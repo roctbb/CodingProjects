@@ -12,9 +12,19 @@
             margin-bottom: 1rem;
         }
 
+        @media screen and (min-width: 900px) {
+            .lesson-content img {
+                display: block;
+                margin: 0 auto;
+                max-width: 80%;
+            }
+        }
+
+
         pre[class*="language-"] {
             margin-bottom: 2rem;
         }
+
 
     </style>
 @endsection
@@ -55,11 +65,11 @@
                                 <script>nbv.render(JSON.parse('{!! addslashes ( $step->theory) !!} '), document.getElementById('notebook'));</script>
                             @else
                                 @parsedown($step->theory)
-                            @endif
+                        @endif
 
-                        @endforeach
+                    @endforeach
 
-                        <!-- Resolved -->
+                    <!-- Resolved -->
                         <div class="text-center border-top border-bottom border-light my-6 py-6">
                             <h4 class="h4 mb-5">
                                 <span class="mr-1"><i class="far fa-newspaper"></i></span>
@@ -69,7 +79,8 @@
                             <button type="button" class="btn btn-success mr-sm-3 animate-up-2"><span class="mr-2"><i
                                             class="far fa-thumbs-up"></i></span>Да, спасибо!
                             </button>
-                            <button type="button" class="btn btn-danger animate-down-2"><span class="mr-2"><i class="far fa-thumbs-down"></i></span>Не очень...
+                            <button type="button" class="btn btn-danger animate-down-2"><span class="mr-2"><i
+                                            class="far fa-thumbs-down"></i></span>Не очень...
                             </button>
 
                         </div>
