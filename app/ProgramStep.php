@@ -101,7 +101,7 @@ class ProgramStep extends Model
         $step->sort_index = $order;
         $step->start_date = $lesson->start_date;
 
-        if (array_has($data, 'notebook')) {
+        if (\Arr::has($data, 'notebook')) {
             $step->is_notebook = true;
             $step->theory = str_replace(array("\n", "\r"), '', $data['theory']);
         }
@@ -118,7 +118,7 @@ class ProgramStep extends Model
         $step->theory = $data['theory'];
         $step->video_url = $data['video_url'];
 
-        if (array_has($data, 'notebook')) {
+        if (\Arr::has($data, 'notebook')) {
             $step->is_notebook = true;
             $step->theory = str_replace(array("\n", "\r"), '', $data['theory']);
         } else {
