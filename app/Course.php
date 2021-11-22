@@ -19,6 +19,11 @@ class Course extends Model
         'start_date', 'end_date'
     ];
 
+    public static function availableForEnroll()
+    {
+        return self::where('mode', 'zoom')->where('state', 'draft')->get();
+    }
+
     public function sdl_lessons()
     {
         return $this->belongsToMany('App\Lesson', 'sdl_courses_users_lessons', 'course_id', 'lesson_id');

@@ -18,7 +18,7 @@ class CourseCategoriesController extends Controller
 
     public function index()
     {
-        $courses = Course::where('mode', 'zoom')->where('state', 'draft')->get();
+        $courses = Course::availableForEnroll();
         return view('rocket.landing.courses.index', compact('courses'));
     }
 

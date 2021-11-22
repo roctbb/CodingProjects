@@ -34,11 +34,12 @@
                     <div class="dropdown-menu dropdown-megamenu dropdown-megamenu-sm pl-3 py-3 p-lg-4" aria-labelledby="dashboardPagesDropdown">
                         <div class="row no-gutters">
                             <div class="col-6">
-                                <h6 class="d-block mb-3 text-primary">Искусственный интеллект и машинное обучение</h6>
                                 <ul class="list-style-none">
-                                    <li class="mb-2 megamenu-item">
-                                        <a class="megamenu-link" href="@@path/pages/basicml.html">Введение в науки о данных</a>
-                                    </li>
+                                    @foreach(\App\Course::availableForEnroll() as $course)
+                                        <li class="mb-2 megamenu-item">
+                                            <a class="megamenu-link" href="{{ url('/courses/'.$course->id) }}">{{ $course->name }}</a>
+                                        </li>
+                                    @endforeach
                                 </ul>
                             </div>
                         </div>
