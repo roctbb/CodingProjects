@@ -76,7 +76,7 @@
                                             {{ $course->landing_short_description }}
                                         </p>
                                         <div class="d-flex">
-                                            <i class="fas fa-calendar"></i><span class="h6 text-sm ml-2">{{ $course->landing_length }}</span>
+                                            <a href="{{ url('/courses/'.$course->id) }}" class="stretched-link"><i class="fas fa-calendar"></i><span class="h6 text-sm ml-2">{{ $course->landing_length }}</span></a>
                                             <span class="ml-4"><i class="fas fa-brain text-secondary"></i><span class="h6 text-sm ml-2">{{ $course->landing_level }}</span></span>
                                         </div>
                                     </div>

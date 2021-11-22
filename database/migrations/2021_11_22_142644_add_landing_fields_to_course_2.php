@@ -16,6 +16,7 @@ class AddLandingFieldsToCourse2 extends Migration
         Schema::table('courses', function (Blueprint $table) {
             $table->string('landing_group_size')->nullable();
             $table->string('landing_price')->nullable();
+            $table->string('landing_timetable')->nullable();
         });
     }
 
