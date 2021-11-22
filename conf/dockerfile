@@ -1,0 +1,19 @@
+FROM php:7.3-fpm-alpine
+RUN set -ex \
+  && apk --no-cache add \
+    postgresql-dev
+
+WORKDIR /var/www/html/
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN docker-php-ext-install pdo pdo_pgsql
+RUN apk add sudo
+RUN addgroup sudo
+RUN adduser laravel -G sudo -D
+RUN passwd laravel -d
+RUN printf "root ALL=(ALL) ALL\n%%sudo ALL=(ALL) ALL\n" > /etc/sudoers
+RUN chown laravel:sudo -R .
+
+USER laravel
+
+
+ENTRYPOINT composer install && cp .env.example .env && php artisan key:generate && php artisan migrate && php-fpm
