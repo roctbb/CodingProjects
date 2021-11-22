@@ -10,7 +10,7 @@
             <div class="navbar-collapse-header">
                 <div class="row">
                     <div class="col-6 collapse-brand">
-                        <a class="d-flex align-items-center" href="{{ url('rocket/index.html') }}">
+                        <a class="d-flex align-items-center" href="{{ url('/') }}">
                             <img src="{{ url('/images/icons/icons8-idea-64.png') }}" alt="Logo dark">
                         </a>
                     </div>
