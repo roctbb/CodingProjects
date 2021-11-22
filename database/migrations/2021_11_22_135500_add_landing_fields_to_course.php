@@ -16,8 +16,8 @@ class AddLandingFieldsToCourse extends Migration
         Schema::table('courses', function (Blueprint $table) {
             $table->string('landing_length')->nullable();
             $table->string('landing_level')->nullable();
-            $table->string('landing_html_description')->nullable();
-            $table->string('landing_short_description')->nullable();
+            $table->text('landing_html_description')->nullable();
+            $table->text('landing_short_description')->nullable();
             $table->string('landing_enrollment_link')->nullable();
         });
     }
