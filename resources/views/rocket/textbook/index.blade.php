@@ -14,7 +14,7 @@
 
 @section('content')
     <!-- Hero -->
-    <section class="section-header bg-primary pb-7 pb-lg-10 text-white">
+    <section class="section-header bg-primary pb-7 pb-lg-7 text-white">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-12 col-md-10 text-center">
@@ -25,7 +25,7 @@
         </div>
         <div class="pattern bottom"></div>
     </section>
-    <section class="section section-md bg-white">
+    <section class="section section-md pt-6 bg-white">
         <div class="container">
             @foreach($textbook->chapters as $chapter)
                 <div class="row">
