@@ -23,15 +23,15 @@
             </div>
             <ul class="navbar-nav navbar-nav-hover justify-content-center">
                 <li class="nav-item">
-                    <a href="{{ url('/') }}" class="nav-link">{{ config('app.name') }}</a>
+                    <a href="{{ url('/') }}" class="nav-link"><strong>{{ config('app.name') }}</strong></a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a href="@@path/index.html" class="nav-link dropdown-toggle" id="dashboardPagesDropdown" aria-expanded="false" data-toggle="dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" id="courses" aria-expanded="false" data-toggle="dropdown">
                         <span class="nav-link-inner-text mr-1">Курсы</span>
                         <i class="fas fa-angle-down nav-link-arrow"></i>
                     </a>
 
-                    <div class="dropdown-menu dropdown-megamenu dropdown-megamenu-sm pl-3 py-3 p-lg-4" aria-labelledby="dashboardPagesDropdown">
+                    <div class="dropdown-menu dropdown-megamenu dropdown-megamenu-sm pl-3 py-3 p-lg-4" aria-labelledby="courses">
                         <div class="row no-gutters">
                             <div class="col-6">
                                 <ul class="list-style-none">
@@ -46,8 +46,30 @@
                     </div>
 
                 </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" id="textbooks" aria-expanded="false" data-toggle="dropdown">
+                        <span class="nav-link-inner-text mr-1">Учебник</span>
+                        <i class="fas fa-angle-down nav-link-arrow"></i>
+                    </a>
+
+                    <div class="dropdown-menu dropdown-megamenu dropdown-megamenu-sm pl-3 py-3 p-lg-4" aria-labelledby="textbooks">
+                        <div class="row no-gutters">
+                            <div class="col-6">
+                                <ul class="list-style-none">
+                                    @foreach(\App\Program::textbooks() as $textbook)
+                                        <li class="mb-2 megamenu-item">
+                                            <a class="megamenu-link" href="{{ url('/textbook/'.$textbook->id) }}">{{ $textbook->name }}</a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </li>
             </ul>
         </div>
+
         <div class="d-none d-lg-block">
             <a href="https://t.me/roctbb" target="_blank" class="btn btn-secondary btn-pricing-plan animate-up-2 mr-3"><i class="fas fa-paper-plane mr-2"></i> Задать вопрос</a>
         </div>

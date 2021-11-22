@@ -56,6 +56,10 @@ Route::get('/articles', 'ArticlesController@open_index');
 Route::get('/articles/{id}', 'ArticlesController@details');
 Route::get('/courses', 'CourseCategoriesController@index');
 Route::get('/courses/{id}', 'CourseCategoriesController@details');
+
+Route::get('/textbook/{id}', 'TextbookController@index');
+Route::get('/textbook/{id}/lesson/{lesson_id}', 'TextbookController@lesson');
+
 Route::get('/categories/create', 'CourseCategoriesController@createView');
 Route::post('/categories/create', 'CourseCategoriesController@create');
 Route::get('/categories/{id}', 'CourseCategoriesController@details');
