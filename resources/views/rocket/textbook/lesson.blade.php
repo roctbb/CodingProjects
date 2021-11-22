@@ -50,23 +50,25 @@
                 <div class="col">
                     <div class="card shadow-soft border-light p-4 p-lg-5 lesson-content">
                         @foreach($lesson->steps as $step)
-                            <h2 class="h3 mb-4">{{ $step->name }}</h2>
+                            @if ($step->theory || $step->video_url)
+                                <h2 class="h3 mb-4">{{ $step->name }}</h2>
 
-                            @if ($step->video_url)
-                                <div class="videoWrapper">
-                                    <iframe width="560" height="315" src="{{$step->video_url}}" frameborder="0"
-                                            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                                            allowfullscreen></iframe>
-                                </div>
+                                @if ($step->video_url)
+                                    <div class="videoWrapper">
+                                        <iframe width="560" height="315" src="{{$step->video_url}}" frameborder="0"
+                                                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                                                allowfullscreen></iframe>
+                                    </div>
+                                @endif
+
+                                @if ($step->is_notebook)
+                                    <div style="width:100%; margin: -30px;" id="notebook">
+
+                                    </div>
+                                    <script>nbv.render(JSON.parse('{!! addslashes ( $step->theory) !!} '), document.getElementById('notebook'));</script>
+                                @else
+                                    @parsedown($step->theory)
                             @endif
-
-                            @if ($step->is_notebook)
-                                <div style="width:100%; margin: -30px;" id="notebook">
-
-                                </div>
-                                <script>nbv.render(JSON.parse('{!! addslashes ( $step->theory) !!} '), document.getElementById('notebook'));</script>
-                            @else
-                                @parsedown($step->theory)
                         @endif
 
                     @endforeach
