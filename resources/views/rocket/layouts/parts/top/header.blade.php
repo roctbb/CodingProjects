@@ -1,6 +1,6 @@
 <nav id="navbar-main" class="navbar navbar-main navbar-expand-lg navbar-dark navbar-theme-primary headroom py-lg-2 px-lg-6">
     <div class="container">
-        <a class="navbar-brand @@logo_classes" href="{{ url('rocket/index.html') }}">
+        <a class="navbar-brand @@logo_classes" href="{{ url('/') }}">
             <div class="d-flex align-items-center">
                 <img class="navbar-brand-dark rotate-logo" src="{{ url('/images/icons/icons8-idea-64.png') }}" alt="Logo light">
                 <img class="navbar-brand-light rotate-logo" src="{{ url('/images/icons/icons8-idea-64.png') }}" alt="Logo dark">
