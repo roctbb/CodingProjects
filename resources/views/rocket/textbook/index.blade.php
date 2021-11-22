@@ -4,6 +4,14 @@
     {{ $textbook->name }}
 @endsection
 
+@section('style')
+    <style>
+        a .card-body {
+            color: #4A5073;
+        }
+    </style>
+@endsection
+
 @section('content')
     <!-- Hero -->
     <section class="section-header bg-primary pb-7 pb-lg-10 text-white">
@@ -31,7 +39,9 @@
                             <a href="{{ url('/textbook/'.$textbook->id.'/lesson/'.$lesson->id) }}" class="card border-light animate-up-3 shadow-soft p-0 p-lg-1">
                                 <div class="card-body">
                                     <h5 class="mb-4">{{ $lesson->name }}</h5>
-                                    <p class="text-gray mb-4">@parsedown($lesson->description)</p>
+                                    <div class="text-gray">
+                                        <p class="text-gray mb-4">@parsedown($lesson->description)</p>
+                                    </div>
                                     <!--<div class="d-flex align-items-center">
                                         <div class="avatar-md">
                                             <img class="rounded-circle" src="../assets/img/team/profile-picture-1.jpg" alt="avatar">
