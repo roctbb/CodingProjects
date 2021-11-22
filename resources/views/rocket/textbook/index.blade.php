@@ -34,11 +34,11 @@
                     </div>
                 </div>
                 <div class="row justify-content-center">
-                    @foreach($chapter->lessons as $lesson)
+                    @foreach($chapter->lessons as $key => $lesson)
                         <div class="col-12 col-lg-6 mb-3">
                             <a href="{{ url('/textbook/'.$textbook->id.'/lesson/'.$lesson->id) }}" class="card border-light animate-up-3 shadow-soft p-0 p-lg-1">
                                 <div class="card-body">
-                                    <h5 class="mb-4">{{ $lesson->name }}</h5>
+                                    <h5 class="mb-4">{{ $key }}. {{ $lesson->name }}</h5>
                                     <div class="text-gray">
                                         <p class="text-gray mb-4">@parsedown($lesson->description)</p>
                                     </div>
