@@ -61,7 +61,7 @@
     </section>
     <section class="section section-lg bg-soft pb-5">
         <div class="container">
-            <div class="row justify-content-center">
+            <div class="row">
                 <div class="col">
                     <div class="text-center">
                         <h3 class="mb-4">Can't find what you are looking for? <br class="d-sm-none"> Let us know!</h3>
