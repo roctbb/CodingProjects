@@ -33,7 +33,7 @@
                         <h2 class="h4 mb-4">{{ $chapter->name }}</h2>
                     </div>
                 </div>
-                <div class="row justify-content-center">
+                <div class="row">
                     @foreach($chapter->lessons as $key => $lesson)
                         <div class="col-12 col-lg-6 mb-3">
                             <a href="{{ url('/textbook/'.$textbook->id.'/lesson/'.$lesson->id) }}" class="card border-light animate-up-3 shadow-soft p-0 p-lg-1">
@@ -58,7 +58,7 @@
                 </div>
             @endforeach
         </div>
-    </section>
+    </section><!--
     <section class="section section-lg bg-soft pb-5">
         <div class="container">
             <div class="row">
@@ -71,5 +71,5 @@
                 </div>
             </div>
         </div>
-    </section>
+    </section>-->
 @endsection
