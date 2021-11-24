@@ -65,6 +65,8 @@ class TextbookController extends Controller
         $previous_id = null;
         $next_id = null;
 
+        dd($textbook->lessons);
+
         $lesson_index = $textbook->lessons->search(function($course_lesson) use ($lesson) {
             return $course_lesson->id == $lesson->id;
         });
