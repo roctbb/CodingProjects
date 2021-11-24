@@ -59,6 +59,7 @@ Route::get('/courses/{id}', 'CourseCategoriesController@details');
 
 Route::get('/textbook/{id}', 'TextbookController@index');
 Route::get('/textbook/{id}/lesson/{lesson_id}', 'TextbookController@lesson');
+Route::get('/textbook/{id}/edit/{step_id}', 'TextbookController@edit_step');
 
 Route::get('/categories/create', 'CourseCategoriesController@createView');
 Route::post('/categories/create', 'CourseCategoriesController@create');

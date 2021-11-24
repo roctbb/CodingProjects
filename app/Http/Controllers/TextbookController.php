@@ -11,6 +11,7 @@ namespace App\Http\Controllers;
 use App\Article;
 use App\ArticleTag;
 use App\CoinTransaction;
+use App\Course;
 use App\ForumComment;
 use App\ForumPost;
 use App\ForumTag;
@@ -19,6 +20,7 @@ use App\ForumVote;
 use App\Lesson;
 use App\Notifications\NewForumAnswer;
 use App\Program;
+use App\ProgramStep;
 use App\Project;
 use App\Http\Controllers\Controller;
 use App\User;
@@ -32,7 +34,7 @@ class TextbookController extends Controller
 
     public function __construct()
     {
-        //$this->middleware('auth')->except('open_index', 'details');
+        $this->middleware('admin')->only('edit');
     }
 
     public function index($id, Request $request)
@@ -76,6 +78,14 @@ class TextbookController extends Controller
         }
 
         return view('rocket.textbook.lesson', compact('textbook', 'lesson', 'previous_id', 'next_id'));
+    }
+
+    public function edit_step($id, $step_id, Request $request)
+    {
+        $textbook = Program::findOrFail($id);
+        $course = Course::where('program_id', $textbook->id)->first();
+
+        return redirect('/insider/courses/'.$course->id.'/steps/'.$step_id.'/edit');
     }
 
 

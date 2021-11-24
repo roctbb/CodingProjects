@@ -68,7 +68,10 @@
                     <div class="card shadow-soft border-light p-4 p-lg-5 lesson-content">
                         @foreach($lesson->steps as $step)
                             @if ($step->theory || $step->video_url)
-                                <h2 class="h3 mb-4">{{ $step->name }}</h2>
+                                <h2 class="h3 mb-4">{{ $step->name }} </h2>
+
+                                @if (\Auth::check() and \Auth::User()->role == 'admin')
+                                    <p class="small"><a target="_blank" href="{{ url('/textbook/' . $textbook->id . '/edit/' . $step->id ) }}"><span class="mr-2"><i class="fas fa-pen"></i></span>Изменить</a></p>@endif
 
                                 @if ($step->video_url)
                                     <div class="videoWrapper">
