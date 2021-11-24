@@ -1,4 +1,4 @@
-<footer class="footer section pt-4 pt-md-4 pb-2 bg-primary text-white overflow-hidden">
+<footer class="footer section pt-4 pt-md-4 pb-2 bg-soft overflow-hidden">
     <div class="container">
         <!--<div class="row">
             <div class="col-lg-4 mb-4 mb-lg-0">
