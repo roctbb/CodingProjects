@@ -44,7 +44,7 @@
         </div>
         <div class="pattern bottom"></div>
     </section>
-    <section class="section section-lg pt-0">
+    <section class="section section-lg pb-4 pt-0">
         <div class="container mt-n8 mt-lg-n12 z-2">
             <div class="row justify-content-center">
                 <div class="col">

@@ -1,7 +1,6 @@
-<footer class="footer section pt-6 pt-md-8 pt-lg-10 pb-3 bg-primary text-white overflow-hidden">
-    <div class="pattern top pattern-soft"></div>
+<footer class="footer section pt-4 pt-md-4 pb-2 bg-primary text-white overflow-hidden">
     <div class="container">
-        <div class="row">
+        <!--<div class="row">
             <div class="col-lg-4 mb-4 mb-lg-0">
                 <a class="footer-brand mr-lg-5 d-flex" href="{{ url('rocket/index.html') }}">
                     <img src="{{ url('rocket/assets/img/brand/light.svg" class="mr-3') }}" alt="Footer logo">
@@ -54,15 +53,14 @@
                 <small class="mt-2 form-text">We’ll never share your details. See our <a href="{{ url('rocket/pages/terms.html') }}" class="font-weight-bold text-underline">Privacy Policy</a></small>
             </div>
         </div>
-        <hr class="my-4 my-lg-5">
+        <hr class="my-4 my-lg-5">-->
         <div class="row">
             <div class="col pb-4 mb-md-0">
                 <a href="https://themesberg.com" target="_blank" class="d-flex justify-content-center">
-                    <img src="{{ url('rocket/assets/img/themesberg.svg" height="25" width="25" class="mb-3') }}" alt="Themesberg Logo">
+                    <img src="{{ url('/images/icons/icons8-idea-64.png') }}" height="25" width="25" class="mb-3" alt="Themesberg Logo">
                 </a>
                 <div class="d-flex text-center justify-content-center align-items-center">
-                    <p class="font-weight-normal font-small mb-0">Copyright © <a href="https://themesberg.com" target="_blank">Themesberg</a> <span class="current-year"></span>. All rights
-                        reserved.</p>
+                    <p class="font-weight-normal font-small mb-0">© <a href="https://vk.com/roctbb" target="_blank">Бородин Ростислав</a> <span class="current-year"></span>. Все права защищены.</p>
                 </div>
             </div>
         </div>

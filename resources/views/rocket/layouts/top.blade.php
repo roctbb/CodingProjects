@@ -7,6 +7,7 @@
     <main>
 
         @yield('content')
+        @include('rocket.layouts.parts.top.footer')
 
     </main>
 
