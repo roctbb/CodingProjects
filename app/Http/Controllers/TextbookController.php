@@ -32,7 +32,7 @@ class TextbookController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth')->except('open_index', 'details');
+        //$this->middleware('auth')->except('open_index', 'details');
     }
 
     public function index($id, Request $request)
@@ -60,7 +60,22 @@ class TextbookController extends Controller
             abort(404);
         }
 
-        return view('rocket.textbook.lesson', compact('textbook', 'lesson'));
+        $previous_id = null;
+        $next_id = null;
+
+        $lesson_index = $textbook->lessons->search(function($course_lesson) use ($lesson) {
+            return $course_lesson->id == $lesson->id;
+        });
+
+        if ($lesson_index > 0) {
+            $previous_id = $textbook->lessons[$lesson_index - 1]->id;
+        }
+
+        if ($lesson_index < count($textbook->lessons) - 1) {
+            $next_id = $textbook->lessons[$lesson_index + 1]->id;
+        }
+
+        return view('rocket.textbook.lesson', compact('textbook', 'lesson', 'previous_id', 'next_id'));
     }
 
 
