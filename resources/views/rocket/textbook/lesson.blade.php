@@ -27,6 +27,18 @@
             margin-bottom: 2rem;
         }
 
+        blockquote {
+            color: #ffffff;
+            background-color: #1E90FF;
+            border-color: #1E90FF;
+            border: 0;
+            font-size: 0.9rem;
+            border-radius: 0.5rem;
+            padding: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+
+        }
+
 
     </style>
 @endsection
@@ -72,7 +84,7 @@
                             @endif
                         @endforeach
 
-                        <div class="text-center">
+                        <div class="text-center pt-4">
                             @if ($previous_id)
                                 <a href="{{ url('/textbook/'.$textbook->id.'/lesson/'.$previous_id) }}" type="button" class="btn btn-info mr-sm-3 animate-left-2"><span class="mr-2"><i
                                                 class="far fa-arrow-alt-circle-left"></i></span>Назад
