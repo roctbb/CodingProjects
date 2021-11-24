@@ -65,6 +65,10 @@ class TextbookController extends Controller
         $previous_id = null;
         $next_id = null;
 
+        $textbook->lessons->sortBy(function ($lesson, $key) {
+            return $lesson->sort_index + 10000 * $lesson->chapter->sort_index;
+        }, SORT_REGULAR);
+
         dd($textbook->lessons);
 
         $lesson_index = $textbook->lessons->search(function($course_lesson) use ($lesson) {
