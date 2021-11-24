@@ -65,22 +65,22 @@ class TextbookController extends Controller
         $previous_id = null;
         $next_id = null;
 
-        $textbook->lessons->sortBy(function ($lesson, $key) {
+        $lessons = $textbook->lessons->sortBy(function ($lesson, $key) {
             return $lesson->sort_index + 10000 * $lesson->chapter->sort_index;
         }, SORT_REGULAR);
 
-        dd($textbook->lessons);
+        dd($lessons);
 
-        $lesson_index = $textbook->lessons->search(function($course_lesson) use ($lesson) {
+        $lesson_index = $lessons->search(function($course_lesson) use ($lesson) {
             return $course_lesson->id == $lesson->id;
         });
 
         if ($lesson_index > 0) {
-            $previous_id = $textbook->lessons[$lesson_index - 1]->id;
+            $previous_id = $lessons[$lesson_index - 1]->id;
         }
 
         if ($lesson_index < count($textbook->lessons) - 1) {
-            $next_id = $textbook->lessons[$lesson_index + 1]->id;
+            $next_id = $lessons[$lesson_index + 1]->id;
         }
 
         return view('rocket.textbook.lesson', compact('textbook', 'lesson', 'previous_id', 'next_id'));
