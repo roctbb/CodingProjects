@@ -7,10 +7,10 @@
     <main>
 
         @yield('content')
-
+        @include('rocket.layouts.parts.top.footer')
 
     </main>
-    @include('rocket.layouts.parts.top.footer')
+
 
 @endsection
 
