@@ -28,15 +28,20 @@
         }
 
         blockquote {
-            color: #ffffff;
-            background-color: #1E90FF;
-            border-color: #1E90FF;
+            color: #506690;
+            background-color: #eaedf2;
+            border-color: #eaedf2;
             border: 0;
-            font-size: 0.9rem;
+
             border-radius: 0.5rem;
             padding: 1.5rem !important;
+            padding-bottom: 0.5rem !important;
             margin-bottom: 1.5rem !important;
 
+        }
+
+        blockquote p {
+            font-size: 1rem !important;
         }
 
 
