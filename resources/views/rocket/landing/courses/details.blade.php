@@ -1,7 +1,7 @@
 @extends('rocket.layouts.top')
 
 @section('title')
-{{ $course->name }}
+    {{ $course->name }}
 @endsection
 
 @section('content')
@@ -31,29 +31,32 @@
     </section>
     <section class="section section-lg pt-0">
         <div class="container mt-n8 mt-lg-n11 z-2">
-        {!! $course->landing_html_description  !!}
+            <div class="col">
+                <div class="card shadow-soft border-light p-4 p-md-5">
+                    {!! $course->landing_html_description  !!}
 
-            <div id="apply" class="row">
-                <div class="col">
-                    <!-- Card -->
-                    <div class="card bg-soft shadow-soft border-0 text-black py-4 p-lg-5">
-                        <div class="card-body p-4">
-                            <div class="mb-5 mb-lg-6 text-center">
-                                <h2 class="h1">Интересно?</h2>
-                            </div>
-                            <div class="text-center">
-                                <a href="{{ $course->landing_enrollment_link }}" target="_blank"
-                                   class="btn btn-secondary mt-4"><span
-                                            class="mr-2"><i class="fas fa-paper-plane"></i></span>
-                                    Записаться!
-                                </a>
+                    <div id="apply" class="row">
+                        <div class="col">
+                            <!-- Card -->
+                            <div class="card bg-soft shadow-soft border-0 text-black py-4 p-lg-5">
+                                <div class="card-body p-4">
+                                    <div class="mb-5 mb-lg-6 text-center">
+                                        <h2 class="h1">Интересно?</h2>
+                                    </div>
+                                    <div class="text-center">
+                                        <a href="{{ $course->landing_enrollment_link }}" target="_blank"
+                                           class="btn btn-secondary mt-4"><span
+                                                    class="mr-2"><i class="fas fa-paper-plane"></i></span>
+                                            Записаться!
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
 
 
     </section>
