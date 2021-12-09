@@ -79,18 +79,18 @@
     <nav class="my-2 my-md-0 mr-md-3">
 
         @if (\Auth::check())
-            @if (\Auth::User()->role != 'novice')
+            <!--@if (\Auth::User()->role != 'novice')
                 <a class="p-2 text-dark {{(Request::is('insider/articles*') ? 'active' : '') }}"
                    href="{{url('/insider/articles')}}">Статьи</a>
             @else
                 <a class="p-2 text-dark {{(Request::is('articles*') ? 'active' : '') }}"
                    href="{{url('/articles')}}">Статьи</a>
-            @endif
+            @endif-->
             <a class="p-2 text-dark {{(Request::is('insider/courses*') ? 'active' : '') }}"
                href="{{url('/insider/courses')}}">Мои курсы</a>
             <a class="p-2 text-dark {{(Request::is('courses*') or Request::is('categories*') ? 'active' : '') }}"
                    href="{{url('/insider/courses')}}">Каталог курсов</a>
-            <a class="p-2 text-dark {{(Request::is('insider/forum*') ? 'active' : '') }}"
+            <!--<a class="p-2 text-dark {{(Request::is('insider/forum*') ? 'active' : '') }}"
                href="{{url('insider/forum')}}">Ответы</a>
             <a class="p-2 text-dark {{(Request::is('insider/ideas*') ? 'active' : '') }}"
                href="{{url('insider/ideas')}}">Идеи</a>
@@ -106,10 +106,10 @@
             href="{{url('insider/events')}}">События</a>
         
            <a class="p-2 text-dark {{(Request::is('insider/games*') ? 'active' : '') }}"
-               href="{{url('insider/games')}}">Игры</a>
+               href="{{url('insider/games')}}">Игры</a>-->
         @else
-            <a class="p-2 text-dark {{(Request::is('articles*') ? 'active' : '') }}"
-               href="{{url('/articles')}}">Статьи</a>
+            <!--<a class="p-2 text-dark {{(Request::is('articles*') ? 'active' : '') }}"
+               href="{{url('/articles')}}">Статьи</a>-->
             <a class="p-2 text-dark {{(Request::is('courses*') or Request::is('categories*') ? 'active' : '') }}"
                href="{{url('courses')}}">Каталог курсов</a>
             <!--<a class="p-2 text-dark {{(Request::is('games*') ? 'active' : '') }}" href="{{url('games')}}">Игры</a>-->
@@ -167,15 +167,10 @@
                 <small class="d-block mb-3 text-muted">&copy; 2016-{{ \Carbon\Carbon::now()->year }}  </small>
             </div>
             <div class="col-6 col-md-9 col-lg-10" style="margin-top: 15px;">
-                <h5>Школа программирования Геккон</h5>
+                <h5>CodingProjects</h5>
                 <ul class="list-unstyled text-small">
 
-                    <li><a class="text-muted" target="_blank" href="https://gekkon-club.ru/programming">Сайт
-                            Геккон-клуба</a></li>
-                    <li><a class="text-muted" target="_blank" href="https://gekkon-club.ru/programming">Бот в ВК</a></li>
-                    @if (\Auth::check())
-                        <li><a class="text-muted" target="_blank" href="https://gekkon-club.ru/programming">Беседа в ВК</a></li>
-                    @endif
+                    <li><a class="text-muted" target="_blank" href="https://gekkon-club.ru/courses">Курсы</a></li>
                     <li><a class="text-muted" target="_blank" href="https://github.com/geekon-school/">GitHub</a></li>
                     <li><a class="text-muted" target="_blank" href="https://storage.geekclass.ru">Storage</a></li>
                     <li><a class="text-muted" target="_blank" href="https://paste.geekclass.ru">Paste</a></li>

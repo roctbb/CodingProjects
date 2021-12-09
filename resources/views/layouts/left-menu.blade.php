@@ -146,7 +146,7 @@
             <ul class="navbar-nav d-lg-block">
 
                 @if (\Auth::check())
-                    @if (\Auth::User()->role != 'novice')
+                    <!--@if (\Auth::User()->role != 'novice')
                         <li class="nav-item">
                             <a class="nav-link {{((Request::is('insider/articles*') or Request::is('articles*'))? 'active-link' : '') }}"
                                href="{{url('/insider/articles')}}">Статьи</a></li>
@@ -154,11 +154,11 @@
                         <li class="nav-item">
                             <a class="nav-link {{(Request::is('articles*') ? 'active-link' : '') }}"
                                href="{{url('/articles')}}">Статьи</a></li>
-                    @endif
+                    @endif-->
                     <li class="nav-item">
                         <a class="nav-link {{(Request::is('insider/courses*') ? 'active-link' : '') }}"
                            href="{{url('/insider/courses')}}">Мои курсы</a></li>
-                    <li class="nav-item">
+                    <!--<li class="nav-item">
                         <a class="nav-link {{((Request::is('courses*') or Request::is('categories*')) ? 'active-link' : '') }}"
                            href="{{url('courses')}}">Каталог курсов</a></li>
                     <li class="nav-item"><a class="nav-link {{(Request::is('insider/forum*') ? 'active-link' : '') }}"
@@ -180,7 +180,7 @@
                                             href="{{url('insider/events')}}">События</a></li>
 
                 <li class="nav-item"><a class="nav-link {{(Request::is('insider/games*') ? 'active-link' : '') }}"
-                                            href="{{url('insider/games')}}">Игры</a></li>
+                                            href="{{url('insider/games')}}">Игры</a></li>-->
                 @else
                     <li class="nav-item"><a class="nav-link {{(Request::is('articles*') ? 'active-link' : '') }}"
                                             href="{{url('/articles')}}">Статьи</a></li>
@@ -199,14 +199,6 @@
 
                 <ul class="nav nav-small flex-column mt-2">
 
-                    <li class="nav-item"><a class="nav-link" target="_blank" href="https://gekkon-club.ru/programming">Сайт
-                            Геккон-клуба</a></li>
-                    @if (\Auth::check())
-                        <li class="nav-item"><a class="nav-link" target="_blank" href="{{ config('bot.vk_chat') }}">Беседа
-                                в ВК</a></li>
-                    @endif
-                    <li class="nav-item"><a class="nav-link" target="_blank" href="https://github.com/geekon-school/">GitHub</a>
-                    </li>
                     <li class="nav-item"><a class="nav-link" target="_blank"
                                             href="https://storage.geekclass.ru">Storage</a></li>
                     <li class="nav-item"><a class="nav-link" target="_blank" href="https://paste.geekclass.ru">Paste</a>
