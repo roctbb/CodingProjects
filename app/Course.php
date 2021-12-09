@@ -84,7 +84,7 @@ class Course extends Model
         $this->state = 'started';
         $this->start_date = Carbon::now();
         do {
-            $invite = str_random(8);
+            $invite = \Str::random(8);
         } while (Course::where('invite', $invite)->count() != 0);
         $this->invite = $invite;
         $this->remote_invite = $invite . '-R';
