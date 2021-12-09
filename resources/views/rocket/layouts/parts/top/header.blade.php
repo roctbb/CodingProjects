@@ -72,7 +72,7 @@
 
         <div class="d-none d-lg-block">
             <a href="https://t.me/roctbb" target="_blank" class="btn btn-secondary btn-pricing-plan animate-up-2 mr-3"><i class="fas fa-paper-plane mr-2"></i> Задать вопрос</a>
-            <a href="{{ url('/login') }}" class="btn btn-primary animate-up-2 mr-3"><i class="fas fa-angle-double-right mr-2"></i> LMS</a>
+            <a href="{{ url('/login') }}" class="btn btn-info animate-up-2 mr-3"><i class="fas fa-angle-double-right mr-2"></i> LMS</a>
         </div>
         <div class="d-flex d-lg-none align-items-center ml-auto">
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar_global"
