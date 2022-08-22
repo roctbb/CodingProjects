@@ -27,6 +27,23 @@
             margin-bottom: 2rem;
         }
 
+        blockquote {
+            color: #506690;
+            background-color: #eaedf2;
+            border-color: #eaedf2;
+            border: 0;
+
+            border-radius: 0.5rem;
+            padding: 1.5rem !important;
+            padding-bottom: 0.5rem !important;
+            margin-bottom: 1.5rem !important;
+
+        }
+
+        blockquote p {
+            font-size: 1rem !important;
+        }
+
 
     </style>
 @endsection
@@ -44,14 +61,17 @@
         </div>
         <div class="pattern bottom"></div>
     </section>
-    <section class="section section-lg pt-0">
+    <section class="section section-lg pb-4 pt-0">
         <div class="container mt-n8 mt-lg-n12 z-2">
             <div class="row justify-content-center">
                 <div class="col">
                     <div class="card shadow-soft border-light p-4 p-lg-5 lesson-content">
                         @foreach($lesson->steps as $step)
                             @if ($step->theory || $step->video_url)
-                                <h2 class="h3 mb-4">{{ $step->name }}</h2>
+                                <h2 class="h3 mb-4">{{ $step->name }} </h2>
+
+                                @if (\Auth::check() and \Auth::User()->role == 'admin')
+                                    <p class="small"><a target="_blank" href="{{ url('/textbook/' . $textbook->id . '/edit/' . $step->id ) }}"><span class="mr-2"><i class="fas fa-pen"></i></span>Изменить</a></p>@endif
 
                                 @if ($step->video_url)
                                     <div class="videoWrapper">
@@ -68,26 +88,40 @@
                                     <script>nbv.render(JSON.parse('{!! addslashes ( $step->theory) !!} '), document.getElementById('notebook'));</script>
                                 @else
                                     @parsedown($step->theory)
+                                @endif
                             @endif
-                        @endif
+                        @endforeach
 
-                    @endforeach
+                        <div class="text-center pt-4">
+                            @if ($previous_id)
+                                <a href="{{ url('/textbook/'.$textbook->id.'/lesson/'.$previous_id) }}" type="button" class="btn btn-info mr-sm-3 animate-left-2"><span class="mr-2"><i
+                                                class="far fa-arrow-alt-circle-left"></i></span>Назад
+                                </a>
+                            @endif
 
-                    <!-- Resolved -->
-                        <div class="text-center border-top border-bottom border-light my-6 py-6">
-                            <h4 class="h4 mb-5">
-                                <span class="mr-1"><i class="far fa-newspaper"></i></span>
-                                Понятно?
-                            </h4>
-
-                            <button type="button" class="btn btn-success mr-sm-3 animate-up-2"><span class="mr-2"><i
-                                            class="far fa-thumbs-up"></i></span>Да, спасибо!
-                            </button>
-                            <button type="button" class="btn btn-danger animate-down-2"><span class="mr-2"><i
-                                            class="far fa-thumbs-down"></i></span>Не очень...
-                            </button>
-
+                            @if ($next_id)
+                                <a href="{{ url('/textbook/'.$textbook->id.'/lesson/'.$next_id) }}" type="button" class="btn btn-info animate-right-2">Дальше<span class="ml-2"><i
+                                                class="far fa-arrow-alt-circle-right"></i></span>
+                                </a>
+                            @endif
                         </div>
+
+                        <!-- Resolved -->
+                        <!--
+                    <div class="text-center border-top border-bottom border-light my-6 py-6">
+                        <h4 class="h4 mb-5">
+                            <span class="mr-1"><i class="far fa-newspaper"></i></span>
+                            Понятно?
+                        </h4>
+
+                        <button type="button" class="btn btn-success mr-sm-3 animate-up-2"><span class="mr-2"><i
+                                        class="far fa-thumbs-up"></i></span>Да, спасибо!
+                        </button>
+                        <button type="button" class="btn btn-danger animate-down-2"><span class="mr-2"><i
+                                        class="far fa-thumbs-down"></i></span>Не очень...
+                        </button>
+
+                    </div>-->
                         <!-- End Resolved -->
 
                     </div>

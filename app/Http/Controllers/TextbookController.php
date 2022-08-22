@@ -11,6 +11,7 @@ namespace App\Http\Controllers;
 use App\Article;
 use App\ArticleTag;
 use App\CoinTransaction;
+use App\Course;
 use App\ForumComment;
 use App\ForumPost;
 use App\ForumTag;
@@ -19,6 +20,7 @@ use App\ForumVote;
 use App\Lesson;
 use App\Notifications\NewForumAnswer;
 use App\Program;
+use App\ProgramStep;
 use App\Project;
 use App\Http\Controllers\Controller;
 use App\User;
@@ -32,7 +34,7 @@ class TextbookController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth')->except('open_index', 'details');
+        $this->middleware('admin')->only('edit');
     }
 
     public function index($id, Request $request)
@@ -60,7 +62,34 @@ class TextbookController extends Controller
             abort(404);
         }
 
-        return view('rocket.textbook.lesson', compact('textbook', 'lesson'));
+        $previous_id = null;
+        $next_id = null;
+
+        $lessons = collect($textbook->lessons->sortBy(function ($lesson, $key) {
+            return $lesson->sort_index + 10000 * $lesson->chapter->sort_index;
+        }, SORT_REGULAR)->values());
+
+        $lesson_index = $lessons->search(function($course_lesson) use ($lesson) {
+            return $course_lesson->id == $lesson->id;
+        });
+
+        if ($lesson_index > 0) {
+            $previous_id = $lessons[$lesson_index - 1]->id;
+        }
+
+        if ($lesson_index < count($textbook->lessons) - 1) {
+            $next_id = $lessons[$lesson_index + 1]->id;
+        }
+
+        return view('rocket.textbook.lesson', compact('textbook', 'lesson', 'previous_id', 'next_id'));
+    }
+
+    public function edit_step($id, $step_id, Request $request)
+    {
+        $textbook = Program::findOrFail($id);
+        $course = Course::where('program_id', $textbook->id)->first();
+
+        return redirect('/insider/courses/'.$course->id.'/steps/'.$step_id.'/edit');
     }
 
 
