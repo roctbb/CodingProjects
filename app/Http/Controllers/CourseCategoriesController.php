@@ -18,8 +18,10 @@ class CourseCategoriesController extends Controller
 
     public function index()
     {
-        $courses = Course::availableForEnroll();
-        return view('rocket.landing.courses.index', compact('courses'));
+
+        return redirect('/textbook/64' );
+        //$courses = Course::availableForEnroll();
+        //return view('rocket.landing.courses.index', compact('courses'));
     }
 
     public function details($id)
