@@ -439,7 +439,7 @@
                         </ul>
                     @endif
 
-                    @if (($course->teachers->contains($user) || $user->role=='admin') && count($students) < 15)
+                    @if (($course->teachers->contains($user) || $user->role=='admin') && count($students) < 40)
 
                         <div id="histogram"></div>
 
