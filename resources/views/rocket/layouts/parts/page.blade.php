@@ -77,7 +77,7 @@
 <!-- Rocket JS -->
 <script src="{{ url('rocket/assets/js/rocket.js') }}"></script>
 <script src="{{url('/js/nbv.js')}}"></script>
-<script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.12.0/build/highlight.min.js"></script>
+<script src="{{ url('/scripts/highlight.min.js') }}"></script>
 <script>hljs.initHighlightingOnLoad();</script>
 
 </body>

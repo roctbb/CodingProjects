@@ -52,7 +52,7 @@
     <script src="{{url('/js/linkify.min.js')}}"></script>
     <script src="{{url('/js/linkify-jquery.min.js')}}"></script>
 
-    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.12.0/build/highlight.min.js"></script>
+    <script src="{{ url('/scripts/highlight.min.js') }}"></script>
     <script>hljs.initHighlightingOnLoad();</script>
     <!-- Latest compiled and minified CSS -->
 
