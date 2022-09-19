@@ -116,7 +116,7 @@
                             @if (\Auth::User()->image!=null)
                                 <img alt="Image" src="{{url('/media/'.\Auth::User()->image)}}" class="avatar menu"/>
                             @else
-                                <img alt="Image" src="http://api.adorable.io/avatars/256/{{\Auth::User()->id}}"
+                                <img alt="Image" src="{{ url('images/user.jpg') }}"
                                      class="avatar"/>
                             @endif
                         </a>
@@ -215,7 +215,7 @@
                         @if (\Auth::User()->image!=null)
                             <img alt="Image" src="{{url('/media/'.\Auth::User()->image)}}" class="avatar menu-avatar"/>
                         @else
-                            <img alt="Image" src="http://api.adorable.io/avatars/256/{{\Auth::User()->id}}"
+                            <img alt="Image" src="{{ url('images/user.jpg') }}"
                                  class="avatar menu-avatar"/>
                         @endif
                     </a>

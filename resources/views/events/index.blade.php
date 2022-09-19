@@ -57,7 +57,7 @@
                                                      class="avatar"/>
                                             @else
                                                 <img alt="Image"
-                                                     src="http://api.adorable.io/avatars/256/{{$participant->id}}"
+                                                     src="{{ url('images/user.jpg') }}"
                                                      class="avatar"/>
                                             @endif
                                         </a>
@@ -116,7 +116,7 @@
                                                      class="avatar"/>
                                             @else
                                                 <img alt="Image"
-                                                     src="http://api.adorable.io/avatars/256/{{$participant->id}}"
+                                                     src="{{ url('images/user.jpg') }}"
                                                      class="avatar"/>
                                             @endif
                                         </a>

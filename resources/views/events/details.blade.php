@@ -51,7 +51,7 @@
                                                 </div>
                                             @else
                                                 <div class="mr-3 rounded-circle img-circle"
-                                                     style='background-image: url("http://api.adorable.io/avatars/256/{{$user->id}}");'>
+                                                     style='background-image: url("{{ url('images/user.jpg') }}");'>
                                                 </div>
                                             @endif
                                         </div>
@@ -103,7 +103,7 @@
                                              class="avatar"/>
                                     @else
                                         <img alt="Image"
-                                             src="http://api.adorable.io/avatars/256/{{$participant->id}}"
+                                             src="{{ url('images/user.jpg') }}"
                                              class="avatar"/>
                                     @endif
                                 </a>

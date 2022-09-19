@@ -63,7 +63,7 @@
                             </div>
                         @else
                             <div class="mr-3 rounded-circle img-circle"
-                                 style='background-image: url("http://api.adorable.io/avatars/256/{{$article->author->id}}");'>
+                                 style='background-image: url("{{ url('images/user.jpg') }}");'>
                             </div>
                         @endif
                     </div>
@@ -133,7 +133,7 @@
                                 @if ($comment->user->image!=null)
                                     <img alt="Image" src="{{url('/media/'.$comment->user->image)}}" class="avatar"/>
                                 @else
-                                    <img alt="Image" src="http://api.adorable.io/avatars/256/{{$comment->user->id}}"
+                                    <img alt="Image" src="{{ url('images/user.jpg') }}"
                                          class="avatar"/>
                                 @endif
                             </a>

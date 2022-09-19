@@ -304,7 +304,7 @@
                          src="{{url('/media/'.$user->image)}}"/>
                 @else
                     <img class="card-img-top"
-                         src="https://api.adorable.io/avatars/250/{{$user->id}}.png"/>
+                         src="{{ url('images/user.jpg') }}"/>
                 @endif
                 <div class="card-body">
 

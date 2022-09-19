@@ -16,7 +16,7 @@
                                         <div class="mr-3 rounded-circle img-circle" style='background-image: url("{{url('/media/'.$user->image)}}");'>
                                         </div>
                                     @else
-                                        <div class="mr-3 rounded-circle img-circle" style='background-image: url("http://api.adorable.io/avatars/256/{{$user->id}}");'>
+                                        <div class="mr-3 rounded-circle img-circle" style='background-image: url("{{ url('images/user.jpg') }}");'>
                                         </div>
                                     @endif
                                 </div>
