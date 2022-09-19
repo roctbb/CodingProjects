@@ -56,8 +56,7 @@
                             @if ($student->image!=null)
                                 <img alt="Image" src="{{url('/media/'.$student->image)}}" class="avatar"/>
                             @else
-                                <img alt="Image" src="http://api.adorable.io/avatars/256/{{$student->id}}"
-                                     class="avatar"/>
+                                <img alt="Image" src="{{ url('images/user.jpg') }}" class="avatar"/>
                             @endif
                         </a>
                     </li>
