@@ -23,6 +23,10 @@ Route::get('/start-exam', function () {
     return redirect('/open/steps/731');
 });
 
+Route::get('/1561test', function () {
+    return redirect('https://forms.gle/KzJ9oAn6tT4eafu47');
+});
+
 Route::get('/vk-meetup', function () {
     return redirect('/open/steps/745');
 });
