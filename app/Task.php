@@ -45,7 +45,7 @@ class Task extends Model
     {
         if ($this->max_mark > 1)
         {
-            return $this->solutions()->where('user_id', $user_id)->where('mark', '>=', $this->max_mark * 0.75)->count() !=0;
+            return $this->solutions()->where('user_id', $user_id)->where('mark', '>=', $this->max_mark * 0,75)->count() !=0;
         }
         else {
             return $this->solutions()->where('user_id', $user_id)->where('mark', '>=', 1)->count() !=0;
