@@ -145,19 +145,22 @@
         <div class="collapse navbar-collapse flex-column" id="navbar-collapse">
             <ul class="navbar-nav d-lg-block">
 
-                @if (\Auth::check())
-                    <!--@if (\Auth::User()->role != 'novice')
-                        <li class="nav-item">
-                            <a class="nav-link {{((Request::is('insider/articles*') or Request::is('articles*'))? 'active-link' : '') }}"
+            @if (\Auth::check())
+                <!--@if (\Auth::User()->role != 'novice')
+                    <li class="nav-item">
+                        <a class="nav-link {{((Request::is('insider/articles*') or Request::is('articles*'))? 'active-link' : '') }}"
                                href="{{url('/insider/articles')}}">Статьи</a></li>
                     @else
-                        <li class="nav-item">
-                            <a class="nav-link {{(Request::is('articles*') ? 'active-link' : '') }}"
+                    <li class="nav-item">
+                        <a class="nav-link {{(Request::is('articles*') ? 'active-link' : '') }}"
                                href="{{url('/articles')}}">Статьи</a></li>
                     @endif-->
-                    <li class="nav-item">
-                        <a class="nav-link {{(Request::is('insider/courses*') ? 'active-link' : '') }}"
-                           href="{{url('/insider/courses')}}">Мои курсы</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link {{(Request::is('insider/courses*') ? 'active-link' : '') }}"
+                               href="{{url('/insider/courses')}}">Мои курсы</a></li>
+                        <li class="nav-item"><a
+                                    class="nav-link {{(Request::is('insider/market*') ? 'active-link' : '') }}"
+                                    href="{{url('insider/market')}}">Магазин</a></li>
                     <!--<li class="nav-item">
                         <a class="nav-link {{((Request::is('courses*') or Request::is('categories*')) ? 'active-link' : '') }}"
                            href="{{url('courses')}}">Каталог курсов</a></li>
@@ -176,21 +179,23 @@
                                     class="nav-link {{(Request::is('insider/market*') ? 'active-link' : '') }}"
                                     href="{{url('insider/market')}}">Магазин</a></li>
                     @endif
-                    <li class="nav-item"><a class="nav-link {{(Request::is('insider/events*') ? 'active-link' : '') }}"
+                            <li class="nav-item"><a class="nav-link {{(Request::is('insider/events*') ? 'active-link' : '') }}"
                                             href="{{url('insider/events')}}">События</a></li>
 
                 <li class="nav-item"><a class="nav-link {{(Request::is('insider/games*') ? 'active-link' : '') }}"
                                             href="{{url('insider/games')}}">Игры</a></li>-->
-                @else
-                    <li class="nav-item"><a class="nav-link {{(Request::is('articles*') ? 'active-link' : '') }}"
-                                            href="{{url('/articles')}}">Статьи</a></li>
-                    <li class="nav-item"><a class="nav-link {{((Request::is('courses*') or Request::is('categories*')) ? 'active-link' : '') }}"
-                                            href="{{url('courses')}}">Каталог курсов</a></li>
-                <!--<li class="nav-item"><a class="nav-link {{(Request::is('games*') ? 'active-link' : '') }}"
+                        @else
+                            <li class="nav-item"><a
+                                        class="nav-link {{(Request::is('articles*') ? 'active-link' : '') }}"
+                                        href="{{url('/articles')}}">Статьи</a></li>
+                            <li class="nav-item"><a
+                                        class="nav-link {{((Request::is('courses*') or Request::is('categories*')) ? 'active-link' : '') }}"
+                                        href="{{url('courses')}}">Каталог курсов</a></li>
+                        <!--<li class="nav-item"><a class="nav-link {{(Request::is('games*') ? 'active-link' : '') }}"
                                             href="{{url('games')}}">Игры</a></li>-->
-                    <li class="nav-item"><a class="nav-link {{(Request::is('games*') ? 'active-link' : '') }}"
-                                            href="{{url('login')}}">Войти</a></li>
-                @endif
+                            <li class="nav-item"><a class="nav-link {{(Request::is('games*') ? 'active-link' : '') }}"
+                                                    href="{{url('login')}}">Войти</a></li>
+                        @endif
             </ul>
             <hr>
             <div class="d-none d-lg-block w-100">
