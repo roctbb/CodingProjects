@@ -39,7 +39,7 @@ Route::get('/', function () {
     if (\Illuminate\Support\Facades\Auth::check()) {
         return redirect('/insider');
     }
-    return redirect('/courses');
+    return redirect('/login');
 
 });
 

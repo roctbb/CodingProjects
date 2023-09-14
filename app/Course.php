@@ -146,12 +146,12 @@ class Course extends Model
             ]);
         }
 
-        $client = new \GuzzleHttp\Client();
+        /*$client = new \GuzzleHttp\Client();
         $res = $client->post('https://cert.geekclass.ru', [
             'body' => json_encode($cert_request)
         ]);
         $cert_result = json_decode($res->getBody()->getContents());
-
+        */
 
         foreach ($this->students as $student) {
             $completed_course = new CompletedCourse();
@@ -159,8 +159,8 @@ class Course extends Model
             $completed_course->provider = $this->provider->short_name;
             $completed_course->user_id = $student->id;
             $completed_course->course_id = $this->id;
-            $id = $student->id;
-            $completed_course->cert_link = $cert_result->$id->link;
+            /*$id = $student->id;
+            $completed_course->cert_link = $cert_result->$id->link; */
             $completed_course->mark = Mark::getMark($this->points($student), $this->max_points($student));
             $completed_course->save();
         }
