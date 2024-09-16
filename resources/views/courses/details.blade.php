@@ -420,7 +420,7 @@
                     <p>
                         <b>Студенты:</b>
                     </p>
-                    @if (count($students) < 40)
+                    @if (count($students) < 70)
                         <ul>
                             @foreach($students->sortByDesc('percent') as $student)
                                 <li><a class="black-link"
