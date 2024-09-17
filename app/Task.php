@@ -45,10 +45,10 @@ class Task extends Model
     {
         if ($this->max_mark > 1)
         {
-            return $this->solutions()->where('user_id', $user_id)->where('mark', '>=', round($this->max_mark * 3 / 4))->count() !=0;
+            return $this->solutions->where('user_id', $user_id)->where('mark', '>=', round($this->max_mark * 3 / 4))->count() !=0;
         }
         else {
-            return $this->solutions()->where('user_id', $user_id)->where('mark', '>=', 1)->count() !=0;
+            return $this->solutions->where('user_id', $user_id)->where('mark', '>=', 1)->count() !=0;
         }
     }
     public function isOnCheck($user_id)
