@@ -226,7 +226,14 @@ class User extends Authenticatable implements MustVerifyEmail
             return $this->manual_rank;
         }
         $score = $this->score();
-        return Rank::where('from', '<=', $score)->where('to', '>', $score)->first();
+        $rank = Rank::where('from', '<=', $score)->where('to', '>', $score)->first();
+
+        if (!$rank) {
+            \Log::info("Not found rank for user ". $this->id . " score " . $score);
+            return Rank::first();
+        }
+
+        return $rank;
     }
 
     public function eventOrgs()
