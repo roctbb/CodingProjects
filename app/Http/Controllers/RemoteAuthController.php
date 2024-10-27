@@ -15,6 +15,13 @@ class RemoteAuthController extends Controller
 
     public function remoteAuth(Request $request)
     {
+        function addQueryParam($url, $key, $value)
+        {
+            $query = parse_url($url, PHP_URL_QUERY);
+            $separator = $query ? '&' : '?';
+            return $url . $separator . urlencode($key) . '=' . urlencode($value);
+        }
+
         $url = $request->get('redirect_url');
 
         if (!$url || !filter_var($url, FILTER_VALIDATE_URL)) {
@@ -33,7 +40,10 @@ class RemoteAuthController extends Controller
             'iat' => time(),
         ], config('auth.jwt_secret'), 'HS256');
 
-        return redirect()->to($url . '?token=' . $token, 302, [], true);
+
+        $finalUrl = addQueryParam($url, 'token', $token);
+
+        return redirect()->to($finalUrl, 302, [], true);
     }
 
 }
