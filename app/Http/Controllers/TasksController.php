@@ -63,11 +63,10 @@ class TasksController extends Controller
         $task->solution = $request->solution;
         $task->price = $price;
 
-
         if ($request->has('answer') and $request->answer != "") {
             $task->is_quiz = true;
             $task->answer = $request->answer;
-        } else if ($request->has('is_code') and $request->is_code == true) {
+        } else if ($request->has('is_code') and $request->is_code == 'on') {
             $task->is_code = true;
         }
         $task->save();
@@ -140,13 +139,9 @@ class TasksController extends Controller
         } else {
             $task->is_quiz = false;
         }
-        if ($request->has('code_answer') and $request->code_answer != "") {
+        if ($request->has('is_code') and $request->is_code == "on") {
             $task->is_quiz = false;
             $task->is_code = true;
-            $task->checker = $request->checker;
-            $task->code_answer = $request->code_answer;
-            $task->code_input = $request->code_input;
-            $task->template = $request->template;
         } else {
             $task->is_code = false;
         }
@@ -228,45 +223,6 @@ class TasksController extends Controller
                 $when = \Carbon\Carbon::now()->addSeconds(1);
                 Notification::send($user, (new \App\Notifications\NewRank())->delay($when));
             }
-        }
-        if ($task->is_code) {
-            $solution->text = $request->text;
-
-            $client = new Client();
-            $res = $client->post('https://checker.geekclass.ru', ['form_params' => ['pswd' => 'GEEK_PSWD_{{}}', 'input' => $task->code_input, 'code' => $solution->text, 'checker' => $task->checker]]);
-            if ($res->getStatusCode() != 200) {
-                $solution->mark = 0;
-                $solution->comment = "Ошибка проверки, попробуйте еще раз чуть позже..";
-            }
-            $data = \GuzzleHttp\json_decode($res->getBody());
-            if ($data->state == 'general error') {
-                $solution->mark = 0;
-                $solution->comment = "Ошибка проверки, попробуйте еще раз чуть позже.";
-            }
-            if ($data->state == 'error') {
-                $solution->mark = 0;
-                $solution->comment = "Ошибка в программе:<br><br>" . nl2br($data->error);
-            }
-            if ($data->state == 'success') {
-                if (str_contains($data->result, $task->code_answer)) {
-                    $deadline = $this->getDeadline($course_id);
-
-                    if (!$deadline or $solution->created_at->lt($deadline->expiration->addDay())) {
-                        $solution->mark = $task->max_mark;
-                        $solution->comment = "Правильно.";
-                    } else {
-                        $solution->mark = ceil($task->max_mark * $deadline->penalty);
-                        $solution->comment = "Правильно. Сдано с опозданием.";
-                    }
-
-                } else {
-                    $solution->mark = 0;
-                    $solution->comment = "Неверное решение.";
-                }
-            }
-            $solution->teacher_id = $task->Step->Course->Teachers->first()->id;
-            $solution->checked = Carbon::now();
-
         }
 
         $solution->save();
@@ -352,7 +308,6 @@ class TasksController extends Controller
             return back();
         }
         $deadline = \App\TaskDeadline::all()->where('course_id', $course_id)->where('task_id', $id)->first();
-        // dd($deadline);
         if ($deadline) {
 
             $deadline->expiration = $request->deadline;

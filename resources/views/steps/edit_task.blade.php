@@ -95,6 +95,12 @@
                                    @if ($task->is_star) checked @endif/>
                         </div>
 
+                        <div class="form-group">
+                            <label for="is_code">Автопроверка</label>
+                            <input type="checkbox" id="is_code" name="is_code" value="on"
+                                   @if ($task->is_code) checked @endif/>
+                        </div>
+
 
                         <div class="form-group{{ $errors->has('price') ? ' has-error' : '' }}">
                             <label for="price" class="col-md-4">Премия</label>
@@ -137,98 +143,7 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="form-group{{ $errors->has('template') ? ' has-error' : '' }}">
-                            <label for="template" class="col-md-4">Шаблон кода</label>
-
-                            <div class="col-md-12">
-
-                                @if (old('template')!="")
-                                    <textarea id="template" class="form-control"
-                                              name="template">{{old('template')}}</textarea>
-                                @else
-                                    <textarea id="template" class="form-control"
-                                              name="template">{{$task->template}}</textarea>
-                                @endif
-
-
-
-
-                                @if ($errors->has('template'))
-                                    <span class="help-block error-block">
-                                        <strong>{{ $errors->first('template') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="form-group{{ $errors->has('checker') ? ' has-error' : '' }}">
-                            <label for="checker" class="col-md-4">Чекер</label>
-
-                            <div class="col-md-12">
-
-                                @if (old('checker')!="")
-                                    <textarea id="checker" class="form-control"
-                                              name="checker">{{old('checker')}}</textarea>
-                                @else
-                                    <textarea id="checker" class="form-control"
-                                              name="checker">{{$task->checker}}</textarea>
-                                @endif
-
-
-
-
-                                @if ($errors->has('checker'))
-                                    <span class="help-block error-block">
-                                        <strong>{{ $errors->first('checker') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="form-group{{ $errors->has('code_input') ? ' has-error' : '' }}">
-                            <label for="code_input" class="col-md-4">Входные данные</label>
-
-                            <div class="col-md-12">
-
-                                @if (old('code_input')!="")
-                                    <textarea id="code_input" class="form-control"
-                                              name="code_input">{{old('code_input')}}</textarea>
-                                @else
-                                    <textarea id="code_input" class="form-control"
-                                              name="code_input">{{$task->code_input}}</textarea>
-                                @endif
-
-
-
-
-                                @if ($errors->has('code_input'))
-                                    <span class="help-block error-block">
-                                        <strong>{{ $errors->first('code_input') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="form-group{{ $errors->has('code_answer') ? ' has-error' : '' }}">
-                            <label for="code_answer" class="col-md-4">Результат</label>
-
-                            <div class="col-md-12">
-
-                                @if (old('code_answer')!="")
-                                    <textarea id="code_answer" class="form-control"
-                                              name="code_answer">{{old('code_answer')}}</textarea>
-                                @else
-                                    <textarea id="code_answer" class="form-control"
-                                              name="code_answer">{{$task->code_answer}}</textarea>
-                                @endif
-
-
-
-
-                                @if ($errors->has('code_answer'))
-                                    <span class="help-block error-block">
-                                        <strong>{{ $errors->first('code_answer') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
+                       
 
                         <button type="submit" class="btn btn-success">Сохранить</button>
                     </form>

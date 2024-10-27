@@ -35,4 +35,6 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
 
+    'geekpaste_url' => env('GEEKPASTE_URL', 'https://paste.geekclass.ru/'),
+
 ];

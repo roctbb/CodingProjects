@@ -89,7 +89,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="is_code">Автопроверка на Python</label>
+                                <label for="is_code">Автопроверка</label>
                                 <input type="checkbox" id="is_code" name="is_code" value="on"/>
                             </div>
                             <div class="form-group{{ $errors->has('answer') ? ' has-error' : '' }}">

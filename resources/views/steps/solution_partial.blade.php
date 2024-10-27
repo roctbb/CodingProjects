@@ -14,11 +14,9 @@
                 </div>
             </div>
             <div class="card-body">
-                @if ($task->is_code)
-                    <pre><code class="hljs python">{{$solution->text}}</code></pre>
-                @else
-                    {!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->text)), false))  !!}
-                @endif
+
+                {!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->text)), false))  !!}
+
                 <br><br>
                 @if ($solution->mark!=null)
                     <p>

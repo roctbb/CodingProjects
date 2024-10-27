@@ -15,30 +15,30 @@
                         <div class="card-header">
                             {{$task->name}} &nbsp; &nbsp;
                             @if (\Request::is('insider/*'))
-                            @if ($task->getDeadline($course->id))
+                                @if ($task->getDeadline($course->id))
 
-                                @php
-                                    $exp = $task->getDeadline($course->id)->expiration;
-                                @endphp
-                                @if (\Carbon\Carbon::now()->gt($exp))
-                                    <img
-                                            style="border: 1px dotted red; height: 23px; border-radius: 3px;"
-                                            title="Дедлайн"
-                                            src="{{ url('images/icons/deadline.png') }}"/>
-                                @elseif (\Carbon\Carbon::now()->addDays(3)->gt($exp))
-                                    <img
-                                            style="border: 1px dotted yellow; height: 23px; border-radius: 3px;"
-                                            title="Дедлайн"
-                                            src="{{ url('images/icons/deadline.png') }}"/>
-                                @else
-                                    <img
-                                            style="height: 23px;"
-                                            title="Дедлайн"
-                                            src="{{ url('images/icons/deadline.png') }}"/>
+                                    @php
+                                        $exp = $task->getDeadline($course->id)->expiration;
+                                    @endphp
+                                    @if (\Carbon\Carbon::now()->gt($exp))
+                                        <img
+                                                style="border: 1px dotted red; height: 23px; border-radius: 3px;"
+                                                title="Дедлайн"
+                                                src="{{ url('images/icons/deadline.png') }}"/>
+                                    @elseif (\Carbon\Carbon::now()->addDays(3)->gt($exp))
+                                        <img
+                                                style="border: 1px dotted yellow; height: 23px; border-radius: 3px;"
+                                                title="Дедлайн"
+                                                src="{{ url('images/icons/deadline.png') }}"/>
+                                    @else
+                                        <img
+                                                style="height: 23px;"
+                                                title="Дедлайн"
+                                                src="{{ url('images/icons/deadline.png') }}"/>
+                                    @endif
+                                    {{ $task->getDeadline($course->id)->expiration->format('d.m.Y')}}
+
                                 @endif
-                                {{ $task->getDeadline($course->id)->expiration->format('d.m.Y')}}
-
-                            @endif
                             @endif
 
 
@@ -67,10 +67,12 @@
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}"><i
                                             class="icon ion-android-create"></i></a>
                                 @include('steps/partials/deadline_modal')
-                                <i title="Установить дедлайн" data-toggle="modal" data-target="#deadline-modal-{{$task->id}}"
+                                <i title="Установить дедлайн" data-toggle="modal"
+                                   data-target="#deadline-modal-{{$task->id}}"
                                    class="float-right btn btn-default btn-sm"><i
                                             class="icon ion-ios-calendar"></i></i>
-                                <a title="Фантомное решение (добавить пустое решение для всех студентов)" class="float-right btn btn-default btn-sm"
+                                <a title="Фантомное решение (добавить пустое решение для всех студентов)"
+                                   class="float-right btn btn-default btn-sm"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"><i
                                             class="icon ion-ios-color-wand"></i></a>
                                 <a title="Сгенерировать форму perr-review" class="float-right btn btn-default btn-sm"
@@ -96,6 +98,12 @@
                         </div>
                         <div class="card-body markdown">
                             @parsedown($task->text)
+
+                            @if ($task->is_code)
+                                <p>
+                                    <a href="{{ config('services.geekpaste_url').'/?task_id=' . $task->id . '&course_id=' . $course->id }}"
+                                       class="btn btn-primary" target="_blank">Сдать решение</a></p>
+                            @endif
                             @if (\Request::is('insider/*'))
                                 @if ($user->role == 'student' and $task->solution!=null and $task->isDone(Auth::User()->id))
                                     <h3>Авторское решение</h3>
@@ -169,12 +177,9 @@
                                         </div>
                                     </div>
                                     <div class="card-body" style="padding-top: 0; padding-bottom: 0;">
-                                        @if ($task->is_code)
-                                            <pre><code class="hljs python">{{$solution->text}}</code></pre>
-                                        @else
-                                            {!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->text)),
-                                            false)) !!}
-                                        @endif
+
+                                        {!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->text)),
+                                        false)) !!}
                                         @if ($solution->mark!=null)
                                             <p>
                   <span class="badge badge-light">Проверено: {{$solution->checked}}
@@ -253,7 +258,7 @@
                 <div id="solutions_ajax{{$task->id}}">
 
                 </div>
-                @if (!$task->is_quiz)
+                @if (!$task->is_quiz and !$task->is_code)
                     <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
                         <div class="col">
                             <div class="card">
@@ -301,7 +306,11 @@
                                                         </div>
                                                     @else
                                                         <textarea id="text{{$task->id}}" class="form-control"
-                                                                  name="text">@if (!isset($solution)){{$task->template}}@else{{$solution->text}}@endif</textarea>
+                                                                  name="text">@if (!isset($solution))
+                                                                {{$task->template}}
+                                                            @else
+                                                                {{$solution->text}}
+                                                            @endif</textarea>
                                                         <div class="editor">
                                                             <div class="ace_editor" id="editor{{$task->id}}"></div>
                                                         </div>
