@@ -262,7 +262,7 @@ class CoursesController extends Controller
                 $all_steps = $all_steps->merge($lesson->steps);
             }
 
-            if (count($students) < 40) {
+            if (count($students) < 70) {
                 foreach ($students as $key => $value) {
                     $students[$key]->percent = 0;
                     $students[$key]->max_points = 0;

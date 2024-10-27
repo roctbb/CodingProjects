@@ -84,7 +84,7 @@ class RegisterController extends Controller
     {
         $user = User::create([
             'name' => $data['name'],
-            'email' => $data['email'],
+            'email' => ltrim(rtrim(mb_strtolower($data['email']))),
             'password' => bcrypt($data['password']),
             'email_verified_at' => app('\App\Services\EmailVerify')->getDate()
         ]);

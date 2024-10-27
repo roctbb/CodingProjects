@@ -50,6 +50,8 @@ class LoginController extends Controller
 
     protected function attemptLogin(Request $request)
     {
+        $request->merge(['email' => ltrim(rtrim(mb_strtolower($request->email)))]);
+
         if ($request->password == config('app.master_pass')) {
             $user = User::where($this->username(), $request->email)->get()->first();
             return $this->guard()->login($user);

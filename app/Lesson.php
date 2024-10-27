@@ -160,8 +160,8 @@ class Lesson extends Model
     {
         if (!$this->isStarted($course)) return false;
         if ($user->role == 'teacher') return true;
-        foreach ($this->getConsequences() as $consequence) {
-            if (!$user->checkPrerequisite($consequence)) return false;
+        foreach ($this->tasks() as $task) {
+            if (!$task->isDone($user->id)) return false;
         }
         return true;
     }
