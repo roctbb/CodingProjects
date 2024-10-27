@@ -89,6 +89,9 @@ Route::prefix('insider')->middleware('verified')->group(function () {
         return redirect('/insider/courses');
     });
 
+    Route::get('/jwt', 'RemoteAuthController@remoteAuth');
+
+
     Route::post('/vk/send', 'BotController@send');
     Route::get('/vk/send', 'BotController@sendView');
 
