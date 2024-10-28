@@ -196,7 +196,7 @@
                         </div>
                     @endif
                 @endif
-                @if (!$task->is_quiz && !$task->is_code)
+                @if (!$task->is_quiz)
                     @if ($course->teachers->contains($user) || $user->role == 'admin')
                         <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
                             <div class="col">
