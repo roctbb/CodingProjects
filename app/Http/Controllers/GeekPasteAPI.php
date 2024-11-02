@@ -39,6 +39,7 @@ class GeekPasteAPI extends Controller
             $solution->text = $text;
             $solution->mark = min($points, $task->max_mark);
             $solution->comment = $comments;
+            $solution->checked = Carbon::now();
             $solution->teacher_id = $course->teachers->first()->id;
             $solution->save();
 
