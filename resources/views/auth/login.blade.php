@@ -22,7 +22,7 @@
             left: 0;
             width: 100%;
             height: 100% !important;
-            background-image: url("{{url('/images/bg/'.random_int(1,7).'.jpg')}}");
+            background-image: url("{{url('/images/bg/'.random_int(1,16).'.jpg')}}");
             background-size: cover;
             display: block;
             opacity: 0.7;
