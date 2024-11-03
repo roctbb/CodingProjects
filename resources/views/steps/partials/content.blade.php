@@ -157,46 +157,8 @@
                 </div>
             </div>
             @if (\Request::is('insider/*'))
-                @if ($task->is_code && $task->solutions()->where('user_id', Auth::User()->id)->count()!=0)
-                    @php
-                        $solution = $task->solutions()->where('user_id', Auth::User()->id)->get()->last();
-                    @endphp
-                    @if ($solution->user_id == Auth::User()->id)
-                        <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
-                            <div class="col">
-                                <div class="card">
-                                    <div class="card-header">
-                                        Дата сдачи: {{ $solution->submitted->format('d.M.Y H:i')}}
-                                        <div class="float-right">
-                                            @if ($solution->mark!=null)
-                                                <span class="badge badge-primary">Очков опыта: {{$solution->mark}}</span>
-                                                <br>
-                                            @else
-                                                <span class="badge badge-secondary">Решение еще не проверено</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <div class="card-body" style="padding-top: 0; padding-bottom: 0;">
 
-                                        {!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->text)),
-                                        false)) !!}
-                                        @if ($solution->mark!=null)
-                                            <p>
-                  <span class="badge badge-light">Проверено: {{$solution->checked}}
-                     , {{$solution->teacher->name}}</span>
-                                            </p>
-                                            <p class="small">
-                                                {!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;',
-                                                $solution->comment)), false)) !!}
-                                            </p>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-                @endif
-                @if (!$task->is_quiz && !$task->is_code)
+                @if (!$task->is_quiz)
                     @if ($course->teachers->contains($user) || $user->role == 'admin')
                         <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
                             <div class="col">
