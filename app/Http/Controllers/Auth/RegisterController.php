@@ -118,7 +118,8 @@ class RegisterController extends Controller
             $is_teacher = true;
         } else {
             if ($request->invite == null || $request->invite == "") {
-                $is_novice = true;
+                $this->make_error_alert('Ошибка!', 'Курс с таким приглашением не найден.');
+                return $this->backException();
             }
             $course = Course::where('invite', $request->invite)->first();
             if ($course == null) {
