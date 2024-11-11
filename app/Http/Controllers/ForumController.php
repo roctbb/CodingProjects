@@ -165,8 +165,8 @@ class ForumController extends Controller
         $thread = ForumThread::findOrFail($id);
         $user = User::findOrFail(Auth::User()->id);
 
-        if (!$thread->subscribers->has($user->id)) {
-            $thread->subscribers()->attach($user->id);
+        if (!$thread->subscribers->contains($user)) {
+            $thread->subscribers()->syncWithoutDetaching([$user->id]);
         }
 
 
@@ -224,7 +224,9 @@ class ForumController extends Controller
         $user = User::findOrFail(Auth::User()->id);
         $thread = ForumThread::findOrFail($thread_id);
 
-        $thread->subscribers()->attach($user->id);
+        if (!$thread->subscribers->contains($user)) {
+            $thread->subscribers()->syncWithoutDetaching([$user->id]);
+        }
 
         return redirect('/insider/forum/' . $thread_id);
     }
@@ -248,8 +250,8 @@ class ForumController extends Controller
         $user = User::findOrFail(Auth::User()->id);
         $thread = ForumThread::findOrFail($thread_id);
 
-        if (!$thread->subscribers->has($user->id)) {
-            $thread->subscribers()->attach($user->id);
+        if (!$thread->subscribers->contains($user)) {
+            $thread->subscribers()->syncWithoutDetaching([$user->id]);
         }
 
 
