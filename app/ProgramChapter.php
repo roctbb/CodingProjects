@@ -24,7 +24,7 @@ class ProgramChapter extends Model
 
     public function isAvailableForUser($course, $user)
     {
-        foreach ($course->lessons->where('chapter_id', $this->id) as $lesson) {
+        foreach ($course->program->lessons->where('chapter_id', $this->id) as $lesson) {
             if ($lesson->isAvailableForUser($course, $user)) return true;
         }
         return false;
@@ -38,7 +38,7 @@ class ProgramChapter extends Model
 
     public function isDoneByUser($course, $user)
     {
-        foreach ($course->lessons->where('chapter_id', $this->id) as $lesson) {
+        foreach ($course->program->lessons->where('chapter_id', $this->id) as $lesson) {
             if (!$lesson->isDoneByUser($course, $user)) return false;
         }
         return true;
@@ -46,8 +46,8 @@ class ProgramChapter extends Model
 
     public function isStarted($course)
     {
-        if ($course->lessons->where('chapter_id', $this->id)->count() == 0) return false;
-        foreach ($course->lessons->where('chapter_id', $this->id) as $lesson) {
+        if ($course->program->lessons->where('chapter_id', $this->id)->count() == 0) return false;
+        foreach ($course->program->lessons->where('chapter_id', $this->id) as $lesson) {
             if ($lesson->isStarted($course)) return true;
         }
         return false;
@@ -67,7 +67,7 @@ class ProgramChapter extends Model
     {
 
         $temp_steps = collect([]);
-        foreach ($course->lessons->where('chapter_id', $this->id) as $lesson) {
+        foreach ($course->program->lessons->where('chapter_id', $this->id) as $lesson) {
             $temp_steps = $temp_steps->merge($lesson->steps);
         }
 

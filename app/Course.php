@@ -168,7 +168,7 @@ class Course extends Model
     public function getPercent(User $user)
     {
         $course = $this;
-        $lessons = $course->lessons->filter(function ($lesson) use ($course) {
+        $lessons = $course->program->lessons->filter(function ($lesson) use ($course) {
             return $lesson->isStarted($this);
         });
 

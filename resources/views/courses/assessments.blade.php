@@ -13,7 +13,7 @@
                 <thead class="thead-inverse">
                 <tr class="bg-primary">
                     <th style="border-bottom: none;"></th>
-                    @foreach($course->lessons as $lesson)
+                    @foreach($course->program->lessons as $lesson)
                             @if ($lesson->tasks()->count()!=0)
                                 <th colspan="{{$lesson->tasks()->count()}}">{{$lesson->name}}
                                 </th>
@@ -27,7 +27,7 @@
                     @php
                         $sum = 0;
                     @endphp
-                    @foreach($course->lessons as $lesson)
+                    @foreach($course->program->lessons as $lesson)
                         @foreach($lesson->steps as $step)
 
                             @foreach($step->tasks as $task)
@@ -53,7 +53,7 @@
                             $sum = 0;
                         @endphp
 
-                        @foreach($course->lessons as $lesson)
+                        @foreach($course->program->lessons as $lesson)
                             @foreach($lesson->steps as $step)
                                 @foreach($step->tasks as $task)
                                     @php

@@ -88,7 +88,7 @@
                                         value="">Не привязывать к задаче
                                 </option>
                                 @foreach ($user->courses->where('state', 'started')->where('is_sdl', false) as $course)
-                                    @foreach ($course->lessons as $lesson)
+                                    @foreach ($course->program->lessons as $lesson)
                                         @foreach ($lesson->steps as $step)
                                             @foreach ($step->tasks->where('answer', null)->where('is_code', false) as $task)
                                                 <option data-tokens="{{ $course->id }}_{{ $task->id }}"

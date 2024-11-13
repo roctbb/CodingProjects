@@ -108,7 +108,7 @@
 
             @endif
             <div class="content-list">
-                @foreach($course->lessons->where('chapter_id', $chapter->id) as $key => $lesson)
+                @foreach($course->program->lessons->where('chapter_id', $chapter->id) as $key => $lesson)
                     @if ($lesson->steps->count()!=0)
                         <div class="card-group">
                             <div class="card">
