@@ -216,8 +216,7 @@ class CoursesController extends Controller
 
 
         $user = User::with('solutions', 'solutions.task')->findOrFail(Auth::User()->id);
-        $course = Course::with('lessons', 'program.chapters', 'students', 'students.submissions', 'teachers')->findOrFail($id);
-        dd($course);
+        $course = Course::with('program', 'lessons', 'program.chapters', 'students', 'students.submissions', 'teachers')->findOrFail($id);
         $students = $course->students;
 
         if (!$course->is_sdl) {
