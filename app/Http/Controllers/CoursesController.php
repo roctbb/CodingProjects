@@ -246,11 +246,12 @@ class CoursesController extends Controller
 
             $temp_steps = collect([]);
             $all_steps = collect([]);
+            \DB::enableQueryLog();
             $lessons = $course->lessons->filter(function ($lesson) use ($course, $chapter) {
                 return $lesson->isStarted($course) and $lesson->chapter_id == $chapter->id;
             });
 
-            \DB::enableQueryLog();
+
 
 
             foreach ($lessons as $lesson) {
