@@ -216,7 +216,7 @@ class CoursesController extends Controller
         \DB::enableQueryLog();
 
         $user = User::with('solutions', 'solutions.task', 'solutions.task')->findOrFail(Auth::User()->id);
-        $course = Course::with('program.lessons', 'program.chapters', 'students', 'students.submissions', 'teachers', 'program.lessons.steps', 'program.lessons.steps.tasks', 'program.lessons.steps.tasks.solutions', 'program.lessons', 'program.lessons.info')->findOrFail($id);
+        $course = Course::with('program.lessons', 'program.chapters', 'students', 'students.submissions', 'teachers')->findOrFail($id);
         $students = $course->students;
 
         if (!$course->is_sdl) {
