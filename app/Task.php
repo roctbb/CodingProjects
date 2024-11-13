@@ -36,11 +36,6 @@ class Task extends Model
         return $this->belongsToMany('App\CoreNode', 'core_consequences', "task_id", "node_id");
     }
 
-    public function tests()
-    {
-        return $this->hasMany('App\CodeTask', 'task_id', 'id');
-    }
-
     public function isDone($user_id)
     {
         if ($this->max_mark > 1)

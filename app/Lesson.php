@@ -92,7 +92,7 @@ class Lesson extends Model
 
     public function tasks()
     {
-        $tasks = new \Illuminate\Database\Eloquent\Collection;;
+        $tasks = new \Illuminate\Database\Eloquent\Collection;
         foreach ($this->steps as $step) {
             $tasks = $tasks->merge($step->tasks);
         }

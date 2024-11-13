@@ -221,16 +221,16 @@ class CoursesController extends Controller
         $course = Course::with('program.lessons', 'program.chapters', 'students', 'students.submissions', 'teachers', 'program.lessons.steps', 'program.lessons.steps.class_tasks', 'program.lessons.prerequisites', 'program.lessons.info')->findOrFail($id);
         $students = $course->students;
 
-        //dd($course);
-
-
         if (!$course->is_sdl) {
             $marks = CompletedCourse::where('course_id', $id)->get();
 
             //Made this due to some issues on my local server
             $cstudent = [];
             if ($request->has('chapter')) {
-                $chapter = ProgramChapter::findOrFail($request->chapter);
+                $chapter = $course->chapters->where('id', $request->chapter)->first();
+                if (!$chapter) {
+                    abort(404);
+                }
             } else {
                 if ($user->role == 'teacher') {
                     $chapter = $course->program->chapters->first();
