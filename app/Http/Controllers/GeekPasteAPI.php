@@ -53,8 +53,6 @@ class GeekPasteAPI extends Controller
             $new_rank = $solution->user->rank();
 
             $when = \Carbon\Carbon::now()->addSeconds(1);
-            Notification::send($solution->user, (new \App\Notifications\NewMark($solution))->delay($when));
-
             if ($new_rank != $old_rank) {
                 $when = \Carbon\Carbon::now()->addSeconds(1);
                 Notification::send($solution->user, (new \App\Notifications\NewRank())->delay($when));
