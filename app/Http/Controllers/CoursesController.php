@@ -243,12 +243,14 @@ class CoursesController extends Controller
                     $chapter = $current_chapter;
                 }
             }
-            \DB::enableQueryLog();
+
             $temp_steps = collect([]);
             $all_steps = collect([]);
             $lessons = $course->lessons->filter(function ($lesson) use ($course, $chapter) {
                 return $lesson->isStarted($course) and $lesson->chapter_id == $chapter->id;
             });
+
+            \DB::enableQueryLog();
 
 
             foreach ($lessons as $lesson) {
