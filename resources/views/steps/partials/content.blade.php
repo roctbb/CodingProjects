@@ -204,17 +204,9 @@
                             </div>
                         </div>
                     @endif
-                    @foreach ($tasksSolutions[$key]->shownSolutions as $sol_key => $solution)
+                    @foreach ($task->solutions->where('user_id', Auth::user()->id) as $solution)
                         @include('steps.solution_partial')
                     @endforeach
-                    @if(sizeof($tasksSolutions[$key]->hiddenSolutions) > 0)
-                        <a data-toggle="collapse" href="#solutionCollapse{{$task->id}}">Показать остальные</a>
-                        <div class="collapse" id="solutionCollapse{{$task->id}}">
-                            @foreach ($tasksSolutions[$key]->hiddenSolutions as $sol_key => $solution)
-                                @include('steps.solution_partial')
-                            @endforeach
-                        </div>
-                    @endif
                 @endif
 
                 <div id="solutions_ajax{{$task->id}}">
@@ -235,63 +227,32 @@
                                         {{ csrf_field() }}
                                         <div class="form-group{{ $errors->has('text') ? ' has-error' : '' }}">
                                             <div class="col-md-12">
-                                                @if (!$task->is_code)
+
                                                     <textarea id="text{{$task->id}}" class="form-control" name="text"
                                                               style="margin-top: 15px;"
                                                               rows="4">{{old('text')}}</textarea>
-                                                    <small class="text-muted">Пожалуйста, не используйте
-                                                        это
-                                                        поле
-                                                        для
-                                                        отправки
-                                                        исходного кода. Выложите код на <a target="_blank"
-                                                                                           href="https://paste.geekclass.ru">GeekPaste</a>,
-                                                        <a target="_blank" href="https://pastebin.com">pastebin</a>, <a
-                                                                target="_blank"
-                                                                href="https://gist.github.com">gist</a>
-                                                        или <a target="_blank" href="https://paste.ofcode.org/">paste.ofcode</a>,
-                                                        а
-                                                        затем
-                                                        скопируйте ссылку сюда.<br>Для загрузки картинок
-                                                        и
-                                                        небольших
-                                                        файлов можно использовать <a
-                                                                href="https://storage.geekclass.ru/"
-                                                                target="_blank">storage.geekclass.ru</a>.
-                                                    </small>
-                                                @else
-                                                    @if (old('text')!='')
-                                                        <textarea id="text{{$task->id}}" class="form-control"
-                                                                  name="text">{{old('text')}}</textarea>
-                                                        <div class="editor">
-                                                            <div class="ace_editor" id="editor{{$task->id}}"></div>
-                                                        </div>
-                                                    @else
-                                                        <textarea id="text{{$task->id}}" class="form-control"
-                                                                  name="text">@if (!isset($solution))
-                                                                {{$task->template}}
-                                                            @else
-                                                                {{$solution->text}}
-                                                            @endif</textarea>
-                                                        <div class="editor">
-                                                            <div class="ace_editor" id="editor{{$task->id}}"></div>
-                                                        </div>
-                                                    @endif
-                                                    <script>
-                                                        var editor = ace.edit("editor{{$task->id}}");
-                                                        editor.setTheme("ace/theme/tomorrow_night_eighties");
-                                                        editor.session.setMode("ace/mode/python");
-                                                        var textarea = $('#text{{$task->id}}').hide();
-                                                        editor.getSession().setValue(textarea.val());
-                                                        editor.getSession().on('change', function () {
-                                                            textarea.val(editor.getSession().getValue());
-                                                        });
-                                                        editor.setOptions({
-                                                            fontFamily: 'Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace',
-                                                            fontSize: "14px"
-                                                        });
-                                                    </script>
-                                                @endif
+                                                <small class="text-muted">Пожалуйста, не используйте
+                                                    это
+                                                    поле
+                                                    для
+                                                    отправки
+                                                    исходного кода. Выложите код на <a target="_blank"
+                                                                                       href="https://paste.geekclass.ru">GeekPaste</a>,
+                                                    <a target="_blank" href="https://pastebin.com">pastebin</a>, <a
+                                                            target="_blank"
+                                                            href="https://gist.github.com">gist</a>
+                                                    или <a target="_blank"
+                                                           href="https://paste.ofcode.org/">paste.ofcode</a>,
+                                                    а
+                                                    затем
+                                                    скопируйте ссылку сюда.<br>Для загрузки картинок
+                                                    и
+                                                    небольших
+                                                    файлов можно использовать <a
+                                                            href="https://storage.geekclass.ru/"
+                                                            target="_blank">storage.geekclass.ru</a>.
+                                                </small>
+
                                                 @if ($errors->has('text'))
                                                     <br><span
                                                             class="help-block error-block"><strong>{{ $errors->first('text') }}</strong></span>
