@@ -156,36 +156,6 @@
                                     <div class="row">
                                         <div class="col" data-filter-by="text">
                                             @parsedown($lesson->description)
-
-                                            @if (count($lesson->prerequisites)!=0)
-                                                <p>
-                                                    <small class="text-muted">Нужно уметь:</small>
-                                                    <br>
-                                                    @foreach($lesson->prerequisites as $prerequisite)
-                                                        @if (!$user->checkPrerequisite($prerequisite))
-                                                            <a tabindex="0" data-toggle="popover" data-trigger="focus"
-                                                               title="{{$prerequisite->title}}" data-html="true"
-                                                               data-content="<small>{{$prerequisite->getParentLine()}}</small> {{$prerequisite->getRelatedLessonsHTML()}}">
-                                                                <span class="badge @if ($course->teachers->contains($user) || $user->role=='admin') badge-secondary @else badge-danger @endif">{{$prerequisite->title}}</span>
-                                                            </a>
-                                                        @else
-                                                            <span class="badge badge-success">{{$prerequisite->title}}</span>
-                                                        @endif
-                                                    @endforeach
-                                                </p>
-                                            @endif
-
-                                            <p>
-                                                <small class="text-muted">Результаты:</small>
-                                                <br>
-                                                @foreach($lesson->getConsequences() as $consequence)
-                                                    @if (!$user->checkPrerequisite($consequence))
-                                                        <span class="badge badge-secondary">{{$consequence->title}}</span>
-                                                    @else
-                                                        <span class="badge badge-success">{{$consequence->title}}</span>
-                                                    @endif
-                                                @endforeach
-                                            </p>
                                         </div>
                                         @if ($user->role!='teacher' and $user->role!='admin' and $lesson->percent($cstudent) > 90)
                                             <div class="col-sm-auto">
@@ -203,9 +173,7 @@
                                                 @foreach($students as $student)
                                                     <div class="row">
                                                         <div class="col">
-                                                            {{$student->name}} @if (!$lesson->isAvailableForUser($course, $student))
-                                                                <strong><span
-                                                                            style="color: red;">!!!</span></strong> @endif
+                                                            {{$student->name}}
                                                         </div>
                                                         <div class="col">
                                                             <div class="progress" style="margin: 5px;">
@@ -286,9 +254,7 @@
                                                         @endif
                                                     </div>
                                                 @endif
-                                                @if ($user->role=='student' and !$lesson->isAvailable($course))
-                                                    <span class="badge badge-danger float-right" style="margin: 3px;">Не выполнены требования</span>
-                                                @endif
+
                                                 @if (($course->teachers->contains($user) || $user->role=='admin') && count($students) < 70)
                                                     <small class="text-muted float-right" style="margin-right: 15px;">
                                                         @foreach($students as $student)
