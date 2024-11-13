@@ -43,7 +43,7 @@ class Lesson extends Model
 
     public function steps()
     {
-        return $this->hasMany('App\ProgramStep', 'lesson_id', 'id')->with('tasks', 'tasks.consequences')->orderBy('sort_index')->orderBy('id');
+        return $this->hasMany('App\ProgramStep', 'lesson_id', 'id')->with('tasks')->orderBy('sort_index')->orderBy('id');
     }
 
     public function prerequisites()
