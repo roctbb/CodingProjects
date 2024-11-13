@@ -212,8 +212,8 @@ class CoursesController extends Controller
     public function details($id, Request $request)
     {
         \App\ActionLog::record(Auth::User()->id, 'course', $id);
-        
 
+        \DB::enableQueryLog();
 
         $user = User::with('solutions', 'solutions.task')->findOrFail(Auth::User()->id);
         $course = Course::with('program','program.steps', 'program.steps.tasks', 'program.steps.tasks.solutions', 'program.lessons', 'program.lessons.info', 'program.chapters', 'students', 'students.submissions', 'teachers')->findOrFail($id);
@@ -246,7 +246,7 @@ class CoursesController extends Controller
 
             $temp_steps = collect([]);
             $all_steps = collect([]);
-            \DB::enableQueryLog();
+
             $lessons = $course->program->lessons->filter(function ($lesson) use ($course, $chapter) {
                 return $lesson->isStarted($course) and $lesson->chapter_id == $chapter->id;
             });
