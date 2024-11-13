@@ -213,8 +213,6 @@ class CoursesController extends Controller
     {
         \App\ActionLog::record(Auth::User()->id, 'course', $id);
 
-        \DB::enableQueryLog();
-
         $user = User::with('solutions', 'solutions.task')->findOrFail(Auth::User()->id);
         $course = Course::with('program','program.steps', 'program.steps.tasks', 'program.steps.tasks.solutions', 'program.lessons', 'program.lessons.info', 'program.chapters', 'students', 'students.submissions', 'teachers')->findOrFail($id);
         $students = $course->students;
