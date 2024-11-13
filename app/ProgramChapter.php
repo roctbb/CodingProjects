@@ -24,7 +24,7 @@ class ProgramChapter extends Model
 
     public function isAvailableForUser($course, $user)
     {
-        foreach ($this->lessons as $lesson) {
+        foreach ($course->lessons->where('chapter_id', $this->id) as $lesson) {
             if ($lesson->isAvailableForUser($course, $user)) return true;
         }
         return false;
