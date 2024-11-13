@@ -72,9 +72,6 @@ class Course extends Model
 
     public function lessons()
     {
-        if (!$this->program) {
-            dd($this);
-        }
         return $this->program->lessons()->with('steps', 'steps.tasks', 'steps.tasks.solutions', 'info');
     }
 
