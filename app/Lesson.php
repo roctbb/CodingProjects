@@ -144,9 +144,6 @@ class Lesson extends Model
     {
         if (!$this->isStarted($course)) return false;
         if ($user->role == 'teacher') return true;
-        foreach ($this->prerequisites as $prerequisite) {
-            if (!$user->checkPrerequisite($prerequisite)) return false;
-        }
         return true;
     }
 

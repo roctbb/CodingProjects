@@ -42,15 +42,7 @@
                             @endif
 
 
-                            &nbsp;&nbsp;@if (\Request::is('insider/*'))
-                                @foreach($task->consequences as $consequence)
-                                    @if (!$user->checkPrerequisite($consequence))
-                                        <span class="badge badge-secondary">{{$consequence->title}}</span>
-                                    @else
-                                        <span class="badge badge-success">{{$consequence->title}}</span>
-                                    @endif
-                                @endforeach
-                            @endif
+                            &nbsp;&nbsp;
                             @if ($task->price > 0)
                                 <img src="{{ url('images/icons/icons8-coins-48.png') }}"
                                      style="height: 23px;">

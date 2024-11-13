@@ -3,13 +3,6 @@
      <div class="card">
        <div class="card-header">
          {{$task->name}}&nbsp;&nbsp;
-         @foreach($task->consequences as $consequence)
-         @if (!$user->checkPrerequisite($consequence))
-         <span class="badge badge-secondary">{{$consequence->title}}</span>
-         @else
-         <span class="badge badge-success">{{$consequence->title}}</span>
-         @endif
-         @endforeach
 
          @if ($task->price > 0)
          <img src="{{ url('images/icons/icons8-coins-48.png') }}" style="height: 23px;">

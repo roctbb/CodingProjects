@@ -45,7 +45,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function solutions()
     {
-        return $this->hasMany('App\Solution', 'user_id', 'id')->with('task.consequences');
+        return $this->hasMany('App\Solution', 'user_id', 'id');
     }
 
     public function courses()
