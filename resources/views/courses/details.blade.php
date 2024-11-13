@@ -304,7 +304,7 @@
                                             % </span>
                                     @endif
                                     @if ($user->role=='student')
-                                        <span class="badge badge-primary"> {{ round($current_chapter->getStudentPercent($user)) }}
+                                        <span class="badge badge-primary"> {{ round($current_chapter->getStudentPercent($course, $user)) }}
                                             % </span>
                                     @endif
                                 </a>

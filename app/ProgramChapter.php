@@ -38,7 +38,7 @@ class ProgramChapter extends Model
 
     public function isDoneByUser($course, $user)
     {
-        foreach ($this->lessons as $lesson) {
+        foreach ($course->lessons->where('chapter_id', $this->id) as $lesson) {
             if (!$lesson->isDoneByUser($course, $user)) return false;
         }
         return true;
@@ -46,8 +46,8 @@ class ProgramChapter extends Model
 
     public function isStarted($course)
     {
-        if ($this->lessons->count() == 0) return false;
-        foreach ($this->lessons as $lesson) {
+        if ($course->lessons->where('chapter_id', $this->id)->count() == 0) return false;
+        foreach ($course->lessons->where('chapter_id', $this->id) as $lesson) {
             if ($lesson->isStarted($course)) return true;
         }
         return false;
@@ -63,11 +63,11 @@ class ProgramChapter extends Model
         return $done * 100 / max($course->students->count(), 1);
     }
 
-    public function getStudentPercent($student)
+    public function getStudentPercent($course, $student)
     {
 
         $temp_steps = collect([]);
-        foreach ($this->lessons as $lesson) {
+        foreach ($course->lessons->where('chapter_id', $this->id) as $lesson) {
             $temp_steps = $temp_steps->merge($lesson->steps);
         }
 
