@@ -306,7 +306,7 @@ class CoursesController extends Controller
             
             \DB::disableQueryLog();
 
-            file_put_contents('/home/roctbb/q.txt', json_encode(\DB::getQueryLog()));
+            file_put_contents('/home/roctbb/CodingProjects/storage/app/q.txt', json_encode(\DB::getQueryLog()));
 
             return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'cstudent', 'lessons', 'marks'));
 
