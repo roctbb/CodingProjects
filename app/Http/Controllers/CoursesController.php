@@ -212,6 +212,8 @@ class CoursesController extends Controller
     public function details($id, Request $request)
     {
         \App\ActionLog::record(Auth::User()->id, 'course', $id);
+        
+        \DB::enableQueryLog();
 
         $user = User::with('solutions', 'solutions.task', 'solutions.task.consequences')->findOrFail(Auth::User()->id);
         $course = Course::with('program.lessons', 'program.chapters', 'students', 'students.submissions', 'teachers', 'program.lessons.steps', 'program.lessons.steps.tasks', 'program.lessons.steps.tasks.solutions', 'program.lessons.prerequisites', 'program.lessons.info')->findOrFail($id);
@@ -300,6 +302,11 @@ class CoursesController extends Controller
                 $steps = $temp_steps;
                 $lessons = $course->lessons->where('chapter_id', $chapter->id);
             }
+            
+            
+            \DB::disableQueryLog();
+
+            file_put_contents('q.txt', json_encode(\DB::getQueryLog()));
 
             return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'cstudent', 'lessons', 'marks'));
 
