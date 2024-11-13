@@ -52,7 +52,7 @@ class Course extends Model
 
     public function program()
     {
-        return $this->hasOne('App\Program', 'id', 'program_id');
+        return $this->belongsTo('App\Program', 'program_id', 'id');
     }
 
     public function teachers()
