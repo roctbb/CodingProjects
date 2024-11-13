@@ -213,7 +213,7 @@ class CoursesController extends Controller
     {
         \App\ActionLog::record(Auth::User()->id, 'course', $id);
         
-        \DB::enableQueryLog();
+
 
         $user = User::with('solutions', 'solutions.task')->findOrFail(Auth::User()->id);
         $course = Course::with('program.lessons', 'program.chapters', 'students', 'students.submissions', 'teachers')->findOrFail($id);
@@ -243,7 +243,7 @@ class CoursesController extends Controller
                     $chapter = $current_chapter;
                 }
             }
-
+            \DB::enableQueryLog();
             $temp_steps = collect([]);
             $all_steps = collect([]);
             $lessons = $course->lessons->filter(function ($lesson) use ($course, $chapter) {
