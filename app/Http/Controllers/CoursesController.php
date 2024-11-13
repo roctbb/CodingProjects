@@ -216,7 +216,7 @@ class CoursesController extends Controller
 
 
         $user = User::with('solutions', 'solutions.task')->findOrFail(Auth::User()->id);
-        $course = Course::with('program', 'lessons', 'program.chapters', 'students', 'students.submissions', 'teachers')->findOrFail($id);
+        $course = Course::with('program','program.steps', 'program.steps.tasks', 'program.steps.tasks.solutions', 'program.lessons', 'program.lessons.info', 'program.chapters', 'students', 'students.submissions', 'teachers')->findOrFail($id);
         $students = $course->students;
 
         if (!$course->is_sdl) {
@@ -247,7 +247,7 @@ class CoursesController extends Controller
             $temp_steps = collect([]);
             $all_steps = collect([]);
             \DB::enableQueryLog();
-            $lessons = $course->lessons->filter(function ($lesson) use ($course, $chapter) {
+            $lessons = $course->program->lessons->filter(function ($lesson) use ($course, $chapter) {
                 return $lesson->isStarted($course) and $lesson->chapter_id == $chapter->id;
             });
 
@@ -257,7 +257,7 @@ class CoursesController extends Controller
             foreach ($lessons as $lesson) {
                 $temp_steps = $temp_steps->merge($lesson->steps);
             }
-            foreach ($course->lessons->filter(function ($item) use ($course) {
+            foreach ($course->program->lessons->filter(function ($item) use ($course) {
                 return $item->isStarted($course);
             }) as $lesson) {
                 $all_steps = $all_steps->merge($lesson->steps);
@@ -293,7 +293,7 @@ class CoursesController extends Controller
 
 
             if ($course->students->contains($user)) {
-                $lessons = $course->lessons->filter(function ($lesson) use ($course, $chapter) {
+                $lessons = $course->program->lessons->filter(function ($lesson) use ($course, $chapter) {
                     return $lesson->isStarted($course) and $lesson->chapter_id == $chapter->id;
                 });
 
@@ -303,7 +303,7 @@ class CoursesController extends Controller
                 })->first();
             } else {
                 $steps = $temp_steps;
-                $lessons = $course->lessons->where('chapter_id', $chapter->id);
+                $lessons = $course->program->lessons->where('chapter_id', $chapter->id);
             }
             
             
