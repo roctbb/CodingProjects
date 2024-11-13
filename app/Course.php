@@ -72,7 +72,7 @@ class Course extends Model
 
     public function lessons()
     {
-        return $this->program->lessons();
+        return $this->program->lessons;
     }
 
     public function solutions()
