@@ -219,6 +219,8 @@ class CoursesController extends Controller
         $course = Course::with('program','program.steps', 'program.steps.tasks', 'program.steps.tasks.solutions', 'program.lessons', 'program.lessons.info', 'program.chapters', 'students', 'students.submissions', 'teachers')->findOrFail($id);
         $students = $course->students;
 
+        \DB::enableQueryLog();
+
         if (!$course->is_sdl) {
             $marks = CompletedCourse::where('course_id', $id)->get();
 
