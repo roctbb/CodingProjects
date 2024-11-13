@@ -184,7 +184,7 @@ class Course extends Model
         $max_points = 0;
         $points = 0;
         foreach ($temp_steps as $step) {
-            $tasks = $step->class_tasks;
+            $tasks = $step->tasks;
 
             foreach ($tasks as $task) {
                 if (!$task->is_star) $max_points += $task->max_mark;

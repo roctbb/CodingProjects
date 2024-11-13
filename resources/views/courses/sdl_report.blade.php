@@ -149,13 +149,7 @@
 
                                                     @foreach($lesson->steps as $step)
                                                         @php
-                                                            if ($student->pivot->is_remote)
-                                                            {
-                                                            $tasks = $step->remote_tasks;
-                                                            }
-                                                            else {
-                                                            $tasks = $step->class_tasks;
-                                                            }
+                                                            $tasks = $step->tasks;
                                                         @endphp
                                                         @foreach($tasks as $task)
                                                             @php

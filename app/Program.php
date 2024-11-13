@@ -23,12 +23,12 @@ class Program extends Model
 
     public function chapters()
     {
-        return $this->hasMany('App\ProgramChapter', 'program_id', 'id')->with('lessons', 'lessons.steps', 'lessons.steps.tasks', 'lessons.steps.class_tasks', 'lessons.steps.remote_tasks', 'lessons.prerequisites')->orderBy('sort_index')->orderBy('id');
+        return $this->hasMany('App\ProgramChapter', 'program_id', 'id')->with('lessons', 'lessons.steps', 'lessons.steps.tasks', 'lessons.prerequisites')->orderBy('sort_index')->orderBy('id');
     }
 
     public function lessons()
     {
-        return $this->hasMany('App\Lesson', 'program_id', 'id')->with('steps', 'steps.tasks', 'steps.class_tasks', 'steps.remote_tasks', 'prerequisites')->orderBy('sort_index')->orderBy('id');
+        return $this->hasMany('App\Lesson', 'program_id', 'id')->with('steps', 'steps.tasks', 'prerequisites')->orderBy('sort_index')->orderBy('id');
     }
 
     public function authors()

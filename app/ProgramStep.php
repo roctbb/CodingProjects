@@ -62,16 +62,6 @@ class ProgramStep extends Model
         return $this->hasMany('App\Task', 'step_id', 'id')->orderBy('sort_index')->orderBy('id');
     }
 
-    public function class_tasks()
-    {
-        return $this->hasMany('App\Task', 'step_id', 'id')->Where('only_remote', false)->orderBy('sort_index')->orderBy('id');
-    }
-
-    public function remote_tasks()
-    {
-        return $this->hasMany('App\Task', 'step_id', 'id')->Where('only_class', false)->orderBy('sort_index')->orderBy('id');
-    }
-
     public function nextStep()
     {
         if ($this->next == null)
@@ -137,7 +127,7 @@ class ProgramStep extends Model
         }
         $results = ['percent' => 0, 'points' => 0, 'max_points' => 0];
 
-        $tasks = $this->class_tasks;
+        $tasks = $this->tasks;
         foreach ($tasks as $task) {
             if (!$task->is_star) $results['max_points'] += $task->max_mark;
             $mark = $student->submissions()->where('task_id', $task->id)->max('mark');

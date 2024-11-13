@@ -159,11 +159,7 @@ class CoursesController extends Controller
                 $students[$key]->max_points = 0;
                 $students[$key]->points = 0;
                 foreach ($temp_steps as $step) {
-                    if ($value->pivot->is_remote) {
-                        $tasks = $step->remote_tasks;
-                    } else {
-                        $tasks = $step->class_tasks;
-                    }
+                    $tasks = $step->tasks;
 
                     foreach ($tasks as $task) {
                         if (!$task->is_star) $students[$key]->max_points += $task->max_mark;
@@ -193,7 +189,7 @@ class CoursesController extends Controller
                 $student_data[$student->id]->max_points = 0;
                 $student_data[$student->id]->points = 0;
                 foreach ($temp_steps as $step) {
-                    $tasks = $step->class_tasks;
+                    $tasks = $step->tasks;
 
                     foreach ($tasks as $task) {
                         if (!$task->is_star) $student_data[$student->id]->max_points += $task->max_mark;
@@ -218,7 +214,7 @@ class CoursesController extends Controller
         \App\ActionLog::record(Auth::User()->id, 'course', $id);
 
         $user = User::with('solutions', 'solutions.task', 'solutions.task.consequences')->findOrFail(Auth::User()->id);
-        $course = Course::with('program.lessons', 'program.chapters', 'students', 'students.submissions', 'teachers', 'program.lessons.steps', 'program.lessons.steps.class_tasks', 'program.lessons.prerequisites', 'program.lessons.info')->findOrFail($id);
+        $course = Course::with('program.lessons', 'program.chapters', 'students', 'students.submissions', 'teachers', 'program.lessons.steps', 'program.lessons.steps.tasks', 'program.lessons.steps.tasks.solutions', 'program.lessons.prerequisites', 'program.lessons.info')->findOrFail($id);
         $students = $course->students;
 
         if (!$course->is_sdl) {
@@ -270,7 +266,7 @@ class CoursesController extends Controller
 
                     foreach ($all_steps as $step) {
 
-                        $tasks = $step->class_tasks;
+                        $tasks = $step->tasks;
 
                         foreach ($tasks as $task) {
                             if (!$task->is_star) $students[$key]->max_points += $task->max_mark;

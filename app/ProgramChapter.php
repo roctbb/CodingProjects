@@ -75,7 +75,7 @@ class ProgramChapter extends Model
         $points = 0;
         foreach ($temp_steps as $step) {
 
-            $tasks = $step->class_tasks;
+            $tasks = $step->tasks;
 
 
             foreach ($tasks as $task) {
