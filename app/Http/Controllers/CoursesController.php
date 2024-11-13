@@ -227,7 +227,7 @@ class CoursesController extends Controller
             //Made this due to some issues on my local server
             $cstudent = [];
             if ($request->has('chapter')) {
-                $chapter = $course->chapters->where('id', $request->chapter)->first();
+                $chapter = $course->program->chapters->where('id', $request->chapter)->first();
                 if (!$chapter) {
                     abort(404);
                 }
