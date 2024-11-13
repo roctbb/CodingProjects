@@ -71,7 +71,7 @@ class CoursesController extends Controller
     public function report($id)
     {
         $user = User::with('solutions', 'solutions.task', 'solutions.task.consequences')->findOrFail(Auth::User()->id);
-        $course = Course::with('program.lessons', 'students', 'students.submissions', 'teachers', 'program.steps', 'program.lessons.prerequisites', 'program.lessons.info')->findOrFail($id);
+        $course = Course::with('program.lessons', 'students', 'students.submissions', 'teachers', 'program.steps', 'program.lessons.info')->findOrFail($id);
         $students = $course->students;
 
         if (!$course->is_sdl) {
