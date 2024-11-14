@@ -41,11 +41,12 @@ class GeekPasteAPI extends Controller
             $solution->comment = $comments;
             $solution->checked = Carbon::now();
             $solution->teacher_id = $course->teachers->first()->id;
-            $solution->save();
+
 
             if ($solution->task->price > 0 and $solution->mark == $solution->task->max_mark and !$solution->task->isFullDone($solution->user_id)) {
                 CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
             }
+            $solution->save();
 
             $old_rank = $solution->user->rank();
 
