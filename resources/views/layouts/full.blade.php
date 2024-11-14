@@ -13,7 +13,8 @@
 
     <link rel="stylesheet" href="/css/ionicons.min.css">
 
-    <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 
     <!-- Styles -->
     <!-- Latest compiled and minified CSS -->
@@ -47,7 +48,6 @@
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="{{url('js/jquery-ui.min.js')}}"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
 
     {!! \NoCaptcha::renderJs() !!}
     <script>

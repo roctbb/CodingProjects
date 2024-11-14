@@ -30,7 +30,8 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
 
-    <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 
     <!-- Autosize - resizes textarea inputs as user types -->
     <script type="text/javascript" src="{{ url('assets/js/autosize.min.js') }}"></script>
@@ -62,7 +63,6 @@
 
 
     @yield('head')
-    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
 
 </head>
 
