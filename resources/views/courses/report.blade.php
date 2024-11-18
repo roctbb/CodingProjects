@@ -156,7 +156,7 @@
 
                                                     @foreach($lesson->steps as $step)
                                                         @php
-                                                            $tasks = $step->class_tasks;
+                                                            $tasks = $step->tasks;
                                                         @endphp
                                                         @foreach($tasks as $task)
                                                             @php
