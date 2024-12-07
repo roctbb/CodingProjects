@@ -244,6 +244,7 @@ class TasksController extends Controller
 
         if (!$solution->recheck_requested and $solution->task->is_code) {
             $solution->recheck_requested = true;
+            $solution->save();
 
             $when = \Carbon\Carbon::now()->addSeconds(1);
             \Notification::send($solution->course->teachers, (new \App\Notifications\NewSolution($solution))->delay($when));
