@@ -97,7 +97,7 @@
                                        class="btn btn-primary" target="_blank">Сдать решение</a></p>
                             @endif
                             @if (\Request::is('insider/*'))
-                                @if ($user->role == 'student' and $task->solution!=null and $task->isDone(Auth::User()->id))
+                                @if ($user->role == 'student' and $task->solution!=null and $task->isFullDone(Auth::User()->id))
                                     <h3>Авторское решение</h3>
                                     @parsedown($task->solution)
                                 @endif
@@ -117,8 +117,7 @@
                                     <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}"
                                           method="POST"
                                           class="form-inline"
-                                          onsubmit="checkTask(event, {{json_encode($task->id)}})"
-                                    >
+                                          onsubmit="checkTask(event, {{json_encode($task->id)}})">
                                         {{ csrf_field() }}
                                         <label for="text{{$task->id}}"><strong>Ответ:&nbsp;</strong></label>
                                         <input type="text" name="text" class="form-control form-control-sm"
