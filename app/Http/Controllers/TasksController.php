@@ -240,7 +240,6 @@ class TasksController extends Controller
     }
 
     public function askForRecheck($course_id, $id, $solution_id) {
-        dd(1);
         $solution = Solution::findOrFail($solution_id);
 
         if (!$solution->recheck_requested and $solution->task->is_code) {
