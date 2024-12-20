@@ -239,6 +239,20 @@ class TasksController extends Controller
         ];
     }
 
+    public function askForRecheck($course_id, $id, $solution_id) {
+        $solution = Solution::findOrFail($solution_id);
+
+        if (!$solution->recheck_requested and $solution->task->is_code) {
+            $solution->recheck_requested = true;
+            $solution->save();
+
+            $when = \Carbon\Carbon::now()->addSeconds(1);
+            \Notification::send($solution->course->teachers, (new \App\Notifications\NewSolution($solution))->delay($when));
+        }
+
+        return redirect()->back();
+    }
+
     public function reviewSolutions($course_id, $id, $student_id, Request $request)
     {
         $task = Task::findOrFail($id);

@@ -176,8 +176,15 @@ class Lesson extends Model
             $tasks = $step->tasks;
             unset($step->tasks);
             $new_step = new ProgramStep();
-            foreach ($step as $property => $value)
-                $new_step->$property = $value;
+            foreach ($step as $property => $value) {
+                try {
+                    $new_step->$property = $value;
+                }
+                catch (\Exception $e) {
+
+                }
+            }
+
             $new_step->lesson_id = $this->id;
             $new_step->program_id = $this->program_id;
             $new_step->save();
@@ -185,17 +192,16 @@ class Lesson extends Model
             foreach ($tasks as $task) {
                 $new_task = new Task();
                 foreach ($task as $property => $value) {
-                    if ($property == 'consequences') continue;
-                    $new_task->$property = $value;
-                }
+                    try {
+                        $new_task->$property = $value;
+                    }
+                    catch (\Exception $e) {
 
+                    }
+                }
 
                 $new_task->step_id = $new_step->id;
                 $new_task->save();
-                if ($task->consequences != null)
-                    foreach ($task->consequences as $consequence) {
-                        $new_task->consequences()->attach($consequence->id);
-                    }
             }
         }
         $this->save();

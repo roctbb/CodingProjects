@@ -26,6 +26,17 @@
                     <p class="small">
                         {!!  nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->comment)), false)) !!}
                     </p>
+
+                    @if ($solution->mark != $solution->task->max_mark and $solution->task->is_code)
+                        @if ($solution->recheck_requested)
+                            <p><span class="badge badge-primary">Запрошена перепроверка</span></p>
+                        @elseif (!$task->isFullDone(Auth::User()->id))
+                            <p>
+                                <a href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution/'. $solution->id . '/recheck') }}"
+                                   class="btn btn-primary">Попросить перепроверить</a></p>
+                        @endif
+
+                    @endif
                 @endif
             </div>
         </div>
