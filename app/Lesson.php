@@ -51,20 +51,6 @@ class Lesson extends Model
         return $this->belongsToMany('App\CoreNode', 'core_prerequisites', "lesson_id", "node_id");
     }
 
-    public function getConsequences()
-    {
-        $tasks = $this->tasks();
-
-        $consequences = collect([]);
-        foreach ($tasks as $task) {
-            foreach ($task->consequences as $consequence) {
-                $consequences->push($consequence);
-            }
-        }
-
-        return $consequences->unique();
-    }
-
     public function percent(User $student)
     {
         $points = $this->points($student);
@@ -157,7 +143,7 @@ class Lesson extends Model
     {
         if (!$this->isStarted($course)) return false;
         if ($user->role == 'teacher') return true;
-        foreach ($this->tasks() as $task) {
+        foreach ($this->tasks()->where('is_star', false) as $task) {
             if (!$task->isDone($user->id)) return false;
         }
         return true;
