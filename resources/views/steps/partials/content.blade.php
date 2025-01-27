@@ -182,7 +182,8 @@
                                                 }
                                             @endphp
                                             <tr>
-                                                <td>{{$student->name}}</td>
+                                                <td><a href="/insider/profile/{{ $student->id }}"
+                                                       target="_blank">{{$student->name}}</a></td>
                                                 <td><a target="_blank"
                                                        href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">
                                                         <span class="badge {{$class}}">{{$mark}}</span>
