@@ -147,23 +147,20 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->score = 0;
         $group = Solution::where('user_id', $this->id)->get()->groupBy('task_id');
         foreach ($group as $task) {
-            
+
             $this->score += $task->sortBy('mark')->first()->mark;
         }
-        
-        foreach($this->games as $game)
-        {
-            $this->score += ($game->upvotes()-$game->downvotes())*5;
+
+        foreach ($this->games as $game) {
+            $this->score += ($game->upvotes() - $game->downvotes()) * 5;
         }
 
-        foreach($this->articles as $article)
-        {
-            $this->score += ($article->getUpvotes()-$article->getDownvotes())*10;
+        foreach ($this->articles as $article) {
+            $this->score += ($article->getUpvotes() - $article->getDownvotes()) * 10;
         }
 
-        foreach($this->events as $event)
-        {
-            $this->score += ($event->getUpvotes()-$event->getDownvotes())*10;
+        foreach ($this->events as $event) {
+            $this->score += ($event->getUpvotes() - $event->getDownvotes()) * 10;
         }
         foreach ($this->posts as $post) {
             $this->score += 5 * $post->getVotes();
@@ -229,7 +226,7 @@ class User extends Authenticatable implements MustVerifyEmail
         $rank = Rank::where('from', '<=', $score)->where('to', '>', $score)->first();
 
         if (!$rank) {
-            \Log::info("Not found rank for user ". $this->id . " score " . $score);
+            \Log::info("Not found rank for user " . $this->id . " score " . $score);
             return Rank::first();
         }
 
@@ -290,6 +287,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isBirthday()
     {
+        if (!$this->birthday) return false;
         return $this->birthday->format('d.m') == Carbon::now()->format('d.m');
     }
 
@@ -298,11 +296,10 @@ class User extends Authenticatable implements MustVerifyEmail
         $stickers = collect([]);
         $sticker_description = [];
 
-        foreach($this->courses as $course) {
+        foreach ($this->courses as $course) {
             if ($course->is_sdl) continue;
-            foreach($course->program->lessons as $lesson) {
-                if ($lesson->percent($this)>90)
-                {
+            foreach ($course->program->lessons as $lesson) {
+                if ($lesson->percent($this) > 90) {
                     $stickers->push($lesson->sticker);
                 }
             }
@@ -314,7 +311,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->themes()->where('theme_id', $theme_id)->count() > 0;
     }
-    
+
     public function themes()
     {
         return $this->hasMany(\App\ThemeBought::class);
@@ -328,14 +325,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function wearTheme($theme_id)
     {
         $inst = $this->hasMany(\App\ThemeUsing::class)->get();
-        
-        if ($inst->count() > 0)
-        {
+
+        if ($inst->count() > 0) {
             $inst[0]->theme_id = $theme_id;
             $inst[0]->save();
-        }
-        else
-        {
+        } else {
             \App\ThemeUsing::create([
                 "user_id" => $this->id,
                 "theme_id" => $theme_id
@@ -346,6 +340,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function takeOffTheme($id)
     {
         \App\ThemeUsing::where('user_id', $this->id)->where('theme_id', $id)->delete();
-        
+
     }
 }

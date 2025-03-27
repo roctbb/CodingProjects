@@ -61,7 +61,7 @@
                                         var data = [
                                             {
                                                 x: {!! $pulse_keys[$student->id] !!},
-                                                y: {!!$pulse_values[$student->id] !!},
+                                                y: {!! $pulse_values[$student->id] !!},
                                                 type: 'scatter',
                                                 line: {shape: 'spline'},
                                             }@if ($task_keys->has($student->id))
