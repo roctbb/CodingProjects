@@ -90,13 +90,13 @@
                         </div>
                         <div class="card-body markdown">
                             @parsedown($task->text)
-
-                            @if ($task->is_code)
-                                <p>
-                                    <a href="{{ config('services.geekpaste_url').'/?task_id=' . $task->id . '&course_id=' . $course->id }}"
-                                       class="btn btn-primary" target="_blank">Сдать решение</a></p>
-                            @endif
                             @if (\Request::is('insider/*'))
+                                @if ($task->is_code)
+                                    <p>
+                                        <a href="{{ config('services.geekpaste_url').'/?task_id=' . $task->id . '&course_id=' . $course->id }}"
+                                           class="btn btn-primary" target="_blank">Сдать решение</a></p>
+                                @endif
+
                                 @if ($user->role == 'student' and $task->solution!=null and $task->isFullDone(Auth::User()->id))
                                     <h3>Авторское решение</h3>
                                     @parsedown($task->solution)
