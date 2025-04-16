@@ -149,7 +149,7 @@ class ProfileController extends Controller
         $this->validate($request, [
             'name' => 'required|string',
             'school' => 'required|string',
-            'grade' => 'integer|min:1|max:11|required'
+            'grade' => 'integer|min:1|max:11|required',
             'hobbies' => 'required|string',
             'interests' => 'required|string',
             'image' => 'image|max:4000'
