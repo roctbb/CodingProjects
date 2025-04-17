@@ -91,7 +91,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function grade()
     {
         $current_year = Carbon::now()->year;
-        return $current_year - $this->grade_year + 1;
+        $date = Carbon::now();
+        if ($date->lt(Carbon::createFromDate($current_year, 6, 1))) {
+                return $current_year - $this->grade_year;
+        } else {
+            return $current_year - $this->grade_year + 1;
+        }
     }
 
     public function projects()
