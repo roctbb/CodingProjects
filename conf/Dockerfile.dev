@@ -1,0 +1,33 @@
+# Use PHP 7.4 CLI image with required extensions
+FROM php:7.4-cli
+
+# Install system dependencies and PHP extensions
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libzip-dev \
+    libxml2-dev \
+    libpq-dev \
+    zip \
+    && docker-php-ext-install zip pdo pdo_mysql pdo_pgsql xml
+
+# Install Composer globally
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Set working directory inside container
+WORKDIR /var/www/html
+
+# Copy your Laravel project files
+COPY . .
+
+# Install PHP dependencies with Composer
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+
+# Set permissions (optional, adapt if needed)
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Expose port for Laravel dev server
+EXPOSE 8000
+
+# Command to run Laravel dev server accessible externally
+CMD php artisan migrate && php artisan serve --host=0.0.0.0 --port=8000
