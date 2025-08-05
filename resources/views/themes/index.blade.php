@@ -15,11 +15,9 @@
         <li class="nav-item">
             <a class="nav-link active" id="pills-own-tab" data-toggle="pill" href="#pills-own" role="tab">Profile</a>
         </li>
-        @if(\Auth::user()->is_teacher || \Auth::user()->role == 'admin')
-            <li class="nav-item" style="height: 100%;">
-                <a class="btn btn-success nav-link" style="color: white;" href="/insider/themes/create">Создать</a>
-            </li>
-        @endif
+        <li class="nav-item" style="height: 100%;">
+            <a class="btn btn-success nav-link" style="color: white;" href="/insider/themes/create">Создать</a>
+        </li>
     </ul></div>
     <div class="tab-content" id="pills-tabContent">
         <div class="tab-pane fade" id="pills-marketplace" role="tabpanel">
