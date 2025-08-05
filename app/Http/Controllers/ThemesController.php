@@ -89,12 +89,12 @@ class ThemesController extends Controller
         ]);
 
         $theme = \App\Theme::make(\Auth::id(), $request->name, $request->description, $request->css, $request->js, $request->price, $request->image);
-
-
         
-
-        
-
+        // Автоматически добавить тему в купленные
+        \App\ThemeBought::create([
+            'user_id' => \Auth::id(),
+            'theme_id' => $theme->id
+        ]);
 
         return redirect('/insider/themes/' . $theme->id);
         
@@ -103,13 +103,22 @@ class ThemesController extends Controller
     function editView($id)
     {
         $theme = \App\Theme::find($id);
+        $user = \Auth::user();
+        if (!($user->role === 'teacher' || $theme->user_id === $user->id)) {
+            abort(403, 'Нет доступа к редактированию этой темы');
+        }
         return view('themes.edit', compact('theme'));
     }
 
     function edit($id, Request $request)
     {
+        $theme = \App\Theme::find($id);
+        $user = \Auth::user();
+        if (!($user->role === 'teacher' || $theme->user_id === $user->id)) {
+            abort(403, 'Нет доступа к редактированию этой темы');
+        }
         \App\Theme::modify($id, $request->name, $request->description, $request->image, $request->price, $request->css, $request->js);
-        return redirect('/insider/themes/{id}');
+        return redirect('/insider/themes/' . $id);
     }
 
 }
