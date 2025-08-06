@@ -38,9 +38,9 @@
                             @endif
                         @endif                        
                             <a href="/insider/themes/{{$theme->id}}?try=true" class="btn btn-primary">Попробовать</a>
-                        @if(\Auth::user()->is_teacher || \Auth::user()->role == 'admin')
+                        @if(\Auth::user()->is_teacher || \Auth::user()->role == 'admin' || $theme->user_id == \Auth::id())
                             <a href="/insider/themes/{{$theme->id}}/edit" class="btn btn-success"><i class="ion ion-edit"></i></a>   
-                            @endif
+                        @endif
                         </div> 
 
                         </div>

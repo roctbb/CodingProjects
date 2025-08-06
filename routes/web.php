@@ -331,8 +331,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/themes/create', 'ThemesController@createView');
     Route::post('/themes/create', 'ThemesController@create');
-    Route::get('/themes/{id}/edit', 'ThemesController@editView')->middleware('teacher');
-    Route::post('/themes/{id}/edit', 'ThemesController@edit')->middleware('teacher');
+    Route::get('/themes/{id}/edit', 'ThemesController@editView');
+    Route::post('/themes/{id}/edit', 'ThemesController@edit');
 
     Route::get('/core/editor', 'CoreController@editor')->middleware('teacher');
 
