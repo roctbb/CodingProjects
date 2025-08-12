@@ -17,8 +17,8 @@ class ThemesController extends Controller
     function getJS($id)
     {
         $theme = \App\Theme::find($id);
-        return $theme->js();
-    
+        return response($theme->js())
+            ->header('Content-Type', 'application/javascript');
     }
     function buy($id)
     {
