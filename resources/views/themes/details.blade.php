@@ -22,7 +22,7 @@
                                     @endif
                                 </a>
                             @endif
- 
+
                         @if(\Auth::user()->hasTheme($theme->id))
                             @if(\Auth::user()->currentTheme() !== null && \Auth::user()->currentTheme()->id == $theme->id)
                             <a class="btn btn-danger" href="/insider/themes/{{$theme->id}}/takeoff/">
@@ -39,7 +39,8 @@
                         @endif                        
                             <a href="/insider/themes/{{$theme->id}}?try=true" class="btn btn-primary">Попробовать</a>
                         @if(\Auth::user()->is_teacher || \Auth::user()->role == 'admin' || $theme->user_id == \Auth::id())
-                            <a href="/insider/themes/{{$theme->id}}/edit" class="btn btn-success"><i class="ion ion-edit"></i></a>   
+                            <a href="/insider/themes/{{$theme->id}}/edit" class="btn btn-success"><i class="ion ion-edit"></i></a>
+                            <a href="/insider/themes/{{$theme->id}}/delete" class="btn btn-danger" onclick="return confirm('Удалить тему?')">Удалить</a>
                         @endif
                         </div> 
 
