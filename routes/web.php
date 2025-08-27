@@ -333,6 +333,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/themes/create', 'ThemesController@create');
     Route::get('/themes/{id}/edit', 'ThemesController@editView');
     Route::post('/themes/{id}/edit', 'ThemesController@edit');
+    Route::get('/themes/{id}/delete', 'ThemesController@delete');
 
     Route::get('/core/editor', 'CoreController@editor')->middleware('teacher');
 
