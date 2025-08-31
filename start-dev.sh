@@ -1,3 +1,5 @@
+docker build -f conf/Dockerfile.dev -t codingprojects .
+
 echo "> Starting development server..."
 # Remove previous container if exists
 docker rm -f coding-dev > /dev/null 2>&1 || true
