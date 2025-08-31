@@ -90,7 +90,9 @@
                                                 Одеть
                                             </a>
                                             @endif
-                                        
+                                        @if(\Auth::user()->is_teacher || \Auth::user()->role == 'admin' || $theme->user_id == \Auth::id())
+                                            <a class="btn btn-danger" href="/insider/themes/{{$theme->id}}/delete" onclick="return confirm('Удалить тему?')">Удалить</a>
+                                        @endif
                                     </span>
                                     @endif
                                     </p>
@@ -103,7 +105,3 @@
         </div>
     </div>
 @endsection
-
-
-
-

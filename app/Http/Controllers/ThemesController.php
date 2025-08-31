@@ -29,7 +29,7 @@ class ThemesController extends Controller
             "theme_id" => $id    
         ]);
 
-        if ($theme->price > 0)
+        if ($theme->price != 0)
         {
             // Списываем деньги с покупателя
             \App\CoinTransaction::register(\Auth::id(), -$theme->price, "Купил тему ".$theme->name);
@@ -121,4 +121,14 @@ class ThemesController extends Controller
         return redirect('/insider/themes/' . $id);
     }
 
+    function delete($id)
+    {
+        $theme = \App\Theme::find($id);
+        $user = \Auth::user();
+        if (!($user->role === 'teacher' || $user->role === 'admin' || $theme->user_id === $user->id)) {
+            abort(403, 'Нет доступа к удалению этой темы');
+        }
+        $theme->delete();
+        return redirect('/insider/themes');
+    }
 }

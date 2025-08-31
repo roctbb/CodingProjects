@@ -67,12 +67,12 @@ class Course extends Model
 
     public function steps()
     {
-        return $this->program->steps();
+        return $this->hasManyThrough('App\ProgramStep', 'App\Program', 'id', 'program_id', 'program_id');
     }
 
     public function lessons()
     {
-        return $this->program->lessons;
+        return $this->hasManyThrough('App\Lesson', 'App\Program', 'id', 'program_id', 'program_id');
     }
 
     public function solutions()
@@ -168,7 +168,7 @@ class Course extends Model
     public function getPercent(User $user)
     {
         $course = $this;
-        $lessons = $course->program->lessons->filter(function ($lesson) use ($course) {
+        $lessons = $course->lessons()->get()->filter(function ($lesson) use ($course) {
             return $lesson->isStarted($this);
         });
 
