@@ -1,0 +1,66 @@
+# Builder stage: install composer deps
+FROM php:7.4-cli AS builder
+
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libzip-dev \
+    libxml2-dev \
+    libpq-dev \
+    zip \
+    && docker-php-ext-install zip pdo pdo_mysql pdo_pgsql xml \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+WORKDIR /app
+
+# Install PHP deps first by copying only composer files (speeds up cache)
+COPY composer.json ./
+
+# ensure folders referenced by composer classmap exist (avoid "could not scan" errors)
+RUN mkdir -p database || true
+
+# Install dependencies but don't generate autoloader yet (we'll generate it after copying source)
+# Disable scripts here to avoid post-update/post-install running before autoload exists
+RUN composer install --no-dev --prefer-dist --no-interaction --no-autoloader --no-scripts
+
+# Copy application source
+COPY . .
+
+# Generate optimized autoloader now that all source files are present
+RUN composer dump-autoload --optimize --classmap-authoritative \
+    && composer run-script post-install-cmd || true \
+    && composer run-script post-autoload-dump || true
+
+# Final production image: php-fpm
+FROM php:7.4-fpm
+
+# Install runtime PHP extensions required in production
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    libxml2-dev \
+    libpq-dev \
+    zip \
+    && docker-php-ext-install zip pdo pdo_mysql pdo_pgsql xml \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy application from builder (includes vendor)
+COPY --from=builder /app /var/www/html
+
+WORKDIR /var/www/html
+
+# Ensure storage and cache are writable by www-data (adjust if using different user)
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
+
+# Production environment variables
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+ENV LOG_CHANNEL=stack
+
+# Expose PHP-FPM port
+EXPOSE 9000
+
+# Run php-fpm (no migrations, no artisan serve in production image)
+CMD ["php-fpm"]

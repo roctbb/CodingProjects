@@ -17,8 +17,8 @@ class ThemesController extends Controller
     function getJS($id)
     {
         $theme = \App\Theme::find($id);
-        return $theme->js();
-    
+        return response($theme->js())
+            ->header('Content-Type', 'application/javascript');
     }
     function buy($id)
     {
@@ -28,13 +28,17 @@ class ThemesController extends Controller
             "user_id" => \Auth::id(),
             "theme_id" => $id    
         ]);
-        
-        
-        if ($theme->price > 0)
+
+        if ($theme->price != 0)
         {
+            // Списываем деньги с покупателя
             \App\CoinTransaction::register(\Auth::id(), -$theme->price, "Купил тему ".$theme->name);
+            // Начисляем деньги продавцу
+            if ($theme->user_id && $theme->user_id != \Auth::id()) {
+                \App\CoinTransaction::register($theme->user_id, $theme->price, "Продал тему ".$theme->name);
+            }
         }
-        return redirect("/insider/themes");       
+        return redirect("/insider/themes");
     }
     function index(Request $request)
     {
@@ -85,12 +89,12 @@ class ThemesController extends Controller
         ]);
 
         $theme = \App\Theme::make(\Auth::id(), $request->name, $request->description, $request->css, $request->js, $request->price, $request->image);
-
-
         
-
-        
-
+        // Автоматически добавить тему в купленные
+        \App\ThemeBought::create([
+            'user_id' => \Auth::id(),
+            'theme_id' => $theme->id
+        ]);
 
         return redirect('/insider/themes/' . $theme->id);
         
@@ -99,13 +103,32 @@ class ThemesController extends Controller
     function editView($id)
     {
         $theme = \App\Theme::find($id);
+        $user = \Auth::user();
+        if (!($user->role === 'teacher' || $theme->user_id === $user->id)) {
+            abort(403, 'Нет доступа к редактированию этой темы');
+        }
         return view('themes.edit', compact('theme'));
     }
 
     function edit($id, Request $request)
     {
+        $theme = \App\Theme::find($id);
+        $user = \Auth::user();
+        if (!($user->role === 'teacher' || $theme->user_id === $user->id)) {
+            abort(403, 'Нет доступа к редактированию этой темы');
+        }
         \App\Theme::modify($id, $request->name, $request->description, $request->image, $request->price, $request->css, $request->js);
-        return redirect('/insider/themes/{id}');
+        return redirect('/insider/themes/' . $id);
     }
 
+    function delete($id)
+    {
+        $theme = \App\Theme::find($id);
+        $user = \Auth::user();
+        if (!($user->role === 'teacher' || $user->role === 'admin' || $theme->user_id === $user->id)) {
+            abort(403, 'Нет доступа к удалению этой темы');
+        }
+        $theme->delete();
+        return redirect('/insider/themes');
+    }
 }

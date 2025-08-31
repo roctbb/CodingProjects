@@ -329,10 +329,11 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/themes/{id}/takeoff', 'ThemesController@takeOff');
     
 
-    Route::get('/themes/create', 'ThemesController@createView')->middleware('teacher');
-    Route::post('/themes/create', 'ThemesController@create')->middleware('teacher');
-    Route::get('/themes/{id}/edit', 'ThemesController@editView')->middleware('teacher');
-    Route::post('/themes/{id}/edit', 'ThemesController@edit')->middleware('teacher');
+    Route::get('/themes/create', 'ThemesController@createView');
+    Route::post('/themes/create', 'ThemesController@create');
+    Route::get('/themes/{id}/edit', 'ThemesController@editView');
+    Route::post('/themes/{id}/edit', 'ThemesController@edit');
+    Route::get('/themes/{id}/delete', 'ThemesController@delete');
 
     Route::get('/core/editor', 'CoreController@editor')->middleware('teacher');
 
