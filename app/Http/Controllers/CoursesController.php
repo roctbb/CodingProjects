@@ -13,6 +13,7 @@ use App\Program;
 use App\ProgramChapter;
 use App\ProgramStep;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
 use App\Provider;
 use App\Solution;
 use App\User;
@@ -42,10 +43,15 @@ class CoursesController extends Controller
      */
     public function index()
     {
-        $user = User::findOrFail(Auth::User()->id);
-        $users = User::where('is_hidden', false)->get();
-        $courses = Course::orderBy('id')->get();
-        $events = Event::getNew()->sortBy('date')->take(5);
+        // Optimize: get authenticated user, cache users and events, eager load course relations
+        $user = Auth::user();
+        $users = Cache::remember('users:not_hidden', 60, function () {
+            return User::where('is_hidden', false)->get();
+        });
+        $courses = Course::with(['students:id', 'teachers:id'])->orderBy('id')->get();
+        $events = Cache::remember('events:new', 5, function () {
+            return Event::getNew()->sortBy('date')->take(5);
+        });
 
         $my_courses = $courses->filter(function ($course) use ($user) {
             return $course->state == 'started' && ($user->role == 'admin' || $course->students->contains($user) || $course->teachers->contains($user));
@@ -64,8 +70,10 @@ class CoursesController extends Controller
             $notification->markAsRead();
         }
 
-        $threads = ForumThread::orderBy('id', 'DESC')->limit(5)->get();
-        return view('home', compact('courses', 'user', 'users', 'threads', 'my_courses', 'open_courses', 'private_courses', 'notifications', 'events'));
+        $threads = Cache::remember('threads:recent', 5, function () {
+            return ForumThread::orderBy('id', 'DESC')->limit(5)->get();
+        });
+    return response()->view('home', compact('courses', 'user', 'users', 'threads', 'my_courses', 'open_courses', 'private_courses', 'notifications', 'events'));
     }
 
     public function report($id)
@@ -211,16 +219,23 @@ class CoursesController extends Controller
 
     public function details($id, Request $request)
     {
-        \App\ActionLog::record(Auth::User()->id, 'course', $id);
-
-        $user = User::with('solutions', 'solutions.task')->findOrFail(Auth::User()->id);
+    // Record action
+    ActionLog::record(Auth::user()->id, 'course', $id);
+    // Load current user with relations
+    $user = Auth::user()->load('solutions', 'solutions.task');
         $course = Course::with('program', 'program.lessons', 'program.lessons.steps', 'program.lessons.steps.tasks', 'program.lessons.info', 'program.chapters', 'students', 'students.submissions', 'teachers')->findOrFail($id);
-        $students = $course->students;
+        // Cache students collection
+        $students = Cache::remember("course:{$id}:students", 5, function () use ($course) {
+            return $course->students;
+        });
 
 
 
         if (!$course->is_sdl) {
-            $marks = CompletedCourse::where('course_id', $id)->get();
+            // Cache marks for this course
+            $marks = Cache::remember("course:{$id}:marks", 5, function () use ($id) {
+                return CompletedCourse::where('course_id', $id)->get();
+            });
 
             //Made this due to some issues on my local server
             $cstudent = [];
@@ -263,32 +278,27 @@ class CoursesController extends Controller
                 $all_steps = $all_steps->merge($lesson->steps);
             }
 
-            if (count($students) < 70) {
-                foreach ($students as $key => $value) {
-                    $students[$key]->percent = 0;
-                    $students[$key]->max_points = 0;
-                    $students[$key]->points = 0;
-
+            // Cache course completion percentages for 10 minutes
+            $stats = Cache::remember("course:{$id}:stats", 10, function () use ($students, $all_steps) {
+                $result = [];
+                foreach ($students as $student) {
+                    $max_points = 0;
+                    $points = 0;
                     foreach ($all_steps as $step) {
-
-                        $tasks = $step->tasks;
-
-                        foreach ($tasks as $task) {
-                            if (!$task->is_star) $students[$key]->max_points += $task->max_mark;
-
-                            $students[$key]->points += $value->submissions->filter(function ($item) use ($task) {
-                                return $item->task_id == $task->id;
-                            })->max('mark');
-
+                        foreach ($step->tasks as $task) {
+                            if (!$task->is_star) {
+                                $max_points += $task->max_mark;
+                            }
+                            $points += $student->submissions->where('task_id', $task->id)->max('mark');
                         }
-
-
                     }
-                    if ($students[$key]->max_points != 0) {
-                        $students[$key]->percent = min(100, $students[$key]->points * 100 / $students[$key]->max_points);
-                    }
-
+                    $result[$student->id] = $max_points > 0 ? min(100, $points * 100 / $max_points) : 0;
                 }
+                return $result;
+            });
+            // Assign cached percents to students
+            foreach ($students as $key => $student) {
+                $students[$key]->percent = isset($stats[$student->id]) ? $stats[$student->id] : 0;
             }
 
 
@@ -306,7 +316,12 @@ class CoursesController extends Controller
                 $lessons = $course->program->lessons->where('chapter_id', $chapter->id);
             }
 
-            return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'cstudent', 'lessons', 'marks'));
+            // Cache rendered view to speed repeated requests
+            $cacheKey = "view:course:{$id}:user:{$user->id}:chapter:{$chapter->id}:details";
+            $html = Cache::remember($cacheKey, 10, function () use ($chapter, $course, $user, $steps, $students, $cstudent, $lessons, $marks) {
+                return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'cstudent', 'lessons', 'marks'))->render();
+            });
+            return response($html);
 
         } else {
             if ($user->role != 'student')
@@ -338,7 +353,12 @@ class CoursesController extends Controller
             $available_lessons = Lesson::getAvailableSdlLessons($user, $course, $idea);
 
             $available_lessons = $current_lessons->merge($available_lessons);
-            return view('courses.sdl_details', compact('course', 'user', 'lessons', 'marks', 'students', 'available_lessons', 'done_lessons', 'idea'));
+            // Cache rendered SDL details view
+            $cacheKey = "view:course:{$id}:user:{$user->id}:sdl_details";
+            $html = Cache::remember($cacheKey, 10, function () use ($course, $user, $lessons, $marks, $students, $available_lessons, $done_lessons, $idea) {
+                return view('courses.sdl_details', compact('course', 'user', 'lessons', 'marks', 'students', 'available_lessons', 'done_lessons', 'idea'))->render();
+            });
+            return response($html);
         }
 
 

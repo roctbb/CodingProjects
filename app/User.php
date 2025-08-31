@@ -3,6 +3,7 @@
 namespace App;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -296,20 +297,46 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->birthday->format('d.m') == Carbon::now()->format('d.m');
     }
 
+    /**
+     * Get user's stickers with caching.
+     *
+     * @return \Illuminate\Support\Collection
+     */
     public function getStickers()
     {
-        $stickers = collect([]);
-        $sticker_description = [];
-
-        foreach ($this->courses as $course) {
-            if ($course->is_sdl) continue;
-            foreach ($course->program->lessons as $lesson) {
-                if ($lesson->percent($this) > 90) {
-                    $stickers->push($lesson->sticker);
+        return Cache::remember("user:{$this->id}:stickers", 60, function () {
+            $stickers = collect([]);
+            foreach ($this->courses as $course) {
+                if ($course->is_sdl) continue;
+                foreach ($course->program->lessons as $lesson) {
+                    if ($lesson->percent($this) > 90) {
+                        $stickers->push($lesson->sticker);
+                    }
                 }
             }
-        }
-        return $stickers->unique();
+            return $stickers->unique();
+        });
+    }
+
+    /**
+     * Get sticker descriptions with caching.
+     *
+     * @return array
+     */
+    public function getStickerDescriptions()
+    {
+        return Cache::remember("user:{$this->id}:sticker_descriptions", 60, function () {
+            $descriptions = [];
+            foreach ($this->courses as $course) {
+                if ($course->is_sdl) continue;
+                foreach ($course->program->lessons as $lesson) {
+                    if ($lesson->percent($this) > 90) {
+                        $descriptions[$lesson->sticker] = $lesson->name;
+                    }
+                }
+            }
+            return $descriptions;
+        });
     }
 
     public function hasTheme($theme_id)
