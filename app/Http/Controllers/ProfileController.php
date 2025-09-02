@@ -52,19 +52,9 @@ class ProfileController extends Controller
             $user = User::findOrFail($id);
         }
 
-        $stickers = collect([]);
-        $sticker_description = [];
-
-        foreach ($user->courses as $course) {
-            if ($course->is_sdl) continue;
-            foreach ($course->program->lessons as $lesson) {
-                if ($lesson->percent($user) > 90) {
-                    $stickers->push($lesson->sticker);
-                    $sticker_description[$lesson->sticker] = $lesson->name;
-                }
-            }
-        }
-        $stickers = $stickers->unique();
+    // Use cached sticker retrieval and descriptions
+    $stickers = $user->getStickers();
+    $sticker_description = $user->getStickerDescriptions();
 
 
         $projects = $user->projects();
