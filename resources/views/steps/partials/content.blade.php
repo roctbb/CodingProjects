@@ -89,7 +89,7 @@
                             @endif
                         </div>
                         <div class="card-body markdown">
-                            @parsedown($task->text)
+                            {!! parsedown_math($task->text) !!}
                             @if (\Request::is('insider/*'))
                                 @if ($task->is_code)
                                     <p>
@@ -99,7 +99,7 @@
 
                                 @if ($user->role == 'student' and $task->solution!=null and $task->isFullDone(Auth::User()->id))
                                     <h3>Авторское решение</h3>
-                                    @parsedown($task->solution)
+                                    {!! parsedown_math($task->solution) !!}
                                 @endif
                                 @if (($course->teachers->contains($user) || $user->role=='admin') and $task->solution != null)
                                     <p>
@@ -110,7 +110,7 @@
                                         </a>
                                     </p>
                                     <div class="collapse" id="solution{{$task->id}}">
-                                        @parsedown($task->solution)
+                                        {!! parsedown_math($task->solution) !!}
                                     </div>
                                 @endif
                                 @if ($task->is_quiz)

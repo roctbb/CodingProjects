@@ -12,7 +12,7 @@
 @section('content')
 
     @if(Session::has('message'))
-        <div class="alert alert-success alert-dismissible role=" alert">
+        <div class="alert alert-success alert-dismissible" role="alert">
         {{ Session::get('message') }}
         <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
                     aria-hidden="true">&times;</span>
@@ -138,7 +138,7 @@
                             </button>
                         </div>
                         <div class="modal-body markdown">
-                            @parsedown($project->task->text)
+                            {!! parsedown($project->task->text) !!}
 
                             <span class="badge badge-secondary">очков опыта: {{$project->task->max_mark}}</span>
 

@@ -45,12 +45,12 @@
 
        </div>
        <div class="card-body markdown">
-         @parsedown($task->text)
+         {!! parsedown_math($task->text) !!}
 
          @if ($task->is_quiz)
          <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}" method="POST"
            class="form-inline"
-           
+
            onsubmit="checkTask(event, {{json_encode($task->id)}})"
            >
            {{ csrf_field() }}

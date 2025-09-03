@@ -91,7 +91,7 @@
 
                                     </div>
                                     <div class="card-body markdownn perform">
-                                        @parsedown($task->text)
+                                        {!! parsedown_math($task->text) !!}
 
                                         <span class="badge badge-secondary">Очков опыта: {{$task->max_mark}}</span>
                                     </div>

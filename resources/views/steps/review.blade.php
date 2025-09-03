@@ -16,7 +16,7 @@
                        href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}">Редактировать</a>
                 </div>
                 <div class="card-body markdown">
-                    @parsedown($task->text)
+                    {!! parsedown_math($task->text) !!}
 
                     <span class="badge badge-secondary">Очков опыта: {{$task->max_mark}}</span>
                 </div>
