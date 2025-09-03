@@ -70,13 +70,13 @@
                         <div class="form-group">
                             <label for="text">Текст</label>
                             <div class="mb-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText('text', 'fix_typos')">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText(this, 'text', 'fix_typos')">
                                     <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText('text', 'improve_style')">
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText(this, 'text', 'improve_style')">
                                     <i class="icon ion-android-create"></i> Улучшить стиль
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText('text', 'both')">
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText(this, 'text', 'both')">
                                     <i class="icon ion-android-star"></i> Исправить и улучшить
                                 </button>
                             </div>
@@ -92,13 +92,13 @@
                         <div class="form-group">
                             <label for="solution">Решение</label>
                             <div class="mb-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText('solution', 'fix_typos')">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText(this, 'solution', 'fix_typos')">
                                     <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText('solution', 'improve_style')">
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText(this, 'solution', 'improve_style')">
                                     <i class="icon ion-android-create"></i> Улучшить стиль
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText('solution', 'both')">
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText(this, 'solution', 'both')">
                                     <i class="icon ion-android-star"></i> Исправить и улучшить
                                 </button>
                             </div>
@@ -185,7 +185,7 @@
         });
 
         // YandexGPT text improvement functionality
-        function improveText(fieldId, action) {
+        function improveText(clickedButton, fieldId, action) {
             const editor = fieldId === 'text' ? simplemde_task : simplemde_solution;
             const currentText = editor.value();
 
@@ -194,12 +194,12 @@
                 return;
             }
 
-            // Show loading state
-            const buttons = document.querySelectorAll(`button[onclick*="${fieldId}"]`);
-            buttons.forEach(btn => {
-                btn.disabled = true;
-                btn.innerHTML = btn.innerHTML.replace(/Исправить|Улучшить/, 'Обработка...');
-            });
+            // Store original button text
+            const originalButtonText = clickedButton.innerHTML;
+
+            // Show loading state only for clicked button
+            clickedButton.disabled = true;
+            clickedButton.innerHTML = clickedButton.innerHTML.replace(/Исправить|Улучшить/, 'Обработка...');
 
             // Make API request
             fetch('/insider/yandexgpt/improve-text', {
@@ -230,19 +230,9 @@
                 alert('Произошла ошибка при обращении к сервису улучшения текста');
             })
             .finally(() => {
-                // Restore button states
-                buttons.forEach(btn => {
-                    btn.disabled = false;
-                    if (btn.innerHTML.includes('Обработка...')) {
-                        if (action === 'fix_typos') {
-                            btn.innerHTML = '<i class="icon ion-android-checkbox-outline"></i> Исправить опечатки';
-                        } else if (action === 'improve_style') {
-                            btn.innerHTML = '<i class="icon ion-android-create"></i> Улучшить стиль';
-                        } else if (action === 'both') {
-                            btn.innerHTML = '<i class="icon ion-android-star"></i> Исправить и улучшить';
-                        }
-                    }
-                });
+                // Restore only the clicked button state
+                clickedButton.disabled = false;
+                clickedButton.innerHTML = originalButtonText;
             });
         }
     </script>
