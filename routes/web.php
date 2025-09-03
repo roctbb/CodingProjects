@@ -91,6 +91,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/jwt', 'RemoteAuthController@remoteAuth');
 
+    // YandexGPT text improvement API
+    Route::post('/yandexgpt/improve-text', 'YandexGPTController@improveText');
 
     Route::post('/vk/send', 'BotController@send');
     Route::get('/vk/send', 'BotController@sendView');
@@ -221,7 +223,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/tasks/{id}/right', 'TasksController@makeUpper');
     Route::get('/courses/{course_id}/tasks/{id}/peer', 'TasksController@reviewTable');
     Route::post('/courses/{course_id}/tasks/{id}/deadline', 'TasksController@makeDeadline');
-        
+
 
     Route::post('/courses/{course_id}/tasks/{id}/edit', 'TasksController@edit');
     Route::post('/courses/{course_id}/tasks/{id}/solution', 'TasksController@postSolution');
@@ -327,7 +329,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/themes/{id}/wear', 'ThemesController@wear');
     Route::get('/themes/{id}/takeoff', 'ThemesController@takeOff');
-    
+
 
     Route::get('/themes/create', 'ThemesController@createView');
     Route::post('/themes/create', 'ThemesController@create');

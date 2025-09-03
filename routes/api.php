@@ -26,5 +26,3 @@ Route::prefix('games')->group(function () {
 Route::post('/vk/feedback', 'BotController@saveFeedback');
 
 Route::post('/geekpaste', 'GeekPasteAPI@submitSolution');
-
-Route::middleware('auth')->post('/yandexgpt/improve-text', 'YandexGPTController@improveText');

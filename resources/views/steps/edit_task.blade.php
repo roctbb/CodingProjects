@@ -202,7 +202,7 @@
             });
 
             // Make API request
-            fetch('/api/yandexgpt/improve-text', {
+            fetch('/insider/yandexgpt/improve-text', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
