@@ -220,7 +220,7 @@
                                                     с {{$lesson->getStartDate($course)->format('Y-m-d')}}</small>
                                             </div>
                                             <div class="col">
-                                                @if ($user->role=='student' and $lesson->max_points($cstudent)!=0 and $lesson->isAvailable($course))
+                                                @if (($user->role=='student' || ($user->role=='teacher' && !$course->teachers->contains($user))) and $lesson->max_points($cstudent)!=0 and $lesson->isAvailable($course))
                                                     <div class="progress" style="margin: 5px;">
                                                         @if ($lesson->percent($cstudent) < 40)
                                                             <div class="progress-bar progress-bar-striped bg-danger"
@@ -303,7 +303,7 @@
                                         <span class="badge badge-primary"> {{ round($current_chapter->getStudentsPercent($course)) }}
                                             % </span>
                                     @endif
-                                    @if ($user->role=='student')
+                                    @if ($user->role=='student' || ($user->role=='teacher' && !$course->teachers->contains($user)))
                                         <span class="badge badge-primary"> {{ round($current_chapter->getStudentPercent($course, $user)) }}
                                             % </span>
                                     @endif
@@ -452,7 +452,7 @@
 
                 </div>
             </div>
-            @if ($user->role=='student')
+            @if ($user->role=='student' || ($user->role=='teacher' && !$course->teachers->contains($user)))
                 <div class="card" style="margin-top: 15px;">
                     <div class="card-body">
 
