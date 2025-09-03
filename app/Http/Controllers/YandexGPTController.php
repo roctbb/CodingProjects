@@ -90,6 +90,8 @@ class YandexGPTController extends Controller
             throw new \Exception('Invalid response format from YandexGPT API');
         }
 
+        \Log::info($data);
+
         return $data['result']['alternatives'][0]['message']['text'];
     }
 
