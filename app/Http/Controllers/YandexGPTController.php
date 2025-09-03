@@ -77,22 +77,64 @@ class YandexGPTController extends Controller
                 ]
             ]);
         } catch (\GuzzleHttp\Exception\RequestException $e) {
-            throw new \Exception('YandexGPT API request failed: ' . $e->getMessage());
+            $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 0;
+            $responseBody = $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : '';
+
+            Log::error('YandexGPT API Request Exception', [
+                'status_code' => $statusCode,
+                'response_body' => $responseBody,
+                'message' => $e->getMessage()
+            ]);
+
+            if ($statusCode === 401) {
+                throw new \Exception('YandexGPT API authentication failed. Please check your API key and folder ID.');
+            } elseif ($statusCode === 404) {
+                throw new \Exception('YandexGPT API endpoint not found. Please check the API URL and model configuration.');
+            } elseif ($statusCode === 429) {
+                throw new \Exception('YandexGPT API rate limit exceeded. Please try again later.');
+            } else {
+                throw new \Exception('YandexGPT API request failed: ' . $e->getMessage());
+            }
         }
 
         if ($response->getStatusCode() !== 200) {
-            throw new \Exception('YandexGPT API request failed: ' . $response->getBody()->getContents());
+            $responseBody = $response->getBody()->getContents();
+            Log::error('YandexGPT API non-200 response', [
+                'status_code' => $response->getStatusCode(),
+                'response_body' => $responseBody
+            ]);
+            throw new \Exception('YandexGPT API request failed with status ' . $response->getStatusCode() . ': ' . $responseBody);
         }
 
-        $data = json_decode($response->getBody()->getContents(), true);
+        $responseBody = $response->getBody()->getContents();
+        $data = json_decode($responseBody, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::error('YandexGPT API JSON decode error', [
+                'json_error' => json_last_error_msg(),
+                'response_body' => $responseBody
+            ]);
+            throw new \Exception('Invalid JSON response from YandexGPT API: ' . json_last_error_msg());
+        }
 
         if (!isset($data['result']['alternatives'][0]['message']['text'])) {
-            throw new \Exception('Invalid response format from YandexGPT API');
+            Log::error('YandexGPT API invalid response format', [
+                'response_data' => $data
+            ]);
+            throw new \Exception('Invalid response format from YandexGPT API. Expected text not found in response.');
         }
 
-        \Log::info($data);
+        $improvedText = $data['result']['alternatives'][0]['message']['text'];
 
-        return $data['result']['alternatives'][0]['message']['text'];
+        if (empty(trim($improvedText))) {
+            Log::warning('YandexGPT API returned empty text', [
+                'original_text' => $text,
+                'response_data' => $data
+            ]);
+            throw new \Exception('YandexGPT API returned empty text. Please try again.');
+        }
+
+        return $improvedText;
     }
 
     private function getPromptForAction($action)
