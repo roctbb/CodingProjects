@@ -32,6 +32,21 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
     <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 
+    <!-- MathJax for mathematical formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+
     <!-- Autosize - resizes textarea inputs as user types -->
     <script type="text/javascript" src="{{ url('assets/js/autosize.min.js') }}"></script>
     <!-- Flatpickr (calendar/date/time picker UI) -->
@@ -321,6 +336,10 @@
     $('div.markdown a').attr('target', 'blank');
     $(document).ready(function () {
         $('.selectpicker').selectpicker();
+        // Re-render MathJax for dynamically loaded content
+        if (window.MathJax) {
+            MathJax.typesetPromise();
+        }
     });
 
     // define a handler
