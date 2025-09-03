@@ -245,7 +245,7 @@ class CoursesController extends Controller
                     abort(404);
                 }
             } else {
-                if ($user->role == 'teacher') {
+                if ($user->role == 'admin' || $course->teachers->contains($user)) {
                     $chapter = $course->program->chapters->first();
                 } else {
                     $current_chapter = $course->program->chapters->first();
@@ -693,7 +693,7 @@ class CoursesController extends Controller
         $user = User::findOrFail(Auth::User()->id);
         $course = Course::findOrFail($id);
 
-        if ($user->role == 'admin' or $user->role == 'teacher') return redirect('/insider/courses/' . $course->id);
+        if ($user->role == 'admin' || $course->teachers->contains($user)) return redirect('/insider/courses/' . $course->id);
 
         if ($course == null or $course->mode != 'open') {
             $this->make_error_alert('Ошибка!', 'Вы не можете записаться на приватный курс.');

@@ -157,7 +157,7 @@
                                         <div class="col" data-filter-by="text">
                                             @parsedown($lesson->description)
                                         </div>
-                                        @if ($user->role!='teacher' and $user->role!='admin' and $lesson->percent($cstudent) > 90)
+                                        @if (!($user->role=='admin' || $course->teachers->contains($user)) and $lesson->percent($cstudent) > 90)
                                             <div class="col-sm-auto">
                                                 <img src="{{url($lesson->sticker)}}" style="max-width: 200px;"/>
                                             </div>
@@ -276,7 +276,7 @@
                                                 @endif
                                             </div>
                                         </div>
-                                        @if ($lesson->is_open && ($user->role=='admin' or $user->role=='teacher') )
+                                        @if ($lesson->is_open && ($user->role=='admin' || $course->teachers->contains($user)) )
                                             <small class="text-muted"><i class="ion ion-android-contacts"></i>
                                                 Открытый URL: {{ url('/open/steps/'.$lesson->steps->first()->id) }}
                                             </small>
@@ -295,7 +295,7 @@
                 <ul style="margin-bottom: 15px; margin-top: 15px;" class="list-group">
 
                     @foreach($course->program->chapters as $current_chapter)
-                        @if ($user->role == 'teacher' or $user->role == 'admin' or $current_chapter->isStarted($course))
+                        @if ($user->role == 'admin' || $course->teachers->contains($user) or $current_chapter->isStarted($course))
                             <li class="list-group-item @if ($current_chapter->id == $chapter->id)  list-group-item-success @endif">
                                 <a
                                         href="{{url('/insider/courses/'.$course->id.'?chapter='.$current_chapter->id)}}">{{$current_chapter->name}}
@@ -333,7 +333,7 @@
                                     </div>
                                     <p class="small" style="margin-bottom: 0;">{{$current_chapter->description}}</p>
                                 @else
-                                    @if ($current_chapter->isDone($course) and $user->role!='teacher' and $user->role!='admin')
+                                    @if ($current_chapter->isDone($course) and !($user->role=='admin' || $course->teachers->contains($user)))
                                         <span class="float-right">
                                         <i class="icon ion-checkmark-circled" style="color:green;"></i> <span
                                                     style="color: green;">выполнено</span>

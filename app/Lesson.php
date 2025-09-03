@@ -129,7 +129,7 @@ class Lesson extends Model
     public function isAvailableForUser($course, $user)
     {
         if (!$this->isStarted($course)) return false;
-        if ($user->role == 'teacher') return true;
+        if ($user->role == 'admin' || $course->teachers->contains($user)) return true;
         return true;
     }
 
@@ -142,7 +142,7 @@ class Lesson extends Model
     public function isDoneByUser($course, $user)
     {
         if (!$this->isStarted($course)) return false;
-        if ($user->role == 'teacher') return true;
+        if ($user->role == 'admin' || $course->teachers->contains($user)) return true;
         foreach ($this->tasks()->where('is_star', false) as $task) {
             if (!$task->isDone($user->id)) return false;
         }
