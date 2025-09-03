@@ -271,5 +271,35 @@
         @if($zero_theory)
         $('.task-pill').first().addClass('active');
         @endif
+
+        // Re-render MathJax when tabs are shown
+        $(document).ready(function() {
+            // Initial MathJax rendering for visible content
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+
+            // Listen for Bootstrap tab show events
+            $('a[data-toggle="pill"]').on('shown.bs.tab', function (e) {
+                // Re-render MathJax for the newly shown tab content
+                if (window.MathJax) {
+                    var targetPane = $(e.target.getAttribute('href'));
+                    if (targetPane.length) {
+                        MathJax.typesetPromise([targetPane[0]]).catch(function (err) {
+                            console.log('MathJax typeset error: ' + err.message);
+                        });
+                    }
+                }
+            });
+
+            // Listen for Bootstrap collapse show events (for solution sections)
+            $('.collapse').on('shown.bs.collapse', function () {
+                if (window.MathJax) {
+                    MathJax.typesetPromise([this]).catch(function (err) {
+                        console.log('MathJax typeset error: ' + err.message);
+                    });
+                }
+            });
+        });
     </script>
 @endif
