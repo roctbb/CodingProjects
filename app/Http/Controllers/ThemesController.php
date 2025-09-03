@@ -117,6 +117,12 @@ class ThemesController extends Controller
         if (!($user->role === 'teacher' || $theme->user_id === $user->id)) {
             abort(403, 'Нет доступа к редактированию этой темы');
         }
+        $this->validate($request, [
+            'name' => 'required|string',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+
+        ]);
         \App\Theme::modify($id, $request->name, $request->description, $request->image, $request->price, $request->css, $request->js);
         return redirect('/insider/themes/' . $id);
     }
