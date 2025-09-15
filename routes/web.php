@@ -320,22 +320,6 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/core/import', 'CoreController@import_core')->middleware('teacher');
     Route::get('/core/importa', 'CoreController@import_core')->middleware('teacher');
 
-    Route::get('/themes', 'ThemesController@index');
-    Route::get('/themes/{id}', 'ThemesController@details');
-    Route::get('/themes/{id}/css', 'ThemesController@getCSS');
-
-    Route::get('/themes/{id}/js', 'ThemesController@getJS');
-    Route::get('/themes/{id}/buy', 'ThemesController@buy');
-
-    Route::get('/themes/{id}/wear', 'ThemesController@wear');
-    Route::get('/themes/{id}/takeoff', 'ThemesController@takeOff');
-
-
-    Route::get('/themes/create', 'ThemesController@createView');
-    Route::post('/themes/create', 'ThemesController@create');
-    Route::get('/themes/{id}/edit', 'ThemesController@editView');
-    Route::post('/themes/{id}/edit', 'ThemesController@edit');
-    Route::get('/themes/{id}/delete', 'ThemesController@delete');
 
     Route::get('/core/editor', 'CoreController@editor')->middleware('teacher');
 

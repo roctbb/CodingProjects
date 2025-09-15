@@ -39,12 +39,6 @@
     <script src="{{ url('/scripts/highlight.min.js') }}"></script>
     <script>hljs.initHighlightingOnLoad();</script>
 
-    @auth
-        @if(\Auth::user()->currentTheme())
-            <link rel="stylesheet" href="/insider/themes/{{\Auth::user()->currentTheme()->id}}/css"/>
-            <script src="/insider/themes/{{\Auth::user()->currentTheme()->id}}/js"></script>
-        @endif
-    @endauth
 </head>
 <body style="min-height: 100%; height: 100%;">
 

@@ -96,12 +96,6 @@
             display: block;
         }
     </style>
-    @auth
-        @if(!isset($disabletheme) && \Auth::user()->currentTheme())
-            <link rel="stylesheet" href="/insider/themes/{{\Auth::user()->currentTheme()->id}}/css"/>
-            <script src="/insider/themes/{{\Auth::user()->currentTheme()->id}}/js"></script>
-        @endif
-    @endauth
     @yield('head')
 </head>
 
@@ -250,8 +244,6 @@
                         @endif
 
 
-                        <a class="dropdown-item" href="{{url('insider/themes/')}}"><i
-                                    class="icon ion-monitor"></i> Темы</a>
                         <a class="dropdown-item" href="{{url('insider/core/'.\Auth::User()->id)}}"><i
                                     class="icon ion-map"></i> Карта</a>
                         <a class="dropdown-item" href="{{ route('logout') }}"

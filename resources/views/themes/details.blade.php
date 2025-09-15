@@ -1,10 +1,5 @@
 @extends('layouts.left-menu')
-@section('head')
-    @if ($is_try)
-        <link rel="stylesheet" href="/insider/themes/{{$theme->id}}/css"></style>
-        <script src="/insider/themes/{{$theme->id}}/js"></script>
-    @endif
-@endsection
+
 @section('content')
     <div class="card">
         <div class="card-body">
