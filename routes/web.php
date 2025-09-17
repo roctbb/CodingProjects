@@ -65,6 +65,11 @@ Route::get('/textbook/{id}', 'TextbookController@index');
 Route::get('/textbook/{id}/lesson/{lesson_id}', 'TextbookController@lesson');
 Route::get('/textbook/{id}/edit/{step_id}', 'TextbookController@edit_step');
 
+Route::get('/games', 'GamesController@index');
+Route::get('/games/{id}', 'GamesController@play');
+Route::get('/games/{id}/frame', 'GamesController@frame');
+Route::get('/insider/games/{id}/viewsource', 'GamesController@viewsource');
+
 Route::get('/categories/create', 'CourseCategoriesController@createView');
 Route::post('/categories/create', 'CourseCategoriesController@create');
 Route::get('/categories/{id}', 'CourseCategoriesController@details');
