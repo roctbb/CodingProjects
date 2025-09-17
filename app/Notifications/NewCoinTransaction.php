@@ -63,11 +63,17 @@ class NewCoinTransaction extends Notification
      */
     public function toArray($notifiable)
     {
+    $price = number_format((float)$this->transaction->price, 2, '.', '');
 
-        return [
-            "text" => "🏧 Вам начислено " . $this->transaction->price . " GK (" . $this->transaction->comment . ")",
-            "type" => "success"
-        ];
+    $comment = $this->transaction->comment ?? '';
 
+    $comment = strip_tags($comment);
+
+    $comment = htmlspecialchars($comment, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+    return [
+        "text" => "🏧 Вам начислено {$price} GK ({$comment})",
+        "type" => "success"
+    ];
     }
 }
