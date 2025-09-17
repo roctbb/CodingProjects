@@ -153,8 +153,7 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->score = 0;
         $group = Solution::where('user_id', $this->id)->get()->groupBy('task_id');
         foreach ($group as $task) {
-
-            $this->score += $task->sortBy('mark')->first()->mark;
+            $this->score += $task->sortByDesc('mark')->first()->mark;
         }
 
         foreach ($this->games as $game) {
