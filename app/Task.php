@@ -70,6 +70,12 @@ class Task extends Model
 
     }
 
-
+    public function isBlocked($user_id, $course_id)
+    {
+        return \App\BlockedTask::where('task_id', $this->id)
+            ->where('user_id', $user_id)
+            ->where('course_id', $course_id)
+            ->exists();
+    }
 
 }

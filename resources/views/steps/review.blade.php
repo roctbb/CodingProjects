@@ -10,6 +10,11 @@
             <div class="card">
                 <div class="card-header">
                     {{$task->name}}
+                    @if ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin')
+                        <a style="margin-right: 5px;" class="float-right btn btn-danger btn-sm"
+                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/block/'.$student->id)}}"
+                           onclick="return confirm('Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены.')">Заблокировать</a>
+                    @endif
                     <a class="float-right btn btn-danger btn-sm"
                        href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"  onclick="return confirm('Вы уверены?')">Удалить</a>
                     <a style="margin-right: 5px;" class="float-right btn btn-success btn-sm"

@@ -31,6 +31,14 @@ class GeekPasteAPI extends Controller
             $user = User::findOrFail($user_id);
             $course = Course::findOrFail($course_id);
 
+            // Reject if task is blocked for this user in this course
+            if ($task->isBlocked($user->id, $course->id)) {
+                return response()->json([
+                    'state' => 'blocked',
+                    'message' => 'Задача заблокирована для этого пользователя в данном курсе.'
+                ], 403);
+            }
+
             $solution = new Solution();
             $solution->task_id = $task->id;
             $solution->course_id = $course->id;
