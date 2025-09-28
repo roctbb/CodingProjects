@@ -313,6 +313,18 @@ class TasksController extends Controller
         return redirect()->back();
     }
 
+    public function unblockStudent($course_id, $id, $student_id)
+    {
+        // Remove block records for this task/user/course
+        \App\BlockedTask::where('task_id', $id)
+            ->where('user_id', $student_id)
+            ->where('course_id', $course_id)
+            ->delete();
+
+        // Do not modify marks here; just allow new submissions
+        return redirect()->back();
+    }
+
     public function estimateSolution($course_id, $id, Request $request)
     {
         $solution = Solution::findOrFail($id);

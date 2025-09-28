@@ -231,6 +231,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/tasks/{id}/phantom', 'TasksController@phantomSolution');
     Route::get('/courses/{course_id}/tasks/{id}/student/{student_id}', 'TasksController@reviewSolutions');
     Route::get('/courses/{course_id}/tasks/{id}/block/{student_id}', 'TasksController@blockStudent');
+    Route::get('/courses/{course_id}/tasks/{id}/unblock/{student_id}', 'TasksController@unblockStudent');
     Route::post('/courses/{course_id}/solution/{id}', 'TasksController@estimateSolution');
     Route::get('/invite', 'CoursesController@invite');
 
