@@ -447,6 +447,8 @@
                                class="btn btn-success btn-sm">Очки опыта</a>
                             <a href="{{url('insider/courses/'.$course->id.'/report')}}"
                                class="btn btn-success btn-sm">Отчет</a>
+                            <a href="{{url('insider/courses/'.$course->id.'/blocked')}}"
+                               class="btn btn-warning btn-sm">Заблокированные</a>
                         </p>
                     @endif
 
