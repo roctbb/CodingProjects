@@ -89,17 +89,25 @@
                             @endif
                         </div>
                         <div class="card-body markdown">
-                            @parsedown($task->text)
+                            {!! parsedown_math($task->text) !!}
                             @if (\Request::is('insider/*'))
+                                @php $blocked = $task->isBlocked(Auth::User()->id, $course->id); @endphp
+                                @if ($blocked)
+                                    <div class="alert alert-danger" role="alert">
+                                        Задача заблокирована для вас. Новые сдачи запрещены.
+                                    </div>
+                                @endif
                                 @if ($task->is_code)
-                                    <p>
-                                        <a href="{{ config('services.geekpaste_url').'/?task_id=' . $task->id . '&course_id=' . $course->id }}"
-                                           class="btn btn-primary" target="_blank">Сдать решение</a></p>
+                                    @if (!$blocked)
+                                        <p>
+                                            <a href="{{ config('services.geekpaste_url').'/?task_id=' . $task->id . '&course_id=' . $course->id }}"
+                                               class="btn btn-primary" target="_blank">Сдать решение</a></p>
+                                    @endif
                                 @endif
 
                                 @if ($user->role == 'student' and $task->solution!=null and $task->isFullDone(Auth::User()->id))
                                     <h3>Авторское решение</h3>
-                                    @parsedown($task->solution)
+                                    {!! parsedown_math($task->solution) !!}
                                 @endif
                                 @if (($course->teachers->contains($user) || $user->role=='admin') and $task->solution != null)
                                     <p>
@@ -110,28 +118,33 @@
                                         </a>
                                     </p>
                                     <div class="collapse" id="solution{{$task->id}}">
-                                        @parsedown($task->solution)
+                                        {!! parsedown_math($task->solution) !!}
                                     </div>
                                 @endif
                                 @if ($task->is_quiz)
-                                    <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}"
-                                          method="POST"
-                                          class="form-inline"
-                                          onsubmit="checkTask(event, {{json_encode($task->id)}})">
-                                        {{ csrf_field() }}
-                                        <label for="text{{$task->id}}"><strong>Ответ:&nbsp;</strong></label>
-                                        <input type="text" name="text" class="form-control form-control-sm"
-                                               id="text{{$task->id}}"/>&nbsp;
-                                        <button type="submit" class="btn btn-success btn-sm">Отправить
-                                        </button>
-                                    </form>
-                                    @if ($errors->has('text'))
-                                        <br><span
-                                                class="help-block error-block"><strong>{{ $errors->first('text') }}</strong></span>
+                                    @if (!$blocked)
+                                        <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}"
+                                              method="POST"
+                                              class="form-inline"
+                                              onsubmit="checkTask(event, {{json_encode($task->id)}})">
+                                            {{ csrf_field() }}
+                                            <label for="text{{$task->id}}"><strong>Ответ:&nbsp;</strong></label>
+                                            <input type="text" name="text" class="form-control form-control-sm"
+                                                   id="text{{$task->id}}"/>&nbsp;
+                                            <button type="submit" class="btn btn-success btn-sm">Отправить
+                                            </button>
+                                        </form>
+                                        @if ($errors->has('text'))
+                                            <br><span
+                                                    class="help-block error-block"><strong>{{ $errors->first('text') }}</strong></span>
+                                        @endif
                                     @endif
                                 @endif
                                 <span class="badge badge-secondary">Очков опыта: {{$task->max_mark}}</span>
-                                @if ($task->is_quiz && $task->solutions()->where('user_id', Auth::User()->id)->count()!=0)
+                                @if ($blocked)
+                                    <span class="badge badge-danger" id="TSK_{{$task->id}}">Очков опыта: 0</span>
+                                    <span class="small" id="TSK_COM_{{$task->id}}">Задача заблокирована</span>
+                                @elseif ($task->is_quiz && $task->solutions()->where('user_id', Auth::User()->id)->count()!=0)
                                     @php
                                         $solution = $task->solutions()->where('user_id', Auth::User()->id)->get()->last();
                                     @endphp
@@ -160,25 +173,32 @@
                                                 $filtered = $task->solutions->filter(function ($value) use ($student) {
                                                 return $value->user_id == $student->id;
                                                 });
-                                                $mark = $filtered->max('mark');
-                                                $mark = $mark == null?0:$mark;
-                                                $need_check = false;
-                                                if ($filtered->count()!=0 && $filtered->last()->mark==null)
-                                                {
-                                                $need_check = true;
-                                                }
-                                                $class = 'badge-light';
-                                                if ($mark >= $task->max_mark * 0.5)
-                                                {
-                                                $class = 'badge-primary';
-                                                }
-                                                if ($mark >= $task->max_mark * 0.7)
-                                                {
-                                                $class = 'badge-success';
-                                                }
-                                                if ($need_check)
-                                                {
-                                                $class = 'badge-warning';
+                                                $blocked = $task->isBlocked($student->id, $course->id);
+                                                if ($blocked) {
+                                                    $mark = 0;
+                                                    $need_check = false;
+                                                    $class = 'badge-danger';
+                                                } else {
+                                                    $mark = $filtered->max('mark');
+                                                    $mark = $mark == null?0:$mark;
+                                                    $need_check = false;
+                                                    if ($filtered->count()!=0 && $filtered->last()->mark==null)
+                                                    {
+                                                    $need_check = true;
+                                                    }
+                                                    $class = 'badge-light';
+                                                    if ($mark >= $task->max_mark * 0.5)
+                                                    {
+                                                    $class = 'badge-primary';
+                                                    }
+                                                    if ($mark >= $task->max_mark * 0.7)
+                                                    {
+                                                    $class = 'badge-success';
+                                                    }
+                                                    if ($need_check)
+                                                    {
+                                                    $class = 'badge-warning';
+                                                    }
                                                 }
                                             @endphp
                                             <tr>
@@ -205,6 +225,7 @@
 
                 </div>
                 @if (!$task->is_quiz and !$task->is_code)
+                    @php $blocked = $task->isBlocked(Auth::User()->id, $course->id); @endphp
                     <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
                         <div class="col">
                             <div class="card">
@@ -212,52 +233,58 @@
                                     Добавить решение
                                 </div>
                                 <div class="card-body" style="padding: 0">
-                                    <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}"
-                                          method="POST"
-                                          class="form-horizontal"
-                                          onsubmit="sendSolution(event, {{json_encode($task->id)}})">
-                                        {{ csrf_field() }}
-                                        <div class="form-group{{ $errors->has('text') ? ' has-error' : '' }}">
-                                            <div class="col-md-12">
+                                    @if (!$blocked)
+                                        <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}"
+                                              method="POST"
+                                              class="form-horizontal"
+                                              onsubmit="sendSolution(event, {{json_encode($task->id)}})">
+                                            {{ csrf_field() }}
+                                            <div class="form-group{{ $errors->has('text') ? ' has-error' : '' }}">
+                                                <div class="col-md-12">
 
-                                                    <textarea id="text{{$task->id}}" class="form-control" name="text"
-                                                              style="margin-top: 15px;"
-                                                              rows="4">{{old('text')}}</textarea>
-                                                <small class="text-muted">Пожалуйста, не используйте
-                                                    это
-                                                    поле
-                                                    для
-                                                    отправки
-                                                    исходного кода. Выложите код на <a target="_blank"
-                                                                                       href="https://paste.geekclass.ru">GeekPaste</a>,
-                                                    <a target="_blank" href="https://pastebin.com">pastebin</a>, <a
-                                                            target="_blank"
-                                                            href="https://gist.github.com">gist</a>
-                                                    или <a target="_blank"
-                                                           href="https://paste.ofcode.org/">paste.ofcode</a>,
-                                                    а
-                                                    затем
-                                                    скопируйте ссылку сюда.<br>Для загрузки картинок
-                                                    и
-                                                    небольших
-                                                    файлов можно использовать <a
-                                                            href="https://storage.geekclass.ru/"
-                                                            target="_blank">storage.geekclass.ru</a>.
-                                                </small>
+                                                        <textarea id="text{{$task->id}}" class="form-control" name="text"
+                                                                  style="margin-top: 15px;"
+                                                                  rows="4">{{old('text')}}</textarea>
+                                                    <small class="text-muted">Пожалуйста, не используйте
+                                                        это
+                                                        поле
+                                                        для
+                                                        отправки
+                                                        исходного кода. Выложите код на <a target="_blank"
+                                                                                           href="https://paste.geekclass.ru">GeekPaste</a>,
+                                                        <a target="_blank" href="https://pastebin.com">pastebin</a>, <a
+                                                                target="_blank"
+                                                                href="https://gist.github.com">gist</a>
+                                                        или <a target="_blank"
+                                                               href="https://paste.ofcode.org/">paste.ofcode</a>,
+                                                        а
+                                                        затем
+                                                        скопируйте ссылку сюда.<br>Для загрузки картинок
+                                                        и
+                                                        небольших
+                                                        файлов можно использовать <a
+                                                                href="https://storage.geekclass.ru/"
+                                                                target="_blank">storage.geekclass.ru</a>.
+                                                    </small>
 
-                                                @if ($errors->has('text'))
-                                                    <br><span
-                                                            class="help-block error-block"><strong>{{ $errors->first('text') }}</strong></span>
-                                                @endif
+                                                    @if ($errors->has('text'))
+                                                        <br><span
+                                                                class="help-block error-block"><strong>{{ $errors->first('text') }}</strong></span>
+                                                    @endif
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <div class="col-md-12">
-                                                <button type="submit" class="btn btn-success" id="sbtn">Отправить
-                                                </button>
+                                            <div class="form-group">
+                                                <div class="col-md-12">
+                                                    <button type="submit" class="btn btn-success" id="sbtn">Отправить
+                                                    </button>
+                                                </div>
                                             </div>
+                                        </form>
+                                    @else
+                                        <div class="alert alert-danger" role="alert" style="margin: 15px;">
+                                            Задача заблокирована для вас. Новые сдачи запрещены.
                                         </div>
-                                    </form>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -271,5 +298,35 @@
         @if($zero_theory)
         $('.task-pill').first().addClass('active');
         @endif
+
+        // Re-render MathJax when tabs are shown
+        $(document).ready(function() {
+            // Initial MathJax rendering for visible content
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+
+            // Listen for Bootstrap tab show events
+            $('a[data-toggle="pill"]').on('shown.bs.tab', function (e) {
+                // Re-render MathJax for the newly shown tab content
+                if (window.MathJax) {
+                    var targetPane = $(e.target.getAttribute('href'));
+                    if (targetPane.length) {
+                        MathJax.typesetPromise([targetPane[0]]).catch(function (err) {
+                            console.log('MathJax typeset error: ' + err.message);
+                        });
+                    }
+                }
+            });
+
+            // Listen for Bootstrap collapse show events (for solution sections)
+            $('.collapse').on('shown.bs.collapse', function () {
+                if (window.MathJax) {
+                    MathJax.typesetPromise([this]).catch(function (err) {
+                        console.log('MathJax typeset error: ' + err.message);
+                    });
+                }
+            });
+        });
     </script>
 @endif

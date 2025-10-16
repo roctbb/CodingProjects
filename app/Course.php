@@ -96,7 +96,7 @@ class Course extends Model
     {
         $user = User::findOrFail(\Auth::User()->id);
         if (!$this->isStarted($lesson)) return false;
-        if ($user->role == 'teacher') return true;
+        if ($user->role == 'admin' || $this->teachers->contains($user)) return true;
         return true;
     }
 

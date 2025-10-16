@@ -69,6 +69,17 @@
 
                         <div class="form-group">
                             <label for="text">Текст</label>
+                            <div class="mb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText(this, 'text', 'fix_typos')">
+                                    <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText(this, 'text', 'improve_style')">
+                                    <i class="icon ion-android-create"></i> Улучшить стиль
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText(this, 'text', 'both')">
+                                    <i class="icon ion-android-star"></i> Исправить и улучшить
+                                </button>
+                            </div>
                             <textarea id="text" class="form-control"
                                       name="text">@if (old('text')!=""){{old('text')}}@else{{$task->text}}@endif</textarea>
                             @if ($errors->has('text'))
@@ -80,6 +91,17 @@
 
                         <div class="form-group">
                             <label for="solution">Решение</label>
+                            <div class="mb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText(this, 'solution', 'fix_typos')">
+                                    <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText(this, 'solution', 'improve_style')">
+                                    <i class="icon ion-android-create"></i> Улучшить стиль
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText(this, 'solution', 'both')">
+                                    <i class="icon ion-android-star"></i> Исправить и улучшить
+                                </button>
+                            </div>
                             <textarea id="solution" class="form-control"
                                       name="solution">@if (old('solution')!=""){{old('solution')}}@else{{$task->solution}}@endif</textarea>
                             @if ($errors->has('solution'))
@@ -143,7 +165,7 @@
                                 @endif
                             </div>
                         </div>
-                       
+
 
                         <button type="submit" class="btn btn-success">Сохранить</button>
                     </form>
@@ -161,6 +183,57 @@
             spellChecker: false,
             element: document.getElementById("solution")
         });
+
+        // YandexGPT text improvement functionality
+        function improveText(clickedButton, fieldId, action) {
+            const editor = fieldId === 'text' ? simplemde_task : simplemde_solution;
+            const currentText = editor.value();
+
+            if (!currentText.trim()) {
+                alert('Поле пустое. Введите текст для улучшения.');
+                return;
+            }
+
+            // Store original button text
+            const originalButtonText = clickedButton.innerHTML;
+
+            // Show loading state only for clicked button
+            clickedButton.disabled = true;
+            clickedButton.innerHTML = clickedButton.innerHTML.replace(/Исправить|Улучшить/, 'Обработка...');
+
+            // Make API request
+            fetch('/insider/yandexgpt/improve-text', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    text: currentText,
+                    action: action
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show comparison modal or replace text directly
+                    if (confirm('Текст был улучшен. Заменить оригинальный текст на улучшенную версию?')) {
+                        editor.value(data.improved_text);
+                    }
+                } else {
+                    alert('Ошибка: ' + (data.error || 'Не удалось улучшить текст'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при обращении к сервису улучшения текста');
+            })
+            .finally(() => {
+                // Restore only the clicked button state
+                clickedButton.disabled = false;
+                clickedButton.innerHTML = originalButtonText;
+            });
+        }
     </script>
 @endsection
-

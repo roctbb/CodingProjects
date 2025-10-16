@@ -10,13 +10,25 @@
             <div class="card">
                 <div class="card-header">
                     {{$task->name}}
+                    @if ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin')
+                        @php $isBlocked = $task->isBlocked($student->id, $course->id); @endphp
+                        @if ($isBlocked)
+                            <a style="margin-right: 5px;" class="float-right btn btn-warning btn-sm"
+                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/unblock/'.$student->id)}}"
+                               onclick="return confirm('Разблокировать задачу для этого ученика?')">Разблокировать</a>
+                        @else
+                            <a style="margin-right: 5px;" class="float-right btn btn-danger btn-sm"
+                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/block/'.$student->id)}}"
+                               onclick="return confirm('Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены.')">Заблокировать</a>
+                        @endif
+                    @endif
                     <a class="float-right btn btn-danger btn-sm"
                        href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"  onclick="return confirm('Вы уверены?')">Удалить</a>
                     <a style="margin-right: 5px;" class="float-right btn btn-success btn-sm"
                        href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}">Редактировать</a>
                 </div>
                 <div class="card-body markdown">
-                    @parsedown($task->text)
+                    {!! parsedown_math($task->text) !!}
 
                     <span class="badge badge-secondary">Очков опыта: {{$task->max_mark}}</span>
                 </div>

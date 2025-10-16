@@ -1,0 +1,5810 @@
+roctbb@ruvds-f4lvp:~/GeekStorage/images$ cat dup
+dupes.sh        duplicates.txt
+roctbb@ruvds-f4lvp:~/GeekStorage/images$ cat dup
+dupes.sh        duplicates.txt
+roctbb@ruvds-f4lvp:~/GeekStorage/images$ cat duplicates.txt
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5ae44b11-460a-41d6-915a-ca7a9f1ffce1.idx
+[DELETE] ./b01d0246-318f-4e05-a042-c526bf601ed2.idx
+[KEEP] ./c1e1e641-e9de-4b45-b977-ff34bcc60b13.idx
+[DELETE] ./ec7195f6-4d80-4910-9576-1f6b1bb1fce2.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./72facfba-e72f-4683-965c-a5473b891754.jpg
+[DELETE] ./a9c8e108-6f52-4efe-aba7-56102ed28c53.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./a1f8aa40-c637-4ed7-8190-b5244ab26b8c.gif
+[DELETE] ./a5b32541-b776-4588-ad46-8b79b1bfa481.gif
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./51da47d2-bbb9-4d90-8484-35b31b1cbc29.ipynb
+[KEEP] ./ff43995d-cdf7-4da1-a441-9cc79c6c172b.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./84a91a99-99e5-4147-a900-45199db39f00.jpeg
+[KEEP] ./e317f498-78a2-4851-b942-b7d1b4c0137a.jpeg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0c3bc41c-5216-4069-a1c3-22749969f126.idx
+[DELETE] ./27f291ca-c449-4b0a-99b6-1457a15afb5f.idx
+[DELETE] ./ba852e6d-0a42-4cd0-9547-a28d3ff3265f.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0f75e79e-651a-4428-b1aa-7c150425e3d1.idx
+[DELETE] ./2e136940-a3c2-4687-a0ff-fcb856c17cc3.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./62a9fcc5-23ed-4e64-b7a6-9aff838fadf6.csv
+[DELETE] ./e470c1e7-60a3-49fa-9e0e-c53b40977d99.csv
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2322796b-071b-4d4d-ab90-c30594aca8c4.png
+[DELETE] ./365280f4-c5b8-4435-8554-7913df736349.png
+[DELETE] ./502baaad-9de6-4ea7-90bd-0b6bac09cf51.png
+[DELETE] ./bd5204b7-d978-4426-a592-7e433f8026fe.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./8b4fadb2-c803-4b6c-b26a-c70fb14763d3.idx
+[DELETE] ./990cbca4-d5e8-4b43-9067-7f9028af7b8f.idx
+[DELETE] ./b595b504-6833-4d3e-9b06-41248451ef2c.idx
+[DELETE] ./bdb233d2-4559-4740-acc8-9632d3fff22a.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./39bdd77c-e2cd-41fd-afda-4957a6676119.idx
+[DELETE] ./7ca247d9-981e-4784-88bb-39f862f069fb.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./8b657c3e-043a-4359-b49f-279fa60cdf69.ipynb
+[DELETE] ./8e1d37da-6eea-4e43-a1f1-24359cfbe37b.ipynb
+[DELETE] ./98f49234-9b90-4bd1-b74b-3f75870a85ab.ipynb
+[KEEP] ./fe90c376-8c88-4ef9-9f06-8b21f2251125.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1c60468f-5949-48ce-bf27-4f6d3173c880.idx
+[DELETE] ./3fac2519-308e-4d9b-a29d-c874e8a46235.idx
+[KEEP] ./9524104e-f801-4e15-aa87-b78434a0c5e3.idx
+[DELETE] ./d7650021-b981-4579-81ef-0a9d44708d54.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./05f58142-4ecb-4c76-a403-74cb188770b4.png
+[KEEP] ./63af64dd-c48f-4b18-831d-65203c494774.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./035df07c-7b9c-49cf-8e08-b397fb113512.png
+[KEEP] ./59a9dbd5-105d-4fd4-b40f-c4686c7304d4.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./aeb55178-e52d-4dc6-8dd1-9842e868703e.jpg
+[DELETE] ./e030117b-87f7-4806-b605-e0b61d369a9b.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./432408f7-16ab-4561-8ec4-9a7f21d0ace9.idx
+[KEEP] ./4fb6cade-a705-49dd-85dc-63fe99aeb1db.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./32e605f0-4cd7-4cd5-b8e6-23e149a7292a.idx
+[DELETE] ./5f4ab9a0-c5c7-4bfa-a21f-4fb7cff83324.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./05099080-a8ef-4198-93a7-1899a55efea7.py
+[KEEP] ./4bdd65d3-7979-4343-a2ae-2cff60495b04.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./b3fadee8-c190-4b52-88e6-7d2570dbd8de.png
+[DELETE] ./f2559a83-3b8c-4286-822b-bf591fd120b1.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./359a4f13-d6a2-411a-a70c-6fadc9e1d3ea.idx
+[DELETE] ./f2b35b98-b769-45d3-a961-61b23aaede7f.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0931951d-3bec-42ae-8860-019c8fc8fc2c.idx
+[DELETE] ./0b247ba6-6d1c-4ad1-b6fa-6837cd390b5d.idx
+[DELETE] ./b55f2996-8ef0-4d30-bb05-4a7442e94f1c.idx
+[KEEP] ./ef8e0c05-03cf-4af3-9fd6-2c6f6aad5511.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a7351377-20cc-498e-b926-c4483b06fffa.idx
+[KEEP] ./b58c9d59-dd1e-4932-98ce-88d2988b713c.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./00d47945-43f7-447e-8e12-6dff879b0b59.sample
+[DELETE] ./dc26b60f-12d6-4591-99a5-96bf2e0161b3.sample
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./538da754-78f9-4b8c-bc79-9196ead78bd9.idx
+[KEEP] ./ddaaf572-ba92-48e0-bc94-9815a4cc14bc.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3799fc1b-a071-4baa-894f-08f9f8e6278a.zip
+[DELETE] ./cc73461b-971e-4d32-8f24-8590c607bd3b
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./124fe1e7-0436-4040-9c63-1b87694d2bb3.idx
+[DELETE] ./89db2637-c407-43aa-b5a9-1018e1333c98.idx
+[DELETE] ./bdeffd1a-fd51-40d1-863a-d8803416c6ac.idx
+[KEEP] ./d9ad2184-fcd4-4893-b784-58c85d7679c1.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7efca1d6-cd1c-4b8b-af1a-b3ff0e8d78f3.idx
+[KEEP] ./98cb79c3-f0d3-42af-bb77-ae84d689fd2d.idx
+[DELETE] ./a5922533-9371-4f45-91ff-02f514cefe48.idx
+[DELETE] ./fe0fe752-46eb-4f42-b49f-95312d12abb2.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./79aa5089-8292-425c-aa96-e05c44b7b2f8.xml
+[DELETE] ./bceeb1d4-0108-4656-b06f-5266f2ec11c3.xml
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0c7e906e-89c2-407a-85f9-68ae9d7969f1.idx
+[KEEP] ./b895fae4-4175-4a8a-a7d1-1fe6d8dc5bdc.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./d531e776-c3f2-4dd6-9e12-29b7bffa9944.png
+[DELETE] ./e8958b82-ff56-4063-b6a4-6ee7d15b1d6a.png
+[KEEP] ./f23b73da-9d7f-409d-869a-830bc6af58fc.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7b40b8d5-cc13-4d6b-a024-6ab261198475.jpg
+[DELETE] ./a005a5de-8601-4fee-bd51-c4beeea0f507.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1718ace9-73d0-403b-a005-992d117f26e5.zip
+[DELETE] ./ac1f17ed-1aee-4724-a2b5-6fc70fb31f69.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1346d8f2-a114-49ad-9981-a45869eb6b2a.png
+[DELETE] ./87f62dc1-9f68-43b0-90a3-8555a66a4069.png
+[KEEP] ./9c0bf494-7d55-4abb-8229-afa96ecd0936.png
+[DELETE] ./e5cc78c5-1e98-44bd-ac46-d3b8eaa7e8f6.png
+[DELETE] ./ecdf7d7b-935c-4ef0-84f9-82bbf5976ffd.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0f37ad7f-3d53-4202-b0fa-59e4d0b38b63.PNG
+[KEEP] ./9218ef1f-3346-4732-b782-d97e0b65bcc8.PNG
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./8643d111-50c1-4ee0-8c31-98a4b852363b.idx
+[DELETE] ./905325c7-1b3c-409c-bfe3-3716021858c4.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5cf8c608-90f4-4414-a21e-504eb0b96ca9.png
+[DELETE] ./9978bf42-19ca-4f8b-a390-acd321d1264d.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./06cd950e-7413-40ac-887c-88847d4ccaa2.png
+[DELETE] ./7488ce55-ac0e-470c-9ab8-5e9b055ce5a4.png
+[DELETE] ./83c87247-775d-44a5-9fa0-e0cb5df03c8a.png
+[DELETE] ./94fa117e-4596-46a2-8ad0-fe37cdea3ff9.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./71a75773-2e4a-46f7-9d79-6627d8b2d6f7.ipynb
+[KEEP] ./f9de12d1-0249-499b-8ba3-689dcff71a02.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1820a560-0a67-4eaf-9a17-c2f1f7e1fcea.idx
+[DELETE] ./77e3e143-1e21-476f-90f5-bebf8be46cb9.idx
+[KEEP] ./d7936b26-8f39-4e27-a575-7b2a78fb5693.idx
+[DELETE] ./fa515bbf-3dd0-4d91-9e29-6f01805b777b.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1c31452d-023b-4814-bf66-9dbd691f3c3d.idx
+[KEEP] ./541a4fe5-1f74-4bec-8218-72bacc4c86d1.idx
+[DELETE] ./8a70d0be-4b76-45cc-b02d-e5947fe06de7.idx
+[DELETE] ./fd058ff6-54a0-489d-a76a-b32b1c00cc9b.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./9766f25e-8f6b-4d09-9cb8-3e8a6feafbe7.sample
+[KEEP] ./a948279d-4a06-4b7f-859a-4b418bcce6af.sample
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./60245053-3362-458a-9ae1-fcfa95b39e43.py
+[DELETE] ./94b589f9-0548-49e1-bfb4-6bf5f59ba9fd.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4a584019-4e69-4b59-ba56-7bbda0ff236e.idx
+[DELETE] ./a18e27c5-3e08-4f6f-9521-20b57e3fb679.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1c9cdd2f-024f-45d8-87d8-05b5a0c689fb.png
+[DELETE] ./5f34c4eb-bc6d-4079-9ef8-6a6de8d756e1.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./824f8162-e0d3-4334-9da0-6e05b2db4827.html
+[KEEP] ./c36c3722-eb36-4556-a7c9-3cd522e2126a.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./c5dfda59-aa66-4b03-b919-a0739b0a5734.ipynb
+[KEEP] ./cf4f89af-3d14-4e30-a278-2558a86e4ed3.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5972984e-9241-4eb5-9168-d20d29add1bd.idx
+[DELETE] ./6e765f72-9bc2-43cb-bd34-95b29e75480f.idx
+[KEEP] ./a6fc75bc-f803-415f-bcdb-99981462f5ac.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1d3eb466-c7f6-4f3b-8147-4cbfb763c510.idx
+[KEEP] ./782733ad-5172-4614-84d5-1ea5d23999a3.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0b860bc9-bad9-4a00-b8e1-76f4204786e6.png
+[KEEP] ./a03d02b5-cba6-4100-9c4c-bfe229843edb.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./07963247-151d-41d1-a79b-cef0ee6e0332.png
+[DELETE] ./4a6fdcd6-6477-40b3-91b7-12fb87a6baae.png
+[DELETE] ./937b546e-0093-4a7c-8bc3-4cd9698c741c.png
+[DELETE] ./a5041236-ae72-4fe6-9969-e4c52e51caac.png
+[DELETE] ./b18e88ec-6e9e-4771-9aed-c4c15e367593.png
+[DELETE] ./c0755305-87e1-449f-9155-38560ccc6c96.png
+[KEEP] ./d3bec093-44a6-4ce7-95bc-743c6a9f8df5.png
+[DELETE] ./ed934b74-688a-4c55-bc85-2da698ed0b12.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./71605b3e-b447-4da4-afe5-644675ebc557.py
+[DELETE] ./83ef154c-196d-48ca-93f4-39676c014904.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./247e3538-ed50-4802-8591-da4702b88760.idx
+[KEEP] ./420c6e58-6ef6-4bb8-8086-c7a1d3b77740.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./a9215cbe-8174-40d4-8beb-ec18974e4a81.h
+[DELETE] ./da57b48c-fb76-4906-b2d0-37aa7aad865f.h
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0080f39b-ffb1-49e9-8c9f-7eda48cfbc7c.png
+[DELETE] ./4277ec47-6f29-44a3-b201-b4b39678c1f0.png
+[DELETE] ./8eb3ac5d-b309-49c8-9351-92222c483afc.png
+[DELETE] ./baee7a98-b856-42ff-8116-b9b68806efc2.png
+[DELETE] ./e14bb8d8-e8c9-4f04-9d75-dcb91bbafd98.png
+[DELETE] ./e50b7876-9428-4d9a-8e5e-4451bcf2ca43.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1b07b4b0-d1ae-4e81-84b2-5caa2761fb58.ipynb
+[DELETE] ./586cfcd8-fa1e-4f89-80ce-0d681dc15d6c.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1ed145c9-6631-4f89-8a0b-6a582f3f8294.idx
+[DELETE] ./3d379e31-e6b1-4916-bc21-9392c989f1d7.idx
+[DELETE] ./54f1a1ea-0de1-4692-87fb-2fe1f1944cc7.idx
+[KEEP] ./ec00b715-e6d6-47c7-ade5-36d59f2e86f8.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3ac94884-e3ef-4f13-8d5b-426c79efca1e.idx
+[DELETE] ./6264666d-6c7b-4ef7-bd42-dc14db6d15a5.idx
+[KEEP] ./cd9eb24c-4314-4265-bd9b-6c9066b67a7f.idx
+[DELETE] ./ea9dc55d-c209-4140-9943-d4d8b2c7a4b7.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0172c0a2-2af0-401b-8467-616dd5cb9ad5.idx
+[DELETE] ./5c6843b8-384a-43e5-8dc0-20d1ce33b1cb.idx
+[KEEP] ./6a7c59af-a73d-42e2-a55c-fcc116b5599e.idx
+[DELETE] ./989bef5f-1ca8-479b-9aae-a52b30e7b383.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./26e1c8ac-eed0-4703-b785-513cff6f4dba.png
+[DELETE] ./d28cbedf-78e8-4866-bec0-db44a1aebd88.png
+[DELETE] ./d9116c2c-3207-4244-8172-160e172bb513.png
+[DELETE] ./edf7a6aa-6ee5-45d2-b85a-33da8c0ed413.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3109f685-8e8f-4b4c-b3a2-92555557022f.idx
+[DELETE] ./4c617109-8283-4ada-99fd-6058973070b3.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3119173c-b747-46be-8aaa-d94edd2d2b46.ipynb
+[KEEP] ./f82905cd-d3fa-46b1-899d-1e4dd8a82597.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./44b00490-343c-4bd5-8509-5e7caa079cb0.o
+[DELETE] ./822ce5bb-cc85-4f00-9090-3b683fdeea0c.o
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./d1cdbdca-8475-4d86-8267-050e2f1fed11.txt
+[KEEP] ./d84d5aea-6aaf-41ef-90cc-0a894584d7ab.txt
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./9b58538b-bc2c-4f66-a75c-b1f491e0edfa.png
+[KEEP] ./9ee3d5b8-36b7-444d-8019-03fc05919821.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./599ebce9-ba06-4450-8795-a7ce770a360c.idx
+[DELETE] ./5f41518d-11a7-4c92-8e5e-e56e41327189.idx
+[DELETE] ./9e08b0ac-ed1d-46e7-9e54-f715632b438d.idx
+[DELETE] ./eb9574ca-36fc-45b7-898e-e575776a593e.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./92019047-2564-4fc9-91c4-d623a2382c9b.png
+[DELETE] ./d21e0d7e-b8f0-4471-be32-36dbc5bef2d1.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./692f2d87-8179-47ba-afa7-d4b409d1b948.idx
+[DELETE] ./8290f14f-2ad2-4c88-b4fa-16538c2ea308.idx
+[KEEP] ./8d1aaef6-4859-403f-beab-999ea8b83348.idx
+[DELETE] ./bed5750a-3566-4d26-a280-f305c503356e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./08326ca0-f47d-48f0-889c-16d2217d5d6b.idx
+[KEEP] ./7a28799a-b915-4b78-a282-252e6a90647c.idx
+[DELETE] ./95a452af-9015-471f-8813-1965aab21889.idx
+[DELETE] ./a7dd7b03-6798-4679-aeb9-bb34b7fbe8f1.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7086e6f7-5ff6-4585-ab1d-80c5ab41c036.png
+[DELETE] ./855e2ab4-d723-40e7-a385-65ddefdd9652.png
+[DELETE] ./85b0355f-dd9d-4e10-b5a1-1d89446a6871.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./561a453a-058a-456f-aa12-7db2f6c3dd36.ui
+[KEEP] ./e8acbf8f-d3a2-4d47-afa0-8a3c71b77b24.ui
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./09148baf-bfa0-41c1-87af-47a287bf13c9.idx
+[KEEP] ./95c5f8ec-9d51-4f67-9872-be3a10da2950.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5ceaeff2-8a66-4375-b414-ebc76ec51b4b.idx
+[KEEP] ./af033201-2b77-4214-b61f-ed57cca69d1a.idx
+[DELETE] ./cdcd5d71-6fdf-4f3f-8d50-40435545f017.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./10d01aca-30df-4b48-a3ee-091c0590219b.idx
+[DELETE] ./541726a5-546b-42be-9cf4-761ffb857cb9.idx
+[DELETE] ./9d410ffb-bd53-4cb7-b2a6-20bb3816c617.idx
+[DELETE] ./ca114057-9d56-4721-b897-c68f8fb781ae.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1899664f-40bb-4c72-8a72-5fde04618faa.o
+[DELETE] ./7845aed6-cd26-4c3d-a2aa-47e2fcf04866.o
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5943e5ab-50cc-4179-a71c-56b3aed6cca7.png
+[KEEP] ./d5cb9db8-7bcf-436d-948d-d9d0a4c67fad.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./8f1cbe8b-72d9-4bc7-9a05-c8975e75ddaa.xml
+[KEEP] ./a6749b52-25eb-4576-8601-ba80deba70a2.xml
+[DELETE] ./b5bb797b-716c-42da-a13d-d9b9f2611c1b.xml
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1a2ff393-344d-4c18-8cee-d7845bbc306a.pdf
+[DELETE] ./1f94af12-278b-48cf-906d-03b02989a28e.pdf
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1fe5a0b4-114c-4911-93b2-2fbca79cc665.idx
+[KEEP] ./3b706df4-e33f-4f60-b869-51fa8b3ed56f.idx
+[DELETE] ./94ad734d-4b52-42c7-b72f-cd32deee3170.idx
+[DELETE] ./e717e88f-e76d-43fb-922b-3b9f72de86c4.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./c7ef56e4-4f90-4361-a89f-43c040d3eb22.png
+[DELETE] ./c94ab965-9ac4-4723-9476-60b61fb84fff.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2a3b270c-3a52-442f-92ea-8e26271e245d.idx
+[DELETE] ./76fb6cbb-2f9c-425c-a500-44e81b0440c7.idx
+[DELETE] ./9917a6bf-76cb-4ed6-b8bc-27d6343dab40.idx
+[KEEP] ./a81b8b50-95e0-48a6-a291-f4dd408f8058.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2bf41c2a-2e4a-4405-a53c-8109ee4aab18.idx
+[DELETE] ./55db8a9a-ec13-4dca-ad83-8cc937d487c5.idx
+[DELETE] ./99aa31c6-f686-4c85-a45f-5e6e7a1d4f5b.idx
+[DELETE] ./b38d898b-79b9-4e64-bd26-97585dcaf48a.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./089de053-7003-47f4-bcc3-0416bb5945dc.txt
+[KEEP] ./2356a3e9-69df-4fbc-a561-25eb3bea51ed.txt
+[DELETE] ./3d7e7f48-71db-49f5-8bd4-ee76970e637d.txt
+[DELETE] ./b69556fa-9609-4f0c-aecf-00872543ea30.txt
+[DELETE] ./bebf9b88-5cd6-46a4-a9fc-93fc19b455aa.txt
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./22327969-2079-4f31-8d6d-e8339ac5badb.idx
+[DELETE] ./3915b05d-d59d-4a86-bb8b-253392085652.idx
+[KEEP] ./b5f537a5-6672-4432-951d-fcc73c82c2c3.idx
+[DELETE] ./c6057ceb-9b5d-444a-b9b5-885de5e75417.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5996df3f-1155-4c37-8616-aecc41cdc44f.png
+[DELETE] ./cad9a58a-5aa2-4527-87a2-13d9675ae3db.webp
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3aa0076a-ed0b-4dad-9498-3316ffb22608.html
+[DELETE] ./4af24ad1-b6a0-4b4e-acb8-c86c9241eb3e.html
+[DELETE] ./9a78b695-4e45-4693-a5aa-b86e0090309b.html
+[DELETE] ./9ddd3607-5560-4fc3-a0d9-55fea07746ec.html
+[DELETE] ./ddeab0de-820e-4c51-826f-de27acc207f8.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./02243319-42a5-4d84-9a75-7fcabaacfc96.wav
+[KEEP] ./4f0b0b45-7688-457a-a32e-7c0c0ec80493.wav
+[DELETE] ./f35482c6-be3e-41e1-88c3-200f7758ecee.wav
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5e3ff0f2-3fd1-4f1f-90e7-8c6fc97957ec.png
+[DELETE] ./73c9f67c-9b01-4c93-bd70-f8db53479783.png
+[KEEP] ./9be0b7e4-ea20-49cb-ace6-96bb5b6d1aeb.png
+[DELETE] ./f7e92f31-9b2c-46d7-ab98-b19be51b1484.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5a6ea889-c4c1-456d-9aaf-f0f1552e21b4.idx
+[DELETE] ./7d12887c-1f54-49bd-a91f-357f8169b094.idx
+[DELETE] ./9fd72c49-2910-451a-8424-41ab4ba67d52.idx
+[DELETE] ./b19946a6-702c-4e54-8ed8-b642440da566.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3ecb99b0-1e74-4821-9e91-0e76da5ee0dc.rar
+[DELETE] ./583afc5f-6950-4256-867b-35c77a37a9e1.rar
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./812f478b-a1de-4a9b-aa82-8ad84110e39e.csv
+[KEEP] ./dfcbef50-3a17-4255-b58f-5c45333a36ac.csv
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0c090e3e-5d57-49e3-98b6-5e2e213bbe98.png
+[KEEP] ./b8f9afb2-880e-4591-a705-dd9b8f85f50e.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7e6ce89a-aaec-4d0a-8033-a65d8fa78358
+[KEEP] ./a8c9b522-14ee-4801-8d5c-49870f69d351
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./492afe74-0780-4c6e-a651-30162a5f7108.zip
+[KEEP] ./96d4fdb5-8007-4c27-af66-0096e942dd60.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1600b76c-a09e-48bd-9382-39fbe8410c2b.idx
+[DELETE] ./35def19b-f6aa-4ba1-bf20-c5bd7f7954ee.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./27205ab1-d7e4-40c7-a9f2-ebcbf62bcb71.idx
+[DELETE] ./a2f60778-5782-4bb6-b0ee-4e8228406958.idx
+[DELETE] ./b211333a-d30b-4186-ae15-81587d9a4df4.idx
+[KEEP] ./b45ca256-70ab-4fd8-bc81-ae640ab51737.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./55594482-68a4-41a9-a9fa-b77652631d41.py
+[KEEP] ./8cdc8824-a8dc-40cd-81b0-41b44e110c15.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./d2533226-45f2-4c1c-9b72-460b75bf0254.py
+[DELETE] ./e9902590-aae8-464f-aeb8-679e5e9a0a03.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./048acdee-ba89-492a-baf4-995b27ce1d4c.idx
+[DELETE] ./7d71cebe-3c1d-4547-a7fa-602ee7b5b6f3.idx
+[KEEP] ./7ed25f89-fd46-41fc-897f-78c128e30340.idx
+[DELETE] ./d495d8b8-3802-4f51-8364-35d3c8cdebd9.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./20bcb54f-08d6-4f53-9ccd-bde7d0e1cfd4.py
+[KEEP] ./c00e907b-6c00-4cf9-aaae-d6a36871a00b.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4bbe3333-7889-4167-8cc5-f44ce55bd5e8.Release
+[DELETE] ./50a2af8d-5e11-4c9e-ba2f-e7152bc26fb8.Release
+[DELETE] ./f6404e3b-d75a-4cce-bf5e-52d5cecc194a.Release
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./37935f20-d5cc-4162-81a6-0cdf3dbe0ca4.idx
+[DELETE] ./4e4c63e5-a6b7-4e94-a359-d3faa2740520.idx
+[DELETE] ./6fc54e27-bc94-407d-8032-d679a263d9c8.idx
+[KEEP] ./806aaa5f-f3a0-471c-859b-3ea4293dabb9.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./33d61445-8185-4d4f-8731-424c6eae8c14.png
+[DELETE] ./45f14dfc-3a6a-4374-b215-efba32aa8360.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3fe1033a-fc27-418d-90c0-24829abcaaf0.idx
+[DELETE] ./64e6a2d2-972c-43d5-b48c-792b40361ffc.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3b43048f-019a-49e1-b23b-18f54345a1a0.py
+[KEEP] ./3bf94843-d5f8-4f43-89b9-807e040e4fdc.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./40b28b98-4fd7-4e31-a3a2-648b0ee0eb62.idx
+[DELETE] ./a91b65e5-69de-42aa-a38c-d486849d8094.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./062485ff-e676-456b-b9d4-813f9aeb2f25.py
+[KEEP] ./b5e828eb-21e8-4719-8f40-c82fc4d4ee80.py
+[DELETE] ./d58c045d-5607-4fa7-9cdc-4406a5fc7873.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./a4a33045-63cc-4ce2-a10d-8aa1530cc3c5.idx
+[DELETE] ./b6e3b847-0f03-492a-8fb4-450b14b37514.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2303d283-f009-4e4b-bf1c-c983bbbcd5bb.png
+[KEEP] ./c8989f7e-c472-499d-9eba-c111d0c36f74.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3b109158-3a8c-45ce-80d2-eba6c5738791.ui
+[KEEP] ./4e00646d-ea06-4eb9-a84b-11bce58f852a.ui
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./098a80ee-53df-4a96-bfe3-499bce1ffa5e.idx
+[DELETE] ./60f3fc66-fdd2-4a73-86af-92096fb37c32.idx
+[KEEP] ./72471fb8-0676-4819-945d-8c0dc0529378.idx
+[DELETE] ./f83c2686-3ad7-47de-bf69-2ad94237a945.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4c410d78-ba28-4f3a-8d6d-93423b8ba3d3.idx
+[DELETE] ./5d017812-5fbd-4c39-aa40-22f15545e130.idx
+[DELETE] ./72658130-7b5c-42e9-ab4a-2ab0b97f9f3b.idx
+[KEEP] ./eda4acb4-aff9-4b77-bbf8-fdfcf91428ae.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./582ec308-41ee-4427-8a00-3cbfa4f4b0e7.png
+[DELETE] ./dbdde67f-0c95-4f97-adac-abcd8412b3af.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./77264982-6fb7-4908-842e-1a525584e86a.png
+[DELETE] ./ba517261-1afe-4634-b76d-b72d60a5d77e.png
+[DELETE] ./d23e214c-1937-4633-9b09-a9faf2c33e33.png
+[DELETE] ./ebfb3f6a-d3ba-4c0f-820e-00d3217715f7.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1a4f83c6-29e5-4ede-af61-bec160b103bf.zip
+[KEEP] ./b2d6dc1c-926e-4adc-b409-cb9b595847b0.zip
+[DELETE] ./c8caa820-e45f-497f-84b6-35248a8a59fe.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5c43c461-faac-4a58-a15f-39f60daee9b0.idx
+[KEEP] ./b5546e3a-a562-4de0-bd88-2f6f3d6cd573.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./b6f7d3e3-b60b-419f-b716-1b6ecb6b762a.zip
+[KEEP] ./bf8e912e-7ce1-4b41-bddb-325db06b4daa.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1c491c54-b815-4a1e-8edc-d4ecfe5c2723.idx
+[KEEP] ./60496e5e-8117-4be4-87f9-2f73cd2d0ce5.idx
+[DELETE] ./afd60f1a-d674-40ed-9d8f-087d944bb70c.idx
+[DELETE] ./e5840b11-7eaf-4550-9aa5-3b3c2d37b867.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2fb65dec-ee2a-4d34-9c0d-33ea7b1a57cd.idx
+[DELETE] ./5d679b63-6b20-4c99-9949-b6b5054a382c.idx
+[KEEP] ./852c8929-3bf5-454f-b3fa-e6233f8e3ae7.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./da2acc68-d3b4-48bb-bb6b-745ef71fecb2.idx
+[KEEP] ./ddd5456b-4d7c-4f08-b19f-4098957e47cf.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./20bc9b7d-2709-4def-9104-4830719ba583.idx
+[DELETE] ./42aabc77-d9eb-4cd6-a2e4-54f7cfacd840.idx
+[DELETE] ./d45d3842-7c5d-43e6-8f9b-fee49e8c2ad7.idx
+[DELETE] ./fc531fee-e52b-45b0-b30c-d447a76185ac.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a1862395-513b-4ae2-9984-671e20495607.rar
+[KEEP] ./c2de79ff-b697-45f8-bf33-841d9a8202b4.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./074c4113-59b5-4cbc-8bde-b656f0fc9d53.py
+[DELETE] ./9c8e1371-b851-48f8-ab0a-dacdfd573412.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./84742495-9999-4ad0-a619-32d84221fdd3.png
+[KEEP] ./f2570acd-edd9-4692-904f-15f72c5134fd.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./79c38a47-ad93-48f1-b8b8-cbb52e3d22c9.idx
+[DELETE] ./cce705d9-cdce-4f32-9603-207f8796b8e7.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./16d34630-d400-44db-a1f4-f769d2d48d0b.idx
+[DELETE] ./c74b797d-900c-4a8d-b178-3fa9ceb12bda.idx
+[KEEP] ./fb85a21c-286a-4247-9d4b-84e1cdf13ff1.idx
+[DELETE] ./fc3fa246-6d6a-4f97-a477-3fd51d22eb10.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./129b5c47-6bc3-4a8e-bf87-3519bb2018c9.jpg
+[KEEP] ./bf74f636-8a7c-42a3-9c37-08eb8a24100f.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./76f22be8-8703-4851-a8e3-320eded23c73.idx
+[DELETE] ./c36b1453-0185-4a25-b22f-a5502f179e18.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./030c6cc0-3422-4b06-968b-3490e938fe3c.png
+[KEEP] ./39dfcd1a-3d6b-44b7-9c0d-53159b4650a2.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0ff1f6cd-418f-4db4-bc6b-4ecfcab4caee.idx
+[KEEP] ./4f6da80b-28b1-49cd-b2df-60fd8012f5f6.idx
+[DELETE] ./ae1205be-90f9-4dbf-8e95-e2243846ac9b.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1fa110ae-edae-47e8-9623-f39813d2b6d3.idx
+[DELETE] ./3e3b0e01-8305-435f-9232-56011ead92cb.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./04d0bd92-53a0-45a5-aa3f-79820fce6408.idx
+[DELETE] ./26460f67-98c0-4d72-9220-620036d66b10.idx
+[KEEP] ./3a1c066f-38e3-40f5-a1ed-f52d6f171391.idx
+[DELETE] ./a2f0783c-2db2-40b2-996b-657fcd3666ff.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1b02df66-928c-4253-ab95-e3b7b756ba94.png
+[KEEP] ./a90bf511-ce4a-47c8-8172-be3deec8a682.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0e0afcb9-5783-4045-bc93-c6030daa9368.idx
+[DELETE] ./317d2992-d1eb-460d-aa25-5ed03cd496c6.idx
+[DELETE] ./3c9eb5c5-8aa5-4eba-895f-e5020183e5c0.idx
+[DELETE] ./bf83c8c4-4749-4dc0-9261-127321f571fa.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./114a17f5-9e2e-43f6-bc2a-d3d7c0ac5e05.idx
+[KEEP] ./19fd015d-6c28-4842-8cd4-ce1bfa4414d5.idx
+[DELETE] ./48e8ffbb-5f35-4608-915b-dcc574085283.idx
+[DELETE] ./ca10f3cb-a19a-42e4-bb06-d4a273ef7721.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3ee42371-b65a-4937-ac06-d7cdfd948476.jpg
+[KEEP] ./80928ce6-ef59-4e70-8e02-77e71827acc2.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./03020d32-0269-483d-8b6d-a501617225fa.idx
+[DELETE] ./42b3a684-085d-4a98-9f03-2e77e33a9a9c.idx
+[DELETE] ./45860c8c-4b98-4b0b-9deb-c3f6dc9027bc.idx
+[DELETE] ./9e307b69-41ab-4f69-82f3-e0d1c32be67d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4573366d-afb6-4732-a31c-1ecef879fb0a.png
+[KEEP] ./75001595-b22e-4820-991c-306c2948a8c7.png
+[DELETE] ./a76139eb-7021-4e8b-87f3-71a75cedb3ca.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2401defa-ae09-4694-bf5e-3f8bfe6e402d.idx
+[DELETE] ./32583ff9-3a41-43e4-9a3b-78b730f2d9e8.idx
+[DELETE] ./a0ff22f9-abd1-41c4-ac99-1542242eb0aa.idx
+[DELETE] ./ec9a860a-de99-41eb-bcc4-623accc0139e.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./777cb503-91ef-4315-9abb-d75d7bbc73b0.xml
+[DELETE] ./8c71b951-38a2-468a-8e19-938ab7dfd5ae.xml
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./9fa6c6a5-b971-45f0-b10e-215bd0adf433.png
+[DELETE] ./a0305b74-3c81-4332-8ae4-edf9281cb289.png
+[DELETE] ./ab64b1e2-c91a-4c26-945d-92f15c04c46a.png
+[DELETE] ./d1d11651-babc-4a9d-b8a9-1b463cede9e9.png
+[DELETE] ./d3b034be-d8e2-4215-9211-11f86e2cf8ba.png
+[DELETE] ./f5215352-479f-4df9-8683-ae62c1912ea0.png
+[DELETE] ./fbb68a80-bba3-4c89-a0a2-9d15fc06439e.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./450c532a-90c3-4f05-a366-444ad889db53.zip
+[DELETE] ./9541d50b-50c1-4ee6-94bf-8361189317bc.zip
+[KEEP] ./b40aaf02-85f5-4411-b91c-f9ffa54965fd.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1645a9bc-8b3a-4c6b-a2b4-025d9a174da7.zip
+[DELETE] ./b31a91dc-cb74-44f4-b6b0-fc1037157a08.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./63c674a9-230a-4111-a8ce-d0094cd4542e.idx
+[KEEP] ./b9e5aaca-fa18-4864-be25-b3da43f4873d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./742d0c53-5936-4cdb-99d7-b3f0f91848ce.jpg
+[KEEP] ./f00148d4-309b-4286-8495-e2486ef4b9f1.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./57bff23b-f669-4586-9f77-8d9553e06e23.idx
+[DELETE] ./c6ce4bc9-424f-4746-ad10-9153e019c2eb.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1b3bd4a3-5089-4fb4-a059-76c409a8b76f.idx
+[DELETE] ./876ca336-b946-4fe6-9fea-ff0cf7ae0828.idx
+[KEEP] ./c7270f6c-41ea-4021-bcec-1cdaad15903e.idx
+[DELETE] ./e5369cbd-f07d-4d84-8a91-adaec78237ff.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./790a4a05-6036-483c-b26d-1908e9f740e9.png
+[DELETE] ./9dec7400-9b63-42da-9ca5-24aa742844b7.png
+[DELETE] ./f4e6e678-4b4b-46ef-97f6-f2e36f9e098a.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./481d0063-9f73-4320-b81d-3b2177dbdaec.idx
+[DELETE] ./75d97c9e-edfd-4ca4-81c8-0608bc5b2414.idx
+[DELETE] ./bc6ba2e9-6ff4-4344-a698-0a02e750a739.idx
+[DELETE] ./f2b289f1-f4c7-4a88-9974-d3bc2f24e417.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./220690b1-bd2e-4420-a587-660c12ffd8f6.idx
+[DELETE] ./38539b66-c8ea-430c-95da-14df997dd383.idx
+[KEEP] ./62240108-ea10-40cf-a864-deae232b55e8.idx
+[DELETE] ./82eec7c5-3cb4-467e-b353-3d1ae98e4f98.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./25dc295a-fa41-4573-90eb-4cccac296c21.ipynb
+[KEEP] ./89c41363-0973-49a8-9612-1c3b7b9a2bde.ipynb
+[DELETE] ./c155d1bc-d2e9-4d80-b638-e640cc034042.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5f9ec02e-7b16-402b-b111-1a7ab284a174.idx
+[KEEP] ./69b94cf3-cda3-4a65-b8b2-36c093eeaea6.idx
+[DELETE] ./7383e440-3ee6-4d81-9979-4ff29843506b.idx
+[DELETE] ./c1ac373c-0eab-4557-9658-70ae1e6d44bc.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./164ee13d-26e3-4062-90e9-addf413d26ad.html
+[KEEP] ./74a3894b-d069-4728-ad0f-95ed55011bb1.html
+[DELETE] ./a64f21e7-7b7d-432e-bd37-6ccea8730c6d.html
+[DELETE] ./b651deda-2074-4c82-a92c-936a97a84891.html
+[DELETE] ./b85b1c8b-8cb9-4559-b9ba-05e330eb796e.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./456a860e-c3f9-4d3a-8f0c-17b91ff99448.idx
+[KEEP] ./63826efc-6932-4b11-ac1e-bdb7370f84ae.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4bc243f4-96b0-4376-9201-80164bd92147.jpg
+[DELETE] ./6a6fa8aa-8f46-475a-bd2f-1de026e63dfc.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./743a752b-d317-4ea1-9ffd-525dbd8194f8.html
+[DELETE] ./79b15520-a5a7-4f62-bf4d-d2d094f3fe9a.html
+[DELETE] ./bf9762f4-4a98-43b1-8702-acd90c61f74f.html
+[DELETE] ./dce5a6ed-6f1c-4912-a991-0079cf13ac8e.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./380c24ba-3c92-4302-91c6-5511a7a0530a.py
+[DELETE] ./3efa4213-cd7d-4a81-b592-df88f20045c2.py
+[DELETE] ./b8cfc694-5574-4cad-8b16-52c80564a524.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./306c998b-795a-4828-895a-1ce698374ab0.idx
+[KEEP] ./5d351a97-824c-4c47-9d17-91fc06646666.idx
+[DELETE] ./be2b848a-3e62-4077-aec6-7578c9035ddd.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1bd1567c-bcbc-4b25-8ead-9785d8e6e35c.png
+[DELETE] ./6cea545c-31a4-49ce-91b6-063d32404661.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1728b5f4-3776-4bc6-a4f4-de61be1184fe.html
+[DELETE] ./c40d9df7-372a-407b-bea2-d4c0c8c5ec66.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6f1f02aa-a254-433a-a5ef-bbde34e5991d.jpg
+[DELETE] ./9442e581-81a8-42de-8e90-19fafc5c31b1.jpg
+[DELETE] ./bbf4825d-d406-4f86-8756-e13de765c991.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./6de36228-907f-46e2-a02c-1b2f8eaec5e6.idx
+[KEEP] ./e70362ee-f403-4abb-bdc8-a3f4764883ff.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0842756f-bfe8-4eb9-921a-daf2e7c7822c.idx
+[DELETE] ./4e27dd99-8c25-4c5d-8425-c7aae85a31e8.idx
+[DELETE] ./70ea30ec-55ec-4fdd-b5c2-4038c969cb3d.idx
+[DELETE] ./e028703b-e4da-4c0c-afd1-4aa3f7c5af81.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./33a14b6b-a648-44f5-912b-f1910a599036.idx
+[KEEP] ./e1d67a96-73ef-4db8-bb17-dbf80f4f9ee8.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3f971850-c0f8-46db-a70c-c2fe421a9bd5.JPG
+[DELETE] ./b035cb06-63e3-48f8-9340-ea5b6829e368.JPG
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0aa49d7f-f1fc-488c-a2a4-90851d662cbd.cpp
+[DELETE] ./3e786ef1-1854-4467-814d-bfe8704cfb52.cpp
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./110079b8-5ae4-4562-bc97-3c99679ec7be.jpg
+[DELETE] ./2555115b-f05a-4d3c-9758-d89b7c8ddde4.jpg
+[KEEP] ./c67ce016-b262-441c-aff1-649a011bbae3.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2869e04a-69f5-4efc-ba0e-c9b8bd5b86ff.png
+[DELETE] ./58d9f162-040e-4b1a-8e7b-d83fc95a9b74.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1044e2c1-9010-4078-a9f7-56cf2224ccc0.zip
+[KEEP] ./cf795332-b505-4638-81dc-3f7036fd3cec.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./9f605632-a7e3-4f91-82b6-5b1c7e2bdcb2.png
+[DELETE] ./fd9c3041-0ce0-4c40-9ead-9f0840f937a5.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./08ffd72b-4a45-450f-9d61-a43867ee263b.idx
+[DELETE] ./691ccbcd-51ec-4f48-90cd-fd3895b64173.idx
+[KEEP] ./fe3633ad-a86c-4838-be7f-ad989d73f6fc.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./08a54691-deb8-483d-b0ce-2bd89393e93d.idx
+[DELETE] ./4e69f6e0-e011-4a75-a499-7f492d2d3063.idx
+[KEEP] ./7372308d-af2f-4951-b071-a9e665caaca3.idx
+[DELETE] ./a2920f34-201f-402c-b569-3195154050c4.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0ca18ea8-c075-4258-b33b-5f85983d0186.py
+[DELETE] ./7aff781a-1a43-4d68-9749-a6ff1e3265a6.py
+[KEEP] ./93007336-5c66-40c3-a819-666894f2ea3b.py
+[DELETE] ./93b68208-e0ae-4c4e-97f5-a7a42b473f4b.py
+[DELETE] ./c52950d9-a202-410a-85ca-d9eca0e623c1.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./612285c0-c740-4914-b833-ac4dfbba8fc6.idx
+[DELETE] ./8e1d2746-02c3-4c19-b4c4-5f66096fab9f.idx
+[DELETE] ./bd4fc077-d2c7-4aab-a70d-0bf697b9bdee.idx
+[DELETE] ./c924b674-298c-4b28-95c3-f9e3b71d5444.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7d730220-9169-4269-95b9-40fa98dd4936.jpg
+[DELETE] ./db80217d-33e0-475f-9733-1dde2c988066.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./32f5a02a-7e48-41ef-b1f4-9b2219634f13.py
+[DELETE] ./fbbe7310-e8bf-4e4d-a85c-6d938be393e3.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./9f110435-9192-4c1c-ad48-7031916ac1ac.idx
+[KEEP] ./d71f1db1-d5ea-435b-9bc6-541b38076537.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./52005e1d-c967-4ef8-a2d5-2a049bf64013.py
+[KEEP] ./6979175f-e989-4420-93f9-8cadbbfb930f.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4aff62a9-6540-49e3-a513-dd14f121c8ba.idx
+[DELETE] ./62a4c477-bcb3-41b3-adf6-274e1c803f43.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./502265d0-1b98-4e68-ab8d-d6088fe25e93.jpg
+[KEEP] ./5717208c-917b-485e-a8ee-1e3a0a869fda.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2a925c71-8cee-476a-91b6-be1c59f56556.idx
+[DELETE] ./4d2f0eef-defb-4da4-a8dd-bfe7500db331.idx
+[DELETE] ./ea273588-3589-4774-8654-a6c9fb549e07.idx
+[DELETE] ./ed206e5e-6259-4fc1-8489-e071f522edda.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./ade510e5-63ba-428f-a7f0-c465d1d24f3a.wav
+[KEEP] ./d49732af-eea3-424f-bc4d-4b723473e057.wav
+[DELETE] ./edb0e23a-917c-4965-988b-aeae899f5385.wav
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7b8022b6-248d-45b3-be95-261161b2a80b.jpg
+[DELETE] ./a79076c4-10f3-470c-ab8c-7741fc116ffe.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0cbacace-3a6a-4b2f-a19f-cf7a8bc99f5a.cur
+[DELETE] ./5c240d87-deae-459f-ac5e-1a5a17e25e47.cur
+[DELETE] ./ad793307-c77b-4462-99be-08ecd8e1b057.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./31d1ac06-2dc3-4a1f-be3f-97ffb4ddfdfc.zip
+[DELETE] ./fc190b73-1e8e-405f-81b2-e273da848713.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./511255fa-e7b0-4353-be29-f6f867bae442.idx
+[DELETE] ./7c8cf3ef-a96d-45d2-8654-b0303db4a426.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./24523c63-5a54-4124-a6bb-b2aa99bc5144.idx
+[DELETE] ./8427ba13-bf7b-4721-a367-43211c862552.idx
+[KEEP] ./c3c22896-0f61-43e3-8f83-4b09eae2aac9.idx
+[DELETE] ./ca625077-c2e9-404b-9a9f-589b040eed40.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0234c10a-f726-45b0-bf8e-75a51fd44fa0.html
+[DELETE] ./1d41c0fb-6563-44c1-b3bc-90faf89268b0.html
+[DELETE] ./96acb93f-7db3-429c-b4c4-2ca61eebf93a.html
+[KEEP] ./c23fbea1-9218-4522-9286-61668d7514ea.html
+[DELETE] ./c9079f4a-04cc-4512-836d-466dc6e5fb9e.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./244a41fa-7636-4fa9-b746-b60bc051d572.zip
+[KEEP] ./2d3c4fa2-883c-40af-b944-00a71278b4cf.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./9bfd92b6-909d-4770-9321-e04b054a8793.idx
+[DELETE] ./a40ce8be-168f-4a0a-a0ac-729e25f9f34f.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./054f0c6e-4d0a-49c0-b84f-fac088a18990.idx
+[DELETE] ./9a078ef2-98bb-4082-b8eb-ac07161fbd0a.idx
+[DELETE] ./f3e6baad-be3b-4517-8804-64c107bd6e4c.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1562ca16-b899-49eb-ba0a-5845e03aeb29.zip
+[KEEP] ./b223788a-f6d7-4659-b79a-546ece6eef3b.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./492cdfa2-f686-48d0-bf68-c21ebdc08bbc.idx
+[KEEP] ./91791fd8-a2f7-46de-8677-63398ab4c416.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2a588ae5-854f-4312-8788-1319ab2a7f80.idx
+[DELETE] ./6f2f0653-6489-414b-8194-436f668e38a7.idx
+[KEEP] ./76e8fbf0-9cc7-4295-8c28-0238349d23d4.idx
+[DELETE] ./ce423d23-5226-4bab-a4b7-93655154d87e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./17ad330d-fb8a-4b62-994b-96c589f8eabf.idx
+[KEEP] ./3d5a3cfc-f6ee-434e-8111-fcb07e9cffa6.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./ab6edf97-6e1f-45fe-bacb-ab8d407fac43.png
+[DELETE] ./eb4d2525-319c-423f-b385-8110ce3704c7.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0a58dd7d-9382-46ae-8a44-81bcc6a2f516.png
+[KEEP] ./13532688-6d5a-41b5-be81-4c11614e6098.png
+[DELETE] ./f2180b3c-d8db-47f7-8be7-06aa2a1f1fd1.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5f7b9b28-5363-494e-989e-07567cae5b29.idx
+[KEEP] ./776101f4-16bd-4757-8c4a-03b594c3001a.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0fe210e4-63f7-46d8-88f3-86a8ed420861.gif
+[KEEP] ./53afd38c-41d8-45b0-a9eb-1bb56b18bcb5.gif
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5e119c43-4a0f-4988-9659-21bd7843b30b.html
+[DELETE] ./c8d4878d-a443-4119-a0b5-062d880fccfe.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4ae19956-d21d-46fa-9926-c0b435bb4b38.idx
+[KEEP] ./88571ac2-d495-4e8b-950d-99c382f53aa5.idx
+[DELETE] ./898760fa-1b5d-4f2a-a25c-97ed8e4d1aa7.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./236bb85c-ac2c-46f4-adf4-8bcb2f80bb72.idx
+[DELETE] ./f0268340-3f8e-45ba-ab7e-61ede78a4d91.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./00ab05fb-a897-4e18-ac7d-62347c8e8d66.ipynb
+[DELETE] ./f0f50c57-1850-4e8c-9b89-5c5c034ac4ca.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./9f1c8942-037d-47de-8177-220527618168.cmake
+[DELETE] ./c47a3c3e-bce4-4695-b787-0333b296ae08.cmake
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5460f04b-3932-4d01-958e-dab313b82b3d.idx
+[DELETE] ./85a6c7ed-e060-4d1b-9e00-704fc30d05c1.idx
+[KEEP] ./c5e4ce33-6ec9-480f-aa21-ffbec05c029d.idx
+[DELETE] ./d97b2c94-40fd-42f2-8297-e834e9cfea65.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0c008c61-974d-47ba-a430-a53768972bfd.iml
+[DELETE] ./191d53f4-f63e-4a1b-9d90-6b2dc2fc1f63.iml
+[KEEP] ./1d053dea-3619-4411-b17a-48d5df949947.iml
+[DELETE] ./31e07b9e-248d-4c72-943e-3eab9b2166f2.iml
+[DELETE] ./56445910-dda4-48ef-8350-e06d597b1c30.iml
+[DELETE] ./64390a34-40be-4209-9208-7b83ffdbf0a7.iml
+[DELETE] ./70db47a1-a9f6-4234-a2f4-493e5874288f.iml
+[DELETE] ./7fa181d3-37c8-4a75-9ff6-64417e894f85.iml
+[DELETE] ./aa2ec1bc-ba3e-4ca8-8bff-09b0b99667e1.iml
+[DELETE] ./b0745cbd-d9d2-47f0-b125-a5f5179bef83.iml
+[DELETE] ./c5fe8ced-608e-4df3-8d17-d09f1f9d9ffe.iml
+[DELETE] ./cfc28f8d-7971-4ae7-a9e8-aa7891c2757f.iml
+[DELETE] ./d4560638-2c04-44f3-adcf-003f5d086136.iml
+[DELETE] ./dba79e48-fe2d-4322-a1ab-ffabd751f546.iml
+[DELETE] ./f2576862-5ce4-48f9-b289-522a196d7117.iml
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1839a5a5-759b-47f1-8789-4fabb559184a.zip
+[KEEP] ./6cb8c827-fec4-4010-a4c6-ccea7924bbc0.zip
+[DELETE] ./72eda6b4-9979-4ca3-8cf9-01a686a3f044.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./b3808131-c466-4ca6-b4e1-00211b456154.py
+[KEEP] ./c267d6b7-a531-46cd-b6ef-fa917202b523.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1a281aae-38b0-424c-b7f2-f0b1799beca7.idx
+[DELETE] ./4620d822-2a1f-4b94-8cca-8f9869cb0e80.idx
+[DELETE] ./d94263ea-619a-4f26-8072-d6a2cee0ae41.idx
+[KEEP] ./dccbb0a5-e77f-46ae-a283-fa65d661e17e.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5bdaf75a-0b00-40c0-8968-7f5278afcc44.idx
+[DELETE] ./603e4759-14e6-4c18-9012-0fff712e5631.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./27a146f1-7463-4de0-981a-8d0d17f794f6.png
+[DELETE] ./41656441-4d0b-4184-9010-e46c61aef839.png
+[DELETE] ./503a22e8-cec6-4941-a7e7-82939b80edec.png
+[DELETE] ./7c1e3db4-761f-4e28-a9c4-c41d0e2907ea.png
+[DELETE] ./a88b8ec2-f4c4-4265-824a-be6d3b3e7374.png
+[DELETE] ./dd22471f-b3d5-473b-a7bd-0cbc2916a301.png
+[KEEP] ./f080a71d-4b61-4a4b-a5de-070d8d33b624.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./07f8ee8c-52bf-4885-849d-95575d720199.ipynb
+[DELETE] ./45bf7b31-67cd-4f87-a8b1-7228ea9b2515.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0f1d2056-9e97-4573-a5e3-8ba56fffb16e.txt
+[DELETE] ./27b8838b-754f-4fc0-8505-c1eb48432d2d.txt
+[DELETE] ./547c929d-ffe5-45bb-a9da-8c1075a34708.txt
+[DELETE] ./e54f3a47-5e6d-49df-9406-bea4db995489.txt
+[DELETE] ./e6668c28-f1e2-45bd-acab-1df76c150451.txt
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5e06dc1b-c5a5-41ec-a147-ab3b4ab680cd.idx
+[DELETE] ./a6cb55df-1127-48cd-9d6b-1ea0e82a9ecd.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./39bc3769-01da-464c-91b0-195d88e14c5a.py
+[KEEP] ./e56b46ab-7495-4879-a127-31b0b59b3b00.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./187346e2-5ec2-44a5-be6b-cb6009feef0c.wav
+[DELETE] ./21ace79d-075a-4cf7-9220-1fdbdfc52418.wav
+[DELETE] ./49361a46-143a-441b-a76a-42aeace21fd0.wav
+[DELETE] ./57b7d503-a07e-4ef6-84af-5e6d39ed5ba9.wav
+[DELETE] ./6f506304-b702-4ac9-a285-396ed2f0871e.wav
+[DELETE] ./c49ea1ce-b6ae-4e4c-869e-833366c96411.wav
+[KEEP] ./f34b7296-3fbd-49bc-967b-6971f78d8ca3.wav
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3ad90047-99ee-4e65-b29f-e3137af23690.py
+[DELETE] ./c257ffb7-c0e9-4730-8e59-e8e2aaa45942.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./05573d7e-7128-4067-a9bb-46e4a3880927.idx
+[DELETE] ./258046e4-b32b-4f6f-aa2c-7d378d660032.idx
+[KEEP] ./58d6c5f1-2111-4b39-b8a9-7701ed976085.idx
+[DELETE] ./d79d7d06-0bcb-48b7-8d25-8f865c3394d4.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./544a2aa7-384b-46a8-83d9-a3005da5c708.idx
+[DELETE] ./feaaaf1e-a8cc-4762-9b3d-f6dad9008bbb.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./ae488b44-6032-4fc4-9ad5-d1c54c23a0d3.ipynb
+[DELETE] ./c9095730-ec31-4be1-bf9f-19fe76fabd5c.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./417fd670-f873-43ba-b9ce-16abfb61a772.jpg
+[DELETE] ./7a45d87f-cc54-4602-bd4d-f945c536ba40.jpg
+[DELETE] ./7e2401ef-39b5-4c14-ab57-3dfb21a78f70.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./869f7a5d-57c7-4055-96a4-655a1247fe98.idx
+[KEEP] ./89d41906-bbdc-4a84-9d81-23ffc60b53e7.idx
+[DELETE] ./beece0de-382c-46e4-ae29-280d4ba22caa.idx
+[DELETE] ./ea14c897-b607-42cb-8d8b-2e78ccd6f161.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0f55bd76-4e33-468a-887a-cfd5f34fbaee.ipynb
+[DELETE] ./85e466f0-26df-4ad1-a673-f68c83498f26.ipynb
+[DELETE] ./cfbd713e-a081-4253-9b80-30dc7f404873.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./10493d78-13f1-4391-a5f5-f6737fb65409.idx
+[KEEP] ./a7144272-806a-45f7-afc3-ce884a9057aa.idx
+[DELETE] ./cc50a9d1-cb69-4424-9fd2-a2aebfc0f851.idx
+[DELETE] ./f82a0a64-de2f-454d-8767-4bb69a26ed78.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./34b81d0a-ff6b-4efa-af93-e5e674bb03ea.html
+[DELETE] ./6bc5f0a1-5442-4c96-a4da-5cb544dfa40c.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1ccf383a-7080-4952-9e59-35b05ece3e57.csv
+[KEEP] ./fe7d65aa-7dcf-4a9d-9b45-8edd29176b5a.csv
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1db32250-f0ff-4fdc-bc03-71be19ea4db9.idx
+[KEEP] ./b65b7b03-8f96-4b70-9f76-36ffec52b8c5.idx
+[DELETE] ./fe3c6887-124b-4be3-a153-169117121c15.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./29a102a1-5c45-4cea-87e4-0b62359a1710.ipynb
+[KEEP] ./e14f30bc-7022-487f-88b9-baca0cf5bc07.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./11202526-18fe-4b98-92f7-76b4ea3ae52f.png
+[DELETE] ./9cdade38-710c-4832-b949-f021d40050d7.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0edc3b0e-0912-4c59-9723-f803abcc57e3.idx
+[KEEP] ./89c43ab8-64f6-477b-aef1-5a8364556ac8.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./403422f6-6477-488d-ac11-ddc9655f4c3a.png
+[DELETE] ./f32a6a2c-b739-4adc-91f0-f9cf2011a27c.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3e367d82-7d74-4bc8-ac64-daca43bb80c9.idx
+[DELETE] ./41d8bc93-9a9e-4ea0-b897-2581335e59f3.idx
+[KEEP] ./b814561a-34a6-4a9c-8682-e9ad22af7835.idx
+[DELETE] ./dbcf29ab-fe94-4bed-af7f-466d755bed99.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./00f38f1d-4f36-4285-9bc0-33f2c8c6c4e8.ipynb
+[DELETE] ./125c8ddf-fe15-4d01-a48b-a642dd03eaad.ipynb
+[DELETE] ./c212468a-a80e-4e4b-a991-098873902054.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./dce47feb-c81d-4ad6-ba20-2284f7c5ddb5.xml
+[DELETE] ./f53ae126-8058-4aa2-9c15-ca06ebfa3b2a.xml
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./76e046e8-8014-4c69-99aa-bf3aa09472fd.png
+[DELETE] ./9e9cce75-bdc0-4b6b-b13d-008520ff5867.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a5b70dfb-15b1-4948-80ef-3e8ee2a91346.jpg
+[KEEP] ./a8363a58-6fcc-4de3-8354-3b5810bdc359.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./32531312-ba4e-4880-a669-063477a6034a.idx
+[DELETE] ./550e3e1c-f394-435e-a73b-5a99ea192033.idx
+[KEEP] ./adc7d50c-8ddd-4484-8c8e-d7d3c511f767.idx
+[DELETE] ./e8d46463-d5d6-4f41-a4c0-bc0554048e79.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./527ac73c-9062-4c33-9f02-76f1616d2e99.idx
+[DELETE] ./92f47f69-b004-4c08-ba2f-eb6dc9b025a4.idx
+[DELETE] ./bc174068-c269-4b76-a99e-483be507ced8.idx
+[KEEP] ./d018ae1c-89ea-4ba3-91bf-81fc7da741dc.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./677daa17-53f3-48f3-a36f-830ba7c2d8b7.png
+[DELETE] ./6ac275e7-36b2-4d66-8c65-fd4c068f3e38.png
+[DELETE] ./b589fab8-be27-4849-94ef-35acbc84ab4d.png
+[DELETE] ./eeb9c3f9-debc-4c3c-a14c-ceaccc7c0752.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1e13fdc3-af5b-4f3a-8bc6-1e9dd611d6a1.xml
+[DELETE] ./3e6f9173-fa6e-47cd-aab9-f8aab5b936ca.xml
+[DELETE] ./448ffea3-72ae-494f-9765-47c7953abf4a.xml
+[DELETE] ./8ac77639-b9c2-4214-aa20-70a4456d4aab.xml
+[DELETE] ./a4a94bb2-9d36-4cb2-bd69-3cf7be59c2b5.xml
+[DELETE] ./c35a533d-e66f-48fd-963d-0c21c9fc69c4.xml
+[DELETE] ./e5fb411e-efbe-459a-b5a8-20302ddbbbe7.xml
+[KEEP] ./ef8e8a4e-710b-48da-9f0e-e07dc00b136c.xml
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./928229df-1f47-41c0-bcc3-70b943e32f31.idx
+[DELETE] ./e0ef09e5-87aa-4b71-bcaf-2073e60bcb50.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./b734a5b0-cbfa-4acf-844b-3f92003e576b.jpg
+[KEEP] ./e81d0876-0c3c-4c87-8555-e06324a09eae.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2cc1ac52-3321-4084-8b92-c37f8e47095b.idx
+[DELETE] ./60d024f7-f124-41ae-beea-beb33c94394f.idx
+[KEEP] ./b8d942ea-20a5-459f-9d67-c47e627217bd.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0526ca65-f585-4963-983d-8324681d09b0.idx
+[KEEP] ./48e7ff13-774d-4608-be52-55433dfce51b.idx
+[DELETE] ./5f84bce4-baaf-4645-a107-cfcf22ea7a07.idx
+[DELETE] ./b1eb51e3-caa3-469e-8cdd-444a79481188.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2bfb4b53-4051-4367-b100-0fbac82e7bc7.Debug
+[KEEP] ./85974bee-8779-4cef-9d0d-2e803721413a.Debug
+[DELETE] ./a5546a0b-a20a-4523-b97f-7ecb517b2863.Debug
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5e70dfc7-3851-4751-9473-5231514cb4fc.rar
+[DELETE] ./8ab11d21-89e4-4bf6-aac9-bbb43f0606f3.rar
+[DELETE] ./dbc551fe-d541-4f3f-bef3-cc208c0d1a66.rar
+[KEEP] ./e0fe6811-ec42-4e3b-a7b7-81e48de9b32b.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5aa56e1e-4382-4d1a-9b9c-cdc29f47bbaf.idx
+[DELETE] ./c53b5314-7733-48da-b0cc-69d50f3caca9.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./d3187021-2adf-44cc-9ad2-719798663f1d.idx
+[DELETE] ./dc8b3498-ba65-41e2-8b8f-e12af6f59aad.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2ab338e8-b681-44a0-b593-6b444f6efbff.zip
+[DELETE] ./f64cac15-ee45-408d-8dc7-cfcdae69f5c2.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2a20a958-0344-43dc-b27e-fa972c8d662d.idx
+[DELETE] ./45c0b1ba-a109-4e0d-9e5d-517bfa10e7b2.idx
+[DELETE] ./8057616a-905f-4907-a31a-6adc7e15cd72.idx
+[DELETE] ./e5b7b62b-2b0f-41d7-9798-8cb086122490.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0526c91f-3405-4fb7-867a-6218b00fb6a6.png
+[KEEP] ./3f75d9df-4b4b-49f0-b04c-f06bfc6f6d15.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./05366813-7764-4f93-b2e3-c795fe6bb54a.idx
+[DELETE] ./207a7117-3329-4e98-a135-3d4a3ebfc4c1.idx
+[DELETE] ./5c0b9f13-5701-460f-9a2a-10faf7d76d52.idx
+[DELETE] ./cb6ca358-82df-41ff-845c-eb07bb8c685f.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0c0832eb-764d-4c76-8f53-89dda590ae9d.png
+[DELETE] ./256be447-3a7e-486a-b322-d1efb19c39fd.png
+[DELETE] ./2e447654-5820-484d-98be-2eadc35e5149.png
+[KEEP] ./47584945-4387-4b84-a4d4-c7af0a4bb381.png
+[DELETE] ./e8641a2b-b8e0-41d9-b2da-590be53564f8.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1c05367f-e696-4b47-9e42-fc7212a5bccb.idx
+[DELETE] ./632b71c8-d77c-4180-ac9c-9c2d90f1a796.idx
+[DELETE] ./876b1da0-27d6-4067-ae03-0355411d2539.idx
+[KEEP] ./ab4fc709-fba4-46b7-ba6b-48b3e34e5fd1.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./452d9095-d122-4ad9-926c-644bf1726aeb.idx
+[DELETE] ./d717756a-8752-4ccb-b22c-98685489300f.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./23b67e0e-f646-42bc-9592-627e4d4ecfbd.h
+[KEEP] ./8a6598ae-4200-4a65-b897-fb1a4271b48b.h
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./01de5cc3-9109-4ac7-80bd-1f72500ea514.ipynb
+[KEEP] ./1ca96745-8cfe-4070-96c4-865e835a8269.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1d67207a-129a-4566-9f8e-64512dcc9138.idx
+[DELETE] ./57eee6e7-a504-4323-824d-112465517b19.idx
+[DELETE] ./9766dc31-b029-4cdf-82f8-3778fa50c762.idx
+[DELETE] ./eaa71ad8-ce2e-46b5-af93-7fe987b26d5c.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7eb71b99-d92c-45a9-bd00-5d9d9585759e.idx
+[KEEP] ./af6b73ff-e31f-443b-92b0-e5883896990a.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4fac61de-4378-4827-b648-bf72045aa246.png
+[DELETE] ./8db9fad1-154c-4edf-8eb2-3da59065b628.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0a09aa6c-171c-40ac-9385-b4ea6804b9d2.idx
+[DELETE] ./15b2888f-16a5-4ffc-8a95-c25c764581a6.idx
+[DELETE] ./32219bee-7371-4d6c-ae04-289c1d933e43.idx
+[KEEP] ./ffca997c-b70e-4b55-8b70-4034b1892026.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./832c9243-0533-4234-bfd4-2529a1e424ac.zip
+[KEEP] ./e4c5d55c-495a-45e2-8e52-066dc2f18e04.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2d515bbc-a579-4453-a1e5-9dda8b83d491.idx
+[DELETE] ./cf5a673d-ac9d-44c0-8c58-3ffe081b35b4.idx
+[DELETE] ./d5e97255-3182-4115-91b3-aa10a6ee077e.idx
+[KEEP] ./ffd9c305-c530-4810-a672-74950e0e910f.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./a4fc96a5-6e1c-462c-b712-678ea132fb03.png
+[DELETE] ./d8ac6695-83c4-4014-aa7e-147bbe8c801e.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2b5611d0-e8a7-47c1-926d-e7463c2f8ace.check_cache
+[KEEP] ./38eb5dcb-a3a8-431c-9296-136a57c8c5a4.check_cache
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./06d7b3ce-3e49-4fdf-90ef-b8f5190cae4a.idx
+[DELETE] ./828302a4-c2de-4408-9081-b101de1148e5.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2127eac0-eb30-41d1-a884-c517543f8e0a.zip
+[KEEP] ./5eba4310-5c67-4ddb-9fe9-e644c842127a.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./22e0d5ed-c14e-4304-8122-367c6e86c00f.html
+[DELETE] ./23adbde2-22f9-40d9-b7f9-b0ac29fed429.html
+[DELETE] ./3a62d3bf-3b0f-441c-879f-0d79e215551a.html
+[KEEP] ./c0e48fb2-1b2d-4354-92de-a52f6805c24e.html
+[DELETE] ./d0ea1bf5-c3fe-46d2-b5e3-eab51fa0d938.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3bd7e38a-cac3-4a28-bbd1-c79bcae62106.rar
+[DELETE] ./ecc48b4f-8371-40ca-b41f-d30dffeece66.rar
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./19a5f9a0-5ce0-4222-bf61-c66fde7f37ba.idx
+[KEEP] ./b670b06d-685f-4cf1-b094-2710052135d5.idx
+[DELETE] ./d20ddbb7-4a5d-4b67-a010-4d1b854e97b2.idx
+[DELETE] ./f078a77f-60a5-42c5-87c5-736d7400c50b.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2d5973d5-dadf-485c-8f27-d011ead63823.zip
+[KEEP] ./32704b37-cfae-4ac0-b5fd-b1f5d477aaf1.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./997b0e5d-e87e-41ab-afea-2a95185e3b93.stl
+[KEEP] ./ca146679-4455-4a30-a113-b76b2b888f17.stl
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./181b105a-321c-49c3-ba6b-2e2adc8b0b75.wav
+[KEEP] ./c09b09fa-42b2-400f-8431-ff074ebc1315.wav
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1dba3517-a85c-49d0-9db8-ce1d3940e30d.ipynb
+[DELETE] ./6baf0f62-8cf3-468b-9d6a-4ff2658af54a.ipynb
+[DELETE] ./9c27a794-5484-40f2-8d9e-efe40c115930.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./44a016a1-1280-471f-a944-daa46690e0d6.ipynb
+[KEEP] ./8c72085b-8ce9-49dd-a299-feee9c2d11fe.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./074cd28a-c75a-4275-9a62-49188f49b2b1.idx
+[DELETE] ./1cfedd3d-29fd-4ea3-a200-6cdfe01abfe3.idx
+[DELETE] ./8bd86a39-24fb-49be-b2a3-0077255d909e.idx
+[KEEP] ./e9931440-f8c0-47a4-ac4f-2e5a50a69599.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3a995822-32e9-4b5f-ad70-dfe1d5d12ad9.cpp
+[DELETE] ./44a3fee3-bb3b-41a9-8a08-12e4724953b1.cpp
+[DELETE] ./ad992ec0-2ef9-4691-9ab7-b61755a16f83.cpp
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3fbd6432-01cf-4266-9578-f1addd31c380.rar
+[KEEP] ./42d16262-4924-4bb9-9c3d-45c5678698f3.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./682757dc-1a89-4d6f-8639-8066f033b9e1.ipynb
+[DELETE] ./73974c0e-1d0d-4f31-959c-48f800669f6c.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5b0bbec9-b617-4f9b-b06a-944dad1e1b2b.idx
+[DELETE] ./f566f46f-99ac-42c8-bb2a-5fbb42767288.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6fc3c432-6173-44f8-8dcf-05db37db2dfb.7z
+[DELETE] ./b78ca7db-7df0-4e94-a4d6-d23659bc2834.7z
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./105d6889-31e4-4833-95c6-3ce17dab7f64.cpp
+[KEEP] ./c9ae076a-0e55-455d-846a-3ce19079be19.cpp
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./38760d93-5852-4a9b-9eae-8abb33973a38.png
+[DELETE] ./a68f78f7-3952-4055-b5ef-4261273b778e.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./02758a5f-6c9f-436b-a607-f65277c0b3ad.py
+[DELETE] ./142834d7-c1b7-4c6e-a87a-24eef6dda823.py
+[DELETE] ./4628b935-4e3a-4a07-b770-08db6cc2c64f.py
+[DELETE] ./64cf68bd-ae51-4681-867c-3f8c7c92280c.py
+[KEEP] ./84683ba6-11a8-4784-a447-fc8a77b9515a.py
+[DELETE] ./bb345e23-37a2-44d9-8f10-8099aa32656b.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./d80579d4-73a5-42a0-8c17-e19475f64566.idx
+[DELETE] ./d93707a4-8e4d-4de1-8fd2-ecf3ecbeaae0.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./546595a0-31ae-408d-afba-4b6df551c6f0.wav
+[KEEP] ./7a12487d-f1ce-4a56-b17d-cd5e1c8e295a.wav
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./12fd67d9-ea9a-4450-9fad-35fbd6c69198.ipynb
+[DELETE] ./aa46ce04-776a-4ee7-af72-8cbb93d61ca5.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./22d7ed2b-16a9-4ca5-b7f9-ff1fde4cea24.jpg
+[KEEP] ./83c9d42a-7ec9-48c1-9d7d-7428ae85e0b0.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4de72a4b-6a3f-4a15-a313-74924ebeb0d4.zip
+[KEEP] ./8c0bc634-ddaf-4460-9790-20ff195e59e2.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7f016328-1059-49da-86d5-ddb50a9c4f5d.ipynb
+[KEEP] ./c40201fd-23b0-48dd-8456-906d9d8c59f6.ipynb
+[DELETE] ./e7a95c64-296f-468c-8cf4-ffad008e78bc.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./101bd4eb-69f1-4fe8-9b7d-1b2ac130527e.idx
+[DELETE] ./15a2e4b8-392d-4304-ad79-d9e91a81f3a5.idx
+[KEEP] ./693f5fc3-8bd4-402a-9686-c833a4a0f8ae.idx
+[DELETE] ./c19fd74f-48f1-4a9a-ab4f-7fc2191f8653.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./b8cdd5d1-cf2e-445b-9acf-2a77a7beef66.png
+[DELETE] ./c5e40ed6-51ef-4663-ab4f-c31066a15ab0.png
+[KEEP] ./e471d4e9-c4a0-41a7-ad86-26676e423803.png
+[DELETE] ./f25cc7ab-5529-4506-a936-73a8de0a2557.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0e288c60-2de1-48df-87ab-a2827483ec38.idx
+[DELETE] ./336add06-be70-46dd-b40e-1b6df9aa7cf6.idx
+[DELETE] ./6fa30dcf-45bc-419f-b67c-e572d17b6e9d.idx
+[DELETE] ./b25dd54a-e07a-49be-90db-888ca4f6dcd8.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1bbcdd4e-5341-4302-9c69-643f32b6310c.zip
+[KEEP] ./31bb4b17-2070-4336-9f4b-63af0e1ba941.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./9bf30bc6-7480-4a22-aab7-af3264768834.idx
+[DELETE] ./ab6158ed-8f11-4d7f-b2eb-d52fe3e4f573.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./75d7d21b-b55a-466a-b155-34440fc3e649.7
+[DELETE] ./ab880ebe-0703-4f51-9f50-2d220010f992
+[DELETE] ./fbf02aed-ea69-4ad6-9a05-895ba524ad49
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./78ece48f-6eff-41d6-b963-4893fad160ca.cpp
+[KEEP] ./ec4f34fc-28aa-4898-bdaa-180d7398eb6f.cpp
+[DELETE] ./ed5bd906-9044-444f-b919-c0d464735dd2.cpp
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./b661abb3-5a48-4fc9-bd96-66e5289fa04b.py
+[DELETE] ./c7011f03-3303-4ea3-8f74-94b472585f4c.py
+[DELETE] ./ff75aabc-b3e1-4276-8906-ccf5580f4cd8.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./072a51c2-64d0-433e-b40e-5f81d8f0677d.wav
+[DELETE] ./21d56ee5-d750-42a0-9406-fc1185e35bd6.wav
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3a182478-cac7-4689-b61a-4a9a9a11442e.idx
+[DELETE] ./7910b5ca-f8f0-4f69-85ac-27c7dab94368.idx
+[DELETE] ./94703bbb-5a66-4536-b97d-26ae1462887d.idx
+[KEEP] ./9c05b536-c0f2-42b9-be52-a511ee5d558f.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./336b6711-1416-4c7e-ad2d-b7c577fa8688.png
+[KEEP] ./7f632bef-e762-4cf1-b739-46faa545b60a.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./318ebe2d-df59-4c42-9bec-8396efa17f03.jpg
+[DELETE] ./55df63fc-9c76-4c99-bfdd-bf762b2ac2a0.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./545d1381-a21f-4f01-b128-b8ddbc73050b.py
+[KEEP] ./e360c61e-99ec-4ec4-9971-4a53a671a67a.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1962588d-9e61-4e36-8243-708ffa791097.idx
+[DELETE] ./27a9df55-8ac1-4f84-9dbc-4fa05c8493e7.idx
+[DELETE] ./5a7fc55f-ea3e-44aa-953d-a74b0d9a2775.idx
+[KEEP] ./777fa802-6f33-497b-ba8f-bdd082ccdc15.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./86865acf-96aa-405b-af22-46d37f6a2642.idx
+[DELETE] ./902329a1-5352-4326-90d5-48a8f56724a3.idx
+[DELETE] ./a2e5ab74-3749-428d-9d57-4221766878dc.idx
+[KEEP] ./efbaefbe-cfd4-49d4-a1a9-fa92e67fc709.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./8d4c75fc-c100-4321-8b82-ee3df39fb755.jpg
+[DELETE] ./c16ec6ab-d0bd-400b-93e1-ca6624f5bd77.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./50943f34-93e3-4e40-ac76-545f7804effb.png
+[KEEP] ./83bcad14-b6f6-46ec-aba6-df0bf74583e4.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./722a2d31-dbcb-4db8-a555-78282fddf3e5.xml
+[DELETE] ./a1eb518f-ccd2-4595-bb50-f8d3b276ce34.xml
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5c5a68a9-fedd-4d26-9352-9554d8ddfbb4.zip
+[DELETE] ./a5421591-6cf1-40eb-b28c-e66f44eb3d3f.zip
+[KEEP] ./b2d3d3a0-c032-41fa-bf02-f23dae14913c.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6aa5ad59-f1f0-4476-b5e0-1bb1c5c740fa.png
+[DELETE] ./ba8983b1-ca1e-4c2b-8a21-b3e3b3319575.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./852e19ba-875b-4b85-a36f-b5dc6121a7ea.txt
+[KEEP] ./f60da750-620e-4f56-9fa9-d3a0701745ae.txt
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./42da2312-3a1a-4d58-93b7-d509a4a6054e.exe
+[DELETE] ./8f514ce5-0e73-4a76-a002-0921766b4e38.exe
+[DELETE] ./96f16c56-e5b6-4234-b758-7c65c0487088.exe
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./06cf5914-6be2-4d7b-963d-ec1621f6dbc6.sqlite
+[DELETE] ./0b5e483e-7d1e-4116-b7d3-35abfa91057e.py
+[DELETE] ./0d6ca00c-f8f5-4924-823d-ba9ec6aab773.py
+[DELETE] ./10f5750e-4294-43ba-9e59-5da7f18ab045.py
+[DELETE] ./25bdbbf1-96d0-4d6e-8452-0d28ec32efaf.txt
+[DELETE] ./2eda77c0-fc5e-4591-a9ef-b880804427d0.cur
+[DELETE] ./30517663-d29a-42e2-9008-2c95a6599cbd
+[DELETE] ./37b1ee5c-99e1-4a45-a7d7-a4fa9c0e4241
+[DELETE] ./3e89dd05-0df7-4e93-9a6e-6247a5166c4a.txt
+[DELETE] ./5c051509-9a91-42d9-9e5e-8f6e4664c58a
+[DELETE] ./5d58d557-cfef-4a9e-9197-410fc9a9ee53
+[DELETE] ./63cc6ff0-4aa2-4ab7-b30e-30ad993fc516.py
+[DELETE] ./6a7f01f2-b4bd-4ae1-b738-eabd2df16ccc.py
+[DELETE] ./6dd94636-9104-4d4a-a86e-da572dc2b6e7
+[DELETE] ./7aefd77d-ee56-40a3-af1b-185c482d22d4
+[DELETE] ./8fb938f4-c621-476f-9062-ff4ac931a214
+[DELETE] ./923626ee-1e01-4016-830a-cfd34d7648d9.sqlite
+[DELETE] ./a373b832-4bd7-4546-bc49-f2b7ed7004a4
+[DELETE] ./a5dd5cd1-e372-4b9b-b332-a20c0a59a443.txt
+[DELETE] ./bdb2cda0-622d-4e48-b362-250d0595fa31.txt
+[DELETE] ./d16905ec-fba2-4550-b2c9-60344ae0a3df.py
+[DELETE] ./d619ceaf-bb94-45f9-9843-1eec3bcbcc91
+[DELETE] ./d8c12e6d-ac99-4591-9a49-980c126647e8.py
+[DELETE] ./deffed30-fd2b-4525-90e8-98bdfe44190a.txt
+[KEEP] ./duplicates.txt
+[DELETE] ./e3a95320-21ea-4a38-88ec-1791dfde3038.py
+[DELETE] ./f0a41d9c-0ed3-4e17-9d86-c1cc51705211.cur
+[DELETE] ./f67a94fa-39c4-4080-84af-4557c4732445.py
+[DELETE] ./f9b0b3ad-ba9d-48c5-9856-47aabe213d86.sqlite3
+[DELETE] ./fa00d4c1-1f24-4acf-ab82-fc983cc19f3f.txt
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3fc7b21d-ee47-4774-ae0a-7c087c45ffb6.idx
+[DELETE] ./6ea38c80-ec36-421e-b0e2-5062b913165b.idx
+[DELETE] ./ace0988b-4c5f-4a2f-8ce1-b119af590ad3.idx
+[DELETE] ./b9f01339-b6a9-4d6a-8f58-ebe1de9389c5.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4d0d9a06-7052-442a-9702-2449f503c771.idx
+[DELETE] ./54ac5155-77d4-44cb-a5d9-85a2e7828008.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0505da8f-16ab-48c1-8508-c3c5af2398d3.idx
+[DELETE] ./50c13701-eb7e-4a81-80c9-0de3fc68bf1e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./01f5cb7b-931e-45b8-bd6b-d4fc68a44857.idx
+[KEEP] ./036dfca9-842c-42dc-b5ce-013de653b412.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6221b8af-44c2-4a10-943e-0945d190dce0.zip
+[DELETE] ./92a8f278-6b20-4938-b612-d95d97d13df7.zip
+[DELETE] ./c6cf17cd-1bb7-44ea-9c7e-4f17c52958cd.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./68296383-5df2-4885-84f4-06aca0d9506e.html
+[DELETE] ./d9c68b46-ce4a-444e-960b-7404996e75ac.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./447241b5-b157-42b6-81b3-8184bd6854ec.py
+[DELETE] ./5016858a-d5ff-4061-82b2-3f1cbf971ef8.py
+[DELETE] ./9844cb92-27b9-4f8f-b3cc-0589930f697d.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./08dac465-b42f-401b-8475-368932b4b358.jpg
+[KEEP] ./228f654c-2369-42f4-9f93-9001473f4536.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./9246cc2c-a07e-4af8-a68a-c70628165d4b.idx
+[DELETE] ./da93fd4c-8728-48a4-a073-1e72f29ae45a.idx
+[DELETE] ./fe6f9797-c7d6-40d3-9739-732538cfdaf5.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./8fd37dd8-a1c1-4dbf-95f5-c1706fed8498.idx
+[DELETE] ./ae3653cc-e1ef-4ae8-a6f0-d52109d897c1.idx
+[KEEP] ./bfea7804-8afe-4cad-a020-bf6a00cf4139.idx
+[DELETE] ./c3d9a139-709a-4ebe-811a-3074cdb70eee.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0f959f38-4edf-4cdc-861b-1baa1ef55c3e.cmake
+[KEEP] ./a2dccc74-c348-45ac-8a8f-8e5006928680.cmake
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./095dc606-da55-4a82-936d-185f1fbade1c.html
+[DELETE] ./102c23a8-c4d9-4b73-9372-a63adcee4ab3.html
+[KEEP] ./1785847f-13cb-4782-b1cc-4cc94ae738d5.html
+[DELETE] ./1ab43dd2-335b-4c48-abbe-5e946520772c.html
+[DELETE] ./bbf85d28-2688-4b01-9775-f2849222e942.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./88737433-16b1-4e47-a74f-00cb8208f50e.png
+[DELETE] ./a1926458-8939-4127-bc7b-06126576d7e1.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a143c1ae-b785-480b-802d-28bc6ae522bf.png
+[KEEP] ./a225d11f-56b4-4ff0-85d1-41b765332bcb.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./b5f88ef6-9af7-4ae7-a70b-339c67979bec.idx
+[KEEP] ./fc0acd60-bc1b-4f5c-897c-15d1ac0b7f09.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./61d57634-3032-4d4e-82b4-3753a1f4a221.idx
+[DELETE] ./7452a795-eba0-4bff-b102-add101460ee9.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./245afa47-c988-4481-9338-9f62347d4789.idx
+[KEEP] ./7516aeca-d54c-4902-b3cc-006cc7644602.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./17b9f410-0430-496f-bda0-0403059e1945.idx
+[KEEP] ./1d2424e8-d8e4-433e-8f56-eb15101a7a89.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./77222355-2652-4069-9c81-1331107ea9b1.zip
+[KEEP] ./f709fb5c-c0aa-4565-9471-d55098138ff3.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3d163c10-5744-43c6-8b7f-7640a330695d.user
+[KEEP] ./a5d829a1-e3a6-4e41-b79b-c35d1b35cf5d.user
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./34c66ed2-9613-43fb-a4fe-ca50b7dd070c.idx
+[KEEP] ./578876bf-857a-4c02-802f-138171325c21.idx
+[DELETE] ./5e966703-92c7-4469-87bb-fa1f8de3e67d.idx
+[DELETE] ./e8c9a5bd-d7de-40af-84ff-18f9f0fb2326.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./41195845-c933-49d0-9036-a2e5164d96b4.idx
+[DELETE] ./4ae8632a-c7ef-45ab-9d18-c9e2701a7ae5.idx
+[DELETE] ./adc2ae3f-b710-44c7-8681-39bf200b9da0.idx
+[KEEP] ./af966de7-29b3-4838-a62f-e28b8bf2f439.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./73533ff2-6c77-49ee-b572-fe0571989431.png
+[DELETE] ./c189f912-78cc-415d-ab97-5943decf7411.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./88bc0850-c44c-4f2a-880f-ea7e7fe98991.idx
+[DELETE] ./d0fc311b-8ebe-4e9f-b8f3-dd7b92183088.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./525177f2-dbc7-4ed2-8358-05bbc27aeacf.rar
+[DELETE] ./c1521611-bdf9-40ff-941c-c4c1c26f864c.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./09b5cf89-8020-4976-8eb6-efddc3cab3bd.idx
+[DELETE] ./d99b7a83-b559-4200-b6b2-41abf0581059.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./07a6dd74-df2c-468d-9122-4531c04d9f63.jpg
+[KEEP] ./5307dddc-09d2-438c-a429-b4af5265c1e9.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./22a3f219-7109-45e3-9264-e89b20765ead.rar
+[KEEP] ./38cca312-bd2c-4e86-9a9c-7d6bbb2c7066.rar
+[DELETE] ./59b85de1-1614-46b8-a4d2-d3bf0b97f1bb.rar
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3189066b-6469-4f8e-b97f-3352083bf975.idx
+[DELETE] ./64eb78b9-d663-442e-ac73-a860ec8f8f4a.idx
+[KEEP] ./697b715e-e2f0-4ccb-8626-76d29b82e314.idx
+[DELETE] ./a033cff8-3015-4e95-ba99-138e64ab59f7.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5984a1ca-5dfd-463c-a0b6-65a992e9f428.idx
+[DELETE] ./8c0d764e-f1b3-49c8-93ec-3b448c33e58c.idx
+[DELETE] ./a8fcabb0-e7c3-4148-92e7-1344b0838d0f.idx
+[DELETE] ./f4dbfdeb-0c67-498d-9c68-8fb198bfc88a.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./a666cfdd-3355-48f5-91ac-01234a9dbc25.png
+[DELETE] ./e6bb5a95-1962-486c-a1a4-a6fcec9176b1.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3182efc9-dd83-41fe-b824-8889ecde030a.idx
+[DELETE] ./5a92c801-e9ac-414e-a7b6-2d0571006b38.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./53455363-4f1a-4c79-af20-7d77a5964f46.ipynb
+[DELETE] ./8239a27b-ffc2-4542-b9fc-b1203f91be25.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./070b3bdd-a6c4-4b99-ad86-33b7823423bc.idx
+[DELETE] ./ca67e417-83ba-4379-b497-b08bb3de9cc1.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./6b926267-4f3f-476f-81a3-0e43bc89928f.txt
+[KEEP] ./e240b656-163e-4506-85eb-811330f90da8.txt
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./b2802392-07e9-4867-a988-d3f06873772f.png
+[DELETE] ./b5d4ee95-f498-4bf9-b889-31eff7443f91.png
+[DELETE] ./ce022c64-eac7-4e8f-921c-ea2aa5499e5b.png
+[KEEP] ./fb089ddb-c8e1-4c73-a16c-cb6708006d3d.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./9b90c67b-9136-44de-9d76-b57decd85432.png
+[KEEP] ./f77078c9-a29b-4e25-af46-64bfdbb6a643.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./39a02276-c77f-4a17-aa48-79733e87f924
+[KEEP] ./9ba68947-ed83-4095-a4a1-0a8268e0ccb2
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./48746d46-52f8-4a04-82f0-d330613f94ec.jpg
+[DELETE] ./70032a81-5179-4e11-aa22-57a714b2550c.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./849c967a-b402-4a82-989c-6bdd3f3249b6.idx
+[KEEP] ./c0321f7a-0bc7-469e-bb57-52377bfc9b45.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./340b84e9-f2d0-4a7d-96db-9dc63b7f7367.idx
+[DELETE] ./748d816f-19da-460f-8aa1-9f3a488db3b3.idx
+[KEEP] ./7b3c67e9-3364-47db-8245-6180ab444d13.idx
+[DELETE] ./e4ccdadc-3bfa-483e-9935-b495bc6b8db3.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./15c03ee0-3c2e-484e-b4f9-0532b0d822cc.idx
+[DELETE] ./71a6286c-4917-4003-9662-c43995353274.idx
+[DELETE] ./f0628ae6-bcd8-4dd7-9d0c-2d22a6b30182.idx
+[KEEP] ./f3821a93-4029-486b-b3ae-67d6a4380062.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./99e370bf-ce81-44db-97e7-1f29f295c553.py
+[DELETE] ./b874485e-ad7b-4749-b30d-2172ee005c7b.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./60cf3a62-c00a-4d5c-9d6b-2a4b50ec637a.rar
+[DELETE] ./fba3304c-a96c-4408-8c65-21ed6bfac6d5.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./978ff2d6-13e3-4b74-b527-79fcac0a05bf.idx
+[DELETE] ./dfa5b8bd-33b3-4384-af43-26876da578d6.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0668da8e-a6e1-4718-9b3a-76cb528e5342.ipynb
+[KEEP] ./fe93fccc-e5b8-4c54-beee-ce30f91d4ea6.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./65dd3751-5449-4e58-b932-2ff52bf1c11f.zip
+[DELETE] ./6819dbbe-d883-4c84-bf03-378ee395136d.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0e923096-9640-4791-b349-7ada25458bbb.idx
+[DELETE] ./3508b389-8141-46fd-bf7f-aeeb6dc444f8.idx
+[DELETE] ./6c6e42f6-ef20-42a4-a5e3-4a7342713050.idx
+[DELETE] ./98aa1506-9087-4eef-9dd9-216dcf344ed3.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./07c14c15-ff08-47f5-a4a5-28f6cb26adb1.png
+[DELETE] ./44829d2b-0a6b-4964-a61e-7707c65f5346.png
+[KEEP] ./7f183956-ad6d-4bc2-9a1e-a9e73f911348.png
+[DELETE] ./d4686444-65c9-403e-a01e-3598a752492f.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./00d90f38-5bfc-4066-b3fe-1538575d6ee7.idx
+[DELETE] ./4a356580-5585-42bc-a518-4c87787a9a11.idx
+[DELETE] ./4f9f9988-fca0-41f3-b086-bbfe8134572a.idx
+[KEEP] ./eea3d791-ba81-467c-a5cf-62e9b435aef0.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./45bff035-2a50-4e51-9bcd-5f099ed9e5b2.py
+[DELETE] ./cd4656e5-8589-4865-bd88-1fb245f9f9a2.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./01008c50-b04a-4a97-94d2-1d3120ca6375.idx
+[DELETE] ./47be22c8-4530-4e38-8704-ae59db3f13a7.idx
+[DELETE] ./623b78e0-aa27-41fb-be99-a33abca0c50d.idx
+[KEEP] ./8f956d86-a344-4241-a46a-b6a66c597055.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./132b215f-f70a-4d87-a65c-1ab01e519f64.idx
+[KEEP] ./95dd7f2f-4018-42cf-90fc-60c6147263b7.idx
+[DELETE] ./c02fc9e9-c60d-43f1-9750-8b1068d0926f.idx
+[DELETE] ./cb757727-6784-459e-bd10-564d3eb92da2.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4548ab6e-fa99-4b76-bef4-37e3b2342232.ipynb
+[DELETE] ./c0790f2c-ee36-4d40-8eb6-029cd6f517cc.ipynb
+[KEEP] ./c1586b55-da45-4e2a-b36d-de48b8f3a55e.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2217fcca-df8f-4729-81fa-0fbeb87a7ab3.pro
+[KEEP] ./84057f08-f2f4-4ed7-be62-c2ee96603214.pro
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2ab27d43-b0b1-48eb-8053-7a4ee3207583.png
+[KEEP] ./36c55d7c-50ac-4fff-bf92-1275b8edffbe.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./58a4313a-2bda-42c2-80f4-048f8cdcba81.idx
+[DELETE] ./66c6702f-775e-4567-8ccc-ce8d2281f6d9.idx
+[KEEP] ./7bc9fe19-f731-4079-b3dc-ed6aaf803b56.idx
+[DELETE] ./e3940a0e-df02-4b0e-b65f-92750c444c1d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2e151c15-d190-4af6-b593-34850240acb5.jpeg
+[KEEP] ./bb04bd73-d6a8-4cc6-9ce4-f4969a4edc38.jpeg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./176c0c50-60c2-4b18-a19f-53e72d2a5530.xlsx
+[DELETE] ./be19cef2-ac06-414d-ace5-1620460adc86.xlsx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./341ec8ed-c964-499a-911c-ec83c1669604
+[DELETE] ./7d25c2e3-aa15-40d0-8d2c-a290f6aeaee7
+[KEEP] ./a606bf79-86da-4191-97c6-424bc25ef43a.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./912807f3-fe7b-44ff-99ec-a10290f22e85.py
+[DELETE] ./f5600a99-a1b6-4aad-b72e-c9bdefe76433.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5b15ae36-62fc-45fd-9edc-46d76e1d7ed2.png
+[DELETE] ./6fd99f16-d8c7-461a-b347-ba94e3dd8ed0.png
+[DELETE] ./cac80e7b-ec45-436b-a995-34b4ae529d8c.png
+[KEEP] ./fb2436d1-4726-4716-b94e-45a72262cd27.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./b41e0a74-249b-4368-a320-57dbec1c62fc.png
+[DELETE] ./e140fa4b-8a2a-400d-a326-81002b4ee1d9.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./317d9ed3-cc63-4eb3-8546-e5249af8decb.cpp
+[DELETE] ./7c52cf81-b70f-469e-8ad1-f4b987448836.cpp
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1c67bb72-643c-4b4e-89f2-3a696bfb9c9d.zip
+[KEEP] ./76118aa6-a9f5-49d3-9fe7-e1d657e7b1e1.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2367ef52-99d5-4e1f-8d82-e3fb5ce6a3fe.docx
+[DELETE] ./94db6385-b705-450b-84c4-2b6f0184f4eb.docx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1160c05b-fef0-494f-b528-a0c50c0a683b.idx
+[DELETE] ./1db921bd-453c-4fd3-996e-c572c9ef099a.idx
+[KEEP] ./84686b5a-5c6d-4586-8e85-6a26dacc8b4c.idx
+[DELETE] ./e95dcc68-d948-4c2b-8589-faff4414e78b.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6a3b23f6-090f-4f12-900c-11d48e42d8a0.exe
+[DELETE] ./dba74acc-7d8b-42e9-bd1c-a7f438b79bbe.exe
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0d0158f7-4eaf-4128-a10e-b382a200ab6a.zip
+[KEEP] ./140c6f1c-6a95-4cf7-bfb3-2d7d84ec51a9.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./923b9832-4e49-4923-a64f-34d7cd2dbf77.idx
+[KEEP] ./e7e0225c-1f04-4fa5-9d38-0318b192b2ee.idx
+[DELETE] ./fcb999c9-e7fa-4293-bd5a-bda19849f058.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./102976ec-455a-432f-a512-6f296c075cb3.rar
+[DELETE] ./a0ef524d-79a9-4886-9a9b-dc58c571868d.rar
+[DELETE] ./fc098bd5-f6f4-4a89-87e1-dc250ac047ba.rar
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4b33107f-3fb3-4ac4-ac6f-37a861ceb28f.cpp
+[KEEP] ./de6de343-d145-4deb-8107-d9505c1f310c.cpp
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./78dc803a-5a3f-43ca-adac-2e9afdfd9335.png
+[KEEP] ./8428545f-0c9f-4f58-9baf-c1d1d17ce0a9.png
+[DELETE] ./dbf11867-342b-4474-8024-dbec76f342b9.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./8ca7615a-0aba-4cc5-8c03-61dc32ff5c91.idx
+[KEEP] ./bdc52e06-f52f-4358-851c-9c0797bc380f.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./088b990e-37ab-4bf2-a07d-11d6ef0c2844.zip
+[KEEP] ./eb5103c8-1698-4bdc-a2e1-34b792acd888.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3c8487ab-7949-4032-a77b-78b08e3ca08d.txt
+[DELETE] ./92cb81da-3ff7-4f4e-b912-4edea62aae23.txt
+[KEEP] ./97c41ec0-2d56-45aa-b0e2-969f6ed3b9f9.txt
+[DELETE] ./b963b41f-1045-439f-9b8b-426aab074887.txt
+[DELETE] ./ccfecf54-8cfc-4dcf-901e-fce8c74d05bf.txt
+[DELETE] ./f90eb883-c2e8-4b86-af11-92739a8e6e63.txt
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./17e9dc2d-79e7-4be2-9ed8-544916941388.idx
+[DELETE] ./b25b0bbb-fa89-416b-a6c7-0c64ebf38e88.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./65be1267-3a61-4541-ac00-f93361e8a549.zip
+[KEEP] ./b7b45fe6-ddb5-4483-9cc6-9ec22353bc7e.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./92591f64-eb1f-4ddb-aac4-9703dfd13f76.gif
+[KEEP] ./e83a4f63-c95a-4116-a0d9-1af7e6da353f.gif
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./23f59514-2bde-48d8-8292-dcc1007fa4f7.idx
+[DELETE] ./9da18774-588a-4ad3-81d6-cc50c2d8ef7a.idx
+[KEEP] ./cd531248-f6a2-401c-9d0c-a2e688e3baea.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./56291bb4-32a9-4c39-8845-d0434f761414.idx
+[DELETE] ./7ecd53bf-a5e4-465c-8a03-488e09a1f9b3.idx
+[DELETE] ./d8916d97-8a5a-4a72-bb13-6c94025afaf2.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1874d8b0-c365-43aa-ae11-b560f6caa557.zip
+[KEEP] ./31572c05-3cec-4453-9cd2-b0e256cf803d.zip
+[DELETE] ./866c76f4-a79c-4d8f-b4d1-b7704e3d4382.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4050c791-28fa-4ea2-878f-041b84ffa8fd.idx
+[DELETE] ./577f54ac-fe2d-4a6d-85d0-9c0b2e3a354c.idx
+[KEEP] ./5ca5ee73-71ff-4858-b777-796dd562284e.idx
+[DELETE] ./b3647169-e475-43e5-a71a-ebb7074773c1.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./07598f30-e1e0-4335-b8dd-0bdd318e7b3b.idx
+[DELETE] ./965980a3-cbdb-4276-b0d6-9ae25fb9c348.idx
+[DELETE] ./afe51e32-b50e-41af-9b37-bfca9d291f5c.idx
+[KEEP] ./b2d77217-4675-469e-b00c-731636fb80a1.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./09475b23-3415-4ce9-87ca-73703fd0cd64.zip
+[KEEP] ./50c4590e-3a34-4ad2-9139-f249ebf3da23.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7068a7e8-c3c2-486e-b79e-d978db30ff68.idx
+[KEEP] ./72e3b155-926e-43e8-8b63-e681cfff81d7.idx
+[DELETE] ./e5310968-60dc-4c8e-af74-efe9e9b5599f.idx
+[DELETE] ./e9fb4be4-b742-4483-8a0d-4d858cb0b0a6.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./db0f8a03-7332-4f6a-b9e9-1782869563ed.idx
+[DELETE] ./e2d39cc0-74c9-44da-8b79-3505a886cdd6.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./32c09215-1b4c-45fc-84ef-b9a5ecfb8755.o
+[DELETE] ./668ce9d5-6817-47e8-aaef-4ff029dbaa64.o
+[DELETE] ./d4f89d31-6f4d-41e1-86ad-afc2d10311e2.o
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./705f295f-6267-42b2-8ec6-4d08ef046c6f.idx
+[KEEP] ./b5cccbd6-7985-4735-9e57-3a7914092c48.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./02b9d540-bc77-48fb-9dc1-497bf3ea74b4.idx
+[DELETE] ./6b49150b-fb97-48aa-ba58-841826f36eaf.idx
+[DELETE] ./7214a6f6-5be4-4f75-b71e-2a720f082435.idx
+[KEEP] ./f03ef0f8-2999-4308-9c59-157a8091708a.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./63a8a9da-6b98-44f8-90b4-403ec9bacfed.idx
+[DELETE] ./acf6f57e-4fec-43ee-93aa-579abd14eb0e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./65eecef4-680a-460b-8c56-8b063cd0e0e5.png
+[DELETE] ./e19b4d15-4616-4f3d-8fb6-478e38218ab2.png
+[KEEP] ./fc603235-f30e-4def-876b-7d77181593d5.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./70273b9b-ee6e-4725-b53c-442a39e94f64.zip
+[KEEP] ./b12a2004-7bf4-4900-b8d3-f91ad12a50af.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3ae11f68-a4a7-4f10-ac0d-14db44c60569.html
+[KEEP] ./64309ead-56e2-469f-b679-2e4358e3abb3.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./20ae403a-d7ee-40bd-9040-efdeefe5755e.png
+[KEEP] ./e3e9395f-9d14-4f8a-be20-4c343950ba25.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./495914c7-3325-4d81-a21a-5b80fa40ef48.idx
+[DELETE] ./5547eb16-1bf0-4087-8d8c-788173a79f98.idx
+[KEEP] ./888f8129-45c8-47c8-a529-0160a3bb485e.idx
+[DELETE] ./c8730a8f-ee52-4367-b668-2d2815ffb94c.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./045e331c-f91e-4c7e-abab-5685104f91f1.idx
+[KEEP] ./6aa0596c-0a5d-43f8-88a5-69008e131237.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1140af99-41c2-4518-9b2f-5779f92004b2.cpp
+[DELETE] ./1c909175-b90f-4578-a3f1-08eed79e71f8.cpp
+[DELETE] ./379c2f66-b09f-42cf-a9da-be89fe798319.cpp
+[DELETE] ./7daa61d8-7570-48ab-8e2f-38f932c65f2c.cpp
+[DELETE] ./9fb705c1-2426-45dc-b9a7-38006d879da9.cpp
+[DELETE] ./ad9f57f3-65f8-4666-80dc-c3c89d181371.cpp
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./62581687-530b-40e0-a849-24a73c9e2ca2.zip
+[KEEP] ./7363986a-3617-4b59-a695-82f4c12cbd45.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./152bed48-93d7-4068-966c-491555d793bc.idx
+[DELETE] ./d2790f80-4b8e-46ea-9cc6-ecbd4e4ee4f2.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./586deffa-c10b-4912-8954-ebfde47046d0.ipynb
+[KEEP] ./f63714e5-7b79-4042-99ef-3f394e87b870.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5442a231-1157-4323-a6ae-4d8066642506.py
+[KEEP] ./6c1d7aed-044f-4bce-a33b-8b1644ae9c85.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3b800aa4-c4d8-46ef-a4be-11662cf631bd.idx
+[KEEP] ./b14ccf92-98e0-4409-a820-888b8d6a48eb.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4b3e769d-4e17-442d-946a-4efe41568bc8.png
+[DELETE] ./9fa4ed67-28fe-41a0-8c92-f6db43315e10.png
+[DELETE] ./b4051af7-a8c1-41df-b567-8d27a4e84ae7.png
+[DELETE] ./c458a440-97b8-4654-8bd1-97943b52791c.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2c58e951-92ec-4674-b4e6-4c7283f71607.py
+[KEEP] ./46e05554-fb53-4f7b-9adf-9aca1f4e9a8d.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3fdae942-98d4-48d8-8253-7c75e373c769.png
+[DELETE] ./84e3f1a8-9e74-49b7-92f1-4b3d418c4be4.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./67fdd436-2b7f-4f01-8775-5a29c1c83bf0.idx
+[DELETE] ./8ec3c894-ced6-4ac5-b605-77975555ba2b.idx
+[DELETE] ./9cfa57b7-5037-4b93-a089-dcbf3385711d.idx
+[KEEP] ./a49b23fb-442e-4066-819b-ac5278b4a3cf.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./8c9116c5-9503-478f-9281-0c11e7119ffa.idx
+[DELETE] ./fa4b8914-060d-471d-b359-3ee1b1a00d77.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3e0a84ea-cc4d-4ce1-b2fd-473197dd4eb6.jpg
+[DELETE] ./d09f2695-8033-4c39-918b-89bef22423b9.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4bcc7706-0ef3-413a-b054-4d0b0e7571dd.idx
+[KEEP] ./a0c96e3a-d69e-4751-adc5-0c2eb0eb7e82.idx
+[DELETE] ./a5889d9f-2e8f-4b85-bc1c-987767978a69.idx
+[DELETE] ./ef470b45-dc0c-4824-a8d8-a5319f007d2e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./03c6feed-dd62-47a6-a101-b01ab834d5a1.png
+[KEEP] ./05f464c3-d546-43d3-8b02-52c4544ef9f2.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./720414fd-b759-4b0b-9cb1-87bf2198425d.pyxres
+[DELETE] ./9013b93b-f233-4bba-a678-8604f8feb0fb.pyxres
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./08c674d3-6ab6-4870-81c0-7ea1e4548c25.idx
+[DELETE] ./9c57c338-b31a-4b8a-8fe9-4379dbdfb14e.idx
+[KEEP] ./a4bc76e8-9624-478e-a593-efc3bac4fc23.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./18922823-4705-4352-853d-e69f842b09a3.idx
+[DELETE] ./246249fa-9a81-4745-ab30-85d276110c11.idx
+[KEEP] ./69075912-fe91-4e7e-98d6-518c5593c931.idx
+[DELETE] ./a507ab39-1eed-424f-a658-ec060b6eb783.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./123e6e54-e2ac-467d-8fec-d5aeb4f067df.png
+[DELETE] ./927912ee-a0fc-438b-84dc-7e3d382414f1.png
+[DELETE] ./ea7a7b33-5fe4-4d55-9e7a-fa84a5bb0f2b.png
+[DELETE] ./fdfacbb5-8de5-4622-9783-b95d1da15b56.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./05cd0bf8-f081-425e-8f7a-c0a07acfc2a1.zip
+[DELETE] ./1d0f4567-5fdd-445f-9610-c6cf560f90f5.zip
+[DELETE] ./caa71fe6-5930-4d56-b8d6-df3265f9fa8d.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0e19a2fc-101b-4221-91ed-1653ea25113f.png
+[KEEP] ./bf5969c3-f490-4f72-a22b-2960f6934a0a.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./76a39908-2a40-4539-a519-b615c0a8b87a.exe
+[KEEP] ./d154c69e-d557-4807-b22d-67b4f3f2c18e.exe
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./8db88657-09be-4027-b13d-bfb7a9e6b1c0.idx
+[KEEP] ./d7aefae3-4c2c-4199-9c97-5965a282021f.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1fd0c4b7-4a94-486f-b807-e1f2423f8e36.html
+[KEEP] ./48880123-b828-4bec-81e3-980af5639c4b.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./19a8bad5-b035-4b76-8ccd-c3d0b2c27153.zip
+[KEEP] ./1a54a222-f58f-4597-8016-31c83cadf32f.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./db40e753-b8b3-429b-a2e8-1cd645b7bc6b.py
+[KEEP] ./e6c0df77-a180-4c13-9c40-0d89f03f31eb.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4207044b-aa4c-4ecd-8a02-428262b6cd33.idx
+[KEEP] ./52d59314-90ed-4257-b99d-f09f071b8291.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7de30715-460c-4034-a07e-4406e1ced36a.xml
+[KEEP] ./9965d3a0-5af7-49e0-8480-34be9a61235d.xml
+[DELETE] ./debe5f68-e5ba-4c39-a996-0f114f660903.xml
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./70449cfb-2e12-403a-ad55-eb2db80fd00e.html
+[DELETE] ./cedc34d5-ff12-4338-81c9-c73cb34efc83.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./14e29953-6c27-4704-a3b8-929930d8f7a8
+[DELETE] ./30d8d606-ac0b-46e2-87dd-7fe80508e24c
+[DELETE] ./4b85f342-087e-4870-bb15-b0d9a430b1e9
+[DELETE] ./69cda19c-9e61-42cd-a4a4-ffbb6e8c5b27
+[KEEP] ./750de9e5-7ad7-496a-a146-5d305aaa74c3
+[DELETE] ./82fac1c8-ed06-4cbc-b980-421f25f286cc
+[DELETE] ./d1739393-1fae-4223-be2a-79d239c41b89
+[DELETE] ./defad28d-795f-47ff-bee4-264b10190d3c
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./76ecbd35-b19c-41f4-a10d-f620f33a7f0b.ipynb
+[KEEP] ./7c565e35-e446-45dc-859f-cc3450666638.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./911b4319-8762-4aa7-b6bd-293270c1d4a3.gif
+[KEEP] ./bc19a489-5234-493e-abd0-e801dc95dcaf.gif
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./c442e393-726a-490f-a679-297abba27a75.py
+[DELETE] ./cb9d8cf9-aa40-4b7e-80a0-983592a0cab4.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./b94f4e24-0bf9-4a32-9c5d-14b7636640a8.png
+[DELETE] ./bd0d317a-5a1d-4645-8200-8b3964adcc0b.png
+[DELETE] ./dbd7bbd1-ab1a-48db-ba3c-69ceee844d3c.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./491f9ba7-685c-4b60-931b-5ae82b9da768.h
+[DELETE] ./4c0d9bfa-61db-46fa-a54d-3e7560a1e27a.h
+[DELETE] ./db9cd8c4-a8e8-4b65-a982-2ef77f617633.h
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./278de399-bd0e-4125-a46f-8cc34d233c2e.idx
+[DELETE] ./91aadebe-fc73-4149-a9bb-1d6aefbd628e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./14df043a-7fc7-4002-a65a-5b5c47126ad5.idx
+[KEEP] ./9c7beedf-e3b5-4b49-b359-0a84be2526cd.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./09f93917-939c-4da2-9f80-2e0466e4bd8b.idx
+[DELETE] ./21613666-1850-4cfa-9943-1a6e0abdd85d.idx
+[DELETE] ./711679d0-dc6a-4019-b724-dbc9a0710f17.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5fc54282-c72c-4541-a807-2a1bded8cac0.png
+[DELETE] ./ecf93042-5e43-4a06-9fc3-4554f4ed1ead.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./00d3a31f-0aa0-47c7-8c5c-fd1e29d1aad6.idx
+[DELETE] ./6ada1742-604b-4dbe-aa29-72f6ab875831.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0a034b25-67fc-4339-9701-242dd33e1330.html
+[DELETE] ./65d91d3f-5e43-400e-a875-efd1f0a60776.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./99e76c15-618e-494d-b43c-9a2aeac89890.idx
+[KEEP] ./ba8080bf-f58d-4eb6-99a5-f8c48a267818.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./34e95f82-f26c-47a6-94d7-9534126d33d8.idx
+[KEEP] ./3552f740-3541-44b3-943f-fba7d0a8ee8d.idx
+[DELETE] ./58c9d3d0-db05-4c43-990e-d840abfb46e8.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./542eb766-b15c-4042-8723-7d0daa55bb61.html
+[KEEP] ./b9c81799-fd5a-47a2-befc-45dab1caa003.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./109701b1-6192-4aa6-968d-c58033f67aa5.idx
+[DELETE] ./60fd2849-f3e5-44ca-8479-5d9b5544d57c.idx
+[KEEP] ./d2f50829-0559-4c5e-a10f-f58102912f61.idx
+[DELETE] ./d7cf31ba-d722-4c9e-bb66-289395479774.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./355dfcf8-d16f-46e7-b22f-17d776bcdfea.idx
+[KEEP] ./38e2f861-e0e4-4e40-a656-bd3a4ee88321.idx
+[DELETE] ./ab49450b-a0f4-4fe7-98fa-3a60ef26240f.idx
+[DELETE] ./cfe0ea6e-017f-4fd7-b238-464503dc503d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./da5ebfbf-6b02-4c11-b712-6007440d0c71.png
+[KEEP] ./dce4d44a-1bc1-4b42-b240-72a806825302.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./b032c1bd-f79a-44ff-ba2e-65110c4d4e06.rar
+[DELETE] ./b27e1929-49f4-4105-9d8b-e5ea6d2ba197.rar
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a08236c6-7b59-4f67-ba33-10bf69dc073a.idx
+[KEEP] ./aa5ada44-a95f-4342-b239-2e529d5aa30a.idx
+[DELETE] ./be06e65e-421d-4736-8317-1f285782278a.idx
+[DELETE] ./eeadc3fa-f874-4c09-92ed-1ec9ee901d52.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0d51413b-76e8-4780-9ed5-aa5f95ba84bc.idx
+[KEEP] ./d2915766-c240-4a88-8681-f9d8d379a22f.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./28620162-67ac-4c91-8ea6-e295b33c03b5
+[DELETE] ./baac6acd-4be1-4b3a-a8ac-405f48560b50
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./08eeb111-d45e-45ac-97e5-3d55bbd000b0.ipynb
+[KEEP] ./ee121070-87d8-46ea-a7b8-516effbfa433.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./13d4c8df-eb9e-4de6-beda-19928384f2cb.idx
+[KEEP] ./52d4a8c4-3480-43b0-a5ce-488402e135d4.idx
+[DELETE] ./5f0ef43b-dd70-4a3a-ad1e-5252f2d92d0b.idx
+[DELETE] ./d54542c6-cb4f-45a6-9d48-9c003a12c53c.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1b756029-2ed4-408d-bfb7-fbb7d2979175.idx
+[DELETE] ./4ba7e233-e8c3-4d2b-be90-fc9618472e30.idx
+[DELETE] ./7d2a903f-3b8b-4aaa-8bb4-ea612d769320.idx
+[KEEP] ./b07f02f4-0f4c-4e28-a678-553d55afd2d4.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./377093af-f828-4529-8f95-b8ce03eb2637.idx
+[KEEP] ./404d4fec-7167-4453-9f21-f84841282c32.idx
+[DELETE] ./bb809caa-e4a9-4c86-b23f-81173ac5bee2.idx
+[DELETE] ./e89bc3b0-9347-4276-a7a3-0076e8709cf8.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./55f06f12-fcfb-49be-bc2f-74c2a268617b.idx
+[DELETE] ./676c4cb6-e1c7-456f-b8df-d7f712a328e2.idx
+[DELETE] ./b2c8f9c2-c052-4413-8ffd-e6b3d0adf132.idx
+[DELETE] ./ba11e43d-dcf0-42cd-b5de-d58ebc9c2947.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./38c609da-fd10-4817-b409-f8f19fee41b9.idx
+[DELETE] ./6c348aed-d571-4dd5-95be-651f6ddd8a96.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7b2cccad-af36-4cb3-ab01-ba5609515d0f.cmake
+[KEEP] ./f7bb011e-7113-4d19-b77f-6edc83c25ea3.cmake
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./26bfd8a1-5b7a-4fcc-a2e0-be17def31356.sample
+[KEEP] ./8180b9b2-6472-4398-8843-2900cba43166.sample
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a6be9c03-5765-47b8-8c26-33cfc23e3018.ipynb
+[KEEP] ./b6e9d7a3-a0aa-4379-b2be-693599940ce5.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./23ece358-137b-43a5-aa09-b169a20ca56a.py
+[KEEP] ./4f2d5224-ddaf-40ff-b31e-f4fb006a886f.py
+[DELETE] ./5acfc034-7b45-4c0d-98ca-dbf1769031f0.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1b47e0de-f491-44b3-8d79-ccd858a3aec7.idx
+[DELETE] ./57ec4968-aed7-4579-aa41-767626de911c.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./43ef30e4-8915-4939-849d-4b4053db8a98.rar
+[KEEP] ./a0c3fe29-e4f6-4c87-9997-669bd6f6c94f.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1c1790c9-b9d9-4b85-bebf-d1fb7f663a3a.idx
+[DELETE] ./b75b2929-6dd7-4566-a8e9-5ffdcde081b4.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./72d2fc02-001f-45e0-bb31-fecc000837b8.png
+[KEEP] ./fb07c9b3-ff6d-4438-91bd-c710925a6b15.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./43af6874-e4da-45d9-9c94-0c7589cba4e7.ipynb
+[KEEP] ./ac176c72-68d5-421a-ada8-18bc1760bf79.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./092fd714-46c9-475a-a01f-445301692aef.idx
+[DELETE] ./0b368880-d80a-44b5-b30a-75237c492319.idx
+[KEEP] ./6e9e686a-665f-4f6f-9d2f-d55bb6491281.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3d873c2c-8bb7-49d2-a7d4-f8aa5b47e0ce.png
+[KEEP] ./62f2e809-9b33-4dcf-b657-71296ae8eda1.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./64a01172-5764-4d6a-b3d8-c7a1004df630.zip
+[DELETE] ./9cc5f122-a472-40fd-bcbe-aabf3bcaebf7.zip
+[KEEP] ./f82cc115-31cb-412e-b312-e46725f3194b.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2cea8f42-ba42-4873-9496-82b0ea58b51e.idx
+[DELETE] ./5106fe7d-5a7d-4e26-9954-8a686eb322b7.idx
+[DELETE] ./6689d591-f4c3-43fd-845b-184448775abe.idx
+[DELETE] ./cfbe394d-eef1-4725-a586-3bb7115c0682.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./16794049-9513-4a32-a46a-cb02d6cd822f.rar
+[KEEP] ./19fd145b-bc01-4fd1-8b50-6f468b90d4e6.rar
+[DELETE] ./c965f8b7-a120-427c-942f-abba8ed06abe.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./635b7042-2ce5-42c5-91a1-0bf8d869d3e4.ipynb
+[DELETE] ./f142c9d0-4f25-4554-b582-36adf7248e36.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1d24a099-43fb-432a-bf0e-a4e8766d93a8.png
+[DELETE] ./2e8311c3-3431-46a9-a772-7ad9eddead36.png
+[DELETE] ./719d25ff-010c-489a-af0d-979ad21e7f5e.png
+[DELETE] ./7efba14d-6222-4493-8882-6a31a48fde7b.png
+[DELETE] ./d43379bd-aa44-41f1-b9c8-2b0db9c67ee3.png
+[DELETE] ./da2d093b-8361-4e6a-8505-b901ce211ce2.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1ad8f29f-3daf-42b1-b3f3-5dfe6344433f.idx
+[KEEP] ./3b7b0222-d7d3-498a-b082-c22b0637c6b5.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./50d86d82-fa58-4991-9c04-979091ad7e99.idx
+[KEEP] ./c3ecd361-a7fa-4321-9b2d-74993ea79b74.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7fac645b-6d1b-4a0a-82cd-348cb7bd2030.h
+[DELETE] ./dcb7153e-bd96-4cd6-b73f-0562bbca6935.h
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./013f3e27-28cd-46a6-9a91-ae79e8cefdf1.wav
+[DELETE] ./434ccccf-0c39-4e24-8174-43e2e11fe6df.wav
+[DELETE] ./56e417ce-7932-4a56-af16-2563a7ab9fad.wav
+[DELETE] ./b250179b-919b-45cd-9f31-03ae4be41736.wav
+[DELETE] ./b28c80c2-0c95-4aa7-a8d4-6a3ec525862b.wav
+[DELETE] ./c887afd3-ca44-4ce8-bfd7-70bac01aedc5.wav
+[DELETE] ./da31150d-b8e4-41f1-b06c-f217dd8003a0.wav
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0da9ade9-d39f-4115-9d69-db15595d5e49.html
+[DELETE] ./ebba732c-30cb-47ea-844e-f209c0f3c2ec.html
+[DELETE] ./ec6f5a7f-cd23-4b3b-bd5c-5c510c469c68.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1e349571-4915-40d0-9a1c-f0f02be85378.png
+[KEEP] ./2580a70f-300f-4579-8ee6-31b77aed1861.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./06ebaa4c-9ead-4624-8481-22cc0f89d585.py
+[DELETE] ./2a6b90f2-0107-4405-abf4-def46bf50371.py
+[DELETE] ./7decf8c4-aaae-4a02-b216-37c3d9b242eb.py
+[DELETE] ./8a6c0703-bf83-4aa8-9a52-26b6c6e8ec78.py
+[DELETE] ./bd3cc16c-b45a-4399-bde7-edb82680e000.py
+[KEEP] ./d5e84495-c841-466e-9d89-7dd44c2e9426.py
+[DELETE] ./d6421c24-7e6f-45cf-b415-9a60a174c453.py
+[DELETE] ./f5d1bbec-9b18-4ffd-97d9-b76b891af053.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./04ba5162-cd33-450b-bccb-8f378aa6a203.idx
+[DELETE] ./4b8e4791-6aa5-42e6-8a9e-f9efc72179c7.idx
+[DELETE] ./5b13566c-84e4-4181-9aff-bbf49d592072.idx
+[DELETE] ./df33bdc7-6883-4d08-826b-66f9cafaeeb1.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./cc07a555-448b-48a0-b245-8395ad7aadd4.idx
+[KEEP] ./ea3c0ceb-8efa-4f6b-83e6-6a45677e5cc0.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./26b05385-d80d-4f1f-8ec7-13dce4960a22.sample
+[KEEP] ./7d1e6c85-0b20-4d62-b9c2-e6a45fe4f0b0.sample
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./26af6385-308d-45f8-aee3-3a41ab8465f6.idx
+[KEEP] ./70c084e3-e606-44c2-9fa3-9dd7f39cc743.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./371d9392-d3f9-4af6-bea3-9270c5a88d68.h
+[DELETE] ./54f276da-849e-45cc-ab35-cea7586bd91e.h
+[DELETE] ./70a72a49-644f-4563-bf09-e008c45eddd1.h
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7f0040ee-c663-4916-9076-b566bb5abc17.png
+[KEEP] ./86b3d558-5c80-4852-a4a5-8eff0cfea1ff.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./26c0d34a-ab9f-4a83-a212-a5bd67c73cb7.idx
+[KEEP] ./2f9ff63e-de49-4710-9854-1271af248e43.idx
+[DELETE] ./42ecb82d-a4fe-4223-a8b3-50499c56eed8.idx
+[DELETE] ./d8cdddd6-776e-4887-87f4-c4703f268b3a.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3a1741d1-37c3-4e50-b9cb-96bc9d58cfd4.idx
+[DELETE] ./4f5241c4-f534-4e00-8bf3-e47afa850853.idx
+[DELETE] ./c2e2cc68-94b6-4378-911b-0d47fe8676cb.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7f4fd0b9-8a09-4522-9391-38f5b84e5f5d.jpeg
+[KEEP] ./a269aa91-2f6f-46fc-9c03-a72fc8ad7afc.jpeg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a60ad68e-82a3-43ba-9580-7657ac9e5683.png
+[KEEP] ./d4e0a0ba-c502-4b77-b90a-b1f5ba2a29d4.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a05e565c-1476-4b37-a35e-8c8ee3ce0551.html
+[KEEP] ./b47cac11-bc56-4457-9ace-472c66a1157f.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a0974c5b-df5e-4d43-a115-f0a9c072c335.idx
+[DELETE] ./b48013d3-899c-4482-8933-a87459a55ab4.idx
+[DELETE] ./b4d306a3-7958-4519-b781-aed2c7bad7de.idx
+[KEEP] ./bbbdd8cd-57e9-446b-8d70-3acff2fd60ce.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./52a711c9-2401-4120-b52a-baa30827b4a7.png
+[DELETE] ./82f06b66-724d-46b1-86f1-4b4f2b144506.png
+[DELETE] ./c772ece5-241f-4b99-bd4b-3c061953ca67.png
+[DELETE] ./d4451950-be9b-41e2-8e31-5ee4068fcaa4.png
+[DELETE] ./db49ca75-ab59-4c1d-be4c-bfc9de4f6392.png
+[DELETE] ./ef93489a-3cd8-4746-8aec-75daa11f5ae0.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./982d1929-e284-4a0f-8c60-3dd3e6c40736.idx
+[DELETE] ./f21f04bd-2573-4c1c-98c6-b796f6a3d8bc.idx
+[DELETE] ./f4abc4cc-52e9-4513-9202-83ee187ea6f1.idx
+[KEEP] ./fe4a6bd1-4ce0-477a-8865-0a0aa2debb58.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1f0363af-724b-43fc-95c9-ab45bf2da6d5.zip
+[KEEP] ./5eb5d5a4-309d-4698-badd-128da99ab330.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./06c51203-5d84-47bc-9919-e3cb55c43709.idx
+[KEEP] ./5494b1dd-3a86-4780-a993-7e0614e0acdb.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./536cd1ac-7139-48a1-b9f8-edd0c662ce16.png
+[DELETE] ./dc02d0ae-b7dd-4185-89aa-b103a19f9f3c.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2474f363-77ba-4a32-8660-bfb1f59d0d3a.html
+[KEEP] ./53d969cb-0c45-41bc-b1e1-8f5d7f16e8d0.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./104eba06-02b6-433f-bc87-5367a99fdc05.html
+[KEEP] ./88804350-1ba0-4395-8fcd-450790210be1.html
+[DELETE] ./8e566cbd-dffe-4acd-88f1-76602497d98a.html
+[DELETE] ./900e2768-d26f-4b15-9c4f-15b46722000c.html
+[DELETE] ./d04fa6f0-f649-44ac-80d4-4db455d1f90f.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./19f19d6f-b68b-44b1-8a6f-f94b8f537dfe.wav
+[DELETE] ./1cc92927-04b9-41c0-9e1f-c1c307599efa.wav
+[DELETE] ./2df441aa-ce8f-4601-acf4-25c00447602c.wav
+[KEEP] ./321ee1e4-df5a-4a94-b219-96f0050bca82.wav
+[DELETE] ./442c4532-d954-48ec-bda9-fd935f847bf5.wav
+[DELETE] ./9ef2a596-1e12-466d-811a-93f5a51ea3ee.wav
+[DELETE] ./a06cb22a-f958-4f81-8a99-7ffba466e61e.wav
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./c0c81a7b-7d85-4bdc-9241-d0e8ece7ba66.jpg
+[DELETE] ./dd655040-756c-4ed6-a353-e6841a1a10f4
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./380cc899-af00-4914-af4d-dc00df5dc8b6.zip
+[DELETE] ./f9446fb5-3cf4-48f1-adab-46ba11cca33a.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./02fae337-691e-4d27-b5fd-176053d35a0a.idx
+[DELETE] ./083bf69f-c814-496a-ba32-5a4966343077.idx
+[DELETE] ./38b31c16-89c3-40aa-b697-4b964c80b243.idx
+[KEEP] ./bb5c08a7-f4ac-484d-9606-7e141444dc3d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./09400a68-d0af-4c84-aa5a-7ccf57af6905.7z
+[DELETE] ./252c7b47-b337-40d5-8ced-92adbaa427c7.7z
+[KEEP] ./465c743e-8a2c-4c77-9786-f5c530fbe611.7z
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./917e0a3a-a678-487f-8da9-6c1b5b029bda.html
+[DELETE] ./b45e2ec9-b166-4833-aa07-8ab6c2606e57.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./89f2fc84-3c83-49af-8ef4-9f7c7d99ecf5.rar
+[KEEP] ./8fa5cc71-4054-4573-af65-85cd48074104.rar
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0b22400e-a788-46f0-a0bf-405b174e1f13.py
+[KEEP] ./eafef312-1ea3-411f-9c6c-7446019d2e24.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6e67157e-2e6b-48fa-9f88-0ef42e64b2ad.rar
+[DELETE] ./ff69aff0-63a2-421c-a13d-3ca7f0dd7e8c.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./20463133-154d-4653-9c6e-7b49c43989b6.idx
+[DELETE] ./4928b700-bb07-4f21-af75-f2fd8e63c155.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./a16e3bda-3bee-4975-a151-471bc570b26e.html
+[DELETE] ./bc98ef51-39ec-412a-895e-3358a6df00c5.html
+[DELETE] ./ce0a542c-dd0a-4077-be2f-669ea4d174e3.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./033f463d-7b57-4a0f-9ed6-373616d2d16d.ipynb
+[DELETE] ./82f7ac8f-b983-4f07-9bf6-7496c8177ad8.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1084437c-9c30-4382-96d0-0434dd817e9a.7z
+[DELETE] ./39e34170-224f-4493-a34a-6e0bb5c22086.7z
+[DELETE] ./d3ef5e52-3245-4078-a9c5-bb62fd8747a8.7z
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./57d24ca3-6846-4f75-ac0a-438eaea74a11.zip
+[DELETE] ./dd64844f-e147-49a6-83b5-713891b7beba.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./55b6564a-378e-46a7-ab48-e0a2241b919c.ipynb
+[KEEP] ./a68e2956-1e49-46b0-ae94-26a9128a38ba.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./52f3442b-783f-456b-aa95-b112c00acfda.jpg
+[KEEP] ./e5c9637e-72e3-4b25-94ec-5d89e09a9e53.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./80226bd7-4049-4c6d-8d3a-7456514b6cad.ipynb
+[KEEP] ./bfbaa531-61d3-4182-a270-1df841faddfc.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5881ab26-80df-4cc4-9832-37cf8214c924.idx
+[DELETE] ./e59d6475-2ca4-4ed2-8f11-473eb52288ee.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4d9b6bc8-12a2-4d12-a6d0-231d02285bf7.png
+[KEEP] ./cf8650a3-af01-4efe-b785-c59faa816c58.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3da0e6c7-3378-4c30-8c8d-cfae005ece7b.idx
+[DELETE] ./9d183f92-93eb-4ec8-8c42-40ed853cd91d.idx
+[DELETE] ./9eafb13f-7735-43d0-aa3f-411b35852b9d.idx
+[DELETE] ./e2158d6e-3950-433c-8b7b-35d1f0f47254.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./00ef6a9d-a63f-4411-8775-e6aeed800d24.jpg
+[DELETE] ./0a4fe5fb-1e30-4775-9a28-c14d003f31e6.jpg
+[KEEP] ./3fefb703-a7c1-4310-90da-82ea75f7eff9.jpg
+[DELETE] ./d2309582-eb31-4237-9eaa-7470e0945523.jpg
+[DELETE] ./eb326e0c-dc78-472e-93c8-bf854346aadc.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5b6033b8-cd9a-4bcf-85dc-700283a6472d.zip
+[KEEP] ./65725268-19ba-47a5-b6e4-050c9789b32c.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4b26754c-56e4-4398-8f8c-9a99cf625dae.idx
+[KEEP] ./8b29a36c-99b8-4c65-82ad-f51cea9c3016.idx
+[DELETE] ./e5393814-080a-472c-9a0b-09da7a79f190.idx
+[DELETE] ./eb1027f2-67ab-4b37-b9d4-87d19f44a15e.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./038aeb40-2184-4716-90b8-486357142a75.zip
+[DELETE] ./21877a26-26a4-4838-a685-e94a57b457d1.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./219c11e8-e1d5-4180-b986-361684577416
+[DELETE] ./9333e101-5a04-408e-adf4-fa894d8f842a
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4f6a7ebe-1825-4389-a3fe-f81d3138f31b.idx
+[KEEP] ./dce63900-6b9c-4916-8851-a40d36f5edbc.idx
+[DELETE] ./efda1cb1-61c4-4aee-b32b-13b0250b1e4c.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./59630d99-1297-40a9-91e5-05e1a340b6a1.ipynb
+[KEEP] ./896be673-32d5-4422-8229-5c4a5495ad8c.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./87939deb-5564-4023-9495-838f61edff8c.png
+[DELETE] ./8bcf50de-5f89-4593-86e0-05bec8478e7c.png
+[KEEP] ./c44e1e71-90ab-4d37-8e0e-bb8673bff48f.png
+[DELETE] ./d3a50b5f-fce6-4f94-a4a5-b04ea12a206e.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./02ad1170-4209-4f4c-a02e-425f45cceecf.idx
+[KEEP] ./cee9861a-1bbe-48cc-808b-f93a16ab8f05.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./241fb12c-6622-40b6-8a18-8751d2c699ab.html
+[DELETE] ./713313e0-2553-441b-a04a-5e0f4780696b.html
+[DELETE] ./c74391be-f35f-413b-83fb-e0678285b22b.html
+[DELETE] ./d735dc4f-8850-4937-87ae-897306d574f7.html
+[DELETE] ./dd31ec11-35b3-4585-9592-7c466f930abe.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./653a7432-e373-4932-870a-8d3a6e4866fa.idx
+[KEEP] ./83af2ee6-9d10-4252-97c9-32cb6945c120.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./03671740-f11d-4502-96be-1f523546090e.idx
+[KEEP] ./b6f096de-8521-4131-ad93-5abb3efae28b.idx
+[DELETE] ./f0984753-7c73-4b62-9c4c-a3804d000f65.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./9ace456a-9a94-4b30-a42c-75e871cdffc7.idx
+[KEEP] ./a1c65833-d9e0-4475-a1b0-e6c181d378ac.idx
+[DELETE] ./ebec5147-81ad-48e7-b0a3-0ab055287e14.idx
+[DELETE] ./f0ad76ce-c7cf-4c43-86d0-718bce5de511.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./366c1fbd-2474-4bc0-b130-c09e2cd8e4fa.py
+[DELETE] ./3892d4ce-922b-4c08-9310-6cf44f4ceeb6.py
+[DELETE] ./66e99429-afb2-4896-862b-9c0480ff4453.py
+[DELETE] ./722e459f-4dc8-4044-b21c-b86b52fdb7ec.py
+[DELETE] ./8e8f94d0-5578-4741-ba7c-04988be9c0d5.py
+[DELETE] ./9114c9ae-c968-4af7-a79c-9126e218028d.py
+[DELETE] ./d8e801f7-701a-456a-8fb2-f6a1e535eba0.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3791b130-ccdb-43b3-9465-8727ca24e0b3.idx
+[DELETE] ./425219a6-907a-4027-b1b2-a634ac82e91f.idx
+[KEEP] ./82e419fb-8cf5-4a83-b42f-fd680732a62c.idx
+[DELETE] ./e7974ff7-02ba-4320-b166-47bd36c1aff4.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5f81f444-8582-406c-b36f-cf09a7c412a4.idx
+[DELETE] ./d77a9638-4741-4642-baef-0e587ed4d8ec.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./05d96914-5f4b-4f10-b007-762373e90691.png
+[DELETE] ./70bc5fed-917c-4ff9-81dd-76fd7bbea287.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./6b748d33-ad3e-4479-98c9-2be709057648.idx
+[KEEP] ./8f3a404c-183b-42c0-a315-07e0125a6040.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./196c02e2-0de2-4ee9-83b5-571dcc7b4500.zip
+[DELETE] ./8e0a0cb6-70e0-4af8-8340-35cbd24d1ba7.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0eb4b04c-3b07-4d13-972d-3c09ed591fb2.idx
+[DELETE] ./13743458-5802-4235-96f7-54b1e3e09cba.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./d3004daa-f196-45ff-aae9-5313d6097ffe.png
+[DELETE] ./f5db66ed-8c11-429d-90ee-7a31805fb789.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3063f39b-c308-4f6e-8b77-2b33ddc19419.idx
+[KEEP] ./c2a56a16-b345-4105-8dfb-66301aeda119.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./c2c72766-b7d4-4ed2-b8e9-83bb62773987.idx
+[KEEP] ./f6ee9d68-b9a6-4bff-ab5b-1f4a53b08b72.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3e699a9d-a373-4860-b7ee-7b98536ec043.png
+[DELETE] ./a5ef84cd-75fb-4c48-bbb5-0f85db6c3f79.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./15194630-a5fd-4ee7-a3e4-5314fb4a14cc.png
+[KEEP] ./35e2b7e3-0fde-47fd-ab7f-a08ed2b1caea.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./47558592-1b3a-4ff4-8f47-729d6a328b12.idx
+[KEEP] ./a62e9f24-ed63-460d-aebe-8a36a6d5f4a0.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./47d3b892-f77b-4235-9435-e72896da2d45.idx
+[DELETE] ./4f4f11ed-6b35-4a93-b17b-87cbd79bfaf6.idx
+[DELETE] ./67d7b5b6-28d8-45ca-bad2-9595f3cfea87.idx
+[DELETE] ./6d4c45af-639f-447e-adb4-855fced94462.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0544ce7c-ebc8-4919-91fc-611021e55694.idx
+[KEEP] ./6b7c823c-535c-4ca7-98ef-6669649ba0d7.idx
+[DELETE] ./8ca83c98-a2e4-420d-9074-b5d3839cbef5.idx
+[DELETE] ./fef1010e-6b53-4c6b-bafb-98bc98a58500.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./152bcfa4-af94-40bc-a665-5074b44adad0.idx
+[KEEP] ./a2512c49-ccc5-4bd3-9cfa-ff27b6bf9f1b.idx
+[DELETE] ./b2e61519-0ee3-4c8c-b3b9-23ac4c244690.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./9aafa512-e909-4ff2-a3e7-09448d98ae8c.PNG
+[DELETE] ./a3fce67d-25c0-4c41-99d0-370a05f12d9f.PNG
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./24ac4eda-13af-46e8-8a0d-23d11ce7e7fd.png
+[DELETE] ./b50043ff-f960-47cd-8d0d-eb7360b38f23.png
+[DELETE] ./f2609119-85a7-4cd4-ae88-50357fb0cc64.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./18c38c37-1885-44ff-a36c-33de6a982509.idx
+[KEEP] ./b7a3068d-a7ee-4057-8bf9-b801179635c7.idx
+[DELETE] ./e749cab2-ebf8-4e37-89ee-f64f18b428c6.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./31bfb05f-53c3-4efe-b646-d325a3d79256.idx
+[KEEP] ./765d94d2-be3d-4266-81f3-c0b9502991f3.idx
+[DELETE] ./8f0825bd-e09e-441c-91be-b48b577461b6.idx
+[DELETE] ./c977bba3-189e-4211-99b6-f9b83009e3d5.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4d363a46-9da8-4f98-96ba-edcdfc60bb66.idx
+[DELETE] ./9b176ab3-f326-468c-af98-9291976b467c.idx
+[KEEP] ./abbebaf2-3db8-42b3-a99c-f657675ff7e1.idx
+[DELETE] ./f2431684-e2c8-4548-a759-aa4d6808ba63.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2b682dc4-15d8-4e9b-a617-5f353f922944.idx
+[DELETE] ./f7e613e5-c484-40fd-a866-3afdfa52f20f.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./48bc5fbb-017b-48df-8e42-980df36308b2.idx
+[DELETE] ./91740c59-9a5c-42ef-9075-1a7148b0129f.idx
+[KEEP] ./91817d41-0c73-4994-bd88-44b8e2987102.idx
+[DELETE] ./a98f29a5-19bf-4a03-b65c-24325628fb53.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./b3ce52a4-0af3-4a89-88a7-201ece565249.png
+[DELETE] ./b7208dac-62e1-4443-8bbc-ad3339fab5e5.png
+[KEEP] ./d59a50d7-09b1-4086-9053-2c5654a94811.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./406fda30-eaa9-49a4-b2c9-11ce53ff8f7b.idx
+[DELETE] ./51d15518-8363-4cd0-b0a1-3662f65f53c1.idx
+[DELETE] ./94ca1cca-2cc6-497f-ad94-c15e874c6ef3.idx
+[KEEP] ./f867d4bf-b6dd-4cff-817c-172fec1e23ae.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./120949a0-ec91-4ecf-a9bd-b3f40a6903fe.png
+[DELETE] ./91fb66ce-7afc-46b6-ae24-bbe13db265a9.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./6a02b1b6-0b5a-4e31-9e28-d52cca4ed6b8.zip
+[KEEP] ./fce36ae8-0fb9-4aff-8edd-e1e0ee182adc.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7d3eb51b-c5e8-4e6e-894b-72f4c8842d64.idx
+[DELETE] ./8e7ba282-a9ce-4512-8538-f198a91665dd.idx
+[DELETE] ./ecd1f4d0-e2cc-44aa-bda4-727db5930012.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./617d753b-8a66-40ec-a85a-b71c3e76e445.png
+[DELETE] ./a6035761-4f52-457f-8822-efccbc83e448.png
+[DELETE] ./a8ee9bdc-e442-4d63-bf8a-ef25be219173.png
+[DELETE] ./f67d6341-7af8-43cd-abc6-03d3718ed3aa.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7eca088a-baa5-4572-a2a8-64ae50dacee1.png
+[DELETE] ./db0a918e-d932-452f-94f1-1a574c8a422f.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./41f01077-370f-438e-819d-26c194f960e6.idx
+[KEEP] ./c1d1d646-c729-47fc-a91e-05397599f830.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5d263393-22f1-4984-be40-ee2b9fb32f47.idx
+[KEEP] ./70eadc4e-c931-4f30-89ac-63ab22a22d0f.idx
+[DELETE] ./a6c40f8d-3fb9-483e-95bf-348e8a7ec076.idx
+[DELETE] ./c436763f-db4d-4e64-b786-67bf6f216d86.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./48d41e07-0352-449a-b829-c1e4b474edd0.wav
+[KEEP] ./6bf3e577-9a98-4810-b408-56780cfa404b.wav
+[DELETE] ./ef4f3187-737d-4709-8380-556ae3d7f40c.wav
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./268fd72a-020b-45a0-b02b-ddc01696fa67.ipynb
+[DELETE] ./5332936b-ad54-451a-ba0e-bb049fc051f3.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./a18f81b4-e4dd-4555-9809-40fe1280443d.zip
+[DELETE] ./faf14d1a-6de3-42ba-b960-e44e4cc757e7.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./48240f28-43a2-40ef-85ae-62d6554a491e.png
+[KEEP] ./9cc09d61-862b-41bf-83e3-deac7564f4d5.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2ce36578-174d-483a-b3e2-294c77397af7.idx
+[DELETE] ./bd6d0283-4502-4686-aeae-c4e6d8a8e18f.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./08b978b8-6845-426c-bf4d-7fd2d6a7acf7.idx
+[DELETE] ./43115161-57ff-418a-86bb-0c1070fe2d9a.idx
+[KEEP] ./53c57789-4e31-450c-b25b-4fed9e1576ff.idx
+[DELETE] ./e0b673fb-a772-42db-9f6e-6e946b90d65c.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./ca65be29-26d1-47d7-8d10-89592a517409.png
+[DELETE] ./f985c0a1-de9e-4621-831d-a5b961e34f04.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./41a848f3-491c-4c8a-a8bb-ba5b8550563d.jpeg
+[KEEP] ./a392425e-56c4-4a1b-aa48-900acfc0b707.jpeg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4da94d0d-6d25-4cd6-9aa7-99e03d8ea26f.png
+[DELETE] ./9a4290e7-7e31-428a-86da-48114bc8f37b.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./105f6a59-a85c-4062-bfbb-66556cd26211.ipynb
+[DELETE] ./a420e501-f8ec-4a4d-8891-a8c9fdebc5ec.ipynb
+[DELETE] ./e4b3b2e0-f1a8-41cb-9cf9-07a62dcbdcff.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./371192a7-c84b-41fb-acfb-829476edd361.idx
+[DELETE] ./41d244ae-5379-4636-85b8-7a74961c853f.idx
+[KEEP] ./ab6ddd7f-cd3b-47ed-9bb9-546626dc7de0.idx
+[DELETE] ./f7b400ff-50b2-41d5-a2e0-4c47fc538d08.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./32d9047a-8f78-4b44-a27f-2008465c1c6f.idx
+[DELETE] ./df4bdd85-e904-4387-99fe-48f9b21853a2.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./19c2f50d-a4dc-46c6-b7e8-a068e0c7a869.png
+[DELETE] ./295f4856-71c5-42ea-b650-ae1711102c40.png
+[KEEP] ./82661f3e-713e-4db2-8f75-c994f7451be2.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0ae03650-448d-454d-b6c8-f6bf4cbb50cc.idx
+[KEEP] ./23105cf9-8ff3-49f6-9995-6ea245ea737c.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5007c145-a162-484e-be64-08efcaf491f9.idx
+[DELETE] ./e9dca840-16b1-4eb8-80aa-18bdea6ae770.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./32c79741-77f3-4698-886d-8a7f747ad076.py
+[DELETE] ./6d6ef434-a579-411f-bafa-18d9f9eda8d9.py
+[DELETE] ./ef73a887-6ef6-4915-a913-7a092880c7dc.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./00851b14-fdc9-47f5-9b45-852692925190.png
+[DELETE] ./b16aec1b-d8d3-4344-9932-1302768905de.png
+[DELETE] ./b89719de-d730-4952-b3e3-0db35219dfc1.png
+[DELETE] ./ffad7df0-da81-4962-bd87-7732c58b45d6.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2df5fca4-397e-418c-a2b2-099dddb07897.png
+[DELETE] ./9ed4dcde-474b-42d2-b912-7310a2c9e8e3.png
+[DELETE] ./b0c45601-7d02-495e-8f0a-2083e01c324f.png
+[DELETE] ./f020f6ce-e8c0-45e6-897e-13890d8c4671.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./14ba9503-0f86-4ca2-ab12-ccd9268fe01d.png
+[DELETE] ./95bc50f1-82ff-40e0-a1e7-5d1240cc90da.png
+[DELETE] ./a32a928d-385e-4771-9b5f-16a20fd21480.png
+[DELETE] ./a7f344c8-6b6d-4abf-881a-0a4e5ed4fd7f.png
+[DELETE] ./a940719e-583d-43e1-904f-b98b801251bb.png
+[DELETE] ./d20c9cfc-dc95-4f7d-b8a5-6599250e1090.png
+[DELETE] ./ec6f83f1-cb1b-4682-8fe1-5cd9c07849a8.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./51d3e41d-4b7e-4aa3-badb-758f7219b58a.rar
+[DELETE] ./7e946e16-dbf7-482a-b75d-35792943d46a.rar
+[DELETE] ./9fb1825c-bf5e-4dd0-9759-5fe285bc4fc3.rar
+[KEEP] ./d79700b7-59a5-41ea-952b-2212262e76dd.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0f763d6d-8605-4990-b36c-e4020e61ad46.png
+[DELETE] ./4fe47747-c8a5-4111-87d6-b0e87e29c5db.png
+[DELETE] ./78dcc762-9159-4ceb-a830-1c48eee09937.png
+[DELETE] ./9f435a95-7df8-4daa-ba52-9fcbf4cb9aa0.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./43ab7d9a-9ad3-447a-b470-3e459db6c3fb.idx
+[KEEP] ./52a8bb76-015f-4b5b-9a6e-eac3bf130861.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./ac32b78a-f7de-412d-9d2e-f21158e4c9bf.idx
+[DELETE] ./b359f5ec-6f9d-438d-9c3a-41cfe268010e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./6d13ee84-d8cf-4e7f-a46a-e209299668b6.ipynb
+[KEEP] ./b88b4391-ca96-4edf-91e7-af9771319f54.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0d1f4fec-a4c5-4707-9246-1a8ff6a6bcfe.idx
+[DELETE] ./941bf460-ab8c-4008-a01c-e2038d6ceeaa.idx
+[KEEP] ./98e5a571-ff5f-430b-b442-ab0ad314b9bc.idx
+[DELETE] ./bd0da856-1734-4d15-9602-5b0020a07c5e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./523ac407-b558-40c4-aad7-a6915cbf1c89.idx
+[KEEP] ./955a7c7c-d621-4d01-ada4-a1f50d0c84e1.idx
+[DELETE] ./eb603daa-bf50-4f3a-805f-53fcafc29f77.idx
+[DELETE] ./f078ee27-ff9f-4e0b-acf7-1cb6b7a86c11.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2cf78ecc-c4cd-41e2-bf17-2fce4cc8e2ff.idx
+[KEEP] ./400e7cb1-f0ec-4ccd-b92d-d60704d8af62.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./50c22bc9-2d5f-4397-9811-a6c6e5542c28.idx
+[DELETE] ./ef66eca9-9606-4378-9f78-1b27dced9d40.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4d30f7de-50c3-4bd4-949c-4e47d2fa6ff5.idx
+[DELETE] ./d0e8b810-b801-4769-98b1-eaa41f6a50df.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./c59b6ee4-b27c-450d-be1f-aa64597edea5.ipynb
+[DELETE] ./e6dd0e6e-41df-4e8b-9e8d-16be8dc7d044.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./395c631a-46c9-43b5-92f7-ecdd32d13145
+[KEEP] ./f795eab4-50ae-4f43-a5cb-0e5669e01a0c
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./98575c3b-1a60-4ed2-983f-70bae462fc13.sample
+[DELETE] ./a254e1e9-8221-4069-a260-360852f37e71.sample
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./78dc5b25-9297-4ec5-b61a-591660624ec7.ascii
+[KEEP] ./914b295c-536b-4b68-8c2c-426c3be20c24.ascii
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2b1d45c3-e57a-4633-b4fb-22d9204587e2.zip
+[KEEP] ./4cc4c922-8cf7-4e84-9d01-a22467c9fdd4.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6d605c0a-a2e9-41f3-9c8c-d29644604b55.png
+[DELETE] ./8914e049-5b19-4446-affe-37ff35bd1884.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./37ebc985-03c6-486d-8eb0-d16982daf949.idx
+[DELETE] ./b9b06ff8-87de-4105-947d-ebcc4832243e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./09cc1501-8016-4744-b75f-2436b1e2d23d.jpg
+[KEEP] ./2ee543a2-76a6-4b49-a5f1-70d6a0a89d1f.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6b3e8f87-e212-4493-9218-e94b1ab24cc6.py
+[DELETE] ./e40f1842-6a58-4226-8a97-76dca8ab92fd.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./38beecfe-342c-402a-b64d-3eda1a5b7414.jar
+[KEEP] ./c4fad60c-5a0b-4d86-94af-adc97219c8a3.jar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./04446109-f5b5-4f93-9e7f-25d40333426d.zip
+[DELETE] ./d60f0a29-fd57-4d63-a265-89e00c2349d8.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./48d6ed51-d32a-46b3-9d19-a24db7dea83e.idx
+[KEEP] ./5ed09ac2-67fc-4cd3-afb3-b4373d352bb0.idx
+[DELETE] ./8ae89799-6ebd-45a0-b56d-28881b85b045.idx
+[DELETE] ./8c190d8b-093c-4cf2-bd7c-0065c154db98.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./08d8b14a-ec06-46cb-9d96-8dd607f537e1.idx
+[DELETE] ./4c8993e5-f53e-41e4-9255-9a5ce910d6c2.idx
+[KEEP] ./e863df16-a832-4068-88fc-be2f0e302d56.idx
+[DELETE] ./e8bd0620-4a5a-4cf4-b323-e1f42891b9de.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./668d8a32-5bc6-4ddb-888b-70988747ad93.zip
+[DELETE] ./9ce2d04a-6758-490a-83c9-4dc3672101f6.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2070c4c3-430f-4b26-a570-7aab19c22fff.idx
+[DELETE] ./430253d9-5a08-45d6-9786-ed7715a623ea.idx
+[KEEP] ./55a45b9a-e5eb-4c40-a071-c35bd0bea1a5.idx
+[DELETE] ./b270e9f2-44ac-4760-8f5d-8d55c95ed4f5.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0fe6903f-ee7b-4b1e-b778-dc3f4ade86c5.png
+[DELETE] ./104e5235-9640-4369-bdfc-a06a75f50f95.png
+[DELETE] ./6ac2fdeb-e88b-4cf3-9628-7ee2be19d0a2.png
+[DELETE] ./6e9afd00-e891-4c13-98af-344cedfda045.png
+[DELETE] ./9adacb07-3457-4ee4-808c-719dd1002061.png
+[DELETE] ./e41641ba-1428-491d-95e2-a6dbadae30ee.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./68ba1eb5-3466-4e64-a82f-a727385824ab.zip
+[DELETE] ./871661c9-60b8-4362-aaf3-b10b3c1de1d3.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./82eb53e7-1769-499c-9ab6-3aa1207544c1.ipynb
+[DELETE] ./cc8fc151-3f2f-4bc7-b9f7-96d3172352fe.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./e54ce544-05cb-4ecf-838c-60e1a23a8dce.jpeg
+[DELETE] ./e6686451-5190-4925-95da-93eee4e27bfa.jpeg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./058841e9-7c09-458d-8ecc-1f0cd598df83.idx
+[KEEP] ./c93f3586-3a1a-411e-9562-f48d5d5447f6.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./663154ed-3ea4-469a-9b13-01008405c61b.rar
+[DELETE] ./a1266954-e192-4710-adbb-2cbd61248f14.rar
+[DELETE] ./a8639edd-b28c-4f2f-b7be-02a4fa9a9170.rar
+[DELETE] ./cd330471-f96d-4b6b-a4b2-d0a4ae5069e8.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./bf0673e4-e5ee-465f-8772-c09cece4145c.jpeg
+[DELETE] ./f820117d-e572-4b99-974c-3f8f460b5254.jpeg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0e8303fc-0aeb-4d8f-b1aa-7f6c9d9f2864.idx
+[DELETE] ./0ed77e49-cf0a-42b1-9871-ef4ed1a0d27d.idx
+[DELETE] ./9b8cbd21-5c8a-4ab4-bea9-313f18c2c9e7.idx
+[KEEP] ./c8a3fcea-e2c8-4e55-a4c4-5a31de23d226.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3c62809d-cd70-4215-8e37-d2a3931a6ab2.py
+[DELETE] ./637d8819-ad69-4573-9789-ed36fc4330d4.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0f60a7ff-8ade-45ce-92b5-bcc3f5d889dd.cpp
+[DELETE] ./bb68a454-948e-4a08-8f38-b29dcbad6b41.cpp
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1724f20f-a7c1-4580-b0ec-b25903723d1b.idx
+[DELETE] ./45ab3fc2-d49f-4b39-a55f-ed8487f55db0.idx
+[DELETE] ./eb5481fc-4c15-495d-96ef-078c22b07452.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./283a7b97-5e05-4789-af97-0b97dd34407a.html
+[DELETE] ./6d2a5ea4-f5e5-40c5-a790-9280be14cb71.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./29739dfd-794d-4727-8be6-b5a8e6425b1b.idx
+[DELETE] ./7e78d6e2-915c-4bb8-8963-5df816e19612.idx
+[DELETE] ./d2b7117d-ab7c-4b96-89da-6ab113e7bbc2.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4d107f3f-785a-4262-84b2-ca256a04e438.idx
+[DELETE] ./7e5b885f-1dc1-4e2d-bad5-76598482123e.idx
+[DELETE] ./c1c1f39c-6a17-42e9-850f-274d99d35411.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./270514c6-a7ac-4ffb-9a01-d75fc5411aec.idx
+[DELETE] ./77394af6-5ec2-41b6-996f-20685ee0efc5.idx
+[DELETE] ./98ca499a-72cc-41fc-8922-b79360c52766.idx
+[KEEP] ./d177420e-6e74-4508-830f-65f61da9708e.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./49090317-da2f-4f32-aa97-bfef253e1c11.url
+[DELETE] ./d6e6d7f8-362d-439b-a7f3-4126f9366cd1.url
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./795da1dc-06cf-458b-b9f9-11a40a451300.png
+[DELETE] ./b704b2bd-e8d3-4ebf-854b-7c8cf9af974a.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./9d82b65f-dced-416d-ad4c-fe884a74a8c7.o
+[DELETE] ./a5954136-9f61-4698-b86e-698a60b5d4bf.o
+[KEEP] ./f9b584a5-53d7-4828-94c3-07430d9cefa4.o
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7ab9f75f-cddc-4ca8-8551-1e97913d0b61.ipynb
+[KEEP] ./b10474f9-c072-4f15-ab67-d685f5b9bc45.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1677c779-2ce2-43e7-a07f-54463e31a4bb.idx
+[KEEP] ./4dd0b7c3-f25b-4075-8c33-967b4896e489.idx
+[DELETE] ./91db6bd0-ecac-4926-a700-b879acb235ca.idx
+[DELETE] ./adfbbd10-b4ee-4fde-8195-0a329cafcab4.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4c34c46b-3e81-4ccb-b54d-8c0c08f31e3b.zip
+[KEEP] ./c603602d-66e1-494f-add8-d460895f9186.zip
+[DELETE] ./e4a8b36e-c3bb-4726-8300-4c8cfcd61704.zip
+[DELETE] ./eff508bc-7386-48e4-8b8c-ed6ff7f4ea8e.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2762b5e2-ace2-4b01-87a1-1c78a8f726bd.idx
+[KEEP] ./a3d9cee3-ca0b-4ea7-85eb-1998bbcf2601.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./01ac40c5-4dfc-41f2-a880-5b081ae143b1.idx
+[DELETE] ./12d7a6d1-26fe-4413-b452-8824aaad9bf5.idx
+[KEEP] ./e9e1f336-7395-4b50-bd93-b502ee08b86d.idx
+[DELETE] ./ef2498e9-f908-40e6-bd59-e2ecd47070a0.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./211f718c-dc93-442e-9fa7-b2d800e82b65.ipynb
+[DELETE] ./21b12695-cd02-4721-9e4a-91176f62932f.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2cf0f27d-bda5-4154-9397-f20481cfcea1.idx
+[KEEP] ./30ea1ad7-08fd-46fd-8bd5-30c7a75888c5.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1f229cc4-f3ab-4695-a144-6d2cbab79264.idx
+[KEEP] ./29822071-a417-4ae7-add5-40d00e25c593.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0db3aa98-a867-45f2-bb57-57221252da57.idx
+[DELETE] ./46618986-04ba-4e8f-825e-a0d58b7605a6.idx
+[KEEP] ./5e1ca618-79f6-486d-af7e-ae83d33e9b9c.idx
+[DELETE] ./d3909e81-e728-4a0b-911f-7730f5f49854.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./a9f89113-c7aa-4156-88e2-c5243d9f0b94.jpg
+[DELETE] ./ab8218ae-e88e-41dd-b88c-328bd090cf11.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./57462576-3199-441f-9126-6392d6138a20.rar
+[KEEP] ./970ab588-7830-4f82-84b5-b4285938865c.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2dc93d05-7e51-4068-b21b-645470ed0883.png
+[DELETE] ./38175fb4-cffb-4f26-9a4d-825e1c5bc142.png
+[DELETE] ./4c724c19-517a-4145-a6ba-c9bbfed5feaf.png
+[DELETE] ./5473ec4d-92ca-44be-b0ac-f4f657ea3536.png
+[DELETE] ./bb40a648-7322-4b0b-8782-be503c3181b9.png
+[DELETE] ./bdee8134-c922-4b26-a8f7-fa64aeb8370a.png
+[DELETE] ./bea3a692-a9ca-49f0-9e11-e659d07ecfeb.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0b7d0ca1-8cc6-447e-8503-bdfd94ebf099.idx
+[KEEP] ./1e1fb40e-84ec-4bc9-b53a-ddfcbd49c374.idx
+[DELETE] ./5d8f388c-a339-428d-a113-c3a244b7c5c3.idx
+[DELETE] ./cc0f08a2-f498-4021-b60d-f4a1551f2258.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2b082b46-ccf3-4c58-ba90-180a96dd9d1b.idx
+[KEEP] ./dcbef61b-3904-4230-aba1-25992d396334.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./118014e9-5073-49e0-a425-65c7066ef92b.png
+[DELETE] ./34e1eb5c-1e5c-447f-9fe7-ad898d951883.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./585d2c4a-7489-412f-9888-7bd6cdc43830.idx
+[DELETE] ./aa80da01-6c69-40f4-a332-9c6ae6d6f351.idx
+[KEEP] ./d27ce1ba-1898-4105-ba0f-0c4bb968337f.idx
+[DELETE] ./fe257561-e135-4b65-9856-4ceb419e04c3.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./20324bb0-64bd-423c-b1cb-bfac9677b158.idx
+[KEEP] ./28ae227b-7ca3-46ce-9431-8947d22050a6.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./07a302bb-d61a-4f7d-8e73-c427e66968a4.idx
+[DELETE] ./2581faa6-33a0-4777-97bd-91af1138076e.idx
+[KEEP] ./863a64ca-7258-4c68-8b6b-2d46e6f3e3a3.idx
+[DELETE] ./aac688f0-2316-4a0d-aaba-3866be3ffdd7.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a35a469c-e121-4b91-a89a-ffcc739f4416.idx
+[KEEP] ./b862c6b0-927e-42f2-9ebe-b95e3d956abe.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./326ef57f-0ca2-4e66-9585-ff107d60845f.idx
+[DELETE] ./80c7f388-b27a-4814-a96c-096d939a4675.idx
+[DELETE] ./a307f1e9-375a-40cf-ad12-fd912599c543.idx
+[KEEP] ./b7027ce5-f016-4bf6-8f58-36db02026e43.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0f84c0c7-b0e0-41b6-b29d-d09a2bd1d912.html
+[KEEP] ./3d936939-5119-4765-92cb-a47e12ad49f8.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./431ba03f-6677-474c-b85e-66bc07f2d16d.idx
+[KEEP] ./4a11fd86-edd0-4d7f-9130-1e3e73a1660a.idx
+[DELETE] ./9d1c7ff5-0eb5-43f6-9197-fd6e77d1ac59.idx
+[DELETE] ./ee21578d-9f2f-4dfb-af5a-0809a7ddf971.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7b9fcb26-edb2-43d6-ad64-ae82954707c1.tsv
+[DELETE] ./9aff4359-6390-4369-a046-eaa42c0ee45e.tsv
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./08fece48-0da7-478a-8df2-ba63e7e2e6e4.pro
+[DELETE] ./4e87a1ca-e28b-4f47-9216-4d547d1b4c28.pro
+[KEEP] ./df6d7ffc-2a70-438f-8476-5b50e1fe01d3.pro
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4ae038ac-11de-4dea-ae42-356afba2e629.idx
+[DELETE] ./8daf8f69-57a3-4254-a5b4-8d63eb99fbeb.idx
+[DELETE] ./f66ccb2c-d24c-4818-a51e-4bcddee682f7.idx
+[DELETE] ./ff426fd1-ce52-48d7-8081-2d159eda4177.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1e4bed33-5251-492a-86df-caa0c5a5db84.png
+[DELETE] ./1f721c13-2bda-437c-84ca-37c1e9385334.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./912aa8cd-2340-4224-a39c-0344c0989163.idx
+[KEEP] ./bc6fa62d-301b-4421-9b59-70dd930ac021.idx
+[DELETE] ./c2b723c2-d83b-4ae7-9483-dbee36b11548.idx
+[DELETE] ./f3ae4b2f-02d9-46c5-93ff-05d642f6f619.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./07024767-8f9b-4715-826c-6730b51a8e44.idx
+[DELETE] ./5b9e9e27-5fe6-450d-9eac-195ef226db44.idx
+[KEEP] ./894136a6-4d38-4752-9254-5223c9988555.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7ac5c3ad-e849-40cd-a89f-231443f92fd5.png
+[DELETE] ./b630b67b-c45c-43ca-ae4f-779c3a50b635.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./ab45603b-6700-4d98-b081-064080bfffb4.idx
+[DELETE] ./ff867b3d-4a87-4ce7-925a-27f3e5749a9e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a7046122-5171-4bae-9e27-ee209466dd8a.ipynb
+[KEEP] ./e61a9bcd-b73f-44c6-8af8-d298039effa7.ipynb
+[DELETE] ./f18492e6-6b14-4ef2-bd5a-ae38f26314cf.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0b0c456d-648f-4d36-921f-6e4a9e2885e5.cmake
+[KEEP] ./b4b7dc43-c816-40f9-9d26-bfe4c1bc3926.cmake
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./100d0dd5-e061-4747-b7e4-c63641ae5743.idx
+[KEEP] ./9592e912-da4a-4f8d-8bc2-1fe50dfc4672.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4aadb704-c576-4769-a1a6-31b85c620c15.idx
+[DELETE] ./83af8bfc-7608-4771-b6b1-8fd56f6e4d94.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./18eff505-e49e-4992-ba34-072e09c46afc.jpeg
+[DELETE] ./51e0121f-5cba-4838-b627-7061ac00d8d2.jpeg
+[DELETE] ./51f85fb3-685b-42eb-a754-5563d2a56a84.jpeg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./b690e731-3600-45d2-bf47-eed12cf80b44.idx
+[DELETE] ./c10fd627-3a17-4f6f-8b6a-df8dab9b48ae.idx
+[KEEP] ./ddf2e05b-b105-450b-9065-a68cc0769d87.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5947c0cd-85a0-4d51-abb8-8f0cd3d73bfe.idx
+[KEEP] ./9b0a844e-a6a1-4043-b54e-acb43b86afe7.idx
+[DELETE] ./9ca27abc-7900-4cca-a70b-8bef1ef9774f.idx
+[DELETE] ./d1868010-3a59-4711-a5d3-fc4c29680bc4.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5daf5c92-b886-427e-88c5-74632a3cc4b9.py
+[KEEP] ./6484fd43-91de-4d65-b613-b3857ea55537.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0cd94b47-6ffc-4113-a3da-84214812041c.idx
+[KEEP] ./38e3ae7e-f017-496d-80e8-6d94d2d691af.idx
+[DELETE] ./b9918aa0-5bb4-427c-bd9d-5948751fe880.idx
+[DELETE] ./eaa6e061-5758-4014-a1be-5470b63f34fb.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3b212a05-94b3-4670-9ee1-c5a176837f37.idx
+[DELETE] ./4333b9c8-9bcd-432f-85aa-27a7ab41be6e.idx
+[DELETE] ./dcd21bba-5e8b-44b2-b454-0ee503384071.idx
+[DELETE] ./df47725a-ca9d-4d27-9a53-8176975d1759.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3ee268ac-9792-41df-b233-6f36a86e06e4.png
+[KEEP] ./4420ec5a-df3a-4a96-be12-01fe6c570662.png
+[DELETE] ./63499dc2-3795-48a9-9982-5d3cce64dee2.png
+[DELETE] ./d0386821-b1e9-40bb-88d4-9d6fd1e2c390.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./203e8667-9d86-4e8f-b29f-28bbc34c2861.idx
+[KEEP] ./85949561-44aa-4ec8-bf25-b106cd2dd08b.idx
+[DELETE] ./c1b2a623-a7e7-4c9b-99b7-61997d129882.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3eb0825e-ba2a-45c7-a1a7-7435f9867d69.idx
+[DELETE] ./46287955-5155-4f8f-bf84-fe7220dd3eb0.idx
+[DELETE] ./88a7e42b-024a-4c50-b006-4af754a0c0f5.idx
+[DELETE] ./d22acca0-32ad-4423-a834-110c8f04bd03.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./34111553-81c7-4db5-9413-46e9403b8ad8.zip
+[KEEP] ./ec180389-8572-409c-8492-c0bb3871e791.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./020d6c54-c718-4d61-a387-3b5b34447a8f.idx
+[KEEP] ./1ba5d04a-dd06-484e-a6ac-13d177562a31.idx
+[DELETE] ./addf45a1-3a2a-483c-b6a3-e8cf92319570.idx
+[DELETE] ./e1022721-4284-4e7f-9d44-8671dd1341a5.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./96e527f9-42c8-45fb-98f9-250db6ebe972.html
+[DELETE] ./b3a7af5f-2490-46e1-bf03-c188e5fb0720.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./234d4320-545c-418b-a428-d7a8c9221656.py
+[DELETE] ./f85382c8-bf01-4cb4-afc9-53102e4bbfda.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./62c53c65-1c62-4308-872f-0e78e2944646.cpp
+[KEEP] ./8914c2d7-0ab9-4ff4-8664-973319b3329f.cpp
+[DELETE] ./b4e64013-c1fb-473e-aefb-e7a1317b7a67.cpp
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./03713ba3-0ac5-469d-8c96-becab90e9914.idx
+[DELETE] ./8452dca0-cbcc-46d3-b61d-e4c007d8026d.idx
+[DELETE] ./90c1cdee-0f83-4db3-a847-cf6da290dbd4.idx
+[DELETE] ./c2ad9c0a-d6fa-4330-a1c3-5251167fb56e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./21426beb-79b3-45ef-aee3-c64b77b73708.idx
+[KEEP] ./44bd9222-ee2c-4f09-83d9-a19219a3e5ae.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./33f97c7c-746c-496a-8ce0-a0a702eb0706.rar
+[DELETE] ./e2c135aa-91e7-4e22-9be9-bb2b98341fae.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1a82c919-39d7-48c0-a809-aee92f8899a4.cpp
+[DELETE] ./2b1f5b9e-5f5f-42e3-888f-e343fcca5920.cpp
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a32540f9-e84b-4f6d-86ab-23c71d9bbe8a.txt
+[DELETE] ./b8bc1c0a-6b44-4fb3-9e8d-200ec87ae932.txt
+[KEEP] ./d2843255-be4d-44c6-ab09-31d7ac55fbdc.txt
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./755a0897-1ffa-4fdf-8564-c0fdd411ea7d.idx
+[KEEP] ./8032ec23-3664-4570-b396-aedc3b01880a.idx
+[DELETE] ./d0d08f23-6566-42a2-ae48-fe8caeb7ded5.idx
+[DELETE] ./dfdf314a-c33d-47ad-8dfa-917462aebf80.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./00148bde-ab96-405c-8659-05ef4d454f82.js
+[DELETE] ./9f22293f-6383-4f6f-8012-11bd64bd97a1.js
+[KEEP] ./be1294b7-919f-4019-85e8-ead70c76447b.js
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./406462cb-859a-421d-b8ae-0e53126d2ca6.png
+[DELETE] ./711fd2a9-8fac-4131-bf15-7f8832341a70.png
+[DELETE] ./ac06cf16-c5ef-40e1-b9e4-fee23e4fe6ac.png
+[DELETE] ./acbf1403-268d-45bb-9d44-93c1b0c94931.png
+[DELETE] ./b1a1401c-3b87-430e-8cfc-0e1c2e2095ef.png
+[DELETE] ./fe6d2080-9f40-46d1-b535-0fa5900f3ba7.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a0727edb-c15a-4179-a676-a34e9dd50c1b.pro
+[KEEP] ./cf2202d9-3ad4-4480-9b84-ad1fdc9c091b.pro
+[DELETE] ./fbdfda76-4165-41cd-90a0-7cd39436afec.pro
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./8cf480f9-c775-423b-a672-593875e0fc55.html
+[DELETE] ./a2dc376b-7973-48ea-a5bd-29c8aa2fa446.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./11beffc9-bd66-4daf-8e9c-2cbbb33b9e9a.rar
+[DELETE] ./1d895d21-3fa4-4ba6-af5a-63e84c14bd32.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./a35b8d7f-f0a1-49f0-98c3-8c4d875d2d16.idx
+[DELETE] ./ac428c4b-9782-48dd-856f-d17e8e69122a.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1d117613-a69b-4f4d-9204-b403b7a81791.png
+[DELETE] ./f125812d-57d0-4c98-b245-e1dc7be24fdb.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./9b0fdb1a-e64e-42ca-9c01-9b3b0c2fc94f.ipynb
+[DELETE] ./9dadb015-1c84-431e-acf4-2db01aea34fa.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7d9377c5-6134-403e-911c-230e71fcc1e1.wav
+[KEEP] ./962caf91-fdb8-4551-ac0c-5671950c89f9.wav
+[DELETE] ./a21324dc-3a07-4b4a-a04d-49c4941d7f5b.wav
+[DELETE] ./bc330189-388f-4d87-8fc0-50ea21648323.wav
+[DELETE] ./d7ecf542-7cf0-4f5e-b003-7a811b430cad.wav
+[DELETE] ./e73b2066-3006-4db0-9b2b-207a0a2eecb2.wav
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./86383ec1-9d72-4bc9-b643-a531b5663ab6.ipynb
+[KEEP] ./8fb17de0-09b5-463f-ae33-81953da4f665.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./073703ca-9352-4b95-b9f0-b355a65da6f0.xlsx
+[DELETE] ./f001b490-85d3-41d1-9943-990b2016004d.xlsx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7e3f2343-76bf-4406-8e5b-8b48276fb2e4.idx
+[KEEP] ./8973af30-5bf0-46a8-b5d1-e168693440a4.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./03b33fa3-b3c9-448a-b661-1abf727b1299.idx
+[KEEP] ./9045aa73-1032-4a3b-89ac-e76a26f4db19.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./19b9e3c1-cde5-44ce-9adc-ac3881656750.idx
+[KEEP] ./4f4ea67d-7259-4ecc-a90d-02d9e70c266a.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./582fdcb0-f293-4d99-a57b-7579b2b02825.idx
+[KEEP] ./b5d1d3e5-9077-472e-81ea-af46b7b3b2cd.idx
+[DELETE] ./d5e9fca4-9711-427d-ade8-13db6f751d2f.idx
+[DELETE] ./ff1d5a27-f434-40f2-8ca4-5a967ccd3c32.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5181da3d-7573-464b-b3c3-9dd1f4235564.html
+[DELETE] ./d6ce83a8-1acc-481a-b22e-c2684925d252.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0a074e2e-f97a-4424-b9a7-3700a1090592.idx
+[DELETE] ./1d883c5f-a621-48ba-8e36-15aeb32a49a5.idx
+[DELETE] ./6c378392-d16c-4f2d-a745-ca885c0a14a4.idx
+[KEEP] ./d647f788-fecb-439f-88d4-d81e36b55a5d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7bdf1f66-e7eb-48fd-9c95-6b9233409309.idx
+[DELETE] ./91bf6731-fde1-4408-a0c4-dfbf3694e7ad.idx
+[KEEP] ./92e157d1-7656-4768-b35f-8ca5697a2813.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2fd24222-5b36-4e8d-9158-74a1ab6fb1c6.js
+[DELETE] ./632c866a-fd43-4248-a2f6-94b212f81494.js
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./8cf100e1-9fa7-40a8-b729-702ec514d437.html
+[KEEP] ./8d6caf74-00a2-4aa0-98b6-853c9f96640b.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4d4bd0e2-4d89-4566-b8e2-79fe5c8a5c94.png
+[KEEP] ./700ea8bd-a6a1-43ce-8387-2c0e481ce5a2.png
+[DELETE] ./b80dae86-591f-44bf-8ac6-28da0e64948b.png
+[DELETE] ./eda814eb-6c2b-4932-b21b-a07c29dab5ea.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./519b0417-55bc-4911-96f6-1faf52616753.idx
+[DELETE] ./ba41940a-a56f-440a-a96c-f54b0bc93d1d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./14c1421c-5578-4bcc-a8cf-494e67f0de30.ipynb
+[KEEP] ./97e3378c-46d6-4617-b655-adc97f644487.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./44b40718-3cbc-4c17-9328-9ba397cfe07a.zip
+[DELETE] ./ed6a832a-d457-4410-88b5-a4b00737dccd.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3c31de95-9069-4418-81ff-cbfb5a0e13c7.idx
+[DELETE] ./54e8f014-d8be-4320-871d-e96197bf6e7d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./00775c4e-9206-4b87-ba90-902bb2878e90.idx
+[DELETE] ./1b05e89d-8a4a-4606-ae6a-9c98a89374da.idx
+[DELETE] ./b27d580e-6298-41b4-b4f1-e71366a9606a.idx
+[KEEP] ./d18acf9b-4093-43a4-8d1e-3b792fd0235d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./47af9b83-5f81-4f3a-a2b0-3c49362a56b0.idx
+[KEEP] ./56d03fea-2d37-45e6-a52b-5f2315faaebe.idx
+[DELETE] ./7807275e-9bae-4a57-a2d9-361f470f7c28.idx
+[DELETE] ./8d6ec32d-a38f-4e46-b7dc-9b896ba5f58c.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./07d19472-99a4-40a0-b7d5-ffa4103574d5.ipynb
+[KEEP] ./3a0db5e4-4a74-40c1-9804-1a578efbae60.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./53a083ef-4f4d-41ee-ac55-40b77727cba9.xml
+[KEEP] ./b8b8200a-7bdf-4f4e-93f8-085cda893e5f.xml
+[DELETE] ./e9c2a3e0-d296-4eeb-8fd9-ddfd5c26fa0b.xml
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./33ce2028-77c9-4d52-9e11-62dff8fd8f4f.idx
+[KEEP] ./cbea492a-2164-4e11-b53e-55864fc81f54.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1ab312f5-d731-4903-b0a6-c650002995f5.idx
+[KEEP] ./6fc1e1e5-88c0-410c-bf31-6e3bd2ddff9a.idx
+[DELETE] ./83a07985-8e8c-4fa4-b2c7-bce435a5c6aa.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./98a0c93f-7f72-47eb-8220-a13dbc47e85c.rar
+[KEEP] ./cc8aaa5c-f7b4-41b4-8716-3510a584e1a8.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./161e0a6d-f601-4c27-855f-630e43b545f6.idx
+[DELETE] ./36926054-497c-41fb-a476-ea50442ec404.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4f86a4aa-8737-4fcc-8528-9fa2f45d5a8d.html
+[DELETE] ./a2313a15-7d61-4749-b8c3-41bf9afccf58.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7feaef1e-5c46-40f1-991f-880093515a7a.idx
+[DELETE] ./f675c336-02cf-4f13-97f7-6cd14413e9c4.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0c4fd09d-678c-4967-a4cb-752c5dc5f6bc.idx
+[DELETE] ./4e2820a9-3f99-4033-ac10-6255f1927c77.idx
+[DELETE] ./4e759fdd-dbb0-46bf-b3f4-a9177b59c73b.idx
+[KEEP] ./96413bba-551a-44f9-afe5-aff5ac9fc8a3.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3669a5d8-dae1-40a9-b6b7-bfca7261b546.png
+[KEEP] ./e9c36d93-2f55-419f-a029-365a557c7234.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./a31bd76b-f8de-4b30-8c1e-ab4322d99092.jpeg
+[DELETE] ./b760206e-6137-4045-afd8-ebf5b54c6338.jpeg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5999cdec-d1e2-474d-9b20-80da86c0761e.png
+[KEEP] ./f6ee3fa8-ca86-4ad1-9425-faaf7b4ccebb.png
+[DELETE] ./ff05712a-9f1c-48c3-8a16-729adafc3a66.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./29b4ec96-d95b-4dd6-9945-e563c06af273.idx
+[DELETE] ./92229b7d-47d2-4025-83e9-39f1ed9bfb7b.idx
+[DELETE] ./d27ec505-dfc7-4921-a83c-bbe579b68e74.idx
+[KEEP] ./e8974ac7-e152-478b-ae2e-07f9704bba4d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./82b3dc7c-5f0d-4e7b-91b0-5f8199f608d6.html
+[KEEP] ./9d4ffa6d-d497-4e29-a18a-951878fd26a8.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./914fd17a-219f-41c8-8747-219d6f231390.idx
+[DELETE] ./a2c1c628-55f9-4961-b95f-8eec62a7100d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0501115e-d2bb-4d7e-8f7d-a94080b96def.png
+[KEEP] ./79d7f416-163b-47cb-9f3b-0940896e4eb8.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./23a73774-07f9-4d78-9d2c-1b81615b3812.idx
+[DELETE] ./445c9a5e-1ad8-40ba-8126-4c828e78fa02.idx
+[KEEP] ./b5fae450-dd59-4a8f-b2db-73d4080718f4.idx
+[DELETE] ./ee42d00f-b9f5-453a-b94b-3169a225a8dc.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./30be3aae-328d-426a-ae45-623657ea7b82.jpg
+[DELETE] ./38d3b4ab-aa51-48f5-9393-ca21f860a079.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./340207c1-525d-4701-9ae2-6e63c870515f.png
+[KEEP] ./83cdf20a-f119-4fc5-8686-9275118e1264.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./49d70ee6-e83a-4ca0-8be6-ad7ad166a415.idx
+[KEEP] ./a1cbcd29-10ca-4ac6-b6df-112911f4246a.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./535919e2-0cbf-47e1-984e-197c5521a2ee.png
+[KEEP] ./8e66ae5b-26c7-46cf-a179-2c36d5fdd1e0.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./21f6e1a0-a7ff-4282-8da9-206d580aa260.idx
+[DELETE] ./b5ae9462-c66d-478c-88d1-72333df3fca0.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./081393c3-aea9-40ef-af5e-e49e8475bfbd.zip
+[KEEP] ./6fcd46f9-8f7e-47f5-8fa1-326e60fc156f.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0f388324-5caf-4f15-a58a-d4e19bf9930d.h
+[KEEP] ./0fdff438-b7c8-4061-b6af-6ff425109358.h
+[DELETE] ./cb963b82-63b9-4a4f-bf84-addcd8e6bf29.h
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./16e46538-7f13-4331-8007-082ed5dc359b.rar
+[KEEP] ./98d94549-fd6f-4c07-a5e0-8cf7a09ad35a.rar
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0284529a-d402-4d0e-b1b5-eb4919193b07.jpg
+[DELETE] ./2f46fa4f-c61d-4303-8779-1e86ac62bf2d.jpg
+[KEEP] ./907ce659-b77a-463f-b08d-e3a5254c53e1.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./55210b4f-af4d-4eea-8ac1-113cf9bbc44a.idx
+[DELETE] ./b30370a2-d275-40de-b02d-790725c496a5.idx
+[DELETE] ./bc73b529-46b6-4f6c-abdc-0deaf641e915.idx
+[KEEP] ./f33c48ac-2cbf-4fb9-a8b9-8bc725428f81.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./d1027334-39ca-4d5d-9fca-fca855038679.idx
+[DELETE] ./e14256dd-1483-4029-9c2e-62c0ce11567d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./57d59679-23bc-4f95-be9b-8974d512ab2e.pyc
+[KEEP] ./6b0e4fe1-f2a5-47aa-888c-8440694e5fc4.pyc
+[DELETE] ./ecbbef71-8b01-4b2f-a849-fc13d6d2745a.pyc
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./18a1b71d-6918-4b72-b455-72f853e3e030.png
+[DELETE] ./fa41809a-9fd8-400b-9e50-0bb61b13527b.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./d499a6e7-4ead-4cd6-8ccb-3f49a78b2494.csv
+[DELETE] ./e3b0e2f5-094b-40fb-8000-f2af27a76ec1.csv
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2173ac67-2e79-42d3-b118-76aee3e8a7fd.html
+[DELETE] ./2fe974d5-6bef-4ecf-8d76-3f6b405bcaaf.html
+[DELETE] ./42891b26-acd4-4730-a2e0-81d9f02e2f04.html
+[DELETE] ./59ccb5d7-c61f-48e2-b282-83f3c3ba0a25.html
+[DELETE] ./f909ad1d-557c-4525-8b4d-19bb079f7760.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./176001d9-e7b9-4748-8ea3-d43efe8f5dc6.zip
+[DELETE] ./40138745-0080-4cf4-8727-812063a6a794.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./010593d6-61cc-47b9-b2de-ad210e3f0c38.jpg
+[DELETE] ./e4a4dbc7-4d59-4a72-a64b-3ecab0fbfb62.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./11be4995-1aac-43df-90da-240bc4814ca7.html
+[KEEP] ./a123a7c7-0efc-49d6-9147-1f4739fd641b.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./234b4bc7-8010-4e2e-af65-75f7cdb3a9ab.idx
+[DELETE] ./3ee96072-44f1-4a6f-862d-1241e002d9ef.idx
+[KEEP] ./655544f4-aacc-4e6a-9ad5-2906a28920e5.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./391ab103-2975-44fe-aa69-dad806d66f8f.idx
+[DELETE] ./c8d38b54-3bd2-471e-a570-a02b347b0ec1.idx
+[DELETE] ./e9e568bf-c842-4ed1-ba7f-00a090522a19.idx
+[KEEP] ./f090a7a8-8ac0-4982-9287-68e656575a47.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1c7ef831-6334-4c79-9aac-e113409ee7d7.png
+[KEEP] ./62df908c-d1c2-4a24-8aca-4d59a19de012.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./8e8ef3d3-b47d-47bf-b974-a45479477688.idx
+[KEEP] ./9f4f8dde-0aff-4366-b688-2e8c40f9043b.idx
+[DELETE] ./e9d9736f-e1aa-452d-bb3c-4605d41425e0.idx
+[DELETE] ./fd4f8650-7cdc-410d-81aa-04011709db92.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./14627b85-634f-48f7-8ef7-f145e788ffa4.webp
+[KEEP] ./f3fce253-d38c-4719-9900-075046ae0c3b.webp
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7b3ee5c1-fd37-43b6-a795-659e3fd06833.gif
+[DELETE] ./eab1b43d-9121-4a99-a3d2-f5ebbd779969.gif
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./08738854-6ceb-47a3-985b-43654fa43fbe.idx
+[DELETE] ./15e03af1-4d7c-48a4-8234-9397e9952658.idx
+[DELETE] ./4edb0f59-d57f-4d9d-a2a9-eabed4f3f233.idx
+[DELETE] ./ca2f3eb1-3399-4bf1-92e7-3648a75382e8.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0390dbc8-7986-496a-9591-d694a848cba7.idx
+[KEEP] ./1d28de9d-c53b-4223-870b-38d6f4a4eb3e.idx
+[DELETE] ./a8576b58-1c4a-4f06-9835-5c5a6bfaaa5e.idx
+[DELETE] ./ac6dac67-e973-4139-bcaa-d46216bf2a64.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0fdf72dd-eb93-4afe-a096-8ba525e289fc.idx
+[KEEP] ./2dc59010-8c18-4e22-bb85-c1da2fed5a6a.idx
+[DELETE] ./c855d4b8-64f5-40a8-b5c8-5636956aa3bf.idx
+[DELETE] ./fa1f1fb7-05c6-4fe8-9b7a-d88b87527189.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./128e3adb-0633-46e8-8775-5bbdd69f262e.idx
+[DELETE] ./c2850217-ecf6-4758-83db-d663c3f0950c.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./062175ad-3e40-403a-b090-ee70403f9631.png
+[DELETE] ./149c22f8-5466-4332-a912-21ba61612534.png
+[DELETE] ./5c06d92f-a7c9-4450-9cf5-9781459b42ae.png
+[DELETE] ./7d961497-4400-49e7-9680-dc574fd3df66.jpg
+[DELETE] ./9a884e4f-f93c-47e5-84b0-2d1bfa4e6470.png
+[DELETE] ./bfaf1f81-6ef0-4f30-8c2e-24b21644de68.png
+[DELETE] ./c003bb1b-97f8-409d-b308-9400c939d255.png
+[KEEP] ./ea1fd31f-b481-49fe-955a-fbed82e239f4.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./6f271fdf-0dd7-4814-aeb2-866ceec65954.idx
+[KEEP] ./8a8cdb81-d891-45aa-84bc-c2661757b0e3.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3be4a742-cffb-4c68-9e5a-e9a5075c430f.ipynb
+[DELETE] ./c5dc6300-ab0f-4044-a8cf-4ed90db0cd34.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1a9ea333-b28a-4abf-a116-10e498a61884.zip
+[DELETE] ./c1941dca-7230-4662-9566-4bd7ff674010.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0978b4eb-b0d4-4eb8-9f07-ead6bd63e5aa.ipynb
+[DELETE] ./6d189b5c-d9d4-4dbb-91ca-658d65e5a2b4.ipynb
+[KEEP] ./e05bd6e5-447f-4f1c-aa08-a8a7291c8105.ipynb
+[DELETE] ./e6a7b904-5075-4f14-b7b8-3aaf2c8c60a8.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6a9e0177-add5-4171-acd2-dcb3568eea7e.png
+[DELETE] ./d3879662-d30b-4f20-8c78-5b204ad5bca2.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./31fe2937-5873-48df-808c-8b583680520e.idx
+[DELETE] ./66a95a57-9697-4f54-8975-6edcbce584cf.idx
+[DELETE] ./808708cf-0502-4b76-80ce-153d2757f8ea.idx
+[KEEP] ./a6d608ee-cdcf-4523-8fbf-67c04dd62c9a.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5ff20d91-44e6-4bc1-bddc-0eeaf627f32f.py
+[KEEP] ./b756f741-0f69-4d68-9763-6dff110be4f4.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./07b57503-746f-4690-be99-57572cd6fefc.gif
+[KEEP] ./08031771-1c5e-46cb-8534-0ccfe6493039.gif
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5bd0f152-70f8-4d07-a1a7-a75d80c84643.png
+[KEEP] ./9dbf3022-cdaf-4ea7-a42d-509226132944.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7a2c7c99-b116-45f7-939d-5584bf7e036c.xml
+[DELETE] ./d5a16be0-fd67-48a6-a453-4cb504f56bd5.xml
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./22da3edc-fbd8-4886-9f71-5093c9e0231d.idx
+[DELETE] ./e7325834-046a-4cf2-b105-3dca1b0758ee.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./054f66f9-5658-4464-b00d-d77a68f86254.rar
+[DELETE] ./2717f256-2039-4a22-9959-f53a62618570.7z
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./aa666bde-7be0-4b37-b316-284d40f38851.pro
+[DELETE] ./bc4b2d2c-dfee-4e94-8bc9-c4154c4eb674.pro
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./8fccae98-de49-4775-8f6f-c48b2d086a3a.idx
+[DELETE] ./fddbd235-3816-47ed-9c26-e1848d897b55.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2b1a9ad6-e027-457e-a3cc-b127312cf239.idx
+[DELETE] ./42c1aab4-600c-4aff-bcb2-d21c2b432db5.idx
+[DELETE] ./50252157-fc6b-47a2-a97a-e80f7fa2fafe.idx
+[KEEP] ./d6b8013b-7d5c-4bc1-a996-94783cfdafb0.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./9c4381c3-dab3-4993-9768-1e558f323855.idx
+[KEEP] ./bbec596f-36ed-40ee-bf79-3e9d63e4f170.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./69bd397b-c31e-4370-8288-b20d3912c449.png
+[DELETE] ./c8a994c1-d52e-4ea2-8086-cf85074fbde7.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1fcadb23-ede5-4f01-ac88-f8433d886362.jpeg
+[DELETE] ./52142237-dca7-426e-bf65-00e3e1156f0a.jpeg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3b81bcb9-2597-4a8e-b0ba-3ff1abf63df8
+[DELETE] ./b722188b-c754-4f6e-aa26-aae6cf4a9444
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1fd350fe-2014-447d-afc1-56af6a4ed2e2.png
+[KEEP] ./8ca53c19-5bbd-4166-bac8-8862441b2262.png
+[DELETE] ./cbe38d4c-4007-4f85-b971-d78c000587da.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2003347e-aacc-4377-8d5f-abc2c074f32f.html
+[KEEP] ./dc6ffb33-ca81-4d5c-97d7-d338a596689f.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7045f5fb-599c-4fca-a62e-c5942d203449.png
+[KEEP] ./873792eb-5f79-466d-9027-cfe8f99a9b19.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./8748ed40-744e-455a-8414-668b4546d240.rar
+[KEEP] ./eab52ad6-50b5-4842-a0a2-961647c61e5d.rar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3a46b17f-d7df-4b94-a805-f8c1f217db3b.mp4
+[DELETE] ./b217b0e6-685f-408b-ac38-ee42d160c653.mp4
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./458e2b36-b693-4a94-85d5-e28235ba3fac.h
+[DELETE] ./73628304-c2f0-4ca1-ae2a-962a37bc2c02.h
+[DELETE] ./8135e5d9-6ca0-4da5-ac42-941c07096a5f.h
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./37d67b0b-2164-40f1-a41c-7612b3be543f.html
+[DELETE] ./dc9d0d17-3742-43b9-818b-2b86839134a3.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./af6addd6-f166-4cdc-8517-8f48832ed5b1.png
+[KEEP] ./eb55a39e-0ffe-4c0e-9fae-ff4255a9becf.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./21acbba0-6a62-4c9c-b5c5-fa701f5ef200.zip
+[DELETE] ./abc6a1de-21f7-4cc8-be83-42c28ebd210f.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1cc5b305-70d2-4be0-8c6b-56601120fc4e.js
+[DELETE] ./76f71e0c-a434-4514-8ae6-03ec868aa050.js
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0fd076fb-9004-4446-858b-e32de10d5fe8.idx
+[DELETE] ./1988565c-4589-45a6-bfbb-8fbd87b63276.idx
+[DELETE] ./3e8ace46-9328-40e1-9da2-dbec2468c4c9.idx
+[DELETE] ./74909363-3598-476d-9e22-532fc72e9809.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./084034db-0edf-4fb0-a972-59a10b7a9ec2.jpg
+[KEEP] ./c70e37bc-9da7-4020-a99f-0be9c036ccb2.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./20df1d31-3a05-489d-b6a5-3648f824d424.py
+[DELETE] ./cb19c481-8ca1-4d39-b66b-ecb712265946.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5cbe2865-0877-4a7d-811d-eabbcb4ed557.idx
+[KEEP] ./dc63c8ed-c5d4-43b9-8622-62c23ce26d93.idx
+[DELETE] ./fc8c5826-2ac8-4d34-832e-26328d4a5861.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./272d77f7-95e7-44e1-8bca-0191bbb44b98.py
+[KEEP] ./6aa9147b-e013-46f0-9e97-fcf2099cfbcb.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./17fe2a28-5fc4-478f-8701-0d937e81bfae.idx
+[DELETE] ./2d9bbc6b-91c7-42aa-bb45-d3146e7b670f.idx
+[DELETE] ./b3898396-e554-4ea3-afb7-65d579851f77.idx
+[DELETE] ./de3e63a6-1786-4b8c-9f74-3d158ff4186d.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./42dd4feb-3a1b-48c7-8811-01ba886bfe35.py
+[DELETE] ./aa3b44c0-1727-4e13-a33b-2ea169ba9876.py
+[DELETE] ./f5719051-b914-42dd-b0f9-dfc688fc5052.py
+[DELETE] ./fa6ffac9-86ce-449b-9c70-644b6da3938a.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2923add5-b85f-44ea-8327-9c605031ee0e.jpg
+[DELETE] ./b1d10686-ff31-49ab-b8a7-94bdf554cbbd.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./df6c7c25-e5a8-4aac-b394-f95a67a7cfde.7z
+[DELETE] ./f23bf9a4-6821-4220-bfff-b881d352bcde.7z
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1e0b03a5-5789-4988-84c9-9c632a3fdf01.csv
+[KEEP] ./c16734ee-88ae-4105-a204-6151dedbe827.csv
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./33197a84-a453-479a-998c-3ce7d3fa81cd.html
+[KEEP] ./50b56f93-2361-4906-9518-53265789bc11.html
+[DELETE] ./8ef84100-a650-4d57-b8e2-04dcadf9fbe4.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./daa904e8-e581-4dfa-8b11-24bc1c3b1afa.idx
+[DELETE] ./dcc402e0-78d0-4afd-82bb-32fbb8a0aaad.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5090133a-2212-490c-9622-b2e4ef7b8f59.png
+[DELETE] ./712da151-7a67-4d70-a7e0-1a2c187761b1.png
+[KEEP] ./81b4d59f-7004-4b49-899a-f1827fb13b9c.png
+[DELETE] ./d5c89d4a-6263-459a-98ef-6d9ccfc9c26d.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./31cbd89c-add9-407a-925f-31b9038e5a8d.ipynb
+[DELETE] ./94eedb40-a1dc-4d7e-8c82-17f2a3b87eee.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./06442f24-aa68-4706-9692-ac669c40388f.jpg
+[DELETE] ./dd1b2652-fba5-4606-848f-f44054eea30e.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0373da54-d6b0-438a-9190-643701bc4285.py
+[KEEP] ./6166d56e-eadd-4575-b781-011b815873b8.py
+[DELETE] ./b3386bed-5620-41b6-a2ff-b2d6eb00dc72.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./36cf8d9c-1a9e-44f1-a072-35ab68f92fc7.idx
+[KEEP] ./ef748f80-8900-47d1-8efc-19f5f922ead6.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./43f08749-bfef-4fc3-949c-04939d948988.idx
+[KEEP] ./7176e972-809b-4b70-8d76-5fd51c70e140.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./431079c4-ed02-40a8-ad8c-c8faa3a0da19.zip
+[KEEP] ./b47cbb98-d659-424c-ade3-a0608104c2f2.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./c6083508-3968-4b74-af7b-8418a7295c05.png
+[DELETE] ./d24165f0-a6dd-442c-ab9c-fb0aace51bca.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./663bdd42-c3eb-4a29-b338-b3e8146a59d9.idx
+[DELETE] ./8b30f5c0-c227-4ade-b974-763e21f020a1.idx
+[KEEP] ./c6919d79-5a19-43ad-83c6-7d9be39bc228.idx
+[DELETE] ./ee88937e-4593-4ff2-b558-9349ba7107b3.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4982bc18-27cd-4a4e-8968-308ca1ac33f1.py
+[KEEP] ./ca59ada3-3023-49f5-b4f9-ed1f92c263d4.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./61f51d12-1ce8-46ef-ba78-6e398dce191c.idx
+[DELETE] ./6550cf67-481d-41ec-a770-6f2a39181cfd.idx
+[DELETE] ./894cc60b-54ae-45ad-964a-72f003b3d66d.idx
+[DELETE] ./97718ef8-f7aa-4d53-8314-aa49e0311c67.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./32e97acb-ad14-4bd1-a42f-a50d6c820654.idx
+[DELETE] ./e391a89b-f961-415c-99dd-2ad2446f7d8c.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./459baed2-8722-4844-8b5f-2b9c41b4c62e.py
+[DELETE] ./84a3629c-424d-4f3e-a9f9-bc3ffca641e4.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3960d136-5ff5-4430-8476-48ab1dd5974d.idx
+[DELETE] ./955673e6-db34-4d1d-895d-92df6d830769.idx
+[DELETE] ./c6649466-87f1-48b4-bd55-261188f1f711.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./d2858aeb-ac2f-48ee-a031-30cd21e0aa97.png
+[DELETE] ./dc2c4a49-f491-4040-9c30-71b38a3a0639.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./155ac2d4-4ee4-4204-85d7-8eecec12e6c9.jpeg
+[KEEP] ./c08421f5-68de-4de9-b889-60c650e7b6a9.jpeg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./30ec4cd2-6361-4c1c-b9ba-bf8a79931364.jpg
+[DELETE] ./eada0d7f-0728-4e01-a818-e262d165706a.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1a4d7268-8c24-410a-8f46-8a344f4d84f9.idx
+[DELETE] ./652599d9-e5f3-44d0-aea1-0081ef2c44a2.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1a1c4dc6-d187-44db-b3be-28e25a9d4500.sample
+[DELETE] ./56614260-3d7f-4002-989a-cf117ede54bc.sample
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4ca4d72f-97ea-4db3-b3ca-f8fc4c0df69f.idx
+[DELETE] ./7d4258fa-aa36-4490-ae28-a17cdbe49d2d.idx
+[DELETE] ./d9da951e-054c-428f-a27e-252dda212966.idx
+[DELETE] ./e84d5995-ad7e-4fdf-8c45-522a3cc8d7a8.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2a2085f9-171b-4ad5-b62f-42f1057bc4b4.idx
+[DELETE] ./4080f9ae-dd78-46d7-8dfb-0496ebcf41ee.idx
+[DELETE] ./87b6adfc-7037-49d3-aa51-bd8e79959849.idx
+[KEEP] ./eac517bb-1cf9-4df3-8ae7-79caf3b36cae.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5d9e5fde-feeb-42be-8d96-0c29758c196d.ipynb
+[DELETE] ./c177b27c-c250-4d60-b0fa-7e8781a568fe.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5fa10c34-d5e2-4fb2-814e-bf913e1239b7.ipynb
+[KEEP] ./eb484a12-0e2a-491c-b8d6-0c5d8b3a5094.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5e37e095-440b-40cd-80dd-ce6126407ccd.txt
+[DELETE] ./acc4a846-826d-4747-9978-eaab094d13ae.txt
+[KEEP] ./c0dd680f-8ca4-4742-b5f0-0d92a1d705e8.txt
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5172fe74-a758-4877-90ab-3b565467e545.idx
+[DELETE] ./b370b015-903c-419b-a12f-c12746e45977.idx
+[DELETE] ./e53fc7a5-f726-4a0b-b8bc-82b839878fe2.idx
+[KEEP] ./fd11898a-2aa5-49b5-aeca-66b58edab568.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1489a19a-f99e-4496-a0ca-eb5d8e1ea23e.png
+[DELETE] ./1c5813c0-9d05-45b5-b5c8-7c196fae7c3c.png
+[DELETE] ./7cc40e22-21f3-492a-ae38-b2e8976405f9.png
+[DELETE] ./a088584f-9bb6-4e4b-8189-b74ae144819c.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./8b684d0f-aa9c-403d-874e-4aadf7e51d24.py
+[KEEP] ./dae4e4c2-edda-4667-8821-8d8f8bf911a5.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./06f4ab8d-9952-45ca-803f-3ad2d98bb21f.idx
+[DELETE] ./955af6e5-3e0b-408e-a62b-619170650feb.idx
+[DELETE] ./974b41ff-da7e-4cd0-bfe8-72c35980a445.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2cd0e07b-82b1-4007-b901-c9a897f61fdc.cpp
+[DELETE] ./34cdbe65-8430-48e0-b869-23078d6bb9b6.cpp
+[KEEP] ./b949e579-4ee0-4bfa-9ca9-422d703ffa78.cpp
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./7b174d06-d387-4bb3-83f4-6ceceb895b6e.gz
+[DELETE] ./d9c2dde2-aa5e-45b1-a3ae-cfa799ba4d68.gz
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./02a2924f-81d4-4ae8-9e88-0b2e1e981b48.xml
+[DELETE] ./2a5f93ec-199f-4e35-a093-08b3bdd045a7.xml
+[DELETE] ./31ccb229-ecaa-4720-aae2-94750418d70c.xml
+[DELETE] ./4fc21386-879e-4cea-9387-546fea5dacd9.xml
+[DELETE] ./537ee3e8-230b-4b28-944b-6fdf1a66ae8e.xml
+[DELETE] ./54421ece-c1e2-4444-ace4-0eb02d1d26d1.xml
+[DELETE] ./6501258d-bf4a-45ee-b074-6bb9e01f55ec.xml
+[DELETE] ./75464853-7883-4e39-9c75-bb5c181cb7c5.xml
+[DELETE] ./7bb6d742-d2f5-4041-98f4-feba7803cd35.xml
+[DELETE] ./890b6f46-c2f3-435c-846c-f2a89bc30200.xml
+[DELETE] ./93137b97-2a60-485a-b02e-88c50db5a782.xml
+[DELETE] ./bd84f5b3-e0da-49a6-9b63-75938c28806e.xml
+[DELETE] ./c20b1fa8-cddc-44f8-b2b9-81d9db59b02d.xml
+[KEEP] ./d2dbfea5-f42d-4ded-acae-f582e526ef23.xml
+[DELETE] ./e607bee8-c37f-4541-812d-2bcf488fa0cb.xml
+[DELETE] ./f749b022-a0ac-4b22-889f-5233ce3bc55f.xml
+[DELETE] ./ffb29ccc-d0d6-4c6d-8e15-b01bb15cade7.xml
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./aeb7a4ac-7231-40b2-bf9b-ff95157e4c0f.zip
+[KEEP] ./ff5f2d6d-14c3-45b0-b250-840a30216737.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0323b124-2266-474c-bdd9-5402154ca001.idx
+[DELETE] ./4b46410d-afe9-4925-abb2-4faf91060e93.idx
+[KEEP] ./96dd3a50-db83-4b7b-b03b-0adf20e66992.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./87b5e6f2-3492-45e9-a06f-7bd839743537.jpg
+[KEEP] ./cb49cb11-8880-41c4-b71b-435025add8a3.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./148dad28-de01-4803-a5ef-4c0539a0a700.html
+[DELETE] ./cb261c37-e16b-4aac-a15d-67e93f393709.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./074a59e6-a5f0-4aa5-a5f4-3d2d80e6c3b0.idx
+[DELETE] ./4bd76e62-0699-4235-bf4f-ed5c876812c4.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./29474472-dae6-4ad7-af5e-77bd1083465f.json
+[KEEP] ./57ff6156-ebe1-4bdb-a21b-ef448820872c.json
+[DELETE] ./ea0cfeaa-9d88-420b-981f-e9c62cc186ce.json
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./89faa454-475b-44a4-b55c-04cfd0b3cb06.py
+[DELETE] ./e108f701-474f-4149-a2fa-9b0d173828f6.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./6f7a5699-ca9a-4fb9-9482-8857f2d1b778.py
+[DELETE] ./876795aa-42a8-4902-b9e9-783aae9b4818.py
+[DELETE] ./94d8da40-0a9b-4001-b9b1-b0ad8f7427a0.py
+[DELETE] ./a717ff72-45d0-4684-a9e7-ae7e594d389d.py
+[DELETE] ./ca366600-d768-4953-8854-56d4287eff64.py
+[KEEP] ./ddeb0faf-0e21-4fc6-8adc-8dbbe47988bc.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3eba053c-a11a-4ae4-8810-de98dd13a70a.idx
+[DELETE] ./4f4342fa-001a-4b3f-a463-a3416256a4af.idx
+[DELETE] ./a8a0c40c-33a6-4c05-8142-633ff06f67f6.idx
+[KEEP] ./d1beaf45-c3b9-4634-95a9-03beb7d3051b.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4f5380b8-86da-42fc-8d36-d8fd48e75556.idx
+[DELETE] ./ba4977c7-32df-4d42-a5e2-e364d2dca162.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./91c424b9-5af5-4d09-b803-d07beba194f1
+[DELETE] ./c68d0c6a-9118-44b3-a19a-fa327df1e5ff
+[DELETE] ./de64e457-c6a8-4584-be5d-b27bf331f2ae
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0a3499b3-9db2-466b-a063-8de43f0964ee.idx
+[DELETE] ./a66c8bfc-8947-4463-ac08-893bb21e7c9a.idx
+[KEEP] ./f48df013-d2cf-43e5-aa04-09202d57dc44.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./13aa87ed-b8e9-49b9-b23f-c680c29d7f59.pyc
+[KEEP] ./9051ede0-873b-431e-a07b-c97b852dc479.pyc
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./10cb9236-674d-44d9-9aa7-4b69122f898b.png
+[DELETE] ./687c83fc-5302-4d37-9b52-12b2ed40e64e.png
+[DELETE] ./9875543d-f28e-4c49-96a8-54dde57f9939.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0813dca9-d7d9-471c-8b75-d5e8fe934f68.idx
+[KEEP] ./0d1b1c1d-2650-41df-bf23-aa3349455e27.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./44a4ad7b-5741-4845-9e36-28062545fd9f.py
+[KEEP] ./6fc6eb11-18b8-4cb8-9511-af18a8207ee7.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./9370cf9b-a5c1-485c-9ae1-4d1184375ca7.JPG
+[KEEP] ./f94d0c32-da48-42b7-acc8-fa80f324846c.JPG
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1b2ab6f5-608c-4bc1-944f-ab991a037251.png
+[KEEP] ./f711c4d6-10e1-4fea-8978-24873806fb06.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./38eb1f65-0212-4575-93ba-5f76e3bee80e.ipynb
+[DELETE] ./5c73e684-eacc-4b4f-a08f-e8158e5e0021.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./af386353-6100-4664-b26e-5a9be199ea9f.wav
+[DELETE] ./d27e692b-2e15-4133-a747-837cde02a4b1.wav
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./db6b6724-e552-470b-a769-7bc22b118d66.png
+[KEEP] ./fdbb4a83-71bb-4a71-bc62-a942a654f6bb.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0ca9cbf7-1c91-4276-93dc-7a7e948b3400.xml
+[DELETE] ./ac748e41-f0bc-4ea0-a3a7-60d7f2851cbc.xml
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./80e1d5ea-eb12-4d08-9a05-c83c7b936d6d.idx
+[DELETE] ./ed22026b-e94d-4e76-869d-7c26d8cf967c.idx
+[KEEP] ./f4857ebd-6ed6-46cb-b015-ff993492e9d7.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./56e5e592-560c-43a7-b9d7-9593a6914861.cmake
+[KEEP] ./f17932d4-a059-4cbf-9526-53d798f5e0ab.cmake
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./152acf79-2ab0-478f-9eb7-ccf8c68545b2.png
+[DELETE] ./bc15075e-5c71-4af9-bf80-5b25a83db0f3.png
+[DELETE] ./d452c4bc-90ca-4f14-b416-0f89b0fc5a0c.png
+[DELETE] ./e720ac2a-2dc0-4b33-8228-b0b0270b53d9.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1afb053e-2b09-4880-ab75-e1cf4e10a6d0.txt
+[DELETE] ./fa52cc8d-a627-4c9d-9559-f5aa2f84042a.txt
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./736848ad-c13e-445d-8ee2-8ea3035a6a33.xml
+[DELETE] ./c15a77fc-13ce-4e24-b2f7-c1ab0ae668fc.xml
+[KEEP] ./cfbb5d27-d2e2-4a42-9520-c62846650e37.xml
+[DELETE] ./d3ff3aef-42dd-44bc-818b-4f043075eb2a.xml
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2b179c61-7119-4d16-b22d-17e1c2aa4936.idx
+[DELETE] ./63cf4c21-7cec-4db4-bb5d-4df1e20b68a1.idx
+[DELETE] ./7a88f366-87fd-4ba2-8995-d1fd8fcac3ab.idx
+[KEEP] ./fe2c7c22-d745-4f3f-b2f6-6e931e57d7bb.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1f4dc67b-7773-4a5d-ad8f-f9151afa659e.jpg
+[DELETE] ./ae53fedc-ad63-4c76-ad15-d05f2083e0c0.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./06c741b6-4a3c-47d9-a46d-2b1a76827a37.idx
+[DELETE] ./8f907d80-44a6-4c29-b79a-ae4d66ade388.idx
+[KEEP] ./930ce1b4-ef6e-445e-99cc-ea7b7dee498b.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./23070b7c-6a00-4200-8bfe-9d7f315e18c6.idx
+[DELETE] ./8b14ee62-9a02-4337-89d4-de8821106e9c.idx
+[DELETE] ./d1a738b8-b7f8-40a4-9506-bf0904f4ae00.idx
+[KEEP] ./e5aa4c54-4913-4e65-88cb-10b4d4e4de2a.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3adca925-72bb-42e5-8ad2-a9b8a1a17413.idx
+[KEEP] ./53441471-ff82-479e-af0d-190a5cbb29f6.idx
+[DELETE] ./8cbb78ed-6fe2-4d4d-8a44-a9fb98a20514.idx
+[DELETE] ./f457514d-0cef-4123-b998-22589a8e3d85.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./9d361493-8c7e-49a7-b0ac-d0000672d6b3.jpg
+[KEEP] ./a7b15219-f8b7-4aef-a05a-fb51c5db612d.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./c8c16464-d599-4ed2-b5b4-de7f961c7e2d.py
+[KEEP] ./ff65c7a4-42c1-4b5d-ad64-bfe93e0fa108.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./06a92757-2eca-4e68-910b-b540fa0dfc54.py
+[KEEP] ./e859edf0-7071-474e-8020-11708606979f.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./17f39931-5074-4fba-bd49-49f75053dd1b.pdf
+[KEEP] ./258c3b42-49d1-4c4c-a05a-0432745dd50e.pdf
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5d7338cf-08f1-495a-9e76-d0ab13b9d52e.idx
+[KEEP] ./792a8d3f-e05e-40f8-adb5-ea76998fa24a.idx
+[DELETE] ./9a0f349e-d732-400a-ab65-802c7d373cf1.idx
+[DELETE] ./b2a014b1-10f0-49dc-ac09-a72bcc394765.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./033205b9-7f0c-4abc-80b3-04b7dad0938c.idx
+[DELETE] ./53715176-e48d-4815-8fc0-5c880a336833.idx
+[DELETE] ./a3c7fdcb-c03d-441c-b62f-6ff9079f5596.idx
+[KEEP] ./f0d056c0-d40a-45a2-8c62-3fb301c83e36.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./37439c11-9890-47ba-adb2-1126ad8cf5ae.py
+[DELETE] ./da3f2e11-884c-4496-bc4e-21735fbf3eb6.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./99d03534-8f37-4353-a434-9f1eb8124051.idx
+[DELETE] ./c354b755-1bb9-4fa3-93b0-b76f4f915d97.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./59d1db30-9870-4656-b62d-b2c3047b2071.MOV
+[KEEP] ./66ef4523-f8cb-47e0-ab77-b8d2728e87f3.MOV
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./547b570a-a632-4b0f-b240-691a4a07508b.qrc
+[KEEP] ./601c1336-20cc-48c8-892f-0c71cf2e9aa5.qrc
+[DELETE] ./6f80c92c-43b5-426a-82f4-da33e532a191.qrc
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./083bc22f-f1b9-412b-b31e-8b7de5de0992.idx
+[KEEP] ./3bbe4d78-22ad-421c-b186-cfb643653b92.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./8a1daa5d-7f24-4f7f-88a5-e12399d6ba42.png
+[KEEP] ./e77076bd-8452-4e25-aca2-15c36064e2ab.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./27b36bcf-8796-4f3e-8feb-753ec5f6a168.txt
+[DELETE] ./28d92d6a-ef6f-42e7-a5ce-4edbdd259f3f.txt
+[DELETE] ./2d40a95f-760a-4345-97a8-5a41dc63ab20.txt
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./493dc0b1-7b73-4ae6-a86e-d33d21d0f0cf.idx
+[KEEP] ./4a1c32dc-52b5-4cc4-a10b-230b345f87bf.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./19d14a39-d021-4bc6-bd63-4a6ead35cae0.h
+[KEEP] ./4c17691c-5a66-4eb4-aa92-0e728d6cdb36.h
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./341db8fc-21a6-42aa-a67f-cd122c90bdf4.png
+[DELETE] ./38ed4536-95ad-4c89-8a78-009391c6c0d0.png
+[DELETE] ./4f2d7ca2-e47e-4a53-88b2-48e3a5ea25be.png
+[DELETE] ./69271a9c-7d4d-4bdb-8f76-f110d352bde6.png
+[DELETE] ./714c7f8d-2ccb-4423-b32f-fe8c03fe7cc8.png
+[DELETE] ./751c3637-07b1-4fd2-83ca-172b2502bbdb.png
+[DELETE] ./bd020aca-aeb4-481b-bf05-ac81a9b272b2.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3b8e5c67-9472-470d-85eb-ed39174b92ae.idx
+[KEEP] ./4fa4521b-9a99-4511-aa56-6c0cf1ef885e.idx
+[DELETE] ./795a576b-c3d4-4879-82e0-eb326778bd2f.idx
+[DELETE] ./e629397f-1661-4340-bc3b-2d67f8ae5aba.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./066dda28-532a-4437-ba27-b30774e01e1c.conan
+[KEEP] ./4b5e085a-e674-4c41-8583-0ef04d25a1ee.conan
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./13e92424-c5a5-4ef7-84e6-c188e390cf27.zip
+[DELETE] ./7bf5de2c-ebcf-4490-8a3b-8a3fe06add2e.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0474beff-eb22-4ccb-8ab4-22bd5ba4c147.idx
+[DELETE] ./c47b5c54-c9b6-4bb5-855e-a79ada163543.idx
+[KEEP] ./e624ddcf-7898-4053-837f-b93bf9b67906.idx
+[DELETE] ./f0556e6f-23c7-4b43-9b4e-4b1171dcac0f.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./8b15d4a1-b0a1-4313-b17d-29b97bc3e34d.zip
+[DELETE] ./9a27d62b-a7f7-4aca-87ed-e636cff92ddc.zip
+[DELETE] ./e6631ced-3c7d-4b07-a0e5-188f9cf3e9b3.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./194c1007-424f-4c0a-b68f-cf34aee9e69b.png
+[KEEP] ./c9179860-35b0-4f0a-bfe8-ce72f51a94a4.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./36322008-aef2-4863-8a8f-ea4a36f0bd69.idx
+[DELETE] ./5b22f16b-4e29-4158-9fa8-29c360572785.idx
+[KEEP] ./d418bb7d-2106-497b-95d7-a9cf60e12a13.idx
+[DELETE] ./dc3d8983-8178-4f90-a9f5-b0e0093fda7c.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0888336a-d611-471f-82ff-bd1d9568f053.ipynb
+[KEEP] ./65624de8-8308-45d7-9397-b3a7b6a5790c.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./20671d22-220e-447b-bc7c-c98953742b02.png
+[KEEP] ./78672c3b-069a-4aeb-9a9f-2bc394a66bab.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3a5ac852-4e37-4f12-8fb6-394306f3c5b2.txt
+[KEEP] ./4698e63f-0064-4f27-bcec-3d01981d16c5.txt
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0d093ed4-f155-4c59-a264-872536689862.zip
+[KEEP] ./737167eb-c82c-4872-97d0-7f59445fa677.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./d21737de-f164-4a27-afd6-d68569d987c2.png
+[DELETE] ./d6a990ff-185d-409b-9102-b30cc64e5d02.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./214d8d3f-64d6-497f-af61-8dfaa7a1446c.idx
+[DELETE] ./26c63136-0bf6-43d3-84ea-4cb0a661e716.idx
+[KEEP] ./2bb58300-f029-4769-8549-1a90b1b84cdf.idx
+[DELETE] ./83238269-16cb-4163-91a6-72978acbff17.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4d0e56c3-75e4-49e6-a29d-55b296b1a67a.png
+[KEEP] ./5f4f62d6-7c2a-4781-b7e0-3f59fbb083a6.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./3bba2469-89ad-4149-a49a-1cb9bc9f15e9.py
+[DELETE] ./cf5ef91c-58cd-4bcf-b98d-01f5ff6451eb.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./745a9eee-ee1c-40df-98ac-b589ec872e36.cpp
+[KEEP] ./b525a6a5-1cea-4a4d-9ab0-6b549d90fc2e.cpp
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./e2d0ef51-4220-4072-8b8d-2089b0eb714c.idx
+[KEEP] ./e7c7b8cf-6bb5-414b-9377-758d867e1673.idx
+[DELETE] ./fc7c1886-5dc5-46ed-a65b-c3ee11170cee.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./764ac5c1-f06b-4e16-8e0b-eea642cad57b.py
+[KEEP] ./ae224bb9-8793-498f-b04c-a529731ac6e2.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./64520a72-4013-4ffb-9e2f-3a75e73543b3.png
+[KEEP] ./c9e5071a-06a4-4d35-9316-76815f68037e.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./392bf2a2-2d17-48b9-8786-d8df39a5efb0.idx
+[KEEP] ./54bca582-d07c-47d2-a01f-a6a4b989c7f8.idx
+[DELETE] ./ef41d0f6-7a9f-4ee7-9958-0916c6288d1d.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./51ac94ca-9820-4cfe-b944-dfcb8b60ae17.png
+[DELETE] ./dd381e5e-7760-4687-a585-a70dc4cfe800.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3429afd8-ad0f-4291-b7ac-75e13a0814b8.jpg
+[DELETE] ./7d1970d3-8441-47a2-9596-f60b289ce367.jpg
+[KEEP] ./9888b43c-5808-4971-85dd-46abbec0e04b.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./88eef1e1-e15b-47c1-a676-7e1c9dd20e1c.png
+[KEEP] ./cd1af8e7-fb6e-4dea-ae24-27b3728ea149.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./39471b7d-672e-48d4-b009-d4a02cf9a809.idx
+[DELETE] ./3fa8dd1a-7e02-474a-9083-e4baeee0bf19.idx
+[DELETE] ./a5db28ed-18fe-418c-86ee-ec9074a44151.idx
+[KEEP] ./aa4e4252-7243-4110-8651-efd543e8728e.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./c3af299a-a176-4ae1-8ab1-fe58b1739eb9.jpeg
+[DELETE] ./d8fe2cf9-5d7e-471b-a9e9-3d53b5ca6368.jpeg
+[KEEP] ./e952f57b-379e-4c20-8d8e-a9b34eff272e.jpeg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0dd10ce9-1cbc-4f43-9920-449fc2e9a9c0.zip
+[KEEP] ./160668a4-a14e-461d-9867-55d07e2e8490.zip
+[DELETE] ./3036382b-05ee-40ca-a3a4-c8821ec082fd.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./37404a09-0783-4157-99bf-72d81e594145.png
+[KEEP] ./6adf4fd1-fe91-4157-83b4-5688c8b6849a.png
+[DELETE] ./aac6ef80-fabb-4aef-96a0-acbcdff563bf.png
+[DELETE] ./dea960fc-f285-4bd4-a0f7-48663d311957.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1030ee67-de09-452f-8908-29355bfcdbd1.mp4
+[DELETE] ./cf4b4535-fd10-4468-9e6d-ee0f04cd69ec.mp4
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./91b810c7-cccf-4ef2-b7dd-e2ba6dc9572b.png
+[DELETE] ./b5370611-fed3-4c33-b3ac-4fbbcec79366.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./565303f1-012e-4d80-ba2d-6c8f301a29b5.idx
+[DELETE] ./8ce5a0ea-c0e7-4e1e-8101-6e77796c84dd.idx
+[DELETE] ./a0f6df9a-eade-400c-aa7e-8ce24c4f349c.idx
+[DELETE] ./de81342c-bdea-45da-bb6f-1aa8bb71bd0d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4995b2cb-7626-4059-b717-ea55471b3c55.idx
+[DELETE] ./4ff2af1c-724b-49f6-87ae-419a2d57e5b0.idx
+[DELETE] ./5e6864f4-f308-46c6-9d7c-ccd3f1644d3e.idx
+[KEEP] ./dbbd8161-5b0c-4ae4-99f9-712d8f6b634c.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./d9a22a6a-9029-45ef-a0bd-6cca085d99f5.ipynb
+[KEEP] ./f6976864-8680-40ef-9266-6e555d08b0a7.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2a654b09-8d02-4256-8d04-7207d8419850.rar
+[KEEP] ./9ef099cc-cbe2-4a71-9090-a4ca4f7800bf.rar
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./b0eae1b0-fcb4-47ef-8e61-842f7094c9f3.idx
+[KEEP] ./c596c97f-05a7-4147-93be-57be8e4d30d4.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./570069f5-0221-4116-b8aa-9c824b2e6765.idx
+[KEEP] ./ca897df5-163f-4177-a362-30097e5dc780.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0bd0b946-2719-4518-8163-fc51c8f00776.png
+[KEEP] ./2474ec92-bcbb-4ad0-b04c-136a2c38147c.png
+[DELETE] ./a23dd14c-3044-4804-bcf6-d1a1e4f0173e.png
+[DELETE] ./c8feb974-4bee-4ffc-99fe-6780c70e7d7c.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./289862fd-1667-4d27-bed0-5936c86b75ac.py
+[KEEP] ./acb26706-e3bb-47e8-b8a2-80d4b55a7b1d.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./748c96a5-bd71-429f-a44a-f06fc5da32f6.png
+[KEEP] ./adb39e96-340e-4545-bb84-2f5b903acd1e.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5d84230b-c1b6-4658-9046-9b33a69e3cc7.idx
+[DELETE] ./9b68fcb0-d595-45d2-b911-d9e5200c8ea1.idx
+[DELETE] ./ec428ddc-8712-4cff-bca3-777b12485689.idx
+[KEEP] ./ff1bdc25-8cd1-4d53-a2fd-bf171083a98e.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./551908e7-b60a-425c-8ba9-7b0d66bb7a7d.sample
+[DELETE] ./d3c8c019-66da-41f8-adbe-7ce9183a2e40.sample
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3c1b1947-f074-4681-bc4f-e7dbd15b3a38.jpg
+[KEEP] ./5f2553e8-993b-4f80-969e-23238bb78318.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1a8c8b75-8fd3-4900-95fc-376002f05d72.idx
+[KEEP] ./a635eae0-d595-4a3b-bd4a-8817b8ac74d7.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./141a6369-3150-460d-b136-2aef7438a5b3.zip
+[DELETE] ./5e8e3703-f79f-410e-a5a6-09b120ce5d20.zip
+[DELETE] ./9dee9d6b-925b-468f-8428-36946aee5f2f.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1ffd5e29-9b93-497b-9d9a-5c4a22660cef.idx
+[DELETE] ./32f6b2e3-efae-4a1a-97a6-61de5a4bddf3.idx
+[DELETE] ./67dbe33f-9f75-4540-9001-1d0739fb19a5.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./ba8af7ee-df90-4f73-8e1c-c4bfc007c115.py
+[KEEP] ./e7319b3b-1b5a-4c02-9b10-17013f37e76b.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./150ccdc8-1c48-4902-8e6e-1110ec7a583d.idx
+[DELETE] ./5066be1b-944a-46ce-b3e6-59362c4ac5bc.idx
+[KEEP] ./5564a64e-d219-4bbe-a91e-2e343c35a4e7.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1a27162c-6334-4bda-92dc-7fe8224c7af1.png
+[DELETE] ./d7f1ef97-3980-4b71-93f2-d2871cbfd4de.png
+[DELETE] ./e007d32b-edb1-4353-ade4-ec771860d732.png
+[DELETE] ./fe5570cc-8582-4ee0-9353-6255199c1850.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./c5aa10b4-21d8-42e6-887f-47b072a46e9a.zip
+[DELETE] ./cbb578ee-6f77-4ef9-bf33-e5897b58eb9b.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./9ef780f3-acbf-4a60-9d65-1620e4333544.png
+[KEEP] ./a81954c2-3166-448a-a840-a737457fb385.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./005b3e9b-ef33-4d77-b2fb-5ba3acd72c83.png
+[DELETE] ./02b44e4d-c392-44bf-96ea-4f1878014c05.png
+[DELETE] ./085fe827-466a-40ca-ac7c-5dad3f81dbce.png
+[DELETE] ./4858f9be-6824-4c56-9374-22f05e0f2c3d.png
+[DELETE] ./51bd677e-b0c7-4c3b-b4ec-02f7d71c93e9.png
+[DELETE] ./901de549-78a1-417a-9897-dceaa4ac12c1.png
+[DELETE] ./f73edafc-d8af-4a9c-a623-886797cfa15e.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1b0d947d-ce9d-48fa-8d39-67403a918136.py
+[KEEP] ./39e7baa6-3662-4113-acec-8cc7e060f123.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./60c462ff-550e-40ea-bd06-5ee9169e4bcf.py
+[DELETE] ./87f38772-9b81-4ae4-9d56-2b6fe4dc8dc1.py
+[KEEP] ./d1d1b230-d626-44dc-859b-4bbb675a6966.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2a7d2bbb-2e7b-4c2d-9e8a-795539b11288.idx
+[DELETE] ./65fd5d96-e251-4577-abbf-2ec07cff921f.idx
+[KEEP] ./79975155-2471-4703-ad64-2d50c8db5dae.idx
+[DELETE] ./939cd557-67d2-4112-a70e-fe09dee9d23b.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7a8503f2-953b-4032-ba1d-b33242ea6666.zip
+[KEEP] ./9c0cbd51-07ea-4176-ad52-62b13545e037.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6814b676-6596-452f-ad4a-d20fa3b59215.rar
+[DELETE] ./abfeeaf1-ce12-431e-852c-fef055fb446b.rar
+[DELETE] ./d4e83c67-7ee3-44f5-9b60-e2a700b00acf.rar
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./a2bc2113-56b0-4f19-bbab-b8d49a501909.csv
+[KEEP] ./d7ac188e-bc84-420f-8f0d-38e63f32b6e2.csv
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./264dd089-de70-482f-a3ee-650ba804c6e1.png
+[KEEP] ./4fc4cc8f-c18c-458f-905b-47f2cd66cfef.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./310634de-5812-483d-86e6-af5c88ab66a3.wav
+[KEEP] ./ea7a424c-1043-4b27-9e8e-8cdb6ad953a9.wav
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./01bc89ad-c04c-4647-b9da-580d9b3e16d1.jpg
+[DELETE] ./43e49bd2-d317-40d9-8ac7-8de056f0cedd.jpg
+[DELETE] ./68764185-7061-4fc4-a9af-ed50aa037b13.jpg
+[DELETE] ./6eaa7c72-55ad-4db6-b12b-653f4518a40b.jpg
+[KEEP] ./b730f2e8-7c89-47ca-ae13-8293a5b46644.jpg
+[DELETE] ./ffbaece1-aae1-4634-9dd2-79229704eabd.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./08231d5b-b568-4dff-bc89-4f405345c96b.idx
+[KEEP] ./f62016a0-9682-48d6-b707-2ed01843a824.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3a1b54e9-e4aa-4c3b-8f1f-b37924ebeb6c.zip
+[KEEP] ./ed980c5d-2a79-41cc-a7b4-e132cbe90504.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./8a4e4cfc-6461-4e92-b6c2-f09a508859c4.png
+[KEEP] ./f7b289cb-82b3-4481-829b-655f8cb1f7a2.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2de9172f-3774-46d1-97b5-94e9e2236a2a.ui
+[DELETE] ./8f2eafe3-ac88-4561-9dbd-1058aa70e1cf.ui
+[DELETE] ./ddafb7ca-ec50-439e-8a87-ce62ed02c0ab.ui
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6373cfc1-e7ad-4c52-ae3e-221a5c92c051.png
+[DELETE] ./afd95a23-407f-4502-aabb-c23d7b88a457.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0f8556de-df11-4fea-85c0-dc9638d93861.png
+[DELETE] ./3b81812a-3505-4c17-b757-2d8950d3acdd.png
+[DELETE] ./8e0e7ff9-7824-46a4-9f93-735b0871099e.png
+[DELETE] ./97e698e7-72eb-4480-9191-b8e5702f18df.png
+[DELETE] ./c13142fe-d6e2-45f8-b097-d7d826eb3e8c.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./2b2f6162-0653-4536-8b37-804a058496f3.jpg
+[KEEP] ./55df634b-ed51-4e01-8545-ed8f94fd351e.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1ef89905-23b2-4dad-8ff1-09a8d4218fb6.png
+[DELETE] ./271ef109-40f2-4b23-875d-083e157e6e26.png
+[DELETE] ./625a9078-80b5-43a9-ab42-206ddaa6608c.png
+[DELETE] ./90fd50cf-2487-41ea-8803-aab1de2c8263.png
+[DELETE] ./ba447887-f53f-4ccb-b84a-559c3a77d75a.png
+[DELETE] ./d02bc4b1-ee60-4faf-a373-a923fad2beee.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./dbecc49f-e6ea-4a2f-8d1c-5f4aa5497c78.html
+[KEEP] ./e84cb71f-e523-4757-97c8-08aa7ca3e515.html
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./52af386b-b220-40b2-aee2-7bfa44fd9080.idx
+[DELETE] ./c582506f-8f3d-44f9-9286-0383443a6c7d.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./5800bc6d-ab25-4bae-9ef6-fe7277bc39c7.png
+[KEEP] ./f05a2924-ec16-4c16-adc3-fd88e5ce670d.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2c793bdc-efa6-452c-9b68-c601a84823df.user
+[DELETE] ./947a87d9-efbd-44d8-bbf5-04c7fb71725b.user
+[DELETE] ./fc4170a2-5259-49fb-9764-d2fa36414426.user
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./c5145358-6f49-4c52-a06c-33371daa6808.wav
+[KEEP] ./c568b77d-6fe6-432f-b53a-824a119c0fcb.wav
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./033f440b-eff2-421d-a060-1171826f851e.png
+[KEEP] ./caa7c135-e257-4299-9427-71e23e581138.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./123585a5-0a2a-47f7-b239-b7b879d167b2.idx
+[DELETE] ./2205de64-ad06-415e-a2bc-ba15706145be.idx
+[KEEP] ./2a7e177d-0dac-4c7b-8f8e-738c77f02e5e.idx
+[DELETE] ./5660b1ac-4056-4369-a73f-4ffe8def236f.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0c0e5f4b-e34f-41da-8ab4-61cdd3bfe8a7.jpg
+[KEEP] ./db731640-846d-4084-91e8-5c1affb6b980.png
+[DELETE] ./e638d897-b5c5-4143-b14a-68e1a74dcf9a.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0727c42e-8e05-45a7-b734-202486c6498c.o
+[KEEP] ./ccea4042-8069-4bb0-b942-d219a1cd9b61.o
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./564e31d3-1714-41c7-ba25-04b9f9591f64.jpg
+[DELETE] ./cc3fe488-0099-4767-a973-56b8d8a1386c.jpg
+[DELETE] ./d323c6b2-6917-40d1-a7bb-e3ce2c8098a4.jpg
+[KEEP] ./f7c203e3-e8de-4d93-a64a-2f1270031377.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0fe49a29-cc52-4610-944e-5c481660f109.exe
+[DELETE] ./c354b3f2-0554-4c9e-ad55-6c4ac29db0b2.exe
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./217d622e-3b3e-413c-b927-4f8c7e991fea.idx
+[KEEP] ./2e4b78b4-c8b7-4b51-82a6-51e6ef1a1da8.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./421c11d0-d306-40c4-ab36-2a584c7ad504.idx
+[DELETE] ./f5cbcb43-1abc-4799-957f-ab6cd754b461.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2d85122d-69e2-4911-b9e6-7564bac1b267.h
+[DELETE] ./bd63c12b-f4f5-4429-b42b-245f0bc40719.h
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./27e5dc17-070e-495c-9162-ab77e1fc079a.ipynb
+[DELETE] ./39ead8ad-ae63-409f-8fe1-a1bf62e68ade.ipynb
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./35faf669-2443-4b73-ab3d-356ac8ad6d0b.idx
+[KEEP] ./d9e42e06-4748-4ed4-958a-ece98a1f0756.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./061ed265-5a6f-4523-b019-27bd6652c240.py
+[DELETE] ./d8dce94e-89c7-4583-a847-c356f67aee64.py
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./00831b89-75d6-498d-b316-4a5a28a06296.idx
+[DELETE] ./02701ba7-3f0b-43b6-ab91-8267a0aa97b5.idx
+[KEEP] ./51cdf4a3-2988-4683-8423-2922f2869780.idx
+[DELETE] ./e32dfdaa-d54c-4bf6-a739-9425e8fefcb0.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4ff683b7-a235-41ef-b113-a6d576369317.idx
+[DELETE] ./98dd2694-38c8-42cb-92ae-a1cc8ae47cfd.idx
+[DELETE] ./ad9e0d1f-69f9-49e6-b272-39bde1f2df7f.idx
+[DELETE] ./d4b9725e-ff6d-45f3-9fc6-2716659a05a4.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0ab3a76d-453b-441d-b7c5-e872e6c1a005.png
+[DELETE] ./69f2048f-3080-41fc-a027-8724bf647b92.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./06f89335-c8fe-423a-9c17-d01a15b5d85e.idx
+[KEEP] ./d7ce5a2d-e330-4b4d-bab5-5626ff45c77a.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./6430303d-faac-4f01-a949-c769e20e7b04.cpp
+[KEEP] ./840b7801-1b5f-497c-9939-023c575a719c.cpp
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./4ccd7dbe-7035-4395-bab4-5cfda1218760.zip
+[DELETE] ./dd4d7938-8c87-4f56-978d-841b35e13bc8.zip
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./34eb52ea-9258-485c-8c51-815ec29624d4.idx
+[KEEP] ./66db371a-b27c-425b-a5d2-228ce124dc35.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3652ac49-2166-44b5-a44f-aa5231fa2591.7z
+[KEEP] ./e14364b8-efca-4cb2-8680-e6cd3c8c9439.7z
+[DELETE] ./eedf9983-035a-41a0-b998-864f347a9ddc.7z
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./9b3292d2-9a0c-4261-a92e-03eab57e8ea3.py
+[KEEP] ./f3a9e299-03c3-42ad-b4d6-893cd3949e67.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./24851ffb-d511-4ddd-85bc-1b608082530f.jar
+[DELETE] ./2bea90f2-c2d0-4c43-ad19-587ead1737af.jar
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./823958a9-dfff-4721-93d3-3fd90a21a44b.idx
+[DELETE] ./e17994e2-7d54-4c80-80e9-345270d4f686.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./13f59816-cf72-4b98-ad4a-84cf564156b4.png
+[KEEP] ./b15c12cb-a402-4f6d-b028-74e40cec821d.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./8cae2960-aacd-4912-a21f-b490048792ab.jpg
+[DELETE] ./f3ff4110-5f6f-4bd1-b789-573a29c0d8e9.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2c99b763-ba08-4648-b667-0edc97e98d28.idx
+[DELETE] ./6f1533bb-ec1e-46f8-b48c-c626ba979934.idx
+[DELETE] ./7689eaa1-9190-4085-89c7-f49686b3eb86.idx
+[DELETE] ./c340a1b0-5650-492c-966e-375bb1f29cd0.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./0fff43b7-2b7a-41a5-b9ad-61392c80e41d.jpg
+[KEEP] ./30a98978-9196-4a34-9d45-25badef779c3.jpg
+[DELETE] ./83b8d1af-a78f-447a-a7d3-af7da64e1eb4.jpg
+[DELETE] ./83fc7a34-5fce-4767-a445-6e26c323b31a.jpg
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./6e037131-26d1-4d63-84f2-fbc9cb89b4e1.idx
+[DELETE] ./eb55dfc3-bd6b-4c6d-aa31-fa90415e65e5.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./56b7f71d-412a-4c2c-9a52-09cb3e948b35.7z
+[DELETE] ./fd8bc559-0fd7-40f9-815a-834007f789c6.7z
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./753e82a8-4dfe-431f-99bc-706932f0e8f5.idx
+[KEEP] ./7e6e9dd7-4bb5-4849-891a-8b743326b056.idx
+[DELETE] ./7f216612-332f-4080-8393-e162a86d85f3.idx
+[DELETE] ./f2290a42-4238-49b8-b08b-9c4a0e6e17e0.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./06b641bf-19ed-48c5-a62c-893ced871b71.png
+[DELETE] ./33b37f39-93ba-42d2-8feb-92e141f776a9.png
+[DELETE] ./a8013810-c3fd-40ae-b7fb-b60b62b3b2ab.png
+[DELETE] ./c4a31457-45b4-40bc-b0b7-28a047663ce1.png
+[DELETE] ./d49f5521-908e-4999-b41a-27f2686e23d9.png
+[DELETE] ./f947ad26-312a-4946-8525-230acf1e674d.png
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./0d7cc77e-2360-44f8-940c-dab1f9afac9a.py
+[DELETE] ./2d912843-4ba4-4f2e-a150-e5495357d099.py
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./5ab9e85d-b5f1-42e5-84c4-fe33366fe8de.jpg
+[DELETE] ./ad3ce944-0e04-495c-a3bf-fc805352594d.jpg
+[DELETE] ./fb44dc90-d016-4572-8235-8be50b58f3fa.jpg
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./6a178c3c-6e0e-4770-a5c9-170b52854b7b.json
+[KEEP] ./a235e798-6f89-4d87-b09d-d301a2e4ac10.json
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./3f2a818b-2dd8-4271-8944-e984016a5a62.idx
+[KEEP] ./65ef5b12-90aa-452c-be02-2deb0e607c33.idx
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./1d46dbcc-30f6-4af3-b45b-ba320b26d5f5.png
+[DELETE] ./6038038e-6981-4c4c-b17c-13561bf0756d.png
+[DELETE] ./8b919293-c880-4424-a3b4-e42045726739.png
+[DELETE] ./c75b8142-755c-4109-bc9c-2edd98af1b5e.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./43d8e0b8-2674-4fb2-8d45-38993b8db017.png
+[KEEP] ./5d8b10d2-f2d4-42cd-8b0e-3b670eafbc96.png
+[DELETE] ./c5070fcf-d845-4bb2-9950-b960739569a0.png
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./433c4c9a-a8dc-4560-bf19-471cb21d4169.pxd
+[KEEP] ./4c86e710-75d9-4f3b-8708-486fa6b0bcb8.pxd
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./4e1150ba-ec26-44e0-b1d5-e16b6066ed0f.ipynb
+[KEEP] ./c1d3168c-1f1b-495a-a834-7e2a31dbff65.ipynb
+[DELETE] ./f97dab86-7857-449f-bcdd-ec43f9a0cec4.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./11e9e289-e704-486f-9c47-926e72163762.ipynb
+[DELETE] ./8e8a42dd-ec5d-44d5-94c9-aa791849f926.ipynb
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./2242ddc7-9c8f-4243-91d5-6fcaa0c1ac69.html
+[DELETE] ./ae8477ad-9900-448a-9c07-48a0b30114a2.html
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./1e1b855c-0cac-4c52-af8e-954f77226238.idx
+[KEEP] ./54adf864-9540-4ef4-b710-e42c4b3908d6.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./95c66b83-740e-446f-9c99-95ffa0549dd6.idx
+[KEEP] ./e6855030-ab5b-40fa-a229-6812f0fb5cf4.idx
+[DELETE] ./e8e2d6e6-a1c9-4994-9656-aa4f0f1d30d7.idx
+
+Группа дубликатов:
+[DELETE]
+[DELETE] ./7ea65b78-660f-4f8c-afba-4799fc038c3b.zip
+[KEEP] ./c77500ba-6e24-4172-ae91-35dc915af452.zip
+
+Группа дубликатов:
+[DELETE]
+[KEEP] ./03ad8ba8-4c6f-424b-9292-ea954cc005d5.idx
+[DELETE] ./d7b26ece-2ef8-4c36-be2c-cb47ae38a44d.idx
+[DELETE] ./ef2c5505-185e-4edc-94da-40cf2def01b0.idx
+[DELETE] ./f83a390c-871e-4c4d-a759-922e0cf729cb.idx
+
+roctbb@ruvds-f4lvp:~/GeekStorage/images$

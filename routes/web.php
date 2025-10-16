@@ -65,6 +65,11 @@ Route::get('/textbook/{id}', 'TextbookController@index');
 Route::get('/textbook/{id}/lesson/{lesson_id}', 'TextbookController@lesson');
 Route::get('/textbook/{id}/edit/{step_id}', 'TextbookController@edit_step');
 
+Route::get('/games', 'GamesController@index');
+Route::get('/games/{id}', 'GamesController@play');
+Route::get('/games/{id}/frame', 'GamesController@frame');
+Route::get('/insider/games/{id}/viewsource', 'GamesController@viewsource');
+
 Route::get('/categories/create', 'CourseCategoriesController@createView');
 Route::post('/categories/create', 'CourseCategoriesController@create');
 Route::get('/categories/{id}', 'CourseCategoriesController@details');
@@ -72,11 +77,6 @@ Route::get('/categories/{id}/start', 'CourseCategoriesController@start');
 Route::get('/categories/{id}/stop', 'CourseCategoriesController@stop');
 Route::get('/categories/{id}/edit', 'CourseCategoriesController@editView');
 Route::post('/categories/{id}/edit', 'CourseCategoriesController@edit');
-
-Route::get('/games', 'GamesController@index');
-Route::get('/games/{id}', 'GamesController@play');
-Route::get('/games/{id}/frame', 'GamesController@frame');
-Route::get('/insider/games/{id}/viewsource', 'GamesController@viewsource');
 
 Route::get('/activate', 'BotController@activateView');
 Route::get('/activate/success', 'BotController@successView');
@@ -91,6 +91,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/jwt', 'RemoteAuthController@remoteAuth');
 
+    // YandexGPT text improvement API
+    Route::post('/yandexgpt/improve-text', 'YandexGPTController@improveText');
 
     Route::post('/vk/send', 'BotController@send');
     Route::get('/vk/send', 'BotController@sendView');
@@ -163,6 +165,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{id}/', 'CoursesController@details');
     Route::get('/courses/{id}/enroll', 'CoursesController@enroll');
     Route::get('/courses/{id}/report', 'CoursesController@report');
+    Route::get('/courses/{id}/blocked', 'CoursesController@blocked');
     Route::get('/courses/{id}/edit', 'CoursesController@editView');
     Route::get('/courses/{id}/start', 'CoursesController@start');
     Route::get('/courses/{id}/stop', 'CoursesController@stop');
@@ -221,13 +224,15 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/tasks/{id}/right', 'TasksController@makeUpper');
     Route::get('/courses/{course_id}/tasks/{id}/peer', 'TasksController@reviewTable');
     Route::post('/courses/{course_id}/tasks/{id}/deadline', 'TasksController@makeDeadline');
-        
+
 
     Route::post('/courses/{course_id}/tasks/{id}/edit', 'TasksController@edit');
     Route::post('/courses/{course_id}/tasks/{id}/solution', 'TasksController@postSolution');
     Route::get('/courses/{course_id}/tasks/{id}/solution/{solution_id}/recheck', 'TasksController@askForRecheck');
     Route::get('/courses/{course_id}/tasks/{id}/phantom', 'TasksController@phantomSolution');
     Route::get('/courses/{course_id}/tasks/{id}/student/{student_id}', 'TasksController@reviewSolutions');
+    Route::get('/courses/{course_id}/tasks/{id}/block/{student_id}', 'TasksController@blockStudent');
+    Route::get('/courses/{course_id}/tasks/{id}/unblock/{student_id}', 'TasksController@unblockStudent');
     Route::post('/courses/{course_id}/solution/{id}', 'TasksController@estimateSolution');
     Route::get('/invite', 'CoursesController@invite');
 
@@ -318,22 +323,6 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/core/import', 'CoreController@import_core')->middleware('teacher');
     Route::get('/core/importa', 'CoreController@import_core')->middleware('teacher');
 
-    Route::get('/themes', 'ThemesController@index');
-    Route::get('/themes/{id}', 'ThemesController@details');
-    Route::get('/themes/{id}/css', 'ThemesController@getCSS');
-
-    Route::get('/themes/{id}/js', 'ThemesController@getJS');
-    Route::get('/themes/{id}/buy', 'ThemesController@buy');
-
-    Route::get('/themes/{id}/wear', 'ThemesController@wear');
-    Route::get('/themes/{id}/takeoff', 'ThemesController@takeOff');
-    
-
-    Route::get('/themes/create', 'ThemesController@createView');
-    Route::post('/themes/create', 'ThemesController@create');
-    Route::get('/themes/{id}/edit', 'ThemesController@editView');
-    Route::post('/themes/{id}/edit', 'ThemesController@edit');
-    Route::get('/themes/{id}/delete', 'ThemesController@delete');
 
     Route::get('/core/editor', 'CoreController@editor')->middleware('teacher');
 

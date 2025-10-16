@@ -80,11 +80,11 @@
                         </div>
                         <div class="modal-body">
                             <strong>Условие</strong>
-                            @parsedown($task->text)
+                            {!! parsedown_math($task->text) !!}
 
                             @if ($task->solution)
                                 <strong>Решение</strong>
-                                @parsedown($task->solution)
+                                {!! parsedown_math($task->solution) !!}
                             @endif
                         </div>
                         <div class="modal-footer">

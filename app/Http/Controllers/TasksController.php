@@ -29,7 +29,7 @@ class TasksController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('task');
-        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution']);
+        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent']);
     }
 
     /**
@@ -174,6 +174,15 @@ class TasksController extends Controller
     {
         $task = Task::findOrFail($id);
         $user = User::findOrFail(Auth::User()->id);
+
+        // Blocked users cannot submit
+        if ($task->isBlocked($user->id, $course_id)) {
+            return [
+                "mark" => 0,
+                "comment" => "Задача заблокирована для вас. Обратитесь к преподавателю."
+            ];
+        }
+
         $this->validate($request, [
             'text' => 'required|string',
         ]);
@@ -262,6 +271,58 @@ class TasksController extends Controller
             return $value->user_id == $student->id;
         });
         return view('steps.review', compact('task', 'student', 'solutions', 'course'));
+    }
+
+    public function blockStudent($course_id, $id, $student_id)
+    {
+        $task = Task::findOrFail($id);
+        $course = Course::findOrFail($course_id);
+        $student = User::findOrFail($student_id);
+
+        // Create block record if not exists
+        if (!\App\BlockedTask::where('task_id', $id)
+            ->where('user_id', $student_id)
+            ->where('course_id', $course_id)->exists()) {
+            \App\BlockedTask::create([
+                'task_id' => $id,
+                'user_id' => $student_id,
+                'course_id' => $course_id,
+                'blocked_at' => Carbon::now(),
+                'reason' => 'plagiarism'
+            ]);
+        }
+
+        // Zero out all existing marks for this task/user/course
+        $solutions = Solution::where('task_id', $id)
+            ->where('user_id', $student_id)
+            ->where('course_id', $course_id)
+            ->get();
+        foreach ($solutions as $solution) {
+            $solution->mark = 0;
+            $solution->comment = 'Решение заблокировано (плагиат).';
+            $solution->teacher_id = Auth::User()->id;
+            if ($solution->checked == null) {
+                $solution->checked = Carbon::now();
+            }
+            $solution->save();
+        }
+
+        // Invalidate cached score
+        $student->rescore();
+
+        return redirect()->back();
+    }
+
+    public function unblockStudent($course_id, $id, $student_id)
+    {
+        // Remove block records for this task/user/course
+        \App\BlockedTask::where('task_id', $id)
+            ->where('user_id', $student_id)
+            ->where('course_id', $course_id)
+            ->delete();
+
+        // Do not modify marks here; just allow new submissions
+        return redirect()->back();
     }
 
     public function estimateSolution($course_id, $id, Request $request)

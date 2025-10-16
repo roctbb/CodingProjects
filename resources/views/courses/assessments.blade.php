@@ -61,26 +61,34 @@
                                         $filtered = $student->submissions->filter(function ($value) use ($task, $course) {
                                             return $value->task_id == $task->id;
                                         });
-                                        $mark = $filtered->max('mark');
-                                        $mark = $mark == null?0:$mark;
-                                        $need_check = false;
-                                        if ($filtered->count()!=0 && $filtered->last()->mark==null)
-                                        {
-                                            $need_check = true;
+                                        $blocked = $task->isBlocked($student->id, $course->id);
+                                        if ($blocked) {
+                                            $mark = 0;
+                                            $need_check = false;
+                                        } else {
+                                            $mark = $filtered->max('mark');
+                                            $mark = $mark == null?0:$mark;
+                                            $need_check = false;
+                                            if ($filtered->count()!=0 && $filtered->last()->mark==null)
+                                            {
+                                                $need_check = true;
+                                            }
                                         }
                                         $sum += $mark;
-                                        $class = 'badge-light';
-                                        if ($mark >= $task->max_mark * 0.5)
-                                        {
-                                            $class = 'badge-primary';
-                                        }
-                                        if ($mark >= $task->max_mark * 0.7)
-                                        {
-                                            $class = 'badge-success';
-                                        }
-                                        if ($need_check)
-                                        {
-                                            $class = 'badge-warning';
+                                        $class = $blocked ? 'badge-danger' : 'badge-light';
+                                        if (!$blocked) {
+                                            if ($mark >= $task->max_mark * 0.5)
+                                            {
+                                                $class = 'badge-primary';
+                                            }
+                                            if ($mark >= $task->max_mark * 0.7)
+                                            {
+                                                $class = 'badge-success';
+                                            }
+                                            if ($need_check)
+                                            {
+                                                $class = 'badge-warning';
+                                            }
                                         }
 
 

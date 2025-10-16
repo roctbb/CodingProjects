@@ -176,7 +176,10 @@
                                                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">{{$task->name}}</a>
 
 
-                                                                @if ($should_check)
+                                                                @php $blocked = $task->isBlocked($student->id, $course->id); @endphp
+                                                                @if ($blocked)
+                                                                    <span class="badge badge-danger float-right">0</span>
+                                                                @elseif ($should_check)
                                                                     <span class="badge badge-warning float-right">{{$mark}}</span>
                                                                 @elseif ($mark == 0)
                                                                     <span class="badge badge-light float-right">{{$mark}}</span>

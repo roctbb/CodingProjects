@@ -170,7 +170,7 @@ class User extends Authenticatable implements MustVerifyEmail
         // Get all solutions grouped by task
         $group = Solution::where('user_id', $this->id)->get()->groupBy('task_id');
         foreach ($group as $task) {
-            $this->score += $task->sortBy('mark')->first()->mark;
+            $this->score += $task->sortByDesc('mark')->first()->mark;
         }
 
         // Get all related data at once

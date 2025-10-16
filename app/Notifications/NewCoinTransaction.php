@@ -63,11 +63,15 @@ class NewCoinTransaction extends Notification
      */
     public function toArray($notifiable)
     {
-
+        $price = (int) $this->transaction->price;
+    
+        $comment = $this->transaction->comment ?? '';
+    
+        $comment = e(strip_tags($comment));
+    
         return [
-            "text" => "🏧 Вам начислено " . $this->transaction->price . " GK (" . $this->transaction->comment . ")",
+            "text" => "🏧 Вам начислено {$price} GK ({$comment})",
             "type" => "success"
         ];
-
     }
 }

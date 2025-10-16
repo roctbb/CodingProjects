@@ -16,7 +16,8 @@ class Kernel extends ConsoleKernel
         Commands\BirthdaySender::class,
         Commands\RequestFeedback::class,
         Commands\LowerEmails::class,
-        Commands\TestEmails::class
+        Commands\TestEmails::class,
+        Commands\FixTyposCommand::class
     ];
 
     /**

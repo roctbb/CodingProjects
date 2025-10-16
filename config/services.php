@@ -37,4 +37,11 @@ return [
 
     'geekpaste_url' => env('GEEKPASTE_URL', 'https://paste.geekclass.ru/'),
 
+    'yandexgpt' => [
+        'api_key' => env('YANDEX_GPT_API_KEY'),
+        'folder_id' => env('YANDEX_GPT_FOLDER_ID'),
+        'model' => env('YANDEX_GPT_MODEL', 'yandexgpt-lite'),
+        'url' => env('YANDEX_GPT_URL', 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'),
+    ],
+
 ];
