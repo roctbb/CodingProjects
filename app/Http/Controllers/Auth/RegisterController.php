@@ -67,7 +67,7 @@ class RegisterController extends Controller
             'password' => 'required|string|min:6|confirmed',
             'name' => 'required|string',
             'school' => 'required|string',
-            'grade' => 'required|integer',
+            'grade' => 'required|integer|between:1,11',
             'birthday' => 'required|date|date_format:Y-m-d',
             'image' => 'image|max:1000',
             'g-recaptcha-response' => app('App\Services\Recaptcha')->getValidationString()
