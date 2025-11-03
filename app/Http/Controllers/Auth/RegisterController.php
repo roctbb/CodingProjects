@@ -63,11 +63,22 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         return Validator::make($data, [
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'unique:users',
+                function ($attribute, $value, $fail) {
+                    if (str_contains($value, '+')) {
+                        $fail('Адрес электронной почты не должен содержать символ "+".');
+                    }
+                },
+            ],
             'password' => 'required|string|min:6|confirmed',
             'name' => 'required|string',
             'school' => 'required|string',
-            'grade' => 'required|integer',
+            'grade' => 'required|integer|between:1,11',
             'birthday' => 'required|date|date_format:Y-m-d',
             'image' => 'image|max:1000',
             'g-recaptcha-response' => app('App\Services\Recaptcha')->getValidationString()

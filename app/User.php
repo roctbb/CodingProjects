@@ -19,6 +19,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $score = null;
     protected $rank = null;
+    protected $cached_data = [];
 
     protected $fillable = [
         'name', 'email', 'password', 'role', 'school', 'grade_year', 'birthday',
@@ -140,102 +141,106 @@ class User extends Authenticatable implements MustVerifyEmail
     public function rescore()
     {
         $this->score = null;
+        $this->rank = null;
+        Cache::forget("user:{$this->id}:score");
+        Cache::forget("user:{$this->id}:rank");
+        Cache::forget("user:{$this->id}:stickers");
+        Cache::forget("user:{$this->id}:sticker_descriptions");
     }
 
     public function score()
     {
         if ($this->score != null)
             return $this->score;
+        
+        $cacheKey = "user:{$this->id}:score";
+        $cached = Cache::get($cacheKey);
+        if ($cached !== null) {
+            return $this->score = $cached;
+        }
+
         if ($this->rank_id != null) {
             $this->score = $this->manual_rank->to - 1;
+            Cache::put($cacheKey, $this->score, 3600);
             return $this->score;
         }
+
         $this->score = 0;
+        
+        // Get all solutions grouped by task
         $group = Solution::where('user_id', $this->id)->get()->groupBy('task_id');
         foreach ($group as $task) {
             $this->score += $task->sortByDesc('mark')->first()->mark;
         }
 
-        foreach ($this->games as $game) {
+        // Get all related data at once
+        $games = $this->games()->get();
+        $articles = $this->articles()->get();
+        $events = $this->events()->get();
+        $posts = $this->posts()->get();
+        $completedCourses = $this->completedCourses()->get();
+
+        // Calculate scores from games
+        foreach ($games as $game) {
             $this->score += ($game->upvotes() - $game->downvotes()) * 5;
         }
 
-        foreach ($this->articles as $article) {
+        // Calculate scores from articles
+        foreach ($articles as $article) {
             $this->score += ($article->getUpvotes() - $article->getDownvotes()) * 10;
         }
 
-        foreach ($this->events as $event) {
+        // Calculate scores from events
+        foreach ($events as $event) {
             $this->score += ($event->getUpvotes() - $event->getDownvotes()) * 10;
         }
-        foreach ($this->posts as $post) {
+
+        // Calculate scores from posts
+        foreach ($posts as $post) {
             $this->score += 5 * $post->getVotes();
         }
 
-        foreach ($this->completedCourses as $course) {
-            $mark = $course->mark;
-            switch ($mark) {
-                case 'S':
-                    $this->score += 2000;
-                    break;
-                case 'A+':
-                    $this->score += 1500;
-                    break;
-                case 'A':
-                    $this->score += 1200;
-                    break;
-                case 'A-':
-                    $this->score += 1000;
-                    break;
-                case 'B+':
-                    $this->score += 800;
-                    break;
-                case 'B':
-                    $this->score += 600;
-                    break;
-                case 'B-':
-                    $this->score += 400;
-                    break;
-                case 'C+':
-                    $this->score += 300;
-                    break;
-                case 'C':
-                    $this->score += 200;
-                    break;
-                case 'C-':
-                    $this->score += 100;
-                    break;
-                case 'D+':
-                    $this->score += 50;
-                    break;
-                case 'D':
-                    $this->score += 50;
-                    break;
-                case 'D-':
-                    $this->score += 50;
-                    break;
-                default:
-                    $this->score += 600;
-                    break;
-            }
+        // Calculate scores from completed courses
+        $markScores = [
+            'S' => 2000, 'A+' => 1500, 'A' => 1200, 'A-' => 1000,
+            'B+' => 800, 'B' => 600, 'B-' => 400,
+            'C+' => 300, 'C' => 200, 'C-' => 100,
+            'D+' => 50, 'D' => 50, 'D-' => 50
+        ];
+
+        foreach ($completedCourses as $course) {
+            $this->score += $markScores[$course->mark] ?? 600;
         }
-        // dd($this->score());
+
+        Cache::put($cacheKey, $this->score, 3600);
         return $this->score;
     }
 
     public function rank()
     {
+        if ($this->rank != null)
+            return $this->rank;
+            
         if ($this->manual_rank != null) {
-            return $this->manual_rank;
+            return $this->rank = $this->manual_rank;
         }
+        
+        $cacheKey = "user:{$this->id}:rank";
+        $cached = Cache::get($cacheKey);
+        if ($cached !== null) {
+            return $this->rank = $cached;
+        }
+        
         $score = $this->score();
-        $rank = Rank::where('from', '<=', $score)->where('to', '>', $score)->first();
+        $this->rank = Rank::where('from', '<=', $score)->where('to', '>', $score)->first();
 
-        if (!$rank) {
+        if (!$this->rank) {
             \Log::info("Not found rank for user " . $this->id . " score " . $score);
-            return Rank::first();
+            $this->rank = Rank::first();
         }
 
-        return $rank;
+        Cache::put($cacheKey, $this->rank, 3600);
+        return $this->rank;
     }
 
     public function eventOrgs()
