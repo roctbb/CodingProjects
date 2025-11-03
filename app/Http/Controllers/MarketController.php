@@ -152,8 +152,8 @@ class MarketController extends Controller
         $order = MarketDeal::findOrFail($id);
 
         $this->make_success_alert("Успех!", 'Доставка товара "' . $order->good->name . '" отменена.', $destination = 'head');
-        dd(CoinTransaction::where('user_id', $user->id)->where('comment', 'like', 'Good #' . $order->good_id)->get());
-        CoinTransaction::where('user_id', $user->id)->where('comment', 'like', 'Good #' . $order->good_id)->orderBy('id', 'desc')->first()->delete();
+        dd('%Good #' . $order->good_id . '%');
+        CoinTransaction::where('user_id', $user->id)->whereLike('comment', 'like', '%Good #' . $order->good_id . '%')->orderBy('id', 'desc')->first()->delete();
         $order->delete();
 
         return redirect('/insider/market/');
