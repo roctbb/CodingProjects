@@ -35,10 +35,12 @@
                             <p><span class="badge badge-danger">Закончился</span></p>
                         @endif
                         <h5 style="margin-top: 15px; font-weight: 300;"
-                            class="card-title">{{$good->name}} @if ($user->role=='teacher' || $user->role=='admin') <span class="float-right"><a
-                                        href="{{url('/insider/market/'.$good->id.'/edit')}}"
-                                        class="btn btn-primary btn-sm"><i
-                                            class="icon ion-android-create"></i></a></span> @endif </h5>
+                            class="card-title">{{$good->name}} @if ($user->role=='teacher' || $user->role=='admin')
+                                <span class="float-right"><a
+                                            href="{{url('/insider/market/'.$good->id.'/edit')}}"
+                                            class="btn btn-primary btn-sm"><i
+                                                class="icon ion-android-create"></i></a></span>
+                            @endif </h5>
                         <p class="card-text" style="font-size: 0.8rem;">{{$good->description}}</p>
 
                         @if ($good->number > 0 and $good->price <= $user->balance())
@@ -76,9 +78,12 @@
 
                         <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
                             <h5 style="margin-top: 15px; font-weight: 300;">{{$order->good->name}}</h5>
-                            <p >{{$order->user->name}}</p>
-                                <p><a href="{{url('/insider/market/ship/'.$order->id)}}"
-                                        class="btn btn-primary btn-sm">Доставлено</a></p>
+                            <p>{{$order->user->name}}</p>
+                            <p><a href="{{url('/insider/market/ship/'.$order->id)}}"
+                                  class="btn btn-primary btn-sm">Доставлено</a></p>
+                            <p><a href="{{url('/insider/market/cancel/'.$order->id)}}"
+                                  class="btn btn-warning btn-sm">Отменить</a></p>
+
                         </div>
 
                     </div>
@@ -121,7 +126,5 @@
 
         </div>
     @endif
-
-
 
 @endsection

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\CoinTransaction;
 use App\CompletedCourse;
 use App\Course;
 use App\MarketDeal;
@@ -27,7 +28,7 @@ class MarketController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('admin')->only(['createView', 'editView', 'edit', 'create', 'ship']);
+        $this->middleware('admin')->only(['createView', 'editView', 'edit', 'create', 'ship', 'cancel']);
     }
 
     /**
@@ -119,14 +120,12 @@ class MarketController extends Controller
         $good = MarketGood::findOrFail($id);
         $deal = $good->buy($user);
 
-        if ($deal)
-        {
+        if ($deal) {
             $receiver = User::findOrFail(1);
             $receiver->notify(new NewOrder($deal));
-            $this->make_success_alert("Успех!", 'Покупка "'.$good->name.'" прошла успешно. Ожидайте доставки!', $destination = 'head');
-        }
-        else {
-            $this->make_error_alert("Ошибка!", 'Покупка "'.$good->name.'" не прошла.', $destination = 'head');
+            $this->make_success_alert("Успех!", 'Покупка "' . $good->name . '" прошла успешно. Ожидайте доставки!', $destination = 'head');
+        } else {
+            $this->make_error_alert("Ошибка!", 'Покупка "' . $good->name . '" не прошла.', $destination = 'head');
         }
 
         return redirect('/insider/market/');
@@ -137,12 +136,25 @@ class MarketController extends Controller
         $user = User::findOrFail(Auth::User()->id);
         $order = MarketDeal::findOrFail($id);
 
-        $this->make_success_alert("Успех!", 'Доставка товара "'.$order->good->name.'" проведена.', $destination = 'head');
+        $this->make_success_alert("Успех!", 'Доставка товара "' . $order->good->name . '" проведена.', $destination = 'head');
 
 
         $order->shipped = true;
         $order->shipped_by = Auth::User()->id;
         $order->save();
+
+        return redirect('/insider/market/');
+    }
+
+    public function cancel($id, Request $request)
+    {
+        $user = User::findOrFail(Auth::User()->id);
+        $order = MarketDeal::findOrFail($id);
+
+        $this->make_success_alert("Успех!", 'Доставка товара "' . $order->good->name . '" отменена.', $destination = 'head');
+
+        CoinTransaction::where('user_id', $user->id)->where('comment', 'Good #' . $order->good->id)->orderBy('id', 'desc')->first()->delete();
+        $order->delete();
 
         return redirect('/insider/market/');
     }

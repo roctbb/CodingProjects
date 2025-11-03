@@ -138,6 +138,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/market/{id}/edit', 'MarketController@edit');
     Route::get('/market/{id}/buy', 'MarketController@buy');
     Route::get('/market/ship/{id}', 'MarketController@ship');
+    Route::get('/market/cancel/{id}', 'MarketController@ship');
 
 
     Route::get('/scales', 'ScalesController@index');
