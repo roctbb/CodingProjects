@@ -153,7 +153,7 @@ class MarketController extends Controller
 
         $this->make_success_alert("Успех!", 'Доставка товара "' . $order->good->name . '" отменена.', $destination = 'head');
 
-        CoinTransaction::where('user_id', $user->id)->where('comment', 'Good #' . $order->good->id)->orderBy('id', 'desc')->first()->delete();
+        CoinTransaction::where('user_id', $user->id)->where('comment', 'like', 'Good #' . $order->good->id)->orderBy('id', 'desc')->first()->delete();
         $order->delete();
 
         return redirect('/insider/market/');
