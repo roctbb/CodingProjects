@@ -52,7 +52,7 @@
                 @foreach($course->students as $student)
                     <li>
                         <a href="{{ url('insider/profile/'.$student->id) }}" data-toggle="tooltip"
-                           title="Kenny">
+                           title="{{ $student->name }}">
                             @if ($student->image!=null)
                                 <img alt="Image" src="{{url('/media/'.$student->image)}}" class="avatar"/>
                             @else

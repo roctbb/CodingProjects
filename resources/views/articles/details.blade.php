@@ -129,7 +129,7 @@
                     <ul class="avatars ">
                         <li>
                             <a href="{{ url('insider/profile/'.$comment->user->id) }}" data-toggle="tooltip"
-                               title="Kenny">
+                               title="{{ $comment->user->name }}">
                                 @if ($comment->user->image!=null)
                                     <img alt="Image" src="{{url('/media/'.$comment->user->image)}}" class="avatar"/>
                                 @else
