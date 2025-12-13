@@ -321,7 +321,7 @@
 
                                                 <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$current_chapter->id.'/edit')}}"
                                                    class="dropdown-item"><i
-                                                            class="icon ion-android-create"></i> Добавить</a>
+                                                            class="icon ion-android-create"></i> Изменить</a>
                                                 <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$current_chapter->id.'/lower')}}"
                                                    class="dropdown-item"><i
                                                             class="icon ion-arrow-up-c"></i> Выше</a>
