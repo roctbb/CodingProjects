@@ -26,16 +26,24 @@
 
 
     <link rel="stylesheet" href="{{url('/css/app.css')}}">
-    <script
-            src="https://code.jquery.com/jquery-3.3.1.min.js"
-            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-            crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+            @if (env('USE_INTEGRITY', true))
+                integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+                crossorigin="anonymous"
+            @endif
+            ></script>
     <script src="{{ url('/scripts/popper.min.js') }}"
-            integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4"
-            crossorigin="anonymous"></script>
+            @if (env('USE_INTEGRITY', true))
+                integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4"
+                crossorigin="anonymous"
+            @endif
+            ></script>
     <script src="{{ url('/scripts/bootstrap.min.js') }}"
-            integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1"
-            crossorigin="anonymous"></script>
+            @if (env('USE_INTEGRITY', true))
+                integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1"
+                crossorigin="anonymous"
+            @endif
+            ></script>
     <script src="{{url('/js/linkify.min.js')}}"></script>
     <script src="{{url('/js/linkify-jquery.min.js')}}"></script>
     <link rel="stylesheet"
