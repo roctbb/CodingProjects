@@ -393,7 +393,7 @@
                             @foreach($students->sortByDesc('percent') as $student)
                                 <li><a class="black-link"
                                        href="{{url('/insider/profile/'.$student->id)}}">{{$student->name}}</a> <span
-                                            class="badge badge-primary float-right" title="{{ $student->points }}"> {{ round($student->percent) }}
+                                            class="badge badge-primary float-right" title="{{$course->points($student)}}"> {{ round($student->percent) }}
                                     % </span></li>
                             @endforeach
                         </ul>
