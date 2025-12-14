@@ -13,7 +13,7 @@ docker run --rm --network=host codingprojects
 ### Windows
 ```bash
 copy windows.env.example .env
-docker run --rm -v "C:\Path\to\folder\.env:/var/www/html/.env" codingprojects php artisan key:generate
+docker run --rm -v "%cd%\.env:/var/www/html/.env" codingprojects php artisan key:generate
 start-dev-windows.bat
 ```
 
