@@ -27,7 +27,7 @@
     <script type="text/javascript" src="{{ url('assets/js/jquery.min.js') }}"></script>
     <script type="text/javascript" src="{{ url('assets/js/popper.min.js') }}"></script>
     <script type="text/javascript" src="{{ url('assets/js/bootstrap.js') }}"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-1.58.5.min.js"></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
     <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
