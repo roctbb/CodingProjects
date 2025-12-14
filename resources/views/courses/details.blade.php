@@ -459,28 +459,48 @@
             @if ($user->role=='student' || ($user->role=='teacher' && !$course->teachers->contains($user)))
                 <div class="card" style="margin-top: 15px;">
                     <div class="card-body">
+                        @php
+                            $temp_steps = collect([]);
+                            foreach ($course->program->lessons->where('chapter_id', $chapter->id) as $lesson) {
+                                $temp_steps = $temp_steps->merge($lesson->steps);
+                            }
 
+                            $max_points = 0;
+                            $points = 0;
+                            foreach ($temp_steps as $step) {
+                                $tasks = $step->tasks;
+                                foreach ($tasks as $task) {
+                                    if (!$task->is_star) $max_points += $task->max_mark;
+                                    $points += $student->submissions->where('task_id', $task->id)->max('mark');
+                                }
+                            }
+                            if ($max_points != 0) {
+                                $percent = min(100, $points * 100 / $max_points);
+                            } else {
+                                $percent = 0;
+                            }
+                        @endphp
                         <h4 class="card-title">Оценки <img src="{{ url('images/icons/icons8-medal-48.png') }}">
-                            <small class="float-right"><span class="badge badge-primary">{{$cstudent->points}}
-                                    / {{$cstudent->max_points}}</span></small>
+                            <small class="float-right"><span class="badge badge-primary">{{$points}}
+                                    / {{$max_points}}</span></small>
                         </h4>
                         <div class="progress" style="margin-bottom: 15px;">
-                            @if ($cstudent->percent < 40)
+                            @if ($percent < 40)
                                 <div class="progress-bar progress-bar-striped bg-danger" role="progressbar"
-                                     style="width: {{$cstudent->percent}}%"
-                                     aria-valuenow="{{$cstudent->percent}}" aria-valuemin="0"
+                                     style="width: {{$percent}}%"
+                                     aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>
 
-                            @elseif($cstudent->percent < 60)
+                            @elseif($percent < 60)
                                 <div class="progress-bar progress-bar-striped bg-warning" role="progressbar"
-                                     style="width: {{$cstudent->percent}}%"
-                                     aria-valuenow="{{$cstudent->percent}}" aria-valuemin="0"
+                                     style="width: {{$percent}}%"
+                                     aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>
 
                             @else
                                 <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
-                                     style="width: {{$cstudent->percent}}%"
-                                     aria-valuenow="{{$cstudent->percent}}" aria-valuemin="0"
+                                     style="width: {{$percent}}%"
+                                     aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>
 
                             @endif
