@@ -183,7 +183,8 @@
                                                                          style="width: {{$lesson->percent($student)}}%"
                                                                          aria-valuenow="{{$lesson->percent($student)}}"
                                                                          aria-valuemin="0"
-                                                                         aria-valuemax="100">{{$lesson->points($student)}}
+                                                                         aria-valuemax="100">
+                                                                        Очки опыта: {{$lesson->points($student)}}
                                                                         / {{$lesson->max_points($student)}}</div>
 
                                                                 @elseif($lesson->percent($student) < 60)
@@ -228,7 +229,8 @@
                                                                  style="width: {{$lesson->percent($cstudent)}}%"
                                                                  aria-valuenow="{{$lesson->percent($cstudent)}}"
                                                                  aria-valuemin="0"
-                                                                 aria-valuemax="100">{{$lesson->points($cstudent)}}
+                                                                 aria-valuemax="100">
+                                                                Очки опыта: {{$lesson->points($cstudent)}}
                                                                 / {{$lesson->max_points($cstudent)}}</div>
 
                                                         @elseif($lesson->percent($cstudent) < 60)
@@ -321,7 +323,7 @@
 
                                                 <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$current_chapter->id.'/edit')}}"
                                                    class="dropdown-item"><i
-                                                            class="icon ion-android-create"></i> Добавить</a>
+                                                            class="icon ion-android-create"></i> Изменить</a>
                                                 <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$current_chapter->id.'/lower')}}"
                                                    class="dropdown-item"><i
                                                             class="icon ion-arrow-up-c"></i> Выше</a>
@@ -391,7 +393,7 @@
                             @foreach($students->sortByDesc('percent') as $student)
                                 <li><a class="black-link"
                                        href="{{url('/insider/profile/'.$student->id)}}">{{$student->name}}</a> <span
-                                            class="badge badge-primary float-right" title="{{ $student->points }}"> {{ round($student->percent) }}
+                                            class="badge badge-primary float-right" title="Очки опыта: {{$course->points($student)}}"> {{ round($student->percent) }}
                                     % </span></li>
                             @endforeach
                         </ul>
@@ -457,28 +459,48 @@
             @if ($user->role=='student' || ($user->role=='teacher' && !$course->teachers->contains($user)))
                 <div class="card" style="margin-top: 15px;">
                     <div class="card-body">
+                        @php
+                            $temp_steps = collect([]);
+                            foreach ($course->program->lessons->where('chapter_id', $chapter->id) as $lesson) {
+                                $temp_steps = $temp_steps->merge($lesson->steps);
+                            }
 
+                            $max_points = 0;
+                            $points = 0;
+                            foreach ($temp_steps as $step) {
+                                $tasks = $step->tasks;
+                                foreach ($tasks as $task) {
+                                    if (!$task->is_star) $max_points += $task->max_mark;
+                                    $points += $student->submissions->where('task_id', $task->id)->max('mark');
+                                }
+                            }
+                            if ($max_points != 0) {
+                                $percent = min(100, $points * 100 / $max_points);
+                            } else {
+                                $percent = 0;
+                            }
+                        @endphp
                         <h4 class="card-title">Оценки <img src="{{ url('images/icons/icons8-medal-48.png') }}">
-                            <small class="float-right"><span class="badge badge-primary">{{$cstudent->points}}
-                                    / {{$cstudent->max_points}}</span></small>
+                            <small class="float-right"><span class="badge badge-primary">{{$points}}
+                                    / {{$max_points}}</span></small>
                         </h4>
-                        <div class="progress" style="margin-bottom: 15px;height: 2px;">
-                            @if ($cstudent->percent < 40)
+                        <div class="progress" style="margin-bottom: 15px;">
+                            @if ($percent < 40)
                                 <div class="progress-bar progress-bar-striped bg-danger" role="progressbar"
-                                     style="height: 2px;width: {{$cstudent->percent}}%"
-                                     aria-valuenow="{{$cstudent->percent}}" aria-valuemin="0"
+                                     style="width: {{$percent}}%"
+                                     aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>
 
-                            @elseif($cstudent->percent < 60)
+                            @elseif($percent < 60)
                                 <div class="progress-bar progress-bar-striped bg-warning" role="progressbar"
-                                     style="height: 2px;width: {{$cstudent->percent}}%"
-                                     aria-valuenow="{{$cstudent->percent}}" aria-valuemin="0"
+                                     style="width: {{$percent}}%"
+                                     aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>
 
                             @else
                                 <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
-                                     style="height: 2px;width: {{$cstudent->percent}}%"
-                                     aria-valuenow="{{$cstudent->percent}}" aria-valuemin="0"
+                                     style="width: {{$percent}}%"
+                                     aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>
 
                             @endif
@@ -532,11 +554,13 @@
                                             @endif
                                         </td>
                                         @if ($should_check)
-                                            <td><span class="badge badge-warning">{{$mark}}</span></td>
+                                            <td><span class="badge badge-warning">{{$mark}} / {{$task->max_mark}}</span></td>
                                         @elseif ($mark == 0)
-                                            <td><span class="badge badge-light">{{$mark}}</span></td>
+                                            <td><span class="badge badge-light">{{$mark}} / {{$task->max_mark}}</span></td>
+                                        @elseif ($mark == $task->max_mark)
+                                            <td><span class="badge badge-success">{{$mark}} / {{$task->max_mark}}</span></td>
                                         @else
-                                            <td><span class="badge badge-primary">{{$mark}}</span></td>
+                                            <td><span class="badge badge-primary">{{$mark}} / {{$task->max_mark}}</span></td>
                                         @endif
 
                                     </tr>
