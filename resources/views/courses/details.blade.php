@@ -460,18 +460,24 @@
                 <div class="card" style="margin-top: 15px;">
                     <div class="card-body">
                         @php
-                            $temp_steps = collect([]);
-                            foreach ($course->program->lessons->where('chapter_id', $chapter->id) as $lesson) {
-                                $temp_steps = $temp_steps->merge($lesson->steps);
-                            }
-
                             $max_points = 0;
                             $points = 0;
-                            foreach ($temp_steps as $step) {
+                            foreach ($steps as $step) {
                                 $tasks = $step->tasks;
                                 foreach ($tasks as $task) {
+                                    if ($task->answer != null) continue;
+                                    $filtered = $task->solutions->filter(function ($value) use ($user) {
+                                        return $value->user_id == $user->id && !$value->is_quiz;
+                                    });
+                                    $mark = null;
+                                    $mark = $filtered->max('mark');
+
+                                    $mark = $mark == null?0:$mark;
+                                    $should_check = false;
+                                    if (count($filtered)!=0 && $filtered->last()->mark==null) $should_check=true;
+
                                     if (!$task->is_star) $max_points += $task->max_mark;
-                                    $points += $student->submissions->where('task_id', $task->id)->max('mark');
+                                    $points += $mark;
                                 }
                             }
                             if ($max_points != 0) {
