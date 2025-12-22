@@ -245,6 +245,9 @@ class CoursesController extends Controller
         // Optimized: load only essential relations, defer heavy loading
         $course = Course::with([
             'program.chapters',
+            'program.lessons' => function($query) {
+                $query->orderBy('sort_index');
+            },
             'students' => function($query) {
                 $query->select('users.id', 'users.name', 'users.image');
             },
@@ -284,19 +287,16 @@ class CoursesController extends Controller
                 }
             }
 
-            // Now load lessons with their steps and tasks, optimized for current chapter
+            // Now load steps and tasks for lessons in the current chapter
             $course->load([
-                'program.lessons' => function($query) use ($chapter) {
-                    $query->where('chapter_id', $chapter->id)->orderBy('sort_index');
-                },
                 'program.lessons.steps.tasks',
                 'program.lessons.info'
             ]);
 
             $temp_steps = collect([]);
 
-            $lessons = $course->program->lessons->filter(function ($lesson) use ($course) {
-                return $lesson->isStarted($course);
+            $lessons = $course->program->lessons->filter(function ($lesson) use ($course, $chapter) {
+                return $lesson->isStarted($course) && $lesson->chapter_id == $chapter->id;
             });
 
             foreach ($lessons as $lesson) {
@@ -329,8 +329,8 @@ class CoursesController extends Controller
 
             if ($course->students->contains($user)) {
                 // Filter started lessons but keep the order
-                $lessons = $course->program->lessons->filter(function ($lesson) use ($course) {
-                    return $lesson->isStarted($course);
+                $lessons = $course->program->lessons->filter(function ($lesson) use ($course, $chapter) {
+                    return $lesson->isStarted($course) && $lesson->chapter_id == $chapter->id;
                 })->sortBy('sort_index')->values();
 
                 $steps = $temp_steps;
@@ -340,7 +340,7 @@ class CoursesController extends Controller
             } else {
                 $steps = $temp_steps;
                 // For teachers, show all lessons in this chapter
-                $lessons = $course->program->lessons->sortBy('sort_index')->values();
+                $lessons = $course->program->lessons->where('chapter_id', $chapter->id)->sortBy('sort_index')->values();
             }
 
             // Preload lesson statistics for all students and lessons in this chapter
