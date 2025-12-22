@@ -270,9 +270,18 @@ class CoursesController extends Controller
                     abort(404);
                 }
             } else {
-                // Simply use first chapter if not specified (optimization)
-                // Students can navigate to other chapters manually
-                $chapter = $course->program->chapters->first();
+                if ($user->role == 'admin' || $course->teachers->contains($user)) {
+                    $chapter = $course->program->chapters->first();
+                } else {
+                    $current_chapter = $course->program->chapters->first();
+                    foreach ($course->program->chapters as $chapter) {
+                        $current_chapter = $chapter;
+                        if (!$chapter->isDone($course)) {
+                            break;
+                        }
+                    }
+                    $chapter = $current_chapter;
+                }
             }
 
             // Now load lessons with their steps and tasks, optimized for current chapter
