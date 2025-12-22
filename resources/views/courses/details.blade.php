@@ -108,7 +108,7 @@
 
             @endif
             <div class="content-list">
-                @foreach($course->program->lessons->where('chapter_id', $chapter->id) as $key => $lesson)
+                @foreach($lessons as $key => $lesson)
                     @if ($lesson->steps->count()!=0)
                         <div class="card-group">
                             <div class="card">
@@ -402,10 +402,20 @@
                     </p>
                     @if (count($students) < 70)
                         <ul>
-                            @foreach($students->sortByDesc('percent') as $student)
+                            @php
+                                // Sort students by points (descending)
+                                $sortedStudents = $students->sortByDesc(function($student) {
+                                    return isset($student->points) ? $student->points : 0;
+                                });
+                            @endphp
+                            @foreach($sortedStudents as $student)
+                                @php
+                                    $studentPoints = isset($student->points) ? $student->points : 0;
+                                    $studentPercent = isset($student->percent) ? $student->percent : 0;
+                                @endphp
                                 <li><a class="black-link"
                                        href="{{url('/insider/profile/'.$student->id)}}">{{$student->name}}</a> <span
-                                            class="badge badge-primary float-right" title="Очки опыта: {{$course->points($student)}}"> {{ round($student->percent) }}
+                                            class="badge badge-primary float-right" title="Очки опыта: {{$studentPoints}}"> {{ round($studentPercent) }}
                                     % </span></li>
                             @endforeach
                         </ul>

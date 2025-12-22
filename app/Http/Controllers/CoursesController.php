@@ -242,11 +242,17 @@ class CoursesController extends Controller
     ActionLog::record(Auth::user()->id, 'course', $id);
     // Load current user with relations
     $user = Auth::user()->load('solutions', 'solutions.task');
-        $course = Course::with('program', 'program.lessons', 'program.lessons.steps', 'program.lessons.steps.tasks', 'program.lessons.info', 'program.chapters', 'students', 'students.submissions', 'teachers')->findOrFail($id);
-        // Cache students collection
-        $students = Cache::remember("course:{$id}:students", 5, function () use ($course) {
-            return $course->students;
-        });
+        // Optimized: load only essential relations, defer heavy loading
+        $course = Course::with([
+            'program.chapters',
+            'students' => function($query) {
+                $query->select('users.id', 'users.name', 'users.image');
+            },
+            'teachers'
+        ])->findOrFail($id);
+
+        // Use the already loaded students
+        $students = $course->students;
 
 
 
@@ -264,38 +270,31 @@ class CoursesController extends Controller
                     abort(404);
                 }
             } else {
-                if ($user->role == 'admin' || $course->teachers->contains($user)) {
-                    $chapter = $course->program->chapters->first();
-                } else {
-                    $current_chapter = $course->program->chapters->first();
-                    foreach ($course->program->chapters as $chapter) {
-                        $current_chapter = $chapter;
-                        if (!$chapter->isDone($course)) {
-                            break;
-                        }
-                    }
-                    $chapter = $current_chapter;
-                }
+                // Simply use first chapter if not specified (optimization)
+                // Students can navigate to other chapters manually
+                $chapter = $course->program->chapters->first();
             }
 
+            // Now load lessons with their steps and tasks, optimized for current chapter
+            $course->load([
+                'program.lessons' => function($query) use ($chapter) {
+                    $query->where('chapter_id', $chapter->id)->orderBy('sort_index');
+                },
+                'program.lessons.steps.tasks',
+                'program.lessons.info'
+            ]);
+
             $temp_steps = collect([]);
-            $all_steps = collect([]);
 
-            $lessons = $course->program->lessons->filter(function ($lesson) use ($course, $chapter) {
-                return $lesson->isStarted($course) and $lesson->chapter_id == $chapter->id;
+            $lessons = $course->program->lessons->filter(function ($lesson) use ($course) {
+                return $lesson->isStarted($course);
             });
-
-
-
 
             foreach ($lessons as $lesson) {
                 $temp_steps = $temp_steps->merge($lesson->steps);
             }
-            foreach ($course->program->lessons->filter(function ($item) use ($course) {
-                return $item->isStarted($course);
-            }) as $lesson) {
-                $all_steps = $all_steps->merge($lesson->steps);
-            }
+
+            // We don't need all_steps anymore - we use cached points from database
 
             // Get cached points from database
             $cachedPoints = CourseStudentPoints::where('course_id', $id)
@@ -303,22 +302,27 @@ class CoursesController extends Controller
                 ->get()
                 ->keyBy('student_id');
 
-            // Assign cached percents to students
+            // Assign cached percents and points to students
             foreach ($students as $key => $student) {
                 if (isset($cachedPoints[$student->id])) {
                     $students[$key]->percent = $cachedPoints[$student->id]->percent;
+                    $students[$key]->points = $cachedPoints[$student->id]->points;
+                    $students[$key]->max_points = $cachedPoints[$student->id]->max_points;
                 } else {
                     // If not cached, calculate and cache it
                     CourseStudentPoints::recalculate($id, $student->id);
                     $students[$key]->percent = 0;
+                    $students[$key]->points = 0;
+                    $students[$key]->max_points = 0;
                 }
             }
 
 
             if ($course->students->contains($user)) {
-                $lessons = $course->program->lessons->filter(function ($lesson) use ($course, $chapter) {
-                    return $lesson->isStarted($course) and $lesson->chapter_id == $chapter->id;
-                });
+                // Filter started lessons but keep the order
+                $lessons = $course->program->lessons->filter(function ($lesson) use ($course) {
+                    return $lesson->isStarted($course);
+                })->sortBy('sort_index')->values();
 
                 $steps = $temp_steps;
                 $cstudent = $students->filter(function ($value, $key) use ($user) {
@@ -326,7 +330,8 @@ class CoursesController extends Controller
                 })->first();
             } else {
                 $steps = $temp_steps;
-                $lessons = $course->program->lessons->where('chapter_id', $chapter->id);
+                // For teachers, show all lessons in this chapter
+                $lessons = $course->program->lessons->sortBy('sort_index')->values();
             }
 
             // Preload lesson statistics for all students and lessons in this chapter
@@ -339,12 +344,8 @@ class CoursesController extends Controller
                     return $stats->keyBy('student_id');
                 });
 
-            // Cache rendered view to speed repeated requests
-            $cacheKey = "view:course:{$id}:user:{$user->id}:chapter:{$chapter->id}:details";
-            $html = Cache::remember($cacheKey, 10, function () use ($chapter, $course, $user, $steps, $students, $cstudent, $lessons, $marks, $lessonStats) {
-                return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'cstudent', 'lessons', 'marks', 'lessonStats'))->render();
-            });
-            return response($html);
+            // Render view without caching for now (caching causes stale data issues)
+            return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'cstudent', 'lessons', 'marks', 'lessonStats'));
 
         } else {
             if ($user->role != 'student')
@@ -376,12 +377,8 @@ class CoursesController extends Controller
             $available_lessons = Lesson::getAvailableSdlLessons($user, $course, $idea);
 
             $available_lessons = $current_lessons->merge($available_lessons);
-            // Cache rendered SDL details view
-            $cacheKey = "view:course:{$id}:user:{$user->id}:sdl_details";
-            $html = Cache::remember($cacheKey, 10, function () use ($course, $user, $lessons, $marks, $students, $available_lessons, $done_lessons, $idea) {
-                return view('courses.sdl_details', compact('course', 'user', 'lessons', 'marks', 'students', 'available_lessons', 'done_lessons', 'idea'))->render();
-            });
-            return response($html);
+            // Render view without caching for now (caching causes stale data issues)
+            return view('courses.sdl_details', compact('course', 'user', 'lessons', 'marks', 'students', 'available_lessons', 'done_lessons', 'idea'));
         }
 
 
