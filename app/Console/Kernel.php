@@ -17,7 +17,8 @@ class Kernel extends ConsoleKernel
         Commands\RequestFeedback::class,
         Commands\LowerEmails::class,
         Commands\TestEmails::class,
-        Commands\FixTyposCommand::class
+        Commands\FixTyposCommand::class,
+        Commands\RecalculateCoursePoints::class
     ];
 
     /**

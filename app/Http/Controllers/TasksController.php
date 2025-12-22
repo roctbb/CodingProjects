@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\CoinTransaction;
 use App\Course;
+use App\CourseStudentPoints;
+use App\LessonStudentStats;
 use App\ProgramStep;
 use App\Http\Controllers\Controller;
 use App\Question;
@@ -226,6 +228,11 @@ class TasksController extends Controller
             }
             $solution->checked = Carbon::now();
             $solution->save();
+
+            // Recalculate cached points after auto-grading quiz
+            CourseStudentPoints::recalculate($course_id, $user->id);
+            LessonStudentStats::recalculateForStudent($course_id, $user->id);
+
             $user->rescore();
             $new_rank = $user->rank();
             if ($new_rank != $old_rank) {
@@ -310,6 +317,12 @@ class TasksController extends Controller
         // Invalidate cached score
         $student->rescore();
 
+        // Recalculate cached points for the student in this course
+        CourseStudentPoints::recalculate($course_id, $student_id);
+
+        // Recalculate lesson stats for all lessons this student is enrolled in
+        LessonStudentStats::recalculateForStudent($course_id, $student_id);
+
         return redirect()->back();
     }
 
@@ -320,6 +333,12 @@ class TasksController extends Controller
             ->where('user_id', $student_id)
             ->where('course_id', $course_id)
             ->delete();
+
+        // Recalculate cached points for the student in this course
+        CourseStudentPoints::recalculate($course_id, $student_id);
+
+        // Recalculate lesson stats for all lessons this student is enrolled in
+        LessonStudentStats::recalculateForStudent($course_id, $student_id);
 
         // Do not modify marks here; just allow new submissions
         return redirect()->back();
@@ -351,6 +370,12 @@ class TasksController extends Controller
         $solution->teacher_id = Auth::User()->id;
         $solution->checked = Carbon::now();
         $solution->save();
+
+        // Recalculate cached points for the student in this course
+        CourseStudentPoints::recalculate($course_id, $solution->user_id);
+
+        // Recalculate lesson stats for all lessons this student is enrolled in
+        LessonStudentStats::recalculateForStudent($course_id, $solution->user_id);
 
         $solution->user->rescore();
         $new_rank = $solution->user->rank();

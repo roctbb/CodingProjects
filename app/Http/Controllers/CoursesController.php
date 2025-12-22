@@ -6,9 +6,11 @@ use App\ActionLog;
 use App\CompletedCourse;
 use App\Course;
 use App\CourseCategory;
+use App\CourseStudentPoints;
 use App\Event;
 use App\ForumThread;
 use App\Idea;
+use App\LessonStudentStats;
 use App\Program;
 use App\ProgramChapter;
 use App\ProgramStep;
@@ -163,53 +165,52 @@ class CoursesController extends Controller
             }
 
 
+            // Get cached points from database
+            $cachedPoints = CourseStudentPoints::where('course_id', $id)
+                ->whereIn('student_id', $students->pluck('id'))
+                ->get()
+                ->keyBy('student_id');
+
             foreach ($students as $key => $value) {
-                $students[$key]->percent = 0;
-                $students[$key]->max_points = 0;
-                $students[$key]->points = 0;
-                foreach ($temp_steps as $step) {
-                    $tasks = $step->tasks;
-
-                    foreach ($tasks as $task) {
-                        if (!$task->is_star) $students[$key]->max_points += $task->max_mark;
-                        $students[$key]->points += $value->submissions->where('task_id', $task->id)->max('mark');
-                    }
-
-
-                }
-                if ($students[$key]->max_points != 0) {
-                    $students[$key]->percent = min(100, $students[$key]->points * 100 / $students[$key]->max_points);
+                if (isset($cachedPoints[$value->id])) {
+                    $students[$key]->percent = $cachedPoints[$value->id]->percent;
+                    $students[$key]->max_points = $cachedPoints[$value->id]->max_points;
+                    $students[$key]->points = $cachedPoints[$value->id]->points;
+                } else {
+                    // If not cached, calculate and cache it
+                    CourseStudentPoints::recalculate($id, $value->id);
+                    $students[$key]->percent = 0;
+                    $students[$key]->max_points = 0;
+                    $students[$key]->points = 0;
                 }
             }
             return view('courses.report', compact('course', 'user', 'steps', 'students', 'lessons', 'pulse_keys', 'pulse_values', 'task_keys', 'task_values'));
         } else {
             $lessons = collect([]);
             $student_data = collect([]);
+
+            // Get cached points from database
+            $cachedPoints = CourseStudentPoints::where('course_id', $id)
+                ->whereIn('student_id', $students->pluck('id'))
+                ->get()
+                ->keyBy('student_id');
+
             foreach ($students as $student) {
                 $lessons[$student->id] = $course->user_sdl_lessons($student)->get();
 
-                $temp_steps = collect([]);
-                foreach ($lessons[$student->id] as $lesson) {
-                    $temp_steps = $temp_steps->merge($lesson->steps);
-                }
-
                 $student_data[$student->id] = $student;
-                $student_data[$student->id]->percent = 0;
-                $student_data[$student->id]->max_points = 0;
-                $student_data[$student->id]->points = 0;
-                foreach ($temp_steps as $step) {
-                    $tasks = $step->tasks;
 
-                    foreach ($tasks as $task) {
-                        if (!$task->is_star) $student_data[$student->id]->max_points += $task->max_mark;
-                        $student_data[$student->id]->points += $student->submissions->where('task_id', $task->id)->max('mark');
-                    }
+                if (isset($cachedPoints[$student->id])) {
+                    $student_data[$student->id]->percent = $cachedPoints[$student->id]->percent;
+                    $student_data[$student->id]->max_points = $cachedPoints[$student->id]->max_points;
+                    $student_data[$student->id]->points = $cachedPoints[$student->id]->points;
+                } else {
+                    // If not cached, calculate and cache it
+                    CourseStudentPoints::recalculate($id, $student->id);
+                    $student_data[$student->id]->percent = 0;
+                    $student_data[$student->id]->max_points = 0;
+                    $student_data[$student->id]->points = 0;
                 }
-                if ($student_data[$student->id]->max_points != 0) {
-                    $student_data[$student->id]->percent = min(100, $student_data[$student->id]->points * 100 / $student_data[$student->id]->max_points);
-                }
-
-
             }
             return view('courses.sdl_report', compact('course', 'user', 'students', 'lessons', 'student_data'));
 
@@ -296,27 +297,21 @@ class CoursesController extends Controller
                 $all_steps = $all_steps->merge($lesson->steps);
             }
 
-            // Cache course completion percentages for 10 minutes
-            $stats = Cache::remember("course:{$id}:stats", 10, function () use ($students, $all_steps) {
-                $result = [];
-                foreach ($students as $student) {
-                    $max_points = 0;
-                    $points = 0;
-                    foreach ($all_steps as $step) {
-                        foreach ($step->tasks as $task) {
-                            if (!$task->is_star) {
-                                $max_points += $task->max_mark;
-                            }
-                            $points += $student->submissions->where('task_id', $task->id)->max('mark');
-                        }
-                    }
-                    $result[$student->id] = $max_points > 0 ? min(100, $points * 100 / $max_points) : 0;
-                }
-                return $result;
-            });
+            // Get cached points from database
+            $cachedPoints = CourseStudentPoints::where('course_id', $id)
+                ->whereIn('student_id', $students->pluck('id'))
+                ->get()
+                ->keyBy('student_id');
+
             // Assign cached percents to students
             foreach ($students as $key => $student) {
-                $students[$key]->percent = isset($stats[$student->id]) ? $stats[$student->id] : 0;
+                if (isset($cachedPoints[$student->id])) {
+                    $students[$key]->percent = $cachedPoints[$student->id]->percent;
+                } else {
+                    // If not cached, calculate and cache it
+                    CourseStudentPoints::recalculate($id, $student->id);
+                    $students[$key]->percent = 0;
+                }
             }
 
 
@@ -334,10 +329,20 @@ class CoursesController extends Controller
                 $lessons = $course->program->lessons->where('chapter_id', $chapter->id);
             }
 
+            // Preload lesson statistics for all students and lessons in this chapter
+            $lessonStats = LessonStudentStats::where('course_id', $id)
+                ->whereIn('lesson_id', $lessons->pluck('id'))
+                ->whereIn('student_id', $students->pluck('id'))
+                ->get()
+                ->groupBy('lesson_id')
+                ->map(function ($stats) {
+                    return $stats->keyBy('student_id');
+                });
+
             // Cache rendered view to speed repeated requests
             $cacheKey = "view:course:{$id}:user:{$user->id}:chapter:{$chapter->id}:details";
-            $html = Cache::remember($cacheKey, 10, function () use ($chapter, $course, $user, $steps, $students, $cstudent, $lessons, $marks) {
-                return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'cstudent', 'lessons', 'marks'))->render();
+            $html = Cache::remember($cacheKey, 10, function () use ($chapter, $course, $user, $steps, $students, $cstudent, $lessons, $marks, $lessonStats) {
+                return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'cstudent', 'lessons', 'marks', 'lessonStats'))->render();
             });
             return response($html);
 

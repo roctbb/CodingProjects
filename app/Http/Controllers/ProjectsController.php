@@ -9,6 +9,8 @@
 namespace App\Http\Controllers;
 
 use App\Course;
+use App\CourseStudentPoints;
+use App\LessonStudentStats;
 use App\Project;
 use App\Http\Controllers\Controller;
 use App\Solution;
@@ -212,6 +214,10 @@ class ProjectsController extends Controller
             $solution->teacher_id = Auth::User()->id;
             $solution->checked = Carbon::now();
             $solution->save();
+
+            // Recalculate cached points after grading project
+            CourseStudentPoints::recalculate($project->course_id, $member->id);
+            LessonStudentStats::recalculateForStudent($project->course_id, $member->id);
 
             \Notification::send($solution->user, (new \App\Notifications\NewMark($solution))->delay($when));
         }

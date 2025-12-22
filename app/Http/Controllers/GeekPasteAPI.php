@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\CoinTransaction;
 use App\Course;
+use App\CourseStudentPoints;
+use App\LessonStudentStats;
 use App\Solution;
 use App\Task;
 use App\User;
@@ -55,6 +57,10 @@ class GeekPasteAPI extends Controller
                 CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
             }
             $solution->save();
+
+            // Recalculate cached points after auto-grading code
+            CourseStudentPoints::recalculate($course->id, $solution->user_id);
+            LessonStudentStats::recalculateForStudent($course->id, $solution->user_id);
 
             $old_rank = $solution->user->rank();
 
