@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    Наградить проект
+@endsection
+
 @section('heading', 'Наградить')
 
 @section('content')

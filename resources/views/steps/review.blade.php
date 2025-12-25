@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    {{$student->name}}: {{$task->name}}
+@endsection
+
 @section('content')
     <h2><a class="back-link" href="{{url('/insider/courses/'.$course->id.'/assessments')}}"><i
                     class="icon ion-chevron-left"></i></a>&nbsp;{{$student->name}}: "{{$task->name}}"</h2>

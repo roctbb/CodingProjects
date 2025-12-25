@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass: Изменение проекта "{{$project->name}}"
+    Изменение проекта "{{$project->name}}"
 @endsection
 
 @section('content')

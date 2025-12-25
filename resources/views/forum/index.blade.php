@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    Ответы
+@endsection
+
 @section('content')
     <div class="row" style="margin-top: 15px;">
         <div class="col">
@@ -41,7 +45,7 @@
             <div class="card-deck">
                 <div class="card" style="min-width:35% !important; border-left: 3px solid #28a745;">
                     <div class="card-body">
-                        <p style="margin-top: 10px;">В качестве эксперимента, мы добавляем в GeekClass новый раздел -
+                        <p style="margin-top: 10px;">В качестве эксперимента, мы добавляем в {{ config('app.name', 'Laravel') }} новый раздел -
                             ответы. Здесь вы можете задавать вопросы на любые темы, связанные с программированием (или
                             любыми учебными и неучебными темами) и получать на них ответы от других участников и
                             преподавателей так же, как это делается на stackoverflow.com.</p>

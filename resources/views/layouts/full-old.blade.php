@@ -8,7 +8,10 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>
+        @yield('title')
+         - {{ config('app.name', 'Laravel') }}
+    </title>
 
 
     <link rel="stylesheet" href="/css/ionicons.min.css">
@@ -83,7 +86,7 @@
 
 <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">
     <img style="height: 40px;" src="{{ url('images/icons/icons8-idea-64.png') }}">&nbsp;&nbsp;&nbsp;
-    <h5 class="my-0 mr-md-auto font-weight-normal">GeekClass</h5>
+    <h5 class="my-0 mr-md-auto font-weight-normal">{{ config('app.name', 'Laravel') }}</h5>
     <nav class="my-2 my-md-0 mr-md-3">
         <a class="p-2 text-dark {{(Request::is('insider/courses*') ? 'active' : '') }}" href="{{url('/insider/courses')}}">Курсы</a>
         <a class="p-2 text-dark {{(Request::is('insider/forum*') ? 'active' : '') }}" href="{{url('insider/forum')}}">Ответы</a>

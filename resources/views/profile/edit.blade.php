@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    Профиль
+@endsection
+
 @section('content')
 
 

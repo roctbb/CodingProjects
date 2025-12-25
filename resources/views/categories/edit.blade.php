@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass: Редактирование образовательного направления
+    Редактирование образовательного направления
 @endsection
 
 @section('content')

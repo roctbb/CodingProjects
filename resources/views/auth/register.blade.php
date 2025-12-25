@@ -1,5 +1,9 @@
 @extends('layouts.empty-dark')
 
+@section('title')
+    Регистрация
+@endsection
+
 @section('content')
     <div class="row">
         <div class="col-md-12 col-md-offset-2">
@@ -11,7 +15,7 @@
                         <a class="navbar-brand" href="{{ url('/') }}" style="line-height: 50px; font-size: 1.3rem; color: white;">
             <span><img style="height: 35px; margin-bottom: 0px;"
                        src="{{ url('images/icons/icons8-idea-64.png') }}">&nbsp;</span>
-                            GeekClass
+                            {{ config('app.name', 'Laravel') }}
                         </a>
                         <h3 class="card-title"
                             style="color: white; margin-top: 20px; font-weight: 300; margin-bottom: 5px;">

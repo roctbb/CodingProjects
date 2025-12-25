@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    События
+@endsection
+
 @section('content')
     <div class="row">
         <div class="col-12">

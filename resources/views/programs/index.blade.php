@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass
+    Программы
 @endsection
 
 @section('content')

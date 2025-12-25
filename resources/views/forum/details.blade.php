@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass: "{{$thread->name}}"
+    {{$thread->name}}
 @endsection
 
 @section('tabs')

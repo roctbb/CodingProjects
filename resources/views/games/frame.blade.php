@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{{$game->title}}</title>
+    <title>{{$game->title}} - {{ config('app.name', 'Laravel') }}</title>
     <style>
         body {
             margin: 0;
