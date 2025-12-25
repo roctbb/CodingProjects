@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass: "{{$course->name}}"
+    {{$course->name}}
 @endsection
 
 @section('content')

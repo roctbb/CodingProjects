@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    @yield('title')
+@overwrite
+
 @section('head')
     <link rel="stylesheet" href="{{asset('codemirror.css')}}">
     <style>

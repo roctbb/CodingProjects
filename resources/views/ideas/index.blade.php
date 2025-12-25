@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    Идеи
+@endsection
+
 @section('content')
     <div class="row" style="margin-top: 15px;">
         <div class="col">

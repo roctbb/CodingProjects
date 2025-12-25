@@ -1,5 +1,9 @@
 @extends('layouts.empty-dark')
 
+@section('title')
+    Вход
+@endsection
+
 @section('head')
     <style>
         html {
@@ -43,7 +47,7 @@
                                    style="line-height: 50px; font-size: 1.3rem; color: white;">
             <span><img style="height: 35px; margin-bottom: 0px;"
                        src="{{ url('images/icons/icons8-idea-64.png') }}">&nbsp;</span>
-                                    GeekClass
+                                    {{ config('app.name', 'Laravel') }}
                                 </a>
                                 <h3 class="card-title"
                                     style="color: white; margin-top: 20px; font-weight: 300; margin-bottom: 15px;">

@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass: Изменение задачи "{{$task->name}}"
+    Изменение задачи "{{$task->name}}"
 @endsection
 
 @section('content')

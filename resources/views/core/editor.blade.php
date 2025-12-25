@@ -1,5 +1,9 @@
 @extends('layouts/app')
 
+@section('title')
+    Редактор Core
+@endsection
+
 @section('content')
   <div id="root">
     <gk-app></gk-app>

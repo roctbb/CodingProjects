@@ -1,5 +1,9 @@
 @extends('layouts/full')
 
+@section('title')
+    @yield('title')
+@overwrite
+
 @section('head')
 
 

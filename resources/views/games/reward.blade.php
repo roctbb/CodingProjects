@@ -1,5 +1,9 @@
 @extends('layouts.games', ['page' => 5])
 
+@section('title')
+    Наградить игру
+@endsection
+
 @section('heading', 'Наградить')
 
 @section('content')

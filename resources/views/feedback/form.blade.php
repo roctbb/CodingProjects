@@ -1,5 +1,9 @@
 @extends('layouts.empty')
 
+@section('title')
+    Обратная связь
+@endsection
+
 @section('head')
     <script>
         function toggleBlock(id, force, b) {

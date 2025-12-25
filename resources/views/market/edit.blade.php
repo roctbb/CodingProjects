@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass: Изменение товара "{{$good->name}}"
+    Изменение товара "{{$good->name}}"
 @endsection
 
 @section('content')

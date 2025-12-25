@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    {{ $user->name }}
+@endsection
+
 @section('content')
     <div class="row" style="margin-top: 0;margin-left: 0;margin-right: 0;">
 

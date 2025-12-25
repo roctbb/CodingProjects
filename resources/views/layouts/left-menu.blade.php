@@ -4,13 +4,16 @@
 <head>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="utf-8">
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>
+        @yield('title')
+         - {{ config('app.name', 'Laravel') }}
+    </title>
 
     <link rel="stylesheet" href="/css/ionicons.min.css">
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="GeekClass">
+    <meta name="description" content="{{ config('app.name', 'Laravel') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <link rel="stylesheet"
@@ -102,12 +105,12 @@
 <body>
 
 <div class="layout layout-nav-side">
-    <div class="navbar navbar-expand-lg bg-dark navbar-dark sticky-top">
+    <div class="navbar navbar-expand-lg bg-dark navbar-dark sticky-top" style="width:19rem;">
 
         <a class="navbar-brand" href="{{ url('/') }}" style="line-height: 50px; font-size: 1.3rem;">
             <span><img style="height: 35px; margin-bottom: 0px;"
                        src="{{ url('images/icons/icons8-idea-64.png') }}">&nbsp;</span>
-            GeekClass
+            CodingProjects
         </a>
 
         <div class="d-flex align-items-center">

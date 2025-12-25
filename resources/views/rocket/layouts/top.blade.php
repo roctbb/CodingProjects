@@ -1,5 +1,9 @@
 @extends('rocket.layouts.parts.page')
 
+@section('title')
+    @yield('title')
+@endsection
+
 @section('page')
     <header class="header-global">
         @include('rocket.layouts.parts.top.header')

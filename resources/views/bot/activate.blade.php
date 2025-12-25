@@ -1,5 +1,9 @@
 @extends('layouts.empty-nc')
 
+@section('title')
+    Активация внешнего сервиса
+@endsection
+
 @section('head')
 <style>
 

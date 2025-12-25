@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass: Добавление главы
+    Добавление главы
 @endsection
 
 @section('content')

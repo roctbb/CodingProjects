@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    Создание ступени
+@endsection
+
 @section('content')
     <h2>Создание ступени</h2>
 

@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass: "{{$idea->name}}"
+    {{$idea->name}}
 @endsection
 
 @section('tabs')

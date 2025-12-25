@@ -1,4 +1,7 @@
 @extends('layouts.left-menu')
+@section('title')
+    {{$theme->name}}
+@endsection
 @section('head')
     @if ($is_try)
         <link rel="stylesheet" href="/insider/themes/{{$try->id}}/css"></style>

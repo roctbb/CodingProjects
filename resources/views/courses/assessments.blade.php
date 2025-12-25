@@ -1,7 +1,7 @@
 @extends('layouts.empty-nc')
 
 @section('title')
-    GeekClass: Журнал
+    Журнал
 @endsection
 
 @section('content')

@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    {{$theme->name}}
+@endsection
+
 @section('content')
     <div class="card">
         <div class="card-body">

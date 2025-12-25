@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    Core
+@endsection
+
 @section('head')
 <link rel="stylesheet" href="{{url('css/alchemy-white.css')}}"/>
 <style>

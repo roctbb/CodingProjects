@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    Подтверждение
+@endsection
+
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
@@ -14,7 +18,7 @@
                     </div>
                     @endif
 
-                    {{ __('Для продолжения работы с GeekClass вам необходимо подтвердить свой e-mail адрес.') }}
+                    {{ __('Для продолжения работы с ' . config('app.name', 'Laravel') . ' вам необходимо подтвердить свой e-mail адрес.') }}
                     {{ __('Если вы не получили сообщение или видите это сообщение впервые') }}, <a href="{{ route('verification.resend') }}">{{ __('нажмите сюда, чтобы получить ссылку на почту') }}</a>.
                 </div>
             </div>

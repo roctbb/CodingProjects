@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass: Изменение шкалы "{{$scale->name}}"
+    Изменение шкалы "{{$scale->name}}"
 @endsection
 
 @section('content')
