@@ -328,10 +328,8 @@ class CoursesController extends Controller
 
 
             if ($course->students->contains($user)) {
-                // Filter started lessons but keep the order
-                $lessons = $course->program->lessons->filter(function ($lesson) use ($course, $chapter) {
-                    return $lesson->isStarted($course) && $lesson->chapter_id == $chapter->id;
-                })->sortBy('sort_index')->values();
+                // Keep the order
+                $lessons = $course->program->lessons->where('chapter_id', $chapter->id)->sortBy('sort_index')->values();
 
                 $steps = $temp_steps;
                 $cstudent = $students->filter(function ($value, $key) use ($user) {
