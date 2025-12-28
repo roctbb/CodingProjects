@@ -2,9 +2,9 @@
 
 @section('title')
     @if (\Request::is('insider/*'))
-        GeekClass: "{{$course->name}}" - "{{$step->name}}"
+        {{$course->name}} - {{$step->name}}
     @else
-        GeekClass: "{{$step->name}}"
+        {{$step->name}}
     @endif
 @endsection
 

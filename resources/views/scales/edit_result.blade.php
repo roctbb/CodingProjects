@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass: Изменение результата "{{$result->name}}"
+    Изменение результата "{{$result->name}}"
 @endsection
 
 @section('content')

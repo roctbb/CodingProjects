@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    GeekClass: Редактирование поста
+    Редактирование поста
 @endsection
 
 @section('content')

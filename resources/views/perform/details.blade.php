@@ -1,7 +1,7 @@
 @extends('layouts.empty')
 
 @section('title')
-    GeekClass: "{{$course->name}}" - "{{$step->name}}"
+    {{$course->name}} - {{$step->name}}
 @endsection
 
 @section('tabs')

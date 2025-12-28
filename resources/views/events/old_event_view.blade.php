@@ -1,5 +1,9 @@
 @extends('layouts.left-menu')
 
+@section('title')
+    События
+@endsection
+
 @section('content')
     @extends('events.event_layout')
     <br>

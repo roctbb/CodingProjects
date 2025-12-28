@@ -1,5 +1,9 @@
 @extends('layouts.games', ['page' => 3])
 
+@section('title')
+    Создать игру
+@endsection
+
 @section('heading', 'Создать')
 
 @section('content')
