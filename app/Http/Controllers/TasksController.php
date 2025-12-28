@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\CoinTransaction;
 use App\Course;
 use App\CourseStudentPoints;
+use App\Jobs\RecalculateCourseStudentPoints;
 use App\LessonStudentStats;
 use App\ProgramStep;
 use App\Http\Controllers\Controller;
@@ -78,6 +79,12 @@ class TasksController extends Controller
                 $task->consequences()->attach($consequence_id);
             }
 
+        // Recalculate points for all students after adding new task
+        $course = Course::findOrFail($course_id);
+        foreach ($course->students as $student) {
+            RecalculateCourseStudentPoints::dispatch($course_id, $student->id);
+        }
+
         return redirect('/insider/courses/' . $course_id . '/steps/' . $step->id . '#task' . $task->id);
     }
 
@@ -86,6 +93,13 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         $step_id = $task->step_id;
         $task->delete();
+
+        // Recalculate points for all students after deleting task
+        $course = Course::findOrFail($course_id);
+        foreach ($course->students as $student) {
+            RecalculateCourseStudentPoints::dispatch($course_id, $student->id);
+        }
+
         return redirect('/insider/courses/' . $course_id . '/steps/' . $step_id);
     }
 
@@ -149,6 +163,12 @@ class TasksController extends Controller
         }
 
         $task->save();
+
+        // Recalculate points for all students after editing task
+        $course = Course::findOrFail($course_id);
+        foreach ($course->students as $student) {
+            RecalculateCourseStudentPoints::dispatch($course_id, $student->id);
+        }
 
         $step_id = $task->step_id;
         return redirect('/insider/courses/' . $course_id . '/steps/' . $step_id . '#task' . $id);
