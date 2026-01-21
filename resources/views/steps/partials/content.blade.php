@@ -70,6 +70,13 @@
                                 <a title="Сгенерировать форму perr-review" class="float-right btn btn-default btn-sm"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/peer')}}"><i
                                             class="icon ion-person-stalker"></i></a>
+                                @if ($task->is_code)
+                                    <a title="Перепроверить все решения (обнулить баллы и отправить последнее решение каждого студента на перепроверку)"
+                                       class="float-right btn btn-default btn-sm"
+                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/recheck-all')}}"
+                                       onclick="return confirm('Вы уверены? Это обнулит все баллы и отправит последние решения на перепроверку.')"><i
+                                                class="icon ion-refresh"></i></a>
+                                @endif
                                 <a class="float-right btn btn-default btn-sm"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i
                                             class="icon ion-arrow-right-c"></i></a>

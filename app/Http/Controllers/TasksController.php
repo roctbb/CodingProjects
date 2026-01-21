@@ -510,4 +510,62 @@ class TasksController extends Controller
 
 
     }
+
+    public function recheckAllSolutions($course_id, $id)
+    {
+        $task = Task::findOrFail($id);
+        $course = Course::findOrFail($course_id);
+
+        if (!$task->is_code) {
+            return redirect()->back()->with('error', 'Перепроверка доступна только для задач с кодом.');
+        }
+
+        // Get all unique students who have solutions for this task in this course
+        $studentIds = Solution::where('task_id', $id)
+            ->where('course_id', $course_id)
+            ->pluck('user_id')
+            ->unique();
+
+        $recheckCount = 0;
+        $client = new Client();
+
+        foreach ($studentIds as $studentId) {
+            // Zero out all solutions for this student/task/course
+            Solution::where('task_id', $id)
+                ->where('user_id', $studentId)
+                ->where('course_id', $course_id)
+                ->update([
+                    'mark' => 0,
+                    'comment' => null,
+                    'checked' => null
+                ]);
+
+            // Get the last solution for recheck
+            $lastSolution = Solution::where('task_id', $id)
+                ->where('user_id', $studentId)
+                ->where('course_id', $course_id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($lastSolution && !empty($lastSolution->text)) {
+                // Extract code ID from the solution text (assuming it's a GeekPaste URL)
+                preg_match('/\?id=([^&\s]+)/', $lastSolution->text, $matches);
+                if (isset($matches[1])) {
+                    $codeId = $matches[1];
+                    try {
+                        // Send recheck request to GeekPaste API
+                        $response = $client->post(config('services.geekpaste_url') . '/recheck', [
+                            'query' => ['id' => $codeId]
+                        ]);
+                        $recheckCount++;
+                    } catch (GuzzleException $e) {
+                        // Log error but continue with other students
+                        \Log::error("Failed to recheck solution for student {$studentId}: " . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', "Отправлено на перепроверку решений: {$recheckCount}");
+    }
 }
