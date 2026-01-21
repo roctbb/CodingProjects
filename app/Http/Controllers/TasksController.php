@@ -553,10 +553,13 @@ class TasksController extends Controller
                 if (isset($matches[1])) {
                     $codeId = $matches[1];
                     try {
+
+                        dd(config('services.geekpaste_url') . '/recheck?id=' . $codeId);
                         // Send recheck request to GeekPaste API
                         $response = $client->post(config('services.geekpaste_url') . '/recheck', [
                             'query' => ['id' => $codeId]
                         ]);
+
                         $recheckCount++;
                     } catch (GuzzleException $e) {
                         // Log error but continue with other students
