@@ -554,7 +554,6 @@ class TasksController extends Controller
                     $codeId = $matches[1];
                     try {
 
-                        dd(config('services.geekpaste_url') . '/recheck?id=' . $codeId);
                         // Send recheck request to GeekPaste API
                         $response = $client->post(config('services.geekpaste_url') . '/recheck', [
                             'query' => ['id' => $codeId]
