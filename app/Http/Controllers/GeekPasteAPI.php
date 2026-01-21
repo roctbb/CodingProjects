@@ -41,16 +41,27 @@ class GeekPasteAPI extends Controller
                 ], 403);
             }
 
-            $solution = new Solution();
-            $solution->task_id = $task->id;
-            $solution->course_id = $course->id;
-            $solution->user_id = $user->id;
-            $solution->submitted = Carbon::now();
-            $solution->text = $text;
+            // Check if solution with the same link already exists
+            $solution = Solution::where('task_id', $task->id)
+                ->where('course_id', $course->id)
+                ->where('user_id', $user->id)
+                ->where('text', $text)
+                ->first();
+
+            // If solution exists, update it; otherwise create new one
+            if (!$solution) {
+                $solution = new Solution();
+                $solution->task_id = $task->id;
+                $solution->course_id = $course->id;
+                $solution->user_id = $user->id;
+                $solution->submitted = Carbon::now();
+                $solution->text = $text;
+                $solution->teacher_id = $course->teachers->first()->id;
+            }
+
             $solution->mark = min($points, $task->max_mark);
             $solution->comment = $comments;
             $solution->checked = Carbon::now();
-            $solution->teacher_id = $course->teachers->first()->id;
 
 
             if ($solution->task->price > 0 and $solution->mark == $solution->task->max_mark and !$solution->task->isFullDone($solution->user_id)) {
