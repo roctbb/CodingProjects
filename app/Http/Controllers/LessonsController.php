@@ -220,7 +220,7 @@ class LessonsController extends Controller
         }
 
         // Create ZIP archive
-        $zipPath = sys_get_temp_dir() . '/lesson-' . $id . '.zip';
+        $zipPath = sys_get_temp_dir() . '/lesson-' . $id . '-' . time() . '.zip';
         $zip = new \ZipArchive();
 
         if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
@@ -234,8 +234,7 @@ class LessonsController extends Controller
         }
 
         // Clean up temporary directory
-        array_map('unlink', glob("$tempDir/*"));
-        rmdir($tempDir);
+        $this->deleteDirectory($tempDir);
 
         // Return ZIP file as download
         $response = \Response::make(file_get_contents($zipPath));
@@ -246,6 +245,29 @@ class LessonsController extends Controller
         register_shutdown_function('unlink', $zipPath);
 
         return $response;
+    }
+
+    private function deleteDirectory($dir)
+    {
+        if (!file_exists($dir)) {
+            return true;
+        }
+
+        if (!is_dir($dir)) {
+            return unlink($dir);
+        }
+
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') {
+                continue;
+            }
+
+            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
+                return false;
+            }
+        }
+
+        return rmdir($dir);
     }
 
     private function sanitizeFileName($name)
