@@ -271,9 +271,14 @@ class LessonsController extends Controller
         $this->deleteDirectory($tempDir);
 
         // Return ZIP file as download
+        $safeName = $this->sanitizeFileName($lesson->name);
+        if (empty($safeName)) {
+            $safeName = 'lesson-' . $id;
+        }
+
         $response = \Response::make(file_get_contents($zipPath));
         $response->header('Content-Type', 'application/zip');
-        $response->header('Content-Disposition', 'attachment; filename=lesson-' . $lesson->name . '.zip');
+        $response->header('Content-Disposition', 'attachment; filename="' . $safeName . '.zip"');
 
         // Clean up ZIP file after sending
         register_shutdown_function('unlink', $zipPath);
