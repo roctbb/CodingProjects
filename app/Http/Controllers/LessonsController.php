@@ -224,6 +224,11 @@ class LessonsController extends Controller
         $zip = new \ZipArchive();
 
         if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            // Set UTF-8 flag for proper encoding on macOS
+            if (defined('ZipArchive::FL_ENC_UTF_8')) {
+                $zip->setArchiveFlag(\ZipArchive::FL_ENC_UTF_8, 1);
+            }
+
             $files = scandir($tempDir);
             foreach ($files as $file) {
                 if ($file !== '.' && $file !== '..') {
