@@ -141,6 +141,9 @@
                                                     <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export')}}"
                                                        class="dropdown-item"><i
                                                                 class="icon ion-ios-cloud-download"></i> Экспорт</a>
+                                                    <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export-md')}}"
+                                                       class="dropdown-item"><i
+                                                                class="icon ion-document-text"></i> Экспорт в MD</a>
                                                     <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/lower?chapter='.$chapter->id)}}"
                                                        class="dropdown-item"><i
                                                                 class="icon ion-arrow-up-c"></i> Выше</a>

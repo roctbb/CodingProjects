@@ -198,6 +198,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/lessons/{id}/edit', 'LessonsController@editView');
     Route::post('/courses/{course_id}/lessons/{id}/edit', 'LessonsController@edit');
     Route::get('/courses/{course_id}/lessons/{id}/export', 'LessonsController@export');
+    Route::get('/courses/{course_id}/lessons/{id}/export-md', 'LessonsController@exportMarkdown');
     Route::get('/courses/{course_id}/lessons/{id}/lower', 'LessonsController@makeLower');
     Route::get('/courses/{course_id}/lessons/{id}/upper', 'LessonsController@makeUpper');
     Route::get('/courses/{course_id}/lessons/{id}/delete', 'LessonsController@delete');

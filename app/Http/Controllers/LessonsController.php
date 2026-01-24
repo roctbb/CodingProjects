@@ -29,7 +29,7 @@ class LessonsController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'edit', 'makeLower', 'makeUpper', 'export']);
+        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'edit', 'makeLower', 'makeUpper', 'export', 'exportMarkdown']);
 
     }
 
@@ -188,6 +188,73 @@ class LessonsController extends Controller
 
         return $response;
 
+    }
+
+    public function exportMarkdown($course_id, $id)
+    {
+        $lesson = Lesson::findOrFail($id);
+
+        // Create a temporary directory for markdown files
+        $tempDir = sys_get_temp_dir() . '/lesson-' . $id . '-' . time();
+        mkdir($tempDir);
+
+        // Export each step's theory and notes as separate markdown files
+        foreach ($lesson->steps as $index => $step) {
+            $stepNumber = $index + 1;
+            $fileName = sprintf('%02d-%s.md', $stepNumber, $this->sanitizeFileName($step->name));
+            $filePath = $tempDir . '/' . $fileName;
+
+            $content = "# {$step->name}\n\n";
+
+            if (!empty($step->theory)) {
+                $content .= "## Теория\n\n";
+                $content .= $step->theory . "\n\n";
+            }
+
+            if (!empty($step->notes)) {
+                $content .= "## Заметки\n\n";
+                $content .= $step->notes . "\n\n";
+            }
+
+            file_put_contents($filePath, $content);
+        }
+
+        // Create ZIP archive
+        $zipPath = sys_get_temp_dir() . '/lesson-' . $id . '.zip';
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            $files = scandir($tempDir);
+            foreach ($files as $file) {
+                if ($file !== '.' && $file !== '..') {
+                    $zip->addFile($tempDir . '/' . $file, $file);
+                }
+            }
+            $zip->close();
+        }
+
+        // Clean up temporary directory
+        array_map('unlink', glob("$tempDir/*"));
+        rmdir($tempDir);
+
+        // Return ZIP file as download
+        $response = \Response::make(file_get_contents($zipPath));
+        $response->header('Content-Type', 'application/zip');
+        $response->header('Content-Disposition', 'attachment; filename=lesson-' . $lesson->name . '.zip');
+
+        // Clean up ZIP file after sending
+        register_shutdown_function('unlink', $zipPath);
+
+        return $response;
+    }
+
+    private function sanitizeFileName($name)
+    {
+        // Remove or replace invalid characters for file names
+        $name = preg_replace('/[^a-zA-Z0-9а-яА-ЯёЁ\s-]/', '', $name);
+        $name = preg_replace('/\s+/', '-', $name);
+        $name = trim($name, '-');
+        return mb_substr($name, 0, 50); // Limit length
     }
 
 
