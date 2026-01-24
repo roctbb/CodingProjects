@@ -198,7 +198,7 @@ class LessonsController extends Controller
         $tempDir = sys_get_temp_dir() . '/lesson-' . $id . '-' . time();
         mkdir($tempDir);
 
-        // Export each step's theory and notes as separate markdown files
+        // Export each step's theory, notes and tasks as separate markdown files
         foreach ($lesson->steps as $index => $step) {
             $stepNumber = $index + 1;
             $fileName = sprintf('%02d-%s.md', $stepNumber, $this->sanitizeFileName($step->name));
@@ -214,6 +214,38 @@ class LessonsController extends Controller
             if (!empty($step->notes)) {
                 $content .= "## Заметки\n\n";
                 $content .= $step->notes . "\n\n";
+            }
+
+            // Add tasks if any
+            if ($step->tasks->count() > 0) {
+                $content .= "## Задачи\n\n";
+
+                foreach ($step->tasks as $taskIndex => $task) {
+                    $taskNumber = $taskIndex + 1;
+                    $content .= "### Задача {$taskNumber}: {$task->name}\n\n";
+
+                    if (!empty($task->text)) {
+                        $content .= $task->text . "\n\n";
+                    }
+
+                    // Add task metadata
+                    $metadata = [];
+                    if ($task->max_mark > 0) {
+                        $metadata[] = "**Максимальный балл:** {$task->max_mark}";
+                    }
+                    if ($task->is_star) {
+                        $metadata[] = "**Звёздочка:** Да";
+                    }
+                    if ($task->answer) {
+                        $metadata[] = "**Правильный ответ:** {$task->answer}";
+                    }
+
+                    if (!empty($metadata)) {
+                        $content .= implode(" | ", $metadata) . "\n\n";
+                    }
+
+                    $content .= "---\n\n";
+                }
             }
 
             file_put_contents($filePath, $content);
