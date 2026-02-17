@@ -132,6 +132,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/games/create', 'GamesController@create');
 
     Route::get('/market', 'MarketController@index');
+    Route::get('/market/orders', 'MarketController@orders');
     Route::get('/market/create', 'MarketController@createView');
     Route::post('/market/create', 'MarketController@create');
     Route::get('/market/{id}/edit', 'MarketController@editView');

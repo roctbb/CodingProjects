@@ -13,6 +13,7 @@
         </div>
         <div class="col">
             @if ($user->role=='admin')
+                <a class="btn btn-secondary float-right" style="margin-left: 10px;" href="{{url('/insider/market/orders')}}">Заказы</a>
                 <a class="btn btn-round float-right" href="{{url('/insider/market/create/')}}"><i
                             class="material-icons">add</i></a>
             @endif
@@ -63,34 +64,6 @@
 
     </div>
     @if ($user->role=='admin')
-
-        <div class="row" style="margin-top: 15px;">
-            <div class="col">
-                <h2> Активные заказы</h2>
-            </div>
-        </div>
-        <div class="row" style="margin-top: 15px;">
-            <div class="card-deck">
-
-                @foreach($active_orders as $order)
-                    <div class="card"
-                         style="min-width: 280px; background-size: cover;">
-
-                        <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
-                            <h5 style="margin-top: 15px; font-weight: 300;">{{$order->good->name}}</h5>
-                            <p>{{$order->user->name}}</p>
-                            <p><a href="{{url('/insider/market/ship/'.$order->id)}}"
-                                  class="btn btn-primary btn-sm">Доставлено</a></p>
-                            <p><a href="{{url('/insider/market/cancel/'.$order->id)}}"
-                                  class="btn btn-warning btn-sm">Отменить</a></p>
-
-                        </div>
-
-                    </div>
-                @endforeach
-            </div>
-
-        </div>
 
         <div class="row" style="margin-top: 15px;">
             <div class="col">

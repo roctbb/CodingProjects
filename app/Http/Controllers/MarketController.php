@@ -28,7 +28,7 @@ class MarketController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('admin')->only(['createView', 'editView', 'edit', 'create', 'ship', 'cancel']);
+        $this->middleware('admin')->only(['createView', 'editView', 'edit', 'create', 'ship', 'cancel', 'orders']);
     }
 
     /**
@@ -40,9 +40,16 @@ class MarketController extends Controller
     {
         $user = User::findOrFail(Auth::User()->id);
         $goods = MarketGood::where('in_stock', true)->orderBy('id', 'desc')->get();
-        $active_orders = MarketDeal::where('shipped', false)->get();
         $archive = MarketGood::where('in_stock', false)->get();
-        return view('market.index', compact('goods', 'user', 'archive', 'active_orders'));
+        return view('market.index', compact('goods', 'user', 'archive'));
+    }
+
+    public function orders()
+    {
+        $user = User::findOrFail(Auth::User()->id);
+        $active_orders = MarketDeal::where('shipped', false)->with(['user', 'good'])->orderBy('created_at', 'desc')->get();
+        $shipped_orders = MarketDeal::where('shipped', true)->with(['user', 'good'])->orderBy('updated_at', 'desc')->limit(50)->get();
+        return view('market.orders', compact('user', 'active_orders', 'shipped_orders'));
     }
 
 
