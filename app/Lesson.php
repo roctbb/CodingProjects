@@ -193,7 +193,10 @@ class Lesson extends Model
                 $new_task = new Task();
                 foreach ($task as $property => $value) {
                     try {
-                        $new_task->$property = $value;
+                        // Skip relationships and only assign scalar values
+                        if (!is_array($value) && !is_object($value)) {
+                            $new_task->$property = $value;
+                        }
                     }
                     catch (\Exception $e) {
 
