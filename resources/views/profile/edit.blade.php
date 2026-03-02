@@ -117,6 +117,23 @@
                             @endif
                         </div>
 
+                        @if (\Auth::User()->role == 'admin')
+                            <div class="form-group">
+                                <label for='role'>Роль пользователя</label>
+                                <select id='role' class="form-control" name='role'>
+                                    <option value="student" {{ $user->role == 'student' || !$user->role ? 'selected' : '' }}>Студент</option>
+                                    <option value="teacher" {{ $user->role == 'teacher' ? 'selected' : '' }}>Преподаватель</option>
+                                    <option value="theme_moderator" {{ $user->role == 'theme_moderator' ? 'selected' : '' }}>Модератор тем</option>
+                                    <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Администратор</option>
+                                </select>
+                                @if ($errors->has('role'))
+                                    <span class="help-block error-block">
+                                        <strong>{{ $errors->first('role') }}</strong>
+                                    </span>
+                                @endif
+                            </div>
+                        @endif
+
                         <h4>О себе</h4>
                         <div class="form-group">
                             <label for='interests'>Технические интересы</label>

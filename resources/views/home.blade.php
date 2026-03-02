@@ -202,9 +202,12 @@
                                     </h5>
                                     <p><a tabindex="0" data-toggle="popover" data-trigger="focus" title="Ранги"
                                           data-html="true"
-                                          data-content="{{\App\Rank::getRanksListHTML($user->rank())}}"><span
-                                                    style="font-size: 13px;" class="badge badge-pill badge-success"><i
-                                                        class="icon ion-ios-arrow-up"></i> {{$user->rank()->name}}</span></a>
+                                          data-content="{{\App\Rank::getRanksListHTML($user->rank())}}">
+                                        @if ($user->rank())
+                                            <span style="font-size: 13px;" class="badge badge-pill badge-success"><i
+                                                class="icon ion-ios-arrow-up"></i> {{$user->rank()->name}}</span>
+                                        @endif
+                                        </a>
 
                                         @if ($user->is_trainee)
                                             <span style="font-size: 13px;"

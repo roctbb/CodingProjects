@@ -82,7 +82,7 @@ Route::get('/activate', 'BotController@activateView');
 Route::get('/activate/success', 'BotController@successView');
 Route::post('/activate', 'BotController@activate');
 
-Route::prefix('insider')->middleware('verified')->group(function () {
+Route::prefix('insider')->middleware('auth')->group(function () {
 
     #TODO Check
     Route::get('/', function () {
@@ -140,6 +140,35 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/market/{id}/buy', 'MarketController@buy');
     Route::get('/market/ship/{id}', 'MarketController@ship');
     Route::get('/market/cancel/{id}', 'MarketController@cancel');
+
+    
+    Route::get('/themes', 'ThemesController@index');
+    Route::get('/themes/{id}', 'ThemesController@details');
+    Route::get('/themes/{id}/css', 'ThemesController@getCSS');
+
+    Route::get('/themes/{id}/js', 'ThemesController@getJS');
+    Route::get('/themes/{id}/buy', 'ThemesController@buy');
+
+    Route::get('/themes/{id}/wear', 'ThemesController@wear');
+    Route::get('/themes/{id}/takeoff', 'ThemesController@takeOff');
+
+
+    Route::get('/themes/create', 'ThemesController@createView');
+    Route::post('/themes/create', 'ThemesController@create');
+    Route::get('/themes/{id}/edit', 'ThemesController@editView');
+    Route::post('/themes/{id}/edit', 'ThemesController@edit');
+    Route::get('/themes/{id}/delete', 'ThemesController@delete');
+
+    // Theme moderation routes
+    Route::middleware('theme_moderator')->group(function () {
+        Route::get('/themes/{id}/moderate', 'ThemesController@moderateView');
+        Route::post('/themes/{id}/approve', 'ThemesController@approve');
+        Route::post('/themes/{id}/ban', 'ThemesController@banTheme');
+        Route::get('/themes/{id}/unban', 'ThemesController@unbanTheme');
+        Route::get('/themes/moderation', 'ThemesController@moderationIndex');
+        Route::get('/users/{id}/ban-themes', 'ThemesController@banUser');
+        Route::get('/users/{id}/unban-themes', 'ThemesController@unbanUser');
+    });
 
 
     Route::get('/scales', 'ScalesController@index');

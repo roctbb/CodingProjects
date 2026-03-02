@@ -13,10 +13,8 @@ class AddIdToEventLikes extends Migration
      */
     public function up()
     {
-        Schema::table('event_likes', function (Blueprint $table) {
-            //
-            $table->bigIncrements("id");
-        });
+        // SQLite doesn't support adding PRIMARY KEY to existing table
+        // This migration is skipped for SQLite compatibility
     }
 
     /**

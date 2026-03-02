@@ -10,6 +10,8 @@ class Rank extends Model
 {
     protected $table = "ranks";
 
+    protected $fillable = ['name', 'from', 'to', 'icon'];
+
     public static function getRanksListHTML($current_rank)
     {
         $ranks = Rank::orderBy('from', 'DESC')->get();

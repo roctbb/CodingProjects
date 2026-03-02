@@ -136,14 +136,21 @@ class ProfileController extends Controller
         $guest = User::findOrFail(Auth::User()->id);
         $user = User::findOrFail($id);
 
-        $this->validate($request, [
+        $validationRules = [
             'name' => 'required|string',
             'school' => 'required|string',
             'grade' => 'integer|min:1|max:11|required',
             'hobbies' => 'required|string',
             'interests' => 'required|string',
             'image' => 'image|max:4000'
-        ]);
+        ];
+
+        // Добавляем валидацию для роли, если пользователь - админ
+        if (Auth::User()->role == 'admin') {
+            $validationRules['role'] = 'required|in:student,teacher,theme_moderator,admin';
+        }
+
+        $this->validate($request, $validationRules);
 
         $user->name = $request->name;
         $user->vk = $request->vk;
@@ -154,7 +161,9 @@ class ProfileController extends Controller
         $user->interests = $request->interests;
         $user->school = $request->school;
         if (Auth::User()->role == 'teacher' || Auth::User()->role == 'admin') {
-            $user->birthday = Carbon::createFromFormat('Y-m-d', $request->birthday);
+            if ($request->birthday) {
+                $user->birthday = Carbon::createFromFormat('Y-m-d', $request->birthday);
+            }
         }
         $user->setGrade($request->grade);
 
@@ -171,6 +180,12 @@ class ProfileController extends Controller
 
         if ($guest->role == 'teacher')
             $user->comments = $request->comments;
+
+        // Назначение роли (только для админов)
+        if (Auth::User()->role == 'admin') {
+            $user->role = $request->role;
+        }
+
         $user->save();
 
         return redirect('/insider/profile/' . $id);

@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Theme extends Model
 {
     //
-    public $fillable = ["name", "price", "image", "description", "user_id"];
+    public $fillable = ["name", "price", "image", "description", "user_id", "moderation_status", "moderated_at", "moderated_by"];
+
+    protected $dates = ['moderated_at', 'created_at', 'updated_at'];
     static function boot()
     {
         parent::boot();
@@ -58,5 +60,41 @@ class Theme extends Model
     function user()
     {
         return $this->belongsTo(\App\User::class);
+    }
+
+    function moderator()
+    {
+        return $this->belongsTo(\App\User::class, 'moderated_by');
+    }
+
+    function approve($moderatorId)
+    {
+        $this->moderation_status = 'approved';
+        $this->moderated_at = now();
+        $this->moderated_by = $moderatorId;
+        $this->save();
+    }
+
+    function ban($moderatorId)
+    {
+        $this->moderation_status = 'banned';
+        $this->moderated_at = now();
+        $this->moderated_by = $moderatorId;
+        $this->save();
+    }
+
+    function isApproved()
+    {
+        return $this->moderation_status === 'approved';
+    }
+
+    function isBanned()
+    {
+        return $this->moderation_status === 'banned';
+    }
+
+    function isPending()
+    {
+        return $this->moderation_status === 'pending';
     }
 }

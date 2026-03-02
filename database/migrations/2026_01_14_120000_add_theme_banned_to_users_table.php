@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CoreAutoincrementFixProd extends Migration
+class AddThemeBannedToUsersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,9 @@ class CoreAutoincrementFixProd extends Migration
      */
     public function up()
     {
-        // This migration is PostgreSQL-specific and not needed for SQLite
-        // ALTER SEQUENCE commands are not supported in SQLite
+        Schema::table('users', function (Blueprint $table) {
+            $table->boolean('theme_banned')->default(false);
+        });
     }
 
     /**
@@ -24,6 +25,8 @@ class CoreAutoincrementFixProd extends Migration
      */
     public function down()
     {
-        //
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('theme_banned');
+        });
     }
 }

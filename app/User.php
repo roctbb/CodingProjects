@@ -24,7 +24,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'name', 'email', 'password', 'role', 'school', 'grade_year', 'birthday',
         'hobbies', 'interests', 'git', 'vk', 'telegram', 'facebook', 'comments', 'letter', 'email_verified_at', 'last_login_at',
-        'last_login_ip'
+        'last_login_ip', 'theme_banned'
     ];
     protected $dates = [
         'birthday'
@@ -376,6 +376,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function takeOffTheme($id)
     {
         \App\ThemeUsing::where('user_id', $this->id)->where('theme_id', $id)->delete();
+    }
 
+    public function isThemeModerator()
+    {
+        return $this->role === 'theme_moderator' || $this->role === 'admin';
+    }
+
+    public function canCreateThemes()
+    {
+        return !$this->theme_banned;
+    }
+
+    public function banFromThemes()
+    {
+        $this->theme_banned = true;
+        $this->save();
+    }
+
+    public function unbanFromThemes()
+    {
+        $this->theme_banned = false;
+        $this->save();
     }
 }

@@ -11,6 +11,9 @@
 
     <link rel="stylesheet" href="/css/ionicons.min.css">
 
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="{{ url('rocket/vendor/@fortawesome/fontawesome-free/css/all.min.css') }}">
+
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ config('app.name', 'Laravel') }}">

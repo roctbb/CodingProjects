@@ -68,6 +68,7 @@ class Kernel extends HttpKernel
         'student' => \App\Http\Middleware\IsStudent::class,
         'novice' => \App\Http\Middleware\IsNovice::class,
         'admin' => \App\Http\Middleware\IsAdmin::class,
+        'theme_moderator' => \App\Http\Middleware\ThemeModerator::class,
         'gameown' => \App\Http\Middleware\HasAccessToGame::class,
         'gameowncomment' => \App\Http\Middleware\HasAccessToGameComment::class,
         'noysreward' => \App\Http\Middleware\CannotRewardYourself::class,
