@@ -283,9 +283,14 @@ class LessonsController extends Controller
         $this->deleteDirectory($tempDir);
 
         // Return ZIP file as download
-        $safeName = $this->sanitizeFileName($lesson->name);
-        if (empty($safeName)) {
-            $safeName = 'lesson-' . $id;
+        // Get lesson order number within the program
+        $lessonOrder = $lesson->program->lessons->search(function($l) use ($lesson) {
+            return $l->id === $lesson->id;
+        }) + 1;
+
+        $safeName = sprintf('%02d-%s', $lessonOrder, $this->sanitizeFileName($lesson->name));
+        if (empty($this->sanitizeFileName($lesson->name))) {
+            $safeName = sprintf('%02d-lesson-%d', $lessonOrder, $id);
         }
 
         $response = \Response::make(file_get_contents($zipPath));
