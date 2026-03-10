@@ -120,7 +120,7 @@ class ProgramStep extends Model
         return $step;
     }
 
-    public function stats(User $student)
+    public function stats(User $student, $course = null)
     {
         if (isset($this->results_cache) and isset($this->results_cache[$student->id])) {
             return $this->results_cache[$student->id];
@@ -129,6 +129,7 @@ class ProgramStep extends Model
 
         $tasks = $this->tasks;
         foreach ($tasks as $task) {
+            if ($course && !$task->isVisible($student->id, $course)) continue;
             if (!$task->is_star) $results['max_points'] += $task->max_mark;
             $mark = $student->submissions->where('task_id', $task->id)->max('mark');
             $results['points'] += $mark ? $mark : 0;
@@ -144,19 +145,19 @@ class ProgramStep extends Model
         return $results;
     }
 
-    public function percent(User $student)
+    public function percent(User $student, $course = null)
     {
-        return ($this->stats($student))['percent'];
+        return ($this->stats($student, $course))['percent'];
     }
 
-    public function points(User $student)
+    public function points(User $student, $course = null)
     {
-        return ($this->stats($student))['points'];
+        return ($this->stats($student, $course))['points'];
     }
 
-    public function max_points(User $student)
+    public function max_points(User $student, $course = null)
     {
-        return ($this->stats($student))['max_points'];
+        return ($this->stats($student, $course))['max_points'];
     }
 
 

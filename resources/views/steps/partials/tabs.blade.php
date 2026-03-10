@@ -16,6 +16,7 @@
                            aria-controls="tasks{{$task->id}}" aria-expanded="true">{{$key+1}}
                             . {{$task->name}}
                             @if($task->is_star) <sup>*</sup> @endif
+                            @if($task->is_hidden) <sup title="Скрытая задача">🔒</sup> @endif
                         <!-- TODO -->
                             @if (\Request::is('insider/*'))
                                 @if($task->isSubmitted($user->id))

@@ -89,6 +89,11 @@
                             </div>
 
                             <div class="form-group">
+                                <label for="is_hidden">Скрытая задача</label>
+                                <input type="checkbox" id="is_hidden" name="is_hidden" value="on"/>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="is_code">Автопроверка</label>
                                 <input type="checkbox" id="is_code" name="is_code" value="on"/>
                             </div>

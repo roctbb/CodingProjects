@@ -48,6 +48,7 @@ class CourseStudentPoints extends Model
         // Calculate points
         foreach ($all_steps as $step) {
             foreach ($step->tasks as $task) {
+                if (!$task->isVisible($studentId, $course)) continue;
                 if (!$task->is_star) {
                     $max_points += $task->max_mark;
                 }

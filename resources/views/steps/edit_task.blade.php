@@ -118,6 +118,12 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="is_hidden">Скрытая задача</label>
+                            <input type="checkbox" id="is_hidden" name="is_hidden" value="on"
+                                   @if ($task->is_hidden) checked @endif/>
+                        </div>
+
+                        <div class="form-group">
                             <label for="is_code">Автопроверка</label>
                             <input type="checkbox" id="is_code" name="is_code" value="on"
                                    @if ($task->is_code) checked @endif/>

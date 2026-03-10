@@ -51,28 +51,28 @@ class Lesson extends Model
         return $this->belongsToMany('App\CoreNode', 'core_prerequisites', "lesson_id", "node_id");
     }
 
-    public function percent(User $student)
+    public function percent(User $student, $course = null)
     {
-        $points = $this->points($student);
-        $max_points = $this->max_points($student);
+        $points = $this->points($student, $course);
+        $max_points = $this->max_points($student, $course);
         if ($max_points == 0) return 100;
         return $points * 100 / $max_points;
 
     }
 
-    public function points(User $student)
+    public function points(User $student, $course = null)
     {
         $sum = 0;
         foreach ($this->steps as $step)
-            $sum += $step->points($student);
+            $sum += $step->points($student, $course);
         return $sum;
     }
 
-    public function max_points(User $student)
+    public function max_points(User $student, $course = null)
     {
         $sum = 0;
         foreach ($this->steps as $step)
-            $sum += $step->max_points($student);
+            $sum += $step->max_points($student, $course);
         return $sum;
     }
 
@@ -144,6 +144,7 @@ class Lesson extends Model
         if (!$this->isStarted($course)) return false;
         if ($user->role == 'admin' || $course->teachers->contains($user)) return true;
         foreach ($this->tasks()->where('is_star', false) as $task) {
+            if (!$task->isVisible($user->id, $course)) continue;
             if (!$task->isDone($user->id)) return false;
         }
         return true;

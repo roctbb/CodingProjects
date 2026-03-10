@@ -46,7 +46,9 @@ class StepsController extends Controller
         \App\ActionLog::record(Auth::User()->id, 'step', $id);
 
 
-        $tasks = $step->tasks()->with('solutions')->get();
+        $tasks = $step->tasks()->with('solutions')->get()->filter(function($task) use ($user, $course) {
+            return $task->isVisible($user->id, $course);
+        });
 
         $zero_theory = $step->theory == null || $step->theory == "";
         $one_tasker = $step->tasks->count() == 1 && $zero_theory;
@@ -66,7 +68,9 @@ class StepsController extends Controller
         $user = User::findOrFail(Auth::User()->id);
         $step = ProgramStep::findOrFail($id);
         $course = Course::findOrFail($course_id);
-        $tasks = $step->tasks;
+        $tasks = $step->tasks->filter(function($task) use ($user, $course) {
+            return $task->isVisible($user->id, $course);
+        });
         $zero_theory = $step->theory == null || $step->theory == "";
         $one_tasker = $step->tasks->count() == 1;
         $empty = $zero_theory && $step->tasks->count() == 0;

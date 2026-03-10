@@ -9,7 +9,7 @@ class Task extends Model
     protected $table = 'tasks';
 
     protected $fillable = [
-        'text', 'step_id', 'deadline', 'name', 'max_mark', 'is_star', 'only_class', 'only_remote', 'sort_index', 'is_quiz', 'is_code'
+        'text', 'step_id', 'deadline', 'name', 'max_mark', 'is_star', 'only_class', 'only_remote', 'sort_index', 'is_quiz', 'is_code', 'is_hidden'
     ];
 
     protected $dates = [
@@ -76,6 +76,14 @@ class Task extends Model
             ->where('user_id', $user_id)
             ->where('course_id', $course_id)
             ->exists();
+    }
+
+    public function isVisible($user_id, $course)
+    {
+        if (!$this->is_hidden) return true;
+        if ($course->teachers->contains('id', $user_id)) return true;
+        if (\App\User::find($user_id)->role == 'admin') return true;
+        return $this->solutions()->where('user_id', $user_id)->exists();
     }
 
 }
