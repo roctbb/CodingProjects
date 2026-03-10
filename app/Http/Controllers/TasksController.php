@@ -61,6 +61,7 @@ class TasksController extends Controller
 
         $task = Task::create(['text' => $request->text, 'step_id' => $step->id, 'name' => $request->name, 'max_mark' => $request->max_mark, 'sort_index' => $order,
             'is_star' => $request->is_star == 'on' ? true : false,
+            'is_hidden' => $request->is_hidden == 'on' ? true : false,
             'only_remote' => $request->only_remote == 'on' ? true : false,
             'only_class' => $request->only_class == 'on' ? true : false]);
         $task->solution = $request->solution;
@@ -138,6 +139,11 @@ class TasksController extends Controller
             $task->is_star = true;
         } else {
             $task->is_star = false;
+        }
+        if ($request->is_hidden == 'on') {
+            $task->is_hidden = true;
+        } else {
+            $task->is_hidden = false;
         }
         if ($request->only_class == 'on') {
             $task->only_class = true;
