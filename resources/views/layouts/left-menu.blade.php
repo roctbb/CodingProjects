@@ -11,13 +11,12 @@
 
     <link rel="stylesheet" href="/css/ionicons.min.css">
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/vendor/bootstrap/bootstrap.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ config('app.name', 'Laravel') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-    <link rel="stylesheet"
-          href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.12.0/build/styles/atelier-lakeside-light.min.css">
+    <link rel="stylesheet" href="/vendor/highlight/atelier-lakeside-light.min.css">
 
     <link rel="stylesheet" href="{{url('css/jquery-ui.min.css')}}">
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
@@ -30,10 +29,10 @@
     <script type="text/javascript" src="{{ url('assets/js/jquery.min.js') }}"></script>
     <script type="text/javascript" src="{{ url('assets/js/popper.min.js') }}"></script>
     <script type="text/javascript" src="{{ url('assets/js/bootstrap.js') }}"></script>
-    <script src="https://cdn.plot.ly/plotly-1.58.5.min.js"></script>
+    <script src="/vendor/plotly/plotly.min.js"></script>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <link rel="stylesheet" href="/vendor/easymde/easymde.min.css">
+    <script src="/vendor/easymde/easymde.min.js"></script>
 
     <!-- MathJax for mathematical formulas -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>

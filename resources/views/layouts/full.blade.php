@@ -16,13 +16,13 @@
 
     <link rel="stylesheet" href="/css/ionicons.min.css">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <link rel="stylesheet" href="/vendor/easymde/easymde.min.css">
+    <script src="/vendor/easymde/easymde.min.js"></script>
 
     <!-- Styles -->
     <!-- Latest compiled and minified CSS -->
     <!-- Compiled and minified CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/vendor/bootstrap/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <link rel="stylesheet" href="{{url('/css/app.css')}}">
@@ -50,7 +50,7 @@
     <script src="{{url('/js/linkify.min.js')}}"></script>
     <script src="{{url('/js/linkify-jquery.min.js')}}"></script>
     <link rel="stylesheet"
-          href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.12.0/build/styles/atelier-lakeside-light.min.css">
+          href="/vendor/highlight/atelier-lakeside-light.min.css">
     <script src="{{ url('/scripts/highlight.min.js') }}"></script>
     <script>hljs.initHighlightingOnLoad();</script>
     <!-- Latest compiled and minified CSS -->
@@ -58,7 +58,7 @@
     <link rel="stylesheet" href="{{url('css/jquery-ui.min.css')}}">
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="{{url('js/jquery-ui.min.js')}}"></script>
-    <script src="https://cdn.plot.ly/plotly-1.58.5.min.js"></script>
+    <script src="/vendor/plotly/plotly.min.js"></script>
 
     {!! \NoCaptcha::renderJs() !!}
     <script>

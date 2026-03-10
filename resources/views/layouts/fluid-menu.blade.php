@@ -13,8 +13,8 @@
          - {{ config('app.name', 'Laravel') }}
     </title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <link rel="stylesheet" href="/vendor/easymde/easymde.min.css">
+    <script src="/vendor/easymde/easymde.min.js"></script>
     <link rel="stylesheet" href="/css/ionicons.min.css">
 
     <!-- Styles -->
