@@ -250,7 +250,7 @@ class Lesson extends Model
         $completed_nodes = collect([]);
 
         foreach ($lessons as $lesson) {
-            if ($lesson->percent($user) > 90) {
+            if ($lesson->percent($user, $course) > 90) {
                 $completed_nodes->push($lesson->sdl_node);
             }
         }

@@ -39,6 +39,7 @@ class LessonStudentStats extends Model
     {
         $lesson = Lesson::with('steps', 'steps.tasks')->findOrFail($lessonId);
         $student = User::with('submissions')->findOrFail($studentId);
+        $course = Course::findOrFail($courseId);
 
         $points = 0;
         $max_points = 0;
@@ -46,6 +47,7 @@ class LessonStudentStats extends Model
         // Calculate points for this lesson
         foreach ($lesson->steps as $step) {
             foreach ($step->tasks as $task) {
+                if (!$task->isVisible($studentId, $course)) continue;
                 if (!$task->is_star) {
                     $max_points += $task->max_mark;
                 }

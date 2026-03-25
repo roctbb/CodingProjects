@@ -79,6 +79,7 @@ class ProgramChapter extends Model
 
 
             foreach ($tasks as $task) {
+                if (!$task->isVisible($student->id, $course)) continue;
                 if (!$task->is_star) $max_points += $task->max_mark;
                 $points += $student->submissions->where('task_id', $task->id)->max('mark');
             }

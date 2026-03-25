@@ -313,7 +313,7 @@ class User extends Authenticatable implements MustVerifyEmail
             foreach ($this->courses as $course) {
                 if ($course->is_sdl) continue;
                 foreach ($course->program->lessons as $lesson) {
-                    if ($lesson->percent($this) > 90) {
+                    if ($lesson->percent($this, $course) > 90) {
                         $stickers->push($lesson->sticker);
                     }
                 }
@@ -334,7 +334,7 @@ class User extends Authenticatable implements MustVerifyEmail
             foreach ($this->courses as $course) {
                 if ($course->is_sdl) continue;
                 foreach ($course->program->lessons as $lesson) {
-                    if ($lesson->percent($this) > 90) {
+                    if ($lesson->percent($this, $course) > 90) {
                         $descriptions[$lesson->sticker] = $lesson->name;
                     }
                 }

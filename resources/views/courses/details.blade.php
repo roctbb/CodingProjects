@@ -160,7 +160,7 @@
                                         <div class="col" data-filter-by="text">
                                             @parsedown($lesson->description)
                                         </div>
-                                        @if (!($user->role=='admin' || $course->teachers->contains($user)) and $lesson->percent($cstudent) > 90)
+                                        @if (!($user->role=='admin' || $course->teachers->contains($user)) and $lesson->percent($cstudent, $course) > 90)
                                             <div class="col-sm-auto">
                                                 <img src="{{url($lesson->sticker)}}" style="max-width: 200px;"/>
                                             </div>

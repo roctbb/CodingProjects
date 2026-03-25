@@ -194,6 +194,11 @@ class TasksController extends Controller
             $solution->save();
         }
 
+        // Recalculate cached points since hidden task is now visible for all students
+        foreach ($course->students as $user) {
+            RecalculateCourseStudentPoints::dispatch($course_id, $user->id);
+        }
+
         return redirect('/insider/courses/' . $course_id . '/steps/' . $task->step->id . '#task' . $id);
     }
 
@@ -272,6 +277,13 @@ class TasksController extends Controller
         if (!$task->is_quiz && !$task->is_code) {
             $when = \Carbon\Carbon::now()->addSeconds(1);
             Notification::send($course->teachers, (new \App\Notifications\NewSolution($solution))->delay($when));
+        }
+
+        // If this is the first solution for a hidden task, recalculate cached points
+        // because the task just became visible for this student
+        if ($task->is_hidden && !$task->is_quiz) {
+            CourseStudentPoints::recalculate($course_id, $user->id);
+            LessonStudentStats::recalculateForStudent($course_id, $user->id);
         }
 
 

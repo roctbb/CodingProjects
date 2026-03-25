@@ -112,7 +112,7 @@ class Course extends Model
     {
         $sum = 0;
         foreach ($this->steps as $step)
-            $sum += $step->max_points($student);
+            $sum += $step->max_points($student, $this);
         return $sum;
     }
 
@@ -184,6 +184,7 @@ class Course extends Model
             $tasks = $step->tasks;
 
             foreach ($tasks as $task) {
+                if (!$task->isVisible($user->id, $course)) continue;
                 if (!$task->is_star) $max_points += $task->max_mark;
                 $points += $user->submissions->where('task_id', $task->id)->max('mark');
             }

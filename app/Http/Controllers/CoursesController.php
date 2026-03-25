@@ -364,7 +364,7 @@ class CoursesController extends Controller
                 $idea = Idea::findOrFail($student->pivot->idea_id);
                 $idea_lessons = $course->user_sdl_lessons($user)->where('sdl_node_id', $idea->sdl_node_id)->get();
                 foreach ($idea_lessons as $lesson) {
-                    if ($lesson->percent($user) > 90) {
+                    if ($lesson->percent($user, $course) > 90) {
                         $idea = null;
                         break;
                     }
@@ -375,11 +375,11 @@ class CoursesController extends Controller
             $marks = [];
             $lessons = $course->user_sdl_lessons($user)->get();
 
-            $done_lessons = $lessons->filter(function ($item) use ($user) {
-                return $item->percent($user) > 90;
+            $done_lessons = $lessons->filter(function ($item) use ($user, $course) {
+                return $item->percent($user, $course) > 90;
             });
-            $current_lessons = $lessons->filter(function ($item) use ($user) {
-                return $item->percent($user) <= 90;
+            $current_lessons = $lessons->filter(function ($item) use ($user, $course) {
+                return $item->percent($user, $course) <= 90;
             });
             $available_lessons = Lesson::getAvailableSdlLessons($user, $course, $idea);
 
