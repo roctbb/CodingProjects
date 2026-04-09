@@ -30,6 +30,9 @@
                                 <a href="{{url('/insider/courses/'.$course->id.'/edit')}}"
                                    class="dropdown-item"><i
                                             class="icon ion-android-create"></i> Изменить курс</a>
+                                <a href="{{url('/insider/courses/'.$course->id.'/export-md')}}"
+                                   class="dropdown-item"><i
+                                            class="icon ion-document-text"></i> Экспорт в MD</a>
                                 @if ($course->state=="draft")
                                     <a href="{{url('/insider/courses/'.$course->id.'/start')}}"
                                        class="dropdown-item"><i

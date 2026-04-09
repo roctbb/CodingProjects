@@ -35,8 +35,8 @@ class CoursesController extends Controller
     public function __construct()
     {
         $this->middleware('auth')->except('details', 'open_index');
-        $this->middleware('course')->only(['details', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'createChapter', 'editChapter', 'createChapterView', 'editChapterView']);
-        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'createChapter', 'editChapter', 'createChapterView', 'editChapterView']);
+        $this->middleware('course')->only(['details', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'createChapter', 'editChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
+        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'createChapter', 'editChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
     }
 
     /**
@@ -751,5 +751,131 @@ class CoursesController extends Controller
 
         return $response;
 
+    }
+
+    public function exportMarkdown($id)
+    {
+        $course = Course::findOrFail($id);
+        $lessons = $course->lessons()->with('steps.tasks')->orderBy('sort_index')->orderBy('id')->get();
+
+        $tempDir = sys_get_temp_dir() . '/course-' . $id . '-' . time();
+        mkdir($tempDir);
+
+        foreach ($lessons as $lessonIndex => $lesson) {
+            $lessonNumber = $lessonIndex + 1;
+            $lessonDirName = sprintf('%02d-%s', $lessonNumber, $this->sanitizeFileName($lesson->name) ?: 'lesson-' . $lesson->id);
+            $lessonDir = $tempDir . '/' . $lessonDirName;
+            mkdir($lessonDir);
+
+            foreach ($lesson->steps as $stepIndex => $step) {
+                $stepNumber = $stepIndex + 1;
+
+                if ($step->is_notebook && !empty($step->theory)) {
+                    $fileName = sprintf('%02d-%s.ipynb', $stepNumber, $this->sanitizeFileName($step->name));
+                    file_put_contents($lessonDir . '/' . $fileName, $step->theory);
+                } else {
+                    $fileName = sprintf('%02d-%s.md', $stepNumber, $this->sanitizeFileName($step->name));
+                    $content = "# {$step->name}\n\n";
+
+                    if (!empty($step->theory)) {
+                        $content .= "## Теория\n\n{$step->theory}\n\n";
+                    }
+                    if (!empty($step->notes)) {
+                        $content .= "## Заметки\n\n{$step->notes}\n\n";
+                    }
+                    if ($step->tasks->count() > 0) {
+                        $content .= "## Задачи\n\n";
+                        foreach ($step->tasks as $taskIndex => $task) {
+                            $content .= "### Задача " . ($taskIndex + 1) . ": {$task->name}\n\n";
+                            if (!empty($task->text)) {
+                                $content .= "{$task->text}\n\n";
+                            }
+                            $metadata = [];
+                            if ($task->max_mark > 0) $metadata[] = "**Максимальный балл:** {$task->max_mark}";
+                            if ($task->is_star) $metadata[] = "**Звёздочка:** Да";
+                            if ($task->answer) $metadata[] = "**Правильный ответ:** {$task->answer}";
+                            if (!empty($metadata)) $content .= implode(" | ", $metadata) . "\n\n";
+                            $content .= "---\n\n";
+                        }
+                    }
+                    file_put_contents($lessonDir . '/' . $fileName, $content);
+                }
+            }
+        }
+
+        $zipPath = sys_get_temp_dir() . '/course-' . $id . '-' . time() . '.zip';
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            $this->addDirToZip($zip, $tempDir, '');
+            $zip->close();
+        }
+
+        $this->deleteDirectory($tempDir);
+
+        $safeName = $this->sanitizeFileName($course->name) ?: 'course-' . $id;
+
+        $response = \Response::make(file_get_contents($zipPath));
+        $response->header('Content-Type', 'application/zip');
+        $response->header('Content-Disposition', 'attachment; filename="' . $safeName . '.zip"');
+        register_shutdown_function('unlink', $zipPath);
+
+        return $response;
+    }
+
+    private function addDirToZip(\ZipArchive $zip, $dir, $prefix)
+    {
+        foreach (scandir($dir) as $item) {
+            if ($item === '.' || $item === '..') continue;
+            $path = $dir . '/' . $item;
+            $localName = $prefix ? $prefix . '/' . $this->transliterate($item) : $this->transliterate($item);
+            if (is_dir($path)) {
+                $zip->addEmptyDir($localName);
+                $this->addDirToZip($zip, $path, $localName);
+            } else {
+                $zip->addFile($path, $localName);
+            }
+        }
+    }
+
+    private function deleteDirectory($dir)
+    {
+        if (!file_exists($dir)) return true;
+        if (!is_dir($dir)) return unlink($dir);
+        foreach (scandir($dir) as $item) {
+            if ($item === '.' || $item === '..') continue;
+            $this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item);
+        }
+        return rmdir($dir);
+    }
+
+    private function sanitizeFileName($name)
+    {
+        $name = $this->transliterate($name);
+        $name = preg_replace('/[^a-zA-Z0-9\s-]/', '', $name);
+        $name = preg_replace('/\s+/', '-', $name);
+        $name = trim($name, '-');
+        return mb_substr($name, 0, 50);
+    }
+
+    private function transliterate($text)
+    {
+        $converter = [
+            'а' => 'a', 'б' => 'b', 'в' => 'v', 'г' => 'g', 'д' => 'd',
+            'е' => 'e', 'ё' => 'yo', 'ж' => 'zh', 'з' => 'z', 'и' => 'i',
+            'й' => 'y', 'к' => 'k', 'л' => 'l', 'м' => 'm', 'н' => 'n',
+            'о' => 'o', 'п' => 'p', 'р' => 'r', 'с' => 's', 'т' => 't',
+            'у' => 'u', 'ф' => 'f', 'х' => 'h', 'ц' => 'ts', 'ч' => 'ch',
+            'ш' => 'sh', 'щ' => 'sch', 'ь' => '', 'ы' => 'y', 'ъ' => '',
+            'э' => 'e', 'ю' => 'yu', 'я' => 'ya',
+            'А' => 'A', 'Б' => 'B', 'В' => 'V', 'Г' => 'G', 'Д' => 'D',
+            'Е' => 'E', 'Ё' => 'Yo', 'Ж' => 'Zh', 'З' => 'Z', 'И' => 'I',
+            'Й' => 'Y', 'К' => 'K', 'Л' => 'L', 'М' => 'M', 'Н' => 'N',
+            'О' => 'O', 'П' => 'P', 'Р' => 'R', 'С' => 'S', 'Т' => 'T',
+            'У' => 'U', 'Ф' => 'F', 'Х' => 'H', 'Ц' => 'Ts', 'Ч' => 'Ch',
+            'Ш' => 'Sh', 'Щ' => 'Sch', 'Ь' => '', 'Ы' => 'Y', 'Ъ' => '',
+            'Э' => 'E', 'Ю' => 'Yu', 'Я' => 'Ya',
+        ];
+        return strtr($text, $converter);
     }
 }

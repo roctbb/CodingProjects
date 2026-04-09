@@ -174,6 +174,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/courses/{id}/edit', 'CoursesController@edit');
     Route::get('/courses/{id}/assessments', 'CoursesController@assessments');
     Route::get('/courses/{id}/export', 'CoursesController@export');
+    Route::get('/courses/{id}/export-md', 'CoursesController@exportMarkdown');
     Route::get('/courses/{id}/chapter', 'CoursesController@createChapterView');
     Route::post('/courses/{id}/chapter', 'CoursesController@createChapter');
     Route::get('/courses/{id}/add_sdl_lesson', 'CoursesController@addSdlLesson');
