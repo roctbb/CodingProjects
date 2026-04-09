@@ -756,49 +756,56 @@ class CoursesController extends Controller
     public function exportMarkdown($id)
     {
         $course = Course::findOrFail($id);
-        $lessons = $course->lessons()->with('steps.tasks')->orderBy('sort_index')->orderBy('id')->get();
+        $chapters = $course->program->chapters()->with('lessons.steps.tasks')->get();
 
         $tempDir = sys_get_temp_dir() . '/course-' . $id . '-' . time();
         mkdir($tempDir);
 
-        foreach ($lessons as $lessonIndex => $lesson) {
-            $lessonNumber = $lessonIndex + 1;
-            $lessonDirName = sprintf('%02d-%s', $lessonNumber, $this->sanitizeFileName($lesson->name) ?: 'lesson-' . $lesson->id);
-            $lessonDir = $tempDir . '/' . $lessonDirName;
-            mkdir($lessonDir);
+        foreach ($chapters as $chapterIndex => $chapter) {
+            $chapterNumber = $chapterIndex + 1;
+            $chapterDirName = sprintf('%02d-%s', $chapterNumber, $this->sanitizeFileName($chapter->name) ?: 'chapter-' . $chapter->id);
+            $chapterDir = $tempDir . '/' . $chapterDirName;
+            mkdir($chapterDir);
 
-            foreach ($lesson->steps as $stepIndex => $step) {
-                $stepNumber = $stepIndex + 1;
+            foreach ($chapter->lessons as $lessonIndex => $lesson) {
+                $lessonNumber = $lessonIndex + 1;
+                $lessonDirName = sprintf('%02d-%s', $lessonNumber, $this->sanitizeFileName($lesson->name) ?: 'lesson-' . $lesson->id);
+                $lessonDir = $chapterDir . '/' . $lessonDirName;
+                mkdir($lessonDir);
 
-                if ($step->is_notebook && !empty($step->theory)) {
-                    $fileName = sprintf('%02d-%s.ipynb', $stepNumber, $this->sanitizeFileName($step->name));
-                    file_put_contents($lessonDir . '/' . $fileName, $step->theory);
-                } else {
-                    $fileName = sprintf('%02d-%s.md', $stepNumber, $this->sanitizeFileName($step->name));
-                    $content = "# {$step->name}\n\n";
+                foreach ($lesson->steps as $stepIndex => $step) {
+                    $stepNumber = $stepIndex + 1;
 
-                    if (!empty($step->theory)) {
-                        $content .= "## Теория\n\n{$step->theory}\n\n";
-                    }
-                    if (!empty($step->notes)) {
-                        $content .= "## Заметки\n\n{$step->notes}\n\n";
-                    }
-                    if ($step->tasks->count() > 0) {
-                        $content .= "## Задачи\n\n";
-                        foreach ($step->tasks as $taskIndex => $task) {
-                            $content .= "### Задача " . ($taskIndex + 1) . ": {$task->name}\n\n";
-                            if (!empty($task->text)) {
-                                $content .= "{$task->text}\n\n";
-                            }
-                            $metadata = [];
-                            if ($task->max_mark > 0) $metadata[] = "**Максимальный балл:** {$task->max_mark}";
-                            if ($task->is_star) $metadata[] = "**Звёздочка:** Да";
-                            if ($task->answer) $metadata[] = "**Правильный ответ:** {$task->answer}";
-                            if (!empty($metadata)) $content .= implode(" | ", $metadata) . "\n\n";
-                            $content .= "---\n\n";
+                    if ($step->is_notebook && !empty($step->theory)) {
+                        $fileName = sprintf('%02d-%s.ipynb', $stepNumber, $this->sanitizeFileName($step->name));
+                        file_put_contents($lessonDir . '/' . $fileName, $step->theory);
+                    } else {
+                        $fileName = sprintf('%02d-%s.md', $stepNumber, $this->sanitizeFileName($step->name));
+                        $content = "# {$step->name}\n\n";
+
+                        if (!empty($step->theory)) {
+                            $content .= "## Теория\n\n{$step->theory}\n\n";
                         }
+                        if (!empty($step->notes)) {
+                            $content .= "## Заметки\n\n{$step->notes}\n\n";
+                        }
+                        if ($step->tasks->count() > 0) {
+                            $content .= "## Задачи\n\n";
+                            foreach ($step->tasks as $taskIndex => $task) {
+                                $content .= "### Задача " . ($taskIndex + 1) . ": {$task->name}\n\n";
+                                if (!empty($task->text)) {
+                                    $content .= "{$task->text}\n\n";
+                                }
+                                $metadata = [];
+                                if ($task->max_mark > 0) $metadata[] = "**Максимальный балл:** {$task->max_mark}";
+                                if ($task->is_star) $metadata[] = "**Звёздочка:** Да";
+                                if ($task->answer) $metadata[] = "**Правильный ответ:** {$task->answer}";
+                                if (!empty($metadata)) $content .= implode(" | ", $metadata) . "\n\n";
+                                $content .= "---\n\n";
+                            }
+                        }
+                        file_put_contents($lessonDir . '/' . $fileName, $content);
                     }
-                    file_put_contents($lessonDir . '/' . $fileName, $content);
                 }
             }
         }
