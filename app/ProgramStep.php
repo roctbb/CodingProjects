@@ -14,8 +14,8 @@ class ProgramStep extends Model
         'name', 'description', 'image', 'start_date'
     ];
 
-    protected $dates = [
-        'start_date'
+    protected $casts = [
+        'start_date' => 'datetime'
     ];
 
 

@@ -26,8 +26,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'hobbies', 'interests', 'git', 'vk', 'telegram', 'facebook', 'comments', 'letter', 'email_verified_at', 'last_login_at',
         'last_login_ip'
     ];
-    protected $dates = [
-        'birthday'
+    protected $casts = [
+        'birthday' => 'datetime'
     ];
 
     protected $prerequisite_cache = [];

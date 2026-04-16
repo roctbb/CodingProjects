@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 
 class Controller extends BaseController
 {
@@ -21,13 +22,12 @@ class Controller extends BaseController
      */
     public function checkValidator($validator, $action = '', $id = -1)
     {
-        $request = request();
         if ($validator->fails()) {
             if ($action != '') {
                 Session::flash('action', $action);
                 Session::flash('lastID', $id);
             }
-            $this->throwValidationException($request, $validator);
+            throw new ValidationException($validator);
         }
     }
 

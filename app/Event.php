@@ -8,7 +8,7 @@ use Carbon\Carbon;
 class Event extends Model
 {
     protected $table = 'events';
-    protected $dates = ['date'];
+    protected $casts = ['date' => 'datetime'];
 
     public function userOrgs()
     {

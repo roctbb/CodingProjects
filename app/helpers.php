@@ -1,5 +1,12 @@
 <?php
 
+if (!function_exists('parsedown')) {
+    function parsedown($text)
+    {
+        return (new Parsedown())->text($text);
+    }
+}
+
 if (!function_exists('parsedown_math')) {
     /**
      * Parse markdown text with mathematical formulas support

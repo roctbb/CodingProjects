@@ -20,11 +20,9 @@ class AppServiceProvider extends ServiceProvider
         \Carbon\Carbon::setLocale('ru');
         Blade::withoutDoubleEncoding();
 
-        /*\DB::listen(function ($query) {
-            print(
-                $query->sql."<br>"
-            );
-        });*/
+        Blade::directive('parsedown', function ($expression) {
+            return "<?php echo (new \Parsedown())->text($expression); ?>";
+        });
     }
 
     /**

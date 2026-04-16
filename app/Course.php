@@ -16,8 +16,8 @@ class Course extends Model
         'name', 'description', 'image', 'start_date', 'end_date', 'state', 'level', 'invite'
     ];
 
-    protected $dates = [
-        'start_date', 'end_date'
+    protected $casts = [
+        'start_date' => 'datetime', 'end_date' => 'datetime'
     ];
 
     public static function availableForEnroll()

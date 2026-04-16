@@ -12,8 +12,8 @@ class Task extends Model
         'text', 'step_id', 'deadline', 'name', 'max_mark', 'is_star', 'only_class', 'only_remote', 'sort_index', 'is_quiz', 'is_code', 'is_hidden'
     ];
 
-    protected $dates = [
-        'deadline'
+    protected $casts = [
+        'deadline' => 'datetime'
     ];
 
     public function step()

@@ -12,7 +12,7 @@ class BlockedTask extends Model
         'task_id', 'user_id', 'course_id', 'reason', 'blocked_at'
     ];
 
-    protected $dates = ['blocked_at'];
+    protected $casts = ['blocked_at' => 'datetime'];
 
     public function task()
     {

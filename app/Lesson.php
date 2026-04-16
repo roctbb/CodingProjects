@@ -3,7 +3,6 @@
 namespace App;
 
 use Carbon\Carbon;
-use function foo\func;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -15,8 +14,8 @@ class Lesson extends Model
         'name', 'description', 'image', 'start_date'
     ];
 
-    protected $dates = [
-        'start_date'
+    protected $casts = [
+        'start_date' => 'datetime'
     ];
 
     protected $results_cache = array();

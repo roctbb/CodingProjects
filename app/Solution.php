@@ -14,8 +14,8 @@ class Solution extends Model
 
     protected $appends = ['mark'];
 
-    protected $dates = [
-        'submitted', 'checked'
+    protected $casts = [
+        'submitted' => 'datetime', 'checked' => 'datetime'
     ];
 /*
     public function pmark()

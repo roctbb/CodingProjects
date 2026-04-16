@@ -8,5 +8,5 @@ class TaskDeadline extends Model
 {
     //
     public $fillable = ['course_id', 'task_id', 'expiration', 'penalty'];
-    protected $dates = ['expiration'];
+    protected $casts = ['expiration' => 'datetime'];
 }
