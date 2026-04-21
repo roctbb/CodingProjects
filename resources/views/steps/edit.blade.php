@@ -5,14 +5,15 @@
 @endsection
 
 @section('content')
-    <div class="row">
-        <div class="col s12">
-            <h3>Изменение темы: "{{$step->name}}"</h3>
-            <div class="card">
+    <div class="cp-step-form-page">
+    <div class="row cp-row-gap-top">
+        <div class="col-12 col-xl-10">
+            <h2 class="cp-heading-lite">Изменение темы: "{{$step->name}}"</h2>
+            <div class="card cp-form-card">
                 <div class="card-body">
-                    <form method="POST">
+                    <form method="POST" class="vstack gap-3">
                         {{ csrf_field() }}
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="name">Название</label>
 
                             @if (old('name')!="")
@@ -23,22 +24,22 @@
                                        name="name" required>
                             @endif
                             @if ($errors->has('name'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('name') }}</strong>
                                     </span>
                             @endif
                         </div>
-                        <div class="form-group">
-                            <label for="theory" style="padding-bottom: 10px;">Теоретический материал</label>
+                        <div class="mb-3">
+                            <label for="theory" class="cp-label-spaced">Теоретический материал</label>
                             <div class="mb-2">
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText(this, 'theory', 'fix_typos')">
-                                    <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
+                                    <i class="icon fa-regular fa-square-check"></i> Исправить опечатки
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText(this, 'theory', 'improve_style')">
-                                    <i class="icon ion-android-create"></i> Улучшить стиль
+                                    <i class="icon fa-solid fa-pen-to-square"></i> Улучшить стиль
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText(this, 'theory', 'both')">
-                                    <i class="icon ion-android-star"></i> Исправить и улучшить
+                                    <i class="icon fa-solid fa-star"></i> Исправить и улучшить
                                 </button>
                             </div>
                             @if (old('theory')!="")
@@ -50,22 +51,22 @@
                             @endif
 
                             @if ($errors->has('theory'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('theory') }}</strong>
                                     </span>
                             @endif
                         </div>
-                        <div class="form-group">
-                            <label for="notes" style="padding-bottom: 10px;">Комментарий для преподавателя</label>
+                        <div class="mb-3">
+                            <label for="notes" class="cp-label-spaced">Комментарий для преподавателя</label>
                             <div class="mb-2">
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText(this, 'notes', 'fix_typos')">
-                                    <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
+                                    <i class="icon fa-regular fa-square-check"></i> Исправить опечатки
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText(this, 'notes', 'improve_style')">
-                                    <i class="icon ion-android-create"></i> Улучшить стиль
+                                    <i class="icon fa-solid fa-pen-to-square"></i> Улучшить стиль
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText(this, 'notes', 'both')">
-                                    <i class="icon ion-android-star"></i> Исправить и улучшить
+                                    <i class="icon fa-solid fa-star"></i> Исправить и улучшить
                                 </button>
                             </div>
                             @if (old('notes')!="")
@@ -77,21 +78,19 @@
                             @endif
 
                             @if ($errors->has('notes'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('notes') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-check">
-                            <label class="form-check-label">
-                                <input type="checkbox" class="form-check-input" name="notebook" value="yes"
-                                       @if ($step->is_notebook) checked @endif>
-                                Это тетрадка
-                            </label>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="notebook" name="notebook" value="yes"
+                                   @if ($step->is_notebook) checked @endif>
+                            <label class="form-check-label" for="notebook">Это тетрадка</label>
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="video_url">Видео</label>
 
                             @if (old('video_url')!="")
@@ -102,13 +101,13 @@
                                        name="video_url">
                             @endif
                             @if ($errors->has('video_url'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('video_url') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <button type="submit" class="btn btn-success">Сохранить</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
                     </form>
                 </div>
             </div>
@@ -187,7 +186,6 @@
                 }
             </script>
         </div>
-    </div>
     </div>
     </div>
 @endsection

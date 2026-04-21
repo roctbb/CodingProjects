@@ -2,7 +2,6 @@
 
 namespace App\Notifications;
 
-use App\Channels\VkChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,7 +29,7 @@ class Feedback extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['mail', VkChannel::class];
+        return ['mail'];
     }
 
     /**
@@ -43,11 +42,6 @@ class Feedback extends Notification implements ShouldQueue
     {
         return (new MailMessage)->greeting('Добрый день!')->subject('Как прошли занятия?')
             ->line("Пожалуйста, оцените, как прошли занятия в Гекконе сегодня. Буквально пара кликов и бонусный геккоин ваш! :)")->action('Оценить', url("/feedback/".$this->key));
-    }
-
-    public function toVk($notifiable)
-    {
-        return "👀 Как прошли занятия? Буквально пара кликов и бонусный геккоин ваш!\n\n🔗 Оценить: ".url("/feedback/".$this->key);
     }
 
 }

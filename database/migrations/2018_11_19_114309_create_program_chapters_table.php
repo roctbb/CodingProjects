@@ -25,10 +25,6 @@ class CreateProgramChaptersTable extends Migration
             $table->boolean('is_scale_blocking')->default(false);
             $table->boolean('is_time_blocking')->default(false);
 
-            $table->integer('scale_id')->unsigned()->nullable();
-            $table->foreign('scale_id')->references('id')
-                ->on('result_scales')->onDelete('cascade');
-
             $table->timestamps();
         });
 

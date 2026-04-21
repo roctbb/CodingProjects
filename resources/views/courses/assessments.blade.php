@@ -5,25 +5,30 @@
 @endsection
 
 @section('content')
-    <h2 style="margin: 20px;"><a class="back-link" href="{{url('/insider/courses/'.$course->id)}}"><i
-                    class="icon ion-chevron-left"></i></a>&nbsp;Очки опыта по курсу "{{$course->name}}"</h2>
+    <div class="cp-course-assessments-page">
+    <div class="cp-assessment-header">
+        <h2 class="m-0 cp-heading-lite cp-assessment-title">
+            <a class="back-link" href="{{url('/insider/courses/'.$course->id)}}"><i class="icon fa-solid fa-chevron-left"></i></a>
+            Очки опыта по курсу "{{$course->name}}"
+        </h2>
+    </div>
     <div class="assessment-block">
-        <div class="table-wrapper">
-            <table class="table table-striped  table-sm">
-                <thead class="thead-inverse">
+        <div class="table-wrapper table-responsive">
+            <table class="table table-striped table-sm align-middle cp-assessment-table">
+                <thead>
                 <tr class="bg-primary">
-                    <th style="border-bottom: none;"></th>
+                    <th class="border-bottom-0 cp-assessment-student-head"></th>
                     @foreach($course->program->lessons as $lesson)
                             @if ($lesson->tasks()->count()!=0)
-                                <th colspan="{{$lesson->tasks()->count()}}">{{$lesson->name}}
+                                <th class="cp-assessment-lesson-head" colspan="{{$lesson->tasks()->count()}}">{{$lesson->name}}
                                 </th>
                             @endif
                     @endforeach
-                    <td class="bg-info"></td>
+                    <th class="bg-info cp-assessment-sum-col"></th>
                 </tr>
 
                 <tr>
-                    <th class="bg-primary"></th>
+                    <th class="bg-primary cp-assessment-student-head"></th>
                     @php
                         $sum = 0;
                     @endphp
@@ -32,23 +37,23 @@
 
                             @foreach($step->tasks as $task)
 
-                                <th class="bg-primary">{{$task->name}} ({{$task->max_mark}})
+                                <th class="bg-primary cp-assessment-task-col" title="{{$task->name}}">{{$task->name}} ({{$task->max_mark}})
                                     @if($task->is_star) <sup>*</sup> @endif
-                                    @if($task->only_class) <sup><i class="icon ion-android-contacts"></i></sup> @endif
-                                    @if($task->only_remote) <sup><i class="icon ion-at"></i></sup> @endif</th>
+                                    @if($task->only_class) <sup><i class="icon fa-solid fa-users"></i></sup> @endif
+                                    @if($task->only_remote) <sup><i class="icon fa-solid fa-at"></i></sup> @endif</th>
                                 @php
                                     $sum += $task->max_mark;
                                 @endphp
                             @endforeach
                         @endforeach
                     @endforeach
-                    <td class="bg-info">Сумма ({{$sum}})</td>
+                    <th class="bg-info cp-assessment-sum-col">Сумма ({{$sum}})</th>
                 </tr>
                 </thead>
                 <tbody>
                 @foreach($course->students as $student)
                     <tr>
-                        <th scope="row">{{$student->name}}</th>
+                        <th scope="row" class="cp-assessment-student-col">{{$student->name}}</th>
                         @php
                             $sum = 0;
                         @endphp
@@ -75,25 +80,25 @@
                                             }
                                         }
                                         $sum += $mark;
-                                        $class = $blocked ? 'badge-danger' : 'badge-light';
+                                        $class = $blocked ? 'text-bg-danger' : 'text-bg-light';
                                         if (!$blocked) {
                                             if ($mark >= $task->max_mark * 0.5)
                                             {
-                                                $class = 'badge-primary';
+                                                $class = 'text-bg-primary';
                                             }
                                             if ($mark >= $task->max_mark * 0.7)
                                             {
-                                                $class = 'badge-success';
+                                                $class = 'text-bg-success';
                                             }
                                             if ($need_check)
                                             {
-                                                $class = 'badge-warning';
+                                                $class = 'text-bg-warning';
                                             }
                                         }
 
 
                                     @endphp
-                                    <td>
+                                    <td class="cp-assessment-mark-col">
                                         <a target="_blank"
                                            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">
                                             <span class="badge {{$class}}">{{$mark}}</span>
@@ -103,7 +108,7 @@
                             @endforeach
 
                         @endforeach
-                        <td class="bg-info">{{$sum}}<br>&nbsp;</td>
+                        <td class="bg-info cp-assessment-sum-col">{{$sum}}</td>
                     </tr>
                 @endforeach
                 </tbody>
@@ -111,5 +116,6 @@
 
             </table>
         </div>
+    </div>
     </div>
 @endsection

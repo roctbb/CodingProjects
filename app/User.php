@@ -23,7 +23,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $fillable = [
         'name', 'email', 'password', 'role', 'school', 'grade_year', 'birthday',
-        'hobbies', 'interests', 'git', 'vk', 'telegram', 'facebook', 'comments', 'letter', 'email_verified_at', 'last_login_at',
+        'hobbies', 'interests', 'git', 'telegram', 'facebook', 'comments', 'letter', 'email_verified_at', 'last_login_at',
         'last_login_ip'
     ];
     protected $casts = [
@@ -55,21 +55,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany('App\Course', 'course_students', 'user_id', 'course_id');
     }
 
-    public function games()
-    {
-        return $this->hasMany('\App\Game');
-    }
-
-    public function articles()
-    {
-        return $this->hasMany('\App\Article', 'author_id', 'id');
-    }
-
-    public function events()
-    {
-        return $this->belongsToMany('\App\Event', 'event_orgs');
-    }
-
     public function completedCourses()
     {
         return $this->hasMany('App\CompletedCourse', 'user_id', 'id');
@@ -85,11 +70,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne('App\Rank', 'id', 'rank_id');
     }
 
-    public function posts()
-    {
-        return $this->hasMany('App\ForumPost', 'user_id', 'id');
-    }
-
     public function grade()
     {
         $current_year = Carbon::now()->year;
@@ -99,11 +79,6 @@ class User extends Authenticatable implements MustVerifyEmail
         } else {
             return $current_year - $this->grade_year + 1;
         }
-    }
-
-    public function projects()
-    {
-        return $this->belongsToMany('App\Project', 'project_students', 'user_id', 'project_id');
     }
 
     public function setGrade($grade)
@@ -119,20 +94,13 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function checkPrerequisite(CoreNode $prerequisite)
     {
-        if ($prerequisite->version == 1)
+        if ($prerequisite->version == 1) {
             foreach ($this->solutions as $solution) {
                 foreach ($solution->task->consequences as $consequence) {
                     if ($prerequisite->id == $consequence->id and $solution->mark != null and $solution->mark >= $consequence->pivot->cutscore) {
                         return true;
                     }
                 }
-            }
-        else {
-            foreach (Lesson::where('sdl_node_id', $prerequisite->id)->get() as $lesson) {
-                if ($lesson->percent($this) >= 90) {
-                    return true;
-                }
-
             }
         }
         return false;
@@ -173,32 +141,7 @@ class User extends Authenticatable implements MustVerifyEmail
             $this->score += $task->sortByDesc('mark')->first()->mark;
         }
 
-        // Get all related data at once
-        $games = $this->games()->get();
-        $articles = $this->articles()->get();
-        $events = $this->events()->get();
-        $posts = $this->posts()->get();
         $completedCourses = $this->completedCourses()->get();
-
-        // Calculate scores from games
-        foreach ($games as $game) {
-            $this->score += ($game->upvotes() - $game->downvotes()) * 5;
-        }
-
-        // Calculate scores from articles
-        foreach ($articles as $article) {
-            $this->score += ($article->getUpvotes() - $article->getDownvotes()) * 10;
-        }
-
-        // Calculate scores from events
-        foreach ($events as $event) {
-            $this->score += ($event->getUpvotes() - $event->getDownvotes()) * 10;
-        }
-
-        // Calculate scores from posts
-        foreach ($posts as $post) {
-            $this->score += 5 * $post->getVotes();
-        }
 
         // Calculate scores from completed courses
         $markScores = [
@@ -241,26 +184,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
         Cache::put($cacheKey, $this->rank, 3600);
         return $this->rank;
-    }
-
-    public function eventOrgs()
-    {
-        return $this->belongsToMany('App\Event', 'event_orgs');
-    }
-
-    public function eventPartis()
-    {
-        return $this->belongsToMany('App\Event', 'event_partis');
-    }
-
-    public function eventLikes()
-    {
-        return $this->belongsToMany('App\Event', 'event_likes');
-    }
-
-    public function eventComments()
-    {
-        return $this->hasMany('App\EventComments');
     }
 
     public function transactions()
@@ -311,7 +234,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return Cache::remember("user:{$this->id}:stickers", 60, function () {
             $stickers = collect([]);
             foreach ($this->courses as $course) {
-                if ($course->is_sdl) continue;
                 foreach ($course->program->lessons as $lesson) {
                     if ($lesson->percent($this, $course) > 90) {
                         $stickers->push($lesson->sticker);
@@ -332,7 +254,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return Cache::remember("user:{$this->id}:sticker_descriptions", 60, function () {
             $descriptions = [];
             foreach ($this->courses as $course) {
-                if ($course->is_sdl) continue;
                 foreach ($course->program->lessons as $lesson) {
                     if ($lesson->percent($this, $course) > 90) {
                         $descriptions[$lesson->sticker] = $lesson->name;
@@ -343,39 +264,4 @@ class User extends Authenticatable implements MustVerifyEmail
         });
     }
 
-    public function hasTheme($theme_id)
-    {
-        return $this->themes()->where('theme_id', $theme_id)->count() > 0;
-    }
-
-    public function themes()
-    {
-        return $this->hasMany(\App\ThemeBought::class);
-    }
-
-    public function currentTheme()
-    {
-        return $this->hasMany(\App\ThemeUsing::class)->first() ? $this->hasMany(\App\ThemeUsing::class)->first()->theme : null;
-    }
-
-    public function wearTheme($theme_id)
-    {
-        $inst = $this->hasMany(\App\ThemeUsing::class)->get();
-
-        if ($inst->count() > 0) {
-            $inst[0]->theme_id = $theme_id;
-            $inst[0]->save();
-        } else {
-            \App\ThemeUsing::create([
-                "user_id" => $this->id,
-                "theme_id" => $theme_id
-            ]);
-        }
-    }
-
-    public function takeOffTheme($id)
-    {
-        \App\ThemeUsing::where('user_id', $this->id)->where('theme_id', $id)->delete();
-
-    }
 }

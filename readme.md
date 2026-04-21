@@ -1,24 +1,20 @@
 # GeekClass
 Платформа для организации онлайн-курсов
 
-## Как запустить DEV
-Для запуска требуется `docker` и `postgres`
+## Docker (production)
+Для запуска требуется `docker` и настроенная БД (например PostgreSQL).
 
-### Linux
+### Сборка production-образа
 ```bash
-docker build -f conf/Dockerfile.dev -t codingprojects . 
-docker run --rm --network=host codingprojects
+docker build -f conf/Dockerfile.prod -t codingprojects:prod .
 ```
 
-### Windows
+### Запуск PHP-FPM контейнера
 ```bash
-copy windows.env.example .env
-docker run --rm -v "%cd%\.env:/var/www/html/.env" codingprojects php artisan key:generate
-start-dev-windows.bat
+docker run --rm -p 9000:9000 --env-file .env codingprojects:prod
 ```
 
-## Доступ к сайту DEV
-Сайт будет доступен по адресу `localhost:8000`
+`conf/Dockerfile.prod` поднимает PHP-FPM (порт `9000`), поэтому для HTTP-доступа нужен отдельный Nginx/прокси.
 
 ### Регистрация учителя
 Создайте новое поле в таблице `providers` с помощью `Adminer` и введите в поле `invite` любое значение, затем используйте его на регистрации

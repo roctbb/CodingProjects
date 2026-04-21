@@ -3,13 +3,10 @@
 namespace App\Http;
 
 use App\Http\Middleware\HasAccessToCourse;
-use App\Http\Middleware\HasAccessToIdea;
-use App\Http\Middleware\HasAccessToProject;
 use App\Http\Middleware\HasAccessToStep;
 use App\Http\Middleware\HasAccessToTask;
 
 use App\Http\Middleware\HttpsProtocol;
-use App\Http\Middleware\IsCreatorOfProject;
 
 use App\Http\Middleware\SelfAccess;
 
@@ -68,9 +65,6 @@ class Kernel extends HttpKernel
         'student' => \App\Http\Middleware\IsStudent::class,
         'novice' => \App\Http\Middleware\IsNovice::class,
         'admin' => \App\Http\Middleware\IsAdmin::class,
-        'gameown' => \App\Http\Middleware\HasAccessToGame::class,
-        'gameowncomment' => \App\Http\Middleware\HasAccessToGameComment::class,
-        'noysreward' => \App\Http\Middleware\CannotRewardYourself::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
@@ -79,8 +73,6 @@ class Kernel extends HttpKernel
         'step' => HasAccessToStep::class,
         'course' => HasAccessToCourse::class,
         'task' => HasAccessToTask::class,
-        'project' => HasAccessToProject::class,
-        'idea' => HasAccessToIdea::class,
         'self' => SelfAccess::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,

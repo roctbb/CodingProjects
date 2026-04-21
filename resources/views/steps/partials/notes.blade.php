@@ -1,8 +1,8 @@
 @if ($empty || !$zero_theory)
-    <div class="tab-pane fade show active markdown" id="theory" role="tabpanel" aria-labelledby="v-theory-tab">
+    <div class="tab-pane fade show active markdown steps-theory-pane" id="theory" role="tabpanel" aria-labelledby="v-theory-tab">
 
         @if ($step->video_url)
-            <div class="videoWrapper">
+            <div class="videoWrapper steps-video-wrapper">
                 <iframe width="560" height="315" src="{{$step->video_url}}" frameborder="0"
                         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen></iframe>
@@ -10,7 +10,7 @@
         @endif
 
         @if ($step->is_notebook)
-            <div style="width:100%; margin: -30px;" id="notebook">
+            <div class="steps-notebook" id="notebook">
 
             </div>
             <script>nbv.render(JSON.parse('{!! addslashes ( $step->theory) !!} '), document.getElementById('notebook'));</script>

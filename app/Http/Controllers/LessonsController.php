@@ -6,6 +6,8 @@ use App\Course;
 use App\ProgramChapter;
 use App\ProgramStep;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Lessons\StoreLessonRequest;
+use App\Http\Requests\Lessons\UpdateLessonRequest;
 use App\Lesson;
 use App\Program;
 use App\Question;
@@ -13,6 +15,7 @@ use App\QuestionVariant;
 use App\Solution;
 use App\Task;
 use App\User;
+use App\Services\StudentProgressService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Auth;
@@ -20,14 +23,17 @@ use Auth;
 
 class LessonsController extends Controller
 {
+    private StudentProgressService $progressService;
+
     /**
      * Create a new controller instance.
      *
      * @return void
      */
 
-    public function __construct()
+    public function __construct(StudentProgressService $progressService)
     {
+        $this->progressService = $progressService;
         $this->middleware('auth');
         $this->middleware('teacher')->only(['createView', 'create', 'editView', 'edit', 'makeLower', 'makeUpper', 'export', 'exportMarkdown']);
 
@@ -44,13 +50,9 @@ class LessonsController extends Controller
         return view('lessons.create');
     }
 
-    public function create($id, Request $request)
+    public function create($id, StoreLessonRequest $request)
     {
         $program = Course::findOrFail($id)->program;
-        $this->validate($request, [
-            'name' => 'required|string',
-            'description' => 'required|string',
-        ]);
 
         if ($request->has('chapter')) {
             $chapter = ProgramChapter::findOrFail($request->chapter);
@@ -92,16 +94,10 @@ class LessonsController extends Controller
         return view('lessons.edit', compact('lesson', 'course'));
     }
 
-    public function edit($course_id, $id, Request $request)
+    public function edit($course_id, $id, UpdateLessonRequest $request)
     {
         $lesson = Lesson::findOrFail($id);
         $course = Course::findOrFail($course_id);
-        $this->validate($request, [
-            'name' => 'required|string',
-            'description' => 'required',
-            'start_date' => 'date|nullable',
-            'chapter' => 'required|exists:program_chapters,id'
-        ]);
         foreach ($lesson->prerequisites as $prerequisite) {
             $lesson->prerequisites()->detach($prerequisite->id);
         }
@@ -117,37 +113,12 @@ class LessonsController extends Controller
 
         // Recalculate points if start date changed (lesson became started or stopped)
         if ($oldStartDate != $request->start_date) {
-            foreach ($course->students as $student) {
-                \App\Jobs\RecalculateCourseStudentPoints::dispatch($course->id, $student->id);
-            }
+            $this->progressService->dispatchCourseStudentsRecalculation($course->id, $course->students);
         }
         if ($request->open == "yes")
             $lesson->is_open = true;
         else
             $lesson->is_open = false;
-
-        if ($request->has('sdl_node_id')) {
-            if ($request->sdl_node_id == -1) {
-                $lesson->sdl_node_id = null;
-            } else {
-                $this->validate($request, ['sdl_node_id' => 'nullable|exists:core_nodes,id']);
-                $lesson->sdl_node_id = $request->sdl_node_id;
-                if ($request->has('is_sdl')) {
-                    $lesson->is_sdl = true;
-                } else {
-                    $lesson->is_sdl = false;
-                }
-            }
-        }
-
-        if ($request->has('scale_id')) {
-            if ($request->scale_id == -1) {
-                $lesson->scale_id = null;
-            } else {
-                $this->validate($request, ['scale_id' => 'nullable|exists:result_scales,id']);
-                $lesson->scale_id = $request->scale_id;
-            }
-        }
 
         $lesson->save();
 

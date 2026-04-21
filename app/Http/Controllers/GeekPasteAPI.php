@@ -4,18 +4,25 @@ namespace App\Http\Controllers;
 
 use App\CoinTransaction;
 use App\Course;
-use App\CourseStudentPoints;
-use App\LessonStudentStats;
+use App\Services\StudentProgressService;
 use App\Solution;
 use App\Task;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Notification;
 use Firebase\JWT\Key;
 
 class GeekPasteAPI extends Controller
 {
+    private StudentProgressService $progressService;
+
+    public function __construct(StudentProgressService $progressService)
+    {
+        $this->progressService = $progressService;
+    }
+
     public function submitSolution(Request $request)
     {
         try {
@@ -62,16 +69,13 @@ class GeekPasteAPI extends Controller
             $solution->mark = min($points, $task->max_mark);
             $solution->comment = $comments;
             $solution->checked = Carbon::now();
-
-
-            if ($solution->task->price > 0 and $solution->mark == $solution->task->max_mark and !$solution->task->isFullDone($solution->user_id)) {
-                CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
-            }
-            $solution->save();
-
-            // Recalculate cached points after auto-grading code
-            CourseStudentPoints::recalculate($course->id, $solution->user_id);
-            LessonStudentStats::recalculateForStudent($course->id, $solution->user_id);
+            DB::transaction(function () use ($solution, $course) {
+                if ($solution->task->price > 0 && $solution->mark == $solution->task->max_mark && !$solution->task->isFullDone($solution->user_id)) {
+                    CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
+                }
+                $solution->save();
+                $this->progressService->recalculateStudentProgress($course->id, $solution->user_id);
+            });
 
             $old_rank = $solution->user->rank();
 

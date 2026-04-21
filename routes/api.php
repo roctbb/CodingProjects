@@ -17,12 +17,4 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
-Route::prefix('games')->group(function () {
-    Route::get('{id}/info', 'GamesAPIController@info');
-    Route::post('{id}/update', 'GamesAPIController@update');
-});
-
-Route::post('/vk/feedback', 'BotController@saveFeedback');
-
 Route::post('/geekpaste', 'GeekPasteAPI@submitSolution');

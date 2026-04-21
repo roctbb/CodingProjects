@@ -3,11 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Course;
-use App\User;
 use Closure;
-use Illuminate\Support\Facades\Auth;
 
-class HasAccessToCourse
+class HasAccessToCourse extends AccessMiddleware
 {
     /**
      * Handle an incoming request.
@@ -19,11 +17,11 @@ class HasAccessToCourse
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if (Auth::User()->role == 'admin') {
+        if ($this->hasRole('admin')) {
             return $next($request);
         }
 
-        $user = User::findOrFail(Auth::User()->id);
+        $user = $this->currentUser();
         $course_id = $request->route('course_id');
         if (!$course_id) {
             $course_id = $request->id;
@@ -34,7 +32,7 @@ class HasAccessToCourse
         }
 
 
-        return abort(403);
+        return $this->forbidden();
 
     }
 }

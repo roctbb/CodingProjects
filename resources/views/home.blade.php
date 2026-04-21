@@ -5,392 +5,424 @@
 @endsection
 
 @section('content')
+    @php
+        $isManager = $user->role == 'teacher' || $user->role == 'admin';
+        $startedCourses = $my_courses->where('state', 'started');
+        $draftCourses = $courses->where('state', 'draft')->filter(function ($course) use ($user) {
+            return $user->role == 'admin' || $course->teachers->contains($user);
+        });
+        $archiveCourses = $courses->where('state', 'ended')->sortByDesc('start_date')->filter(function ($course) use ($user) {
+            return $user->role == 'admin' || $course->teachers->contains($user);
+        });
+        $upcomingBirthdays = $users->where('birthday', '!=', null)->sortBy(function ($col) {
+            return $col->birthday->day;
+        })->filter(function ($buser) {
+            return $buser->birthday->month == \Carbon\Carbon::now()->month
+                && $buser->birthday->day > \Carbon\Carbon::now()->day - 10
+                && $buser->birthday->day < \Carbon\Carbon::now()->day + 10;
+        });
+    @endphp
 
+    @php
+        $cpuiTabsSelector = '.cp-tabs .nav-link[data-bs-toggle="tab"]';
+        $cpuiPopoverSelector = '[data-bs-toggle="popover"]';
+        $cpuiEnableHashSync = true;
 
-    @if($user->isBirthday())
-        <div class="row">
-            <div class="col">
-                <div class="alert alert-info alert-dismissible" role="alert">
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
-                                aria-hidden="true">&times;</span>
-                    </button>
-                    <h3>
-                        <img src="{{ url('images/icons/icons8-confetti-48.png') }}"> <img
-                                src="{{ url('images/icons/icons8-confetti-48.png') }}"> <img
-                                src="{{ url('images/icons/icons8-confetti-48.png') }}">
-                        <span>С днем рождения!!!</span> <img
-                                src="{{ url('images/icons/icons8-confetti-48.png') }}">
-                        <img
-                                src="{{ url('images/icons/icons8-confetti-48.png') }}"> <img
-                                src="{{ url('images/icons/icons8-confetti-48.png') }}"></h3>
+        $courseCards = $startedCourses->values()->map(function ($course) use ($user) {
+            $percent = null;
+            $cstudent = $course->students->firstWhere('id', $user->id);
+            if ($course->students->contains($user)) {
+                $percent = (int) round($course->getPercent($user));
+            }
+
+            $taskAlerts = collect();
+            if ($cstudent != null) {
+                foreach ($course->program->steps as $step) {
+                    foreach ($step->tasks as $task) {
+                        $deadlineModel = $task->getDeadline($course->id);
+                        if ($deadlineModel && !$task->isDone($cstudent->id)) {
+                            $exp = $deadlineModel->expiration;
+                            $deadline = $exp instanceof \Carbon\Carbon
+                                ? $exp->copy()->addDay()
+                                : \Carbon\Carbon::parse($exp)->addDay();
+
+                            if (\Carbon\Carbon::now()->gt($deadline)) {
+                                $taskAlerts->push([
+                                    'level' => 'danger',
+                                    'step_id' => $step->id,
+                                    'task_id' => $task->id,
+                                    'task_name' => $task->name,
+                                    'deadline_at' => $deadline,
+                                    'deadline_label' => $deadline->format('d.m'),
+                                ]);
+                            } elseif (\Carbon\Carbon::now()->addDays(1)->gt($deadline)) {
+                                $taskAlerts->push([
+                                    'level' => 'warning',
+                                    'step_id' => $step->id,
+                                    'task_id' => $task->id,
+                                    'task_name' => $task->name,
+                                    'deadline_at' => $deadline,
+                                    'deadline_label' => $deadline->format('d.m'),
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            $overdueCount = $taskAlerts->where('level', 'danger')->count();
+            $warningCount = $taskAlerts->where('level', 'warning')->count();
+            $urgentAlert = $taskAlerts->firstWhere('level', 'danger') ?: $taskAlerts->firstWhere('level', 'warning');
+
+            $continueStep = optional(
+                $course->program->lessons->first(function ($lesson) use ($course, $user) {
+                    return $lesson->steps->count() > 0
+                        && ($lesson->isAvailable($course) || $course->teachers->contains($user) || $user->role == 'admin');
+                })
+            )->steps->first();
+
+            if ($overdueCount > 0) {
+                $statusLabel = 'Просрочено';
+                $statusClass = 'danger';
+            } elseif ($warningCount > 0) {
+                $statusLabel = 'Нужно сделать';
+                $statusClass = 'warning';
+            } elseif ($percent !== null && $percent >= 100) {
+                $statusLabel = 'Сдано';
+                $statusClass = 'success';
+            } elseif ($percent !== null && $percent > 0) {
+                $statusLabel = 'В процессе';
+                $statusClass = 'progress';
+            } else {
+                $statusLabel = 'Нужно сделать';
+                $statusClass = 'warning';
+            }
+
+            return [
+                'course' => $course,
+                'percent' => $percent,
+                'overdue_count' => $overdueCount,
+                'warning_count' => $warningCount,
+                'urgent_alert' => $urgentAlert,
+                'continue_step_id' => optional($continueStep)->id,
+                'continue_url' => $continueStep
+                    ? url('/insider/courses/'.$course->id.'/steps/'.$continueStep->id)
+                    : url('insider/courses/'.$course->id),
+                'status_label' => $statusLabel,
+                'status_class' => $statusClass,
+            ];
+        });
+
+        $primaryContinueCard = $courseCards->first();
+        $todayOverdueTotal = $courseCards->sum('overdue_count');
+        $todayWarningTotal = $courseCards->sum('warning_count');
+        $nextDeadlineItem = $courseCards->pluck('urgent_alert')->filter()->sortBy('deadline_at')->first();
+    @endphp
+
+    <div class="cp-dashboard cp-home-page">
+        @if($user->isBirthday())
+            <div class="alert alert-info alert-dismissible cp-alert" role="alert">
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                </button>
+                С днем рождения! Пусть учебный год будет ярким и результативным.
+            </div>
+        @endif
+
+        <section class="cp-toolbar">
+            <div class="cp-toolbar__actions">
+                @if ($isManager)
+                    <ul class="nav nav-tabs cp-tabs cp-tabs--manager" id="coursesTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="active-tab" data-bs-toggle="tab" href="#active" role="tab"
+                               aria-controls="active" aria-selected="true">
+                                <i class="icon fa-solid fa-building-columns"></i>
+                                <span>Мои курсы</span>
+                                <span class="cp-tab-count">{{ $startedCourses->count() }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="draft-tab" data-bs-toggle="tab" href="#draft" role="tab"
+                                aria-controls="draft" aria-selected="false">
+                                <i class="icon fa-solid fa-pen-to-square"></i>
+                                <span>Черновики</span>
+                                <span class="cp-tab-count">{{ $draftCourses->count() }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="archive-tab" data-bs-toggle="tab" href="#archive" role="tab"
+                                aria-controls="archive" aria-selected="false">
+                                <i class="icon fa-solid fa-box-archive"></i>
+                                <span>Архив</span>
+                                <span class="cp-tab-count">{{ $archiveCourses->count() }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="cp-create-btn" href="{{ url('/insider/courses/create/') }}">
+                                <i class="icon fa-solid fa-circle-plus"></i> Создать
+                            </a>
+                        </li>
+                    </ul>
+                @else
+                    <form autocomplete="off" class="cp-invite" method="post" action="{{ url('insider/invite') }}">
+                        <input autocomplete="false" name="hidden" type="text" class="cp-hidden-input">
+                        {{ csrf_field() }}
+                        <input type="text" class="form-control" id="invite" name="invite" placeholder="Инвайт на курс">
+                        <button type="submit" class="btn btn-primary">Добавить</button>
+                    </form>
+                @endif
+            </div>
+        </section>
+
+        <div class="tab-content" id="courses">
+            <div class="tab-pane fade show active cp-pane" id="active" role="tabpanel" aria-labelledby="active-tab">
+                <div class="cp-layout">
+                    <div class="cp-main-col">
+                        <section class="cp-today-card">
+                            <div class="cp-today-card__head">
+                                <div>
+                                    <h3 class="cp-today-card__title">{{ $isManager ? '📊 Панель преподавателя' : '📚 Что сделать сегодня' }}</h3>
+                                    <p class="cp-today-card__subtitle">
+                                        {{ $isManager ? 'Быстрый обзор ваших курсов и текущей нагрузки.' : 'Короткий план, чтобы не потеряться в дедлайнах.' }}
+                                    </p>
+                                </div>
+                                @if (!$isManager && $primaryContinueCard)
+                                    <a class="cp-today-card__continue" href="{{ url('insider/courses/'.$primaryContinueCard['course']->id) }}">
+                                        <i class="icon fa-solid fa-arrow-right"></i> Перейти к курсу
+                                    </a>
+                                @endif
+                                @if ($isManager)
+                                    <a class="cp-today-card__continue" href="#active">
+                                        <i class="icon fa-solid fa-layer-group"></i> К курсам
+                                    </a>
+                                @endif
+                            </div>
+
+                            <div class="cp-today-card__stats">
+                                @if ($isManager)
+                                    <span class="cp-today-card__stat">🎓 Активных курсов: <strong>{{ $startedCourses->count() }}</strong></span>
+                                    <span class="cp-today-card__stat">📝 Черновиков: <strong>{{ $draftCourses->count() }}</strong></span>
+                                    <span class="cp-today-card__stat">🗂 Архив: <strong>{{ $archiveCourses->count() }}</strong></span>
+                                @else
+                                    <span class="cp-today-card__stat">✅ Сдано за 7 дней: <strong>{{ $weeklySubmittedCount }}</strong></span>
+                                    <span class="cp-today-card__stat">🧠 Проверено: <strong>{{ $weeklyCheckedCount }}</strong></span>
+                                    <span class="cp-today-card__stat">🏆 XP: <strong>{{ $weeklyPoints }}</strong></span>
+                                @endif
+                            </div>
+
+                            <ul class="cp-today-list">
+                                @if ($isManager)
+                                    <li class="cp-today-list__item">
+                                        <span class="cp-today-list__icon">⚠️</span>
+                                        <span>Сейчас в работе просроченных задач: {{ $todayOverdueTotal }}</span>
+                                    </li>
+                                    <li class="cp-today-list__item">
+                                        <span class="cp-today-list__icon">⏱</span>
+                                        <span>Заданий на подходе по дедлайнам: {{ $todayWarningTotal }}</span>
+                                    </li>
+                                @else
+                                    @if ($primaryContinueCard)
+                                        <li class="cp-today-list__item">
+                                            <span class="cp-today-list__icon">▶</span>
+                                            <span>
+                                                Перейти к курсу
+                                                <a href="{{ url('insider/courses/'.$primaryContinueCard['course']->id) }}">{{ $primaryContinueCard['course']->name }}</a>
+                                            </span>
+                                        </li>
+                                    @endif
+
+                                    <li class="cp-today-list__item">
+                                        <span class="cp-today-list__icon">⏰</span>
+                                        <span>
+                                            @if ($nextDeadlineItem)
+                                                Ближайший дедлайн: {{ $nextDeadlineItem['task_name'] }} до {{ $nextDeadlineItem['deadline_label'] }}
+                                            @else
+                                                Дедлайнов на сегодня нет, можно двигаться по плану.
+                                            @endif
+                                        </span>
+                                    </li>
+
+                                    <li class="cp-today-list__item">
+                                        <span class="cp-today-list__icon">⚠️</span>
+                                        <span>Просрочено задач: {{ $todayOverdueTotal }}</span>
+                                    </li>
+                                @endif
+
+                                <li class="cp-today-list__item">
+                                    <span class="cp-today-list__icon">📌</span>
+                                    <span>
+                                        @if ($todayWarningTotal > 0)
+                                            {{ $isManager ? 'На подходе дедлайны у студентов: ' : 'На подходе дедлайны: ' }}{{ $todayWarningTotal }}
+                                        @elseif($recentNotifications->count())
+                                            Последнее уведомление: {{ \Illuminate\Support\Str::limit(strip_tags($recentNotifications->first()->data['text'] ?? ''), 90) }}
+                                        @else
+                                            Уведомлений пока нет.
+                                        @endif
+                                    </span>
+                                </li>
+                            </ul>
+                        </section>
+
+                        @foreach($notifications as $notification)
+                            <div class="alert alert-{{ $notification->data['type'] }} alert-dismissible fade show" role="alert">
+                                {!! $notification->data['text'] !!}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                                </button>
+                            </div>
+                        @endforeach
+
+                        @if ($startedCourses->count())
+                            <div class="cp-courses-grid">
+                                @foreach($courseCards as $courseCard)
+                                    @php
+                                        $course = $courseCard['course'];
+                                        $percent = $courseCard['percent'];
+                                        $overdueCount = $courseCard['overdue_count'];
+                                        $warningCount = $courseCard['warning_count'];
+                                    @endphp
+
+                                    <article class="cp-course-card {{ $course->is_open ? 'cp-course-card--open' : 'cp-course-card--private' }} @if ($overdueCount > 0) cp-course-card--overdue @elseif ($warningCount > 0) cp-course-card--attention @endif">
+                                        <header class="cp-course-card__header">
+                                            <h3 class="cp-course-card__title cp-course-card__title--compact">
+                                                <a href="{{ url('insider/courses/'.$course->id) }}">{{ $course->name }}</a>
+                                            </h3>
+                                            <span class="cp-status cp-status--{{ $courseCard['status_class'] }}">{{ $courseCard['status_label'] }}</span>
+                                        </header>
+
+                                        <div class="cp-course-card__subtitle cp-course-card__subtitle--compact">
+                                            <span>Уроков: {{ $course->program->lessons->count() }}</span>
+                                            <span>Студентов: {{ $course->students->count() }}</span>
+                                            <span>{{ $course->is_open ? 'Открытый курс' : 'Курс группы' }}</span>
+                                        </div>
+
+                                        @if ($percent !== null)
+                                            <div class="cp-progress-mini">
+                                                <div class="cp-progress-mini__track">
+                                                    <span style="width: {{ max(0, min(100, $percent)) }}%;"></span>
+                                                </div>
+                                                <span class="cp-progress-mini__value">{{ $percent }}%</span>
+                                            </div>
+                                        @endif
+
+                                        <div class="cp-course-card__meta">
+                                            @if ($overdueCount > 0)
+                                                <span class="cp-chip cp-chip--danger">Просрочено: {{ $overdueCount }}</span>
+                                            @endif
+                                            @if ($warningCount > 0)
+                                                <span class="cp-chip cp-chip--warn">Срок скоро: {{ $warningCount }}</span>
+                                            @endif
+                                        </div>
+
+                                        <footer class="cp-course-card__footer">
+                                            <a class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" href="{{ url('insider/courses/'.$course->id) }}">
+                                                <i class="icon fa-solid fa-arrow-right"></i> Перейти к курсу
+                                            </a>
+                                            @if ($course->site != null)
+                                                <a class="cp-link" target="_blank" href="{{ $course->site }}"><i class="icon fa-solid fa-link"></i> Сайт</a>
+                                            @endif
+                                        </footer>
+                                    </article>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="cp-empty">Вы пока не записаны на курсы.</div>
+                        @endif
+                    </div>
+
+                    <div class="cp-side-col">
+                        <aside class="cp-side-card cp-birthday-card">
+                            <div class="cp-birthday-card__head">
+                                <h3 class="cp-side-card__title cp-birthday-card__title">
+                                    <i class="icon fa-solid fa-star"></i>
+                                    Празднуем день рождения
+                                </h3>
+                                <span class="cp-birthday-card__count">
+                                    {{ $upcomingBirthdays->count() }}
+                                </span>
+                            </div>
+                            @if ($upcomingBirthdays->count())
+                                <ul class="cp-birthday-list">
+                                    @foreach($upcomingBirthdays as $buser)
+                                        @php
+                                            $isTodayBirthday = $buser->birthday->day == \Carbon\Carbon::now()->day
+                                                && $buser->birthday->month == \Carbon\Carbon::now()->month;
+                                        @endphp
+                                        <li>
+                                            <a class="@if ($isTodayBirthday) cp-birthday-list__today @endif"
+                                               href="{{ url('insider/profile/'.$buser->id) }}">
+                                                {{ $buser->name }}
+                                            </a>
+                                            <span class="cp-birthday-date @if ($isTodayBirthday) cp-birthday-date--today @endif">
+                                                {{ $buser->birthday->format('d.m') }}
+                                            </span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <div class="cp-empty cp-empty--compact cp-birthday-empty">В ближайшие дни дней рождения нет.</div>
+                            @endif
+                        </aside>
+                    </div>
                 </div>
             </div>
-        </div>
-    @endif
 
-    <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
-        <div class="col">
-            <h2>Мои курсы</h2>
-        </div>
-        <div class="col">
-            @if ($user->role=='teacher' || $user->role=='admin')
-                <ul class="nav nav-tabs nav-fill" id="coursesTabs" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="active-tab" data-toggle="tab" href="#active" role="tab"
-                           aria-controls="active" aria-selected="true">Мои курсы</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="draft-tab" data-toggle="tab" href="#draft" role="tab"
-                           aria-controls="draft" aria-selected="false">Черновики</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="archive-tab" data-toggle="tab" href="#archive" role="tab"
-                           aria-controls="archive" aria-selected="false">Архив</a>
-                    </li>
+            @if ($isManager)
+                <div class="tab-pane fade cp-pane cp-pane--draft" id="draft" role="tabpanel" aria-labelledby="draft-tab">
+                    @if ($draftCourses->count())
+                        <div class="cp-courses-grid cp-courses-grid--draft">
+                            @foreach($draftCourses as $course)
+                                <article class="cp-course-card cp-course-card--draft cp-course-card--draft-view">
+                                    <header class="cp-course-card__header">
+                                        <h3 class="cp-course-card__title">
+                                            <a href="{{ url('insider/courses/'.$course->id) }}">{{ $course->name }}</a>
+                                        </h3>
+                                        <span class="cp-badge">Черновик</span>
+                                    </header>
+                                    <p class="cp-course-card__hint">Курс еще не запущен и доступен для доработки.</p>
+                                    <p class="cp-course-card__description">{{ $course->description }}</p>
+                                    <footer class="cp-course-card__footer">
+                                        <a href="{{ url('insider/courses/'.$course->id.'/edit') }}"
+                                           class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1">
+                                            <i class="icon fa-solid fa-pen-to-square"></i> Редактировать
+                                        </a>
+                                        <a href="{{ url('insider/courses/'.$course->id) }}"
+                                           class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1">
+                                            <i class="icon fa-solid fa-play"></i> Открыть
+                                        </a>
+                                    </footer>
+                                </article>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="cp-empty">Черновиков пока нет.</div>
+                    @endif
+                </div>
 
-                    <li class="nav-item" style="margin-left: 5px;">
-                        <a class="btn btn-success btn-sm nav-link" style="color: white;"
-                           href="{{url('/insider/courses/create/')}}"><i
-                                    class="icon ion-plus-round" style="color: white;"></i>&nbsp;Создать</a>
-                    </li>
-
-                </ul>
-
-            @else
-                <div class="float-right">
-                    <form autocomplete="off" class="form-inline" method="get" action="{{url('insider/invite')}}">
-                        <input autocomplete="false" name="hidden" type="text" style="display:none;">
-                        {{csrf_field()}}
-                        <input type="text" class="form-control form-control-sm mb-2 mr-sm-2 mb-sm-0" id="invite"
-                               name="invite" placeholder="Инвайт на курс">
-
-                        <button type="submit" class="btn btn-success btn-sm"><i class="icon ion-plus-round"
-                                                                                style="color: white;"></i>&nbsp;Добавить
-                        </button>
-                    </form>
+                <div class="tab-pane fade cp-pane cp-pane--archive" id="archive" role="tabpanel" aria-labelledby="archive-tab">
+                    @if ($archiveCourses->count())
+                        <div class="cp-courses-grid cp-courses-grid--archive">
+                            @foreach($archiveCourses as $course)
+                                <article class="cp-course-card cp-course-card--archive">
+                                    <header class="cp-course-card__header">
+                                        <h3 class="cp-course-card__title">{{ $course->name }}</h3>
+                                        <p class="cp-archive-date">
+                                            @if ($course->start_date){{ $course->start_date->format('d.m.Y') }}@endif
+                                            @if ($course->end_date) - {{ $course->end_date->format('d.m.Y') }}@endif
+                                        </p>
+                                    </header>
+                                    <footer class="cp-course-card__footer">
+                                        <a href="{{ url('insider/courses/'.$course->id) }}"
+                                           class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1">
+                                            <i class="icon fa-solid fa-file-lines"></i> Страница
+                                        </a>
+                                    </footer>
+                                </article>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="cp-empty">Архивных курсов пока нет.</div>
+                    @endif
                 </div>
             @endif
         </div>
     </div>
-
-    <div class="tab-content" id="courses">
-        <div class="tab-pane fade show active" id="active" role="tabpanel" aria-labelledby="active">
-
-            <div class="row">
-                <div class="col-12 col-lg-7 col-xl-8">
-                    @foreach($notifications as $notification)
-                        <div class="alert alert-{{$notification->data['type']}} alert-dismissible fade show"
-                             role="alert">
-                            {!! $notification->data['text'] !!}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">×</span>
-                            </button>
-                        </div>
-                    @endforeach
-
-                    @if ($my_courses->count()!=0)
-                        <div class="card-deck">
-                            @foreach($my_courses->where('state', 'started') as $course)
-                                <div class="card"
-                                     style="min-width: 280px; background-image: url({{$course->image}}); background-size: cover; @if (!$course->is_open) border-left: 3px solid #28a745;@else border-left: 3px solid #17a2b8; @endif">
-                                    <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
-                                        <h5 style="font-weight: 300;"
-                                            class="card-title">
-                                            <a href="{{url('insider/courses/'.$course->id)}}"
-                                               style="color: #333741;">{{$course->name}}</a>
-
-                                        </h5>
-                                        <p class="card-text"
-                                           style="font-size: 0.8rem;">{{$course->description}}</p>
-                                        @if (!$course->is_sdl)
-                                            @if ($course->students->contains($user))
-                                                @php
-                                                    $percent = round($course->getPercent($user));
-                                                @endphp
-                                                @if ($percent < 40)
-                                                    <span class="badge badge-warning">Выполнено {{$percent}}%</span>
-                                                @else
-                                                    @if ($percent < 80)
-                                                        <span class="badge badge-info">Выполнено {{$percent}}%</span>
-                                                    @else
-                                                        <span class="badge badge-success">Выполнено {{$percent}}%</span>
-                                                    @endif
-                                                @endif
-                                            @endif
-                                        @endif
-                                        <div style="float:right;">
-                                            @php
-                                                $students = $course->students;
-                                                $cstudent = $students->filter(function ($value, $key) {
-                                                    return $value->id == \Auth::id();
-                                                })->first();
-                                            @endphp
-                                            @if ($cstudent != null and !$course->is_sdl)
-                                                @foreach($course->program->steps as $step)
-                                                    @php
-                                                        $tasks = $step->tasks;
-                                                    @endphp
-                                                    @foreach($tasks as $task)
-                                                        @if ($task->getDeadline($course->id))
-                                                            @if (!$task->isDone($cstudent->id))
-                                                                @php
-                                                                    $deadline = $task->getDeadline($course->id)->expiration->addDay();
-                                                                @endphp
-
-                                                                @if (\Carbon\Carbon::now()->gt($deadline))
-                                                                    <span class="badge badge-danger"
-                                                                          data-tooltip="{{$task->name}}"
-                                                                          onclick="location.href='/insider/courses/{{$course->id}}/steps/{{$step->id}}#task{{$task->id}}'"
-                                                                          style="cursor:pointer;">
-                                                                        !
-                                                                    </span>
-                                                                @elseif (\Carbon\Carbon::now()->addDays(1)->gt($deadline))
-                                                                    <span class="badge badge-warning"
-                                                                          data-tooltip="{{$task->name}}"
-                                                                          onclick="location.href='/insider/courses/{{$course->id}}/steps/{{$step->id}}#task{{$task->id}}'"
-                                                                          style="cursor:pointer;">
-                                                                        !
-                                                                    </span>
-                                                                @endif
-                                                            @endif
-                                                        @endif
-                                                    @endforeach
-                                                @endforeach
-                                            @endif
-                                        </div>
-                                        @if ($course->site != null)
-                                            <a target="_blank" href="{{$course->site}}"
-                                               style="margin-top: 6px; font-size: 0.8rem;"
-                                               class="float-right">О курсе</a>
-                                        @endif
-
-
-                                    </div>
-                                </div>
-                            @endforeach
-
-                        </div>
-                    @else
-                        <p>Вы пока не записаны на курсы.</p>
-                    @endif
-                    <div class="d-none d-lg-block">
-                        <img style="max-width: 100%;" src="{{'/images/clip-education.png'}}"/>
-                    </div>
-                </div>
-
-                <div class="col-12 col-lg-5 col-xl-4">
-
-                    <div class="card"
-                         style="border-left: 3px solid #007bff;">
-                        <div class="card-body">
-
-                            <div class="row">
-                                <div class="col" style="width: 85px; max-width: 85px;">
-                                    @if ($user->image!=null)
-                                        <div class="mr-3 rounded-circle img-circle"
-                                             style='background-image: url("{{url('/media/'.$user->image)}}");'>
-                                        </div>
-                                    @else
-                                        <div class="mr-3 rounded-circle img-circle"
-                                             style='background-image: url("{{ url('images/user.jpg') }}");'>
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="col-auto" style="width: calc(100% - 100px); max-width: calc(100% - 100px)">
-                                    <h5>
-                                        <a href="{{url('/insider/profile/'.$user->id)}}">{{ $user->name }}</a>
-                                    </h5>
-                                    <p><a tabindex="0" data-toggle="popover" data-trigger="focus" title="Ранги"
-                                          data-html="true"
-                                          data-content="{{\App\Rank::getRanksListHTML($user->rank())}}"><span
-                                                    style="font-size: 13px;" class="badge badge-pill badge-success"><i
-                                                        class="icon ion-ios-arrow-up"></i> {{$user->rank()->name}}</span></a>
-
-                                        @if ($user->is_trainee)
-                                            <span style="font-size: 13px;"
-                                                  class="badge badge-pill badge-info">Стажер</span>
-                                        @endif
-                                        @if ($user->is_teacher)
-                                            <span style="font-size: 13px;"
-                                                  class="badge badge-pill badge-info">Преподаватель</span>
-                                        @endif
-
-                                        <span style="margin-top: 8px;" data-container="body"
-                                              data-placement="bottom"
-                                              data-content="{{ $user->getHtmlTransactions() }}"
-                                              data-html="true" data-toggle="popover">
-                                           <img src="{{ url('images/icons/icons8-coins-48.png') }}"
-                                                style="height: 23px;"/>&nbsp;{{$user->balance()}}&nbsp;&nbsp;
-
-                                        </span>
-
-                                    </p>
-
-                                </div>
-                            </div>
-
-                            <p><strong>Дата
-                                    рождения:</strong> @if($user->birthday!=null){{$user->birthday->format('Y-m-d')}}@endif
-                                <br>
-                                <strong>Место учебы:</strong> {{$user->school}}<br>
-                                <strong>Класс:</strong> {{$user->grade()}}</p>
-
-                            <div class="progress" style="margin-bottom: 15px;">
-                                <div class="progress-bar" role="progressbar"
-                                     style="width:{{100*($user->score()-$user->rank()->from)/($user->rank()->to-$user->rank()->from)}}%;"
-                                     aria-valuenow="{{$user->score()}}" aria-valuemin="{{$user->rank()->from}}"
-                                     aria-valuemax="{{$user->rank()->to}}">{{$user->score()}}</div>
-                            </div>
-
-                            @foreach($user->getStickers() as $sticker)
-                                <img src="{{url($sticker)}}"
-                                     style="max-height: 35px;"/>
-                            @endforeach
-
-
-                            <p class="card-text" style="font-size: 0.8rem;">
-                            </p>
-
-                        </div>
-
-                    </div>
-                    @if (count($events) > 0)
-                        <div class="card"
-                             style="border-left: 3px solid #007bff;">
-                            <div class="card-body">
-
-                                <h5 style="font-weight: 400; font-size: 1.1rem;"
-                                    class="card-title">Ближайшие события:</h5>
-                                <p class="card-text" style="font-size: 0.8rem;">
-                                <ul>
-                                    @foreach($events as $event)
-                                        <li>
-                                            <a style="color: black;"
-                                               href="{{url('insider/events/'.$event->id)}}">{{ $event->name }}</a>
-                                            -
-                                            <strong>{{$event->date->format('d.m')}}</strong></li>
-                                    @endforeach
-                                </ul>
-                                </p>
-
-                            </div>
-
-                        </div>
-                    @endif
-
-                    <div class="card"
-                         style="margin-top: 15px;border-left: 3px solid #007bff;">
-                        <div class="card-body">
-
-                            <h5 style="font-weight: 400; font-size: 1.1rem;"
-                                class="card-title">Празднуем день рождения:</h5>
-                            <p class="card-text" style="font-size: 0.8rem;">
-                            <ul>
-                                @foreach($users->where('birthday', '!=', null)->sortBy(function($col){return $col->birthday->day;}) as $buser)
-                                    @if ($buser->birthday->month == \Carbon\Carbon::now()->month and ($buser->birthday->day > \Carbon\Carbon::now()->day - 10 and $buser->birthday->day < \Carbon\Carbon::now()->day + 10))
-                                        <li>
-                                            <a style="color: black; @if ($buser->birthday->day == \Carbon\Carbon::now()->day and $buser->birthday->month == \Carbon\Carbon::now()->month) font-weight: bold; @endif"
-                                               href="{{url('insider/profile/'.$buser->id)}}">{{ $buser->name }}</a>
-                                            -
-                                            <strong>{{$buser->birthday->format('d.m')}}</strong></li>
-                                    @endif
-                                @endforeach
-                            </ul>
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="card"
-                         style="border-left: 3px solid #007bff">
-                        <div class="card-body">
-                            <h5 style="margin-top: 15px; font-weight: 400; font-size: 1.1rem;"
-                                class="card-title">Последние вопросы:</h5>
-                            <p class="card-text" style="font-size: 0.8rem;">
-                            <ul>
-                                @foreach($threads as $thread)
-                                    <li>
-                                        <a style="color: black; @if ($buser->birthday->day == \Carbon\Carbon::now()->day) font-weight: bold; @endif"
-                                           href="{{url('insider/forum/'.$thread->id)}}">{{ $thread->name }}</a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                            </p>
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-            </div>
-
-        </div>
-
-        @if ($user->role == 'teacher' || $user->role=='admin' )
-            <div class="tab-pane fade" id="draft" role="tabpanel" aria-labelledby="draft">
-                <div class="row" style="margin-top: 15px;">
-                    <div class="card-deck">
-                        @foreach($courses->where('state', 'draft') as $course)
-                            @if ($user->role=='admin' || $course->teachers->contains($user))
-                                <div class="card"
-                                     style="min-width: 280px; background-image: url({{$course->image}}); background-size: cover;">
-                                    <!--<img class="card-img-top" src="..." alt="Card image cap">-->
-                                    <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
-                                        <h4 class="card-title">{{$course->name}}</h4>
-                                        <p class="card-text" style="font-size: 0.8rem;">{{$course->description}}</p>
-
-                                    </div>
-                                    <div class="card-footer" style="background-color: rgba(245,245,245,1);">
-                                        <a href="{{url('insider/courses/'.$course->id)}}"
-                                           class="btn btn-success btn-sm">Страница
-                                            курса</a>
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-                    </div>
-
-                </div>
-
-            </div>
-            <div class="tab-pane fade" id="archive" role="tabpanel" aria-labelledby="archive">
-                <div class="row" style="margin-top: 15px;">
-                    @foreach($courses->where('state', 'ended')->sortByDesc('start_date') as $course)
-                        @if ($user->role=='admin' || $course->teachers->contains($user))
-                            <div class="col-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="row">
-                                            <div class="col-md-9">
-                                                <h5 style="padding: 0; margin: 0;" class="card-title">{{$course->name}}
-                                                    <br>
-                                                    <small style="font-size: 70%;">@if ($course->start_date){{$course->start_date->format('d.m.Y')}} @endif
-                                                        @if ($course->end_date) - {{$course->end_date->format('d.m.Y')}}@endif</small>
-                                                </h5>
-
-                                            </div>
-                                            <div class="col-md-3">
-                                                <a href="{{url('insider/courses/'.$course->id)}}"
-                                                   class="btn btn-success btn-sm  float-right">Страница</a>
-                                            </div>
-                                        </div>
-
-
-                                    </div>
-
-                                </div>
-                            </div>
-                        @endif
-
-                    @endforeach
-                </div>
-
-
-            </div>
-        @endif
-    </div>
-
 @endsection

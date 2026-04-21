@@ -2,10 +2,7 @@
 
 namespace App;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 
 class Program extends Model
 {
@@ -34,10 +31,5 @@ class Program extends Model
     public function authors()
     {
         return $this->belongsToMany('App\User', 'programs_authors', 'program_id', 'user_id');
-    }
-
-    public static function textbooks()
-    {
-        return self::where('available_as_textbook', true)->get();
     }
 }

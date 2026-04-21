@@ -11,51 +11,57 @@
 
 
 @section('content')
-    <div class="row">
-        <div class="col">
-            <h2 style="font-weight: 300;"><a class="back-link" href="{{url('/insider/courses/'.$course->id)}}"><i
-                            class="icon ion-chevron-left"></i></a> Отчет по курсу: {{$course->name}}</h2>
+    <div class="cp-course-report-page">
+    <div class="row cp-report-header align-items-center g-2">
+        <div class="col-12 col-xl">
+            <h2 class="cp-heading-lite cp-report-title">
+                <a class="back-link" href="{{url('/insider/courses/'.$course->id)}}"><i class="icon fa-solid fa-chevron-left"></i></a>
+                Отчет по курсу: {{$course->name}}
+            </h2>
+        </div>
+        <div class="col-12 col-xl-auto">
+            <div class="cp-report-meta">
+                <span class="badge rounded-pill text-bg-light">Студентов: {{ $students->count() }}</span>
+                <span class="badge rounded-pill text-bg-light">Уроков: {{ $lessons->count() }}</span>
+            </div>
         </div>
     </div>
 
-    <div class="row">
+    <div class="row g-3">
 
-        <div class="col-9">
+        <div class="col-12 col-xl-9">
             <div class="tab-content" id="v-pills-tabContent">
-                <script>
-                </script>
                 @foreach ($students as $key => $student)
                     <div class="tab-pane fade show @if ($key == 0) active @endif" id="student{{$student->id}}"
                          role="tabpanel"
-                         aria-labelledby="v-pills-tab">
+                         aria-labelledby="students-tab-{{$student->id}}">
 
-                        <div class="card" style="width: 100%; min-width: 100%;">
+                        <div class="card w-100 cp-report-student-card">
                             <div class="card-body" id="cardbody{{$student->id}}">
                                 <h4 class="card-title">{{ $student->name }}</h4>
-                                <div class="progress" style="margin-bottom: 15px;">
+                                <div class="progress cp-mb-15">
                                     @if ($student->percent < 40)
-                                        <div class="progress-bar progress-bar-striped bg-danger" role="progressbar"
-                                             style="height: 2px;width: {{$student->percent}}%"
+                                        <div class="progress-bar progress-bar-striped bg-danger cp-progress-thin" role="progressbar"
+                                             style="width: {{$student->percent}}%"
                                              aria-valuenow="{{$student->percent}}" aria-valuemin="0"
                                              aria-valuemax="100"></div>
 
                                     @elseif($student->percent < 60)
-                                        <div class="progress-bar progress-bar-striped bg-warning" role="progressbar"
-                                             style="height: 2px;width: {{$student->percent}}%"
+                                        <div class="progress-bar progress-bar-striped bg-warning cp-progress-thin" role="progressbar"
+                                             style="width: {{$student->percent}}%"
                                              aria-valuenow="{{$student->percent}}" aria-valuemin="0"
                                              aria-valuemax="100"></div>
 
                                     @else
-                                        <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
-                                             style="height: 2px;width: {{$student->percent}}%"
+                                        <div class="progress-bar progress-bar-striped bg-success cp-progress-thin" role="progressbar"
+                                             style="width: {{$student->percent}}%"
                                              aria-valuenow="{{$student->percent}}" aria-valuemin="0"
                                              aria-valuemax="100"></div>
 
                                     @endif
                                 </div>
                                 @if ($pulse_keys->has($student->id))
-                                    <div id="pulse{{$student->id}}"
-                                         style="min-width: 100%; height: 200px; margin-bottom: 10px;"></div>
+                                    <div id="pulse{{$student->id}}" class="w-100 mb-2 cp-min-h-200"></div>
 
                                     <script>
                                         var data = [
@@ -103,13 +109,14 @@
                                     </script>
 
                                 @endif
-                                <table class="table table-striped">
+                                <div class="table-responsive cp-report-table-wrap">
+                                <table class="table table-striped table-sm align-middle cp-report-lessons-table mb-0">
                                     @foreach($lessons as $lesson)
 
                                         <tr>
-                                            <td style="width: 50%;">
+                                            <td class="w-50">
 
-                                                <a data-toggle="collapse"
+                                                <a class="cp-report-lesson-link" data-bs-toggle="collapse"
                                                    href="#student{{$student->id}}marks{{$lesson->id}}"
                                                    aria-expanded="false"
                                                    aria-controls="student{{$student->id}}marks{{$lesson->id}}"> {{$lesson->name}}
@@ -117,16 +124,17 @@
 
 
                                                 @if (!$lesson->isAvailableForUser($course, $student))
-                                                    <strong><span style="color: red;">!!!</span></strong> @endif</td>
+                                                    <strong><span class="text-danger">!!!</span></strong> @endif</td>
                                             <td>
-                                                <div class="progress" style="margin: 5px;">
+                                                <div class="progress m-1">
                                                     @if ($lesson->percent($student, $course) < 40)
                                                         <div class="progress-bar progress-bar-striped bg-danger"
                                                              role="progressbar"
                                                              style="width: {{$lesson->percent($student, $course)}}%"
                                                              aria-valuenow="{{$lesson->percent($student, $course)}}"
                                                              aria-valuemin="0"
-                                                             aria-valuemax="100">{{$lesson->points($student, $course)}}
+                                                             aria-valuemax="100">
+                                                            Очки опыта: {{$lesson->points($student, $course)}}
                                                             / {{$lesson->max_points($student, $course)}}</div>
 
                                                     @elseif($lesson->percent($student, $course) < 60)
@@ -152,8 +160,9 @@
                                                     @endif
                                                 </div>
 
-                                                <div class="collapse" id="student{{$student->id}}marks{{$lesson->id}}">
+                                                <div class="collapse cp-report-lesson-details" id="student{{$student->id}}marks{{$lesson->id}}">
 
+                                                    <ul class="list-unstyled mb-0">
                                                     @foreach($lesson->steps as $step)
                                                         @php
                                                             $tasks = $step->tasks;
@@ -169,27 +178,26 @@
                                                                 if (count($filtered)!=0 && $filtered->last()->mark==null) $should_check=true;
 
                                                             @endphp
-                                                            <li style="padding-right: 10px;">
-
-
+                                                            <li class="pe-2 d-flex align-items-center justify-content-between gap-2">
                                                                 <a target="_blank"
                                                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">{{$task->name}}</a>
 
 
                                                                 @php $blocked = $task->isBlocked($student->id, $course->id); @endphp
                                                                 @if ($blocked)
-                                                                    <span class="badge badge-danger float-right">0</span>
+                                                <span class="badge text-bg-danger">0</span>
                                                                 @elseif ($should_check)
-                                                                    <span class="badge badge-warning float-right">{{$mark}}</span>
+                                                                <span class="badge text-bg-warning">{{$mark}}</span>
                                                                 @elseif ($mark == 0)
-                                                                    <span class="badge badge-light float-right">{{$mark}}</span>
+                                                                    <span class="badge text-bg-light">{{$mark}}</span>
                                                                 @else
-                                                                    <span class="badge badge-primary float-right">{{$mark}}</span>
+                                                                    <span class="badge text-bg-primary">{{$mark}}</span>
                                                                 @endif
 
                                                             </li>
                                                         @endforeach
                                                     @endforeach
+                                                    </ul>
 
                                                 </div>
                                             </td>
@@ -203,6 +211,7 @@
 
                                     @endforeach
                                 </table>
+                                </div>
 
                             </div>
 
@@ -212,22 +221,27 @@
 
             </div>
         </div>
-        <div class="col-3">
-            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+        <div class="col-12 col-xl-3">
+            <div class="nav flex-column nav-pills cp-report-students-nav" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                 @foreach ($students as $key => $student)
-                    <a class="nav-link @if ($key == 0) active @endif" id="students-tab" data-toggle="pill"
-                       href="#student{{$student->id}}" role="tab"
-                       aria-controls="student{{$student->id}}" aria-selected="true"
-                       onclick="Plotly.relayout('pulse{{$student->id}}', {width: 1.5*getInnerWidth($('#v-pills-tabContent')[0]) + 'px', height: ''});">{{$student->name}}
-                        &nbsp;&nbsp;
+                    <button class="nav-link @if ($key == 0) active @endif"
+                            id="students-tab-{{$student->id}}"
+                            data-bs-toggle="pill"
+                            data-bs-target="#student{{$student->id}}"
+                            data-student-id="{{$student->id}}"
+                            type="button"
+                            role="tab"
+                            aria-controls="student{{$student->id}}"
+                            aria-selected="{{ $key == 0 ? 'true' : 'false' }}">
+                        <span class="cp-report-student-name">{{$student->name}}</span>
                         @if ($student->percent < 40)
-                            <span class="badge badge-danger">&nbsp;</span>
+                            <span class="badge text-bg-danger cp-report-student-state">&nbsp;</span>
                         @elseif($student->percent < 60)
-                            <span class="badge badge-warning">&nbsp;</span>
+                            <span class="badge text-bg-warning cp-report-student-state">&nbsp;</span>
                         @else
-                            <span class="badge badge-success">&nbsp;</span>
+                            <span class="badge text-bg-success cp-report-student-state">&nbsp;</span>
                         @endif
-                    </a>
+                    </button>
                 @endforeach
             </div>
         </div>
@@ -236,14 +250,17 @@
 
 
     <script>
-        $(function () {
-            $('[data-toggle="popover"]').popover()
-        });
-        $('.popover-dismiss').popover({
-            trigger: 'focus'
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.CPUI) {
+                    window.CPUI.initPopovers('[data-bs-toggle="popover"]');
+                window.CPUI.initPopovers('.popover-dismiss', {trigger: 'focus'});
+            }
         });
 
         function getInnerWidth(element) {
+            if (!element) {
+                return 0;
+            }
 
             var wrapper = document.createElement('span'),
                 result;
@@ -266,6 +283,39 @@
 
         }
 
+        function relayoutPulse(studentId) {
+            var chartId = 'pulse' + studentId;
+            var chartEl = document.getElementById(chartId);
+            if (!chartEl || typeof Plotly === 'undefined' || typeof Plotly.relayout !== 'function') {
+                return;
+            }
+
+            var targetWidth = chartEl.parentElement ? chartEl.parentElement.clientWidth : 0;
+            if (!targetWidth) {
+                var contentEl = document.getElementById('v-pills-tabContent');
+                targetWidth = contentEl ? getInnerWidth(contentEl) : 0;
+            }
+
+            if (!targetWidth) {
+                return;
+            }
+
+            Plotly.relayout(chartId, {
+                width: targetWidth,
+                height: ''
+            });
+        }
+
+        document.querySelectorAll('#v-pills-tab [data-bs-toggle="pill"]').forEach(function (tabButton) {
+            tabButton.addEventListener('shown.bs.tab', function (event) {
+                var studentId = event.target.getAttribute('data-student-id');
+                if (studentId) {
+                    relayoutPulse(studentId);
+                }
+            });
+        });
+
     </script>
+    </div>
 
 @endsection

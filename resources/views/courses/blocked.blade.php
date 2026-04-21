@@ -5,14 +5,15 @@
 @endsection
 
 @section('content')
+    <div class="cp-course-blocked-page">
     <div class="row">
         <div class="col">
-            <h2 style="font-weight: 300;"><a class="back-link" href="{{url('/insider/courses/'.$course->id)}}"><i
-                            class="icon ion-chevron-left"></i></a> Заблокированные задачи: {{$course->name}}</h2>
+            <h2 class="cp-heading-lite"><a class="back-link" href="{{url('/insider/courses/'.$course->id)}}"><i
+                            class="icon fa-solid fa-chevron-left"></i></a> Заблокированные задачи: {{$course->name}}</h2>
         </div>
     </div>
 
-    <div class="row" style="margin-top: 15px;">
+    <div class="row cp-row-gap-top">
         <div class="col">
             @if ($blocked->isEmpty())
                 <div class="alert alert-info" role="alert">
@@ -24,15 +25,15 @@
                         $student = $records->first()->user;
                         $tasks = $records->unique('task_id');
                     @endphp
-                    <div class="card" style="margin-bottom: 15px;">
-                        <div class="card-header">
+                    <div class="card cp-mb-15">
+                        <div class="card-header d-flex align-items-center justify-content-between gap-2">
                             <a href="{{ url('/insider/profile/'.$student->id) }}" target="_blank">{{ $student->name }}</a>
-                            <span class="badge badge-danger float-right" title="Количество заблокированных задач">{{ $tasks->count() }}</span>
+                            <span class="badge text-bg-danger" title="Количество заблокированных задач">{{ $tasks->count() }}</span>
                         </div>
                         <div class="card-body">
                             <ul class="list-unstyled">
                                 @foreach ($tasks as $bt)
-                                    <li style="padding: 4px 0;">
+                                    <li class="py-1">
                                         <a target="_blank"
                                            href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$bt->task_id.'/student/'.$student->id) }}">
                                             {{ optional($bt->task)->name ?? ('Задача #'.$bt->task_id) }}
@@ -51,5 +52,6 @@
                 @endforeach
             @endif
         </div>
+    </div>
     </div>
 @endsection

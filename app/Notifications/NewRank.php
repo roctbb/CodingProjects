@@ -2,11 +2,9 @@
 
 namespace App\Notifications;
 
-use App\Channels\VkChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 
 class NewRank extends Notification implements ShouldQueue
 {
@@ -29,16 +27,7 @@ class NewRank extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return [VkChannel::class, 'database'];
-    }
-
-
-    public function toVk($notifiable)
-    {
-        $message = "🌟 Вы получили новое звание - \"" . $notifiable->rank()->name . "\"! Поздравляем!";
-
-        return $message;
-
+        return ['database'];
     }
 
     /**

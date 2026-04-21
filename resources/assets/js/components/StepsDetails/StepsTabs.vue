@@ -16,10 +16,10 @@
                                 <!-- TODO -->
                                 <div v-if="insider">
                                     <div v-if="task.isSubmitted">
-                                        <sup v-if="task.isFailed"><img title="Не выполнено" src="{{ url('images/icons/icons8-cancel-48.png') }}" style="height: 20px;" /></sup>
-                                        <sup v-else-if="task.isOnCheck"><img title="Ожидает проверки" src="{{ url('images/icons/icons8-historical-48.png') }}" style="height: 20px;" /></sup>
-                                        <sup v-else-if="task.isFullDone"><img title="Выполнено" src="{{ url('images/icons/icons8-checkmark-48.png') }}" style="height: 20px;" /></sup>
-                                        <sup v-else><img title="Требует доработки" src="{{ url('images/icons/icons8-error-48.png') }}" style="height: 20px;" /></sup>
+                                        <sup v-if="task.isFailed"><img title="Не выполнено" src="/images/icons/icons8-cancel-48.png" style="height: 20px;" /></sup>
+                                        <sup v-else-if="task.isOnCheck"><img title="Ожидает проверки" src="/images/icons/icons8-historical-48.png" style="height: 20px;" /></sup>
+                                        <sup v-else-if="task.isFullDone"><img title="Выполнено" src="/images/icons/icons8-checkmark-48.png" style="height: 20px;" /></sup>
+                                        <sup v-else><img title="Требует доработки" src="/images/icons/icons8-error-48.png" style="height: 20px;" /></sup>
                                     </div>
                                 </div>
                             </a>

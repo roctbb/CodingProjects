@@ -5,38 +5,37 @@
 @endsection
 
 @section('content')
-
-
-    <form method="POST" class="form-horizontal" enctype="multipart/form-data">
+    <div class="cp-profile-edit-page">
+    <form method="POST" enctype="multipart/form-data">
         {{ csrf_field() }}
         <div class="row">
             <div class="col-md-8">
-                <h4>Профиль</h4>
+                <h4 class="cp-profile-edit-title">Профиль</h4>
             </div>
-            <div class="col">
-                <button type="submit" class="btn btn-success btn-sm float-right">Сохранить</button>
+            <div class="col text-md-end">
+                <button type="submit" class="btn btn-primary btn-sm">Сохранить</button>
             </div>
         </div>
 
-        <div class="row" style="margin-top: 15px;">
+        <div class="row cp-row-gap-top">
             <div class="col-md-8">
-                <div class="card">
+                <div class="card cp-form-card">
                     <div class="card-body">
 
-                        <div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
-                            <label for="password" class="control-label">Новый пароль</label>
+                        <div class="mb-3">
+                            <label for="password">Новый пароль</label>
 
 
                             <input id="password" type="password" class="form-control" name="password">
 
                             @if ($errors->has('password'))
-                                <span class="help-block error-block"><strong>{{ $errors->first('password') }}</strong></span>
+                                <span class="invalid-feedback d-block"><strong>{{ $errors->first('password') }}</strong></span>
                             @endif
 
                         </div>
 
-                        <div class="form-group">
-                            <label for="password-confirm" class="control-label">Повторите
+                        <div class="mb-3">
+                            <label for="password-confirm">Повторите
                                 пароль</label>
 
 
@@ -45,7 +44,7 @@
 
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for='name'>Имя</label>
 
                             @if (old('name')!="")
@@ -56,14 +55,14 @@
                                        required>
                             @endif
                             @if ($errors->has('name'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('name') }}</strong>
                                     </span>
                             @endif
                         </div>
 
                         @if (\Auth::User()->role == 'teacher' || \Auth::User()->role == 'admin')
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for='birthday'>Дата рождения</label>
 
                                 @if (old('birthday')!="" || $user->birthday==null)
@@ -75,13 +74,13 @@
                                            required>
                                 @endif
                                 @if ($errors->has('birthday'))
-                                    <span class="help-block error-block">
+                                    <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('birthday') }}</strong>
                                     </span>
                                 @endif
                             </div>
                         @endif
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for='school'>Место учебы</label>
 
                             @if (old('school')!="")
@@ -94,12 +93,12 @@
                                        required>
                             @endif
                             @if ($errors->has('school'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('school') }}</strong>
                                     </span>
                             @endif
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for='grade'>Класс</label>
 
                             @if (old('grade')!="" || $user->grade_year==null)
@@ -111,14 +110,14 @@
                                        required>
                             @endif
                             @if ($errors->has('grade'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('grade') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <h4>О себе</h4>
-                        <div class="form-group">
+                        <h4 class="cp-profile-edit-section-title">О себе</h4>
+                        <div class="mb-3">
                             <label for='interests'>Технические интересы</label>
 
                             @if (old('interests')!="")
@@ -129,12 +128,12 @@
                                           name="interests">{{$user->interests}}</textarea>
                             @endif
                             @if ($errors->has('interests'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('interests') }}</strong>
                                     </span>
                             @endif
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for='hobbies'>Увлечения</label>
 
                             @if (old('hobbies')!="")
@@ -143,14 +142,14 @@
                                 <textarea id="hobbies" class="form-control" name="hobbies">{{$user->hobbies}}</textarea>
                             @endif
                             @if ($errors->has('hobbies'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('hobbies') }}</strong>
                                     </span>
                             @endif
                         </div>
                         @if ($guest->role=='teacher' || $guest->role=='admin')
-                            <h4>Информация</h4>
-                            <div class="form-group">
+                            <h4 class="cp-profile-edit-section-title">Информация</h4>
+                            <div class="mb-3">
                                 <label for='comments'>Комментарий</label>
 
                                 @if (old('comments')!="")
@@ -161,7 +160,7 @@
                                               name="comments">{{$user->comments}}</textarea>
                                 @endif
                                 @if ($errors->has('comments'))
-                                    <span class="help-block error-block">
+                                    <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('comments') }}</strong>
                                     </span>
                                 @endif
@@ -173,35 +172,21 @@
 
             </div>
             <div class="col-md-4">
-                <div class="card">
+                <div class="card cp-form-card">
                     <div class="card-body">
 
 
-                        <div class="form-group{{ $errors->has('image') ? ' has-error' : '' }}">
+                        <div class="mb-3">
                             <label for="image">Аватар</label>
 
                             <input id="image" type="file" class="form-control" name="image"/>
 
                             @if ($errors->has('image'))
-                                <span class="help-block error-block"><strong>{{ $errors->first('image') }}</strong></span>
+                                <span class="invalid-feedback d-block"><strong>{{ $errors->first('image') }}</strong></span>
                             @endif
                         </div>
-                        <h4>Контакты</h4>
-                        <div class="form-group">
-                            <label for='vk'>VK</label>
-
-                            @if (old('vk')!="")
-                                <input id='vk' type="text" class="form-control" name='vk' value="{{old('vk')}}">
-                            @else
-                                <input id='vk' type="text" class="form-control" name='vk' value="{{$user->vk}}">
-                            @endif
-                            @if ($errors->has('vk'))
-                                <span class="help-block error-block">
-                                        <strong>{{ $errors->first('vk') }}</strong>
-                                    </span>
-                            @endif
-                        </div>
-                        <div class="form-group">
+                        <h4 class="cp-profile-edit-section-title">Контакты</h4>
+                        <div class="mb-3">
                             <label for='telegram'>Telegram</label>
 
                             @if (old('telegram')!="")
@@ -212,12 +197,12 @@
                                        value="{{$user->telegram}}">
                             @endif
                             @if ($errors->has('telegram'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('telegram') }}</strong>
                                     </span>
                             @endif
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for='git'>Git</label>
 
                             @if (old('git')!="")
@@ -226,26 +211,15 @@
                                 <input id='git' type="text" class="form-control" name='git' value="{{$user->git}}">
                             @endif
                             @if ($errors->has('git'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('git') }}</strong>
                                     </span>
                             @endif
                         </div>
-                        <div class="form-group">
-                            <label for='facebook'>Facebook</label>
-
-                            @if (old('facebook')!="")
-                                <input id='facebook' type="text" class="form-control" name='facebook'
-                                       value="{{old('facebook')}}">
-                            @else
-                                <input id='facebook' type="text" class="form-control" name='facebook'
-                                       value="{{$user->facebook}}">
-                            @endif
-                            @if ($errors->has('facebook'))
-                                <span class="help-block error-block">
-                                        <strong>{{ $errors->first('facebook') }}</strong>
-                                    </span>
-                            @endif
+                        <div class="mb-3">
+                            <label for='email'>E-Mail</label>
+                            <input id='email' type="text" class="form-control" value="{{$user->email}}" readonly>
+                            <span class="form-text text-muted">Почта задается при регистрации.</span>
                         </div>
                     </div>
                 </div>
@@ -254,11 +228,5 @@
 
         </div>
     </form>
-    <script>
-        var simplemde_description = new EasyMDE({
-            spellChecker: false,
-            element: document.getElementById("description")
-        });
-        var simplemde_theory = new EasyMDE({spellChecker: false, element: document.getElementById("theory")});
-    </script>
+    </div>
 @endsection

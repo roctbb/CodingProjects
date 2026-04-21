@@ -4,95 +4,59 @@
     Восстановление пароля
 @endsection
 
-@section('head')
-    <style>
-        html {
-            width: 100%;
-            height: 100% !important;
-        }
-
-        body {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            height: 100% !important;
-        }
-
-        body::before {
-            content: "";
-            z-index: -1;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100% !important;
-            background-image: url("{{url('/images/bg/'.random_int(1,7).'.jpg')}}");
-            background-size: cover;
-            display: block;
-            opacity: 0.7;
-            filter: blur(3px);
-        }
-    </style>
-@endsection
-
 @section('content')
-    <div class="main-container fullscreen">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-xl-5 col-lg-6 col-md-7">
-                    <div class="text-center">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <a class="navbar-brand" href="{{ url('/') }}"
-                                   style="line-height: 50px; font-size: 1.3rem; color: white;">
-            <span><img style="height: 35px; margin-bottom: 0px;"
-                       src="{{ url('images/icons/icons8-idea-64.png') }}">&nbsp;</span>
-                                    {{ config('app.name', 'Laravel') }}
-                                </a>
-                                <h3 class="card-title"
-                                    style="color: white; margin-top: 20px; font-weight: 300; margin-bottom: 15px;">
-                                    Восстановление пароля</h3>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                @if (session('status'))
-                                    <div class="alert alert-success">
-                                        {{ session('status') }}
-                                    </div>
-                                @endif
-
-                                <form method="POST" action="{{ route('password.email') }}"
-                                      class="form-signin text-left">
-
-                                    <div class="card">
-                                        <div class="card-body">
-                                            {{ csrf_field() }}
-
-                                            <div class="form-group">
-                                                <label for="email" class="control-label">E-Mail адрес</label>
-
-                                                <input id="email" type="email" class="form-control form-group-lg"
-                                                       name="email" value="{{ old('email') }}" required>
-
-                                                @if ($errors->has('email'))
-                                                    <span class="help-block error-block">
-                                        <strong>{{ $errors->first('email') }}</strong>
-                                    </span>
-                                                @endif
-                                            </div>
-
-                                            <div class="form-group">
-                                                <button type="submit" class="btn btn-primary">
-                                                    Восстановить пароль
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+    <div class="ge-auth-visual-shell ge-auth-visual-shell--image" style="--auth-bg-image: url('{{ url('/images/bg/'.random_int(1,7).'.jpg') }}')">
+        <div class="auth-panel-shell">
+            <div class="card auth-card">
+                <div class="card-body">
+                    <div class="text-center auth-brand auth-brand--in-card">
+                        <a class="auth-brand-link" href="{{ url('/') }}">
+                            <img class="auth-brand-icon" src="{{ url('images/icons/icons8-idea-64.png') }}" alt="logo">
+                            {{ config('app.name', 'Laravel') }}
+                        </a>
+                        <h3 class="auth-title">Восстановление пароля</h3>
                     </div>
+
+                    @if (session('status'))
+                        <div class="alert alert-success auth-success-panel" role="status">
+                            {{ session('status') }}
+                            <div class="auth-success-panel__hint">Если письмо не пришло, можно отправить повторно через минуту.</div>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('password.email') }}" class="auth-form">
+                        {{ csrf_field() }}
+
+                        <div class="mb-3">
+                            <label for="email">Электронная почта</label>
+
+                            <input id="email" type="email" class="form-control form-control-lg"
+                                   name="email" value="{{ old('email') }}" autocomplete="email" required>
+
+                            @if ($errors->has('email'))
+                                <span class="invalid-feedback d-block">
+                                    <strong>{{ $errors->first('email') }}</strong>
+                                </span>
+                            @endif
+                        </div>
+
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary w-100" id="passwordEmailSubmit"
+                                    @if (session('status')) data-resend-seconds="60" disabled @endif>
+                                @if (session('status'))
+                                    Повторная отправка через 60 сек
+                                @else
+                                    Отправить письмо для восстановления
+                                @endif
+                            </button>
+                            <div class="form-text auth-resend-note" id="passwordEmailResendNote"></div>
+                        </div>
+
+                        <div class="auth-links-row text-start">
+                            <a class="auth-link-chip" href="{{url('/login')}}"><i class="icon ion-log-in"></i><span>Вернуться ко входу</span></a>
+                            <a class="auth-link-chip" href="{{url('/register')}}"><i class="icon ion-person-add"></i><span>Регистрация</span></a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

@@ -28,12 +28,6 @@ ALTER TABLE action_logs ADD INDEX IF NOT EXISTS idx_created (created_at);
 ALTER TABLE completed_courses ADD INDEX IF NOT EXISTS idx_course (course_id);
 ALTER TABLE completed_courses ADD INDEX IF NOT EXISTS idx_user (user_id);
 
--- Forum threads (for sidebar)
-ALTER TABLE forum_threads ADD INDEX IF NOT EXISTS idx_created (created_at);
-
--- Events (for sidebar)
-ALTER TABLE events ADD INDEX IF NOT EXISTS idx_date (date);
-
 -- Users
 ALTER TABLE users ADD INDEX IF NOT EXISTS idx_hidden (is_hidden);
 ALTER TABLE users ADD INDEX IF NOT EXISTS idx_role (role);

@@ -3,9 +3,8 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Support\Facades\Auth;
 
-class IsAdmin
+class IsAdmin extends AccessMiddleware
 {
     /**
      * Handle an incoming request.
@@ -17,8 +16,8 @@ class IsAdmin
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if (Auth::User()->role!='admin') {
-            return abort(403);
+        if (!$this->hasRole('admin')) {
+            return $this->forbidden();
         }
 
         return $next($request);

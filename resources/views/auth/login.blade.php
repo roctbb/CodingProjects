@@ -4,117 +4,71 @@
     Вход
 @endsection
 
-@section('head')
-    <style>
-        html {
-            width: 100%;
-            height: 100% !important;
-        }
-
-        body {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            height: 100% !important;
-        }
-
-        body::before {
-            content: "";
-            z-index: -1;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100% !important;
-            background-image: url("{{url('/images/bg/'.random_int(1,16).'.jpg')}}");
-            background-size: cover;
-            display: block;
-            opacity: 0.7;
-            filter: blur(3px);
-        }
-    </style>
-@endsection
-
 @section('content')
-    <div class="main-container fullscreen">
-        <div class="container">
+    <div class="ge-auth-visual-shell ge-auth-visual-shell--image" style="--auth-bg-image: url('{{ url('/images/bg/'.random_int(1,16).'.jpg') }}')">
+        <div class="auth-panel-shell">
             <div class="row justify-content-center">
-                <div class="col-xl-5 col-lg-6 col-md-7">
-                    <div class="text-center">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <a class="navbar-brand" href="{{ url('/') }}"
-                                   style="line-height: 50px; font-size: 1.3rem; color: white;">
-            <span><img style="height: 35px; margin-bottom: 0px;"
-                       src="{{ url('images/icons/icons8-idea-64.png') }}">&nbsp;</span>
-                                    {{ config('app.name', 'Laravel') }}
-                                </a>
-                                <h3 class="card-title"
-                                    style="color: white; margin-top: 20px; font-weight: 300; margin-bottom: 15px;">
-                                    Вход</h3>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <form method="POST" action="{{ url('/login') }}" class="form-signin">
+                <div class="col-12">
+                    <form method="POST" action="{{ url('/login') }}" class="auth-form">
+                        {{ csrf_field() }}
+                        <div class="card auth-card">
+                            <div class="card-body">
+                                <div class="text-center auth-brand auth-brand--in-card">
+                                    <a class="navbar-brand auth-brand-link" href="{{ url('/') }}">
+                                        <img class="auth-brand-icon" src="{{ url('images/icons/icons8-idea-64.png') }}" alt="logo">
+                                        {{ config('app.name', 'Laravel') }}
+                                    </a>
+                                    <h3 class="auth-title">Вход</h3>
+                                </div>
 
-                                    <div class="card">
-                                        <div class="card-body">
-                                            {{ csrf_field() }}
-                                            <div class="form-group">
-                                                <label for="inputEmail" class="sr-only">Email</label>
-                                                <input type="email" name="email" id="inputEmail"
-                                                       class="form-control-lg form-control"
-                                                       placeholder="Email address"
-                                                       required
-                                                       autofocus>
-                                                @if ($errors->has('email'))
-                                                    <span class="help-block error-block">
-                                        <strong>{{ $errors->first('email') }}</strong>
-                                    </span>
-                                                @endif
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="inputPassword" class="sr-only">Пароль</label>
-                                                <input type="password" id="inputPassword" name="password"
-                                                       class="form-control-lg form-control"
-                                                       placeholder="Password"
-                                                       required>
-                                                @if ($errors->has('password'))
-                                                    <span class="help-block error-block"><strong>{{ $errors->first('password') }}</strong></span>
-                                                @endif
-                                            </div>
-
-                                            <div class="form-group">
-
-                                                <button class="btn btn-lg btn-primary btn-block"
-                                                        type="submit">Вход
-                                                </button>
-                                            </div>
-                                            <div class="form-check text-left"
-                                                 style="color: #0A6187; margin-top: 0px; margin-bottom: 15px;">
-                                                <input type="checkbox" name="remember" class="form-check-input"
-                                                       id="exampleCheck1">
-                                                <label class="form-check-label" for="exampleCheck1">Не выходить из
-                                                    системы</label>
-                                            </div>
-                                            <p style="margin-top: 15px;" class="text-left">
-                                                <a style="color: #0A6187;" href="{{url('/register')}}"><i
-                                                            class="icon ion-person-add"></i>&nbsp;Регистрация</a><br>
-                                                <a style="color: #0A6187;" href="{{url('/password/reset')}}">&nbsp;<i
-                                                            class="icon ion-key"></i>&nbsp;&nbsp;Забыли
-                                                    пароль?</a>
-                                            </p>
-                                        </div>
+                                <div class="mb-3">
+                                    <label for="inputEmail" class="visually-hidden">Email</label>
+                                    <input type="email" name="email" id="inputEmail"
+                                           class="form-control-lg form-control"
+                                           placeholder="Электронная почта"
+                                           autocomplete="email"
+                                           required
+                                           autofocus>
+                                    @if ($errors->has('email'))
+                                        <span class="invalid-feedback d-block">
+                                            <strong>{{ $errors->first('email') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="mb-3">
+                                    <label for="inputPassword" class="visually-hidden">Пароль</label>
+                                    <div class="auth-password-wrap">
+                                        <input type="password" id="inputPassword" name="password"
+                                               class="form-control-lg form-control"
+                                               placeholder="Пароль"
+                                               autocomplete="current-password"
+                                               required>
+                                        <button type="button" class="auth-password-toggle" data-target="inputPassword" aria-label="Показать пароль">
+                                            <i class="icon ion-eye"></i>
+                                        </button>
                                     </div>
-                                </form>
+                                    @if ($errors->has('password'))
+                                        <span class="invalid-feedback d-block"><strong>{{ $errors->first('password') }}</strong></span>
+                                    @endif
+                                </div>
+
+                                <div class="mb-3">
+                                    <button class="btn btn-lg btn-primary w-100" type="submit">Вход</button>
+                                </div>
+                                <div class="form-check text-start mb-3">
+                                    <input type="checkbox" name="remember" class="form-check-input" id="exampleCheck1">
+                                    <label class="form-check-label" for="exampleCheck1">Не выходить из системы</label>
+                                </div>
+                                <div class="auth-links-row text-start">
+                                    <a class="auth-link-chip" href="{{url('/register')}}"><i class="icon ion-person-add"></i><span>Регистрация</span></a>
+                                    <a class="auth-link-chip" href="{{url('/password/reset')}}"><i class="icon ion-key"></i><span>Забыли пароль?</span></a>
+                                </div>
                             </div>
                         </div>
+                    </form>
                     </div>
-                </div>
             </div>
         </div>
     </div>
 
 @endsection
-

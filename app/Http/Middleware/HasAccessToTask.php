@@ -3,13 +3,10 @@
 namespace App\Http\Middleware;
 
 use App\Course;
-use App\ProgramStep;
 use App\Task;
-use App\User;
 use Closure;
-use Illuminate\Support\Facades\Auth;
 
-class HasAccessToTask
+class HasAccessToTask extends AccessMiddleware
 {
     /**
      * Handle an incoming request.
@@ -21,12 +18,12 @@ class HasAccessToTask
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if (Auth::User()->role == 'admin') {
+        if ($this->hasRole('admin')) {
             return $next($request);
         }
 
 
-        $user = User::findOrFail(Auth::User()->id);
+        $user = $this->currentUser();
 
         $course = Course::findOrFail($request->course_id);
         if ($course->teachers->contains($user)) {
@@ -34,12 +31,12 @@ class HasAccessToTask
         }
 
         $task = Task::findOrFail($request->id);
-        if ($course->students->contains($user) and ($course->is_sdl or $course->steps->contains($task->step))) {
+        if ($course->students->contains($user) && $course->steps->contains($task->step)) {
             return $next($request);
         }
 
 
-        return abort(403);
+        return $this->forbidden();
 
     }
 }

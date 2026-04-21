@@ -2,11 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Article;
-use App\CoinTransaction;
 use App\CourseCategory;
-use App\User;
-use App\Course;
 use Illuminate\Http\Request;
 
 class CourseCategoriesController extends Controller
@@ -18,16 +14,21 @@ class CourseCategoriesController extends Controller
 
     public function index()
     {
+        $categories = CourseCategory::query()
+            ->orderByDesc('is_available')
+            ->orderBy('title')
+            ->get();
 
-        return redirect('/textbook/64' );
-        //$courses = Course::availableForEnroll();
-        //return view('rocket.landing.courses.index', compact('courses'));
+        return view('courses', compact('categories'));
     }
 
     public function details($id)
     {
-        $course = Course::findOrFail($id);
-        return view('rocket.landing.courses.details', compact('course'));
+        $category = CourseCategory::findOrFail($id);
+        $open_courses = $category->courses->whereIn('mode', ['open', 'paid']);
+        $private_courses = $category->courses->whereIn('mode', ['offline', 'zoom']);
+
+        return view('categories.details', compact('category', 'open_courses', 'private_courses'));
     }
 
     public function createView()
@@ -107,11 +108,7 @@ class CourseCategoriesController extends Controller
 
     public function category_details($id)
     {
-        $category = CourseCategory::findOrFail($id);
-        $open_courses = $category->courses->whereIn('mode', ['open', 'paid']);
-        $private_courses = $category->courses->whereIn('mode', ['offline', 'zoom']);
-
-        return view('categories.details', compact('category', 'open_courses', 'private_courses'));
+        return $this->details($id);
     }
 
     public function start($id)

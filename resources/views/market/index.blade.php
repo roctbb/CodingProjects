@@ -5,99 +5,138 @@
 @endsection
 
 @section('content')
-    <div class="row" style="margin-top: 15px;">
-        <div class="col">
-            <h2> Магазин</h2>
-            <p>Ваш баланс - <img src="{{ url('images/icons/icons8-coins-48.png') }}"
-                                 style="height: 30px;"/>&nbsp;{{$user->balance()}}&nbsp;</p>
-        </div>
-        <div class="col">
-            @if ($user->role=='admin')
-                <a class="btn btn-secondary float-right" style="margin-left: 10px;" href="{{url('/insider/market/orders')}}">Заказы</a>
-                <a class="btn btn-round float-right" href="{{url('/insider/market/create/')}}"><i
-                            class="material-icons">add</i></a>
+    @php
+        $availableGoods = $goods->where('number', '>', 0)->count();
+    @endphp
+
+    <div class="gx-market-shell cp-market-page">
+        <section class="card border-0 rounded-4 shadow-sm gx-market-hero">
+            <div class="card-body">
+                <div class="gx-market-hero-top">
+                    <div>
+                        <h1 class="gx-market-title">Магазин</h1>
+                        <p class="gx-market-description">Обменивайте монеты на призы, материалы и полезные бонусы.</p>
+                    </div>
+                    <div class="gx-market-stats">
+                        <span class="badge gx-market-stat-badge">
+                            Баланс: <img src="{{ url('images/icons/icons8-coins-48.png') }}" class="gx-market-coin-icon" alt="coins"> {{ $user->balance() }}
+                        </span>
+                        <span class="badge gx-market-stat-badge">Товаров: {{ $goods->count() }}</span>
+                        <span class="badge gx-market-stat-badge">В наличии: {{ $availableGoods }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="gx-market-toolbar ge-page-header">
+            <div class="gx-market-toolbar-head">
+                <h4 class="gx-market-toolbar-title">Каталог товаров</h4>
+                <p class="gx-market-toolbar-subtitle">Выберите товар и оформите покупку за монеты</p>
+            </div>
+            @if ($user->role == 'admin')
+                <div class="gx-market-toolbar-actions">
+                    <a class="btn btn-outline-secondary btn-sm" href="{{url('/insider/market/orders')}}">Заказы</a>
+                    <a class="btn btn-primary btn-sm gx-market-create-btn" href="{{url('/insider/market/create/')}}">
+                        <i class="icon fa-solid fa-circle-plus"></i>&nbsp;Добавить
+                    </a>
+                </div>
             @endif
         </div>
-    </div>
-    <div class="row" style="margin-top: 15px;">
-        <div class="card-deck">
 
-            @foreach($goods as $good)
-                <div class="card"
-                     style="min-width: 210px; max-width: 260px; background-size: cover;">
-                    @if ($good->image != null)
-                        <img class="card-img-top" src="{{$good->image}}" style="max-width: 335px;"/>
-                    @endif
+        @if($goods->count())
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 row-cols-xxl-4 gx-market-grid">
+                @foreach($goods as $good)
+                    <div class="col">
+                        <article class="card h-100 gx-market-card {{ $good->number <= 0 ? 'is-soldout' : '' }}">
+                            <div class="gx-market-image-wrap">
+                                @if ($good->image)
+                                    <img class="card-img-top gx-market-image" src="{{$good->image}}" alt="{{ $good->name }}"/>
+                                @else
+                                    <img class="card-img-top gx-market-image" src="{{ url('images/clip-education.png') }}" alt="{{ $good->name }}"/>
+                                @endif
+                            </div>
 
-                    <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
-                        @if ($good->number > 0)
-                            <p><span class="badge badge-success">В наличии: {{$good->number}}x</span></p>
-                        @else
-                            <p><span class="badge badge-danger">Закончился</span></p>
-                        @endif
-                        <h5 style="margin-top: 15px; font-weight: 300;"
-                            class="card-title">{{$good->name}} @if ($user->role=='teacher' || $user->role=='admin')
-                                <span class="float-right"><a
-                                            href="{{url('/insider/market/'.$good->id.'/edit')}}"
-                                            class="btn btn-primary btn-sm"><i
-                                                class="icon ion-android-create"></i></a></span>
-                            @endif </h5>
-                        <p class="card-text" style="font-size: 0.8rem;">{{$good->description}}</p>
+                            <div class="card-body gx-market-card-body d-flex flex-column">
+                                <div class="gx-market-status-line">
+                                    @if ($good->number > 0)
+                                        <span class="badge text-bg-success">В наличии: {{$good->number}}x</span>
+                                    @else
+                                        <span class="badge text-bg-danger">Закончился</span>
+                                    @endif
+                                    @if ($user->role == 'teacher' || $user->role == 'admin')
+                                        <a href="{{url('/insider/market/'.$good->id.'/edit')}}" class="btn btn-primary btn-sm gx-market-edit-btn">
+                                            <i class="icon fa-solid fa-pen-to-square"></i>
+                                        </a>
+                                    @endif
+                                </div>
 
-                        @if ($good->number > 0 and $good->price <= $user->balance())
-                            <a href="{{url('/insider/market/'.$good->id.'/buy')}}" class="btn btn-primary"
-                               onclick="return confirm('Вы уверены?')">Купить за {{$good->price}} <img
-                                        style="height: 20px;"
-                                        src="{{ url('images/icons/icons8-coins-48.png') }}"/></a>
-                        @else
-                            <a href="#" class="disabled btn btn-primary">Купить за {{$good->price}} <img
-                                        style="height: 20px;"
-                                        src="{{ url('images/icons/icons8-coins-48.png') }}"/></a>
-                        @endif
+                                <h5 class="card-title gx-market-card-title">{{$good->name}}</h5>
+                                <p class="card-text gx-market-card-description">{{$good->description}}</p>
 
-
-                    </div>
-
-                </div>
-            @endforeach
-        </div>
-
-    </div>
-    @if ($user->role=='admin')
-
-        <div class="row" style="margin-top: 15px;">
-            <div class="col">
-                <h2> Архив</h2>
-            </div>
-        </div>
-        <div class="row" style="margin-top: 15px;">
-            <div class="card-deck">
-
-                @foreach($archive as $good)
-                    <div class="card"
-                         style="min-width: 280px; background-size: cover;">
-
-                        <!--<img class="card-img-top" src="..." alt="Card image cap">-->
-                        <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
-                            @if ($good->image != null)
-                                <img src="{{$good->image}}" style="margin-top: 15px; max-width: 200px;"/>
-                            @endif
-                            <h5 style="margin-top: 15px; font-weight: 300;"
-                                class="card-title">{{$good->name}} <span class="float-right"><a
-                                            href="{{url('/insider/market/'.$good->id.'/edit')}}"
-                                            class="btn btn-primary btn-sm"><i
-                                                class="icon ion-android-create"></i></a></span></h5>
-                            <p class="card-text" style="font-size: 0.8rem;">{{$good->description}}</p>
-                            <p><span class="badge badge-default">Снят с продажи</span></p>
-
-
-                        </div>
-
+                                @if ($good->number > 0 and $good->price <= $user->balance())
+                                    <a href="{{url('/insider/market/'.$good->id.'/buy')}}" class="btn btn-primary gx-market-buy-btn mt-auto"
+                                       onclick="return confirm('Вы уверены?')">
+                                        Купить за {{$good->price}}
+                                        <img class="cp-h-20" src="{{ url('images/icons/icons8-coins-48.png') }}" alt="coins"/>
+                                    </a>
+                                @else
+                                    <button type="button" class="btn btn-primary gx-market-buy-btn mt-auto" disabled>
+                                        Купить за {{$good->price}}
+                                        <img class="cp-h-20" src="{{ url('images/icons/icons8-coins-48.png') }}" alt="coins"/>
+                                    </button>
+                                @endif
+                            </div>
+                        </article>
                     </div>
                 @endforeach
             </div>
+        @else
+            <div class="alert alert-secondary gx-market-empty" role="alert">
+                Пока нет доступных товаров.
+            </div>
+        @endif
 
-        </div>
-    @endif
+        @if ($user->role == 'admin')
+            <div class="gx-market-archive-toolbar ge-page-header">
+                <div class="gx-market-toolbar-head">
+                    <h4 class="gx-market-toolbar-title">Архив товаров</h4>
+                    <p class="gx-market-toolbar-subtitle">Снятые с продажи позиции</p>
+                </div>
+            </div>
+
+            @if($archive->count())
+                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 row-cols-xxl-4 gx-market-grid gx-market-grid--archive">
+                    @foreach($archive as $good)
+                        <div class="col">
+                            <article class="card h-100 gx-market-card is-archived">
+                                <div class="gx-market-image-wrap">
+                                    @if ($good->image)
+                                        <img class="card-img-top gx-market-image" src="{{$good->image}}" alt="{{ $good->name }}"/>
+                                    @else
+                                        <img class="card-img-top gx-market-image" src="{{ url('images/clip-education.png') }}" alt="{{ $good->name }}"/>
+                                    @endif
+                                </div>
+
+                                <div class="card-body gx-market-card-body d-flex flex-column">
+                                    <div class="gx-market-status-line">
+                                        <span class="badge text-bg-secondary">Снят с продажи</span>
+                                        <a href="{{url('/insider/market/'.$good->id.'/edit')}}" class="btn btn-primary btn-sm gx-market-edit-btn">
+                                            <i class="icon fa-solid fa-pen-to-square"></i>
+                                        </a>
+                                    </div>
+                                    <h5 class="card-title gx-market-card-title">{{$good->name}}</h5>
+                                    <p class="card-text gx-market-card-description">{{$good->description}}</p>
+                                </div>
+                            </article>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="alert alert-secondary gx-market-empty" role="alert">
+                    Архив пока пуст.
+                </div>
+            @endif
+        @endif
+    </div>
 
 @endsection

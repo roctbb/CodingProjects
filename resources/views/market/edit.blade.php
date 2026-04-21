@@ -5,15 +5,15 @@
 @endsection
 
 @section('content')
-
-    <h2>Изменение товара "{{$good->name}}"</h2>
-    <div class="row" style="margin-top: 15px;">
-        <div class="col">
-            <div class="card">
+    <div class="cp-market-form-page">
+    <h2 class="cp-heading-lite">Изменение товара "{{$good->name}}"</h2>
+    <div class="row cp-row-gap-top">
+        <div class="col-12 col-xl-10">
+            <div class="card cp-form-card">
                 <div class="card-body">
-                    <form method="POST" class="form-horizontal" enctype="multipart/form-data">
+                    <form method="POST" class="vstack gap-3" enctype="multipart/form-data">
                         {{ csrf_field() }}
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="name">Название</label>
                             @if (old('name')!='')
                                 <input id="name" type="text" class="form-control" name="name" value="{{old('name')}}"
@@ -23,14 +23,14 @@
                                        required>
                             @endif
                             @if ($errors->has('name'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('name') }}</strong>
                                     </span>
                             @endif
                         </div>
 
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="description">Описание</label>
                             @if (old('description')!='')
                                 <textarea id="description" class="form-control" name="description"
@@ -40,45 +40,45 @@
                                           required>{{$good->description}}</textarea>
                             @endif
                             @if ($errors->has('description'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('description') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="number">Количество</label>
                             @if (old('number')!='')
-                                <input id="number" type="text" class="form-control" name="number"
+                                <input id="number" type="number" min="0" step="1" class="form-control" name="number"
                                        value="{{old('number')}}" required>
                             @else
-                                <input id="number" type="text" class="form-control" name="number"
+                                <input id="number" type="number" min="0" step="1" class="form-control" name="number"
                                        value="{{$good->number}}" required>
                             @endif
                             @if ($errors->has('number'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('number') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="price">Стоимость</label>
                             @if (old('price')!='')
-                                <input id="price" type="text" class="form-control" name="price" value="{{old('price')}}"
+                                <input id="price" type="number" min="0" step="1" class="form-control" name="price" value="{{old('price')}}"
                                        required>
                             @else
-                                <input id="price" type="text" class="form-control" name="price" value="{{$good->price}}"
+                                <input id="price" type="number" min="0" step="1" class="form-control" name="price" value="{{$good->price}}"
                                        required>
                             @endif
                             @if ($errors->has('price'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('price') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="image">Фото</label>
                             @if (old('image')!='')
                                 <input id="image" type="text" class="form-control" name="image" value="{{old('image')}}"
@@ -88,29 +88,29 @@
                                        required>
                             @endif
                             @if ($errors->has('image'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('image') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
-                            <label for="in_stock">В продаже?</label>
-                            <input id="in_stock" type="checkbox" name="in_stock" value="on"
+                        <div class="form-check mb-3">
+                            <input id="in_stock" class="form-check-input" type="checkbox" name="in_stock" value="on"
                                    @if ($good->in_stock) checked @endif>
+                            <label class="form-check-label" for="in_stock">В продаже?</label>
                             @if ($errors->has('in_stock'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('in_stock') }}</strong>
                                     </span>
                             @endif
                         </div>
 
 
-                        <button type="submit" class="btn btn-success">Сохранить</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+    </div>
 @endsection
-

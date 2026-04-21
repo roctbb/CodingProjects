@@ -30,16 +30,6 @@ class Lesson extends Model
         return $this->belongsTo('App\ProgramChapter', 'chapter_id', 'id');
     }
 
-    public function sdl_node()
-    {
-        return $this->belongsTo('App\CoreNode', 'sdl_node_id', 'id');
-    }
-
-    public function scale()
-    {
-        return $this->belongsTo('App\ResultScale', 'scale_id', 'id');
-    }
-
     public function steps()
     {
         return $this->hasMany('App\ProgramStep', 'lesson_id', 'id')->with('tasks')->orderBy('sort_index')->orderBy('id');
@@ -209,59 +199,5 @@ class Lesson extends Model
         }
         $this->save();
     }
-
-    public static function getAvailableSdlLessons($user, Course $course, $idea = null)
-    {
-        $current_lessons = $course->user_sdl_lessons($user)->with('sdl_node', 'sdl_node.children', 'sdl_node.parents')->get();
-        $version = $course->sdl_core_version;
-
-        if ($idea == null)
-        {
-            $nodes = CoreNode::where('version', $version)->with('parents', 'children')->get();
-        }
-        else
-        {
-            $start_node = CoreNode::findOrFail($idea->sdl_node_id);
-            $nodes = collect([]);
-            $nodes->push($start_node);
-
-            $nodes_to_look = $start_node->parents;
-
-            while ($nodes_to_look->count() != 0)
-            {
-                $current_node = $nodes_to_look->pop();
-                $nodes->push($current_node);
-
-                foreach ($current_node->parents as $parent)
-                {
-                    if ($nodes->contains($parent) or $nodes_to_look->contains($parent)) continue;
-                    $nodes_to_look->push($parent);
-                }
-            }
-        }
-
-        $lessons = Lesson::whereIn('sdl_node_id', $nodes->pluck('id'))->where('is_sdl', true)->with('sdl_node', 'sdl_node.children', 'sdl_node.parents')->get();
-        $available_lessons = $lessons->filter(function ($lesson) use ($current_lessons) {
-            if ($lesson->sdl_node->parents()->count() == 0 and !$current_lessons->contains($lesson)) return true;
-            return false;
-        });
-
-        $completed_nodes = collect([]);
-
-        foreach ($lessons as $lesson) {
-            if ($lesson->percent($user, $course) > 90) {
-                $completed_nodes->push($lesson->sdl_node);
-            }
-        }
-        foreach ($lessons as $lesson) {
-            if ($current_lessons->contains($lesson) or $available_lessons->contains($lesson)) continue;
-            if ($completed_nodes->count() == 0 and $lesson->sdl_node->parents->count() != 0) continue;
-            if ($lesson->sdl_node->parents->pluck('id')->diff($completed_nodes->pluck('id'))->intersect($lesson->sdl_node->parents->pluck('id'))->count() != 0) continue;
-            $available_lessons->push($lesson);
-        }
-
-        return $available_lessons;
-    }
-
 
 }

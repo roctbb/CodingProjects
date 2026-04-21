@@ -7157,9 +7157,6 @@ article ul {
   article ul > li {
     margin-bottom: .5rem; }
 
-article + article {
-  margin-top: 3rem; }
-
 article pre + p {
   margin-top: 2.25rem; }
 

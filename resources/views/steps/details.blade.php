@@ -8,84 +8,112 @@
     @endif
 @endsection
 
-
 @section('tabs')
-
 @endsection
 
 @section('content')
-    <div class="row" style="min-height: 100%; position: absolute; width: 100%; background-color: #fafafa;">
-        @include('steps/partials/nav')
-
-        <main role="main" class="col-sm-8 ml-sm-auto col-md-9 col-xl-10 pt-3" style="background-color: white; padding-bottom: 40px;">
-            @include('steps/partials/breadcrumb_widget')
-            @include('steps/partials/tabs')
-
-
-            <div class="tab-content" id="pills-tabContent" style="padding: 15px;">
-
-                @include('steps/partials/notes')
-                @include('steps/partials/quizer')
-                @include('steps/partials/content')
-
+    <div class="neo-step-page">
+        <section class="steps-hero card border-0">
+            <div class="card-body">
+                <div class="steps-hero-top">
+                    <div>
+                        @if (\Request::is('insider/*'))
+                            <a class="steps-hero-course-link" href="{{url('/insider/courses/'.$course->id)}}">{{$course->name}}</a>
+                        @endif
+                        @if (\Request::is('open/*'))
+                            <span class="steps-hero-course-link">Открытый урок</span>
+                        @endif
+                        <h1 class="steps-hero-title">{{$step->lesson->name}}</h1>
+                        <p class="steps-hero-subtitle">{{$step->name}}</p>
+                    </div>
+                    <div class="steps-hero-meta">
+                        <span class="badge text-bg-secondary">Этапов: {{$step->lesson->steps->count()}}</span>
+                        @if (count($tasks) > 0)
+                            <span class="badge text-bg-primary">Задач: {{count($tasks)}}</span>
+                        @endif
+                    </div>
+                </div>
             </div>
-            <p class="markdown">
-                @if (\Request::is('insider/*'))
-                    @if ($step->previousStep() != null)
-                        <a href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->previousStep()->id)}}"
-                           class="btn btn-success btn-sm">Назад</a>
-                    @endif
-                    @if ($step->nextStep() != null)
-                        <a href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->nextStep()->id)}}"
-                           class="btn btn-success btn-sm float-right">Вперед</a>
-                    @endif
-                @endif
-                @if (\Request::is('open/*'))
-                    @if ($step->previousStep() != null)
-                        <a href="{{url('/open/steps/'.$step->previousStep()->id)}}"
-                           class="btn btn-success btn-sm">Назад</a>
-                    @endif
-                    @if ($step->nextStep() != null)
-                        <a href="{{url('/open/steps/'.$step->nextStep()->id)}}"
-                           class="btn btn-success btn-sm float-right">Вперед</a>
-                    @endif
-                @endif
-            </p>
+        </section>
 
-        </main>
+        <div class="steps-layout neo-step-layout mt-3">
+            @include('steps/partials/nav')
 
+            <main role="main" class="steps-main">
+                @include('steps/partials/breadcrumb_widget')
+                @include('steps/partials/tabs')
 
+                <div class="tab-content steps-tab-content" id="pills-tabContent">
+                    @include('steps/partials/notes')
+                    @include('steps/partials/quizer')
+                    @include('steps/partials/content')
+                </div>
+
+                <div class="steps-bottom-nav">
+                    @if (\Request::is('insider/*'))
+                        @if ($step->previousStep() != null)
+                            <a href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->previousStep()->id)}}"
+                               class="btn btn-outline-secondary steps-bottom-nav-btn">Назад</a>
+                        @endif
+                        @if ($step->nextStep() != null)
+                            <a href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->nextStep()->id)}}"
+                               class="btn btn-primary steps-bottom-nav-btn steps-bottom-nav-btn--next">Вперед</a>
+                        @endif
+                    @endif
+                    @if (\Request::is('open/*'))
+                        @if ($step->previousStep() != null)
+                            <a href="{{url('/open/steps/'.$step->previousStep()->id)}}"
+                               class="btn btn-outline-secondary steps-bottom-nav-btn">Назад</a>
+                        @endif
+                        @if ($step->nextStep() != null)
+                            <a href="{{url('/open/steps/'.$step->nextStep()->id)}}"
+                               class="btn btn-primary steps-bottom-nav-btn steps-bottom-nav-btn--next">Вперед</a>
+                        @endif
+                    @endif
+                </div>
+            </main>
+        </div>
     </div>
-
 
     @include('steps/partials/modal')
     <script>
-        $('blockquote').addClass('bd-callout bd-callout-info')
-
-        var simplemde_task = new EasyMDE({
-            spellChecker: false,
-            element: document.getElementById("text")
-        });
-        var simplemde_solution = new EasyMDE({
-            spellChecker: false,
-            element: document.getElementById("solution")
+        document.querySelectorAll('blockquote').forEach(function (node) {
+            node.classList.add('bd-callout', 'bd-callout-info');
         });
 
-        $('table').addClass('table table-striped');
+        var taskEditorElement = document.getElementById('text');
+        if (taskEditorElement) {
+            window.simplemde_task = new EasyMDE({
+                spellChecker: false,
+                element: taskEditorElement
+            });
+        }
+
+        var solutionEditorElement = document.getElementById('solution');
+        if (solutionEditorElement) {
+            window.simplemde_solution = new EasyMDE({
+                spellChecker: false,
+                element: solutionEditorElement
+            });
+        }
+
+        document.querySelectorAll('table').forEach(function (node) {
+            node.classList.add('table', 'table-striped', 'table-sm', 'align-middle');
+        });
     </script>
     @if (\Request::is('insider/*'))
         <script>
             var thtml = `
-    <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
+    <div class="row steps-solution-row">
       <div class="col">
          <div class="card">
             <div class="card-header">
                Дата сдачи: __DATE_PLACEHOLDER__
-               <div class="float-right">
-                  <span class="badge badge-secondary">Решение еще не проверено</span>
+               <div class="steps-solution-status">
+                  <span class="badge text-bg-secondary">Решение еще не проверено</span>
                </div>
             </div>
-            <div class="card-body" style="padding-top: 0; padding-bottom: 0; padding: 20px;">
+            <div class="card-body steps-solution-body">
                __TEXT_PLACEHOLDER__
             </div>
          </div>
@@ -116,16 +144,14 @@
                     return;
                 }
                 e.target.querySelector("[name=text]").value = "";
-                console.log(e.target.querySelector("#sbtn"))
-                e.target.querySelector("#sbtn").classList.remove("btn-success");
+                e.target.querySelector("#sbtn").classList.remove("btn-primary");
                 e.target.querySelector("#sbtn").classList.add("btn-disabled");
                 e.target.querySelector("#sbtn").disabled = "true";
                 e.target.querySelector("#sbtn").innerHTML = "Подождите ...";
 
                 axios.post(`/insider/courses/{{$course->id}}/tasks/${taskId}/solution`, `text=` + encodeURIComponent(text))
                     .then((res) => {
-
-                        e.target.querySelector("#sbtn").classList.add("btn-success");
+                        e.target.querySelector("#sbtn").classList.add("btn-primary");
                         e.target.querySelector("#sbtn").classList.remove("btn-disabled");
                         e.target.querySelector("#sbtn").removeAttribute("disabled");
                         e.target.querySelector("#sbtn").innerHTML = "Ответить";
@@ -141,5 +167,4 @@
             }
         </script>
     @endif
-
 @endsection

@@ -5,89 +5,90 @@
 @endsection
 
 @section('content')
-    <h2>Новое образовательное направление</h2>
-    <div class="row" style="margin-top: 15px;">
-        <div class="col">
-            <div class="card">
+    <div class="cp-category-form-page">
+    <h2 class="cp-heading-lite">Новое образовательное направление</h2>
+    <div class="row cp-row-gap-top">
+        <div class="col-12 col-xl-10">
+            <div class="card cp-form-card">
                 <div class="card-body">
-                    <form method="POST">
+                    <form method="POST" class="vstack gap-3">
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             {{ csrf_field() }}
-                            <label for="name">Название</label>
+                            <label for="title">Название</label>
                             <input id="title" type="text" class="form-control" name="title" value="{{old('title')}}"
                                    required>
                             @if ($errors->has('title'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('title') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
 
                             <label for="small_image_url">Маленькая картинка</label>
                             <input id="small_image_url" type="text" class="form-control" name="small_image_url"
                                    value="{{old('small_image_url')}}"
                                    required>
                             @if ($errors->has('small_image_url'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                     <strong>{{ $errors->first('small_image_url') }}</strong>
                                 </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
 
                             <label for="card_image_url">Картинка для карточки</label>
                             <input id="card_image_url" type="text" class="form-control" name="card_image_url"
                                    value="{{old('card_image_url')}}"
                                    required>
                             @if ($errors->has('card_image_url'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                     <strong>{{ $errors->first('card_image_url') }}</strong>
                                 </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
 
                             <label for="head_image_url">Картинка для заголовка</label>
                             <input id="head_image_url" type="text" class="form-control" name="head_image_url"
                                    value="{{old('head_image_url')}}"
                                    required>
                             @if ($errors->has('head_image_url'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                     <strong>{{ $errors->first('head_image_url') }}</strong>
                                 </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
 
                             <label for="video_url">Видео</label>
                             <input id="video_url" type="text" class="form-control" name="video_url"
                                    value="{{old('video_url')}}">
                             @if ($errors->has('video_url'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                     <strong>{{ $errors->first('video_url') }}</strong>
                                 </span>
                             @endif
                         </div>
 
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="short_description">Описание для карточки</label>
                             <textarea id="short_description" class="form-control"
                                       name="short_description">{{old('short_description')}}</textarea>
                             @if ($errors->has('short_description'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('short_description') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="description">Описание</label>
                             <p class="text-muted">Для разметки текста используется markdown, описание - <a
                                         target="_blank"
@@ -97,13 +98,13 @@
                             <textarea id="description" class="form-control"
                                       name="description">{{old("description")}}</textarea>
                             @if ($errors->has("description"))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first("description") }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <input type="submit" class="btn btn-success" value="Добавить"/>
+                        <input type="submit" class="btn btn-primary" value="Добавить"/>
 
                     </form>
                 </div>
@@ -116,5 +117,6 @@
                 element: document.getElementById("description")
             });
         </script>
+    </div>
     </div>
 @endsection

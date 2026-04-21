@@ -2,37 +2,60 @@
 
 namespace App\Http\Controllers;
 
+use App\BlockedTask;
 use App\CoinTransaction;
 use App\Course;
-use App\CourseStudentPoints;
-use App\Jobs\RecalculateCourseStudentPoints;
-use App\LessonStudentStats;
+use App\Http\Requests\Tasks\EstimateTaskSolutionRequest;
+use App\Http\Requests\Tasks\StoreTaskRequest;
+use App\Http\Requests\Tasks\SubmitTaskSolutionRequest;
+use App\Http\Requests\Tasks\UpdateTaskRequest;
 use App\ProgramStep;
 use App\Http\Controllers\Controller;
-use App\Question;
-use App\QuestionVariant;
 use App\Solution;
+use App\TaskDeadline;
 use App\Task;
 use App\User;
+use App\Services\StudentProgressService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Auth;
+use Illuminate\Support\Facades\DB;
 use Notification;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Client;
 
 class TasksController extends Controller
 {
+    private StudentProgressService $progressService;
+
     /**
      * Create a new controller instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(StudentProgressService $progressService)
     {
+        $this->progressService = $progressService;
         $this->middleware('auth');
         $this->middleware('task');
-        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent']);
+        $this->middleware('teacher')->only([
+            'create',
+            'delete',
+            'editForm',
+            'edit',
+            'reviewSolutions',
+            'estimateSolution',
+            'phantomSolution',
+            'blockStudent',
+            'unblockStudent',
+            'makeLower',
+            'makeUpper',
+            'toNextTask',
+            'toPreviousTask',
+            'makeDeadline',
+            'recheckAllSolutions',
+            'reviewTable',
+        ]);
     }
 
     /**
@@ -41,23 +64,15 @@ class TasksController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function create($course_id, $id, Request $request)
+    public function create($course_id, $id, StoreTaskRequest $request)
     {
         $step = ProgramStep::findOrFail($id);
-        $this->validate($request, [
-            'text' => 'required|string',
-            'name' => 'required|string',
-            'price' => 'nullable|numeric|min:0',
-            'max_mark' => 'required|integer|min:0|max:1000'
-        ]);
-
-
         $order = 100;
-        if ($step->lesson->steps->count() != 0)
-            $order = $step->lesson->steps->last()->sort_index + 1;
+        if ($step->tasks->count() != 0) {
+            $order = $step->tasks->last()->sort_index + 1;
+        }
 
-        if (!$request->has('price') or $request->price == null) $price = 0;
-        else $price = $request->price;
+        $price = $request->price ?? 0;
 
         $task = Task::create(['text' => $request->text, 'step_id' => $step->id, 'name' => $request->name, 'max_mark' => $request->max_mark, 'sort_index' => $order,
             'is_star' => $request->is_star == 'on' ? true : false,
@@ -67,10 +82,10 @@ class TasksController extends Controller
         $task->solution = $request->solution;
         $task->price = $price;
 
-        if ($request->has('answer') and $request->answer != "") {
+        if ($request->has('answer') && $request->answer != "") {
             $task->is_quiz = true;
             $task->answer = $request->answer;
-        } else if ($request->has('is_code') and $request->is_code == 'on') {
+        } elseif ($request->has('is_code') && $request->is_code == 'on') {
             $task->is_code = true;
         }
         $task->save();
@@ -82,11 +97,9 @@ class TasksController extends Controller
 
         // Recalculate points for all students after adding new task
         $course = Course::findOrFail($course_id);
-        foreach ($course->students as $student) {
-            RecalculateCourseStudentPoints::dispatch($course_id, $student->id);
-        }
+        $this->progressService->dispatchCourseStudentsRecalculation($course_id, $course->students);
 
-        return redirect('/insider/courses/' . $course_id . '/steps/' . $step->id . '#task' . $task->id);
+        return $this->redirectToTask($course_id, $step->id, $task->id);
     }
 
     public function delete($course_id, $id)
@@ -97,9 +110,7 @@ class TasksController extends Controller
 
         // Recalculate points for all students after deleting task
         $course = Course::findOrFail($course_id);
-        foreach ($course->students as $student) {
-            RecalculateCourseStudentPoints::dispatch($course_id, $student->id);
-        }
+        $this->progressService->dispatchCourseStudentsRecalculation($course_id, $course->students);
 
         return redirect('/insider/courses/' . $course_id . '/steps/' . $step_id);
     }
@@ -111,15 +122,9 @@ class TasksController extends Controller
         return view('steps.edit_task', compact('task'));
     }
 
-    public function edit($course_id, $id, Request $request)
+    public function edit($course_id, $id, UpdateTaskRequest $request)
     {
         $task = Task::findOrFail($id);
-        $this->validate($request, [
-            'text' => 'required|string',
-            'name' => 'required|string',
-            'price' => 'nullable|numeric|min:0',
-            'max_mark' => 'required|integer|min:0|max:1000'
-        ]);
 
         foreach ($task->consequences as $consequence) {
             $task->consequences()->detach($consequence->id);
@@ -132,8 +137,7 @@ class TasksController extends Controller
         $task->text = $request->text;
         $task->max_mark = $request->max_mark;
         $task->name = $request->name;
-        if (!$request->has('price')) $request->price = 0;
-        $task->price = $request->price;
+        $task->price = $request->price ?? 0;
         $task->solution = $request->solution;
         if ($request->is_star == 'on') {
             $task->is_star = true;
@@ -155,13 +159,13 @@ class TasksController extends Controller
         } else {
             $task->only_remote = false;
         }
-        if ($request->has('answer') and $request->answer != "") {
+        if ($request->has('answer') && $request->answer != "") {
             $task->is_quiz = true;
             $task->answer = $request->answer;
         } else {
             $task->is_quiz = false;
         }
-        if ($request->has('is_code') and $request->is_code == "on") {
+        if ($request->has('is_code') && $request->is_code == "on") {
             $task->is_quiz = false;
             $task->is_code = true;
         } else {
@@ -172,12 +176,10 @@ class TasksController extends Controller
 
         // Recalculate points for all students after editing task
         $course = Course::findOrFail($course_id);
-        foreach ($course->students as $student) {
-            RecalculateCourseStudentPoints::dispatch($course_id, $student->id);
-        }
+        $this->progressService->dispatchCourseStudentsRecalculation($course_id, $course->students);
 
         $step_id = $task->step_id;
-        return redirect('/insider/courses/' . $course_id . '/steps/' . $step_id . '#task' . $id);
+        return $this->redirectToTask($course_id, $step_id, $id);
     }
 
     public function phantomSolution($course_id, $id, Request $request)
@@ -195,18 +197,16 @@ class TasksController extends Controller
         }
 
         // Recalculate cached points since hidden task is now visible for all students
-        foreach ($course->students as $user) {
-            RecalculateCourseStudentPoints::dispatch($course_id, $user->id);
-        }
+        $this->progressService->dispatchCourseStudentsRecalculation($course_id, $course->students);
 
-        return redirect('/insider/courses/' . $course_id . '/steps/' . $task->step->id . '#task' . $id);
+        return $this->redirectToTask($course_id, $task->step->id, $id);
     }
 
 
-    public function postSolution($course_id, $id, Request $request)
+    public function postSolution($course_id, $id, SubmitTaskSolutionRequest $request)
     {
         $task = Task::findOrFail($id);
-        $user = User::findOrFail(Auth::User()->id);
+        $user = Auth::user();
 
         // Blocked users cannot submit
         if ($task->isBlocked($user->id, $course_id)) {
@@ -216,16 +216,11 @@ class TasksController extends Controller
             ];
         }
 
-        $this->validate($request, [
-            'text' => 'required|string',
-        ]);
-
-        $step_id = $task->step_id;
         $course = Course::findOrFail($course_id);
 
         $solution = new Solution();
         $solution->task_id = $id;
-        $solution->user_id = Auth::User()->id;
+        $solution->user_id = $user->id;
         $solution->course_id = $course_id;
         $solution->submitted = Carbon::now();
         $solution->text = clean($request->text);
@@ -233,13 +228,13 @@ class TasksController extends Controller
         if ($task->is_quiz) {
             $old_rank = $user->rank();
             if ($task->answer == $request->text) {
-                if ($task->price > 0 and !$task->isFullDone(Auth::User()->id)) {
-                    CoinTransaction::register(Auth::User()->id, $task->price, "Task #" . $task->id);
+                if ($task->price > 0 && !$task->isFullDone($user->id)) {
+                    CoinTransaction::register($user->id, $task->price, "Task #" . $task->id);
                 }
 
                 $deadline = $task->getDeadline($course_id);
 
-                if (!$deadline or Carbon::now()->lt($deadline->expiration->addDay())) {
+                if (!$deadline || Carbon::now()->lt($deadline->expiration->addDay())) {
                     $solution->mark = $task->max_mark;
                     $solution->comment = "Правильно.";
                 } else {
@@ -261,8 +256,7 @@ class TasksController extends Controller
             $solution->save();
 
             // Recalculate cached points after auto-grading quiz
-            CourseStudentPoints::recalculate($course_id, $user->id);
-            LessonStudentStats::recalculateForStudent($course_id, $user->id);
+            $this->progressService->recalculateStudentProgress($course_id, $user->id);
 
             $user->rescore();
             $new_rank = $user->rank();
@@ -282,8 +276,7 @@ class TasksController extends Controller
         // If this is the first solution for a hidden task, recalculate cached points
         // because the task just became visible for this student
         if ($task->is_hidden && !$task->is_quiz) {
-            CourseStudentPoints::recalculate($course_id, $user->id);
-            LessonStudentStats::recalculateForStudent($course_id, $user->id);
+            $this->progressService->recalculateStudentProgress($course_id, $user->id);
         }
 
 
@@ -293,10 +286,11 @@ class TasksController extends Controller
         ];
     }
 
-    public function askForRecheck($course_id, $id, $solution_id) {
+    public function askForRecheck($course_id, $id, $solution_id)
+    {
         $solution = Solution::findOrFail($solution_id);
 
-        if (!$solution->recheck_requested and $solution->task->is_code) {
+        if (!$solution->recheck_requested && $solution->task->is_code) {
             $solution->recheck_requested = true;
             $solution->save();
 
@@ -323,97 +317,85 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         $course = Course::findOrFail($course_id);
         $student = User::findOrFail($student_id);
-
-        // Create block record if not exists
-        if (!\App\BlockedTask::where('task_id', $id)
-            ->where('user_id', $student_id)
-            ->where('course_id', $course_id)->exists()) {
-            \App\BlockedTask::create([
-                'task_id' => $id,
-                'user_id' => $student_id,
-                'course_id' => $course_id,
-                'blocked_at' => Carbon::now(),
-                'reason' => 'plagiarism'
-            ]);
-        }
-
-        // Zero out all existing marks for this task/user/course
-        $solutions = Solution::where('task_id', $id)
-            ->where('user_id', $student_id)
-            ->where('course_id', $course_id)
-            ->get();
-        foreach ($solutions as $solution) {
-            $solution->mark = 0;
-            $solution->comment = 'Решение заблокировано (плагиат).';
-            $solution->teacher_id = Auth::User()->id;
-            if ($solution->checked == null) {
-                $solution->checked = Carbon::now();
+        DB::transaction(function () use ($id, $student_id, $course_id) {
+            if (!BlockedTask::where('task_id', $id)
+                ->where('user_id', $student_id)
+                ->where('course_id', $course_id)->exists()) {
+                BlockedTask::create([
+                    'task_id' => $id,
+                    'user_id' => $student_id,
+                    'course_id' => $course_id,
+                    'blocked_at' => Carbon::now(),
+                    'reason' => 'plagiarism',
+                ]);
             }
-            $solution->save();
-        }
+
+            $solutions = Solution::where('task_id', $id)
+                ->where('user_id', $student_id)
+                ->where('course_id', $course_id)
+                ->get();
+            foreach ($solutions as $solution) {
+                $solution->mark = 0;
+                $solution->comment = 'Решение заблокировано (плагиат).';
+                $solution->teacher_id = Auth::id();
+                if ($solution->checked == null) {
+                    $solution->checked = Carbon::now();
+                }
+                $solution->save();
+            }
+        });
 
         // Invalidate cached score
         $student->rescore();
 
         // Recalculate cached points for the student in this course
-        CourseStudentPoints::recalculate($course_id, $student_id);
-
-        // Recalculate lesson stats for all lessons this student is enrolled in
-        LessonStudentStats::recalculateForStudent($course_id, $student_id);
+        $this->progressService->recalculateStudentProgress($course_id, $student_id);
 
         return redirect()->back();
     }
 
     public function unblockStudent($course_id, $id, $student_id)
     {
-        // Remove block records for this task/user/course
-        \App\BlockedTask::where('task_id', $id)
-            ->where('user_id', $student_id)
-            ->where('course_id', $course_id)
-            ->delete();
+        DB::transaction(function () use ($id, $student_id, $course_id) {
+            BlockedTask::where('task_id', $id)
+                ->where('user_id', $student_id)
+                ->where('course_id', $course_id)
+                ->delete();
+        });
 
         // Recalculate cached points for the student in this course
-        CourseStudentPoints::recalculate($course_id, $student_id);
-
-        // Recalculate lesson stats for all lessons this student is enrolled in
-        LessonStudentStats::recalculateForStudent($course_id, $student_id);
+        $this->progressService->recalculateStudentProgress($course_id, $student_id);
 
         // Do not modify marks here; just allow new submissions
         return redirect()->back();
     }
 
-    public function estimateSolution($course_id, $id, Request $request)
+    public function estimateSolution($course_id, $id, EstimateTaskSolutionRequest $request)
     {
         $solution = Solution::findOrFail($id);
-        $this->validate($request, [
-            'mark' => 'required|integer|min:0|max:' . $solution->task->max_mark
-        ]);
-
         $old_rank = $solution->user->rank();
-        $deadline = $solution->task->getDeadline($course_id);
 
-        if (!$deadline or $solution->created_at->lt($deadline->expiration->addDay())) {
-            $solution->mark = $request->mark;
-            $solution->comment = $request->comment;
-        } else {
-            $solution->mark = ceil($request->mark * $deadline->penalty);
-            $solution->comment = "Сдано с опозданием.\n\n" . $request->comment;
-        }
+        DB::transaction(function () use ($solution, $request, $course_id) {
+            $deadline = $solution->task->getDeadline($course_id);
 
-        if ($solution->task->price > 0 and $solution->mark == $solution->task->max_mark and !$solution->task->isFullDone($solution->user_id)) {
-            CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
-        }
+            if (!$deadline || $solution->created_at->lt($deadline->expiration->addDay())) {
+                $solution->mark = $request->mark;
+                $solution->comment = $request->comment;
+            } else {
+                $solution->mark = ceil($request->mark * $deadline->penalty);
+                $solution->comment = "Сдано с опозданием.\n\n" . $request->comment;
+            }
 
+            if ($solution->task->price > 0 && $solution->mark == $solution->task->max_mark && !$solution->task->isFullDone($solution->user_id)) {
+                CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
+            }
 
-        $solution->teacher_id = Auth::User()->id;
-        $solution->checked = Carbon::now();
-        $solution->save();
+            $solution->teacher_id = Auth::id();
+            $solution->checked = Carbon::now();
+            $solution->save();
+        });
 
-        // Recalculate cached points for the student in this course
-        CourseStudentPoints::recalculate($course_id, $solution->user_id);
-
-        // Recalculate lesson stats for all lessons this student is enrolled in
-        LessonStudentStats::recalculateForStudent($course_id, $solution->user_id);
+        $this->progressService->recalculateStudentProgress($course_id, $solution->user_id);
 
         $solution->user->rescore();
         $new_rank = $solution->user->rank();
@@ -435,24 +417,23 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         $task->sort_index -= 1;
         $task->save();
-        return redirect('/insider/courses/' . $course_id . '/steps/' . $task->step->id . '#task' . $id);
+        return $this->redirectToTask($course_id, $task->step->id, $id);
     }
 
     public function makeDeadline($course_id, $id, Request $request)
     {
-        if (!$request->deadline)
-        {
-            \App\TaskDeadline::where('course_id', $course_id)->where('task_id', $id)->delete();
+        if (!$request->deadline) {
+            TaskDeadline::where('course_id', $course_id)->where('task_id', $id)->delete();
             return back();
         }
-        $deadline = \App\TaskDeadline::all()->where('course_id', $course_id)->where('task_id', $id)->first();
+        $deadline = TaskDeadline::where('course_id', $course_id)->where('task_id', $id)->first();
         if ($deadline) {
 
             $deadline->expiration = $request->deadline;
             $deadline->penalty = $request->penalty;
             $deadline->save();
         } else {
-            \App\TaskDeadline::create([
+            TaskDeadline::create([
                 "course_id" => $course_id,
                 "task_id" => $id,
                 "expiration" => $request->deadline,
@@ -467,7 +448,7 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         $task->sort_index += 1;
         $task->save();
-        return redirect('/insider/courses/' . $course_id . '/steps/' . $task->step->id . '#task' . $id);
+        return $this->redirectToTask($course_id, $task->step->id, $id);
     }
 
     public function toNextTask($course_id, $id, Request $request)
@@ -477,10 +458,10 @@ class TasksController extends Controller
         if ($next != null) {
             $task->step_id = $next->id;
             $task->save();
-            return redirect('/insider/courses/' . $course_id . '/steps/' . $next->id . '#task' . $id);
+            return $this->redirectToTask($course_id, $next->id, $id);
         }
 
-        return redirect('/insider/courses/' . $course_id . '/steps/' . $task->step->id . '#task' . $id);
+        return $this->redirectToTask($course_id, $task->step->id, $id);
     }
 
     public function toPreviousTask($course_id, $id, Request $request)
@@ -490,10 +471,10 @@ class TasksController extends Controller
         if ($previous != null) {
             $task->step_id = $previous->id;
             $task->save();
-            return redirect('/insider/courses/' . $course_id . '/steps/' . $previous->id . '#task' . $id);
+            return $this->redirectToTask($course_id, $previous->id, $id);
         }
 
-        return redirect('/insider/courses/' . $course_id . '/steps/' . $task->step->id . '#task' . $id);
+        return $this->redirectToTask($course_id, $task->step->id, $id);
     }
 
     public function reviewTable($course_id, $id, Request $request)
@@ -573,7 +554,7 @@ class TasksController extends Controller
                     try {
 
                         // Send recheck request to GeekPaste API
-                        $response = $client->post(config('services.geekpaste_url') . '/recheck', [
+                        $client->post(config('services.geekpaste_url') . '/recheck', [
                             'query' => ['id' => $codeId]
                         ]);
 
@@ -587,5 +568,10 @@ class TasksController extends Controller
         }
 
         return redirect()->back()->with('success', "Отправлено на перепроверку решений: {$recheckCount}");
+    }
+
+    private function redirectToTask($courseId, $stepId, $taskId)
+    {
+        return redirect('/insider/courses/' . $courseId . '/steps/' . $stepId . '#task' . $taskId);
     }
 }

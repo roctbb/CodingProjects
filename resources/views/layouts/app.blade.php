@@ -1,17 +1,15 @@
-@extends('layouts/full')
+@extends('layouts.full')
 
 @section('title')
     @yield('title')
 @overwrite
 
 @section('head')
-
-
-    @yield('head')    
+    @yield('head')
 @overwrite
 
 @section('content')
-    <div class="mx-auto col-md-9 col-11" style="margin-top: 15px">
+    <div class="geek-app-content-shell">
         @yield('content')
     </div>
 @overwrite

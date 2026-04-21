@@ -4,11 +4,9 @@ namespace App\Http\Middleware;
 
 use App\Course;
 use App\ProgramStep;
-use App\User;
 use Closure;
-use Illuminate\Support\Facades\Auth;
 
-class HasAccessToStep
+class HasAccessToStep extends AccessMiddleware
 {
     /**
      * Handle an incoming request.
@@ -20,23 +18,25 @@ class HasAccessToStep
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if (Auth::User()->role=='admin') {
+        if ($this->hasRole('admin')) {
             return $next($request);
         }
 
-        $user = User::findOrFail(Auth::User()->id);
+        $user = $this->currentUser();
         $step = ProgramStep::findOrFail($request->id);
         $course = Course::findOrFail($request->course_id);
-        if ($course->teachers->contains($user))
-        {
+        if ($course->teachers->contains($user)) {
             return $next($request);
         }
-        if ($course->students->contains($user) and $course->state != 'draft' and ($course->is_sdl or ($course->steps->contains($step) and $step->lesson->isStarted($course))))
-        {
+        if (
+            $course->students->contains($user) &&
+            $course->state != 'draft' &&
+            ($course->steps->contains($step) && $step->lesson->isStarted($course))
+        ) {
             return $next($request);
         }
 
-        return abort(403);
+        return $this->forbidden();
 
     }
 }

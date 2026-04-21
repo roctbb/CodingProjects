@@ -3,9 +3,8 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Support\Facades\Auth;
 
-class IsNovice
+class IsNovice extends AccessMiddleware
 {
     /**
      * Handle an incoming request.
@@ -17,8 +16,8 @@ class IsNovice
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if (Auth::User()->role!='novice') {
-            return abort(403);
+        if (!$this->hasRole('novice')) {
+            return $this->forbidden();
         }
 
         return $next($request);

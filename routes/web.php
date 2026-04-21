@@ -27,10 +27,6 @@ Route::get('/1561test', function () {
     return redirect('https://forms.gle/KzJ9oAn6tT4eafu47');
 });
 
-Route::get('/vk-meetup', function () {
-    return redirect('/open/steps/745');
-});
-
 Route::get('/telegram-bot', function () {
     return redirect('/open/steps/647');
 });
@@ -49,38 +45,29 @@ Route::prefix('open')->group(function () {
     Route::get('/steps/{id}', 'OpenStepsController@details');
 });
 
-Route::get('/aesthethics', function () {
-    return view('aesthethics');
-});
-
 Route::get('/feedback/{key}', 'DetailedFeedbackController@feedback_view');
 Route::post('/feedback/{key}', 'DetailedFeedbackController@feedback');
 
-Route::get('/articles', 'ArticlesController@open_index');
-Route::get('/articles/{id}', 'ArticlesController@details');
 Route::get('/courses', 'CourseCategoriesController@index');
 Route::get('/courses/{id}', 'CourseCategoriesController@details');
 
-Route::get('/textbook/{id}', 'TextbookController@index');
-Route::get('/textbook/{id}/lesson/{lesson_id}', 'TextbookController@lesson');
-Route::get('/textbook/{id}/edit/{step_id}', 'TextbookController@edit_step');
-
-Route::get('/games', 'GamesController@index');
-Route::get('/games/{id}', 'GamesController@play');
-Route::get('/games/{id}/frame', 'GamesController@frame');
-Route::get('/insider/games/{id}/viewsource', 'GamesController@viewsource');
+Route::get('/textbook/{id}', function () {
+    return redirect('/courses', 301);
+});
+Route::get('/textbook/{id}/lesson/{lesson_id}', function () {
+    return redirect('/courses', 301);
+});
+Route::get('/textbook/{id}/edit/{step_id}', function () {
+    return redirect('/courses', 301);
+});
 
 Route::get('/categories/create', 'CourseCategoriesController@createView');
 Route::post('/categories/create', 'CourseCategoriesController@create');
 Route::get('/categories/{id}', 'CourseCategoriesController@details');
-Route::get('/categories/{id}/start', 'CourseCategoriesController@start');
-Route::get('/categories/{id}/stop', 'CourseCategoriesController@stop');
+Route::post('/categories/{id}/start', 'CourseCategoriesController@start');
+Route::post('/categories/{id}/stop', 'CourseCategoriesController@stop');
 Route::get('/categories/{id}/edit', 'CourseCategoriesController@editView');
 Route::post('/categories/{id}/edit', 'CourseCategoriesController@edit');
-
-Route::get('/activate', 'BotController@activateView');
-Route::get('/activate/success', 'BotController@successView');
-Route::post('/activate', 'BotController@activate');
 
 Route::prefix('insider')->middleware('verified')->group(function () {
 
@@ -94,43 +81,6 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     // YandexGPT text improvement API
     Route::post('/yandexgpt/improve-text', 'YandexGPTController@improveText');
 
-    Route::post('/vk/send', 'BotController@send');
-    Route::get('/vk/send', 'BotController@sendView');
-
-    Route::get('/articles', 'ArticlesController@index');
-    Route::get('/articles/create', 'ArticlesController@createView');
-    Route::post('/articles/create', 'ArticlesController@create');
-    Route::get('/articles/{id}', 'ArticlesController@details');
-    Route::get('/articles/{id}/edit', 'ArticlesController@editView');
-    Route::post('/articles/{id}/edit', 'ArticlesController@edit');
-    Route::get('/articles/{id}/delete', 'ArticlesController@delete');
-    Route::get('/articles/{id}/ask_review', 'ArticlesController@ask_review');
-    Route::get('/articles/{id}/publish', 'ArticlesController@publish');
-    Route::get('/articles/{id}/draft', 'ArticlesController@publish');
-    Route::post('/articles/{id}/comment', 'ArticlesController@comment');
-    Route::get('/articles/comments/{id}/delete', 'ArticlesController@delete_comment');
-
-    Route::get('/articles/{id}/downvote', 'ArticlesController@downvote');
-    Route::get('/articles/{id}/upvote', 'ArticlesController@upvote');
-
-    Route::get('/games', 'GamesController@index');
-    Route::post('/games', 'GamesController@store');
-    Route::get('/games/{id}', 'GamesController@play');
-
-    Route::get('/games/{id}/upvote', 'GamesController@upvote');
-    Route::get('/games/{id}/downvote', 'GamesController@downvote');
-    Route::post('/games/{id}/comment', 'GamesController@comment');
-    Route::get('/games/{id}/reward', 'GamesController@reward')->middleware('noysreward');
-    Route::post('/games/{id}/reward', 'GamesController@sendReward')->middleware('noysreward');
-    Route::get('/games/comments/{cid}/delete', 'GamesController@commentDelete')->middleware('gameowncomment');
-    Route::post('/games/{id}', 'GamesController@update')->middleware('gameown');
-
-    Route::get('/games/{id}/frame', 'GamesController@frame');
-    Route::get('/games/{id}/edit', 'GamesController@edit')->middleware('gameown');
-    Route::get('/games/{id}/ide', 'GamesController@ide')->middleware('gameown');
-    Route::get('/games/{id}/delete', 'GamesController@delete')->middleware('gameown');
-    Route::get('/games/create', 'GamesController@create');
-
     Route::get('/market', 'MarketController@index');
     Route::get('/market/orders', 'MarketController@orders');
     Route::get('/market/create', 'MarketController@createView');
@@ -142,48 +92,27 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/market/cancel/{id}', 'MarketController@cancel');
 
 
-    Route::get('/scales', 'ScalesController@index');
-    Route::get('/scales/create', 'ScalesController@createView');
-    Route::post('/scales/create', 'ScalesController@create');
-    Route::get('/scales/{id}/edit', 'ScalesController@editView');
-    Route::post('/scales/{id}/edit', 'ScalesController@edit');
-    Route::get('/scales/{id}', 'ScalesController@details');
-    Route::get('/scales/{id}/results/add', 'ScalesController@createResultView');
-    Route::post('/scales/{id}/results/add', 'ScalesController@createResult');
-    Route::get('/scales/{id}/results/{result_id}/edit', 'ScalesController@editResultView');
-    Route::post('/scales/{id}/results/{result_id}/edit', 'ScalesController@editResult');
-    Route::get('/scales/{id}/results/{result_id}/delete', 'ScalesController@deleteResult');
-    Route::get('/scales/{id}/results/{result_id}/tasks/add', 'ScalesController@createTaskForm');
-    Route::post('/scales/{id}/results/{result_id}/tasks/add', 'ScalesController@createTask');
-    Route::get('/scales/{id}/results/{result_id}/tasks/{task_id}/edit', 'ScalesController@editTaskForm');
-    Route::post('/scales/{id}/results/{result_id}/tasks/{task_id}/edit', 'ScalesController@editTask');
-    Route::get('/scales/{id}/results/{result_id}/tasks/{task_id}/delete', 'ScalesController@deleteTask');
-
     Route::get('/courses', 'CoursesController@index')->name('Courses');
 
     Route::get('/courses/create', 'CoursesController@createView')->name('Create course');
     Route::post('/courses/create', 'CoursesController@create');
 
     Route::get('/courses/{id}/', 'CoursesController@details');
-    Route::get('/courses/{id}/enroll', 'CoursesController@enroll');
+    Route::post('/courses/{id}/enroll', 'CoursesController@enroll');
     Route::get('/courses/{id}/report', 'CoursesController@report');
     Route::get('/courses/{id}/blocked', 'CoursesController@blocked');
     Route::get('/courses/{id}/edit', 'CoursesController@editView');
-    Route::get('/courses/{id}/start', 'CoursesController@start');
-    Route::get('/courses/{id}/stop', 'CoursesController@stop');
+    Route::post('/courses/{id}/start', 'CoursesController@start');
+    Route::post('/courses/{id}/stop', 'CoursesController@stop');
     Route::post('/courses/{id}/edit', 'CoursesController@edit');
     Route::get('/courses/{id}/assessments', 'CoursesController@assessments');
     Route::get('/courses/{id}/export', 'CoursesController@export');
     Route::get('/courses/{id}/export-md', 'CoursesController@exportMarkdown');
     Route::get('/courses/{id}/chapter', 'CoursesController@createChapterView');
     Route::post('/courses/{id}/chapter', 'CoursesController@createChapter');
-    Route::get('/courses/{id}/add_sdl_lesson', 'CoursesController@addSdlLesson');
-    Route::post('/courses/{id}/sdl_idea', 'CoursesController@setSdlIdea');
-    Route::get('/courses/{id}/sdl_idea', 'CoursesController@setSdlIdea');
-
     Route::get('/courses/{course_id}/chapters/{chapter_id}/edit', 'CoursesController@editChapterView');
-    Route::get('/courses/{course_id}/chapters/{chapter_id}/upper', 'CoursesController@makeChapterUpper');
-    Route::get('/courses/{course_id}/chapters/{chapter_id}/lower', 'CoursesController@makeChapterLower');
+    Route::post('/courses/{course_id}/chapters/{chapter_id}/upper', 'CoursesController@makeChapterUpper');
+    Route::post('/courses/{course_id}/chapters/{chapter_id}/lower', 'CoursesController@makeChapterLower');
     Route::post('/courses/{course_id}/chapters/{chapter_id}/edit', 'CoursesController@editChapter');
 
 
@@ -201,8 +130,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/courses/{course_id}/lessons/{id}/edit', 'LessonsController@edit');
     Route::get('/courses/{course_id}/lessons/{id}/export', 'LessonsController@export');
     Route::get('/courses/{course_id}/lessons/{id}/export-md', 'LessonsController@exportMarkdown');
-    Route::get('/courses/{course_id}/lessons/{id}/lower', 'LessonsController@makeLower');
-    Route::get('/courses/{course_id}/lessons/{id}/upper', 'LessonsController@makeUpper');
+    Route::post('/courses/{course_id}/lessons/{id}/lower', 'LessonsController@makeLower');
+    Route::post('/courses/{course_id}/lessons/{id}/upper', 'LessonsController@makeUpper');
     Route::get('/courses/{course_id}/lessons/{id}/delete', 'LessonsController@delete');
 
 
@@ -211,35 +140,35 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/steps/{id}', 'StepsController@details');
     Route::get('/courses/{course_id}/perform/{id}', 'StepsController@perform');
     Route::get('/courses/{course_id}/steps/{id}/edit', 'StepsController@editView');
-    Route::get('/courses/{course_id}/steps/{id}/lower', 'StepsController@makeLower');
-    Route::get('/courses/{course_id}/steps/{id}/upper', 'StepsController@makeUpper');
-    Route::get('/courses/{course_id}/steps/{id}/delete', 'StepsController@delete');
+    Route::post('/courses/{course_id}/steps/{id}/lower', 'StepsController@makeLower');
+    Route::post('/courses/{course_id}/steps/{id}/upper', 'StepsController@makeUpper');
+    Route::delete('/courses/{course_id}/steps/{id}/delete', 'StepsController@delete');
     Route::post('/courses/{course_id}/steps/{id}/edit', 'StepsController@edit');
     Route::post('/courses/{course_id}/steps/{id}/question', 'StepsController@question');
     Route::post('/courses/{course_id}/steps/{id}/task', 'TasksController@create');
 
-    Route::get('/courses/{course_id}/questions/{id}/delete', 'StepsController@deleteQuestion');
-    Route::get('/courses/{course_id}/tasks/{id}/delete', 'TasksController@delete');
+    Route::delete('/courses/{course_id}/questions/{id}/delete', 'StepsController@deleteQuestion');
+    Route::delete('/courses/{course_id}/tasks/{id}/delete', 'TasksController@delete');
     Route::get('/courses/{course_id}/tasks/{id}/edit', 'TasksController@editForm');
 
-    Route::get('/courses/{course_id}/tasks/{id}/up', 'TasksController@toPreviousTask');
-    Route::get('/courses/{course_id}/tasks/{id}/down', 'TasksController@toNextTask');
-    Route::get('/courses/{course_id}/tasks/{id}/left', 'TasksController@makeLower');
-    Route::get('/courses/{course_id}/tasks/{id}/right', 'TasksController@makeUpper');
+    Route::post('/courses/{course_id}/tasks/{id}/up', 'TasksController@toPreviousTask');
+    Route::post('/courses/{course_id}/tasks/{id}/down', 'TasksController@toNextTask');
+    Route::post('/courses/{course_id}/tasks/{id}/left', 'TasksController@makeLower');
+    Route::post('/courses/{course_id}/tasks/{id}/right', 'TasksController@makeUpper');
     Route::get('/courses/{course_id}/tasks/{id}/peer', 'TasksController@reviewTable');
     Route::post('/courses/{course_id}/tasks/{id}/deadline', 'TasksController@makeDeadline');
-    Route::get('/courses/{course_id}/tasks/{id}/recheck-all', 'TasksController@recheckAllSolutions');
+    Route::post('/courses/{course_id}/tasks/{id}/recheck-all', 'TasksController@recheckAllSolutions');
 
 
     Route::post('/courses/{course_id}/tasks/{id}/edit', 'TasksController@edit');
     Route::post('/courses/{course_id}/tasks/{id}/solution', 'TasksController@postSolution');
-    Route::get('/courses/{course_id}/tasks/{id}/solution/{solution_id}/recheck', 'TasksController@askForRecheck');
-    Route::get('/courses/{course_id}/tasks/{id}/phantom', 'TasksController@phantomSolution');
+    Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/recheck', 'TasksController@askForRecheck');
+    Route::post('/courses/{course_id}/tasks/{id}/phantom', 'TasksController@phantomSolution');
     Route::get('/courses/{course_id}/tasks/{id}/student/{student_id}', 'TasksController@reviewSolutions');
-    Route::get('/courses/{course_id}/tasks/{id}/block/{student_id}', 'TasksController@blockStudent');
-    Route::get('/courses/{course_id}/tasks/{id}/unblock/{student_id}', 'TasksController@unblockStudent');
+    Route::post('/courses/{course_id}/tasks/{id}/block/{student_id}', 'TasksController@blockStudent');
+    Route::post('/courses/{course_id}/tasks/{id}/unblock/{student_id}', 'TasksController@unblockStudent');
     Route::post('/courses/{course_id}/solution/{id}', 'TasksController@estimateSolution');
-    Route::get('/invite', 'CoursesController@invite');
+    Route::post('/invite', 'CoursesController@invite');
 
     Route::get('/community', 'ProfileController@index');
     Route::get('/profile/{id?}', 'ProfileController@details');
@@ -251,85 +180,6 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/profile/delete-course/{id}', 'ProfileController@deleteCourse');
     Route::get('/profile/{user_id}/delete-course/{course_id}', 'ProfileController@deleteCurrentCourse');
     Route::post('/profile/{user_id}/money', 'ProfileController@addMoney');
-
-    Route::get('/projects/create', 'ProjectsController@createView');
-    Route::post('/projects/create', 'ProjectsController@create');
-    Route::get('/projects/{id}', 'ProjectsController@details');
-
-    Route::get('/projects/{id}/reward', 'ProjectsController@rewardView');
-    Route::post('/projects/{id}/reward', 'ProjectsController@reward');
-    Route::get('/projects/{id}/edit', 'ProjectsController@editView');
-    Route::post('/projects/{id}/edit', 'ProjectsController@edit');
-    Route::get('/projects/{id}/delete', 'ProjectsController@deleteProject');
-    Route::post('/projects/{id}/review', 'ProjectsController@review');
-    Route::get('/projects/{id}/ask_review', 'ProjectsController@ask_review');
-    Route::get('/projects', 'ProjectsController@index');
-
-    Route::get('/ideas/create', 'IdeasController@createView');
-    Route::post('/ideas/create', 'IdeasController@create');
-    Route::get('/ideas/{id}', 'IdeasController@details');
-    Route::get('/ideas/{id}/approve', 'IdeasController@approve');
-    Route::get('/ideas/{id}/decline', 'IdeasController@decline');
-
-    Route::get('/ideas/{id}/edit', 'IdeasController@editView');
-    Route::post('/ideas/{id}/edit', 'IdeasController@edit');
-    Route::get('/ideas/{id}/delete', 'IdeasController@delete');
-    Route::get('/ideas', 'IdeasController@index');
-
-    // forum
-    Route::get('/forum', 'ForumController@index');
-    Route::get('/forum/create', 'ForumController@createView');
-    Route::get('/forum/{id}', 'ForumController@details');
-    Route::get('/forum/{thread_id}/delete/{id}', 'ForumController@delete');
-    Route::get('/forum/{thread_id}/edit/{id}', 'ForumController@editView');
-    Route::get('/forum/{thread_id}/upvote/{id}', 'ForumController@upvote');
-    Route::get('/forum/{thread_id}/downvote/{id}', 'ForumController@downvote');
-    Route::post('/forum/{thread_id}/edit/{id}', 'ForumController@edit');
-    Route::post('/forum/{id}/answer', 'ForumController@answer');
-    Route::get('/forum/{id}/subscribe', 'ForumController@subscribe');
-    Route::get('/forum/{id}/unsubscribe', 'ForumController@unsubscribe');
-    Route::post('/forum/{thread_id}/comment/{id}', 'ForumController@comment');
-    Route::post('/forum/create', 'ForumController@createThread');
-
-    Route::get('/events', 'EventController@event_view');
-    Route::get('/events/old', 'EventController@old_events_view');
-    Route::get('/events/create', 'EventController@add_event_view');
-    Route::post('/events/create', 'EventController@add_event');
-    Route::get('/events/{id}', 'EventController@current_event');
-    Route::get('/events/{id}/api', function ($ev) {
-        $ev = \App\Event::find($ev);
-        return json_encode([
-            'id' => $ev->id,
-            'likes' => $ev->userLikes()->count()
-        ]);
-    });
-    Route::get('/events/{id}/go', 'EventController@go_event');
-    Route::get('/events/{id}/left', 'EventController@left_event');
-    Route::get('/events/{id}/like', 'EventController@like_event');
-    Route::get('/events/{id}/dislike', 'EventController@dislike_event');
-    Route::get('/events/{id}/add_org', 'EventController@add_org');
-    Route::post('/events', 'EventController@event_view');
-    Route::post('/events/old', 'EventController@old_events_view');
-    Route::get('/events/{id}/edit', 'EventController@edit_event_view');
-    Route::post('/events/{id}/edit', 'EventController@edit_event');
-    Route::get('/events/{id}/delete', 'EventController@del_event');
-    Route::get('/events/{id}/prize', 'EventController@prize_view');
-    Route::post('/events/{id}/prize', 'EventController@prize');
-    Route::get('/events/{id}/delete_comm/{id2}', 'EventController@del_comment');
-
-    Route::post('/events/{id}', 'EventController@add_comment');
-
-    Route::get('/core/{id}', 'CoreController@index');
-    Route::get('/core/{id}/node/{node_id}', 'CoreController@subcore');
-    Route::get('/core/network/{id}', 'CoreController@get_core');
-    Route::get('/core/network/', 'CoreController@get_versions');
-
-    Route::get('/core/import', 'CoreController@import_core_form');
-    Route::post('/core/import', 'CoreController@import_core')->middleware('teacher');
-    Route::get('/core/importa', 'CoreController@import_core')->middleware('teacher');
-
-
-    Route::get('/core/editor', 'CoreController@editor')->middleware('teacher');
 
     Route::get('/testmail', function () {
         $user = \App\User::findOrFail(1);

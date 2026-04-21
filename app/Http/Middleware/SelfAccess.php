@@ -2,13 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Course;
-use App\ProgramStep;
-use App\User;
 use Closure;
-use Illuminate\Support\Facades\Auth;
 
-class SelfAccess
+class SelfAccess extends AccessMiddleware
 {
     /**
      * Handle an incoming request.
@@ -20,16 +16,15 @@ class SelfAccess
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if (Auth::User()->role=='admin') {
+        if ($this->hasRole('admin')) {
             return $next($request);
         }
 
-        if (Auth::User()->id == $request->id)
-        {
+        if ($this->authUser()->id == $request->id) {
             return $next($request);
         }
 
-        return abort(403);
+        return $this->forbidden();
 
     }
 }

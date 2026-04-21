@@ -5,36 +5,46 @@
 @endsection
 
 @section('content')
+    <div class="cp-step-review-page">
     <h2><a class="back-link" href="{{url('/insider/courses/'.$course->id.'/assessments')}}"><i
-                    class="icon ion-chevron-left"></i></a>&nbsp;{{$student->name}}: "{{$task->name}}"</h2>
+                    class="icon fa-solid fa-chevron-left"></i></a>&nbsp;{{$student->name}}: "{{$task->name}}"</h2>
 
-    <div class="row" style="margin-top: 15px;">
+    <div class="row cp-row-gap-top">
         <div class="col">
 
             <div class="card">
                 <div class="card-header">
                     {{$task->name}}
+                    <div class="steps-review-actions d-flex flex-wrap gap-1">
                     @if ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin')
                         @php $isBlocked = $task->isBlocked($student->id, $course->id); @endphp
                         @if ($isBlocked)
-                            <a style="margin-right: 5px;" class="float-right btn btn-warning btn-sm"
-                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/unblock/'.$student->id)}}"
-                               onclick="return confirm('Разблокировать задачу для этого ученика?')">Разблокировать</a>
+                            <a class="btn btn-warning btn-sm"
+                               href="#"
+                               data-action-url="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/unblock/'.$student->id)}}"
+                               data-action-method="POST"
+                               data-action-confirm="Разблокировать задачу для этого ученика?">Разблокировать</a>
                         @else
-                            <a style="margin-right: 5px;" class="float-right btn btn-danger btn-sm"
-                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/block/'.$student->id)}}"
-                               onclick="return confirm('Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены.')">Заблокировать</a>
+                            <a class="btn btn-danger btn-sm"
+                               href="#"
+                               data-action-url="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/block/'.$student->id)}}"
+                               data-action-method="POST"
+                               data-action-confirm="Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены.">Заблокировать</a>
                         @endif
                     @endif
-                    <a class="float-right btn btn-danger btn-sm"
-                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"  onclick="return confirm('Вы уверены?')">Удалить</a>
-                    <a style="margin-right: 5px;" class="float-right btn btn-success btn-sm"
+                    <a class="btn btn-danger btn-sm"
+                       href="#"
+                       data-action-url="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"
+                       data-action-method="DELETE"
+                       data-action-confirm="Вы уверены?">Удалить</a>
+                    <a class="btn btn-primary btn-sm"
                        href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}">Редактировать</a>
+                    </div>
                 </div>
                 <div class="card-body markdown">
                     {!! parsedown_math($task->text) !!}
 
-                    <span class="badge badge-secondary">Очков опыта: {{$task->max_mark}}</span>
+                    <span class="badge text-bg-secondary">Очков опыта: {{$task->max_mark}}</span>
                 </div>
             </div>
 
@@ -42,16 +52,13 @@
 
     </div>
     @foreach ($solutions as $key => $solution)
-        <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
+        <div class="row cp-row-gap-y">
 
             <div class="col">
 
                 <div class="card">
                     <div class="card-header">
                         Дата сдачи: {{ $solution->submitted->format('d.M.Y H:i')}}
-                        <div class="float-right">
-
-                        </div>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -61,8 +68,8 @@
                                 <br>
                                 @if ($solution->mark!=null)
                                     <p>
-                                        <span class="badge badge-primary">Очков опыта: {{$solution->mark}}</span><br>
-                                        <span class="badge badge-light">Проверено: {{$solution->checked}}
+                                        <span class="badge text-bg-primary">Очков опыта: {{$solution->mark}}</span><br>
+                                        <span class="badge text-bg-light">Проверено: {{$solution->checked}}
                                             , {{$solution->teacher->name}}</span>
                                     </p>
 
@@ -70,27 +77,26 @@
                                         <span class="small">{!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->comment)), false))!!}</span>
                                     </p>
                                 @else
-                                    <span class="badge badge-secondary">Решение еще не проверено</span>
+                                    <span class="badge text-bg-secondary">Решение еще не проверено</span>
                                 @endif
                             </div>
                             <div class="col-md-4">
-                                <form class="form-horizontal" method="post"
+                                <form method="post"
                                       action="{{url('insider/courses/'.$solution->course_id.'/solution/'.$solution->id)}}">
                                     {{csrf_field()}}
-                                    <div class="form-group">
-                                        <input type="text" class="form-control form-control-sm mb-2 mr-sm-2 mb-sm-0"
-                                               id="mark"
+                                    <div class="mb-3">
+                                        <input type="number" min="0" step="1" class="form-control form-control-sm mb-2"
+                                               id="mark_{{$solution->id}}"
                                                name="mark" placeholder="Очков опыта">
                                         @if ($errors->has('mark'))
-                                            <span class="help-block error-block"><strong>{{ $errors->first('mark') }}</strong></span>
+                                            <span class="invalid-feedback d-block"><strong>{{ $errors->first('mark') }}</strong></span>
                                         @endif
                                     </div>
-                                    <div class="form-group">
+                                    <div class="mb-3">
                                         <textarea class="form-control" name="comment"
                                                   placeholder="Комментарий"></textarea>
-
                                     </div>
-                                    <button type="submit" class="btn btn-success btn-sm">Оценить</button>
+                                    <button type="submit" class="btn btn-primary btn-sm">Оценить</button>
                                 </form>
                             </div>
                         </div>
@@ -100,4 +106,5 @@
             </div>
         </div>
     @endforeach
+    </div>
 @endsection

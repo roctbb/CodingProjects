@@ -11,11 +11,7 @@ class CoreNode extends Model
 
     public function lessons()
     {
-        if ($this->version == 1)
-        {
-            return $this->belongsToMany('App\Lesson', 'core_prerequisites', "node_id", "lesson_id");
-        }
-        return $this->hasMany('App\Lesson',  "id", "sdl_node_id");
+        return $this->belongsToMany('App\Lesson', 'core_prerequisites', "node_id", "lesson_id");
     }
 
     public function tasks()

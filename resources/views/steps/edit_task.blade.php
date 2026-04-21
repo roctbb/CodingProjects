@@ -5,15 +5,15 @@
 @endsection
 
 @section('content')
-
-    <h2>Изменение задачи "{{$task->name}}"</h2>
-    <div class="row" style="margin-top: 15px;">
-        <div class="col">
-            <div class="card">
+    <div class="cp-step-form-page">
+    <h2 class="cp-heading-lite">Изменение задачи "{{$task->name}}"</h2>
+    <div class="row cp-row-gap-top">
+        <div class="col-12 col-xl-10">
+            <div class="card cp-form-card">
                 <div class="card-body">
-                    <form method="POST" class="form-horizontal" enctype="multipart/form-data">
+                    <form method="POST" class="vstack gap-3" enctype="multipart/form-data">
                         {{ csrf_field() }}
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="name">Название</label>
 
                             @if (old('name')!="")
@@ -24,156 +24,150 @@
                                        required>
                             @endif
                             @if ($errors->has('name'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('name') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
-                            <label for="consequences" style="padding-bottom: 10px;">Подтверждаемые результаты из <sup>
+                        <div class="mb-3">
+                            <label for="consequences" class="cp-label-spaced">Подтверждаемые результаты из <sup>
                                     <small>Core</small>
-                                </sup>:</label><br>
-                            <select class="selectpicker  form-control" data-live-search="true" id="consequences"
-                                    name="consequences[]" multiple data-width="auto">
+                                </sup>:</label>
+                            @php
+                                $selectedConsequenceIds = array_map(
+                                    'strval',
+                                    (array) old('consequences', $task->consequences->pluck('id')->toArray())
+                                );
+                            @endphp
+                            <select class="form-select" id="consequences" name="consequences[]" multiple>
                                 @foreach (\App\CoreNode::where('is_root', false)->where('version', 1)->get() as $node)
                                     <option data-tokens="{{ $node->id }}" value="{{ $node->id }}"
+                                            @if (in_array((string) $node->id, $selectedConsequenceIds, true)) selected @endif
                                             data-subtext="{{$node->getParentLine()}}">{{$node->title}}</option>
                                 @endforeach
                             </select>
-
-                            <script>
-                                $('.selectpicker').selectpicker('val', [{{implode(',', $task->consequences->pluck('id')->toArray())}}]);
-                            </script>
                         </div>
 
-                        <div class="form-group{{ $errors->has('max_mark') ? ' has-error' : '' }}">
+                        <div class="mb-3">
                             <label for="max_mark">Очков опыта</label>
 
                             @if (old('max_mark')!="")
-                                <input type="text" name="max_mark" class="form-control" id="max_mark"
-                                       value="{{old('name')}}"
+                                <input type="number" min="0" step="1" name="max_mark" class="form-control" id="max_mark"
+                                       value="{{old('max_mark')}}"
                                        required/>
                             @else
-                                <input type="text" name="max_mark" class="form-control" id="max_mark"
+                                <input type="number" min="0" step="1" name="max_mark" class="form-control" id="max_mark"
                                        value="{{$task->max_mark}}" required/>
                             @endif
 
                             @if ($errors->has('max_mark'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('max_mark') }}</strong>
                                     </span>
                             @endif
 
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text">Текст</label>
                             <div class="mb-2">
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText(this, 'text', 'fix_typos')">
-                                    <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
+                                    <i class="icon fa-regular fa-square-check"></i> Исправить опечатки
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText(this, 'text', 'improve_style')">
-                                    <i class="icon ion-android-create"></i> Улучшить стиль
+                                    <i class="icon fa-solid fa-pen-to-square"></i> Улучшить стиль
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText(this, 'text', 'both')">
-                                    <i class="icon ion-android-star"></i> Исправить и улучшить
+                                    <i class="icon fa-solid fa-star"></i> Исправить и улучшить
                                 </button>
                             </div>
                             <textarea id="text" class="form-control"
                                       name="text">@if (old('text')!=""){{old('text')}}@else{{$task->text}}@endif</textarea>
                             @if ($errors->has('text'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('text') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="solution">Решение</label>
                             <div class="mb-2">
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText(this, 'solution', 'fix_typos')">
-                                    <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
+                                    <i class="icon fa-regular fa-square-check"></i> Исправить опечатки
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText(this, 'solution', 'improve_style')">
-                                    <i class="icon ion-android-create"></i> Улучшить стиль
+                                    <i class="icon fa-solid fa-pen-to-square"></i> Улучшить стиль
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText(this, 'solution', 'both')">
-                                    <i class="icon ion-android-star"></i> Исправить и улучшить
+                                    <i class="icon fa-solid fa-star"></i> Исправить и улучшить
                                 </button>
                             </div>
                             <textarea id="solution" class="form-control"
                                       name="solution">@if (old('solution')!=""){{old('solution')}}@else{{$task->solution}}@endif</textarea>
                             @if ($errors->has('solution'))
-                                <span class="help-block error-block">
+                                <span class="invalid-feedback d-block">
                                         <strong>{{ $errors->first('solution') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group">
-                            <label for="is_star">Дополнительное</label>
-                            <input type="checkbox" id="is_star" name="is_star" value="on"
-                                   @if ($task->is_star) checked @endif/>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="is_star" name="is_star" value="on"
+                                   @if ($task->is_star) checked @endif>
+                            <label class="form-check-label" for="is_star">Дополнительное</label>
                         </div>
 
-                        <div class="form-group">
-                            <label for="is_hidden">Скрытая задача</label>
-                            <input type="checkbox" id="is_hidden" name="is_hidden" value="on"
-                                   @if ($task->is_hidden) checked @endif/>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="is_hidden" name="is_hidden" value="on"
+                                   @if ($task->is_hidden) checked @endif>
+                            <label class="form-check-label" for="is_hidden">Скрытая задача</label>
                         </div>
 
-                        <div class="form-group">
-                            <label for="is_code">Автопроверка</label>
-                            <input type="checkbox" id="is_code" name="is_code" value="on"
-                                   @if ($task->is_code) checked @endif/>
-                        </div>
-
-
-                        <div class="form-group{{ $errors->has('price') ? ' has-error' : '' }}">
-                            <label for="price" class="col-md-4">Премия</label>
-
-                            <div class="col-md-12">
-
-                                @if (old('price')!="")
-                                    <input type="text" name="price" class="form-control" id="price"
-                                           value="{{old('price')}}"/>
-                                @else
-                                    <input type="text" name="price" class="form-control" id="price"
-                                           value="{{$task->price}}"/>
-                                @endif
-
-                                @if ($errors->has('price'))
-                                    <span class="help-block error-block">
-                                        <strong>{{ $errors->first('price') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div class="form-group{{ $errors->has('answer') ? ' has-error' : '' }}">
-                            <label for="answer" class="col-md-4">Ответ</label>
-
-                            <div class="col-md-12">
-
-                                @if (old('answer')!="")
-                                    <input type="text" name="answer" class="form-control" id="answer"
-                                           value="{{old('answer')}}"/>
-                                @else
-                                    <input type="text" name="answer" class="form-control" id="answer"
-                                           value="{{$task->answer}}"/>
-                                @endif
-
-                                @if ($errors->has('answer'))
-                                    <span class="help-block error-block">
-                                        <strong>{{ $errors->first('answer') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="is_code" name="is_code" value="on"
+                                   @if ($task->is_code) checked @endif>
+                            <label class="form-check-label" for="is_code">Автопроверка</label>
                         </div>
 
 
-                        <button type="submit" class="btn btn-success">Сохранить</button>
+                        <div class="mb-3">
+                            <label for="price">Премия</label>
+                            @if (old('price')!="")
+                                <input type="number" min="0" step="1" name="price" class="form-control" id="price"
+                                       value="{{old('price')}}"/>
+                            @else
+                                <input type="number" min="0" step="1" name="price" class="form-control" id="price"
+                                       value="{{$task->price}}"/>
+                            @endif
+
+                            @if ($errors->has('price'))
+                                <span class="invalid-feedback d-block">
+                                    <strong>{{ $errors->first('price') }}</strong>
+                                </span>
+                            @endif
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="answer">Ответ</label>
+                            @if (old('answer')!="")
+                                <input type="text" name="answer" class="form-control" id="answer"
+                                       value="{{old('answer')}}"/>
+                            @else
+                                <input type="text" name="answer" class="form-control" id="answer"
+                                       value="{{$task->answer}}"/>
+                            @endif
+
+                            @if ($errors->has('answer'))
+                                <span class="invalid-feedback d-block">
+                                    <strong>{{ $errors->first('answer') }}</strong>
+                                </span>
+                            @endif
+                        </div>
+
+
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
                     </form>
                 </div>
             </div>
@@ -242,4 +236,5 @@
             });
         }
     </script>
+    </div>
 @endsection

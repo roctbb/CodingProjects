@@ -3,9 +3,8 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Support\Facades\Auth;
 
-class IsTeacher
+class IsTeacher extends AccessMiddleware
 {
     /**
      * Handle an incoming request.
@@ -17,8 +16,8 @@ class IsTeacher
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if (Auth::User()->role!='teacher' and Auth::User()->role!='admin') {
-            return abort(403);
+        if (!$this->hasRole('teacher', 'admin')) {
+            return $this->forbidden();
         }
 
         return $next($request);

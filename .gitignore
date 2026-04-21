@@ -1,13 +1,57 @@
+# Environment
 .env
-.idea/*
+.env.*
+!.env.example
+!.env.dusk.example
+
+# IDE / OS
+.idea/
+.vscode/
+.tools/
+.DS_Store
+Thumbs.db
+
+# Dependencies
 /node_modules
-/public/hot
-/public/storage
-/storage/*.key
 /vendor
+
+# Frontend build artifacts
+/public/hot
+/public/build
+/public/storage
+/public/mix-manifest.json
+/bootstrap/ssr
+
+# Laravel runtime files
+/storage/*.key
+/storage/logs/*
+!/storage/logs/.gitignore
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+
+# PHP / test caches
+/bootstrap/cache/*.php
 .phpunit.result.cache
+.phpunit.cache
+.php-cs-fixer.cache
+
+# Local VM configs
 Homestead.json
 Homestead.yaml
-npm-debug.log
-yarn-error.log
-package-lock.json
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Temp files
+*.swp
+*.swo
+*~
+coverage/
+.nyc_output/

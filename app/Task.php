@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Task extends Model
 {
+    private static array $userRoleCache = [];
+
     protected $table = 'tasks';
 
     protected $fillable = [
@@ -66,8 +68,9 @@ class Task extends Model
 
     public function getDeadline($course_id)
     {
-        return $this->hasMany('App\TaskDeadline', 'task_id', 'id')->where('course_id', $course_id)->get()->first();
-
+        return $this->hasMany('App\TaskDeadline', 'task_id', 'id')
+            ->where('course_id', $course_id)
+            ->first();
     }
 
     public function isBlocked($user_id, $course_id)
@@ -82,8 +85,18 @@ class Task extends Model
     {
         if (!$this->is_hidden) return true;
         if ($course->teachers->contains('id', $user_id)) return true;
-        if (\App\User::find($user_id)->role == 'admin') return true;
+        if ($this->getUserRole($user_id) == 'admin') return true;
         return $this->solutions()->where('user_id', $user_id)->exists();
+    }
+
+    private function getUserRole($user_id)
+    {
+        if (array_key_exists($user_id, self::$userRoleCache)) {
+            return self::$userRoleCache[$user_id];
+        }
+
+        self::$userRoleCache[$user_id] = User::whereKey($user_id)->value('role');
+        return self::$userRoleCache[$user_id];
     }
 
 }

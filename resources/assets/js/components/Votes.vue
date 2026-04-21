@@ -1,13 +1,13 @@
 <template>
     <div class="upvotesComponent">
         <div :class="upvoteClasses" @click="upvote">
-            <i class="icon ion-chevron-up"></i>
+            <i class="icon fa-solid fa-chevron-up"></i>
         </div>
         <div v-if="!showed" :class="scoreClasses" @click="show">{{score}}</div>
         <div class="green" v-if="showed" @click="show">{{upvotes + upvoted}}</div>
         <div class="red" v-if="showed" @click="show">{{-downvotes - downvoted}}</div>
         <div @click="downvote" :class="downvoteClasses">
-            <i class="icon ion-chevron-down"></i>
+            <i class="icon fa-solid fa-chevron-down"></i>
         </div>
     </div>
 </template>
