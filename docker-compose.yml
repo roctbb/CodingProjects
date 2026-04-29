@@ -27,6 +27,7 @@ services:
     build:
       context: .
       dockerfile: conf/Dockerfile
+      target: app
     container_name: codingprojects-php
     restart: unless-stopped
     logging:
@@ -45,12 +46,15 @@ services:
         condition: service_healthy
     healthcheck: *app-healthcheck
     volumes:
-      - ./:/var/www/html
+      - storage_app:/var/www/html/storage/app
     networks:
       - app
 
   nginx:
-    image: nginx:1.27-alpine
+    build:
+      context: .
+      dockerfile: conf/Dockerfile
+      target: web
     container_name: codingprojects-nginx
     restart: unless-stopped
     logging:
@@ -63,9 +67,6 @@ services:
         condition: service_healthy
     ports:
       - "127.0.0.1:1111:8050"
-    volumes:
-      - ./:/var/www/html:ro
-      - ./conf/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     healthcheck:
       test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://127.0.0.1:8050 || exit 1"]
       interval: 30s
@@ -75,10 +76,28 @@ services:
     networks:
       - app
 
+  node:
+    image: node:22-alpine
+    container_name: codingprojects-node
+    working_dir: /var/www/html
+    command: npm run build
+    profiles:
+      - tools
+    volumes:
+      - ./:/var/www/html
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - app
+
   queue:
     build:
       context: .
       dockerfile: conf/Dockerfile
+      target: app
     container_name: codingprojects-queue
     restart: unless-stopped
     command: php artisan queue:work --sleep=3 --tries=3 --timeout=90
@@ -93,7 +112,7 @@ services:
         condition: service_healthy
     healthcheck: *app-healthcheck
     volumes:
-      - ./:/var/www/html
+      - storage_app:/var/www/html/storage/app
     logging:
       driver: json-file
       options:
@@ -106,6 +125,7 @@ services:
     build:
       context: .
       dockerfile: conf/Dockerfile
+      target: app
     container_name: codingprojects-scheduler
     restart: unless-stopped
     command: php artisan schedule:work
@@ -120,7 +140,7 @@ services:
         condition: service_healthy
     healthcheck: *app-healthcheck
     volumes:
-      - ./:/var/www/html
+      - storage_app:/var/www/html/storage/app
     logging:
       driver: json-file
       options:
@@ -176,6 +196,7 @@ services:
 volumes:
   db_data:
   redis_data:
+  storage_app:
 
 networks:
   app:

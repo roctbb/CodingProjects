@@ -1,5 +1,16 @@
 # syntax=docker/dockerfile:1
 
+# Frontend assets stage: build Vite output into public/build
+FROM node:22-alpine AS assets
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --no-audit --no-fund
+
+COPY . .
+RUN npm run build
+
 # Builder stage: install PHP deps with Composer
 FROM php:8.4-cli AS builder
 
@@ -57,6 +68,7 @@ WORKDIR /var/www/html
 
 # Copy app and vendor from builder
 COPY --from=builder /app /var/www/html
+COPY --from=assets /app/public/build /var/www/html/public/build
 
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
 
@@ -66,3 +78,9 @@ ENV APP_ENV=production \
 
 EXPOSE 9000
 CMD ["php-fpm"]
+
+# Web stage: nginx with built static assets from the app image
+FROM nginx:1.27-alpine AS web
+
+COPY conf/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=app /var/www/html/public /var/www/html/public
