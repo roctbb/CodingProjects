@@ -61,7 +61,7 @@
                                         $filtered = $student->submissions->filter(function ($value) use ($task, $course) {
                                             return $value->task_id == $task->id;
                                         });
-                                        $blocked = $task->isBlocked($student->id, $course->id);
+                                        $blocked = isset($blockedTaskMap[$student->id . ':' . $task->id]);
                                         if ($blocked) {
                                             $mark = 0;
                                             $need_check = false;

@@ -1,0 +1,102 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: conf/Dockerfile
+    container_name: codingprojects-php
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8050
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: codingprojects
+      DB_USERNAME: codingprojects
+      DB_PASSWORD: codingprojects
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - app
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: codingprojects-nginx
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - php
+    ports:
+      - "127.0.0.1:1111:8050"
+    volumes:
+      - ./:/var/www/html:ro
+      - ./conf/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - app
+
+  db:
+    image: postgres:16-alpine
+    container_name: codingprojects-db
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      POSTGRES_DB: codingprojects
+      POSTGRES_USER: codingprojects
+      POSTGRES_PASSWORD: codingprojects
+    ports:
+      - "5435:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codingprojects -d codingprojects"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app
+
+  redis:
+    image: redis:7-alpine
+    container_name: codingprojects-redis
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app
+
+volumes:
+  db_data:
+  redis_data:
+
+networks:
+  app:
+    driver: bridge

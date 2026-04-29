@@ -349,6 +349,20 @@ h5.card-title {
   line-height: 1;
 }
 
+.nav-tabs .nav-link.btn-success,
+.nav-tabs .nav-link.btn-success:not(.active) {
+  color: #fff !important;
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.nav-tabs .nav-link.btn-success:hover,
+.nav-tabs .nav-link.btn-success:focus {
+  color: #fff !important;
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
 @media screen and (max-width: 991px) {
   .layout.layout-nav-side > .navbar {
     width: 100% !important;

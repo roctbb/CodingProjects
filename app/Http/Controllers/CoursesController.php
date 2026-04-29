@@ -313,8 +313,18 @@ class CoursesController extends Controller
 
     public function assessments($id)
     {
-        $course = Course::findOrFail($id);
-        return view('courses.assessments', compact('course'));
+        $course = Course::with([
+            'program.lessons.steps.tasks',
+            'students.submissions',
+        ])->findOrFail($id);
+
+        $blockedTaskMap = BlockedTask::where('course_id', $course->id)
+            ->get(['user_id', 'task_id'])
+            ->mapWithKeys(function ($item) {
+                return [$item->user_id . ':' . $item->task_id => true];
+            });
+
+        return view('courses.assessments', compact('course', 'blockedTaskMap'));
     }
 
     public function createView()

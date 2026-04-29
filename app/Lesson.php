@@ -104,7 +104,10 @@ class Lesson extends Model
 
     public function isAvailable($course)
     {
-        $user = User::findOrFail(\Auth::User()->id);
+        $user = \Auth::user();
+        if ($user == null) {
+            return false;
+        }
         if (!$this->isStarted($course)) return false;
         return $this->isAvailableForUser($course, $user);
     }
@@ -118,7 +121,10 @@ class Lesson extends Model
 
     public function isDone($course)
     {
-        $user = User::findOrFail(\Auth::User()->id);
+        $user = \Auth::user();
+        if ($user == null) {
+            return false;
+        }
         return $this->isDoneByUser($course, $user);
     }
 
