@@ -181,7 +181,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.querySelectorAll('[data-progress-width]').forEach(function (progressBar) {
-        progressBar.style.width = progressBar.dataset.progressWidth;
+        const width = parseFloat(progressBar.dataset.progressWidth);
+
+        if (Number.isNaN(width)) {
+            return;
+        }
+
+        progressBar.style.width = Math.max(0, Math.min(100, width)) + '%';
     });
 
     document.querySelectorAll('[data-progress-height]').forEach(function (progressBar) {

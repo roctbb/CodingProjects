@@ -10,35 +10,35 @@
          @endif
 
          @if ($course->teachers->contains($user) || $user->role=='admin')
-          <a class="float-right btn btn-danger btn-sm"
-            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"
-            data-confirm="Вы уверены?"><i class="icon ion-android-close"></i></a>
-          <a class="float-right btn btn-success btn-sm mr-1"
-           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}"><i
-             class="icon ion-android-create"></i></a>
-          <a class="float-right btn btn-secondary btn-sm"
-           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"><i
-             class="icon ion-ios-color-wand"></i></a>
-          <a class="float-right btn btn-secondary btn-sm"
-           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/peer')}}"><i
-             class="icon ion-person-stalker"></i></a>
+           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-danger"
+             href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"
+             data-confirm="Вы уверены?"><i class="icon ion-android-close"></i></a>
+           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-success"
+            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}"><i
+              class="icon ion-android-create"></i></a>
+           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"><i
+              class="icon ion-ios-color-wand"></i></a>
+           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/peer')}}"><i
+              class="icon ion-person-stalker"></i></a>
 
 
-          <a class="float-right btn btn-secondary btn-sm"
-           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i
-             class="icon ion-arrow-right-c"></i></a>
-          <a class="float-right btn btn-secondary btn-sm"
-           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i
-             class="icon ion-arrow-left-c"></i></a>
-         @if ($step->previousStep() != null)
-          <a class="float-right btn btn-secondary btn-sm"
-           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i
-             class="icon ion-arrow-up-c"></i></a>
-         @endif
-         @if ($step->nextStep() != null)
-          <a class="float-right btn btn-secondary btn-sm"
-           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i
-             class="icon ion-arrow-down-c"></i></a>
+           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i
+              class="icon ion-arrow-right-c"></i></a>
+           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i
+              class="icon ion-arrow-left-c"></i></a>
+          @if ($step->previousStep() != null)
+           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i
+              class="icon ion-arrow-up-c"></i></a>
+          @endif
+          @if ($step->nextStep() != null)
+           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i
+              class="icon ion-arrow-down-c"></i></a>
          @endif
 
          @endif

@@ -28,6 +28,12 @@
   border-radius: 0;
 }
 
+@for $i from 0 through 100 {
+  .progress-width-#{$i} {
+    width: #{$i * 1%};
+  }
+}
+
 .markdown p,
 li {
   max-width: 840px;
@@ -198,6 +204,26 @@ body {
 
 .card-footer {
   padding: 5px 5px 5px 20px;
+}
+
+.dropdown-item {
+  color: #6c757d;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  color: #343a40;
+}
+
+.dropdown-item > i:first-child,
+.dropdown-item > .icon:first-child,
+.dropdown-item > .fas:first-child,
+.dropdown-item > .far:first-child,
+.dropdown-item > .fab:first-child {
+  display: inline-block;
+  margin-right: .5rem;
+  text-align: center;
+  width: 1.25em;
 }
 
 h4 {

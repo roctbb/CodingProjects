@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col">
-        <ul class="nav nav-pills nav-fill @if (count($tasks)==0 || $one_tasker || $quizer) float-right @endif"
+        <ul class="nav nav-pills justify-content-end"
             id="pills-tab" role="tablist">
             @if (count($tasks)!=0 && !$zero_theory && !$quizer)
                 <li class="nav-item">

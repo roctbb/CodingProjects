@@ -181,6 +181,7 @@
                                                     @php
                                                         $stats = $lessonStats[$lesson->id][$student->id] ?? null;
                                                         $percent = $stats ? $stats->percent : 0;
+                                                        $progressWidth = max(0, min(100, (int) round($percent)));
                                                         $points = $stats ? $stats->points : 0;
                                                         $maxPoints = $stats ? $stats->max_points : 0;
                                                     @endphp
@@ -190,31 +191,32 @@
                                                         </div>
                                                         <div class="col">
                                                             <div class="progress m-1">
-                                                                @if ($percent < 40)
-                                                                    <div class="progress-bar progress-bar-striped bg-danger"
+                                                                @if ($maxPoints == 0)
+                                                                @elseif ($percent < 40)
+                                                                    <div class="progress-bar progress-bar-striped bg-danger progress-width-{{$progressWidth}}"
                                                                          role="progressbar"
-                                                                          data-progress-width="{{$percent}}%"
-                                                                         aria-valuenow="{{$percent}}"
-                                                                         aria-valuemin="0"
-                                                                         aria-valuemax="100">
+                                                                           data-progress-width="{{$percent}}%"
+                                                                          aria-valuenow="{{$progressWidth}}"
+                                                                          aria-valuemin="0"
+                                                                          aria-valuemax="100">
                                                                         Очки опыта: {{$points}} / {{$maxPoints}}</div>
 
                                                                 @elseif($percent < 60)
-                                                                    <div class="progress-bar progress-bar-striped bg-warning"
+                                                                    <div class="progress-bar progress-bar-striped bg-warning progress-width-{{$progressWidth}}"
                                                                          role="progressbar"
-                                                                          data-progress-width="{{$percent}}%"
-                                                                         aria-valuenow="{{$percent}}"
-                                                                         aria-valuemin="0"
-                                                                         aria-valuemax="100">
+                                                                           data-progress-width="{{$percent}}%"
+                                                                          aria-valuenow="{{$progressWidth}}"
+                                                                          aria-valuemin="0"
+                                                                          aria-valuemax="100">
                                                                         Очки опыта: {{$points}} / {{$maxPoints}}</div>
 
                                                                 @else
-                                                                    <div class="progress-bar progress-bar-striped bg-success"
+                                                                    <div class="progress-bar progress-bar-striped bg-success progress-width-{{$progressWidth}}"
                                                                          role="progressbar"
-                                                                          data-progress-width="{{$percent}}%"
-                                                                         aria-valuenow="{{$percent}}"
-                                                                         aria-valuemin="0"
-                                                                         aria-valuemax="100">
+                                                                           data-progress-width="{{$percent}}%"
+                                                                          aria-valuenow="{{$progressWidth}}"
+                                                                          aria-valuemin="0"
+                                                                          aria-valuemax="100">
                                                                         Очки опыта: {{$points}} / {{$maxPoints}}</div>
 
                                                                 @endif
@@ -235,36 +237,37 @@
                                                     @php
                                                         $cstats = $lessonStats[$lesson->id][$cstudent->id] ?? null;
                                                         $cpercent = $cstats ? $cstats->percent : 0;
+                                                        $cprogressWidth = max(0, min(100, (int) round($cpercent)));
                                                         $cpoints = $cstats ? $cstats->points : 0;
                                                         $cmaxPoints = $cstats ? $cstats->max_points : 0;
                                                     @endphp
                                                     @if ($cmaxPoints != 0)
                                                     <div class="progress m-1">
                                                         @if ($cpercent < 40)
-                                                            <div class="progress-bar progress-bar-striped bg-danger"
+                                                            <div class="progress-bar progress-bar-striped bg-danger progress-width-{{$cprogressWidth}}"
                                                                  role="progressbar"
-                                                                  data-progress-width="{{$cpercent}}%"
-                                                                 aria-valuenow="{{$cpercent}}"
-                                                                 aria-valuemin="0"
-                                                                 aria-valuemax="100">
+                                                                   data-progress-width="{{$cpercent}}%"
+                                                                  aria-valuenow="{{$cprogressWidth}}"
+                                                                  aria-valuemin="0"
+                                                                  aria-valuemax="100">
                                                                 Очки опыта: {{$cpoints}} / {{$cmaxPoints}}</div>
 
                                                         @elseif($cpercent < 60)
-                                                            <div class="progress-bar progress-bar-striped bg-warning"
+                                                            <div class="progress-bar progress-bar-striped bg-warning progress-width-{{$cprogressWidth}}"
                                                                  role="progressbar"
-                                                                  data-progress-width="{{$cpercent}}%"
-                                                                 aria-valuenow="{{$cpercent}}"
-                                                                 aria-valuemin="0"
-                                                                 aria-valuemax="100">
+                                                                   data-progress-width="{{$cpercent}}%"
+                                                                  aria-valuenow="{{$cprogressWidth}}"
+                                                                  aria-valuemin="0"
+                                                                  aria-valuemax="100">
                                                                 Очки опыта: {{$cpoints}} / {{$cmaxPoints}}</div>
 
                                                         @else
-                                                            <div class="progress-bar progress-bar-striped bg-success"
+                                                            <div class="progress-bar progress-bar-striped bg-success progress-width-{{$cprogressWidth}}"
                                                                  role="progressbar"
-                                                                  data-progress-width="{{$cpercent}}%"
-                                                                 aria-valuenow="{{$cpercent}}"
-                                                                 aria-valuemin="0"
-                                                                 aria-valuemax="100">
+                                                                   data-progress-width="{{$cpercent}}%"
+                                                                  aria-valuenow="{{$cprogressWidth}}"
+                                                                  aria-valuemin="0"
+                                                                  aria-valuemax="100">
                                                                 Очки опыта: {{$cpoints}} / {{$cmaxPoints}}</div>
 
                                                         @endif
@@ -482,19 +485,19 @@
                         </h4>
                         <div class="progress mb-3">
                             @if ($percent < 40)
-                                <div class="progress-bar progress-bar-striped bg-danger" role="progressbar"
+                                <div class="progress-bar progress-bar-striped bg-danger progress-width-{{(int) round($percent)}}" role="progressbar"
                                       data-progress-width="{{$percent}}%"
                                      aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>
 
                             @elseif($percent < 60)
-                                <div class="progress-bar progress-bar-striped bg-warning" role="progressbar"
+                                <div class="progress-bar progress-bar-striped bg-warning progress-width-{{(int) round($percent)}}" role="progressbar"
                                       data-progress-width="{{$percent}}%"
                                      aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>
 
                             @else
-                                <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+                                <div class="progress-bar progress-bar-striped bg-success progress-width-{{(int) round($percent)}}" role="progressbar"
                                       data-progress-width="{{$percent}}%"
                                      aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>

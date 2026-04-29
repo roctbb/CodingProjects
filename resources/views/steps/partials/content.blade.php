@@ -49,47 +49,47 @@
                             @endif
                             @if (\Request::is('insider/*') && ($course->teachers->contains($user) || $user->role=='admin'))
 
-                                <a class="float-right btn btn-danger btn-sm"
+                                <a class="float-right btn btn-link btn-sm p-0 ml-2 text-danger"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"
                                    data-confirm="Вы уверены?"><i
-                                            class="icon ion-android-close"></i></a>
-                                <a class="float-right btn btn-success btn-sm mr-1"
+                                             class="icon ion-android-close"></i></a>
+                                <a class="float-right btn btn-link btn-sm p-0 ml-2 text-success"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}"><i
-                                            class="icon ion-android-create"></i></a>
+                                             class="icon ion-android-create"></i></a>
                                 @include('steps/partials/deadline_modal')
-                                <i title="Установить дедлайн" data-toggle="modal"
+                                <button type="button" title="Установить дедлайн" data-toggle="modal"
                                    data-target="#deadline-modal-{{$task->id}}"
-                                   class="float-right btn btn-secondary btn-sm"><i
-                                            class="icon ion-ios-calendar"></i></i>
+                                   class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"><i
+                                             class="icon ion-ios-calendar"></i></button>
                                 <a title="Фантомное решение (добавить пустое решение для всех студентов)"
-                                   class="float-right btn btn-secondary btn-sm"
+                                   class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"><i
-                                            class="icon ion-ios-color-wand"></i></a>
-                                <a title="Сгенерировать форму perr-review" class="float-right btn btn-secondary btn-sm"
+                                             class="icon ion-ios-color-wand"></i></a>
+                                <a title="Сгенерировать форму perr-review" class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/peer')}}"><i
-                                            class="icon ion-person-stalker"></i></a>
+                                             class="icon ion-person-stalker"></i></a>
                                 @if ($task->is_code)
                                     <a title="Перепроверить все решения (обнулить баллы и отправить последнее решение каждого студента на перепроверку)"
-                                        class="float-right btn btn-secondary btn-sm"
+                                        class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
                                         href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/recheck-all')}}"
                                         data-confirm="Вы уверены? Это обнулит все баллы и отправит последние решения на перепроверку."><i
-                                                class="icon ion-refresh"></i></a>
+                                                 class="icon ion-refresh"></i></a>
                                 @endif
-                                <a class="float-right btn btn-secondary btn-sm"
+                                <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i
-                                            class="icon ion-arrow-right-c"></i></a>
-                                <a class="float-right btn btn-secondary btn-sm"
+                                             class="icon ion-arrow-right-c"></i></a>
+                                <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i
-                                            class="icon ion-arrow-left-c"></i></a>
+                                             class="icon ion-arrow-left-c"></i></a>
                                 @if ($step->previousStep() != null)
-                                    <a class="float-right btn btn-secondary btn-sm"
+                                    <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
                                        href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i
-                                                class="icon ion-arrow-up-c"></i></a>
+                                                 class="icon ion-arrow-up-c"></i></a>
                                 @endif
                                 @if ($step->nextStep() != null)
-                                    <a class="float-right btn btn-secondary btn-sm"
+                                    <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
                                        href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i
-                                                class="icon ion-arrow-down-c"></i></a>
+                                                 class="icon ion-arrow-down-c"></i></a>
                                 @endif
                             @endif
                         </div>
