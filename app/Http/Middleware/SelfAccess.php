@@ -2,9 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Course;
-use App\ProgramStep;
-use App\User;
 use Closure;
 use Illuminate\Support\Facades\Auth;
 

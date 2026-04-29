@@ -7,15 +7,7 @@ use App\ProgramChapter;
 use App\ProgramStep;
 use App\Http\Controllers\Controller;
 use App\Lesson;
-use App\Program;
-use App\Question;
-use App\QuestionVariant;
-use App\Solution;
-use App\Task;
-use App\User;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Auth;
 
 
 class LessonsController extends Controller
@@ -73,11 +65,6 @@ class LessonsController extends Controller
 
         $lesson->save();
 
-        if ($request->prerequisites != null)
-            foreach ($request->prerequisites as $prerequisite_id) {
-                $lesson->prerequisites()->attach($prerequisite_id);
-            }
-
         $data = ['name' => 'Введение', 'theory' => '', 'notes' => ''];
 
         $step = ProgramStep::createStep($lesson, $data);
@@ -102,13 +89,6 @@ class LessonsController extends Controller
             'start_date' => 'date|nullable',
             'chapter' => 'required|exists:program_chapters,id'
         ]);
-        foreach ($lesson->prerequisites as $prerequisite) {
-            $lesson->prerequisites()->detach($prerequisite->id);
-        }
-        if ($request->prerequisites != null)
-            foreach ($request->prerequisites as $prerequisite_id) {
-                $lesson->prerequisites()->attach($prerequisite_id);
-            }
         $lesson->name = $request->name;
         $oldStartDate = $lesson->getStartDate($course);
         $lesson->setStartDate($course, $request->start_date);
@@ -125,29 +105,6 @@ class LessonsController extends Controller
             $lesson->is_open = true;
         else
             $lesson->is_open = false;
-
-        if ($request->has('sdl_node_id')) {
-            if ($request->sdl_node_id == -1) {
-                $lesson->sdl_node_id = null;
-            } else {
-                $this->validate($request, ['sdl_node_id' => 'nullable|exists:core_nodes,id']);
-                $lesson->sdl_node_id = $request->sdl_node_id;
-                if ($request->has('is_sdl')) {
-                    $lesson->is_sdl = true;
-                } else {
-                    $lesson->is_sdl = false;
-                }
-            }
-        }
-
-        if ($request->has('scale_id')) {
-            if ($request->scale_id == -1) {
-                $lesson->scale_id = null;
-            } else {
-                $this->validate($request, ['scale_id' => 'nullable|exists:result_scales,id']);
-                $lesson->scale_id = $request->scale_id;
-            }
-        }
 
         $lesson->save();
 

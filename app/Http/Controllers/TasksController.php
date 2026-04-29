@@ -75,11 +75,6 @@ class TasksController extends Controller
         }
         $task->save();
 
-        if ($request->consequences)
-            foreach ($request->consequences as $consequence_id) {
-                $task->consequences()->attach($consequence_id);
-            }
-
         // Recalculate points for all students after adding new task
         $course = Course::findOrFail($course_id);
         foreach ($course->students as $student) {
@@ -120,14 +115,6 @@ class TasksController extends Controller
             'price' => 'nullable|numeric|min:0',
             'max_mark' => 'required|integer|min:0|max:1000'
         ]);
-
-        foreach ($task->consequences as $consequence) {
-            $task->consequences()->detach($consequence->id);
-        }
-        if ($request->consequences != null)
-            foreach ($request->consequences as $consequence_id) {
-                $task->consequences()->attach($consequence_id);
-            }
 
         $task->text = $request->text;
         $task->max_mark = $request->max_mark;

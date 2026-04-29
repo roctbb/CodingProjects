@@ -188,20 +188,6 @@
                         </div>
                         <h4>Контакты</h4>
                         <div class="form-group">
-                            <label for='vk'>VK</label>
-
-                            @if (old('vk')!="")
-                                <input id='vk' type="text" class="form-control" name='vk' value="{{old('vk')}}">
-                            @else
-                                <input id='vk' type="text" class="form-control" name='vk' value="{{$user->vk}}">
-                            @endif
-                            @if ($errors->has('vk'))
-                                <span class="help-block error-block">
-                                        <strong>{{ $errors->first('vk') }}</strong>
-                                    </span>
-                            @endif
-                        </div>
-                        <div class="form-group">
                             <label for='telegram'>Telegram</label>
 
                             @if (old('telegram')!="")
@@ -228,22 +214,6 @@
                             @if ($errors->has('git'))
                                 <span class="help-block error-block">
                                         <strong>{{ $errors->first('git') }}</strong>
-                                    </span>
-                            @endif
-                        </div>
-                        <div class="form-group">
-                            <label for='facebook'>Facebook</label>
-
-                            @if (old('facebook')!="")
-                                <input id='facebook' type="text" class="form-control" name='facebook'
-                                       value="{{old('facebook')}}">
-                            @else
-                                <input id='facebook' type="text" class="form-control" name='facebook'
-                                       value="{{$user->facebook}}">
-                            @endif
-                            @if ($errors->has('facebook'))
-                                <span class="help-block error-block">
-                                        <strong>{{ $errors->first('facebook') }}</strong>
                                     </span>
                             @endif
                         </div>

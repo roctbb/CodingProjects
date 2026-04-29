@@ -2,7 +2,6 @@
 
 namespace App\Notifications;
 
-use App\Channels\VkChannel;
 use App\CoinTransaction;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
@@ -33,26 +32,7 @@ class NewCoinTransaction extends Notification
      */
     public function via($notifiable)
     {
-        $channels = [VkChannel::class];
-        if ($this->transaction->price > 0) {
-            array_push($channels, 'database');
-        }
-        return $channels;
-    }
-
-    /**
-     * Get the mail representation of the notification.
-     *
-     * @param  mixed $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
-     */
-    public function toVk($notifiable)
-    {
-        if ($this->transaction->price > 0) {
-            return "🏧 Вам начислено " . $this->transaction->price . " GK (" . $this->transaction->comment . ")";
-        } else {
-            return "🏧 Списание " . $this->transaction->price . " GK (" . $this->transaction->comment . ")";
-        }
+        return $this->transaction->price > 0 ? ['database'] : [];
     }
 
     /**

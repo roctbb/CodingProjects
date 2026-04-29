@@ -9,60 +9,12 @@
          - {{ config('app.name', 'Laravel') }}
     </title>
 
-    <link rel="stylesheet" href="/css/ionicons.min.css">
-
-    <link rel="stylesheet" href="/vendor/bootstrap/bootstrap.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ config('app.name', 'Laravel') }}">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
-    <link rel="stylesheet"
-          href="/vendor/highlight/atelier-lakeside-light.min.css">
-
-    <link rel="stylesheet" href="{{url('css/jquery-ui.min.css')}}">
-    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-
-
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Gothic+A1" rel="stylesheet">
+    @include('layouts.partials.npm-vendor-assets')
     <link href="{{url('assets/css/theme.css')}}" rel="stylesheet" type="text/css" media="all"/>
-    <link rel="stylesheet" href="{{url('/css/app.css')}}">
-    <script type="text/javascript" src="{{ url('assets/js/jquery.min.js') }}"></script>
-    <script type="text/javascript" src="{{ url('assets/js/popper.min.js') }}"></script>
-    <script type="text/javascript" src="{{ url('assets/js/bootstrap.js') }}"></script>
-    <script src="/vendor/plotly/plotly.min.js"></script>
-
-
-    <link rel="stylesheet" href="/vendor/easymde/easymde.min.css">
-    <script src="/vendor/easymde/easymde.min.js"></script>
-
-    <!-- Autosize - resizes textarea inputs as user types -->
-    <script type="text/javascript" src="{{ url('assets/js/autosize.min.js') }}"></script>
-    <!-- Flatpickr (calendar/date/time picker UI) -->
-    <script type="text/javascript" src="{{ url('assets/js/flatpickr.min.js') }}"></script>
-    <!-- Prism - displays formatted code boxes -->
-    <script type="text/javascript" src="{{ url('assets/js/prism.js') }}"></script>
-    <!-- Shopify Draggable - drag, drop and sort items on page -->
-    <script type="text/javascript" src="{{ url('assets/js/draggable.bundle.legacy.js') }}"></script>
-    <script type="text/javascript" src="{{ url('assets/js/swap-animation.js') }}"></script>
-    <!-- Dropzone - drag and drop files onto the page for uploading -->
-    <script type="text/javascript" src="{{ url('assets/js/dropzone.min.js') }}"></script>
-    <!-- List.js - filter list elements -->
-    <script type="text/javascript" src="{{ url('assets/js/list.min.js') }}"></script>
-
-    <!-- Required theme scripts (Do not remove) -->
-    <script type="text/javascript" src="{{ url('assets/js/theme.js') }}"></script>
-
-    <script src="{{url('/js/linkify.min.js')}}"></script>
-    <script src="{{url('/js/linkify-jquery.min.js')}}"></script>
-
-    <script src="{{ url('/scripts/highlight.min.js') }}"></script>
-    <script>hljs.initHighlightingOnLoad();</script>
-    <!-- Latest compiled and minified CSS -->
-
-    <script src="{{url('js/jquery-ui.min.js')}}"></script>
-    <script src="{{url('/js/bootstrap-select.min.js')}}"></script>
-    <link rel="stylesheet" href="{{url('css/bootstrap-select.min.css')}}">
+    <link href="{{ asset('build/css/legacy-theme.css') }}" rel="stylesheet" type="text/css" media="all"/>
+    @include('layouts.partials.pipeline-theme-scripts')
 
 
     @yield('head')
@@ -105,66 +57,8 @@
 
 
 {!! \NoCaptcha::renderJs() !!}
-<script>
-    $(function () {
-        $(".nav-link").click(function () {
-            $(".nav-link.active").removeClass('active');
-        });
-    });
-    $(function () {
-        $(".date").datepicker({
-            changeMonth: true,
-            changeYear: true,
-            yearRange: "1940:2025",
-            dateFormat: 'yy-mm-dd'
-        });
-
-    });
-</script>
-<!-- Latest compiled and minified JavaScript -->
-
 <form style="display: none;" id="logout-form" method="POST" action="{{ route('logout') }}">{{ csrf_field() }}</form>
-<script>
-    var url = document.location.toString();
-
-
-    if (url.match('#')) {
-        $('a[href="#' + url.split('#')[1] + '"]').tab('show');
-        console.log(url.split('#')[1]);
-    }
-
-    // Change hash for page-reload
-    $('.nav-tabs a').on('shown.bs.tab', function (e) {
-        window.location.hash = e.target.hash;
-    });
-
-    $('div').linkify({
-        target: "_blank"
-    });
-    $('div.markdown a').attr('target', 'blank');
-    $(document).ready(function () {
-        $('.selectpicker').selectpicker();
-    });
-
-    // define a handler
-    function doc_keyUp(e) {
-
-        // this would test for whichever key is 40 and the ctrl key at the same time
-        if (e.ctrlKey && e.keyCode == 81) {
-            // call your function to do the thing
-            location.href = "/aesthethics"
-        }
-    }
-
-    // register the handler
-    document.addEventListener('keyup', doc_keyUp, false);
-    $(document).popover({
-        selector: '[data-toggle=popover]',
-        trigger: 'hover'
-    });
-
-
-</script>
+@include('layouts.partials.common-footer-scripts')
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">
     (function (m, e, t, r, i, k, a) {

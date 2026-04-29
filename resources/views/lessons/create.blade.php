@@ -25,18 +25,6 @@
                             @endif
                         </div>
                         <div class="form-group">
-                            <label for="prerequisites" style="padding-bottom: 10px;">Необходимые знания из <sup>
-                                    <small>Core</small>
-                                </sup>:</label><br>
-                            <select class="selectpicker  form-control" data-live-search="true" id="prerequisites"
-                                    name="prerequisites[]" multiple data-width="auto">
-                                @foreach (\App\CoreNode::where('is_root', false)->where('version', 1)->get() as $node)
-                                    <option data-tokens="{{ $node->id }}" value="{{ $node->id }}"
-                                            data-subtext="{{$node->getParentLine()}}">{{$node->title}}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group">
                             <label for="description" style="padding-bottom: 10px;">Описание урока</label>
 
                             <textarea id="description" class="materialize-textarea"

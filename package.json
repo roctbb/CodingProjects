@@ -1,31 +1,41 @@
 {
   "private": true,
   "scripts": {
-    "dev": "npm run development",
-    "development": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
-    "watch": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --watch --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
-    "watch-poll": "npm run watch -- --watch-poll",
-    "hot": "cross-env NODE_ENV=development node_modules/webpack-dev-server/bin/webpack-dev-server.js --inline --hot --config=node_modules/laravel-mix/setup/webpack.config.js",
-    "prod": "npm run production",
-    "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js"
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "prod": "npm run build",
+    "production": "npm run build"
   },
   "devDependencies": {
-    "axios": "^0.15.3",
-    "babel-loader": "^7.1.5",
-    "babel-polyfill": "^6.26.0",
-    "bootstrap-sass": "^3.3.7",
-    "cross-env": "^3.2.3",
-    "jquery": "^3.1.1",
-    "laravel-mix": "^0.12.1",
-    "loader-utils": "^1.2.3",
-    "lodash": "^4.17.11",
-    "monaco-editor": "^0.16.2",
-    "monaco-editor-webpack-plugin": "^1.7.0",
-    "vue": "^2.1.10",
-    "webpack": "^3.11.0",
-    "webpack-cli": "^3.3.1"
+    "sass": "^1.99.0",
+    "vite": "^7.0.0",
+    "vite-plugin-static-copy": "^4.1.0"
   },
   "dependencies": {
-    "easymde": "^2.9.0"
+    "@fontsource/gothic-a1": "^5.2.8",
+    "@fontsource/raleway": "^5.2.8",
+    "@fontsource/roboto": "^5.2.10",
+    "@fortawesome/fontawesome-free": "^6.7.2",
+    "@material/web": "^2.4.1",
+    "@shopify/draggable": "^1.2.1",
+    "autosize": "^6.0.1",
+    "axios": "^1.13.2",
+    "bootstrap": "^4.6.2",
+    "bootstrap-select": "^1.13.18",
+    "dropzone": "^5.9.3",
+    "easymde": "^2.20.0",
+    "flatpickr": "^4.6.13",
+    "highlight.js": "^11.11.1",
+    "jquery": "^3.7.1",
+    "jquery-ui-dist": "^1.13.3",
+    "linkify-html": "^4.3.2",
+    "linkifyjs": "^4.3.2",
+    "list.js": "^2.3.1",
+    "lodash": "^4.17.21",
+    "marked": "^4.3.0",
+    "mathjax": "^4.1.1",
+    "plotly.js-dist-min": "^3.5.0",
+    "popper.js": "^1.16.1",
+    "prismjs": "^1.30.0"
   }
 }

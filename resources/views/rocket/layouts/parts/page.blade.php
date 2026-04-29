@@ -47,8 +47,7 @@
     <!-- Rocket CSS -->
     <link type="text/css" href="{{ url('rocket/css/rocket.css') }}" rel="stylesheet">
 
-    <link rel="stylesheet"
-          href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.12.0/build/styles/atelier-lakeside-light.min.css">
+    <link rel="stylesheet" href="{{ asset('build/css/vendor/highlight-atom-one-light.css') }}">
 
     @yield('style')
     <!-- NOTICE: You can use the _analytics.html partial to include production code specific code & trackers -->
@@ -57,7 +56,6 @@
 
 <body>
 @yield('page')
-<!-- Core -->
 <script src="{{ url('rocket/vendor/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ url('rocket/vendor/popper.js/dist/umd/popper.min.js') }}"></script>
 <script src="{{ url('rocket/vendor/bootstrap/dist/js/bootstrap.min.js') }}"></script>
@@ -79,9 +77,8 @@
 
 <!-- Rocket JS -->
 <script src="{{ url('rocket/assets/js/rocket.js') }}"></script>
-<script src="{{url('/js/nbv.js')}}"></script>
-<script src="{{ url('/scripts/highlight.min.js') }}"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+<script src="{{ asset('build/js/nbv.js') }}"></script>
+<script type="module" src="{{ asset('build/js/highlight.js') }}"></script>
 
 </body>
 

@@ -2,10 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Course;
-use App\DetailedFeedback;
 use Illuminate\Console\Command;
-use Log;
 
 class LowerEmails extends Command
 {

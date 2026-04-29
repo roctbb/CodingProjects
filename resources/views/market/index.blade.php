@@ -15,7 +15,7 @@
             @if ($user->role=='admin')
                 <a class="btn btn-secondary float-right" style="margin-left: 10px;" href="{{url('/insider/market/orders')}}">Заказы</a>
                 <a class="btn btn-round float-right" href="{{url('/insider/market/create/')}}"><i
-                            class="material-icons">add</i></a>
+                            class="fas fa-plus"></i></a>
             @endif
         </div>
     </div>

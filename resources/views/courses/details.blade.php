@@ -8,6 +8,10 @@
 
 @endsection
 
+@section('head')
+    <script src="{{ asset('build/js/vendor/plotly.min.js') }}"></script>
+@endsection
+
 
 
 @section('content')
@@ -18,7 +22,7 @@
 
                         <div class="dropdown">
                             <button class="btn btn-round" data-toggle="dropdown" data-target="#project-add-modal">
-                                <i class="material-icons">add</i>
+                                <i class="fas fa-plus"></i>
                             </button>
 
                             <div class="dropdown-menu dropdown-menu-right">
@@ -56,11 +60,7 @@
                     <li>
                         <a href="{{ url('insider/profile/'.$student->id) }}" data-toggle="tooltip"
                            title="{{ $student->name }}">
-                            @if ($student->image!=null)
-                                <img alt="Image" src="{{url('/media/'.$student->image)}}" class="avatar"/>
-                            @else
-                                <img alt="Image" src="{{ url('images/user.jpg') }}" class="avatar"/>
-                            @endif
+                            <img alt="Image" src="{{ $student->imageUrl() }}" class="avatar"/>
                         </a>
                     </li>
                 @endforeach
@@ -130,10 +130,11 @@
                                             @endif
                                         </div>
                                         @if ($course->teachers->contains($user) || $user->role=='admin')
-                                            <div class="dropdown">
+                                            <div class="col-auto d-flex align-items-start">
+                                                <div class="dropdown">
                                                 <button class="btn-options" type="button" data-toggle="dropdown"
                                                         aria-haspopup="true" aria-expanded="false">
-                                                    <i class="material-icons">more_vert</i>
+                                                    <i class="fas fa-ellipsis-v"></i>
                                                 </button>
 
                                                 <div class="dropdown-menu dropdown-menu-right">
@@ -153,6 +154,7 @@
                                                     <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/upper?chapter='.$chapter->id)}}"
                                                        class="dropdown-item"><i
                                                                 class="icon ion-arrow-down-c"></i> Ниже</a>
+                                                </div>
                                                 </div>
                                             </div>
 
@@ -334,7 +336,7 @@
                                         <div class="dropdown">
                                             <button class="btn-options" type="button" data-toggle="dropdown"
                                                     aria-haspopup="true" aria-expanded="false">
-                                                <i class="material-icons">more_vert</i>
+                                                <i class="fas fa-ellipsis-v"></i>
                                             </button>
 
                                             <div class="dropdown-menu dropdown-menu-right">
@@ -376,11 +378,6 @@
                         @if ($course->teachers->contains($user) || $user->role=='admin')
                             <b>Статус:</b> {{$course->state}}<br/>
                             <b>Инвайт:</b> {{$course->invite}}<br/>
-                            <b>Средняя оценка:</b> {{ round($course->average_mark(), 2) }} ({{$course->marks_count()}})
-                            <br/>
-                            <b>Последние оценки:</b> {{ round($course->recent_mark(), 2) }}
-                            ({{$course->recent_marks_count()}})<br/>
-
                         @endif
                         @if ($course->git!=null)
                             <b><img src="{{ url('images/icons/icons8-git-48.png') }}" title="Git" width="16"

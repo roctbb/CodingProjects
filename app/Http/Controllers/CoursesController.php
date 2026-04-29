@@ -7,19 +7,12 @@ use App\CompletedCourse;
 use App\Course;
 use App\CourseCategory;
 use App\CourseStudentPoints;
-use App\Event;
-use App\ForumThread;
-use App\Idea;
 use App\LessonStudentStats;
 use App\Program;
 use App\ProgramChapter;
-use App\ProgramStep;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
-use App\Provider;
-use App\Solution;
 use App\User;
-use App\Lesson;
 use App\BlockedTask;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -46,15 +39,12 @@ class CoursesController extends Controller
      */
     public function index()
     {
-        // Optimize: get authenticated user, cache users and events, eager load course relations
+        // Optimize: get authenticated user, cache users, eager load course relations
         $user = Auth::user();
         $users = Cache::remember('users:not_hidden', 60, function () {
             return User::where('is_hidden', false)->get();
         });
         $courses = Course::with(['students:id', 'teachers:id'])->orderBy('id')->get();
-        $events = Cache::remember('events:new', 5, function () {
-            return Event::getNew()->sortBy('date')->take(5);
-        });
 
         $my_courses = $courses->filter(function ($course) use ($user) {
             return $course->state == 'started' && ($user->role == 'admin' || $course->students->contains($user) || $course->teachers->contains($user));
@@ -73,10 +63,7 @@ class CoursesController extends Controller
             $notification->markAsRead();
         }
 
-        $threads = Cache::remember('threads:recent', 5, function () {
-            return ForumThread::orderBy('id', 'DESC')->limit(5)->get();
-        });
-    return response()->view('home', compact('courses', 'user', 'users', 'threads', 'my_courses', 'open_courses', 'private_courses', 'notifications', 'events'));
+    return response()->view('home', compact('courses', 'user', 'users', 'my_courses', 'open_courses', 'private_courses', 'notifications'));
     }
 
     public function report($id)
@@ -85,8 +72,7 @@ class CoursesController extends Controller
         $course = Course::with('program.lessons', 'students', 'students.submissions', 'teachers', 'program.steps', 'program.lessons.info')->findOrFail($id);
         $students = $course->students;
 
-        if (!$course->is_sdl) {
-            $steps = $course->steps;
+        $steps = $course->steps;
 
             $lessons = $course->program->lessons->filter(function ($lesson) use ($course) {
                 return $lesson->isStarted($course);
@@ -184,38 +170,7 @@ class CoursesController extends Controller
                     $students[$key]->points = 0;
                 }
             }
-            return view('courses.report', compact('course', 'user', 'steps', 'students', 'lessons', 'pulse_keys', 'pulse_values', 'task_keys', 'task_values'));
-        } else {
-            $lessons = collect([]);
-            $student_data = collect([]);
-
-            // Get cached points from database
-            $cachedPoints = CourseStudentPoints::where('course_id', $id)
-                ->whereIn('student_id', $students->pluck('id'))
-                ->get()
-                ->keyBy('student_id');
-
-            foreach ($students as $student) {
-                $lessons[$student->id] = $course->user_sdl_lessons($student)->get();
-
-                $student_data[$student->id] = $student;
-
-                if (isset($cachedPoints[$student->id])) {
-                    $student_data[$student->id]->percent = $cachedPoints[$student->id]->percent;
-                    $student_data[$student->id]->max_points = $cachedPoints[$student->id]->max_points;
-                    $student_data[$student->id]->points = $cachedPoints[$student->id]->points;
-                } else {
-                    // If not cached, calculate and cache it
-                    CourseStudentPoints::recalculate($id, $student->id);
-                    $student_data[$student->id]->percent = 0;
-                    $student_data[$student->id]->max_points = 0;
-                    $student_data[$student->id]->points = 0;
-                }
-            }
-            return view('courses.sdl_report', compact('course', 'user', 'students', 'lessons', 'student_data'));
-
-
-        }
+        return view('courses.report', compact('course', 'user', 'steps', 'students', 'lessons', 'pulse_keys', 'pulse_values', 'task_keys', 'task_values'));
 
     }
 
@@ -259,8 +214,7 @@ class CoursesController extends Controller
 
 
 
-        if (!$course->is_sdl) {
-            // Cache marks for this course
+        // Cache marks for this course
             $marks = Cache::remember("course:{$id}:marks", 5, function () use ($id) {
                 return CompletedCourse::where('course_id', $id)->get();
             });
@@ -352,80 +306,8 @@ class CoursesController extends Controller
                 });
 
             // Render view without caching for now (caching causes stale data issues)
-            return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'cstudent', 'lessons', 'marks', 'lessonStats'));
+        return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'cstudent', 'lessons', 'marks', 'lessonStats'));
 
-        } else {
-            if ($user->role != 'student')
-                return redirect('insider/courses/' . $id . '/report');
-
-            $student = $students->where('id', $user->id)->first();
-            $idea = null;
-            if ($student->pivot->idea_id != null) {
-                $idea = Idea::findOrFail($student->pivot->idea_id);
-                $idea_lessons = $course->user_sdl_lessons($user)->where('sdl_node_id', $idea->sdl_node_id)->get();
-                foreach ($idea_lessons as $lesson) {
-                    if ($lesson->percent($user, $course) > 90) {
-                        $idea = null;
-                        break;
-                    }
-                }
-
-            }
-
-            $marks = [];
-            $lessons = $course->user_sdl_lessons($user)->get();
-
-            $done_lessons = $lessons->filter(function ($item) use ($user, $course) {
-                return $item->percent($user, $course) > 90;
-            });
-            $current_lessons = $lessons->filter(function ($item) use ($user, $course) {
-                return $item->percent($user, $course) <= 90;
-            });
-            $available_lessons = Lesson::getAvailableSdlLessons($user, $course, $idea);
-
-            $available_lessons = $current_lessons->merge($available_lessons);
-            // Render view without caching for now (caching causes stale data issues)
-            return view('courses.sdl_details', compact('course', 'user', 'lessons', 'marks', 'students', 'available_lessons', 'done_lessons', 'idea'));
-        }
-
-
-    }
-
-    public function setSdlIdea($id, Request $request)
-    {
-        $course = Course::findOrFail($id);
-        $student = $course->students->where('id', Auth::User()->id)->first();
-
-        if (!$request->has('idea_id')) {
-            $student->pivot->idea_id = null;
-        } else {
-            $this->validate($request, [
-                'idea_id' => 'required|exists:ideas,id',
-            ]);
-            $idea = Idea::findOrFail($request->idea_id);
-            if ($idea->sdl_node_id == null) abort(503);
-            $student->pivot->idea_id = $idea->id;
-        }
-
-        $student->pivot->save();
-
-        return redirect('/insider/courses/' . $course->id . '');
-    }
-
-    public function addSdlLesson($id, Request $request)
-    {
-        $user = User::findOrFail(Auth::User()->id);
-        $course = Course::findOrFail($id);
-        $lesson = Lesson::findOrFail($request->lesson_id);
-
-        if (!$course->is_sdl) abort(422);
-        if ($lesson->sdl_node_id == null) abort(422);
-        if (!$course->students->contains($user) and !$course->teachers->contains($user)) {
-            abort(422);
-        }
-
-        $course->sdl_lessons()->attach($request->lesson_id, array('user_id' => $user->id));
-        return redirect('/insider/courses/' . $course->id);
 
     }
 
@@ -646,11 +528,6 @@ class CoursesController extends Controller
                 $chapter->program_id = $program->id;
                 $chapter->sort_index = $order;
                 $chapter->save();
-            } else if ($request->program == -2) {
-                $this->validate($request, ['sdl_version' => 'required|integer|exists:core_nodes,version']);
-                $course->is_sdl = true;
-                $course->sdl_core_version = $request->sdl_version;
-                $course->program_id = null;
             } else {
                 abort(422);
             }

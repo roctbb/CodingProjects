@@ -8,20 +8,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Article;
-use App\ArticleTag;
 use App\CoinTransaction;
 use App\Course;
-use App\ForumComment;
-use App\ForumPost;
-use App\ForumTag;
-use App\ForumThread;
-use App\ForumVote;
 use App\Lesson;
-use App\Notifications\NewForumAnswer;
 use App\Program;
 use App\ProgramStep;
-use App\Project;
 use App\Http\Controllers\Controller;
 use App\User;
 use Illuminate\Http\Request;

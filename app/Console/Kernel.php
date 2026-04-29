@@ -14,7 +14,6 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\BirthdaySender::class,
-        Commands\RequestFeedback::class,
         Commands\LowerEmails::class,
         Commands\TestEmails::class,
         Commands\FixTyposCommand::class,
@@ -30,7 +29,6 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('birthdays')->daily();
-        $schedule->command('feedback')->dailyAt("22:00");
         //          ->hourly();
     }
 

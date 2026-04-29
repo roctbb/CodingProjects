@@ -27,23 +27,6 @@
                                     @endif
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="consequences" style="padding-bottom: 10px;">Подтверждаемые результаты из
-                                    <sup>
-                                        <small>Core</small>
-                                    </sup>:</label><br>
-                                <select class="selectpicker  form-control" data-live-search="true" id="consequences"
-                                        name="consequences[]" multiple data-width="auto">
-                                    @foreach (\App\CoreNode::where('is_root', false)->where('version', 1)->get() as $node)
-                                        <option data-tokens="{{ $node->id }}" value="{{ $node->id }}"
-                                                data-subtext="{{$node->getParentLine()}}">{{$node->title}}</option>
-                                    @endforeach
-                                </select>
-
-                                <script>
-                                    $('.selectpicker').selectpicker();
-                                </script>
-                            </div>
                             <div class="form-group{{ $errors->has('max_mark') ? ' has-error' : '' }}">
                                 <label for="max_mark" class="col-md-4">Очков опыта</label>
 

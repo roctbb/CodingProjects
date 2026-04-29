@@ -1,9 +1,12 @@
 .env
 .idea/*
+/.tools/
 /node_modules
 /public/hot
 /public/storage
+/public/build/
 /storage/*.key
+/storage/framework/views/*.php
 /vendor
 .phpunit.result.cache
 Homestead.json

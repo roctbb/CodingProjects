@@ -6,9 +6,7 @@
         }
 
     </style>
-    <link rel="stylesheet" href="{{ url('/styles/bootstrap.min.css') }}"
-          integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('build/css/app.css') }}">
 
 </head>
 <body>

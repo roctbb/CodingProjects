@@ -20,8 +20,6 @@ class AddFieldsToUser extends Migration
             $table->text('hobbies')->nullable();
             $table->text('interests')->nullable();
             $table->string('git')->nullable();
-            $table->string('vk')->nullable();
-            $table->string('facebook')->nullable();
             $table->string('telegram')->nullable();
             $table->text('comments')->nullable();
             $table->text('letter')->nullable();

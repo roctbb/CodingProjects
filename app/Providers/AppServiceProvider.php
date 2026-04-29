@@ -19,6 +19,9 @@ class AppServiceProvider extends ServiceProvider
         setlocale(LC_TIME, 'ru_RU.UTF-8');
         \Carbon\Carbon::setLocale('ru');
         Blade::withoutDoubleEncoding();
+        Blade::directive('parsedown', function ($expression) {
+            return "<?php echo parsedown($expression); ?>";
+        });
 
         /*\DB::listen(function ($query) {
             print(

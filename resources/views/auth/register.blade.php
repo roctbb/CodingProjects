@@ -180,16 +180,6 @@
                                 <span class="help-block text-muted">Эти данные увидят только другие студенты школы, заполнять не обязательно. <strong>Они не видны из интернета.</strong></span>
 
                                 <div class="form-group">
-                                    <label for='vk'>VK</label>
-
-                                    <input id='vk' type="text" class="form-control" name='vk' value="{{old('vk')}}">
-                                    @if ($errors->has('vk'))
-                                        <span class="help-block error-block">
-                                        <strong>{{ $errors->first('vk') }}</strong>
-                                    </span>
-                                    @endif
-                                </div>
-                                <div class="form-group">
                                     <label for='telegram'>Telegram</label>
                                     <input id='telegram' type="text" class="form-control" name='telegram'
                                            value="{{old('telegram')}}">
@@ -208,17 +198,6 @@
                                     @if ($errors->has('git'))
                                         <span class="help-block error-block">
                                         <strong>{{ $errors->first('git') }}</strong>
-                                    </span>
-                                    @endif
-                                </div>
-                                <div class="form-group">
-                                    <label for='facebook'>Facebook</label>
-
-                                    <input id='facebook' type="text" class="form-control" name='facebook'
-                                           value="{{old('facebook')}}">
-                                    @if ($errors->has('facebook'))
-                                        <span class="help-block error-block">
-                                        <strong>{{ $errors->first('facebook') }}</strong>
                                     </span>
                                     @endif
                                 </div>

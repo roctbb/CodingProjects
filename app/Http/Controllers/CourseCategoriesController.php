@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Article;
 use App\CoinTransaction;
 use App\CourseCategory;
 use App\User;

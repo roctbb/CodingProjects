@@ -99,9 +99,7 @@ class RegisterController extends Controller
             'password' => bcrypt($data['password']),
             'email_verified_at' => app('\App\Services\EmailVerify')->getDate()
         ]);
-        $user->vk = $data->vk;
         $user->git = $data->git;
-        $user->facebook = $data->facebook;
         $user->telegram = $data->telegram;
         $user->hobbies = $data->hobbies;
         $user->interests = $data->interests;

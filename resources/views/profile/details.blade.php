@@ -22,7 +22,7 @@
                             <div class="dropdown float-right">
                                 <button class="btn-options" type="button" data-toggle="dropdown"
                                         aria-haspopup="true" aria-expanded="false">
-                                    <i class="material-icons">more_vert</i>
+                                    <i class="fas fa-ellipsis-v"></i>
                                 </button>
 
                                 <div class="dropdown-menu dropdown-menu-right">
@@ -37,10 +37,6 @@
                                             <i class="icon ion-cash"></i> Начислить
                                         </a>
                                     @endif
-                                    <a target="_blank" class="dropdown-item"
-                                       href="{{'/insider/core/'.$user->id}}">
-                                        Core</a>
-
                                 </div>
                             </div>
 
@@ -117,7 +113,7 @@
                     <div class="col" style="padding-top: 19px;">
                         @if ($guest->role=='admin')
                             <button class="btn btn-round float-right" data-toggle="modal" data-target="#exampleModal">
-                                <i class="material-icons">add</i>
+                                <i class="fas fa-plus"></i>
                             </button>
 
                         @endif
@@ -153,116 +149,6 @@
                 </div>
             @endif
 
-            @if ($user->projects->count()!=0 || $guest->role=='teacher' || $guest->role=='admin')
-                <div class="row">
-                    <div class="col-md-8">
-                        <h4 style="margin: 20px;" class="card-title">Проекты <img style="height: 30px;"
-                                                                                  src="{{ url('images/icons/icons8-microsoft-project-48.png') }}">
-                        </h4>
-                    </div>
-                    <div class="col" style="padding-top: 19px;">
-                        @if ($guest->role=='admin' || $guest->role=='teacher' || $guest->id==$user->id)
-                            <button class="btn btn-round float-right" data-toggle="modal" data-target="#createProject">
-                                <i class="material-icons">add</i>
-                            </button>
-                        @endif
-                    </div>
-
-                </div>
-
-                <div class="row">
-                    @foreach($user->projects as $project)
-                        <div class="col-md-6">
-                            <div class="card" style="width: 100%; margin-bottom: 10px;">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{$project->name}}</h5>
-                                    <p><span>{{$project->short_description}}</span></p>
-                                    <a href="{{url('insider/projects/'.$project->id)}}" class="card-link">Страница
-                                        проекта</a>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-
-            {{-- @foreach($events as $event)
-                @if($event->participants->contains($user->id) && (\Carbon\Carbon::createFromFormat('Y-m-d', $event->date)->lt(\Carbon\Carbon::now())))
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h4 style="margin: 20px;" class="card-title">Прошедшие события
-                                <img src="https://png.icons8.com/ultraviolet/50/000000/overtime.png" width="25px">
-                            </h4>
-                        </div>
-                    </div>
-                    @break
-                @endif
-            @endforeach --}}
-
-            <div class="row">
-                {{-- @foreach($events as $event)
-                    @if($event->participants->contains($user->id) && (\Carbon\Carbon::createFromFormat('Y-m-d', $event->date)->lt(\Carbon\Carbon::now())))
-                        <div class="col-md-6">
-                            <div class="card" style="width: 100%; margin-bottom: 10px;">
-                                <div class="card-footer">
-                                    <div class="float-left">
-                                        <h5 class="card-title">{{$event->name}}</h5>
-                                    </div>
-                                    <div class="float-right" style="margin-right:5px">
-                                        {{$event->date}}
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="float-left"><span>{{$event->short_text}}</span></div>
-                                    <div class="float-right">
-                                        <a href="{{url('insider/events/'.$event->id)}}" class="card-link">Страница
-                                            события</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-                @endforeach --}}
-            </div>
-
-            {{-- @foreach($events as $event)
-                @if($event->participants->contains($user->id) && (\Carbon\Carbon::createFromFormat('Y-m-d', $event->date)->gt(\Carbon\Carbon::now())))
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h4 style="margin: 20px;" class="card-title">События <img
-                                        src="https://png.icons8.com/ultraviolet/50/000000/today.png" width="25px">
-                            </h4>
-                        </div>
-                    </div>
-                    @break
-                @endif
-            @endforeach --}}
-
-            <div class="row">
-                {{-- @foreach($events as $event)
-                    @if($event->participants->contains($user->id) && (\Carbon\Carbon::createFromFormat('Y-m-d', $event->date)->gt(\Carbon\Carbon::now())))
-                        <div class="col-md-6">
-                            <div class="card" style="width: 100%; margin-bottom: 10px;">
-                                <div class="card-footer">
-                                    <div class="float-left">
-                                        <h5 class="card-title">{{$event->name}}</h5>
-                                    </div>
-                                    <div class="float-right" style="margin-right:5px">
-                                        {{$event->date}}
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="float-left"><span>{{$event->short_text}}</span></div>
-                                    <div class="float-right">
-                                        <a href="{{url('insider/events/'.$event->id)}}" class="card-link">Страница
-                                            события</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-                @endforeach --}}
-            </div>
             @if ($user->orders->count()!=0)
                 <div class="row">
                     <div class="col-md-8">
@@ -298,13 +184,7 @@
         <div class="col-md-4">
 
             <div class="card">
-                @if ($user->image)
-                    <img class="card-img-top"
-                         src="{{url('/media/'.$user->image)}}"/>
-                @else
-                    <img class="card-img-top"
-                         src="{{ url('images/user.jpg') }}"/>
-                @endif
+                <img class="card-img-top" src="{{ $user->imageUrl() }}"/>
                 <div class="card-body">
 
                     <p><strong>Дата
@@ -344,20 +224,6 @@
                             <li class="list-group-item"><img src="{{ url('images/icons/icons8-git-48.png') }}" title="Git"
                                                              width="16" height="16"><strong> Git: </strong>
                                 {{$user->git}}</li>
-                        @endif
-                        @if ($user->vk!='')
-                            <li class="list-group-item"><img src="{{ url('images/icons/icons8-vk.com-48.png') }}"
-                                                             title="VKontakte" width="16"
-                                                             height="16">
-                                <strong> VK: </strong>
-                                {{$user->vk}}</li>
-                        @endif
-                        @if ($user->facebook!='')
-                            <li class="list-group-item"><img src="{{ url('images/icons/icons8-facebook-like-48.png') }}"
-                                                             title="Facebook"
-                                                             width="16"
-                                                             height="16"><strong> Facebook: </strong>
-                                {{$user->facebook}}</li>
                         @endif
                     </ul>
 
@@ -477,72 +343,6 @@
                         <div class="form-group">
                             <div class="col-md-12">
                                 <button type="submit" class="btn btn-success">Начислить</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="createProject" tabindex="-1" role="dialog"
-         aria-labelledby="exampleModelLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModelLabel">Добавление проекта</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form action="{{url('/insider/projects/create')}}" method="POST"
-                          class="form-horizontal">
-                        {{ csrf_field() }}
-                        <div class="form-group{{ $errors->has('name') ? ' has-error' : '' }}">
-                            <label for="name" class="col-md-4">Название</label>
-
-                            <div class="col-md-12">
-                                <input type="text" name="name" class="form-control" id="name"/>
-                                @if ($errors->has('name'))
-                                    <span class="help-block error-block">
-                <strong>{{ $errors->first('name') }}</strong>
-            </span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="form-group{{ $errors->has('short_description') ? ' has-error' : '' }}">
-                            <label for="short_description" class="col-md-4">Краткое описание</label>
-
-                            <div class="col-md-12">
-        <textarea name="short_description" class="form-control"
-                  id="short_description"></textarea>
-                                @if ($errors->has('short_description'))
-                                    <span class="help-block error-block">
-                <strong>{{ $errors->first('short_description') }}</strong>
-            </span>
-                                @endif
-                            </div>
-                        </div>
-                    <!--  <div class="form-group{{ $errors->has('projectType') ? ' has-error' : '' }}">
-    <label for="short_description" class="col-md-4">Тип</label>
-    <div class="col-md-12">
-        <select name="projectType" class="form-control" id="projectType"/>
-            <option value="None selected">Выберите тип проекта</option>
-            <option value="Learning">Учебный</option>
-            <option value="Working">Рабочий</option>
-        </select>
-        @if ($errors->has('short_description'))
-                        <span class="help-block error-block">
-                            <strong>{{ $errors->first('short_description') }}</strong>
-            </span>
-        @endif
-                            </div>
-                        </div>-->
-
-
-                        <div class="form-group">
-                            <div class="col-md-12">
-                                <button type="submit" class="btn btn-success">Создать</button>
                             </div>
                         </div>
                     </form>

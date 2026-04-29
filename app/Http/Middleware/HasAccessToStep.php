@@ -31,7 +31,7 @@ class HasAccessToStep
         {
             return $next($request);
         }
-        if ($course->students->contains($user) and $course->state != 'draft' and ($course->is_sdl or ($course->steps->contains($step) and $step->lesson->isStarted($course))))
+        if ($course->students->contains($user) and $course->state != 'draft' and $course->steps->contains($step) and $step->lesson->isStarted($course))
         {
             return $next($request);
         }

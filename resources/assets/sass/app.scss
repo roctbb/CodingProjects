@@ -1,9 +1,64 @@
+@import "@fontsource/roboto/400.css";
+@import "@fontsource/roboto/500.css";
+@import "@fontsource/roboto/700.css";
+@import "@fontsource/gothic-a1/latin-400.css";
+@import "@fontsource/raleway/latin-100.css";
+@import "@fontsource/raleway/latin-600.css";
+@import "bootstrap/dist/css/bootstrap.css";
+@import "@fortawesome/fontawesome-free/css/all.css";
+@import "bootstrap-select/dist/css/bootstrap-select.css";
+@import "easymde/dist/easymde.min.css";
+@import "highlight.js/styles/atom-one-light.css";
+@import "jquery-ui-dist/jquery-ui.css";
+@import "prismjs/themes/prism.css";
 
-// Fonts
-@import url(https://fonts.googleapis.com/css?family=Raleway:300,400,600);
+.icon[class*=" ion-"],
+.ion[class*=" ion-"],
+[class^="ion-"] {
+  font-family: "Font Awesome 6 Free";
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 900;
+  line-height: 1;
+  text-rendering: auto;
+}
 
-// Variables
-@import "variables";
-
-// Bootstrap
-@import "node_modules/bootstrap-sass/assets/stylesheets/bootstrap";
+.ion-person::before { content: "\f007"; }
+.ion-person-add::before { content: "\f234"; }
+.ion-person-stalker::before { content: "\f500"; }
+.ion-university::before { content: "\f19c"; }
+.ion-reply::before { content: "\f3e5"; }
+.ion-key::before { content: "\f084"; }
+.ion-compose::before,
+.ion-android-create::before,
+.ion-edit::before { content: "\f044"; }
+.ion-plus::before,
+.ion-android-add::before { content: "\2b"; }
+.ion-plus-round::before,
+.ion-android-add-circle::before { content: "\f055"; }
+.ion-document-text::before { content: "\f15c"; }
+.ion-ios-cloud-download::before { content: "\f0ed"; }
+.ion-power::before { content: "\f011"; }
+.ion-stop::before { content: "\f04d"; }
+.ion-chevron-left::before { content: "\f053"; }
+.ion-arrow-up-c::before,
+.ion-ios-arrow-up::before { content: "\f062"; }
+.ion-arrow-down-c::before { content: "\f063"; }
+.ion-arrow-left-c::before { content: "\f060"; }
+.ion-arrow-right-c::before { content: "\f061"; }
+.ion-clock::before { content: "\f017"; }
+.ion-stats-bars::before { content: "\f080"; }
+.ion-android-contacts::before { content: "\f0c0"; }
+.ion-checkmark-circled::before { content: "\f058"; }
+.ion-cash::before { content: "\f3d1"; }
+.ion-android-checkbox-outline::before { content: "\f14a"; }
+.ion-android-star::before { content: "\f005"; }
+.ion-android-close::before,
+.ion-close-round::before { content: "\f00d"; }
+.ion-android-delete::before { content: "\f1f8"; }
+.ion-android-desktop::before { content: "\f108"; }
+.ion-ios-calendar::before { content: "\f133"; }
+.ion-ios-color-wand::before { content: "\f0d0"; }
+.ion-refresh::before { content: "\f021"; }
+.ion-trophy::before { content: "\f091"; }
+.ion-at::before { content: "\40"; }

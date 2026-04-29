@@ -92,7 +92,7 @@
                         <div class="card-deck">
                             @foreach($my_courses->where('state', 'started') as $course)
                                 <div class="card"
-                                     style="min-width: 280px; background-image: url({{$course->image}}); background-size: cover; @if (!$course->is_open) border-left: 3px solid #28a745;@else border-left: 3px solid #17a2b8; @endif">
+                                      style="min-width: 280px; background-image: url({{$course->imageUrl()}}); background-size: cover; @if (!$course->is_open) border-left: 3px solid #28a745;@else border-left: 3px solid #17a2b8; @endif">
                                     <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
                                         <h5 style="font-weight: 300;"
                                             class="card-title">
@@ -102,19 +102,17 @@
                                         </h5>
                                         <p class="card-text"
                                            style="font-size: 0.8rem;">{{$course->description}}</p>
-                                        @if (!$course->is_sdl)
-                                            @if ($course->students->contains($user))
-                                                @php
-                                                    $percent = round($course->getPercent($user));
-                                                @endphp
-                                                @if ($percent < 40)
-                                                    <span class="badge badge-warning">Выполнено {{$percent}}%</span>
+                                        @if ($course->students->contains($user))
+                                            @php
+                                                $percent = round($course->getPercent($user));
+                                            @endphp
+                                            @if ($percent < 40)
+                                                <span class="badge badge-warning">Выполнено {{$percent}}%</span>
+                                            @else
+                                                @if ($percent < 80)
+                                                    <span class="badge badge-info">Выполнено {{$percent}}%</span>
                                                 @else
-                                                    @if ($percent < 80)
-                                                        <span class="badge badge-info">Выполнено {{$percent}}%</span>
-                                                    @else
-                                                        <span class="badge badge-success">Выполнено {{$percent}}%</span>
-                                                    @endif
+                                                    <span class="badge badge-success">Выполнено {{$percent}}%</span>
                                                 @endif
                                             @endif
                                         @endif
@@ -125,7 +123,7 @@
                                                     return $value->id == \Auth::id();
                                                 })->first();
                                             @endphp
-                                            @if ($cstudent != null and !$course->is_sdl)
+                                            @if ($cstudent != null)
                                                 @foreach($course->program->steps as $step)
                                                     @php
                                                         $tasks = $step->tasks;
@@ -254,30 +252,6 @@
                         </div>
 
                     </div>
-                    @if (count($events) > 0)
-                        <div class="card"
-                             style="border-left: 3px solid #007bff;">
-                            <div class="card-body">
-
-                                <h5 style="font-weight: 400; font-size: 1.1rem;"
-                                    class="card-title">Ближайшие события:</h5>
-                                <p class="card-text" style="font-size: 0.8rem;">
-                                <ul>
-                                    @foreach($events as $event)
-                                        <li>
-                                            <a style="color: black;"
-                                               href="{{url('insider/events/'.$event->id)}}">{{ $event->name }}</a>
-                                            -
-                                            <strong>{{$event->date->format('d.m')}}</strong></li>
-                                    @endforeach
-                                </ul>
-                                </p>
-
-                            </div>
-
-                        </div>
-                    @endif
-
                     <div class="card"
                          style="margin-top: 15px;border-left: 3px solid #007bff;">
                         <div class="card-body">
@@ -301,27 +275,6 @@
                         </div>
 
                     </div>
-
-
-                    <div class="card"
-                         style="border-left: 3px solid #007bff">
-                        <div class="card-body">
-                            <h5 style="margin-top: 15px; font-weight: 400; font-size: 1.1rem;"
-                                class="card-title">Последние вопросы:</h5>
-                            <p class="card-text" style="font-size: 0.8rem;">
-                            <ul>
-                                @foreach($threads as $thread)
-                                    <li>
-                                        <a style="color: black; @if ($buser->birthday->day == \Carbon\Carbon::now()->day) font-weight: bold; @endif"
-                                           href="{{url('insider/forum/'.$thread->id)}}">{{ $thread->name }}</a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                            </p>
-                        </div>
-
-                    </div>
-
                 </div>
 
 
@@ -336,7 +289,7 @@
                         @foreach($courses->where('state', 'draft') as $course)
                             @if ($user->role=='admin' || $course->teachers->contains($user))
                                 <div class="card"
-                                     style="min-width: 280px; background-image: url({{$course->image}}); background-size: cover;">
+                                      style="min-width: 280px; background-image: url({{$course->imageUrl()}}); background-size: cover;">
                                     <!--<img class="card-img-top" src="..." alt="Card image cap">-->
                                     <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
                                         <h4 class="card-title">{{$course->name}}</h4>

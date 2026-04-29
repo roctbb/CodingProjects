@@ -3,18 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\CoinTransaction;
-use App\CompletedCourse;
-use App\Course;
 use App\MarketDeal;
 use App\MarketGood;
 use App\Notifications\NewOrder;
 use App\Program;
-use App\ProgramStep;
 use App\Http\Controllers\Controller;
-use App\Provider;
 use App\User;
-use App\Lesson;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Auth;
 

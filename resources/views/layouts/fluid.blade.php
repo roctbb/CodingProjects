@@ -13,60 +13,10 @@
          - {{ config('app.name', 'Laravel') }}
     </title>
 
-    <link rel="stylesheet" href="/vendor/easymde/easymde.min.css">
-    <script src="/vendor/easymde/easymde.min.js"></script>
-    <link rel="stylesheet" href="/css/ionicons.min.css">
-
-    <!-- Styles -->
-    <!-- Latest compiled and minified CSS -->
-    <!-- Compiled and minified CSS -->
-    <link rel="stylesheet" href="{{ url('/styles/bootstrap.min.css') }}"
-            @if (env('USE_INTEGRITY', true))
-                integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M"
-                crossorigin="anonymous"
-            @endif
-            >
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
-
-    <link rel="stylesheet" href="{{url('/css/app.css')}}">
-    <script src="{{ url('/scripts/jquery-3.2.1.slim.min.js') }}"
-            @if (env('USE_INTEGRITY', true))
-                integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
-                crossorigin="anonymous"
-            @endif
-            ></script>
-    <script src="{{ url('/scripts/popper.min.js') }}"
-            @if (env('USE_INTEGRITY', true))
-                integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4"
-                crossorigin="anonymous"
-            @endif
-            ></script>
-    <script src="{{ url('/scripts/bootstrap.min.js') }}"
-            @if (env('USE_INTEGRITY', true))
-                integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1"
-                crossorigin="anonymous"
-            @endif
-            ></script>
-    <script src="{{url('/js/linkify.min.js')}}"></script>
-    <script src="{{url('/js/linkify-jquery.min.js')}}"></script>
-    <link rel="stylesheet"
-          href="/vendor/highlight/atelier-lakeside-light.min.css">
-    <script src="{{ url('/scripts/highlight.min.js') }}"></script>
-    <script>hljs.initHighlightingOnLoad();</script>
-    <script src="{{url('src-min-noconflict/ace.js')}}" type="text/javascript" charset="utf-8"></script>
-    <!-- Latest compiled and minified JavaScript -->
-    <script src="{{url('/js/bootstrap-select.min.js')}}"></script>
-    <link rel="stylesheet" href="{{url('css/bootstrap-select.min.css')}}">
-    <script src="{{ url('/scripts/axios.min.js') }}"></script>
-
-    <link rel='stylesheet' href='/vendor/prism/prism.min.css'/>
-    <script src='/vendor/marked/marked.min.js'></script>
-    <script src='/vendor/prism/prism.min.js' data-manual></script>
-    <script src='/vendor/prism/prism-python.min.js'
-            data-manual></script>
-    <script src="{{url('/js/nbv.js')}}"></script>
+    @include('layouts.partials.npm-vendor-assets')
+    <script src="{{ asset('build/js/nbv.js') }}"></script>
     <link href="{{url('assets/css/theme.css')}}" rel="stylesheet" type="text/css" media="all"/>
+    <link href="{{ asset('build/css/legacy-theme.css') }}" rel="stylesheet" type="text/css" media="all"/>
 </head>
 <body style="min-height: 100%; height: 100%; background-color: white;">
 
@@ -82,32 +32,8 @@
     @yield('content')
 </div>
 
-<!-- Compiled and minified JavaScript -->
-
-
-<!-- Scripts -->
-<!--
-    <script src="{{ asset('js/app.js') }}"></script>-->
 <form style="display: none;" id="logout-form" method="POST" action="{{ route('logout') }}">{{ csrf_field() }}</form>
-<script>
-    var url = document.location.toString();
-
-    if (url.match('#')) {
-        $('a[href="#' + url.split('#')[1] + '"]').tab('show');
-        console.log(url.split('#')[1]);
-    }
-
-    // Change hash for page-reload
-    $('.nav-tabs a').on('shown.bs.tab', function (e) {
-        window.location.hash = e.target.hash;
-    });
-
-    $('div').linkify({
-        target: "_blank"
-    });
-    $('div.markdown a').attr('target', 'blank');
-
-</script>
+@include('layouts.partials.common-footer-scripts')
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">
     (function (m, e, t, r, i, k, a) {

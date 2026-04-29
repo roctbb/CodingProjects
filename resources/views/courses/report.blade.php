@@ -8,6 +8,10 @@
 
 @endsection
 
+@section('head')
+    <script src="{{ asset('build/js/vendor/plotly.min.js') }}"></script>
+@endsection
+
 
 
 @section('content')

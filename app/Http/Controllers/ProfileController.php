@@ -5,14 +5,11 @@ namespace App\Http\Controllers;
 use App\CoinTransaction;
 use App\CompletedCourse;
 use App\Course;
-use App\ProgramStep;
 use App\Http\Controllers\Controller;
 use App\User;
-use App\Event;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Auth;
-use App\Project;
 
 
 class ProfileController extends Controller
@@ -26,7 +23,7 @@ class ProfileController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('self')->except(['index', 'details', 'project', 'editProject']);
+        $this->middleware('self')->except(['index', 'details']);
         $this->middleware('teacher')->only(['addMoney']);
         $this->middleware('admin')->only(['deleteCourse', 'course', 'deleteCurrentCourse', 'addMoney']);
     }
@@ -38,7 +35,7 @@ class ProfileController extends Controller
      */
     public function index()
     {
-        $users = User::with('submissions', 'posts', 'games', 'completedCourses')->orderBy('name')->get();
+        $users = User::with('submissions', 'completedCourses')->orderBy('name')->get();
         return view('profile.index', compact('users'));
     }
 
@@ -56,18 +53,14 @@ class ProfileController extends Controller
     $stickers = $user->getStickers();
     $sticker_description = $user->getStickerDescriptions();
 
-
-        $projects = $user->projects();
-        $events = Event::all();
-        return view('profile.details', compact('user', 'guest', 'projects', 'events', 'stickers', 'sticker_description'));
+        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description'));
     }
 
     public function editView($id)
     {
         $guest = User::findOrFail(Auth::User()->id);
         $user = User::findOrFail($id);
-        $projects = $user->projects();
-        return view('profile.edit', compact('user', 'guest', 'projects'));
+        return view('profile.edit', compact('user', 'guest'));
     }
 
     public function deleteCourse($id)
@@ -146,9 +139,7 @@ class ProfileController extends Controller
         ]);
 
         $user->name = $request->name;
-        $user->vk = $request->vk;
         $user->git = $request->git;
-        $user->facebook = $request->facebook;
         $user->telegram = $request->telegram;
         $user->hobbies = $request->hobbies;
         $user->interests = $request->interests;
@@ -175,23 +166,4 @@ class ProfileController extends Controller
 
         return redirect('/insider/profile/' . $id);
     }
-    #TODO do i need this?
-    /*public function project ($id, Request $request)
-    {
-        $user = User::findOrFail(Auth::User()->id);
-        $this->validate($request, [
-            'name' => 'required|string',
-            'description' => 'required|string',
-            'type' => 'required|string',
-            'url' => 'required|string',
-        ]);
-        $project = new Project();
-        $project->name = $request->name;
-        $project->description = clean($request->description);
-        $project->type = $request->type;
-        $project->url = $request->url;
-
-        return redirect()->back();
-
-    }*/
 }

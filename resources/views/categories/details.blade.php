@@ -19,7 +19,7 @@
                                 <div class="dropdown">
                                     <button class="btn btn-round" data-toggle="dropdown"
                                             data-target="#project-add-modal">
-                                        <i class="material-icons">more_vert</i>
+                                        <i class="fas fa-ellipsis-v"></i>
                                     </button>
 
                                     <div class="dropdown-menu dropdown-menu-right">
@@ -81,7 +81,7 @@
                     @foreach($open_courses->sortBy('created_at') as $course)
 
                         <div class="card"
-                             style="min-width: 280px; background-image: url({{$course->image}}); border-left: 3px solid @if ($course->mode == 'open') #28a745; @else #007bff @endif">
+                              style="min-width: 280px; background-image: url({{$course->imageUrl()}}); border-left: 3px solid @if ($course->mode == 'open') #28a745; @else #007bff @endif">
                             <div class="card-body" style="background-color: #ffffffdd;">
                                 <h5 style="font-weight: 300; margin-bottom: 5px;"
                                     class="card-title">{{$course->name}}</h5>
@@ -126,7 +126,7 @@
                     @foreach($private_courses->sortBy('start_date') as $course)
 
                         <div class="card"
-                             style="min-width: 280px; background-image: url({{$course->image}}); border-left: 3px solid #17a2b8">
+                              style="min-width: 280px; background-image: url({{$course->imageUrl()}}); border-left: 3px solid #17a2b8">
                             <div class="card-body">
                                 <h5 style="font-weight: 300; margin-bottom: 5px;"
                                     class="card-title">{{$course->name}}</h5>

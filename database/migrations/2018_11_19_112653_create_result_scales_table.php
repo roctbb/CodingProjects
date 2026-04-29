@@ -19,10 +19,6 @@ class CreateResultScalesTable extends Migration
 
             $table->string('name');
             $table->text('description')->nullable();
-
-            $table->integer('core_node_id')->unsigned()->nullable();
-            $table->foreign('core_node_id')->references('id')
-                ->on('core_nodes')->onDelete('cascade');
         });
     }
 

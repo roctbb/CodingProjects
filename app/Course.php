@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Course extends Model
@@ -16,8 +17,9 @@ class Course extends Model
         'name', 'description', 'image', 'start_date', 'end_date', 'state', 'level', 'invite'
     ];
 
-    protected $dates = [
-        'start_date', 'end_date'
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
 
     public static function availableForEnroll()
@@ -25,24 +27,9 @@ class Course extends Model
         return self::where('mode', 'zoom')->where('state', 'draft')->get();
     }
 
-    public function sdl_lessons()
-    {
-        return $this->belongsToMany('App\Lesson', 'sdl_courses_users_lessons', 'course_id', 'lesson_id');
-    }
-
-    public function user_sdl_lessons($user)
-    {
-        return $this->sdl_lessons()->wherePivot('user_id', $user->id);
-    }
-
     public function students()
     {
-        return $this->belongsToMany('App\User', 'course_students', 'course_id', 'user_id')->withPivot(['is_remote', 'idea_id'])->orderBy('name');
-    }
-
-    public function feedback()
-    {
-        return $this->hasMany('App\DetailedFeedback', 'course_id', 'id');
+        return $this->belongsToMany('App\User', 'course_students', 'course_id', 'user_id')->withPivot(['is_remote'])->orderBy('name');
     }
 
     public function provider()
@@ -58,6 +45,23 @@ class Course extends Model
     public function teachers()
     {
         return $this->belongsToMany('App\User', 'course_teachers', 'course_id', 'user_id');
+    }
+
+    public function imageUrl(): string
+    {
+        if (!$this->image || $this->image === 'course_avatars/blank.png') {
+            return url('/images/sidebar-wave.svg');
+        }
+
+        if (Str::startsWith($this->image, ['http://', 'https://', '/'])) {
+            return $this->image;
+        }
+
+        if (Storage::exists($this->image)) {
+            return url('/media/' . $this->image);
+        }
+
+        return url($this->image);
     }
 
     public function categories()
@@ -195,23 +199,4 @@ class Course extends Model
         return $percent;
     }
 
-    public function average_mark()
-    {
-        return $this->feedback()->where('is_filled', true)->average('mark');
-    }
-
-    public function marks_count()
-    {
-        return $this->feedback()->where('is_filled', true)->count();
-    }
-
-    public function recent_marks_count()
-    {
-        return $this->feedback()->where('is_filled', true)->where('created_at', '>', Carbon::now()->addWeeks(-1))->count();
-    }
-
-    public function recent_mark()
-    {
-        return $this->feedback()->where('is_filled', true)->where('created_at', '>', Carbon::now()->addWeeks(-1))->average('mark');
-    }
 }

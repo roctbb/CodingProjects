@@ -29,3 +29,10 @@ if (!function_exists('parsedown_math')) {
         return $html;
     }
 }
+
+if (!function_exists('parsedown')) {
+    function parsedown($text)
+    {
+        return parsedown_math($text);
+    }
+}

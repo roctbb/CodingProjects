@@ -30,21 +30,10 @@
                         @foreach($programs as $program)
                             <option value="{{$program->id}}">{{$program->name}}</option>
                         @endforeach
-                        <option value="-2">Курс SDL</option>
                     </select>
                     @if ($errors->has('program'))
                         <span class="help-block error-block">
                                         <strong>{{ $errors->first('program') }}</strong>
-                                    </span>
-                    @endif
-                </div>
-
-                <div class="form-group">
-                    <label for="sdl_version">Версия графа SDL (только для SDL курсов)</label>
-                    <input id="sdl_version" type="text" class="form-control" name="sdl_version" value="{{old('sdl_version')}}">
-                    @if ($errors->has('sdl_version'))
-                        <span class="help-block error-block">
-                                        <strong>{{ $errors->first('sdl_version') }}</strong>
                                     </span>
                     @endif
                 </div>

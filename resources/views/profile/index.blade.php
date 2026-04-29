@@ -16,13 +16,8 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col" style="width: 100px; max-width: 100px;">
-                                    @if ($user->image!=null)
-                                        <div class="mr-3 rounded-circle img-circle" style='background-image: url("{{url('/media/'.$user->image)}}");'>
-                                        </div>
-                                    @else
-                                        <div class="mr-3 rounded-circle img-circle" style='background-image: url("{{ url('images/user.jpg') }}");'>
-                                        </div>
-                                    @endif
+                                    <div class="mr-3 rounded-circle img-circle" style='background-image: url("{{ $user->imageUrl() }}");'>
+                                    </div>
                                 </div>
                                 <div class="col-auto" style="width: calc(100% - 100px); max-width: calc(100% - 100px)">
                                     <h5 class="card-title"><a href="{{url('/insider/profile/'.$user->id)}}">{{ $user->name }}</a>
