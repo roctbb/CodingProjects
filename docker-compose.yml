@@ -54,6 +54,80 @@ services:
     networks:
       - app
 
+  queue:
+    build:
+      context: .
+      dockerfile: conf/Dockerfile
+    container_name: codingprojects-queue
+    restart: unless-stopped
+    command: php artisan queue:work --sleep=3 --tries=3 --timeout=90
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8050
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: codingprojects
+      DB_USERNAME: codingprojects
+      DB_PASSWORD: codingprojects
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./:/var/www/html
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - app
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: conf/Dockerfile
+    container_name: codingprojects-scheduler
+    restart: unless-stopped
+    command: php artisan schedule:work
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8050
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: codingprojects
+      DB_USERNAME: codingprojects
+      DB_PASSWORD: codingprojects
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./:/var/www/html
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - app
+
   db:
     image: postgres:16-alpine
     container_name: codingprojects-db
