@@ -1,6 +1,6 @@
 x-app-environment: &app-environment
-  APP_ENV: ${APP_ENV:-local}
-  APP_DEBUG: ${APP_DEBUG:-true}
+  APP_ENV: ${APP_ENV:-production}
+  APP_DEBUG: ${APP_DEBUG:-false}
   APP_URL: ${APP_URL:-http://localhost:8050}
   DB_CONNECTION: ${DB_CONNECTION:-pgsql}
   DB_HOST: ${DB_HOST:-db}
@@ -13,6 +13,7 @@ x-app-environment: &app-environment
   QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
   REDIS_HOST: ${REDIS_HOST:-redis}
   REDIS_PORT: ${REDIS_PORT:-6379}
+  REDIS_CLIENT: ${REDIS_CLIENT:-phpredis}
 
 x-app-healthcheck: &app-healthcheck
   test: ["CMD-SHELL", "php artisan about --only=environment >/dev/null 2>&1"]
