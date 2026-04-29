@@ -9,7 +9,6 @@
 @import "bootstrap-select/dist/css/bootstrap-select.css";
 @import "easymde/dist/easymde.min.css";
 @import "highlight.js/styles/atom-one-light.css";
-@import "jquery-ui-dist/jquery-ui.css";
 @import "prismjs/themes/prism.css";
 
 .icon[class*=" ion-"],
@@ -62,3 +61,70 @@
 .ion-refresh::before { content: "\f021"; }
 .ion-trophy::before { content: "\f091"; }
 .ion-at::before { content: "\40"; }
+
+.peer-review img {
+  max-width: 40%;
+}
+
+.peer-review-page-break {
+  page-break-after: always;
+}
+
+.peer-review-cell {
+  border: 2px dotted gray;
+}
+
+.peer-review-score-cell {
+  border: 2px dotted green;
+}
+
+.welcome-page {
+  background-color: #fff;
+  color: #636b6f;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 100;
+  height: 100vh;
+  margin: 0;
+}
+
+.welcome-page .full-height {
+  height: 100vh;
+}
+
+.welcome-page .flex-center {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.welcome-page .position-ref {
+  position: relative;
+}
+
+.welcome-page .top-right {
+  position: absolute;
+  right: 10px;
+  top: 18px;
+}
+
+.welcome-page .content {
+  text-align: center;
+}
+
+.welcome-page .title {
+  font-size: 84px;
+}
+
+.welcome-page .links > a {
+  color: #636b6f;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .1rem;
+  padding: 0 25px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.welcome-page .m-b-md {
+  margin-bottom: 30px;
+}

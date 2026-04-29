@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
         <div class="col">
             <h2>Заказы магазина</h2>
         </div>
@@ -14,14 +14,14 @@
         </div>
     </div>
 
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
         <div class="col">
             <h4>Активные заказы ({{$active_orders->count()}})</h4>
         </div>
     </div>
 
     @if($active_orders->count() > 0)
-        <div class="row" style="margin-top: 15px;">
+        <div class="row mt-3">
             <div class="col">
                 <table class="table table-striped">
                     <thead>
@@ -39,10 +39,10 @@
                             <td>{{$order->created_at->format('d.m.Y H:i')}}</td>
                             <td>{{$order->good->name}}</td>
                             <td><a href="{{url('/insider/profile/'.$order->user->id)}}">{{$order->user->name}}</a></td>
-                            <td>{{$order->good->price}} <img style="height: 20px;" src="{{ url('images/icons/icons8-coins-48.png') }}"/></td>
+                            <td>{{$order->good->price}} <img src="{{ url('images/icons/icons8-coins-48.png') }}" height="20" alt=""/></td>
                             <td>
                                 <a href="{{url('/insider/market/ship/'.$order->id)}}" class="btn btn-success btn-sm">Доставлено</a>
-                                <a href="{{url('/insider/market/cancel/'.$order->id)}}" class="btn btn-warning btn-sm" onclick="return confirm('Отменить заказ?')">Отменить</a>
+                                <a href="{{url('/insider/market/cancel/'.$order->id)}}" class="btn btn-warning btn-sm" data-confirm="Отменить заказ?">Отменить</a>
                             </td>
                         </tr>
                     @endforeach
@@ -54,14 +54,14 @@
         <p class="text-muted">Нет активных заказов</p>
     @endif
 
-    <div class="row" style="margin-top: 30px;">
+    <div class="row mt-4">
         <div class="col">
             <h4>Доставленные заказы (последние 50)</h4>
         </div>
     </div>
 
     @if($shipped_orders->count() > 0)
-        <div class="row" style="margin-top: 15px;">
+        <div class="row mt-3">
             <div class="col">
                 <table class="table table-striped">
                     <thead>
@@ -80,7 +80,7 @@
                             <td>{{$order->updated_at->format('d.m.Y H:i')}}</td>
                             <td>{{$order->good->name}}</td>
                             <td><a href="{{url('/insider/profile/'.$order->user->id)}}">{{$order->user->name}}</a></td>
-                            <td>{{$order->good->price}} <img style="height: 20px;" src="{{ url('images/icons/icons8-coins-48.png') }}"/></td>
+                            <td>{{$order->good->price}} <img src="{{ url('images/icons/icons8-coins-48.png') }}" height="20" alt=""/></td>
                         </tr>
                     @endforeach
                     </tbody>

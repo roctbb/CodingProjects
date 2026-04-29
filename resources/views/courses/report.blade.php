@@ -17,7 +17,7 @@
 @section('content')
     <div class="row">
         <div class="col">
-            <h2 style="font-weight: 300;"><a class="back-link" href="{{url('/insider/courses/'.$course->id)}}"><i
+            <h2 class="font-weight-light"><a class="d-inline mr-2" href="{{url('/insider/courses/'.$course->id)}}"><i
                             class="icon ion-chevron-left"></i></a> Отчет по курсу: {{$course->name}}</h2>
         </div>
     </div>
@@ -26,92 +26,54 @@
 
         <div class="col-9">
             <div class="tab-content" id="v-pills-tabContent">
-                <script>
-                </script>
                 @foreach ($students as $key => $student)
                     <div class="tab-pane fade show @if ($key == 0) active @endif" id="student{{$student->id}}"
                          role="tabpanel"
                          aria-labelledby="v-pills-tab">
 
-                        <div class="card" style="width: 100%; min-width: 100%;">
+                        <div class="card w-100">
                             <div class="card-body" id="cardbody{{$student->id}}">
                                 <h4 class="card-title">{{ $student->name }}</h4>
-                                <div class="progress" style="margin-bottom: 15px;">
+                                <div class="progress mb-3">
                                     @if ($student->percent < 40)
                                         <div class="progress-bar progress-bar-striped bg-danger" role="progressbar"
-                                             style="height: 2px;width: {{$student->percent}}%"
-                                             aria-valuenow="{{$student->percent}}" aria-valuemin="0"
-                                             aria-valuemax="100"></div>
+                                              data-progress-width="{{$student->percent}}%"
+                                              data-progress-height="2px"
+                                              aria-valuenow="{{$student->percent}}" aria-valuemin="0"
+                                              aria-valuemax="100"></div>
 
                                     @elseif($student->percent < 60)
                                         <div class="progress-bar progress-bar-striped bg-warning" role="progressbar"
-                                             style="height: 2px;width: {{$student->percent}}%"
-                                             aria-valuenow="{{$student->percent}}" aria-valuemin="0"
-                                             aria-valuemax="100"></div>
+                                              data-progress-width="{{$student->percent}}%"
+                                              data-progress-height="2px"
+                                              aria-valuenow="{{$student->percent}}" aria-valuemin="0"
+                                              aria-valuemax="100"></div>
 
                                     @else
                                         <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
-                                             style="height: 2px;width: {{$student->percent}}%"
-                                             aria-valuenow="{{$student->percent}}" aria-valuemin="0"
-                                             aria-valuemax="100"></div>
+                                              data-progress-width="{{$student->percent}}%"
+                                              data-progress-height="2px"
+                                              aria-valuenow="{{$student->percent}}" aria-valuemin="0"
+                                              aria-valuemax="100"></div>
 
                                     @endif
                                 </div>
                                 @if ($pulse_keys->has($student->id))
-                                    <div id="pulse{{$student->id}}"
-                                         style="min-width: 100%; height: 200px; margin-bottom: 10px;"></div>
-
-                                    <script>
-                                        var data = [
-                                            {
-                                                x: {!! $pulse_keys[$student->id] !!},
-                                                y: {!! $pulse_values[$student->id] !!},
-                                                type: 'scatter',
-                                                line: {shape: 'spline'},
-                                            }@if ($task_keys->has($student->id))
-                                            ,
-                                            {
-                                                x: {!! $task_keys[$student->id] !!},
-                                                y: {!! $task_values[$student->id] !!},
-                                                type: 'scatter',
-                                                yaxis: 'y2',
-                                                line: {shape: 'spline'},
-                                                fill: 'tonexty',
-                                            }@endif
-
-                                        ];
-
-                                        plot{{$student->id}} = Plotly.newPlot('pulse{{$student->id}}', data, {
-                                            xaxis: {
-
-                                                zeroline: false,
-                                                showline: false,
-
-                                            }, yaxis: {
-                                                zeroline: false,
-                                                showline: false
-                                            }, yaxis2: {
-                                                side: 'right',
-                                                zeroline: false,
-                                                showline: false,
-                                                overlaying: 'y'
-                                            }, margin: {
-                                                l: 15,
-                                                r: 20,
-                                                b: 30,
-                                                t: 3,
-                                                pad: 0
-                                            },
-                                            showlegend: false
-                                        }, {staticPlot: false, displayModeBar: false, responsive: false});
-                                    </script>
+                                    <div id="pulse{{$student->id}}" class="mb-2 w-100"
+                                          data-plotly-report-chart
+                                         data-pulse-keys='{{ $pulse_keys[$student->id] }}'
+                                         data-pulse-values='{{ $pulse_values[$student->id] }}'
+                                         @if ($task_keys->has($student->id))
+                                             data-task-keys='{{ $task_keys[$student->id] }}'
+                                             data-task-values='{{ $task_values[$student->id] }}'
+                                         @endif></div>
 
                                 @endif
                                 <table class="table table-striped">
                                     @foreach($lessons as $lesson)
 
                                         <tr>
-                                            <td style="width: 50%;">
+                                            <td class="w-50">
 
                                                 <a data-toggle="collapse"
                                                    href="#student{{$student->id}}marks{{$lesson->id}}"
@@ -121,13 +83,13 @@
 
 
                                                 @if (!$lesson->isAvailableForUser($course, $student))
-                                                    <strong><span style="color: red;">!!!</span></strong> @endif</td>
+                                                    <strong><span class="text-danger">!!!</span></strong> @endif</td>
                                             <td>
-                                                <div class="progress" style="margin: 5px;">
+                                                <div class="progress m-1">
                                                     @if ($lesson->percent($student, $course) < 40)
                                                         <div class="progress-bar progress-bar-striped bg-danger"
                                                              role="progressbar"
-                                                             style="width: {{$lesson->percent($student, $course)}}%"
+                                                              data-progress-width="{{$lesson->percent($student, $course)}}%"
                                                              aria-valuenow="{{$lesson->percent($student, $course)}}"
                                                              aria-valuemin="0"
                                                              aria-valuemax="100">{{$lesson->points($student, $course)}}
@@ -136,7 +98,7 @@
                                                     @elseif($lesson->percent($student, $course) < 60)
                                                         <div class="progress-bar progress-bar-striped bg-warning"
                                                              role="progressbar"
-                                                             style="width: {{$lesson->percent($student, $course)}}%"
+                                                              data-progress-width="{{$lesson->percent($student, $course)}}%"
                                                              aria-valuenow="{{$lesson->percent($student, $course)}}"
                                                              aria-valuemin="0"
                                                              aria-valuemax="100">
@@ -146,7 +108,7 @@
                                                     @else
                                                         <div class="progress-bar progress-bar-striped bg-success"
                                                              role="progressbar"
-                                                             style="width: {{$lesson->percent($student, $course)}}%"
+                                                              data-progress-width="{{$lesson->percent($student, $course)}}%"
                                                              aria-valuenow="{{$lesson->percent($student, $course)}}"
                                                              aria-valuemin="0"
                                                              aria-valuemax="100">
@@ -173,7 +135,7 @@
                                                                 if (count($filtered)!=0 && $filtered->last()->mark==null) $should_check=true;
 
                                                             @endphp
-                                                            <li style="padding-right: 10px;">
+                                                            <li class="pr-2">
 
 
                                                                 <a target="_blank"
@@ -222,7 +184,7 @@
                     <a class="nav-link @if ($key == 0) active @endif" id="students-tab" data-toggle="pill"
                        href="#student{{$student->id}}" role="tab"
                        aria-controls="student{{$student->id}}" aria-selected="true"
-                       onclick="Plotly.relayout('pulse{{$student->id}}', {width: 1.5*getInnerWidth($('#v-pills-tabContent')[0]) + 'px', height: ''});">{{$student->name}}
+                       data-plotly-resize-target="pulse{{$student->id}}">{{$student->name}}
                         &nbsp;&nbsp;
                         @if ($student->percent < 40)
                             <span class="badge badge-danger">&nbsp;</span>
@@ -237,39 +199,5 @@
         </div>
     </div>
 
-
-
-    <script>
-        $(function () {
-            $('[data-toggle="popover"]').popover()
-        });
-        $('.popover-dismiss').popover({
-            trigger: 'focus'
-        });
-
-        function getInnerWidth(element) {
-
-            var wrapper = document.createElement('span'),
-                result;
-
-            while (element.firstChild) {
-                wrapper.appendChild(element.firstChild);
-            }
-
-            element.appendChild(wrapper);
-
-            result = wrapper.offsetWidth;
-
-            element.removeChild(wrapper);
-
-            while (wrapper.firstChild) {
-                element.appendChild(wrapper.firstChild);
-            }
-
-            return result;
-
-        }
-
-    </script>
 
 @endsection

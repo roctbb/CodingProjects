@@ -13,27 +13,27 @@
                 <div class="modal-body">
                   <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/deadline')}}"
                           method="POST"
-                          class="form-horizontal">
+                         >
                         {{ csrf_field() }}
-                        <div class="form-group{{ $errors->has('price') ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="price" class="col-md-4">Дедлайн</label>
 
                             <div class="col-md-12">
                             <input type="date" name="deadline" class="form-control" id="deadline" value="{{$task->getDeadline($course->id) ? $task->getDeadline($course->id)->expiration->format('Y-m-d') : '0000-00-00'}}"/>
                                 @if ($errors->has('deadline'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                                     <strong>{{ $errors->first('deadline') }}</strong>
                                 </span>
                                 @endif
                             </div>
                         </div>
-                        <div class="form-group{{ $errors->has('price') ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="price" class="col-md-4">Штраф (баллы * штраф)</label>
 
                             <div class="col-md-12">
                                 <input type="number" step="0.01" min=0 max=1 name="penalty" class="form-control" id="penalty" value="{{$task->getDeadline($course->id) ? $task->getDeadline($course->id)->penalty : 0}}"/>
                                 @if ($errors->has('penalty'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                                     <strong>{{ $errors->first('penalty') }}</strong>
                                 </span>
                                 @endif

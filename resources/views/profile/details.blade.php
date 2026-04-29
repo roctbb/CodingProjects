@@ -7,17 +7,17 @@
 @section('content')
     <div class="row">
         <div class="col">
-            <h2 style="font-weight: 300;">{{$user->name}}</h2>
+            <h2 class="font-weight-light">{{$user->name}}</h2>
         </div>
     </div>
 
 
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
 
         <div class="col-md-8">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title" style="max-width: 100% !important;">О себе
+                    <h4 class="card-title mw-100">О себе
                         @if ($guest->role=='admin' || $guest->id==$user->id)
                             <div class="dropdown float-right">
                                 <button class="btn-options" type="button" data-toggle="dropdown"
@@ -31,11 +31,10 @@
                                                 class="icon ion-android-create"></i>
                                         Редактировать</a>
                                     @if ($guest->role=='teacher' || $guest->role=='admin')
-                                        <a href="#" class="dropdown-item"
-                                           role="button"
+                                        <button type="button" class="dropdown-item"
                                            data-toggle="modal" data-target="#addMoney">
                                             <i class="icon ion-cash"></i> Начислить
-                                        </a>
+                                        </button>
                                     @endif
                                 </div>
                             </div>
@@ -50,13 +49,13 @@
                 </div>
             </div>
             @if($user->managed_courses->count()!=0)
-                <h4 style="margin: 20px;" class="card-title">Преподаватель в курсах <img style="height: 30px;"
-                            src="{{ url('images/icons/icons8-school-director-48.png') }}"></h4>
+                <h4 class="card-title m-3">Преподаватель в курсах <img
+                            src="{{ url('images/icons/icons8-school-director-48.png') }}" height="30" alt=""></h4>
                 <div class="row">
                     @foreach($user->managed_courses as $course)
                         @if ($course->state == 'started')
                             <div class="col-md-6">
-                                <div class="card" style="width: 100%;">
+                                <div class="card w-100">
                                     <div class="card-body">
                                         <h5 class="card-title">{{$course->name}}</h5>
                                         <p>
@@ -74,13 +73,13 @@
                 </div>
             @endif
             @if($user->courses()->where('state', 'started')->count()!=0)
-                <h4 style="margin: 20px;" class="card-title"> Текущие курсы <img style="height: 30px;"
-                            src="{{ url('images/icons/icons8-graduation-cap-48.png') }}"></h4>
+                <h4 class="card-title m-3"> Текущие курсы <img
+                            src="{{ url('images/icons/icons8-graduation-cap-48.png') }}" height="30" alt=""></h4>
                 <div class="row">
                     @foreach($user->courses as $course)
                         @if ($course->state == 'started')
                             <div class="col-md-6">
-                                <div class="card" style="width: 100%;">
+                                <div class="card w-100">
                                     <div class="card-body">
                                         <h5 class="card-title">{{$course->name}}</h5>
                                         <p>
@@ -93,8 +92,8 @@
                                         @if ($guest->role=='admin')
                                             <br>
                                             <a href="{{url('insider/profile/'.$user->id.'/delete-course/'.$course->id)}}"
-                                               style="color: red;" class="card-link"
-                                               onclick="return confirm('Вы уверены?')">Отчислить</a>
+                                               class="card-link text-danger"
+                                               data-confirm="Вы уверены?">Отчислить</a>
                                         @endif
                                     </div>
                                 </div>
@@ -107,10 +106,10 @@
             @if($user->completedCourses->count()!=0 || $guest->role=='admin')
                 <div class="row">
                     <div class="col-md-8">
-                        <h4 style="margin: 20px;" class="card-title">Завершенные курсы <img style="height: 30px;"
-                                    src="{{ url('images/icons/icons8-gold-medal-48.png') }}"></h4>
+                         <h4 class="card-title m-3">Завершенные курсы <img
+                                    src="{{ url('images/icons/icons8-gold-medal-48.png') }}" height="30" alt=""></h4>
                     </div>
-                    <div class="col" style="padding-top: 19px;">
+                    <div class="col pt-3">
                         @if ($guest->role=='admin')
                             <button class="btn btn-round float-right" data-toggle="modal" data-target="#exampleModal">
                                 <i class="fas fa-plus"></i>
@@ -122,13 +121,13 @@
                 <div class="row">
                     @foreach($user->completedCourses as $course)
                         <div class="col-md-6">
-                            <div class="card" style="width: 100%; margin-bottom: 10px;">
+                            <div class="card w-100 mb-2">
                                 <div class="card-body">
                                     <h5 class="card-title">{{$course->name}}
                                         @if ($guest->role=='admin')
                                             <a class="float-right"
                                                href="{{url('/insider/profile/delete-course/'.$course->id)}}"
-                                               onclick="return confirm('Вы уверены?')"><span
+                                               data-confirm="Вы уверены?"><span
                                                         aria-hidden="true">&times;</span></a>
                                         @endif</h5>
                                     <p>
@@ -152,15 +151,15 @@
             @if ($user->orders->count()!=0)
                 <div class="row">
                     <div class="col-md-8">
-                        <h4 style="margin: 20px;" class="card-title">Покупки <img style="height: 30px;"
-                                    src="{{ url('images/icons/icons8-shopping-basket-48.png') }}"></h4>
+                         <h4 class="card-title m-3">Покупки <img
+                                    src="{{ url('images/icons/icons8-shopping-basket-48.png') }}" height="30" alt=""></h4>
                     </div>
                 </div>
 
                 <div class="row">
                     @foreach($user->orders as $deal)
                         <div class="col-md-6">
-                            <div class="card" style="width: 100%; margin-bottom: 10px;">
+                            <div class="card w-100 mb-2">
                                 <div class="card-body">
                                     <h5 class="card-title">{{$deal->good->name}}</h5>
                                     <p>
@@ -194,14 +193,14 @@
 
                     <div class="progress">
                         <div class="progress-bar" role="progressbar"
-                             style="width:{{100*($user->score()-$user->rank()->from)/($user->rank()->to-$user->rank()->from)}}%;"
+                             data-progress-width="{{100*($user->score()-$user->rank()->from)/($user->rank()->to-$user->rank()->from)}}%"
                              aria-valuenow="{{$user->score()}}" aria-valuemin="{{$user->rank()->from}}"
                              aria-valuemax="{{$user->rank()->to}}">{{$user->score()}}</div>
                     </div>
-                    <p style="margin-top: 15px;">
+                     <p class="mt-3">
                         <a tabindex="0" data-toggle="popover" data-trigger="focus" title="Ранги" data-html="true"
-                           data-content="{{\App\Rank::getRanksListHTML($user->rank())}}"><span style="font-size: 15px;"
-                                                                                               class="badge badge-pill badge-success"><i
+                           data-content="{{\App\Rank::getRanksListHTML($user->rank())}}"><span
+                                                                                                class="badge badge-pill badge-success small"><i
                                         class="icon ion-ios-arrow-up"></i> {{$user->rank()->name}}</span></a>
                         <br>
                         @if ($user->is_trainee)
@@ -211,9 +210,9 @@
                             <span class="badge badge-pill badge-info">Преподаватель</span>
                         @endif
                         <img src="{{ url('images/icons/icons8-coins-48.png') }}"
-                             style="height: 23px;">&nbsp;{{$user->balance()}}&nbsp;&nbsp;
+                              height="23" alt="">&nbsp;{{$user->balance()}}&nbsp;&nbsp;
                     </p>
-                    <ul class="list-group list-group-flush" style="box-shadow: none;">
+                    <ul class="list-group list-group-flush shadow-none">
                         @if ($user->telegram!='')
                             <li class="list-group-item"><img src="{{ url('images/icons/icons8-telegram-app-48.png') }}"
                                                              title="Telegram App" width="16"
@@ -229,7 +228,7 @@
 
                     @foreach($stickers as $sticker)
                         <img src="{{url($sticker)}}" title="{{$sticker_description[$sticker]}}"
-                             style="max-height: 35px;"/>
+                              height="35" alt=""/>
                     @endforeach
                 </div>
 
@@ -251,39 +250,39 @@
                 </div>
                 <div class="modal-body">
                     <form action="{{url('/insider/profile/'.$user->id.'/course')}}" method="POST"
-                          class="form-horizontal">
+                         >
                         {{ csrf_field() }}
-                        <div class="form-group{{ $errors->has('name') ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="name" class="col-md-4">Название</label>
 
                             <div class="col-md-12">
                                 <input type="text" name="name" class="form-control" id="name"/>
                                 @if ($errors->has('name'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                 <strong>{{ $errors->first('name') }}</strong>
             </span>
                                 @endif
                             </div>
                         </div>
-                        <div class="form-group{{ $errors->has('mark') ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="mark" class="col-md-4">Очков опыта</label>
 
                             <div class="col-md-12">
                                 <input type="text" name="mark" class="form-control" id="mark"/>
                                 @if ($errors->has('mark'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                 <strong>{{ $errors->first('mark') }}</strong>
             </span>
                                 @endif
                             </div>
                         </div>
-                        <div class="form-group{{ $errors->has('provider') ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="provider" class="col-md-4">Организация</label>
 
                             <div class="col-md-12">
                                 <input type="text" name="provider" class="form-control" id="provider"/>
                                 @if ($errors->has('provider'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                 <strong>{{ $errors->first('provider') }}</strong>
             </span>
                                 @endif
@@ -311,28 +310,28 @@
                 </div>
                 <div class="modal-body">
                     <form action="{{url('/insider/profile/'.$user->id.'/money')}}" method="POST"
-                          class="form-horizontal">
+                         >
                         {{ csrf_field() }}
-                        <div class="form-group{{ $errors->has('description') ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="description" class="col-md-4">За что?</label>
 
                             <div class="col-md-12">
                                 <input type="text" name="description" class="form-control" id="description"/>
                                 @if ($errors->has('description'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                 <strong>{{ $errors->first('description') }}</strong>
             </span>
                                 @endif
                             </div>
                         </div>
 
-                        <div class="form-group{{ $errors->has('amount') ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="amount" class="col-md-4">Сколько?</label>
 
                             <div class="col-md-12">
                                 <input type="number" name="amount" class="form-control" id="amount"/>
                                 @if ($errors->has('amount'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                 <strong>{{ $errors->first('amount') }}</strong>
             </span>
                                 @endif
@@ -350,13 +349,4 @@
             </div>
         </div>
     </div>
-    <script>
-        $(function () {
-            $('[data-toggle="popover"]').popover()
-        });
-        $('.popover-dismiss').popover({
-            trigger: 'focus'
-        });
-    </script>
-
 @endsection

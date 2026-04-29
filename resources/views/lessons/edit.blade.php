@@ -23,13 +23,13 @@
                                        name="name" required>
                             @endif
                             @if ($errors->has('name'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('name') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group{{ $errors->has("start_date") ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="start_date">Дата начала</label>
                             @if (old('start_date')!="" || $lesson->getStartDate($course)==null)
                                 <input id="start_date" type="text" class="form-control date"
@@ -43,14 +43,14 @@
 
 
                             @if ($errors->has("start_date"))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first("start_date") }}</strong>
                                     </span>
                             @endif
                         </div>
 
                         <div class="form-group">
-                            <label for="chapter" style="padding-bottom: 10px;">Глава</label>
+                            <label for="chapter" class="pb-2">Глава</label>
                             @if (old('chapter')!="")
                                 <select class="form-control" name="chapter">
                                     @foreach($lesson->program->chapters as $chapter)
@@ -68,24 +68,24 @@
                             @endif
 
                             @if ($errors->has('chapter'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('chapter') }}</strong>
                                     </span>
                             @endif
                         </div>
 
                         <div class="form-group">
-                            <label for="description" style="padding-bottom: 10px;">Описание</label>
+                            <label for="description" class="pb-2">Описание</label>
                             @if (old('description')!="")
-                                <textarea id="description" class="form-control"
+                                <textarea id="description" class="form-control" data-markdown-editor data-markdown-autosave="true"
                                           name="description">{{old('description')}}</textarea>
                             @else
-                                <textarea id="description" class="form-control"
+                                <textarea id="description" class="form-control" data-markdown-editor data-markdown-autosave="true"
                                           name="description">{{$lesson->description}}</textarea>
                             @endif
 
                             @if ($errors->has('description'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('description') }}</strong>
                                     </span>
                             @endif
@@ -99,13 +99,13 @@
                             </label>
                         </div>
 
-                        <div class="form-group{{ $errors->has("import") ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="import">Импорт</label>
                             <input id="import" type="file" class="form-control"
                                    name="import">
 
                             @if ($errors->has("import"))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first("import") }}</strong>
                                     </span>
                             @endif
@@ -116,13 +116,6 @@
                     </form>
                 </div>
             </div>
-            <script>
-                var simplemde_description = new EasyMDE({
-                    spellChecker: false,
-                    autosave: true,
-                    element: document.getElementById("description")
-                });
-            </script>
         </div>
     </div>
 @endsection

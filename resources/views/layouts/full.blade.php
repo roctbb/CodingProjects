@@ -22,8 +22,8 @@
 </head>
 <body>
 
-<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">
-    <img style="height: 40px;" src="{{ url('images/icons/icons8-idea-64.png') }}">&nbsp;&nbsp;&nbsp;
+<header class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">
+    <img class="mr-3" src="{{ url('images/icons/icons8-idea-64.png') }}" height="40" alt="{{ config('app.name', 'Laravel') }}">
     <h5 class="my-0 mr-md-auto font-weight-normal"><a class="p-2 text-dark" href='{{url('/')}}'> {{ config('app.name', 'Laravel') }}</a></h5>
     <nav class="my-2 my-md-0 mr-md-3">
 
@@ -38,18 +38,19 @@
         @endif
     </nav>
     @if (\Auth::check())
-        <ul class="navbar-nav" style="width: 260px;">
+        <ul class="navbar-nav user-menu-nav">
             <li class="nav-item dropdown">
-                <a class="p-2 text-dark dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown"
+                <button class="btn btn-link p-2 text-dark dropdown-toggle" id="dropdown01" data-toggle="dropdown"
                    aria-haspopup="true" aria-expanded="false">
-                    {{ Auth::user()->name }}</a>
+                    {{ Auth::user()->name }}</button>
 
                 <div class="dropdown-menu" aria-labelledby="dropdown01">
                     <a class="dropdown-item" href="{{url('insider/profile')}}"><i class="icon ion-person"></i>
                         Профиль</a>
-                    <a class="dropdown-item" href="{{ route('logout') }}"
-                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i
-                                class="icon ion-reply"></i>Выход</a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        {{ csrf_field() }}
+                        <button type="submit" class="dropdown-item"><i class="icon ion-reply"></i>Выход</button>
+                    </form>
 
                 </div>
             </li>
@@ -57,10 +58,10 @@
     @else
         <a class="btn btn-outline-primary" href="/login">Вход</a>
     @endif
-</div>
+</header>
 
 
-<div class="mx-auto col-md-11 col-12" style="margin-top: 30px">
+<main class="mx-auto col-md-11 col-12 mt-4">
     @if(Session::has('alert-class') and Session::get('alert-destination')=='head')
         <div class="alert {{ Session::get('alert-class') }} alert-dismissible" role="alert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
@@ -75,10 +76,10 @@
     <footer class="pt-4 my-md-5 border-top">
         <div class="row">
             <div class="col-12 col-md-3 col-lg-2">
-                <img class="mb-2 logo" src="{{url('/images/logo.png')}}" style="width: 150px;">
+                <img class="mb-2 logo" src="{{url('/images/logo.png')}}" width="150" alt="CodingProjects">
                 <small class="d-block mb-3 text-muted">&copy; 2016-{{ \Carbon\Carbon::now()->year }}  </small>
             </div>
-            <div class="col-6 col-md-9 col-lg-10" style="margin-top: 15px;">
+            <div class="col-6 col-md-9 col-lg-10 mt-3">
                 <h5>CodingProjects</h5>
                 <ul class="list-unstyled text-small">
 
@@ -91,25 +92,10 @@
             </div>
         </div>
     </footer>
-</div>
+</main>
 
-<form style="display: none;" id="logout-form" method="POST" action="{{ route('logout') }}">{{ csrf_field() }}</form>
 @include('layouts.partials.common-footer-scripts')
-<!-- Yandex.Metrika counter -->
-<script type="text/javascript" >
-    (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-
-    ym(55625236, "init", {
-        clickmap:true,
-        trackLinks:true,
-        accurateTrackBounce:true,
-        webvisor:true
-    });
-</script>
-<noscript><div><img src="https://mc.yandex.ru/watch/55625236" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-<!-- /Yandex.Metrika counter -->
+@include('layouts.partials.yandex-metrika')
 
 </body>
 </html>

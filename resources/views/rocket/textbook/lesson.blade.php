@@ -4,50 +4,6 @@
     {{ $textbook->name }} - {{ $lesson->name }}
 @endsection
 
-@section('style')
-    <style>
-        .lesson-content p {
-            font-size: 1.1rem;
-            font-weight: 400;
-            margin-bottom: 1rem;
-        }
-
-        @media screen and (min-width: 900px) {
-            .lesson-content img {
-                display: block;
-                margin: 0 auto;
-                max-width: 80%;
-                margin-top: 1.5rem;
-                margin-bottom: 1.5rem;
-            }
-        }
-
-
-        pre[class*="language-"] {
-            margin-bottom: 2rem;
-        }
-
-        blockquote {
-            color: #506690;
-            background-color: #eaedf2;
-            border-color: #eaedf2;
-            border: 0;
-
-            border-radius: 0.5rem;
-            padding: 1.5rem !important;
-            padding-bottom: 0.5rem !important;
-            margin-bottom: 1.5rem !important;
-
-        }
-
-        blockquote p {
-            font-size: 1rem !important;
-        }
-
-
-    </style>
-@endsection
-
 @section('content')
 
 
@@ -74,18 +30,17 @@
                                     <p class="small"><a target="_blank" href="{{ url('/textbook/' . $textbook->id . '/edit/' . $step->id ) }}"><span class="mr-2"><i class="fas fa-pen"></i></span>Изменить</a></p>@endif
 
                                 @if ($step->video_url)
-                                    <div class="videoWrapper">
-                                        <iframe width="560" height="315" src="{{$step->video_url}}" frameborder="0"
+                                    <div class="embed-responsive embed-responsive-16by9 mb-4">
+                                        <iframe class="embed-responsive-item" src="{{$step->video_url}}"
                                                 allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                                                 allowfullscreen></iframe>
                                     </div>
                                 @endif
 
                                 @if ($step->is_notebook)
-                                    <div style="width:100%; margin: -30px;" id="notebook">
+                                    <div class="notebook-container" id="notebook" data-notebook-content="{{ e($step->theory) }}">
 
                                     </div>
-                                    <script>nbv.render(JSON.parse('{!! addslashes ( $step->theory) !!} '), document.getElementById('notebook'));</script>
                                 @else
                                     @parsedown($step->theory)
                                 @endif

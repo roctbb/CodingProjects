@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ app()->getLocale() }}">
+<html lang="{{ app()->getLocale() }}" class="@hasSection('auth-background-image') auth-shell-html @endif">
 
 <head>
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -12,7 +12,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ config('app.name', 'Laravel') }}">
     @include('layouts.partials.npm-vendor-assets')
-    <link href="{{url('assets/css/theme.css')}}" rel="stylesheet" type="text/css" media="all"/>
+    <link href="{{ asset('build/css/legacy/theme.css') }}" rel="stylesheet" type="text/css" media="all"/>
     <link href="{{ asset('build/css/legacy-theme.css') }}" rel="stylesheet" type="text/css" media="all"/>
     @include('layouts.partials.pipeline-theme-scripts')
 
@@ -21,10 +21,14 @@
 
 </head>
 
-<body style="background-color: #2D9CCC;">
+<body class="auth-shell @hasSection('auth-background-image') auth-shell-with-background @endif">
+
+@hasSection('auth-background-image')
+    <div class="auth-shell-background" data-background-image="@yield('auth-background-image')"></div>
+@endif
 
 
-<div class="container" style="padding-bottom: 30px;">
+<main class="container pb-4">
     <div class="row justify-content-center">
         <div class="col-11">
 
@@ -48,7 +52,7 @@
     </div>
 
 
-</div>
+</main>
 
 
 <!-- Required vendor scripts (Do not remove) -->
@@ -57,30 +61,8 @@
 
 
 {!! \NoCaptcha::renderJs() !!}
-<form style="display: none;" id="logout-form" method="POST" action="{{ route('logout') }}">{{ csrf_field() }}</form>
 @include('layouts.partials.common-footer-scripts')
-<!-- Yandex.Metrika counter -->
-<script type="text/javascript">
-    (function (m, e, t, r, i, k, a) {
-        m[i] = m[i] || function () {
-            (m[i].a = m[i].a || []).push(arguments)
-        };
-        m[i].l = 1 * new Date();
-        k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
-    })
-    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-
-    ym(55625236, "init", {
-        clickmap: true,
-        trackLinks: true,
-        accurateTrackBounce: true,
-        webvisor: true
-    });
-</script>
-<noscript>
-    <div><img src="https://mc.yandex.ru/watch/55625236" style="position:absolute; left:-9999px;" alt=""/></div>
-</noscript>
-<!-- /Yandex.Metrika counter -->
+@include('layouts.partials.yandex-metrika')
 
 </body>
 

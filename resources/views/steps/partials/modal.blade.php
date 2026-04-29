@@ -13,41 +13,41 @@
                     <div class="modal-body">
                         <form action="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id.'/task')}}"
                               method="POST"
-                              class="form-horizontal">
+                             >
                             {{ csrf_field() }}
-                            <div class="form-group{{ $errors->has('name') ? ' has-error' : '' }}">
+                            <div class="form-group">
                                 <label for="name" class="col-md-4">Название</label>
 
                                 <div class="col-md-12">
                                     <input type="text" name="name" class="form-control" id="name"/>
                                     @if ($errors->has('name'))
-                                        <span class="help-block error-block">
+                                        <span class="text-danger d-block">
                                         <strong>{{ $errors->first('name') }}</strong>
                                     </span>
                                     @endif
                                 </div>
                             </div>
-                            <div class="form-group{{ $errors->has('max_mark') ? ' has-error' : '' }}">
+                            <div class="form-group">
                                 <label for="max_mark" class="col-md-4">Очков опыта</label>
 
                                 <div class="col-md-12">
                                     <input type="text" name="max_mark" class="form-control" id="max_mark"/>
                                     @if ($errors->has('max_mark'))
-                                        <span class="help-block error-block">
+                                        <span class="text-danger d-block">
                                         <strong>{{ $errors->first('max_mark') }}</strong>
                                     </span>
                                     @endif
                                 </div>
                             </div>
-                            <div class="form-group{{ $errors->has('text') ? ' has-error' : '' }}">
+                            <div class="form-group">
                                 <label for="text" class="col-md-4">Текст вопроса</label>
 
                                 <div class="col-md-12">
-                                                <textarea id="text" class="form-control"
-                                                          name="text">{{old('text')}}</textarea>
+                                                <textarea id="text" class="form-control" data-markdown-editor
+                                                           name="text">{{old('text')}}</textarea>
 
                                     @if ($errors->has('text'))
-                                        <span class="help-block error-block">
+                                        <span class="text-danger d-block">
                                         <strong>{{ $errors->first('text') }}</strong>
                                     </span>
                                     @endif
@@ -56,10 +56,10 @@
 
                             <div class="form-group">
                                 <label for="solution">Решение</label>
-                                <textarea id="solution" class="form-control"
+                                <textarea id="solution" class="form-control" data-markdown-editor
                                           name="solution">@if (old('solution')!=""){{old('solution')}}@endif</textarea>
                                 @if ($errors->has('solution'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                                         <strong>{{ $errors->first('solution') }}</strong>
                                     </span>
                                 @endif
@@ -80,25 +80,25 @@
                                 <label for="is_code">Автопроверка</label>
                                 <input type="checkbox" id="is_code" name="is_code" value="on"/>
                             </div>
-                            <div class="form-group{{ $errors->has('answer') ? ' has-error' : '' }}">
+                            <div class="form-group">
                                 <label for="answer" class="col-md-4">Ответ</label>
 
                                 <div class="col-md-12">
                                     <input type="text" name="answer" class="form-control" id="answer"/>
                                     @if ($errors->has('answer'))
-                                        <span class="help-block error-block">
+                                        <span class="text-danger d-block">
                                         <strong>{{ $errors->first('answer') }}</strong>
                                     </span>
                                     @endif
                                 </div>
                             </div>
-                            <div class="form-group{{ $errors->has('price') ? ' has-error' : '' }}">
+                            <div class="form-group">
                                 <label for="price" class="col-md-4">Премия</label>
 
                                 <div class="col-md-12">
                                     <input type="text" name="price" class="form-control" id="price"/>
                                     @if ($errors->has('price'))
-                                        <span class="help-block error-block">
+                                        <span class="text-danger d-block">
                                         <strong>{{ $errors->first('price') }}</strong>
                                     </span>
                                     @endif

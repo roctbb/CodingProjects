@@ -7,11 +7,11 @@
 @section('content')
 
     <h2>Изменение товара "{{$good->name}}"</h2>
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
         <div class="col">
             <div class="card">
                 <div class="card-body">
-                    <form method="POST" class="form-horizontal" enctype="multipart/form-data">
+                    <form method="POST" enctype="multipart/form-data">
                         {{ csrf_field() }}
                         <div class="form-group">
                             <label for="name">Название</label>
@@ -23,7 +23,7 @@
                                        required>
                             @endif
                             @if ($errors->has('name'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('name') }}</strong>
                                     </span>
                             @endif
@@ -40,7 +40,7 @@
                                           required>{{$good->description}}</textarea>
                             @endif
                             @if ($errors->has('description'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('description') }}</strong>
                                     </span>
                             @endif
@@ -56,7 +56,7 @@
                                        value="{{$good->number}}" required>
                             @endif
                             @if ($errors->has('number'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('number') }}</strong>
                                     </span>
                             @endif
@@ -72,7 +72,7 @@
                                        required>
                             @endif
                             @if ($errors->has('price'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('price') }}</strong>
                                     </span>
                             @endif
@@ -88,7 +88,7 @@
                                        required>
                             @endif
                             @if ($errors->has('image'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('image') }}</strong>
                                     </span>
                             @endif
@@ -99,7 +99,7 @@
                             <input id="in_stock" type="checkbox" name="in_stock" value="on"
                                    @if ($good->in_stock) checked @endif>
                             @if ($errors->has('in_stock'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('in_stock') }}</strong>
                                     </span>
                             @endif
@@ -113,4 +113,3 @@
         </div>
     </div>
 @endsection
-

@@ -77,8 +77,6 @@ export default class NodeSystem
 
   fromObject(obj)
   {
-    console.log(obj.nodes.length);
-    console.log(obj.edges.length);
     this.nodes = [];
     var connections = [];
 

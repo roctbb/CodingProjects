@@ -5,54 +5,50 @@
 @endsection
 
 @section('content')
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
         <div class="col">
             <h2> Магазин</h2>
             <p>Ваш баланс - <img src="{{ url('images/icons/icons8-coins-48.png') }}"
-                                 style="height: 30px;"/>&nbsp;{{$user->balance()}}&nbsp;</p>
+                                  height="30" alt=""/>&nbsp;{{$user->balance()}}&nbsp;</p>
         </div>
         <div class="col">
             @if ($user->role=='admin')
-                <a class="btn btn-secondary float-right" style="margin-left: 10px;" href="{{url('/insider/market/orders')}}">Заказы</a>
+                <a class="btn btn-secondary float-right ml-2" href="{{url('/insider/market/orders')}}">Заказы</a>
                 <a class="btn btn-round float-right" href="{{url('/insider/market/create/')}}"><i
                             class="fas fa-plus"></i></a>
             @endif
         </div>
     </div>
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
         <div class="card-deck">
 
             @foreach($goods as $good)
-                <div class="card"
-                     style="min-width: 210px; max-width: 260px; background-size: cover;">
+                <div class="card market-card">
                     @if ($good->image != null)
-                        <img class="card-img-top" src="{{$good->image}}" style="max-width: 335px;"/>
+                        <img class="card-img-top" src="{{$good->image}}" alt=""/>
                     @endif
 
-                    <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
+                    <div class="card-body market-card-body">
                         @if ($good->number > 0)
                             <p><span class="badge badge-success">В наличии: {{$good->number}}x</span></p>
                         @else
                             <p><span class="badge badge-danger">Закончился</span></p>
                         @endif
-                        <h5 style="margin-top: 15px; font-weight: 300;"
-                            class="card-title">{{$good->name}} @if ($user->role=='teacher' || $user->role=='admin')
+                        <h5 class="card-title font-weight-light mt-3">{{$good->name}} @if ($user->role=='teacher' || $user->role=='admin')
                                 <span class="float-right"><a
                                             href="{{url('/insider/market/'.$good->id.'/edit')}}"
                                             class="btn btn-primary btn-sm"><i
                                                 class="icon ion-android-create"></i></a></span>
                             @endif </h5>
-                        <p class="card-text" style="font-size: 0.8rem;">{{$good->description}}</p>
+                        <p class="card-text small">{{$good->description}}</p>
 
                         @if ($good->number > 0 and $good->price <= $user->balance())
                             <a href="{{url('/insider/market/'.$good->id.'/buy')}}" class="btn btn-primary"
-                               onclick="return confirm('Вы уверены?')">Купить за {{$good->price}} <img
-                                        style="height: 20px;"
-                                        src="{{ url('images/icons/icons8-coins-48.png') }}"/></a>
+                                data-confirm="Вы уверены?">Купить за {{$good->price}} <img
+                                        src="{{ url('images/icons/icons8-coins-48.png') }}" height="20" alt=""/></a>
                         @else
-                            <a href="#" class="disabled btn btn-primary">Купить за {{$good->price}} <img
-                                        style="height: 20px;"
-                                        src="{{ url('images/icons/icons8-coins-48.png') }}"/></a>
+                            <button type="button" class="btn btn-primary" disabled>Купить за {{$good->price}} <img
+                                        src="{{ url('images/icons/icons8-coins-48.png') }}" height="20" alt=""/></button>
                         @endif
 
 
@@ -65,30 +61,27 @@
     </div>
     @if ($user->role=='admin')
 
-        <div class="row" style="margin-top: 15px;">
+        <div class="row mt-3">
             <div class="col">
                 <h2> Архив</h2>
             </div>
         </div>
-        <div class="row" style="margin-top: 15px;">
+        <div class="row mt-3">
             <div class="card-deck">
 
                 @foreach($archive as $good)
-                    <div class="card"
-                         style="min-width: 280px; background-size: cover;">
+                    <div class="card market-card-archive">
 
-                        <!--<img class="card-img-top" src="..." alt="Card image cap">-->
-                        <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
+                        <div class="card-body market-card-body">
                             @if ($good->image != null)
-                                <img src="{{$good->image}}" style="margin-top: 15px; max-width: 200px;"/>
+                                <img src="{{$good->image}}" class="mt-3" width="200" alt=""/>
                             @endif
-                            <h5 style="margin-top: 15px; font-weight: 300;"
-                                class="card-title">{{$good->name}} <span class="float-right"><a
+                            <h5 class="card-title font-weight-light mt-3">{{$good->name}} <span class="float-right"><a
                                             href="{{url('/insider/market/'.$good->id.'/edit')}}"
                                             class="btn btn-primary btn-sm"><i
                                                 class="icon ion-android-create"></i></a></span></h5>
-                            <p class="card-text" style="font-size: 0.8rem;">{{$good->description}}</p>
-                            <p><span class="badge badge-default">Снят с продажи</span></p>
+                            <p class="card-text small">{{$good->description}}</p>
+                            <p><span class="badge badge-secondary">Снят с продажи</span></p>
 
 
                         </div>

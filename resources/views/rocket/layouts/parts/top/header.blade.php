@@ -26,10 +26,10 @@
                     <a href="{{ url('/') }}" class="nav-link"><strong>{{ config('app.name') }}</strong></a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" id="courses" aria-expanded="false" data-toggle="dropdown">
+                    <button type="button" class="nav-link dropdown-toggle btn btn-link" id="courses" aria-expanded="false" data-toggle="dropdown">
                         <span class="nav-link-inner-text mr-1">Курсы</span>
                         <i class="fas fa-angle-down nav-link-arrow"></i>
-                    </a>
+                    </button>
 
                     <div class="dropdown-menu dropdown-megamenu dropdown-megamenu-sm pl-3 py-3 p-lg-4" aria-labelledby="courses">
                         <div class="row no-gutters">
@@ -48,10 +48,10 @@
                 </li>
 
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" id="textbooks" aria-expanded="false" data-toggle="dropdown">
+                    <button type="button" class="nav-link dropdown-toggle btn btn-link" id="textbooks" aria-expanded="false" data-toggle="dropdown">
                         <span class="nav-link-inner-text mr-1">Учебник</span>
                         <i class="fas fa-angle-down nav-link-arrow"></i>
-                    </a>
+                    </button>
 
                     <div class="dropdown-menu dropdown-megamenu dropdown-megamenu-sm pl-3 py-3 p-lg-4" aria-labelledby="textbooks">
                         <div class="row no-gutters">

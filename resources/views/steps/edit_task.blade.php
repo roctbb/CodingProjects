@@ -7,11 +7,11 @@
 @section('content')
 
     <h2>Изменение задачи "{{$task->name}}"</h2>
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
         <div class="col">
             <div class="card">
                 <div class="card-body">
-                    <form method="POST" class="form-horizontal" enctype="multipart/form-data">
+                    <form method="POST" enctype="multipart/form-data">
                         {{ csrf_field() }}
                         <div class="form-group">
                             <label for="name">Название</label>
@@ -24,13 +24,13 @@
                                        required>
                             @endif
                             @if ($errors->has('name'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('name') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group{{ $errors->has('max_mark') ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="max_mark">Очков опыта</label>
 
                             @if (old('max_mark')!="")
@@ -43,7 +43,7 @@
                             @endif
 
                             @if ($errors->has('max_mark'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('max_mark') }}</strong>
                                     </span>
                             @endif
@@ -53,20 +53,20 @@
                         <div class="form-group">
                             <label for="text">Текст</label>
                             <div class="mb-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText(this, 'text', 'fix_typos')">
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-improve-text="fix_typos" data-field-id="text">
                                     <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText(this, 'text', 'improve_style')">
+                                <button type="button" class="btn btn-sm btn-outline-info" data-improve-text="improve_style" data-field-id="text">
                                     <i class="icon ion-android-create"></i> Улучшить стиль
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText(this, 'text', 'both')">
+                                <button type="button" class="btn btn-sm btn-outline-success" data-improve-text="both" data-field-id="text">
                                     <i class="icon ion-android-star"></i> Исправить и улучшить
                                 </button>
                             </div>
-                            <textarea id="text" class="form-control"
+                            <textarea id="text" class="form-control" data-markdown-editor
                                       name="text">@if (old('text')!=""){{old('text')}}@else{{$task->text}}@endif</textarea>
                             @if ($errors->has('text'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('text') }}</strong>
                                     </span>
                             @endif
@@ -75,20 +75,20 @@
                         <div class="form-group">
                             <label for="solution">Решение</label>
                             <div class="mb-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="improveText(this, 'solution', 'fix_typos')">
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-improve-text="fix_typos" data-field-id="solution">
                                     <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="improveText(this, 'solution', 'improve_style')">
+                                <button type="button" class="btn btn-sm btn-outline-info" data-improve-text="improve_style" data-field-id="solution">
                                     <i class="icon ion-android-create"></i> Улучшить стиль
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" onclick="improveText(this, 'solution', 'both')">
+                                <button type="button" class="btn btn-sm btn-outline-success" data-improve-text="both" data-field-id="solution">
                                     <i class="icon ion-android-star"></i> Исправить и улучшить
                                 </button>
                             </div>
-                            <textarea id="solution" class="form-control"
+                            <textarea id="solution" class="form-control" data-markdown-editor
                                       name="solution">@if (old('solution')!=""){{old('solution')}}@else{{$task->solution}}@endif</textarea>
                             @if ($errors->has('solution'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('solution') }}</strong>
                                     </span>
                             @endif
@@ -113,7 +113,7 @@
                         </div>
 
 
-                        <div class="form-group{{ $errors->has('price') ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="price" class="col-md-4">Премия</label>
 
                             <div class="col-md-12">
@@ -127,14 +127,14 @@
                                 @endif
 
                                 @if ($errors->has('price'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                                         <strong>{{ $errors->first('price') }}</strong>
                                     </span>
                                 @endif
                             </div>
                         </div>
 
-                        <div class="form-group{{ $errors->has('answer') ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="answer" class="col-md-4">Ответ</label>
 
                             <div class="col-md-12">
@@ -148,7 +148,7 @@
                                 @endif
 
                                 @if ($errors->has('answer'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                                         <strong>{{ $errors->first('answer') }}</strong>
                                     </span>
                                 @endif
@@ -162,67 +162,4 @@
             </div>
         </div>
     </div>
-
-    <script>
-        var simplemde_task = new EasyMDE({
-            spellChecker: false,
-            element: document.getElementById("text")
-        });
-        var simplemde_solution = new EasyMDE({
-            spellChecker: false,
-            element: document.getElementById("solution")
-        });
-
-        // YandexGPT text improvement functionality
-        function improveText(clickedButton, fieldId, action) {
-            const editor = fieldId === 'text' ? simplemde_task : simplemde_solution;
-            const currentText = editor.value();
-
-            if (!currentText.trim()) {
-                alert('Поле пустое. Введите текст для улучшения.');
-                return;
-            }
-
-            // Store original button text
-            const originalButtonText = clickedButton.innerHTML;
-
-            // Show loading state only for clicked button
-            clickedButton.disabled = true;
-            clickedButton.innerHTML = clickedButton.innerHTML.replace(/Исправить|Улучшить/, 'Обработка...');
-
-            // Make API request
-            fetch('/insider/yandexgpt/improve-text', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    text: currentText,
-                    action: action
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Show comparison modal or replace text directly
-                    if (confirm('Текст был улучшен. Заменить оригинальный текст на улучшенную версию?')) {
-                        editor.value(data.improved_text);
-                    }
-                } else {
-                    alert('Ошибка: ' + (data.error || 'Не удалось улучшить текст'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Произошла ошибка при обращении к сервису улучшения текста');
-            })
-            .finally(() => {
-                // Restore only the clicked button state
-                clickedButton.disabled = false;
-                clickedButton.innerHTML = originalButtonText;
-            });
-        }
-    </script>
 @endsection

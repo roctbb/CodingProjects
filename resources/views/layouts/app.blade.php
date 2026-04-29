@@ -11,7 +11,7 @@
 @overwrite
 
 @section('content')
-    <div class="mx-auto col-md-9 col-11" style="margin-top: 15px">
+    <div class="mx-auto col-md-9 col-11 mt-3">
         @yield('content')
     </div>
 @overwrite

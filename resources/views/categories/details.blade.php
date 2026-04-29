@@ -7,14 +7,13 @@
     <div class="row">
         <div class="col-12">
 
-            <div class="jumbotron p-5 p-md-7 text-white bg-dark"
-                 style='background-size: cover; background-position-y: center; background-image: url("{{url($category->head_image_url)}}"); margin-bottom: 10px; padding: 0 !important;'>
-                <div style="height: 35vh; "></div>
-                <div class="col-md-12" style="color: white; padding: 40px; background-color: #2D9CCC99; ">
+            <div class="jumbotron p-5 p-md-7 text-white bg-dark category-hero"
+                 data-background-image="{{url($category->head_image_url)}}">
+                <div class="category-hero-spacer"></div>
+                <div class="col-md-12 category-hero-panel">
 
-                    <h1 class="display-12"
-                        style="color: white;">{{$category->title}}@if (Auth::check() and Auth::user()->role=='admin')
-                            <div style="margin-top: 10px;" class="float-right">
+                    <h1 class="display-12 text-white">{{$category->title}}@if (Auth::check() and Auth::user()->role=='admin')
+                            <div class="float-right mt-2">
 
                                 <div class="dropdown">
                                     <button class="btn btn-round" data-toggle="dropdown"
@@ -44,25 +43,25 @@
 
                             </div>@endif</h1>
 
-                    <p style="color: white;">{{$category->short_description}}</p>
+                    <p class="text-white">{{$category->short_description}}</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row" style="margin-top: 15px;" id="root">
+    <div class="row mt-3" id="root">
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
                     @if ($category->video_url)
-                        <div class="videoWrapper" style="margin: -24px; margin-bottom: 30px;">
-                            <iframe width="560" height="315" src="{{$category->video_url}}" frameborder="0"
+                        <div class="embed-responsive embed-responsive-16by9 video-card-bleed">
+                            <iframe class="embed-responsive-item" src="{{$category->video_url}}"
                                     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                                     allowfullscreen></iframe>
                         </div>
                     @endif
                     <h5 class="card-title">Подробнее о направлении</h5>
-                    <div style="margin-top: 15px;" class="markdown markdown-big">
+                    <div class="markdown markdown-big mt-3">
                         @parsedown($category->description)
                     </div>
                 </div>
@@ -72,7 +71,7 @@
 
     <div class="row">
         <div class="col-12">
-            <h5 style="margin-top: 30px;">Онлайн в своем темпе</h5>
+            <h5 class="mt-4">Онлайн в своем темпе</h5>
             <p class="text-muted">Осваивать теорию и сдавать задачи можно в своем темпе, а вопросы задавать в чате
                 преподавателю и другим участникам. При необходимости можно запросить индивидуальную консультацию
                 преподавателя.</p>
@@ -80,22 +79,19 @@
                 <div class="card-deck">
                     @foreach($open_courses->sortBy('created_at') as $course)
 
-                        <div class="card"
-                              style="min-width: 280px; background-image: url({{$course->imageUrl()}}); border-left: 3px solid @if ($course->mode == 'open') #28a745; @else #007bff @endif">
-                            <div class="card-body" style="background-color: #ffffffdd;">
-                                <h5 style="font-weight: 300; margin-bottom: 5px;"
-                                    class="card-title">{{$course->name}}</h5>
+                        <div class="card course-catalog-card border-left border-left-accent @if ($course->mode == 'open') border-left-accent-success @else border-left-accent-primary @endif"
+                              data-background-image="{{$course->imageUrl()}}">
+                            <div class="card-body translucent-card-body">
+                                <h5 class="card-title font-weight-light mb-1">{{$course->name}}</h5>
                                 @if ($course->mode == 'open')
                                     <span class="badge badge-success">Бесплатно</span>
                                 @endif
                                 <span class="badge badge-primary">Онлайн</span>
-                                <p class="card-text"
-                                   style="font-size: 0.8rem; margin-top: 10px;">{{$course->description}}</p>
+                                <p class="card-text small mt-2">{{$course->description}}</p>
 
                                 @if ($course->site != null)
                                     <a target="_blank" href="{{$course->site}}"
-                                       style="margin-top: 6px; font-size: 0.8rem;"
-                                       class="float-right">О курсе</a>
+                                       class="float-right small mt-1">О курсе</a>
                                 @endif
                                 @if ($course->mode == 'open')
                                     @if (\Auth::check())
@@ -118,18 +114,17 @@
                 <p>Сейчас нет онлайн курсов по этому направлению.</p>
             @endif
 
-            <h5 style="margin-top: 15px;">По расписанию с преподавателем</h5>
+            <h5 class="mt-3">По расписанию с преподавателем</h5>
             <p class="text-muted">Еженедельные занятия по расписанию с преподавателем и группой единомышленников очно
                 или онлайн.</p>
             @if ($private_courses->count() != 0)
                 <div class="card-deck">
                     @foreach($private_courses->sortBy('start_date') as $course)
 
-                        <div class="card"
-                              style="min-width: 280px; background-image: url({{$course->imageUrl()}}); border-left: 3px solid #17a2b8">
+                        <div class="card course-catalog-card border-left border-left-accent border-left-accent-info"
+                              data-background-image="{{$course->imageUrl()}}">
                             <div class="card-body">
-                                <h5 style="font-weight: 300; margin-bottom: 5px;"
-                                    class="card-title">{{$course->name}}</h5>
+                                <h5 class="card-title font-weight-light mb-1">{{$course->name}}</h5>
 
                                 @if ($course->mode == 'zoom')
                                     <span class="badge badge-primary">Онлайн</span>
@@ -139,8 +134,7 @@
                                 <span class="badge badge-info">С преподавателем</span>
 
 
-                                <p class="card-text"
-                                   style="font-size: 0.8rem; margin-top: 10px;">{{$course->description}}</p>
+                                <p class="card-text small mt-2">{{$course->description}}</p>
                                 @if ($course->start_date)
                                     <p class="card-text text-muted">
                                         @if ($course->state != 'draft')
@@ -153,8 +147,7 @@
 
                                 @if ($course->site != null)
                                     <a target="_blank" href="{{$course->site}}"
-                                       style="margin-top: 6px; font-size: 0.8rem;"
-                                       class="float-right">О курсе</a>
+                                       class="float-right small mt-1">О курсе</a>
                                 @endif
                                 <a href="https://goo.gl/forms/jMsLU855JBFaZRQE2" target="_blank"
                                    class="btn btn-info btn-sm">Оставить заявку</a>

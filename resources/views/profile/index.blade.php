@@ -5,26 +5,26 @@
 @endsection
 
 @section('content')
-    <div class="row" style="margin-top: 0;margin-left: 0;margin-right: 0;">
+    <div class="row mx-0 mt-0">
 
         <div class="card-deck">
 
 
             @foreach($users->sortByDesc(function ($user) {return $user->score();}) as $user)
                 @if (!$user->is_hidden)
-                    <div class="card" style="min-width: 340px;">
+                    <div class="card profile-card">
                         <div class="card-body">
                             <div class="row">
-                                <div class="col" style="width: 100px; max-width: 100px;">
-                                    <div class="mr-3 rounded-circle img-circle" style='background-image: url("{{ $user->imageUrl() }}");'>
+                                <div class="col-auto">
+                                    <div class="mr-3 rounded-circle img-circle" data-background-image="{{ $user->imageUrl() }}">
                                     </div>
                                 </div>
-                                <div class="col-auto" style="width: calc(100% - 100px); max-width: calc(100% - 100px)">
+                                <div class="col">
                                     <h5 class="card-title"><a href="{{url('/insider/profile/'.$user->id)}}">{{ $user->name }}</a>
                                     </h5>
                                     <p><a tabindex="0" data-toggle="popover" data-trigger="focus" title="Ранги"
-                                          data-html="true" data-content="{{\App\Rank::getRanksListHTML($user->rank())}}"><span
-                                                    style="font-size: 15px;" class="badge badge-pill badge-success"><i
+                                           data-html="true" data-content="{{\App\Rank::getRanksListHTML($user->rank())}}"><span
+                                                     class="badge badge-pill badge-success small"><i
                                                         class="icon ion-ios-arrow-up"></i> {{$user->rank()->name}}</span></a>
                                         <br>
 
@@ -49,13 +49,4 @@
             @endforeach
         </div>
     </div>
-
-    <script>
-        $(function () {
-            $('[data-toggle="popover"]').popover()
-        });
-        $('.popover-dismiss').popover({
-            trigger: 'focus'
-        });
-    </script>
 @endsection

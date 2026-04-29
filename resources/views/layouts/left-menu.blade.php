@@ -12,55 +12,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ config('app.name', 'Laravel') }}">
     @include('layouts.partials.npm-vendor-assets')
-    <link href="{{url('assets/css/theme.css')}}" rel="stylesheet" type="text/css" media="all"/>
+    <link href="{{ asset('build/css/legacy/theme.css') }}" rel="stylesheet" type="text/css" media="all"/>
     <link href="{{ asset('build/css/legacy-theme.css') }}" rel="stylesheet" type="text/css" media="all"/>
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            },
-            options: {
-                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-            }
-        };
-    </script>
+    <script type="module" src="{{ asset('build/js/mathjax-config.js') }}"></script>
     <script id="MathJax-script" async src="{{ asset('build/js/vendor/mathjax/tex-mml-chtml.js') }}"></script>
 
     @include('layouts.partials.pipeline-theme-scripts')
-
-    <style>
-        *[data-tooltip] {
-            position: relative;
-        }
-
-        *[data-tooltip]::before {
-            content: attr(data-tooltip);
-            position: absolute;
-            padding: 2px 10px;
-            border-radius: 3px;
-            color: #fff;
-            background: #333741;
-            display: none;
-            top: 20px;
-            left: -100%;
-        }
-
-        *[data-tooltip]:hover::before {
-            display: block;
-        }
-    </style>
     @yield('head')
 </head>
 
 <body>
 
 <div class="layout layout-nav-side">
-    <div class="navbar navbar-expand-lg bg-dark navbar-dark sticky-top" style="width:19rem;">
+    <nav class="navbar navbar-expand-lg bg-dark navbar-dark sticky-top" aria-label="Основная навигация">
 
-        <a class="navbar-brand" href="{{ url('/') }}" style="line-height: 50px; font-size: 1.3rem;">
-            <span><img style="height: 35px; margin-bottom: 0px;"
-                       src="{{ url('images/icons/icons8-idea-64.png') }}">&nbsp;</span>
+        <a class="navbar-brand" href="{{ url('/') }}">
+            <span><img src="{{ url('images/icons/icons8-idea-64.png') }}" height="35" alt="">&nbsp;</span>
             CodingProjects
         </a>
 
@@ -73,16 +40,17 @@
 
                 @if (\Auth::check())
                     <div class="dropdown">
-                        <a href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <button class="btn p-0 border-0 bg-transparent" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
                             <img alt="Image" src="{{ \Auth::User()->imageUrl() }}" class="avatar menu"/>
-                        </a>
+                        </button>
                         <div class="dropdown-menu dropdown-menu-right">
                             <a class="dropdown-item" href="{{url('insider/profile')}}"><i class="icon ion-person"></i>
                                 Профиль</a>
-                            <a class="dropdown-item" href="{{ route('logout') }}"
-                               onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i
-                                        class="icon ion-reply"></i>Выход</a>
+                            <form method="POST" action="{{ route('logout') }}">
+                                {{ csrf_field() }}
+                                <button type="submit" class="dropdown-item"><i class="icon ion-reply"></i>Выход</button>
+                            </form>
                         </div>
                     </div>
                 @endif
@@ -94,16 +62,16 @@
 
             @if (\Auth::check())
                         <li class="nav-item">
-                            <a class="nav-link {{(Request::is('insider/courses*') ? 'active-link' : '') }}"
+                            <a class="nav-link {{(Request::is('insider/courses*') ? 'font-weight-bold' : '') }}"
                                href="{{url('/insider/courses')}}">Мои курсы</a></li>
                         <li class="nav-item"><a
-                                    class="nav-link {{(Request::is('insider/market*') ? 'active-link' : '') }}"
+                                    class="nav-link {{(Request::is('insider/market*') ? 'font-weight-bold' : '') }}"
                                     href="{{url('insider/market')}}">Магазин</a></li>
                         @else
                             <li class="nav-item"><a
-                                        class="nav-link {{((Request::is('courses*') or Request::is('categories*')) ? 'active-link' : '') }}"
+                                        class="nav-link {{((Request::is('courses*') or Request::is('categories*')) ? 'font-weight-bold' : '') }}"
                                         href="{{url('courses')}}">Каталог курсов</a></li>
-                            <li class="nav-item"><a class="nav-link {{(Request::is('games*') ? 'active-link' : '') }}"
+                            <li class="nav-item"><a class="nav-link {{(Request::is('games*') ? 'font-weight-bold' : '') }}"
                                                     href="{{url('login')}}">Войти</a></li>
                         @endif
             </ul>
@@ -125,25 +93,26 @@
         @if (\Auth::check())
             <div class="d-none d-lg-block">
                 <div class="dropup">
-                    <a href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <button class="btn p-0 border-0 bg-transparent" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
-                        <img alt="Image" src="{{ \Auth::User()->imageUrl() }}" class="avatar menu-avatar"/>
-                    </a>
+                        <img alt="Image" src="{{ \Auth::User()->imageUrl() }}" class="avatar border-white" width="67" height="67"/>
+                    </button>
 
                     <div class="dropdown-menu">
                         <a class="dropdown-item" href="{{url('insider/profile')}}"><i class="icon ion-person"></i>
                             Профиль</a>
-                        <a class="dropdown-item" href="{{ route('logout') }}"
-                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i
-                                    class="icon ion-reply"></i>Выход</a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            {{ csrf_field() }}
+                            <button type="submit" class="dropdown-item"><i class="icon ion-reply"></i>Выход</button>
+                        </form>
                     </div>
 
                 </div>
             </div>
         @endif
 
-    </div>
-    <div class="container-fluid" style="padding-bottom: 30px;">
+    </nav>
+    <main class="container-fluid pb-4">
         <div class="row justify-content-center">
             <div class="col-11">
 
@@ -167,7 +136,7 @@
         </div>
 
 
-    </div>
+    </main>
 </div>
 
 <!-- Required vendor scripts (Do not remove) -->
@@ -176,30 +145,8 @@
 
 
 {!! \NoCaptcha::renderJs() !!}
-<form style="display: none;" id="logout-form" method="POST" action="{{ route('logout') }}">{{ csrf_field() }}</form>
 @include('layouts.partials.common-footer-scripts')
-<!-- Yandex.Metrika counter -->
-<script type="text/javascript">
-    (function (m, e, t, r, i, k, a) {
-        m[i] = m[i] || function () {
-            (m[i].a = m[i].a || []).push(arguments)
-        };
-        m[i].l = 1 * new Date();
-        k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
-    })
-    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-
-    ym(55625236, "init", {
-        clickmap: true,
-        trackLinks: true,
-        accurateTrackBounce: true,
-        webvisor: true
-    });
-</script>
-<noscript>
-    <div><img src="https://mc.yandex.ru/watch/55625236" style="position:absolute; left:-9999px;" alt=""/></div>
-</noscript>
-<!-- /Yandex.Metrika counter -->
+@include('layouts.partials.yandex-metrika')
 
 </body>
 

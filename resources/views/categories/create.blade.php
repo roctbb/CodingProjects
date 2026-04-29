@@ -6,7 +6,7 @@
 
 @section('content')
     <h2>Новое образовательное направление</h2>
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
         <div class="col">
             <div class="card">
                 <div class="card-body">
@@ -18,7 +18,7 @@
                             <input id="title" type="text" class="form-control" name="title" value="{{old('title')}}"
                                    required>
                             @if ($errors->has('title'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('title') }}</strong>
                                     </span>
                             @endif
@@ -31,7 +31,7 @@
                                    value="{{old('small_image_url')}}"
                                    required>
                             @if ($errors->has('small_image_url'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                     <strong>{{ $errors->first('small_image_url') }}</strong>
                                 </span>
                             @endif
@@ -44,7 +44,7 @@
                                    value="{{old('card_image_url')}}"
                                    required>
                             @if ($errors->has('card_image_url'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                     <strong>{{ $errors->first('card_image_url') }}</strong>
                                 </span>
                             @endif
@@ -57,7 +57,7 @@
                                    value="{{old('head_image_url')}}"
                                    required>
                             @if ($errors->has('head_image_url'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                     <strong>{{ $errors->first('head_image_url') }}</strong>
                                 </span>
                             @endif
@@ -69,7 +69,7 @@
                             <input id="video_url" type="text" class="form-control" name="video_url"
                                    value="{{old('video_url')}}">
                             @if ($errors->has('video_url'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                     <strong>{{ $errors->first('video_url') }}</strong>
                                 </span>
                             @endif
@@ -81,7 +81,7 @@
                             <textarea id="short_description" class="form-control"
                                       name="short_description">{{old('short_description')}}</textarea>
                             @if ($errors->has('short_description'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('short_description') }}</strong>
                                     </span>
                             @endif
@@ -94,10 +94,10 @@
                                         href="https://simplemde.com/markdown-guide">тут</a>.
                             </p>
 
-                            <textarea id="description" class="form-control"
+                            <textarea id="description" class="form-control" data-markdown-editor data-markdown-autosave="true"
                                       name="description">{{old("description")}}</textarea>
                             @if ($errors->has("description"))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first("description") }}</strong>
                                     </span>
                             @endif
@@ -109,12 +109,5 @@
                 </div>
             </div>
         </div>
-        <script>
-            var simplemde_text = new EasyMDE({
-                spellChecker: false,
-                autosave: true,
-                element: document.getElementById("description")
-            });
-        </script>
     </div>
 @endsection

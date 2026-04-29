@@ -17,8 +17,8 @@
 @section('content')
     <div class="row">
         <div class="col">
-            <h2 style="font-weight: 300;">{{$course->name}} @if ($course->teachers->contains($user) || $user->role=='admin')
-                    <div style="margin-top: 10px;" class="float-right">
+            <h2 class="font-weight-light">{{$course->name}} @if ($course->teachers->contains($user) || $user->role=='admin')
+                    <div class="float-right mt-2">
 
                         <div class="dropdown">
                             <button class="btn btn-round" data-toggle="dropdown" data-target="#project-add-modal">
@@ -75,7 +75,7 @@
         <div class="col-md-8">
 
             @if ($course->state=="ended" and ($course->teachers->contains($user) || $user->role=='admin'))
-                <div class="card-group">
+                <div class="card-group my-3">
                     <div class="card">
                         <div class="card-body">
                             <div class="row">
@@ -113,19 +113,18 @@
             <div class="content-list">
                 @foreach($lessons as $key => $lesson)
                     @if ($lesson->steps->count()!=0)
-                        <div class="card-group">
+                        <div class="card-group my-3">
                             <div class="card">
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col">
                                             @if ($lesson->isAvailable($course) or $course->teachers->contains($user) or $user->role=='admin')
-                                                <h5 data-filter-by="text">{{$key+1}}. <a class="collection-item"
+                                                <h5 data-filter-by="text">{{$key+1}}. <a
                                                                                          href="{{url('/insider/courses/'.$course->id.'/steps/'.$lesson->steps->first()->id)}}">{{$lesson->name}}</a>
                                                 </h5>
                                             @else
-                                                <h5 data-filter-by="text">{{$key+1}}. <a
-                                                            class="collection-item text-muted"
-                                                            href="#">{{$lesson->name}}</a>
+                                                <h5 data-filter-by="text">{{$key+1}}. <span
+                                                            class="text-muted">{{$lesson->name}}</span>
                                                 </h5>
                                             @endif
                                         </div>
@@ -167,7 +166,7 @@
                                         </div>
                                         @if (!($user->role=='admin' || $course->teachers->contains($user)) and $lesson->percent($cstudent, $course) > 90)
                                             <div class="col-sm-auto">
-                                                <img src="{{url($lesson->sticker)}}" style="max-width: 200px;"/>
+                                                <img src="{{url($lesson->sticker)}}" width="200" alt=""/>
                                             </div>
                                         @endif
 
@@ -190,11 +189,11 @@
                                                             {{$student->name}}
                                                         </div>
                                                         <div class="col">
-                                                            <div class="progress" style="margin: 5px;">
+                                                            <div class="progress m-1">
                                                                 @if ($percent < 40)
                                                                     <div class="progress-bar progress-bar-striped bg-danger"
                                                                          role="progressbar"
-                                                                         style="width: {{$percent}}%"
+                                                                          data-progress-width="{{$percent}}%"
                                                                          aria-valuenow="{{$percent}}"
                                                                          aria-valuemin="0"
                                                                          aria-valuemax="100">
@@ -203,7 +202,7 @@
                                                                 @elseif($percent < 60)
                                                                     <div class="progress-bar progress-bar-striped bg-warning"
                                                                          role="progressbar"
-                                                                         style="width: {{$percent}}%"
+                                                                          data-progress-width="{{$percent}}%"
                                                                          aria-valuenow="{{$percent}}"
                                                                          aria-valuemin="0"
                                                                          aria-valuemax="100">
@@ -212,7 +211,7 @@
                                                                 @else
                                                                     <div class="progress-bar progress-bar-striped bg-success"
                                                                          role="progressbar"
-                                                                         style="width: {{$percent}}%"
+                                                                          data-progress-width="{{$percent}}%"
                                                                          aria-valuenow="{{$percent}}"
                                                                          aria-valuemin="0"
                                                                          aria-valuemax="100">
@@ -240,11 +239,11 @@
                                                         $cmaxPoints = $cstats ? $cstats->max_points : 0;
                                                     @endphp
                                                     @if ($cmaxPoints != 0)
-                                                    <div class="progress" style="margin: 5px;">
+                                                    <div class="progress m-1">
                                                         @if ($cpercent < 40)
                                                             <div class="progress-bar progress-bar-striped bg-danger"
                                                                  role="progressbar"
-                                                                 style="width: {{$cpercent}}%"
+                                                                  data-progress-width="{{$cpercent}}%"
                                                                  aria-valuenow="{{$cpercent}}"
                                                                  aria-valuemin="0"
                                                                  aria-valuemax="100">
@@ -253,7 +252,7 @@
                                                         @elseif($cpercent < 60)
                                                             <div class="progress-bar progress-bar-striped bg-warning"
                                                                  role="progressbar"
-                                                                 style="width: {{$cpercent}}%"
+                                                                  data-progress-width="{{$cpercent}}%"
                                                                  aria-valuenow="{{$cpercent}}"
                                                                  aria-valuemin="0"
                                                                  aria-valuemax="100">
@@ -262,7 +261,7 @@
                                                         @else
                                                             <div class="progress-bar progress-bar-striped bg-success"
                                                                  role="progressbar"
-                                                                 style="width: {{$cpercent}}%"
+                                                                  data-progress-width="{{$cpercent}}%"
                                                                  aria-valuenow="{{$cpercent}}"
                                                                  aria-valuemin="0"
                                                                  aria-valuemax="100">
@@ -274,7 +273,7 @@
                                                 @endif
 
                                                 @if (($course->teachers->contains($user) || $user->role=='admin') && count($students) < 70)
-                                                    <small class="text-muted float-right" style="margin-right: 15px;">
+                                                    <small class="text-muted float-right mr-3">
                                                         @foreach($students as $student)
                                                             @php
                                                                 $sstats = $lessonStats[$lesson->id][$student->id] ?? null;
@@ -289,7 +288,7 @@
                                                             @endif
                                                         @endforeach
 
-                                                        <a style="margin-left: 10px;" data-toggle="collapse"
+                                                        <a class="ml-2" data-toggle="collapse"
                                                            href="#marks{{$lesson->id}}" aria-expanded="false"
                                                            aria-controls="marks{{$lesson->id}}"><i
                                                                     class="ion ion-stats-bars"></i> Статистика
@@ -314,11 +313,11 @@
         </div>
         <div class="col-md-4">
             @if ($course->program->chapters->count()>1)
-                <ul style="margin-bottom: 15px; margin-top: 15px;" class="list-group">
+                <ul class="list-group my-3">
 
                     @foreach($course->program->chapters as $current_chapter)
                         @if ($user->role == 'admin' || $course->teachers->contains($user) or $current_chapter->isStarted($course))
-                            <li class="list-group-item @if ($current_chapter->id == $chapter->id)  list-group-item-success @endif">
+                            <li class="list-group-item @if ($current_chapter->id == $chapter->id) list-group-item-success @endif">
                                 <a
                                         href="{{url('/insider/courses/'.$course->id.'?chapter='.$current_chapter->id)}}">{{$current_chapter->name}}
                                     @if (($course->teachers->contains($user) || $user->role=='admin') and $current_chapter->isStarted($course))
@@ -353,12 +352,12 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <p class="small" style="margin-bottom: 0;">{{$current_chapter->description}}</p>
+                                    <p class="small mb-0">{{$current_chapter->description}}</p>
                                 @else
                                     @if ($current_chapter->isDone($course) and !($user->role=='admin' || $course->teachers->contains($user)))
                                         <span class="float-right">
-                                        <i class="icon ion-checkmark-circled" style="color:green;"></i> <span
-                                                    style="color: green;">выполнено</span>
+                                        <i class="icon ion-checkmark-circled text-success"></i> <span
+                                                    class="text-success">выполнено</span>
                                         </span>
                                     @endif
                                 @endif
@@ -372,8 +371,8 @@
 
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title">Информация <img style="width: 30px;"
-                                                           src="{{ url('images/icons/icons8-info-48.png') }}"></h4>
+                    <h4 class="card-title">Информация <img width="30"
+                                                           src="{{ url('images/icons/icons8-info-48.png') }}" alt=""></h4>
                     <p>
                         @if ($course->teachers->contains($user) || $user->role=='admin')
                             <b>Статус:</b> {{$course->state}}<br/>
@@ -396,7 +395,7 @@
                     </p>
                     <ul>
                         @foreach($course->teachers as $teacher)
-                            <li><a class="black-link"
+                            <li><a class="text-dark"
                                    href="{{url('/insider/profile/'.$teacher->id)}}">{{$teacher->name}}</a></li>
                         @endforeach
                     </ul>
@@ -416,7 +415,7 @@
                                     $studentPoints = isset($student->points) ? $student->points : 0;
                                     $studentPercent = isset($student->percent) ? $student->percent : 0;
                                 @endphp
-                                <li><a class="black-link"
+                                <li><a class="text-dark"
                                        href="{{url('/insider/profile/'.$student->id)}}">{{$student->name}}</a> <span
                                             class="badge badge-primary float-right" title="Очки опыта: {{$studentPoints}}"> {{ round($studentPercent) }}
                                     % </span></li>
@@ -425,7 +424,7 @@
                     @else
                         <ul>
                             @foreach($students as $student)
-                                <li><a class="black-link"
+                                <li><a class="text-dark"
                                        href="{{url('/insider/profile/'.$student->id)}}">{{$student->name}}</a></li>
                             @endforeach
                         </ul>
@@ -433,41 +432,7 @@
 
                     @if (($course->teachers->contains($user) || $user->role=='admin') && count($students) < 40)
 
-                        <div id="histogram"></div>
-
-                        <script>
-                                    @php
-                                        $points = [];
-                                        foreach ($students as $student)
-                                        {
-                                            array_push($points, $student->percent);
-                                        }
-                                    @endphp
-                            var x = [{{implode(',',$points)}}];
-
-                            var trace = {
-                                x: x,
-                                type: 'histogram',
-                                autobinx: false,
-                                marker: {
-                                    color: "rgba(100, 200, 102, 0.7)",
-                                    line: {
-                                        color: "rgba(100, 200, 102, 1)",
-                                        width: 1
-                                    }
-                                },
-                                opacity: 0.75,
-                                xbins: {
-                                    end: 110,
-                                    size: 15,
-                                    start: 0
-
-                                }
-                            };
-
-                            var data = [trace];
-                            Plotly.newPlot('histogram', data);
-                        </script>
+                        <div id="histogram" data-plotly-histogram='@json($students->pluck('percent')->values())'></div>
 
                         <p>
                             <a href="{{url('insider/courses/'.$course->id.'/assessments')}}"
@@ -482,7 +447,7 @@
                 </div>
             </div>
             @if ($user->role=='student' || ($user->role=='teacher' && !$course->teachers->contains($user)))
-                <div class="card" style="margin-top: 15px;">
+                <div class="card mt-3">
                     <div class="card-body">
                         @php
                             $max_points = 0;
@@ -515,22 +480,22 @@
                             <small class="float-right"><span class="badge badge-primary">{{$points}}
                                     / {{$max_points}}</span></small>
                         </h4>
-                        <div class="progress" style="margin-bottom: 15px;">
+                        <div class="progress mb-3">
                             @if ($percent < 40)
                                 <div class="progress-bar progress-bar-striped bg-danger" role="progressbar"
-                                     style="width: {{$percent}}%"
+                                      data-progress-width="{{$percent}}%"
                                      aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>
 
                             @elseif($percent < 60)
                                 <div class="progress-bar progress-bar-striped bg-warning" role="progressbar"
-                                     style="width: {{$percent}}%"
+                                      data-progress-width="{{$percent}}%"
                                      aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>
 
                             @else
                                 <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
-                                     style="width: {{$percent}}%"
+                                      data-progress-width="{{$percent}}%"
                                      aria-valuenow="{{$percent}}" aria-valuemin="0"
                                      aria-valuemax="100"></div>
 
@@ -560,8 +525,8 @@
                                                 <a href="{{url('/insider/courses/'.$course->id.'/steps/'.$task->step_id.'#task'.$task->id)}}">{{$task->name}} @if ($task->is_star)
                                                         (*)@endif</a>
                                             @else
-                                                <a href="#" class="text-muted">{{$task->name}} @if ($task->is_star)
-                                                        (*)@endif</a>
+                                                <span class="text-muted">{{$task->name}} @if ($task->is_star)
+                                                        (*)@endif</span>
                                             @endif
 
                                             @if (!$task->isDone($cstudent->id) and $task->getDeadline($course->id))
@@ -602,17 +567,8 @@
                 </div>
             @endif
 
-            <img src="{{url('images/ginger-cat.png')}}" style="max-width: 100%;"/>
+            <img src="{{url('images/ginger-cat.png')}}" class="img-fluid" alt=""/>
         </div>
-        <script>
-            $(function () {
-                $('[data-toggle="popover"]').popover()
-            });
-            $('.popover-dismiss').popover({
-                trigger: 'focus'
-            });
-        </script>
-
     </div>
 
 

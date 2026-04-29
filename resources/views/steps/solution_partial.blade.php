@@ -1,5 +1,5 @@
 {{-- Will be replaced by solution.vue --}}
-<div class="row" style="margin-top: 15px; margin-bottom: 15px;">
+<div class="row my-3">
     <div class="col">
         <div class="card">
             <div class="card-header">

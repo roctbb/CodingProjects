@@ -13,7 +13,7 @@
         @if (!$blocked)
             <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}"
               method="POST"
-              class="form-inline" onsubmit="checkTask(event, {{json_encode($task->id)}})">
+              class="form-inline" data-check-task data-task-id="{{$task->id}}">
                 {{ csrf_field() }}
                 <label for="text{{$task->id}}"><strong>Ответ:&nbsp;</strong></label>
                 <input type="text" name="text" class="form-control form-control-sm"
@@ -23,7 +23,7 @@
             </form>
             @if ($errors->has('text'))
                 <br><span
-                class="help-block error-block"><strong>{{ $errors->first('text') }}</strong></span>
+                class="text-danger d-block"><strong>{{ $errors->first('text') }}</strong></span>
             @endif
         @endif
     @endif

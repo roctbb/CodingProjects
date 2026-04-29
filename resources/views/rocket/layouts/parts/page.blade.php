@@ -48,6 +48,7 @@
     <link type="text/css" href="{{ url('rocket/css/rocket.css') }}" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ asset('build/css/vendor/highlight-atom-one-light.css') }}">
+    <link rel="stylesheet" href="{{ asset('build/css/notebook.css') }}">
 
     @yield('style')
     <!-- NOTICE: You can use the _analytics.html partial to include production code specific code & trackers -->
@@ -78,6 +79,7 @@
 <!-- Rocket JS -->
 <script src="{{ url('rocket/assets/js/rocket.js') }}"></script>
 <script src="{{ asset('build/js/nbv.js') }}"></script>
+<script type="module" src="{{ asset('build/js/notebook-render.js') }}"></script>
 <script type="module" src="{{ asset('build/js/highlight.js') }}"></script>
 
 </body>

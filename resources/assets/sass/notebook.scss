@@ -1,0 +1,40 @@
+.notebook-container {
+  margin: -30px;
+  width: 100%;
+}
+
+.lesson-content p {
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin-bottom: 1rem;
+}
+
+@media screen and (min-width: 900px) {
+  .lesson-content img {
+    display: block;
+    margin: 1.5rem auto;
+    max-width: 80%;
+  }
+}
+
+pre[class*="language-"] {
+  margin-bottom: 2rem;
+}
+
+blockquote {
+  background-color: #eaedf2;
+  border: 0;
+  border-color: #eaedf2;
+  border-radius: 0.5rem;
+  color: #506690;
+  margin-bottom: 1.5rem !important;
+  padding: 1.5rem 1.5rem 0.5rem !important;
+}
+
+blockquote p {
+  font-size: 1rem !important;
+}
+
+.rocket-textbook-card-link .card-body {
+  color: #4A5073;
+}

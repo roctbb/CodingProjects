@@ -99,7 +99,7 @@
             <div class="app-material-user">
                 <div class="app-material-user__row">
                     <img alt="User" src="{{ $menuAvatarPrimary }}"
-                         onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='{{ $menuAvatarFallback }}';}"
+                         data-image-fallback="{{ $menuAvatarFallback }}"
                          class="app-material-user__avatar">
                     <div>
                         <p class="app-material-user__name">{{ Auth::user()->name }}</p>
@@ -136,6 +136,7 @@
 <button type="button" class="app-material-nav-backdrop" data-ui-nav-backdrop hidden aria-label="Закрыть меню"></button>
 
 {!! \NoCaptcha::renderJs() !!}
+<form class="d-none" id="logout-form" method="POST" action="{{ route('logout') }}">{{ csrf_field() }}</form>
 
 @php
     $cpuiDatepickers = true;
@@ -145,56 +146,5 @@
     $includeActionFormScript = true;
 @endphp
 @include('layouts.partials.common-footer-scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var nav = document.getElementById('appMaterialNav');
-        var toggle = document.querySelector('[data-ui-nav-toggle]');
-        var backdrop = document.querySelector('[data-ui-nav-backdrop]');
-
-        if (!nav || !toggle || !backdrop) {
-            return;
-        }
-
-        var closeMenu = function () {
-            nav.classList.remove('is-open');
-            backdrop.hidden = true;
-            toggle.setAttribute('aria-expanded', 'false');
-            document.body.classList.remove('app-material-nav-open');
-        };
-
-        var openMenu = function () {
-            nav.classList.add('is-open');
-            backdrop.hidden = false;
-            toggle.setAttribute('aria-expanded', 'true');
-            document.body.classList.add('app-material-nav-open');
-        };
-
-        toggle.addEventListener('click', function () {
-            if (nav.classList.contains('is-open')) {
-                closeMenu();
-                return;
-            }
-            openMenu();
-        });
-
-        backdrop.addEventListener('click', closeMenu);
-        nav.querySelectorAll('a').forEach(function (link) {
-            link.addEventListener('click', closeMenu);
-        });
-
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape') {
-                closeMenu();
-            }
-        });
-
-        window.addEventListener('resize', function () {
-            if (window.innerWidth > 1180) {
-                closeMenu();
-            }
-        });
-
-    });
-</script>
 </body>
 </html>

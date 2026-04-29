@@ -3,20 +3,16 @@
             <ul class="nav nav-pills flex-column">
                 @if (\Request::is('insider/*'))
                     <li class="nav-item">
-                    <!--<a class="nav-link" style="padding-top: 10px; padding-bottom: 10px; font-size: 150%;"
-                           href="{{url('/insider/courses/'.$course->id)}}">
-                            <i class="icon ion-chevron-left"></i> {{ config('app.name', 'Laravel') }} </a>-->
-                        <a class="nav-link" style="padding-top: 10px; padding-bottom: 10px; font-size: 150%;"
+                        <a class="nav-link h4 py-2 mb-0"
                            href="{{url('/insider/courses/'.$course->id.'?chapter='.$step->lesson->chapter->id)}}">
-                            <i class="icon ion-chevron-left"></i> <img src="{{url('images/bhlogo.png')}}"
-                                                                       style="height: 35px;"/> </a>
+                             <i class="icon ion-chevron-left"></i> <img src="{{url('images/bhlogo.png')}}"
+                                                                        height="35" alt=""/> </a>
                     </li>
                 @endif
                 @if (\Request::is('open/*'))
                     <li class="nav-item">
-                        <a class="nav-link" style="padding-top: 10px; padding-bottom: 10px; font-size: 150%;"
-                           href="#">
-                            <img src="{{url('images/bhlogo.png')}}" style="height: 35px;"/> </a>
+                         <span class="nav-link h4 py-2 mb-0">
+                              <img src="{{url('images/bhlogo.png')}}" height="35" alt=""/> </span>
                     </li>
                 @endif
             </ul>
@@ -41,7 +37,7 @@
                 @endforeach
             </ul>
             @if (\Request::is('insider/*') && ($course->teachers->contains($user) || $user->role=='admin'))
-                <p align="center" style="margin-top: 15px;">
+                 <p class="mt-3 text-center">
                     <a href="{{url('/insider/courses/'.$course->id.'/lessons/'.$step->lesson->id.'/create')}}"
                        class="btn btn-success btn-sm">Новый
                         этап</a>

@@ -5,10 +5,10 @@
 @endsection
 
 @section('content')
-    <h2><a class="back-link" href="{{url('/insider/courses/'.$course->id.'/assessments')}}"><i
+    <h2><a class="d-inline mr-2" href="{{url('/insider/courses/'.$course->id.'/assessments')}}"><i
                     class="icon ion-chevron-left"></i></a>&nbsp;{{$student->name}}: "{{$task->name}}"</h2>
 
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
         <div class="col">
 
             <div class="card">
@@ -17,18 +17,18 @@
                     @if ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin')
                         @php $isBlocked = $task->isBlocked($student->id, $course->id); @endphp
                         @if ($isBlocked)
-                            <a style="margin-right: 5px;" class="float-right btn btn-warning btn-sm"
+                            <a class="float-right btn btn-warning btn-sm mr-1"
                                href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/unblock/'.$student->id)}}"
-                               onclick="return confirm('Разблокировать задачу для этого ученика?')">Разблокировать</a>
+                               data-confirm="Разблокировать задачу для этого ученика?">Разблокировать</a>
                         @else
-                            <a style="margin-right: 5px;" class="float-right btn btn-danger btn-sm"
+                            <a class="float-right btn btn-danger btn-sm mr-1"
                                href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/block/'.$student->id)}}"
-                               onclick="return confirm('Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены.')">Заблокировать</a>
+                               data-confirm="Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены.">Заблокировать</a>
                         @endif
                     @endif
                     <a class="float-right btn btn-danger btn-sm"
-                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"  onclick="return confirm('Вы уверены?')">Удалить</a>
-                    <a style="margin-right: 5px;" class="float-right btn btn-success btn-sm"
+                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}" data-confirm="Вы уверены?">Удалить</a>
+                    <a class="float-right btn btn-success btn-sm mr-1"
                        href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}">Редактировать</a>
                 </div>
                 <div class="card-body markdown">
@@ -42,7 +42,7 @@
 
     </div>
     @foreach ($solutions as $key => $solution)
-        <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
+        <div class="row my-3">
 
             <div class="col">
 
@@ -74,7 +74,7 @@
                                 @endif
                             </div>
                             <div class="col-md-4">
-                                <form class="form-horizontal" method="post"
+                                <form method="post"
                                       action="{{url('insider/courses/'.$solution->course_id.'/solution/'.$solution->id)}}">
                                     {{csrf_field()}}
                                     <div class="form-group">
@@ -82,7 +82,7 @@
                                                id="mark"
                                                name="mark" placeholder="Очков опыта">
                                         @if ($errors->has('mark'))
-                                            <span class="help-block error-block"><strong>{{ $errors->first('mark') }}</strong></span>
+                                            <span class="text-danger d-block"><strong>{{ $errors->first('mark') }}</strong></span>
                                         @endif
                                     </div>
                                     <div class="form-group">

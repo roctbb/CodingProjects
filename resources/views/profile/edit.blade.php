@@ -7,7 +7,7 @@
 @section('content')
 
 
-    <form method="POST" class="form-horizontal" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data">
         {{ csrf_field() }}
         <div class="row">
             <div class="col-md-8">
@@ -18,25 +18,25 @@
             </div>
         </div>
 
-        <div class="row" style="margin-top: 15px;">
+        <div class="row mt-3">
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-body">
 
-                        <div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
-                            <label for="password" class="control-label">Новый пароль</label>
+                        <div class="form-group">
+                            <label for="password" class="form-label">Новый пароль</label>
 
 
                             <input id="password" type="password" class="form-control" name="password">
 
                             @if ($errors->has('password'))
-                                <span class="help-block error-block"><strong>{{ $errors->first('password') }}</strong></span>
+                                <span class="text-danger d-block"><strong>{{ $errors->first('password') }}</strong></span>
                             @endif
 
                         </div>
 
                         <div class="form-group">
-                            <label for="password-confirm" class="control-label">Повторите
+                            <label for="password-confirm" class="form-label">Повторите
                                 пароль</label>
 
 
@@ -56,7 +56,7 @@
                                        required>
                             @endif
                             @if ($errors->has('name'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('name') }}</strong>
                                     </span>
                             @endif
@@ -75,7 +75,7 @@
                                            required>
                                 @endif
                                 @if ($errors->has('birthday'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                                         <strong>{{ $errors->first('birthday') }}</strong>
                                     </span>
                                 @endif
@@ -94,7 +94,7 @@
                                        required>
                             @endif
                             @if ($errors->has('school'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('school') }}</strong>
                                     </span>
                             @endif
@@ -111,7 +111,7 @@
                                        required>
                             @endif
                             @if ($errors->has('grade'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('grade') }}</strong>
                                     </span>
                             @endif
@@ -129,7 +129,7 @@
                                           name="interests">{{$user->interests}}</textarea>
                             @endif
                             @if ($errors->has('interests'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('interests') }}</strong>
                                     </span>
                             @endif
@@ -143,7 +143,7 @@
                                 <textarea id="hobbies" class="form-control" name="hobbies">{{$user->hobbies}}</textarea>
                             @endif
                             @if ($errors->has('hobbies'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('hobbies') }}</strong>
                                     </span>
                             @endif
@@ -161,7 +161,7 @@
                                               name="comments">{{$user->comments}}</textarea>
                                 @endif
                                 @if ($errors->has('comments'))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                                         <strong>{{ $errors->first('comments') }}</strong>
                                     </span>
                                 @endif
@@ -177,13 +177,13 @@
                     <div class="card-body">
 
 
-                        <div class="form-group{{ $errors->has('image') ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="image">Аватар</label>
 
                             <input id="image" type="file" class="form-control" name="image"/>
 
                             @if ($errors->has('image'))
-                                <span class="help-block error-block"><strong>{{ $errors->first('image') }}</strong></span>
+                                <span class="text-danger d-block"><strong>{{ $errors->first('image') }}</strong></span>
                             @endif
                         </div>
                         <h4>Контакты</h4>
@@ -198,7 +198,7 @@
                                        value="{{$user->telegram}}">
                             @endif
                             @if ($errors->has('telegram'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('telegram') }}</strong>
                                     </span>
                             @endif
@@ -212,7 +212,7 @@
                                 <input id='git' type="text" class="form-control" name='git' value="{{$user->git}}">
                             @endif
                             @if ($errors->has('git'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('git') }}</strong>
                                     </span>
                             @endif
@@ -224,11 +224,4 @@
 
         </div>
     </form>
-    <script>
-        var simplemde_description = new EasyMDE({
-            spellChecker: false,
-            element: document.getElementById("description")
-        });
-        var simplemde_theory = new EasyMDE({spellChecker: false, element: document.getElementById("theory")});
-    </script>
 @endsection

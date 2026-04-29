@@ -1,3 +1,10 @@
+import { marked } from 'marked';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-python';
+
+window.marked = window.marked || marked;
+window.Prism = window.Prism || Prism;
+
 var nbv = (function() {
     "use strict";
 

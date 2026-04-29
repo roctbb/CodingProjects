@@ -1,15 +1,9 @@
 <html>
 <head>
-    <style>
-        img {
-            max-width: 40%;
-        }
-
-    </style>
     <link rel="stylesheet" href="{{ asset('build/css/app.css') }}">
 
 </head>
-<body>
+<body class="peer-review">
 <table class="table">
     <tr>
         <th>id</th>
@@ -30,10 +24,10 @@
 </table>
 
 <hr>
-<div style="page-break-after: always;"></div>
+<div class="peer-review-page-break"></div>
 
 @foreach($students as $id => $student)
-    <h3 style="font-weight: 300;">{{$student->name}} - протокол peer review</h3>
+    <h3 class="font-weight-light">{{$student->name}} - протокол peer review</h3>
 
     <h6>Условие задачи и правила оценивания:</h6>
     {!! parsedown($task->text) !!}
@@ -51,7 +45,7 @@
                 <td>{!! nl2br($solution->text) !!}}</td>
             </tr>
             <tr>
-                <td colspan="2" style="border: 2px dotted gray;">
+                <td colspan="2" class="peer-review-cell">
                     <p><br></p>
                     <p><br></p>
                     <p><br></p>
@@ -62,13 +56,13 @@
                 <td>
                     <small><strong>Итого&nbsp;очков опыта:</strong></small>
                 </td>
-                <td style="border: 2px dotted green;">
+                <td class="peer-review-score-cell">
 
                 </td>
             </tr>
         @endforeach
     </table>
-    <div style="page-break-after: always;"></div>
+    <div class="peer-review-page-break"></div>
 @endforeach
 
 

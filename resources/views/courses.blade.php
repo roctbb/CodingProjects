@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-    <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
+    <div class="row my-3">
         <div class="col">
             <h2>Образовательные направления</h2>
         </div>
@@ -21,10 +21,10 @@
                            aria-controls="draft" aria-selected="false">Черновики</a>
                     </li>
 
-                    <li class="nav-item" style="margin-left: 5px;">
-                        <a class="btn btn-success btn-sm nav-link" style="color: white;"
+                    <li class="nav-item ml-1">
+                        <a class="btn btn-success btn-sm nav-link text-white"
                            href="{{url('/categories/create/')}}"><i
-                                    class="icon ion-plus-round" style="color: white;"></i>&nbsp;Создать</a>
+                                    class="icon ion-plus-round"></i>&nbsp;Создать</a>
                     </li>
 
                 </ul>
@@ -39,16 +39,14 @@
 
                     <div class="card-deck">
                         @foreach($categories->where('is_available', true) as $category)
-                            <div class="card mb-3" style="min-width: 280px;">
+                            <div class="card mb-3 category-card">
                                 <img alt="Team" class="card-img-top" src="{{$category->card_image_url}}">
-                                <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
-                                    <h5 style="font-weight: 300;"
-                                        class="card-title">
+                                <div class="card-body market-card-body">
+                                    <h5 class="card-title font-weight-light">
                                         <a href="{{url('categories/'.$category->id)}}"
-                                           style="color: #333741;">{{$category->title}}</a>
+                                           class="text-dark">{{$category->title}}</a>
                                     </h5>
-                                    <p class="card-text"
-                                       style="font-size: 0.8rem;">{{$category->short_description}}</p>
+                                    <p class="card-text small">{{$category->short_description}}</p>
 
                                 </div>
                             </div>
@@ -61,16 +59,14 @@
                     <div class="tab-pane fade show" id="draft" role="tabpanel" aria-labelledby="active">
                         <div class="card-deck">
                             @foreach($categories->where('is_available', false) as $category)
-                                <div class="card mb-3" style="min-width: 280px; max-width: 33%;">
+                                <div class="card mb-3 category-card-draft">
                                     <img alt="Team" class="card-img-top" src="{{$category->card_image_url}}">
-                                    <div class="card-body" style="background-color: rgba(255,255,255,0.9);">
-                                        <h5 style="font-weight: 300;"
-                                            class="card-title">
+                                    <div class="card-body market-card-body">
+                                        <h5 class="card-title font-weight-light">
                                             <a href="{{url('categories/'.$category->id)}}"
-                                               style="color: #333741;">{{$category->title}}</a>
+                                               class="text-dark">{{$category->title}}</a>
                                         </h5>
-                                        <p class="card-text"
-                                           style="font-size: 0.8rem;">{{$category->short_description}}</p>
+                                        <p class="card-text small">{{$category->short_description}}</p>
 
                                     </div>
                                 </div>

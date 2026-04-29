@@ -6,18 +6,18 @@
 
 @section('content')
     <h2>Изменение главы</h2>
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
         <div class="col">
             <div class="card">
                 <div class="card-body">
-            <form method="POST" class="form-horizontal" enctype="multipart/form-data">
+            <form method="POST" enctype="multipart/form-data">
                 {{ csrf_field() }}
                 <div class="form-group">
                     <label for="name">Название</label>
                     <input id="name" type="text" class="form-control" name="name"
                            value="{{old('name')==""?$chapter->name:old('name')}}" required>
                     @if ($errors->has('name'))
-                        <span class="help-block error-block">
+                        <span class="text-danger d-block">
                                         <strong>{{ $errors->first('name') }}</strong>
                                     </span>
                     @endif
@@ -27,7 +27,7 @@
                     <label for="description">Описание</label>
                     <textarea id="description" class="form-control" name="description">{{old('description')==""?$chapter->description:old('description')}}</textarea>
                     @if ($errors->has('description'))
-                        <span class="help-block error-block">
+                        <span class="text-danger d-block">
                                         <strong>{{ $errors->first('description') }}</strong>
                                     </span>
                     @endif

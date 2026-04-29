@@ -4,14 +4,6 @@
     {{ $textbook->name }}
 @endsection
 
-@section('style')
-    <style>
-        a .card-body {
-            color: #4A5073;
-        }
-    </style>
-@endsection
-
 @section('content')
     <!-- Hero -->
     <section class="section-header bg-primary pb-7 pb-lg-7 text-white">
@@ -36,7 +28,7 @@
                 <div class="row">
                     @foreach($chapter->lessons as $key => $lesson)
                         <div class="col-12 col-lg-6 mb-3">
-                            <a href="{{ url('/textbook/'.$textbook->id.'/lesson/'.$lesson->id) }}" class="card border-light animate-up-3 shadow-soft p-0 p-lg-1">
+                            <a href="{{ url('/textbook/'.$textbook->id.'/lesson/'.$lesson->id) }}" class="card border-light animate-up-3 shadow-soft p-0 p-lg-1 rocket-textbook-card-link">
                                 <div class="card-body">
                                     <h5 class="mb-4">{{ $key + 1 }}. {{ $lesson->name }}</h5>
                                     <div class="text-gray">

@@ -12,17 +12,17 @@
     <div class="row">
         <div class="col-md-8">
 
-            <h2><span style="font-weight: 200;"><a style="display: inline;" class="nav-link" role="tab" id="back-link"
+            <h2><span class="font-weight-light"><a class="nav-link d-inline" role="tab" id="back-link"
                                                    href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id)}}"><i
                                 class="icon ion-chevron-left"></i></a>{{$course->name}}
                     - </span>{{$step->lesson->name}}</h2>
         </div>
     </div>
 
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
         <div class="col-md-12">
             @if (count($tasks)!=0)
-                <div class="row" style=" margin-bottom: 15px;">
+                <div class="row mb-3">
                     <div class="col">
                         <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
                             @if (count($tasks)!=0 && !$zero_theory)
@@ -55,7 +55,7 @@
 
                 </div>
             @endif
-            <div class="tab-content" id="pills-tabContent" style="margin-bottom: 15px;">
+            <div class="tab-content mb-3" id="pills-tabContent" data-perform-tabs>
                 @if ($empty || !$zero_theory)
                     <div class="tab-pane fade show active" id="theory" role="tabpanel" aria-labelledby="v-theory-tab">
                         <div class="row">
@@ -90,7 +90,7 @@
                                         {{$task->name}}
 
                                     </div>
-                                    <div class="card-body markdownn perform">
+                                    <div class="card-body markdown perform">
                                         {!! parsedown_math($task->text) !!}
 
                                         <span class="badge badge-secondary">Очков опыта: {{$task->max_mark}}</span>
@@ -100,12 +100,6 @@
                         </div>
                     </div>
                 @endforeach
-
-                <script>
-                    $('.tab-pane').first().removeClass('fade');
-                    $('.tab-pane').first().addClass('show active');
-                </script>
-
                 <p>
                     @if ($step->previousStep() != null)
                         <a href="{{url('/insider/courses/'.$course->id.'/perform/'.$step->previousStep()->id)}}"

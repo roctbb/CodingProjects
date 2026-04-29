@@ -7,11 +7,11 @@
 @section('content')
 
     <h2>Изменение курса "{{$course->name}}"</h2>
-    <div class="row" style="margin-top: 15px;">
+    <div class="row mt-3">
         <div class="col">
             <div class="card">
                 <div class="card-body">
-                    <form method="POST" class="form-horizontal" enctype="multipart/form-data">
+                    <form method="POST" enctype="multipart/form-data">
                         {{ csrf_field() }}
                         <div class="form-group">
                             <label for="name">Название</label>
@@ -24,66 +24,54 @@
                                        required>
                             @endif
                             @if ($errors->has('name'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('name') }}</strong>
                                     </span>
                             @endif
                         </div>
                         @if (Auth::user()->role=='admin')
                             <div class="form-group">
-                                <label for="mode" style="padding-bottom: 10px;">Тип курса:</label><br>
+                                <label for="mode" class="pb-2">Тип курса:</label><br>
                                 <select class="selectpicker4 form-control" data-live-search="true" id="mode"
-                                        name="mode">
+                                        name="mode" data-selectpicker-value='@json($course->mode)'>
                                     <option data-tokens="private" value="private">Скрытый</option>
                                     <option data-tokens="offline" value="offline">Офлайн</option>
                                     <option data-tokens="zoom" value="zoom">Платный онлайн курс</option>
                                     <option data-tokens="paid" value="paid">Платный онлайн курс без преподавателя</option>
                                     <option data-tokens="open" value="open">Бесплатный онлайн курс</option>
                                 </select>
-
-                                <script>
-                                    $('.selectpicker4').selectpicker('val', '{{$course->mode}}');
-                                </script>
                             </div>
 
                             <div class="form-group">
-                                <label for="categories" style="padding-bottom: 10px;">Образовательные
+                                <label for="categories" class="pb-2">Образовательные
                                     направления:</label><br>
                                 <select class="selectpicker3 form-control" data-live-search="true" id="categories"
-                                        name="categories[]" multiple data-width="auto">
+                                        name="categories[]" multiple data-width="auto" data-selectpicker-value='@json($course->categories->pluck('id')->toArray())'>
                                     @foreach (\App\CourseCategory::all() as $category)
                                         <option data-tokens="{{ $category->id }}"
                                                 value="{{ $category->id }}">{{$category->title}}</option>
                                     @endforeach
                                 </select>
-
-                                <script>
-                                    $('.selectpicker3').selectpicker('val', [{{implode(',', $course->categories->pluck('id')->toArray())}}]);
-                                </script>
                             </div>
 
                         @endif
 
                         @if (Auth::user()->role=='admin')
                             <div class="form-group">
-                                <label for="teachers" style="padding-bottom: 10px;">Учителя:</label><br>
-                                <select class="selectpicker1  form-control" data-live-search="true" id="teachers"
-                                        name="teachers[]" multiple data-width="auto">
+                                <label for="teachers" class="pb-2">Учителя:</label><br>
+                                <select class="selectpicker1 form-control" data-live-search="true" id="teachers"
+                                        name="teachers[]" multiple data-width="auto" data-selectpicker-value='@json($course->teachers->pluck('id')->toArray())'>
                                     @foreach (\App\User::where('role', 'teacher')->orWhere('role', 'admin')->get() as $teacher)
                                         <option data-tokens="{{ $teacher->id }}"
                                                 value="{{ $teacher->id }}">{{$teacher->name}}</option>
                                     @endforeach
                                 </select>
-
-                                <script>
-                                    $('.selectpicker1').selectpicker('val', [{{implode(',', $course->teachers->pluck('id')->toArray())}}]);
-                                </script>
                             </div>
 
                         @endif
 
                         @if ($course->state == 'draft')
-                            <div class="form-group{{ $errors->has("start_date") ? ' has-error' : '' }}">
+                            <div class="form-group">
                                 <label for="start_date">Дата начала:</label>
                                 @if (old('start_date')!="" || $course->start_date==null)
                                     <input id="start_date" type="text" class="form-control date"
@@ -97,7 +85,7 @@
 
 
                                 @if ($errors->has("start_date"))
-                                    <span class="help-block error-block">
+                                    <span class="text-danger d-block">
                                         <strong>{{ $errors->first("start_date") }}</strong>
                                     </span>
                                 @endif
@@ -105,18 +93,14 @@
                         @endif
 
                         <div class="form-group">
-                            <label for="students" style="padding-bottom: 10px;">Студенты:</label><br>
-                            <select class="selectpicker2  form-control" data-live-search="true" id="students"
-                                    name="students[]" multiple data-width="auto">
+                            <label for="students" class="pb-2">Студенты:</label><br>
+                            <select class="selectpicker2 form-control" data-live-search="true" id="students"
+                                    name="students[]" multiple data-width="auto" data-selectpicker-value='@json($course->students->pluck('id')->toArray())'>
                                 @foreach (\App\User::all() as $student)
                                     <option data-tokens="{{ $student->id }}"
                                             value="{{ $student->id }}">{{$student->name}}</option>
                                 @endforeach
                             </select>
-
-                            <script>
-                                $('.selectpicker2').selectpicker('val', [{{implode(',', $course->students->pluck('id')->toArray())}}]);
-                            </script>
                         </div>
 
                         <div class="form-group">
@@ -131,7 +115,7 @@
                                 >
                             @endif
                             @if ($errors->has('invite'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('invite') }}</strong>
                                     </span>
                             @endif
@@ -147,7 +131,7 @@
                                 >
                             @endif
                             @if ($errors->has('git'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('git') }}</strong>
                                     </span>
                             @endif
@@ -164,7 +148,7 @@
                                        value="{{$course->telegram}}">
                             @endif
                             @if ($errors->has('telegram'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('telegram') }}</strong>
                                     </span>
                             @endif
@@ -180,7 +164,7 @@
                                 >
                             @endif
                             @if ($errors->has('site'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('site') }}</strong>
                                     </span>
                             @endif
@@ -198,7 +182,7 @@
                                 >
                             @endif
                             @if ($errors->has('image'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('image') }}</strong>
                                     </span>
                             @endif
@@ -209,7 +193,7 @@
                             <textarea id="description" class="form-control" name="description"
                                       required>@if (old('description')!=""){{old('description')}}@else{{$course->description}}@endif</textarea>
                             @if ($errors->has('description'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('description') }}</strong>
                                     </span>
                             @endif
@@ -228,19 +212,19 @@
                                        value="{{$course->weekdays}}" placeholder="1;4">
                             @endif
                             @if ($errors->has('weekdays'))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('weekdays') }}</strong>
                                     </span>
                             @endif
                         </div>
 
-                        <div class="form-group{{ $errors->has("import") ? ' has-error' : '' }}">
+                        <div class="form-group">
                             <label for="import">Импорт</label>
                             <input id="import" type="file" class="form-control"
                                    name="import">
 
                             @if ($errors->has("import"))
-                                <span class="help-block error-block">
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first("import") }}</strong>
                                     </span>
                             @endif
@@ -254,4 +238,3 @@
         </div>
     </div>
 @endsection
-

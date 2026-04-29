@@ -17,27 +17,26 @@
                             . {{$task->name}}
                             @if($task->is_star) <sup>*</sup> @endif
                             @if($task->is_hidden) <sup title="Скрытая задача">🔒</sup> @endif
-                        <!-- TODO -->
                             @if (\Request::is('insider/*'))
                                 @if($task->isSubmitted($user->id))
                                     @if($task->isFailed($user->id))
                                         <sup><img title="Не выполнено"
                                                   src="{{ url('images/icons/icons8-cancel-48.png') }}"
-                                                  style="height: 20px;"/></sup>
+                                                  height="20"/></sup>
                                     @else
                                         @if ($task->isOnCheck($user->id))
                                             <sup><img title="Ожидает проверки"
                                                       src="{{ url('images/icons/icons8-historical-48.png') }}"
-                                                      style="height: 20px;"/></sup>
+                                                        height="20"/></sup>
                                         @else
                                             @if($task->isFullDone($user->id))
                                                 <sup><img title="Выполнено"
                                                           src="{{ url('images/icons/icons8-checkmark-48.png') }}"
-                                                          style="height: 20px;"/></sup>
+                                                            height="20"/></sup>
                                             @else
                                                 <sup><img title="Требует доработки"
                                                           src="{{ url('images/icons/icons8-error-48.png') }}"
-                                                          style="height: 20px;"/></sup>
+                                                            height="20"/></sup>
                                             @endif
                                         @endif
 
@@ -48,11 +47,11 @@
                                             $exp = $task->getDeadline($course->id)->expiration;
                                         @endphp
                                         @if (\Carbon\Carbon::now()->gt($exp))
-                                            &nbsp;<sup><img style="border: 1px dotted red; height: 20px; border-radius: 3px;" title="Дедлайн"
-                                                            src="{{ url('images/icons/deadline.png') }}" /></sup>
+                                            &nbsp;<sup><img class="border border-danger rounded" title="Дедлайн"
+                                                             src="{{ url('images/icons/deadline.png') }}" height="20" /></sup>
                                         @elseif (\Carbon\Carbon::now()->addDays(3)->gt($exp))
-                                            &nbsp;<sup><img style="border: 1px dotted yellow; height: 20px; border-radius: 3px;" title="Дедлайн"
-                                                            src="{{ url('images/icons/deadline.png') }}" /></sup>
+                                            &nbsp;<sup><img class="border border-warning rounded" title="Дедлайн"
+                                                             src="{{ url('images/icons/deadline.png') }}" height="20" /></sup>
                                         @endif
                                     @endif
                                 @endif
@@ -62,43 +61,37 @@
                 @endforeach
             @endif
             @if (\Request::is('insider/*') && ($course->teachers->contains($user) || $user->role=='admin'))
-                <li class="nav-item" style="max-width: 45px;">
+                <li class="nav-item mx-1">
                     <a href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id.'/edit')}}"
-                       class="nav-link btn btn-success"
-                       style="padding: 8px 9px; height: 40px; margin: 0 0; margin-left: 5px; width: 40px;;"><i
-                                class="icon ion-android-create"></i></a>
+                       class="nav-link btn btn-success btn-sm p-2"><i
+                                 class="icon ion-android-create"></i></a>
                 </li>
-                <li class="nav-item" style="max-width: 45px;">
-                    <button type="button" class="nav-link btn btn-success" data-toggle="modal"
-                            data-target="#exampleModal"
-                            style="padding: 8px 9px;height: 40px; margin: 0 0; margin-left: 5px; width: 40px;;">
+                <li class="nav-item mx-1">
+                    <button type="button" class="nav-link btn btn-success btn-sm p-2" data-toggle="modal"
+                            data-target="#exampleModal">
                         <i class="icon ion-android-add-circle"></i>
                     </button>
                 </li>
-                <li class="nav-item" style="max-width: 45px;">
+                <li class="nav-item mx-1">
                     <a href="{{url('/insider/courses/'.$course->id.'/perform/'.$step->id)}}"
-                       class="nav-link btn btn-success"
-                       style="padding: 8px 9px;height: 40px; margin: 0 0; margin-left: 5px; width: 40px;"><i
-                                class="icon ion-android-desktop"></i></a>
+                       class="nav-link btn btn-success btn-sm p-2"><i
+                                 class="icon ion-android-desktop"></i></a>
                 </li>
-                <li class="nav-item" style="max-width: 45px;">
+                <li class="nav-item mx-1">
 
-                    <a class="nav-link btn btn-success"
-                       style="padding: 8px 9px;height: 40px; margin: 0 0; margin-left: 5px; width: 40px;"
+                    <a class="nav-link btn btn-success btn-sm p-2"
                        href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id.'/lower')}}"><i
-                                class="ion-arrow-up-c"></i></a>
+                                 class="ion-arrow-up-c"></i></a>
                 </li>
-                <li class="nav-item" style="max-width: 45px;">
-                    <a class="nav-link btn btn-success"
-                       style="padding: 8px 9px;height: 40px; margin: 0 0; margin-left: 5px; width: 40px;"
+                <li class="nav-item mx-1">
+                    <a class="nav-link btn btn-success btn-sm p-2"
                        href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id.'/upper')}}"><i
-                                class="ion-arrow-down-c"></i></a>
+                                 class="ion-arrow-down-c"></i></a>
                 </li>
-                <li class="nav-item" style="max-width: 45px;">
-                    <a class="nav-link btn btn-danger"
-                       style="padding: 8px 9px;height: 40px; margin: 0 0; margin-left: 5px; width: 40px;"
+                <li class="nav-item mx-1">
+                    <a class="nav-link btn btn-danger btn-sm p-2"
                        href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id.'/delete')}}"
-                       onclick="return confirm('Вы уверены?')"><i class="ion-close-round"></i></a>
+                       data-confirm="Вы уверены?"><i class="ion-close-round"></i></a>
                 </li>
             @endif
         </ul>
