@@ -33,7 +33,8 @@ RUN composer install \
 COPY . .
 
 # Refresh optimized autoload for full source tree
-RUN composer dump-autoload --optimize --classmap-authoritative --no-dev --no-interaction
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache \
+    && composer dump-autoload --optimize --classmap-authoritative --no-dev --no-interaction --no-scripts
 
 # Final production image: PHP-FPM
 FROM php:8.4-fpm AS app
