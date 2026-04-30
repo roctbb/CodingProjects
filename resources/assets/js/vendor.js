@@ -92,13 +92,17 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    document.querySelectorAll('div.markdown').forEach(function (markdown) {
-        markdown.innerHTML = linkifyHtml(markdown.innerHTML, {
+    const linkifySelector = document.body.dataset.linkifySelector || 'div.markdown';
+
+    document.querySelectorAll(linkifySelector).forEach(function (element) {
+        element.innerHTML = linkifyHtml(element.innerHTML, {
             target: '_blank'
         });
     });
 
-    $('div.markdown a').attr('target', '_blank');
+    document.querySelectorAll(linkifySelector + ' a').forEach(function (link) {
+        link.target = '_blank';
+    });
 
     if ($.fn.selectpicker) {
         $('.selectpicker').selectpicker();

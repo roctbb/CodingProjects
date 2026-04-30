@@ -12,7 +12,7 @@
 
     @yield('head')
 </head>
-<body class="app-material-shell">
+<body class="app-material-shell" data-linkify-selector="div">
 
 @php
     $menuAvatarPrimary = null;
@@ -138,13 +138,6 @@
 {!! \NoCaptcha::renderJs() !!}
 <form class="d-none" id="logout-form" method="POST" action="{{ route('logout') }}">{{ csrf_field() }}</form>
 
-@php
-    $cpuiDatepickers = true;
-    $cpuiApplyLinkify = true;
-    $cpuiLinkifySelector = 'div';
-    $cpuiInitPopovers = false;
-    $includeActionFormScript = true;
-@endphp
 @include('layouts.partials.common-footer-scripts')
 </body>
 </html>
