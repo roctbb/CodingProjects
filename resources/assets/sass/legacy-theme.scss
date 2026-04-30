@@ -259,7 +259,14 @@ h4 {
 }
 
 .layout-nav-side > .navbar {
+  flex: 0 0 19rem;
+  min-width: 19rem;
   width: 19rem;
+}
+
+.layout-nav-side > main {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .auth-shell {
@@ -386,6 +393,8 @@ h4 {
 
 @media screen and (max-width: 991px) {
   .layout.layout-nav-side > .navbar {
+    flex-basis: auto;
+    min-width: 0;
     width: 100% !important;
   }
 
