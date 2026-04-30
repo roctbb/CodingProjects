@@ -92,9 +92,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    const linkifySelector = document.body.dataset.linkifySelector || 'div.markdown';
+    const linkifySelector = document.body.dataset.linkifySelector || 'div.markdown, [data-linkify]';
+
+    const linkifySkipSelector = 'nav, aside, form, button, textarea, select, option, .dropdown-menu, .app-material-nav, .app-material-user';
 
     document.querySelectorAll(linkifySelector).forEach(function (element) {
+        if (element.closest(linkifySkipSelector)) {
+            return;
+        }
+
         element.innerHTML = linkifyHtml(element.innerHTML, {
             target: '_blank'
         });

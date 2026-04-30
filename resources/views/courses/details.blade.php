@@ -301,7 +301,7 @@
                                             </div>
                                         </div>
                                         @if ($lesson->is_open && ($user->role=='admin' || $course->teachers->contains($user)) )
-                                            <small class="text-muted"><i class="ion ion-android-contacts"></i>
+                                            <small class="text-muted" data-linkify><i class="ion ion-android-contacts"></i>
                                                 Открытый URL: {{ url('/open/steps/'.$lesson->steps->first()->id) }}
                                             </small>
                                         @endif

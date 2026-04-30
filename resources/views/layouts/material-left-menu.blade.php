@@ -12,7 +12,7 @@
 
     @yield('head')
 </head>
-<body class="app-material-shell" data-linkify-selector="div">
+<body class="app-material-shell">
 
 @php
     $menuAvatarPrimary = null;
