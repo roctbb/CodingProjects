@@ -23,6 +23,25 @@ if (token) {
 
 document.addEventListener('DOMContentLoaded', function () {
     var url = document.location.toString();
+    const linkifySelector = document.body.dataset.linkifySelector || 'div.markdown, [data-linkify]';
+    const linkifySkipSelector = 'nav, aside, form, button, textarea, select, option, .dropdown-menu, .app-material-nav, .app-material-user';
+
+    const applyLinkify = function (root) {
+        root.querySelectorAll(linkifySelector).forEach(function (element) {
+            if (element.dataset.linkifyReady === '1' || element.closest(linkifySkipSelector)) {
+                return;
+            }
+
+            element.innerHTML = linkifyHtml(element.innerHTML, {
+                target: '_blank'
+            });
+            element.dataset.linkifyReady = '1';
+        });
+
+        root.querySelectorAll(linkifySelector + ' a').forEach(function (link) {
+            link.target = '_blank';
+        });
+    };
 
     const appendSubmittedSolution = function (target, date, text) {
         const months = [
@@ -54,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const body = document.createElement('div');
         body.className = 'card-body p-3';
         body.style.whiteSpace = 'pre-wrap';
+        body.dataset.linkify = '';
         body.textContent = text;
 
         card.appendChild(header);
@@ -61,6 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
         col.appendChild(card);
         row.appendChild(col);
         target.appendChild(row);
+        applyLinkify(row);
     };
 
     const replaceButtonText = function (button, pattern, replacement) {
@@ -92,23 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    const linkifySelector = document.body.dataset.linkifySelector || 'div.markdown, [data-linkify]';
-
-    const linkifySkipSelector = 'nav, aside, form, button, textarea, select, option, .dropdown-menu, .app-material-nav, .app-material-user';
-
-    document.querySelectorAll(linkifySelector).forEach(function (element) {
-        if (element.closest(linkifySkipSelector)) {
-            return;
-        }
-
-        element.innerHTML = linkifyHtml(element.innerHTML, {
-            target: '_blank'
-        });
-    });
-
-    document.querySelectorAll(linkifySelector + ' a').forEach(function (link) {
-        link.target = '_blank';
-    });
+    applyLinkify(document);
 
     if ($.fn.selectpicker) {
         $('.selectpicker').selectpicker();

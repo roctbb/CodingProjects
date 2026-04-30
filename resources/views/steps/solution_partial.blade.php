@@ -15,7 +15,9 @@
             </div>
             <div class="card-body">
 
-                {!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->text)), false))  !!}
+                <div data-linkify>
+                    {!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->text)), false))  !!}
+                </div>
 
                 <br><br>
                 @if ($solution->mark!=null)
@@ -23,7 +25,7 @@
                         <span class="badge badge-light">Проверено: {{$solution->checked}}
                             , {{$solution->teacher->name}}</span>
                     </p>
-                    <p class="small">
+                    <p class="small" data-linkify>
                         {!!  nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->comment)), false)) !!}
                     </p>
 
