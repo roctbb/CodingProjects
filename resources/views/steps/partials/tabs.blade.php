@@ -63,33 +63,33 @@
             @if (\Request::is('insider/*') && ($course->teachers->contains($user) || $user->role=='admin'))
                 <li class="nav-item mx-1">
                     <a href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id.'/edit')}}"
-                       class="nav-link btn btn-success btn-sm p-2"><i
+                       class="btn btn-success btn-sm p-2"><i
                                  class="icon ion-android-create"></i></a>
                 </li>
                 <li class="nav-item mx-1">
-                    <button type="button" class="nav-link btn btn-success btn-sm p-2" data-toggle="modal"
+                    <button type="button" class="btn btn-success btn-sm p-2" data-toggle="modal"
                             data-target="#exampleModal">
                         <i class="icon ion-android-add-circle"></i>
                     </button>
                 </li>
                 <li class="nav-item mx-1">
                     <a href="{{url('/insider/courses/'.$course->id.'/perform/'.$step->id)}}"
-                       class="nav-link btn btn-success btn-sm p-2"><i
+                       class="btn btn-success btn-sm p-2"><i
                                  class="icon ion-android-desktop"></i></a>
                 </li>
                 <li class="nav-item mx-1">
 
-                    <a class="nav-link btn btn-success btn-sm p-2"
+                    <a class="btn btn-success btn-sm p-2"
                        href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id.'/lower')}}"><i
                                  class="ion-arrow-up-c"></i></a>
                 </li>
                 <li class="nav-item mx-1">
-                    <a class="nav-link btn btn-success btn-sm p-2"
+                    <a class="btn btn-success btn-sm p-2"
                        href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id.'/upper')}}"><i
                                  class="ion-arrow-down-c"></i></a>
                 </li>
                 <li class="nav-item mx-1">
-                    <a class="nav-link btn btn-danger btn-sm p-2"
+                    <a class="btn btn-danger btn-sm p-2"
                        href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id.'/delete')}}"
                        data-confirm="Вы уверены?"><i class="ion-close-round"></i></a>
                 </li>
