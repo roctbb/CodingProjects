@@ -78,7 +78,7 @@
 
 <!-- Rocket JS -->
 <script src="{{ url('rocket/assets/js/rocket.js') }}"></script>
-<script src="{{ asset('build/js/nbv.js') }}"></script>
+<script type="module" src="{{ asset('build/js/nbv.js') }}"></script>
 <script type="module" src="{{ asset('build/js/notebook-render.js') }}"></script>
 <script type="module" src="{{ asset('build/js/highlight.js') }}"></script>
 

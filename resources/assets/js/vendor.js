@@ -232,7 +232,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (window.nbv) {
         document.querySelectorAll('[data-notebook-content]').forEach(function (notebook) {
-            window.nbv.render(JSON.parse(notebook.dataset.notebookContent), notebook);
+            if (notebook.dataset.notebookRendered === '1') {
+                return;
+            }
+
+            try {
+                window.nbv.render(JSON.parse(notebook.dataset.notebookContent), notebook);
+                notebook.dataset.notebookRendered = '1';
+            } catch (error) {
+                console.error('Failed to render notebook:', error);
+            }
         });
     }
 

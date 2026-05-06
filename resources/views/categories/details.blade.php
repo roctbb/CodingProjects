@@ -55,7 +55,7 @@
                 <div class="card-body">
                     @if ($category->video_url)
                         <div class="embed-responsive embed-responsive-16by9 video-card-bleed">
-                            <iframe class="embed-responsive-item" src="{{$category->video_url}}"
+                            <iframe class="embed-responsive-item" src="{{ video_embed_url($category->video_url) }}"
                                     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                                     allowfullscreen></iframe>
                         </div>

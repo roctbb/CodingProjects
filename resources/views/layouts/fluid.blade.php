@@ -14,7 +14,7 @@
     </title>
 
     @include('layouts.partials.npm-vendor-assets')
-    <script src="{{ asset('build/js/nbv.js') }}"></script>
+    <script type="module" src="{{ asset('build/js/nbv.js') }}"></script>
     <link href="{{ asset('build/css/notebook.css') }}" rel="stylesheet" type="text/css" media="all"/>
     <link href="{{ asset('build/css/legacy/theme.css') }}" rel="stylesheet" type="text/css" media="all"/>
     <link href="{{ asset('build/css/legacy-theme.css') }}" rel="stylesheet" type="text/css" media="all"/>
@@ -34,6 +34,7 @@
 </main>
 
 @include('layouts.partials.common-footer-scripts')
+<script type="module" src="{{ asset('build/js/notebook-render.js') }}"></script>
 @include('layouts.partials.yandex-metrika')
 
 

@@ -1,7 +1,7 @@
 @extends('layouts.left-menu')
 
 @section('title')
-    {{ $user->name }}
+    Сообщество
 @endsection
 
 @section('content')

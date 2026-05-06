@@ -3,7 +3,7 @@
 
         @if ($step->video_url)
             <div class="embed-responsive embed-responsive-16by9 mb-4">
-                <iframe class="embed-responsive-item" src="{{$step->video_url}}"
+                <iframe class="embed-responsive-item" src="{{ video_embed_url($step->video_url) }}"
                         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen></iframe>
             </div>
