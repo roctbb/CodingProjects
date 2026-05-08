@@ -3,141 +3,135 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ config('app.name', 'Laravel') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
     <title>@yield('title') - {{ config('app.name', 'Laravel') }}</title>
 
     @include('layouts.partials.npm-vendor-assets')
-
+    <link href="{{ asset('build/css/legacy-theme.css') }}" rel="stylesheet">
     @yield('head')
 </head>
-<body class="app-material-shell">
+<body>
 
-@php
-    $menuAvatarPrimary = null;
-    $menuAvatarFallback = url('images/user.jpg');
-    if (Auth::check()) {
-        $menuAvatarPrimary = Auth::user()->image ? url('/media/'.Auth::user()->image) : $menuAvatarFallback;
-    }
-@endphp
+<div class="gc-layout">
+    <aside id="gcSidebar" class="gc-sidebar">
+        <a class="gc-sidebar__brand" href="{{ url('/') }}">
+            <img src="{{ url('images/icons/icons8-idea-64.png') }}" alt="">
+            <span>GeekClass</span>
+        </a>
 
-<div class="app-material-shell__layout">
-    <aside id="appMaterialNav" class="app-material-nav" aria-label="Основная навигация">
-        <div class="app-material-nav__section">
-            <h2 class="app-material-nav__title">Навигация</h2>
-            <ul class="app-material-nav__list">
-                @if (Auth::check())
+        <ul class="gc-sidebar__nav">
+            @if (Auth::check())
+                <li>
+                    <a class="gc-sidebar__link {{ Request::is('insider/courses*') ? 'active' : '' }}" href="{{ url('/insider/courses') }}">
+                        <i class="fas fa-graduation-cap"></i> Мои курсы
+                    </a>
+                </li>
+                <li>
+                    <a class="gc-sidebar__link {{ Request::is('insider/market*') ? 'active' : '' }}" href="{{ url('/insider/market') }}">
+                        <i class="fas fa-store"></i> Магазин
+                    </a>
+                </li>
+                <li>
+                    <a class="gc-sidebar__link {{ Request::is('insider/profile*') ? 'active' : '' }}" href="{{ url('/insider/profile') }}">
+                        <i class="fas fa-user-circle"></i> Профиль
+                    </a>
+                </li>
+                @if (Auth::user()->role == 'admin')
                     <li>
-                        <a class="app-material-nav__link {{ Request::is('insider/courses*') ? 'is-active' : '' }}" href="{{ url('/insider/courses') }}" aria-label="Мои курсы">
-                            <i class="fas fa-graduation-cap" aria-hidden="true"></i>
-                            <span>Мои курсы</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="app-material-nav__link {{ Request::is('insider/market*') ? 'is-active' : '' }}" href="{{ url('/insider/market') }}" aria-label="Магазин">
-                            <i class="fas fa-store" aria-hidden="true"></i>
-                            <span>Магазин</span>
-                        </a>
-                    </li>
-                @else
-                    <li>
-                        <a class="app-material-nav__link {{ (Request::is('courses*') || Request::is('categories*')) ? 'is-active' : '' }}" href="{{ url('/courses') }}" aria-label="Каталог курсов">
-                            <i class="fas fa-book-open" aria-hidden="true"></i>
-                            <span>Каталог курсов</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="app-material-nav__link {{ Request::is('login') ? 'is-active' : '' }}" href="{{ url('/login') }}" aria-label="Войти">
-                            <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
-                            <span>Войти</span>
+                        <a class="gc-sidebar__link {{ Request::is('insider/market/orders*') ? 'active' : '' }}" href="{{ url('/insider/market/orders') }}">
+                            <i class="fas fa-box"></i> Заказы
                         </a>
                     </li>
                 @endif
-            </ul>
-        </div>
+            @else
+                <li>
+                    <a class="gc-sidebar__link {{ Request::is('login') ? 'active' : '' }}" href="{{ url('/login') }}">
+                        <i class="fas fa-sign-in-alt"></i> Войти
+                    </a>
+                </li>
+            @endif
+        </ul>
 
-        <div class="app-material-nav__section">
-            <h2 class="app-material-nav__title">Инструменты</h2>
-            <ul class="app-material-nav__list app-material-nav__list--small">
-                <li>
-                    <a class="app-material-nav__link" target="_blank" rel="noopener noreferrer" href="https://blog.geekclass.ru" aria-label="Блог">
-                        <i class="fas fa-newspaper" aria-hidden="true"></i>
-                        <span>Блог</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="app-material-nav__link" target="_blank" rel="noopener noreferrer" href="https://notes.geekclass.ru" aria-label="GeekPaste">
-                        <i class="fas fa-sticky-note" aria-hidden="true"></i>
-                        <span>GeekPaste</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+        <div class="gc-sidebar__section-label">Инструменты</div>
+        <ul class="gc-sidebar__nav" style="flex: 0">
+            <li>
+                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://blog.geekclass.ru">
+                    <i class="fas fa-newspaper"></i> Блог
+                </a>
+            </li>
+            <li>
+                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://notes.geekclass.ru">
+                    <i class="fas fa-sticky-note"></i> GeekPaste
+                </a>
+            </li>
+        </ul>
 
         @if (Auth::check())
-            <div class="app-material-nav__section">
-                <h2 class="app-material-nav__title">Профиль</h2>
-                <ul class="app-material-nav__list app-material-nav__list--small">
-                    <li>
-                        <a class="app-material-nav__link {{ Request::is('insider/profile*') ? 'is-active' : '' }}" href="{{ url('/insider/profile') }}" aria-label="Мой профиль">
-                            <i class="fas fa-user-circle" aria-hidden="true"></i>
-                            <span>Мой профиль</span>
-                        </a>
-                    </li>
-                    @if (Auth::user()->role == 'admin')
+            <div class="gc-sidebar__user">
+                <div class="dropdown">
+                    <button class="gc-sidebar__user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="{{ Auth::user()->imageUrl() }}" class="gc-sidebar__avatar" alt="">
+                        <span>{{ Auth::user()->name }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ url('insider/profile') }}"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                        <li><span class="dropdown-item-text text-muted"><i class="fas fa-coins me-2"></i>{{ Auth::user()->balance() }} GC</span></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li>
-                            <a class="app-material-nav__link {{ Request::is('insider/market/orders*') ? 'is-active' : '' }}" href="{{ url('/insider/market/orders') }}" aria-label="Заказы магазина">
-                                <i class="fas fa-box" aria-hidden="true"></i>
-                                <span>Заказы магазина</span>
-                            </a>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Выход</button>
+                            </form>
                         </li>
-                    @endif
-                </ul>
-            </div>
-
-            <div class="app-material-user">
-                <div class="app-material-user__row">
-                    <img alt="User" src="{{ $menuAvatarPrimary }}"
-                         data-image-fallback="{{ $menuAvatarFallback }}"
-                         class="app-material-user__avatar">
-                    <div>
-                        <p class="app-material-user__name">{{ Auth::user()->name }}</p>
-                        <p class="app-material-user__balance"><i class="fas fa-coins" aria-hidden="true"></i> {{ Auth::user()->balance() }}</p>
-                    </div>
+                    </ul>
                 </div>
-                <md-icon-button type="submit" form="logout-form" class="app-material-user__logout">
-                    <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
-                    <span class="app-material-user__logout-text">Выход</span>
-                </md-icon-button>
             </div>
         @endif
-
     </aside>
 
-    <div id="main-content" class="app-material-main">
-        <md-icon-button type="button"
-                class="app-material-nav-toggle"
-                data-ui-nav-toggle
-                aria-controls="appMaterialNav"
-                aria-expanded="false"
-                aria-label="Открыть меню">
-            <i class="fas fa-bars" aria-hidden="true"></i>
-        </md-icon-button>
+    <div class="gc-main">
+        <div class="gc-topbar">
+            <button id="gcSidebarToggle" class="gc-topbar__toggle" aria-label="Меню">
+                <i class="fas fa-bars"></i>
+            </button>
+            <span class="fw-medium">GeekClass</span>
 
-        @include('layouts.partials.flash-alert')
+            @if (Auth::check())
+                <div class="dropdown ms-auto">
+                    <button class="btn btn-link p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="{{ Auth::user()->imageUrl() }}" class="avatar" alt="">
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ url('insider/profile') }}">Профиль</a></li>
+                        <li>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="dropdown-item">Выход</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            @endif
+        </div>
 
-        <div class="insider-page-shell">
+        <div class="gc-content">
+            @if(Session::has('alert-class') && Session::get('alert-destination') == 'head')
+                <div class="alert {{ Session::get('alert-class') }} alert-dismissible fade show" role="alert">
+                    <strong>{{ Session::get('alert-title') }}</strong> {{ Session::get('alert-text') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                </div>
+            @endif
+
             @yield('content')
         </div>
     </div>
 </div>
 
-<button type="button" class="app-material-nav-backdrop" data-ui-nav-backdrop hidden aria-label="Закрыть меню"></button>
+<div id="gcBackdrop" class="gc-backdrop"></div>
 
 {!! \NoCaptcha::renderJs() !!}
-<form class="d-none" id="logout-form" method="POST" action="{{ route('logout') }}">{{ csrf_field() }}</form>
-
 @include('layouts.partials.common-footer-scripts')
+@include('layouts.partials.yandex-metrika')
+
 </body>
 </html>

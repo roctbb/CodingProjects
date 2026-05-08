@@ -10,6 +10,8 @@ use App\CourseStudentPoints;
 use App\LessonStudentStats;
 use App\Program;
 use App\ProgramChapter;
+use App\Solution;
+use App\TaskDeadline;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\User;
@@ -44,26 +46,70 @@ class CoursesController extends Controller
         $users = Cache::remember('users:not_hidden', 60, function () {
             return User::where('is_hidden', false)->get();
         });
-        $courses = Course::with(['students:id', 'teachers:id'])->orderBy('id')->get();
+        $courses = Course::with(['students:id', 'teachers:id,name,image'])->withCount('lessons')->orderBy('id')->get();
 
         $my_courses = $courses->filter(function ($course) use ($user) {
             return $course->state == 'started' && ($user->role == 'admin' || $course->students->contains($user) || $course->teachers->contains($user));
         });
 
         $open_courses = $courses->filter(function ($course) use ($user) {
-            return $course->state == 'started' && ($user->role != 'admin' && !$course->students->contains($user) && !$course->teachers->contains($user) && $course->is_open);
+            return $course->state == 'started' && ($user->role != 'admin' && !$course->students->contains($user) && !$course->teachers->contains($user) && $course->mode == 'open');
         });
 
         $private_courses = $courses->filter(function ($course) use ($user) {
-            return $course->state == 'started' && ($user->role != 'admin' && !$course->students->contains($user) && !$course->teachers->contains($user) && !$course->is_open);
+            return $course->state == 'started' && ($user->role != 'admin' && !$course->students->contains($user) && !$course->teachers->contains($user) && $course->mode != 'open');
         });
+
+        $activeCourseIds = $my_courses->pluck('id');
+        $courseProgress = CourseStudentPoints::where('student_id', $user->id)
+            ->whereIn('course_id', $activeCourseIds)
+            ->get()
+            ->keyBy('course_id');
+
+        $upcomingDeadlines = collect([]);
+        $pendingSolutions = collect([]);
+
+        if (!($user->role == 'teacher' || $user->role == 'admin')) {
+            $submittedTaskIds = Solution::where('user_id', $user->id)
+                ->whereIn('course_id', $activeCourseIds)
+                ->whereNotNull('mark')
+                ->pluck('task_id');
+
+            $upcomingDeadlines = TaskDeadline::with(['task:id,name,is_hidden', 'course:id,name'])
+                ->whereIn('course_id', $activeCourseIds)
+                ->whereDate('expiration', '>=', Carbon::today())
+                ->whereHas('task', function ($query) {
+                    $query->where('is_hidden', false);
+                })
+                ->whereNotIn('task_id', $submittedTaskIds)
+                ->orderBy('expiration')
+                ->take(5)
+                ->get();
+        }
+
+        if ($user->role == 'teacher' || $user->role == 'admin') {
+            $managedActiveCourseIds = $user->role == 'admin'
+                ? $activeCourseIds
+                : $my_courses->filter(function ($course) use ($user) {
+                    return $course->teachers->contains($user);
+                })->pluck('id');
+
+            $pendingSolutions = Solution::with(['course:id,name', 'task:id,name', 'user:id,name,image'])
+                ->whereIn('course_id', $managedActiveCourseIds)
+                ->whereNotNull('submitted')
+                ->whereNull('mark')
+                ->orderBy('submitted')
+                ->take(5)
+                ->get();
+        }
+
         $notifications = collect([]);
         foreach ($user->unreadNotifications as $notification) {
             $notifications->push($notification);
             $notification->markAsRead();
         }
 
-    return response()->view('home', compact('courses', 'user', 'users', 'my_courses', 'open_courses', 'private_courses', 'notifications'));
+        return response()->view('home', compact('courses', 'user', 'users', 'my_courses', 'open_courses', 'private_courses', 'notifications', 'courseProgress', 'upcomingDeadlines', 'pendingSolutions'));
     }
 
     public function report($id)
@@ -116,8 +162,8 @@ class CoursesController extends Controller
                     return Carbon::createFromFormat('Y-m-d', $key);
                 });
 
-                $pulse_keys[$student_id] = '[\'' . implode('\', \'', $use_records[$student_id]->keys()->toArray()) . '\']';
-                $pulse_values[$student_id] = '[\'' . implode('\', \'', $use_records[$student_id]->values()->toArray()) . '\']';
+                $pulse_keys[$student_id] = $use_records[$student_id]->keys()->values()->toJson();
+                $pulse_values[$student_id] = $use_records[$student_id]->values()->toJson();
             }
 
             $task_records = $course->solutions->where('created_at', '>', Carbon::now()->addWeeks(-2))->groupBy('user_id')->map(function ($item) {
@@ -146,8 +192,8 @@ class CoursesController extends Controller
                     return Carbon::createFromFormat('Y-m-d', $key);
                 });
 
-                $task_keys[$student_id] = '[\'' . implode('\', \'', $task_records[$student_id]->keys()->toArray()) . '\']';
-                $task_values[$student_id] = '[\'' . implode('\', \'', $task_records[$student_id]->values()->toArray()) . '\']';
+                $task_keys[$student_id] = $task_records[$student_id]->keys()->values()->toJson();
+                $task_values[$student_id] = $task_records[$student_id]->values()->toJson();
             }
 
 

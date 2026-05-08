@@ -7,23 +7,27 @@
 @section('content')
 
 
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" class="profile-edit-page form-page">
         {{ csrf_field() }}
-        <div class="row">
-            <div class="col-md-8">
-                <h4>Профиль</h4>
+        <div class="form-page-header gc-card mb-3">
+            <div class="min-width-0">
+                <a class="assessment-back-link" href="{{ url('/insider/profile/'.$user->id) }}"><i class="icon ion-chevron-left"></i> К профилю</a>
+                <h2 class="mb-1 text-truncate">Редактирование профиля</h2>
+                <p class="mb-0 text-muted text-truncate">{{ $user->name }}</p>
             </div>
-            <div class="col">
-                <button type="submit" class="btn btn-success btn-sm float-right">Сохранить</button>
+            <div>
+                <button type="submit" class="btn btn-success">Сохранить</button>
             </div>
         </div>
 
-        <div class="row mt-3">
+        <div class="row g-3">
             <div class="col-md-8">
-                <div class="card">
+                <div class="gc-card profile-edit-card">
                     <div class="card-body">
 
-                        <div class="form-group">
+                        <div class="form-section-title">Доступ</div>
+
+                        <div class="mb-3">
                             <label for="password" class="form-label">Новый пароль</label>
 
 
@@ -35,7 +39,7 @@
 
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="password-confirm" class="form-label">Повторите
                                 пароль</label>
 
@@ -45,7 +49,7 @@
 
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for='name'>Имя</label>
 
                             @if (old('name')!="")
@@ -63,7 +67,7 @@
                         </div>
 
                         @if (\Auth::User()->role == 'teacher' || \Auth::User()->role == 'admin')
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for='birthday'>Дата рождения</label>
 
                                 @if (old('birthday')!="" || $user->birthday==null)
@@ -81,7 +85,7 @@
                                 @endif
                             </div>
                         @endif
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for='school'>Место учебы</label>
 
                             @if (old('school')!="")
@@ -99,7 +103,7 @@
                                     </span>
                             @endif
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for='grade'>Класс</label>
 
                             @if (old('grade')!="" || $user->grade_year==null)
@@ -117,8 +121,8 @@
                             @endif
                         </div>
 
-                        <h4>О себе</h4>
-                        <div class="form-group">
+                        <div class="form-section-title">О себе</div>
+                        <div class="mb-3">
                             <label for='interests'>Технические интересы</label>
 
                             @if (old('interests')!="")
@@ -134,7 +138,7 @@
                                     </span>
                             @endif
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for='hobbies'>Увлечения</label>
 
                             @if (old('hobbies')!="")
@@ -149,8 +153,8 @@
                             @endif
                         </div>
                         @if ($guest->role=='teacher' || $guest->role=='admin')
-                            <h4>Информация</h4>
-                            <div class="form-group">
+                            <div class="form-section-title">Информация</div>
+                            <div class="mb-3">
                                 <label for='comments'>Комментарий</label>
 
                                 @if (old('comments')!="")
@@ -173,11 +177,15 @@
 
             </div>
             <div class="col-md-4">
-                <div class="card">
+                <div class="gc-card profile-edit-card profile-edit-side-card">
                     <div class="card-body">
+                        <div class="text-center mb-3">
+                            <img src="{{ $user->imageUrl() }}" class="avatar lg rounded-circle" alt="">
+                            <h6 class="mt-2 mb-0">{{ $user->name }}</h6>
+                            <small class="text-muted">{{ $user->rank()->name }}</small>
+                        </div>
 
-
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="image">Аватар</label>
 
                             <input id="image" type="file" class="form-control" name="image"/>
@@ -186,8 +194,8 @@
                                 <span class="text-danger d-block"><strong>{{ $errors->first('image') }}</strong></span>
                             @endif
                         </div>
-                        <h4>Контакты</h4>
-                        <div class="form-group">
+                        <div class="form-section-title">Контакты</div>
+                        <div class="mb-3">
                             <label for='telegram'>Telegram</label>
 
                             @if (old('telegram')!="")
@@ -203,7 +211,7 @@
                                     </span>
                             @endif
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for='git'>Git</label>
 
                             @if (old('git')!="")

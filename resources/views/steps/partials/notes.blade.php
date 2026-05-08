@@ -2,8 +2,8 @@
     <div class="tab-pane fade show active markdown" id="theory" role="tabpanel" aria-labelledby="v-theory-tab">
 
         @if ($step->video_url)
-            <div class="embed-responsive embed-responsive-16by9 mb-4">
-                <iframe class="embed-responsive-item" src="{{ video_embed_url($step->video_url) }}"
+            <div class="ratio ratio-16x9 mb-4">
+                <iframe src="{{ video_embed_url($step->video_url) }}"
                         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen></iframe>
             </div>

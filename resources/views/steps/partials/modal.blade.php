@@ -2,12 +2,12 @@
     @if (\Request::is('insider/*'))
         <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
              aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="exampleModalLabel">Добавление задачи</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                            
                         </button>
                     </div>
                     <div class="modal-body">
@@ -15,7 +15,7 @@
                               method="POST"
                              >
                             {{ csrf_field() }}
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="name" class="col-md-4">Название</label>
 
                                 <div class="col-md-12">
@@ -27,7 +27,7 @@
                                     @endif
                                 </div>
                             </div>
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="max_mark" class="col-md-4">Очков опыта</label>
 
                                 <div class="col-md-12">
@@ -39,7 +39,7 @@
                                     @endif
                                 </div>
                             </div>
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="text" class="col-md-4">Текст вопроса</label>
 
                                 <div class="col-md-12">
@@ -54,7 +54,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="solution">Решение</label>
                                 <textarea id="solution" class="form-control" data-markdown-editor
                                           name="solution">@if (old('solution')!=""){{old('solution')}}@endif</textarea>
@@ -66,21 +66,21 @@
                             </div>
 
                             <hr>
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="is_star">Дополнительное</label>
                                 <input type="checkbox" id="is_star" name="is_star" value="on"/>
                             </div>
 
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="is_hidden">Скрытая задача</label>
                                 <input type="checkbox" id="is_hidden" name="is_hidden" value="on"/>
                             </div>
 
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="is_code">Автопроверка</label>
                                 <input type="checkbox" id="is_code" name="is_code" value="on"/>
                             </div>
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="answer" class="col-md-4">Ответ</label>
 
                                 <div class="col-md-12">
@@ -92,7 +92,7 @@
                                     @endif
                                 </div>
                             </div>
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="price" class="col-md-4">Премия</label>
 
                                 <div class="col-md-12">
@@ -105,7 +105,7 @@
                                 </div>
                             </div>
                             
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <div class="col-md-12">
                                     <button type="submit" class="btn btn-success">Создать</button>
                                 </div>

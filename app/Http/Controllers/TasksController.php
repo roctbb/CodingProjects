@@ -194,20 +194,26 @@ class TasksController extends Controller
     {
         $task = Task::findOrFail($id);
         $user = User::findOrFail(Auth::User()->id);
+        $step_id = $task->step_id;
+
+        $responseData = [
+            'mark' => 0,
+            'comment' => null,
+        ];
 
         // Blocked users cannot submit
         if ($task->isBlocked($user->id, $course_id)) {
-            return [
-                "mark" => 0,
-                "comment" => "Задача заблокирована для вас. Обратитесь к преподавателю."
-            ];
+            $responseData['comment'] = 'Задача заблокирована для вас. Обратитесь к преподавателю.';
+
+            return $request->expectsJson()
+                ? $responseData
+                : redirect('/insider/courses/' . $course_id . '/steps/' . $step_id . '#task' . $id);
         }
 
         $this->validate($request, [
             'text' => 'required|string',
         ]);
 
-        $step_id = $task->step_id;
         $course = Course::findOrFail($course_id);
 
         $solution = new Solution();
@@ -274,10 +280,12 @@ class TasksController extends Controller
         }
 
 
-        return [
-            "mark" => $solution->mark,
-            "comment" => $solution->comment
-        ];
+        $responseData['mark'] = $solution->mark;
+        $responseData['comment'] = $solution->comment;
+
+        return $request->expectsJson()
+            ? $responseData
+            : redirect('/insider/courses/' . $course_id . '/steps/' . $step_id . '#task' . $id);
     }
 
     public function askForRecheck($course_id, $id, $solution_id) {

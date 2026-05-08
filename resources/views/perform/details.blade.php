@@ -1,120 +1,80 @@
 @extends('layouts.empty')
 
-@section('title')
-    {{$course->name}} - {{$step->name}}
-@endsection
-
-@section('tabs')
-
-@endsection
+@section('title', $course->name . ' - ' . $step->name)
 
 @section('content')
-    <div class="row">
-        <div class="col-md-8">
+    <div class="container py-4" style="max-width: 900px;">
+        <nav class="mb-3">
+            <a href="{{ url('/insider/courses/'.$course->id.'/steps/'.$step->id) }}" class="text-decoration-none">
+                <i class="fas fa-arrow-left me-1"></i>{{ $course->name }}
+            </a>
+        </nav>
 
-            <h2><span class="font-weight-light"><a class="nav-link d-inline" role="tab" id="back-link"
-                                                   href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id)}}"><i
-                                class="icon ion-chevron-left"></i></a>{{$course->name}}
-                    - </span>{{$step->lesson->name}}</h2>
-        </div>
-    </div>
+        <h3 class="mb-3">{{ $step->lesson->name }}</h3>
 
-    <div class="row mt-3">
-        <div class="col-md-12">
-            @if (count($tasks)!=0)
-                <div class="row mb-3">
-                    <div class="col">
-                        <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-                            @if (count($tasks)!=0 && !$zero_theory)
-                                <li class="nav-item">
-                                    <a class="nav-link active" id="theory-tab" data-toggle="pill" href="#theory"
-                                       role="tab"
-                                       aria-controls="theory" aria-expanded="true">0. Теория</a>
-                                </li>
-                            @endif
-                            @if (!$one_tasker || !$zero_theory)
-                                @foreach ($tasks as $key => $task)
-                                    <li class="nav-item">
-                                        <a class="nav-link" id="tasks-tab{{$task->id}}"
-                                           data-toggle="pill"
-                                           href="#task{{$task->id}}"
-                                           role="tab"
-                                           aria-controls="tasks{{$task->id}}" aria-expanded="true">{{$key+1}}
-                                            . {{$task->name}}
-                                            @if($task->is_star) <sup>*</sup> @endif
-                                            @if($task->only_class) <sup><i
-                                                        class="icon ion-android-contacts"></i></sup> @endif
-                                            @if($task->only_remote) <sup><i class="icon ion-at"></i></sup> @endif</a>
-                                    </li>
-                                @endforeach
-                            @endif
-
-                        </ul>
-                    </div>
-
-
-                </div>
-            @endif
-            <div class="tab-content mb-3" id="pills-tabContent" data-perform-tabs>
-                @if ($empty || !$zero_theory)
-                    <div class="tab-pane fade show active" id="theory" role="tabpanel" aria-labelledby="v-theory-tab">
-                        <div class="row">
-                            <div class="col">
-                                <div class="card">
-                                    <div class="card-body markdown perform">
-                                        <h4 class="lead">{{$step->name}}</h4>
-                                        @parsedown($step->theory)
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        @if (count($tasks) && (!$zero_theory || !$one_tasker))
+            <ul class="nav nav-pills mb-4" role="tablist">
+                @if (!$zero_theory)
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="pill" href="#theory" role="tab">Теория</a>
+                    </li>
                 @endif
                 @foreach ($tasks as $key => $task)
-                    <div class="tab-pane fade" id="task{{$task->id}}" role="tabpanel"
-                         aria-labelledby="tasks-tab{{$task->id}}">
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="pill" href="#task{{ $task->id }}" role="tab">
+                            {{ $key + 1 }}. {{ $task->name }}
+                            @if($task->is_star)<sup>*</sup>@endif
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
 
-
-                        <div class="row">
-                            <div class="col">
-                                @if ($task->is_star)
-                                    <div class="alert alert-success" role="alert">
-                                        <strong>Это необязательная задача.</strong> За ее решение вы получите
-                                        дополнительные
-                                        баллы.
-                                    </div>
-                                @endif
-
-                                <div class="card">
-                                    <div class="card-header">
-                                        {{$task->name}}
-
-                                    </div>
-                                    <div class="card-body markdown perform">
-                                        {!! parsedown_math($task->text) !!}
-
-                                        <span class="badge badge-secondary">Очков опыта: {{$task->max_mark}}</span>
-                                    </div>
-                                </div>
-                            </div>
+        <div class="tab-content" data-perform-tabs>
+            @if ($empty || !$zero_theory)
+                <div class="tab-pane fade show active" id="theory" role="tabpanel">
+                    <div class="card gc-card">
+                        <div class="card-body markdown perform">
+                            <h4>{{ $step->name }}</h4>
+                            @parsedown($step->theory)
                         </div>
                     </div>
-                @endforeach
-                <p>
-                    @if ($step->previousStep() != null)
-                        <a href="{{url('/insider/courses/'.$course->id.'/perform/'.$step->previousStep()->id)}}"
-                           class="btn btn-success btn-sm">Назад</a>
+                </div>
+            @endif
+
+            @foreach ($tasks as $key => $task)
+                <div class="tab-pane fade" id="task{{ $task->id }}" role="tabpanel">
+                    @if ($task->is_star)
+                        <div class="alert alert-success">
+                            <strong>Необязательная задача.</strong> За решение — дополнительные баллы.
+                        </div>
                     @endif
-                    @if ($step->nextStep() != null)
-                        <a href="{{url('/insider/courses/'.$course->id.'/perform/'.$step->nextStep()->id)}}"
-                           class="btn btn-success btn-sm float-right">Вперед</a>
-                    @endif
-                </p>
-            </div>
+                    <div class="card gc-card">
+                        <div class="card-header bg-transparent fw-medium">{{ $task->name }}</div>
+                        <div class="card-body markdown perform">
+                            {!! parsedown_math($task->text) !!}
+                            <span class="badge bg-secondary mt-2">Очков опыта: {{ $task->max_mark }}</span>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
         </div>
+
+        <nav class="d-flex justify-content-between mt-4">
+            <div>
+                @if ($step->previousStep())
+                    <a href="{{ url('/insider/courses/'.$course->id.'/perform/'.$step->previousStep()->id) }}" class="btn step-nav-btn">
+                        <i class="fas fa-arrow-left me-1"></i>Назад
+                    </a>
+                @endif
+            </div>
+            <div>
+                @if ($step->nextStep())
+                    <a href="{{ url('/insider/courses/'.$course->id.'/perform/'.$step->nextStep()->id) }}" class="btn step-nav-btn">
+                        Вперёд<i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                @endif
+            </div>
+        </nav>
     </div>
-
-
-
-
 @endsection

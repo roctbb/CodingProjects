@@ -6,14 +6,25 @@
 
 @section('content')
 
-    <h2>Изменение курса "{{$course->name}}"</h2>
-    <div class="row mt-3">
-        <div class="col">
-            <div class="card">
-                <div class="card-body">
-                    <form method="POST" enctype="multipart/form-data">
+    <div class="form-page">
+        <div class="form-page-header gc-card mb-3">
+            <div class="min-width-0">
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
+                <h2 class="mb-1 text-truncate">Настройки курса</h2>
+                <p class="mb-0 text-muted text-truncate">{{ $course->name }}</p>
+            </div>
+            <div class="form-page-status">
+                <span class="badge course-status-pill course-status-pill--primary">{{ $course->state }}</span>
+                @if($course->mode)
+                    <span class="badge course-status-pill course-status-pill--muted">{{ $course->mode }}</span>
+                @endif
+            </div>
+        </div>
+
+        <div class="gc-card form-card form-card--wide">
+                    <form method="POST" enctype="multipart/form-data" class="form-grid form-grid--settings">
                         {{ csrf_field() }}
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="name">Название</label>
 
                             @if (old('name')!="")
@@ -30,26 +41,23 @@
                             @endif
                         </div>
                         @if (Auth::user()->role=='admin')
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="mode" class="pb-2">Тип курса:</label><br>
-                                <select class="selectpicker4 form-control" data-live-search="true" id="mode"
-                                        name="mode" data-selectpicker-value='@json($course->mode)'>
-                                    <option data-tokens="private" value="private">Скрытый</option>
-                                    <option data-tokens="offline" value="offline">Офлайн</option>
-                                    <option data-tokens="zoom" value="zoom">Платный онлайн курс</option>
-                                    <option data-tokens="paid" value="paid">Платный онлайн курс без преподавателя</option>
-                                    <option data-tokens="open" value="open">Бесплатный онлайн курс</option>
+                                <select class="form-select" id="mode" name="mode">
+                                    <option value="private" @if($course->mode == 'private') selected @endif>Скрытый</option>
+                                    <option value="offline" @if($course->mode == 'offline') selected @endif>Офлайн</option>
+                                    <option value="zoom" @if($course->mode == 'zoom') selected @endif>Платный онлайн курс</option>
+                                    <option value="paid" @if($course->mode == 'paid') selected @endif>Платный онлайн курс без преподавателя</option>
+                                    <option value="open" @if($course->mode == 'open') selected @endif>Бесплатный онлайн курс</option>
                                 </select>
                             </div>
 
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="categories" class="pb-2">Образовательные
                                     направления:</label><br>
-                                <select class="selectpicker3 form-control" data-live-search="true" id="categories"
-                                        name="categories[]" multiple data-width="auto" data-selectpicker-value='@json($course->categories->pluck('id')->toArray())'>
+                                <select class="form-select" id="categories" name="categories[]" multiple>
                                     @foreach (\App\CourseCategory::all() as $category)
-                                        <option data-tokens="{{ $category->id }}"
-                                                value="{{ $category->id }}">{{$category->title}}</option>
+                                        <option value="{{ $category->id }}" @if($course->categories->contains($category->id)) selected @endif>{{$category->title}}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -57,13 +65,11 @@
                         @endif
 
                         @if (Auth::user()->role=='admin')
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="teachers" class="pb-2">Учителя:</label><br>
-                                <select class="selectpicker1 form-control" data-live-search="true" id="teachers"
-                                        name="teachers[]" multiple data-width="auto" data-selectpicker-value='@json($course->teachers->pluck('id')->toArray())'>
+                                <select class="form-select" id="teachers" name="teachers[]" multiple>
                                     @foreach (\App\User::where('role', 'teacher')->orWhere('role', 'admin')->get() as $teacher)
-                                        <option data-tokens="{{ $teacher->id }}"
-                                                value="{{ $teacher->id }}">{{$teacher->name}}</option>
+                                        <option value="{{ $teacher->id }}" @if($course->teachers->contains($teacher->id)) selected @endif>{{$teacher->name}}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -71,7 +77,7 @@
                         @endif
 
                         @if ($course->state == 'draft')
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="start_date">Дата начала:</label>
                                 @if (old('start_date')!="" || $course->start_date==null)
                                     <input id="start_date" type="text" class="form-control date"
@@ -92,18 +98,16 @@
                             </div>
                         @endif
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="students" class="pb-2">Студенты:</label><br>
-                            <select class="selectpicker2 form-control" data-live-search="true" id="students"
-                                    name="students[]" multiple data-width="auto" data-selectpicker-value='@json($course->students->pluck('id')->toArray())'>
+                            <select class="form-select" id="students" name="students[]" multiple>
                                 @foreach (\App\User::all() as $student)
-                                    <option data-tokens="{{ $student->id }}"
-                                            value="{{ $student->id }}">{{$student->name}}</option>
+                                    <option value="{{ $student->id }}" @if($course->students->contains($student->id)) selected @endif>{{$student->name}}</option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="git">Инвайт</label>
 
                             @if (old('invite')!="")
@@ -121,7 +125,7 @@
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="git">Git репозиторий</label>
 
                             @if (old('git')!="")
@@ -137,7 +141,7 @@
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="telegram">Telegram чат</label>
 
                             @if (old('telegram')!="")
@@ -154,7 +158,7 @@
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="site">Ссылка на описание курса</label>
 
                             @if (old('site')!="")
@@ -170,7 +174,7 @@
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="image">Ссылка на обложку</label>
 
                             @if (old('image')!="")
@@ -188,7 +192,7 @@
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="description">Описание</label>
                             <textarea id="description" class="form-control" name="description"
                                       required>@if (old('description')!=""){{old('description')}}@else{{$course->description}}@endif</textarea>
@@ -201,7 +205,7 @@
 
                         <hr>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="weekdays">Дни недели</label>
 
                             @if (old('weekdays')!="")
@@ -218,7 +222,7 @@
                             @endif
                         </div>
 
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="import">Импорт</label>
                             <input id="import" type="file" class="form-control"
                                    name="import">
@@ -231,10 +235,10 @@
                         </div>
 
 
-                        <button type="submit" class="btn btn-success">Сохранить</button>
+                        <div class="form-actions form-actions--full">
+                            <button type="submit" class="btn btn-success">Сохранить настройки</button>
+                        </div>
                     </form>
-                </div>
-            </div>
         </div>
     </div>
 @endsection

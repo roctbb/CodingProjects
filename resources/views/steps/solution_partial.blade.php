@@ -1,15 +1,14 @@
 {{-- Will be replaced by solution.vue --}}
-<div class="row my-3">
+<div class="row mt-4">
     <div class="col">
-        <div class="card">
-            <div class="card-header">
-                Дата сдачи: {{ $solution->submitted->format('d.M.Y H:i')}}
-                <div class="float-right">
+        <div class="gc-card step-solution-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="icon ion-ios-clock-outline" style="margin-right:0.3rem;opacity:0.7;"></i>{{ $solution->submitted->format('d.M.Y H:i')}}</span>
+                <div>
                     @if ($solution->mark!=null)
-                        <span class="badge badge-primary">Очков опыта: {{$solution->mark}}</span>
-                        <br>
+                        <span class="badge bg-primary">Очков опыта: {{$solution->mark}}</span>
                     @else
-                        <span class="badge badge-secondary">Решение еще не проверено</span>
+                        <span class="badge bg-secondary">Не проверено</span>
                     @endif
                 </div>
             </div>
@@ -22,7 +21,7 @@
                 <br><br>
                 @if ($solution->mark!=null)
                     <p>
-                        <span class="badge badge-light">Проверено: {{$solution->checked}}
+                        <span class="badge bg-light text-dark">Проверено: {{$solution->checked}}
                             , {{$solution->teacher->name}}</span>
                     </p>
                     <p class="small" data-linkify>
@@ -31,7 +30,7 @@
 
                     @if ($solution->mark != $solution->task->max_mark and $solution->task->is_code)
                         @if ($solution->recheck_requested)
-                            <p><span class="badge badge-primary">Запрошена перепроверка</span></p>
+                            <p><span class="badge bg-primary">Запрошена перепроверка</span></p>
                         @elseif (!$task->isFullDone(Auth::User()->id))
                             <p>
                                 <a href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution/'. $solution->id . '/recheck') }}"

@@ -5,101 +5,94 @@
 @endsection
 
 @section('content')
-    <h2><a class="d-inline mr-2" href="{{url('/insider/courses/'.$course->id.'/assessments')}}"><i
-                    class="icon ion-chevron-left"></i></a>&nbsp;{{$student->name}}: "{{$task->name}}"</h2>
+    <div class="solution-review-page">
+        <div class="solution-review-header gc-card mb-3">
+            <div class="min-width-0">
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
+                <h2 class="mb-1 text-truncate">Проверка решения</h2>
+                <p class="mb-0 text-muted text-truncate">{{ $student->name }} · {{ $task->name }}</p>
+            </div>
+            <div class="solution-review-actions">
+                <a class="btn btn-outline-primary btn-sm" href="{{ url('/insider/courses/'.$course->id.'/assessments') }}">Журнал</a>
+                <a class="btn btn-success btn-sm" href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit') }}">Редактировать</a>
+            @if ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin')
+                @php $isBlocked = $task->isBlocked($student->id, $course->id); @endphp
+                @if ($isBlocked)
+                    <a class="btn btn-warning btn-sm"
+                       href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/unblock/'.$student->id) }}"
+                       data-confirm="Разблокировать задачу для этого ученика?">Разблокировать</a>
+                @else
+                    <a class="btn btn-outline-danger btn-sm"
+                       href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/block/'.$student->id) }}"
+                       data-confirm="Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены.">Заблокировать</a>
+                @endif
+            @endif
+            </div>
+        </div>
 
-    <div class="row mt-3">
-        <div class="col">
+        <div class="gc-card solution-task-card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between gap-2">
+                <strong class="text-truncate">{{ $task->name }}</strong>
+                <span class="badge bg-secondary text-nowrap">{{ $task->max_mark }} XP</span>
+            </div>
+            <div class="card-body markdown">
+                {!! parsedown_math($task->text) !!}
+            </div>
+        </div>
 
-            <div class="card">
-                <div class="card-header">
-                    {{$task->name}}
-                    @if ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin')
-                        @php $isBlocked = $task->isBlocked($student->id, $course->id); @endphp
-                        @if ($isBlocked)
-                            <a class="float-right btn btn-warning btn-sm mr-1"
-                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/unblock/'.$student->id)}}"
-                               data-confirm="Разблокировать задачу для этого ученика?">Разблокировать</a>
-                        @else
-                            <a class="float-right btn btn-danger btn-sm mr-1"
-                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/block/'.$student->id)}}"
-                               data-confirm="Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены.">Заблокировать</a>
-                        @endif
+        @forelse ($solutions as $key => $solution)
+            <div class="gc-card solution-review-card mb-3" id="solution-{{ $solution->id }}">
+                <div class="card-header solution-review-card__header">
+                    <div>
+                        <strong>Решение #{{ $solutions->count() - $key }}</strong>
+                        <span class="text-muted small d-block">{{ $solution->submitted->format('d.m.Y H:i') }}</span>
+                    </div>
+                    @if ($solution->mark!=null)
+                        <span class="badge bg-primary">{{ $solution->mark }} / {{ $task->max_mark }} XP</span>
+                    @else
+                        <span class="badge bg-warning text-dark">На проверке</span>
                     @endif
-                    <a class="float-right btn btn-danger btn-sm"
-                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}" data-confirm="Вы уверены?">Удалить</a>
-                    <a class="float-right btn btn-success btn-sm mr-1"
-                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}">Редактировать</a>
                 </div>
-                <div class="card-body markdown">
-                    {!! parsedown_math($task->text) !!}
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-lg-8">
+                            <div class="solution-answer" data-linkify>
+                                {!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->text)), false))!!}
+                            </div>
 
-                    <span class="badge badge-secondary">Очков опыта: {{$task->max_mark}}</span>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-    @foreach ($solutions as $key => $solution)
-        <div class="row my-3">
-
-            <div class="col">
-
-                <div class="card">
-                    <div class="card-header">
-                        Дата сдачи: {{ $solution->submitted->format('d.M.Y H:i')}}
-                        <div class="float-right">
-
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div data-linkify>
-                                    {!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->text)), false))!!}
+                            @if ($solution->mark!=null)
+                                <div class="solution-feedback mt-3">
+                                    <div class="small text-muted mb-1">Проверено: {{ $solution->checked }}@if($solution->teacher), {{ $solution->teacher->name }}@endif</div>
+                                    <div class="small" data-linkify>{!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->comment)), false))!!}</div>
                                 </div>
-                                <br>
-                                <br>
-                                @if ($solution->mark!=null)
-                                    <p>
-                                        <span class="badge badge-primary">Очков опыта: {{$solution->mark}}</span><br>
-                                        <span class="badge badge-light">Проверено: {{$solution->checked}}
-                                            , {{$solution->teacher->name}}</span>
-                                    </p>
-
-                                    <p>
-                                        <span class="small" data-linkify>{!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->comment)), false))!!}</span>
-                                    </p>
-                                @else
-                                    <span class="badge badge-secondary">Решение еще не проверено</span>
-                                @endif
-                            </div>
-                            <div class="col-md-4">
-                                <form method="post"
-                                      action="{{url('insider/courses/'.$solution->course_id.'/solution/'.$solution->id)}}">
-                                    {{csrf_field()}}
-                                    <div class="form-group">
-                                        <input type="text" class="form-control form-control-sm mb-2 mr-sm-2 mb-sm-0"
-                                               id="mark"
-                                               name="mark" placeholder="Очков опыта">
-                                        @if ($errors->has('mark'))
-                                            <span class="text-danger d-block"><strong>{{ $errors->first('mark') }}</strong></span>
-                                        @endif
-                                    </div>
-                                    <div class="form-group">
-                                        <textarea class="form-control" name="comment"
-                                                  placeholder="Комментарий"></textarea>
-
-                                    </div>
-                                    <button type="submit" class="btn btn-success btn-sm">Оценить</button>
-                                </form>
-                            </div>
+                            @endif
+                        </div>
+                        <div class="col-lg-4">
+                            <form class="solution-grade-form" method="post" action="{{ url('insider/courses/'.$solution->course_id.'/solution/'.$solution->id) }}">
+                                {{ csrf_field() }}
+                                <div class="mb-3">
+                                    <label for="mark-{{ $solution->id }}" class="form-label">Очков опыта</label>
+                                    <input type="number" class="form-control form-control-sm" id="mark-{{ $solution->id }}" name="mark" min="0" max="{{ $task->max_mark }}" placeholder="0-{{ $task->max_mark }}">
+                                    @if ($errors->has('mark'))
+                                        <span class="text-danger d-block"><strong>{{ $errors->first('mark') }}</strong></span>
+                                    @endif
+                                </div>
+                                <div class="mb-3">
+                                    <label for="comment-{{ $solution->id }}" class="form-label">Комментарий</label>
+                                    <textarea class="form-control" id="comment-{{ $solution->id }}" name="comment" rows="5" placeholder="Что получилось, что поправить"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-success btn-sm w-100">Оценить</button>
+                            </form>
                         </div>
                     </div>
                 </div>
-
             </div>
-        </div>
-    @endforeach
+        @empty
+            <div class="courses-empty-state gc-card">
+                <div class="courses-empty-state__icon"><i class="fas fa-inbox"></i></div>
+                <h5>Решений пока нет</h5>
+                <p>Когда ученик отправит работу, она появится здесь.</p>
+            </div>
+        @endforelse
+    </div>
 @endsection

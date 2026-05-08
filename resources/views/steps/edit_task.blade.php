@@ -5,16 +5,20 @@
 @endsection
 
 @section('content')
+    <div class="form-page">
+        <div class="form-page-header gc-card mb-3">
+            <div>
+                <h2 class="mb-1">Изменение задачи</h2>
+                <p class="mb-0 text-muted text-truncate">{{$task->name}}</p>
+            </div>
+        </div>
 
-    <h2>Изменение задачи "{{$task->name}}"</h2>
-    <div class="row mt-3">
-        <div class="col">
-            <div class="card">
-                <div class="card-body">
-                    <form method="POST" enctype="multipart/form-data">
+        <div class="form-layout">
+            <div class="gc-card form-card form-card--wide">
+                    <form method="POST" enctype="multipart/form-data" class="form-stack">
                         {{ csrf_field() }}
-                        <div class="form-group">
-                            <label for="name">Название</label>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Название</label>
 
                             @if (old('name')!="")
                                 <input id="name" type="text" class="form-control" name="name" value="{{old('name')}}"
@@ -30,8 +34,8 @@
                             @endif
                         </div>
 
-                        <div class="form-group">
-                            <label for="max_mark">Очков опыта</label>
+                        <div class="mb-3">
+                            <label for="max_mark" class="form-label">Очков опыта</label>
 
                             @if (old('max_mark')!="")
                                 <input type="text" name="max_mark" class="form-control" id="max_mark"
@@ -50,8 +54,8 @@
 
                         </div>
 
-                        <div class="form-group">
-                            <label for="text">Текст</label>
+                        <div class="mb-3">
+                            <label for="text" class="form-label">Текст</label>
                             <div class="mb-2">
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-improve-text="fix_typos" data-field-id="text">
                                     <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
@@ -72,8 +76,8 @@
                             @endif
                         </div>
 
-                        <div class="form-group">
-                            <label for="solution">Решение</label>
+                        <div class="mb-3">
+                            <label for="solution" class="form-label">Решение</label>
                             <div class="mb-2">
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-improve-text="fix_typos" data-field-id="solution">
                                     <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
@@ -94,72 +98,71 @@
                             @endif
                         </div>
 
-                        <div class="form-group">
-                            <label for="is_star">Дополнительное</label>
+                        <div class="mb-3">
+                            <label for="is_star" class="form-label">Дополнительное</label>
                             <input type="checkbox" id="is_star" name="is_star" value="on"
                                    @if ($task->is_star) checked @endif/>
                         </div>
 
-                        <div class="form-group">
-                            <label for="is_hidden">Скрытая задача</label>
+                        <div class="mb-3">
+                            <label for="is_hidden" class="form-label">Скрытая задача</label>
                             <input type="checkbox" id="is_hidden" name="is_hidden" value="on"
                                    @if ($task->is_hidden) checked @endif/>
                         </div>
 
-                        <div class="form-group">
-                            <label for="is_code">Автопроверка</label>
+                        <div class="mb-3">
+                            <label for="is_code" class="form-label">Автопроверка</label>
                             <input type="checkbox" id="is_code" name="is_code" value="on"
                                    @if ($task->is_code) checked @endif/>
                         </div>
 
 
-                        <div class="form-group">
-                            <label for="price" class="col-md-4">Премия</label>
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Премия</label>
 
-                            <div class="col-md-12">
+                            @if (old('price')!="")
+                                <input type="text" name="price" class="form-control" id="price"
+                                       value="{{old('price')}}"/>
+                            @else
+                                <input type="text" name="price" class="form-control" id="price"
+                                       value="{{$task->price}}"/>
+                            @endif
 
-                                @if (old('price')!="")
-                                    <input type="text" name="price" class="form-control" id="price"
-                                           value="{{old('price')}}"/>
-                                @else
-                                    <input type="text" name="price" class="form-control" id="price"
-                                           value="{{$task->price}}"/>
-                                @endif
-
-                                @if ($errors->has('price'))
-                                    <span class="text-danger d-block">
+                            @if ($errors->has('price'))
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('price') }}</strong>
                                     </span>
-                                @endif
-                            </div>
+                            @endif
                         </div>
 
-                        <div class="form-group">
-                            <label for="answer" class="col-md-4">Ответ</label>
+                        <div class="mb-3">
+                            <label for="answer" class="form-label">Ответ</label>
 
-                            <div class="col-md-12">
+                            @if (old('answer')!="")
+                                <input type="text" name="answer" class="form-control" id="answer"
+                                       value="{{old('answer')}}"/>
+                            @else
+                                <input type="text" name="answer" class="form-control" id="answer"
+                                       value="{{$task->answer}}"/>
+                            @endif
 
-                                @if (old('answer')!="")
-                                    <input type="text" name="answer" class="form-control" id="answer"
-                                           value="{{old('answer')}}"/>
-                                @else
-                                    <input type="text" name="answer" class="form-control" id="answer"
-                                           value="{{$task->answer}}"/>
-                                @endif
-
-                                @if ($errors->has('answer'))
-                                    <span class="text-danger d-block">
+                            @if ($errors->has('answer'))
+                                <span class="text-danger d-block">
                                         <strong>{{ $errors->first('answer') }}</strong>
                                     </span>
-                                @endif
-                            </div>
+                            @endif
                         </div>
 
 
-                        <button type="submit" class="btn btn-success">Сохранить</button>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-success">Сохранить</button>
+                        </div>
                     </form>
-                </div>
             </div>
         </div>
     </div>
 @endsection
+@push('editor')
+<script type="text/javascript" src="{{ asset('build/js/vendor/easymde.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('build/js/easymde-bridge.js') }}"></script>
+@endpush

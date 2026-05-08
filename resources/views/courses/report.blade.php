@@ -15,25 +15,38 @@
 
 
 @section('content')
-    <div class="row">
-        <div class="col">
-            <h2 class="font-weight-light"><a class="d-inline mr-2" href="{{url('/insider/courses/'.$course->id)}}"><i
-                            class="icon ion-chevron-left"></i></a> Отчет по курсу: {{$course->name}}</h2>
+    <div class="report-page">
+        <div class="management-header gc-card mb-3">
+            <div class="min-width-0">
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
+                <h2 class="mb-1">Отчет по курсу</h2>
+                <p class="mb-0 text-muted text-truncate">{{ $course->name }}</p>
+            </div>
+            <div class="assessment-summary">
+                <div><strong>{{ $students->count() }}</strong><span>учеников</span></div>
+                <div><strong>{{ $lessons->count() }}</strong><span>уроков</span></div>
+                <div><strong>{{ round($students->avg('percent')) }}%</strong><span>средний прогресс</span></div>
+            </div>
         </div>
-    </div>
 
-    <div class="row">
+    <div class="row g-3 report-layout">
 
-        <div class="col-9">
+        <div class="col-12 col-xl-9">
             <div class="tab-content" id="v-pills-tabContent">
                 @foreach ($students as $key => $student)
                     <div class="tab-pane fade show @if ($key == 0) active @endif" id="student{{$student->id}}"
                          role="tabpanel"
                          aria-labelledby="v-pills-tab">
 
-                        <div class="card w-100">
+                        <div class="gc-card report-student-card w-100">
                             <div class="card-body" id="cardbody{{$student->id}}">
-                                <h4 class="card-title">{{ $student->name }}</h4>
+                                <div class="report-student-heading">
+                                    <div>
+                                        <h4 class="card-title mb-1">{{ $student->name }}</h4>
+                                        <small class="text-muted">{{ $student->points }} / {{ $student->max_points }} XP</small>
+                                    </div>
+                                    <strong>{{ round($student->percent) }}%</strong>
+                                </div>
                                 <div class="progress mb-3">
                                     @if ($student->percent < 40)
                                         <div class="progress-bar progress-bar-striped bg-danger" role="progressbar"
@@ -69,13 +82,13 @@
                                          @endif></div>
 
                                 @endif
-                                <table class="table table-striped">
+                                <table class="table table-hover report-lessons-table">
                                     @foreach($lessons as $lesson)
 
                                         <tr>
                                             <td class="w-50">
 
-                                                <a data-toggle="collapse"
+                                                <a data-bs-toggle="collapse"
                                                    href="#student{{$student->id}}marks{{$lesson->id}}"
                                                    aria-expanded="false"
                                                    aria-controls="student{{$student->id}}marks{{$lesson->id}}"> {{$lesson->name}}
@@ -135,7 +148,7 @@
                                                                 if (count($filtered)!=0 && $filtered->last()->mark==null) $should_check=true;
 
                                                             @endphp
-                                                            <li class="pr-2">
+                                                            <li class="report-task-row">
 
 
                                                                 <a target="_blank"
@@ -144,13 +157,13 @@
 
                                                                 @php $blocked = $task->isBlocked($student->id, $course->id); @endphp
                                                                 @if ($blocked)
-                                                                    <span class="badge badge-danger float-right">0</span>
+                                                                    <span class="badge bg-danger float-end">0</span>
                                                                 @elseif ($should_check)
-                                                                    <span class="badge badge-warning float-right">{{$mark}}</span>
+                                                                    <span class="badge bg-warning text-dark float-end">{{$mark}}</span>
                                                                 @elseif ($mark == 0)
-                                                                    <span class="badge badge-light float-right">{{$mark}}</span>
+                                                                    <span class="badge bg-light text-dark float-end">{{$mark}}</span>
                                                                 @else
-                                                                    <span class="badge badge-primary float-right">{{$mark}}</span>
+                                                                    <span class="badge bg-primary float-end">{{$mark}}</span>
                                                                 @endif
 
                                                             </li>
@@ -178,25 +191,25 @@
 
             </div>
         </div>
-        <div class="col-3">
-            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+        <div class="col-12 col-xl-3">
+            <div class="nav flex-column nav-pills report-student-nav gc-card" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                 @foreach ($students as $key => $student)
-                    <a class="nav-link @if ($key == 0) active @endif" id="students-tab" data-toggle="pill"
+                    <a class="nav-link @if ($key == 0) active @endif" id="students-tab" data-bs-toggle="pill"
                        href="#student{{$student->id}}" role="tab"
                        aria-controls="student{{$student->id}}" aria-selected="true"
-                       data-plotly-resize-target="pulse{{$student->id}}">{{$student->name}}
-                        &nbsp;&nbsp;
+                       data-plotly-resize-target="pulse{{$student->id}}"><span class="text-truncate">{{$student->name}}</span>
                         @if ($student->percent < 40)
-                            <span class="badge badge-danger">&nbsp;</span>
+                            <span class="badge bg-danger">&nbsp;</span>
                         @elseif($student->percent < 60)
-                            <span class="badge badge-warning">&nbsp;</span>
+                            <span class="badge bg-warning text-dark">&nbsp;</span>
                         @else
-                            <span class="badge badge-success">&nbsp;</span>
+                            <span class="badge bg-success">&nbsp;</span>
                         @endif
                     </a>
                 @endforeach
             </div>
         </div>
+    </div>
     </div>
 
 

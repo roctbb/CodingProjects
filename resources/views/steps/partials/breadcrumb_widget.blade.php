@@ -1,12 +1,16 @@
-  <div class="p-3">
+  <div class="step-page-header">
       @if (\Request::is('insider/*'))
-      <small><a href="{{url('/insider/courses/'.$course->id)}}" class="font-weight-light">{{$course->name}}</a> &raquo;
-          <strong>{{$step->lesson->name}}</strong></small>
-      <h2 class="font-weight-light">{{$step->name}}</h2>
+      <div class="step-page-header__crumb">
+          <a href="{{url('/insider/courses/'.$course->id)}}">{{$course->name}}</a>
+          <i class="icon ion-chevron-right" style="font-size:0.7rem;opacity:0.5;"></i>
+          <span>{{$step->lesson->name}}</span>
+      </div>
+      <h1 class="step-page-header__title">{{$step->name}}</h1>
       @endif
       @if (\Request::is('open/*'))
-      <small>
-          <strong>{{$step->lesson->name}}</strong></small>
-      <h2 class="font-weight-light">{{$step->name}}</h2>
+      <div class="step-page-header__crumb">
+          <span>{{$step->lesson->name}}</span>
+      </div>
+      <h1 class="step-page-header__title">{{$step->name}}</h1>
       @endif
   </div>

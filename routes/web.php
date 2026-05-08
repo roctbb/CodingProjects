@@ -45,20 +45,6 @@ Route::prefix('open')->group(function () {
     Route::get('/steps/{id}', 'OpenStepsController@details');
 });
 
-Route::get('/courses', 'CourseCategoriesController@index');
-Route::get('/courses/{id}', 'CourseCategoriesController@details');
-
-Route::get('/textbook/{id}', 'TextbookController@index');
-Route::get('/textbook/{id}/lesson/{lesson_id}', 'TextbookController@lesson');
-Route::get('/textbook/{id}/edit/{step_id}', 'TextbookController@edit_step');
-
-Route::get('/categories/create', 'CourseCategoriesController@createView');
-Route::post('/categories/create', 'CourseCategoriesController@create');
-Route::get('/categories/{id}', 'CourseCategoriesController@details');
-Route::get('/categories/{id}/start', 'CourseCategoriesController@start');
-Route::get('/categories/{id}/stop', 'CourseCategoriesController@stop');
-Route::get('/categories/{id}/edit', 'CourseCategoriesController@editView');
-Route::post('/categories/{id}/edit', 'CourseCategoriesController@edit');
 
 Route::prefix('insider')->middleware('verified')->group(function () {
 

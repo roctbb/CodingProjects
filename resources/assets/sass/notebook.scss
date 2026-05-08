@@ -1,6 +1,11 @@
 .notebook-container {
-  margin: -30px;
-  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.notebook-container > div {
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .lesson-content p {
@@ -33,8 +38,4 @@ blockquote {
 
 blockquote p {
   font-size: 1rem !important;
-}
-
-.rocket-textbook-card-link .card-body {
-  color: #4A5073;
 }

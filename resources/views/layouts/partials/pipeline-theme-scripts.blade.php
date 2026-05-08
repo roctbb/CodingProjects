@@ -1,13 +1,6 @@
-<script type="text/javascript" src="{{ asset('build/js/legacy/jquery.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('build/js/legacy/popper.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('build/js/legacy/bootstrap.js') }}"></script>
 <script type="text/javascript" src="{{ asset('build/js/vendor/autosize.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('build/js/vendor/dropzone.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('build/js/vendor/draggable.umd.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('build/js/legacy/swap-animation.js') }}"></script>
 <script type="text/javascript" src="{{ asset('build/js/vendor/list.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('build/js/vendor/flatpickr.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('build/js/vendor/easymde.min.js') }}"></script>
 <script type="text/javascript" src="{{ asset('build/js/vendor/prism.js') }}"></script>
-<script type="text/javascript" src="{{ asset('build/js/easymde-bridge.js') }}"></script>
-<script type="text/javascript" src="{{ asset('build/js/legacy/theme.js') }}"></script>
+@stack('editor')

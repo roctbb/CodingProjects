@@ -44,8 +44,10 @@ class OpenStepsController extends Controller
         $empty = $zero_theory && $step->tasks->count() == 0;
         $tasks = $step->tasks;
         $quizer = false;
+        $course = null;
+        $user = Auth::user();
 
-        return view('steps.details', compact('step', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'tasks'));
+        return view('steps.details', compact('step', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'user'));
     }
 
 

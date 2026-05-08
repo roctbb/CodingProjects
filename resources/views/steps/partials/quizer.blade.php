@@ -10,33 +10,33 @@
          @endif
 
          @if ($course->teachers->contains($user) || $user->role=='admin')
-           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-danger"
+           <a class="float-end btn btn-link btn-sm p-0 ms-2 text-danger"
              href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"
              data-confirm="Вы уверены?"><i class="icon ion-android-close"></i></a>
-           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-success"
+           <a class="float-end btn btn-link btn-sm p-0 ms-2 text-success"
             href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}"><i
               class="icon ion-android-create"></i></a>
-           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+           <a class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
             href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"><i
               class="icon ion-ios-color-wand"></i></a>
-           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+           <a class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
             href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/peer')}}"><i
               class="icon ion-person-stalker"></i></a>
 
 
-           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+           <a class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
             href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i
               class="icon ion-arrow-right-c"></i></a>
-           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+           <a class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
             href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i
               class="icon ion-arrow-left-c"></i></a>
           @if ($step->previousStep() != null)
-           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+           <a class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
             href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i
               class="icon ion-arrow-up-c"></i></a>
           @endif
           @if ($step->nextStep() != null)
-           <a class="float-right btn btn-link btn-sm p-0 ml-2 text-muted"
+           <a class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
             href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i
               class="icon ion-arrow-down-c"></i></a>
          @endif
@@ -49,7 +49,7 @@
 
          @if ($task->is_quiz)
           <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}" method="POST"
-            class="form-inline"
+            class="d-flex gap-2"
             data-check-task data-task-id="{{$task->id}}">
            {{ csrf_field() }}
            <label for="text{{$task->id}}"><strong>Ответ:&nbsp;</strong></label>
@@ -65,15 +65,15 @@
 
          @endif
 
-         <span class="badge badge-secondary">Очков опыта: {{$task->max_mark}}</span>
-         @if ($task->is_quiz && $task->solutions()->where('user_id', Auth::User()->id)->count()!=0)
-         @php
-         $solution = $task->solutions()->where('user_id', Auth::User()->id)->orderBy('id', 'DESC')->get()->first();
-         @endphp
-         <span class="badge badge-primary" id="TSK_{{$task->id}}">Очков опыта: {{$solution->mark}}</span>
+         <span class="badge bg-secondary">Очков опыта: {{$task->max_mark}}</span>
+          @if ($task->is_quiz && $task->solutions()->where('user_id', Auth::User()->id)->exists())
+          @php
+          $solution = $task->solutions()->where('user_id', Auth::User()->id)->orderByDesc('submitted')->first();
+          @endphp
+         <span class="badge bg-primary" id="TSK_{{$task->id}}">Очков опыта: {{$solution->mark}}</span>
          <span class="small" id="TSK_COM_{{$task->id}}">{{$solution->comment}}</span>
          @else
-         <span class="badge badge-primary" id="TSK_{{$task->id}}"></span>
+         <span class="badge bg-primary" id="TSK_{{$task->id}}"></span>
          <span class="small" id="TSK_COM_{{$task->id}}"></span>
          @endif
        </div>

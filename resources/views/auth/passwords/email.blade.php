@@ -18,7 +18,7 @@
             <span><img src="{{ url('images/icons/icons8-idea-64.png') }}" height="35" alt="">&nbsp;</span>
                                     {{ config('app.name', 'Laravel') }}
                                 </a>
-                                <h3 class="card-title text-white font-weight-light mt-3 mb-3">
+                                <h3 class="card-title text-white fw-light mt-3 mb-3">
                                     Восстановление пароля</h3>
                             </div>
                         </div>
@@ -31,13 +31,13 @@
                                 @endif
 
                                 <form method="POST" action="{{ route('password.email') }}"
-                                      class="form-signin text-left">
+                                      class="form-signin text-start">
 
                                     <div class="card">
                                         <div class="card-body">
                                             {{ csrf_field() }}
 
-                                            <div class="form-group">
+                                            <div class="mb-3">
                                                 <label for="email" class="form-label">E-Mail адрес</label>
 
                                                 <input id="email" type="email" class="form-control form-control-lg"
@@ -50,7 +50,7 @@
                                                 @endif
                                             </div>
 
-                                            <div class="form-group">
+                                            <div class="mb-3">
                                                 <button type="submit" class="btn btn-primary">
                                                     Восстановить пароль
                                                 </button>

@@ -5,15 +5,20 @@
 @endsection
 
 @section('content')
-    <div class="row">
-        <div class="col s12">
-            <h3>Изменение темы: "{{$step->name}}"</h3>
-            <div class="card">
-                <div class="card-body">
-                    <form method="POST">
+    <div class="form-page">
+        <div class="form-page-header gc-card mb-3">
+            <div>
+                <h2 class="mb-1">Изменение темы</h2>
+                <p class="mb-0 text-muted text-truncate">{{$step->name}}</p>
+            </div>
+        </div>
+
+        <div class="form-layout">
+            <div class="gc-card form-card form-card--wide">
+                    <form method="POST" class="form-stack">
                         {{ csrf_field() }}
-                        <div class="form-group">
-                            <label for="name">Название</label>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Название</label>
 
                             @if (old('name')!="")
                                 <input id="name" type="text" class="form-control" value="{{old('name')}}"
@@ -28,8 +33,8 @@
                                     </span>
                             @endif
                         </div>
-                        <div class="form-group">
-                            <label for="theory" class="pb-2">Теоретический материал</label>
+                        <div class="mb-3">
+                            <label for="theory" class="form-label pb-2">Теоретический материал</label>
                             <div class="mb-2">
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-improve-text="fix_typos" data-field-id="theory">
                                     <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
@@ -55,8 +60,8 @@
                                     </span>
                             @endif
                         </div>
-                        <div class="form-group">
-                            <label for="notes" class="pb-2">Комментарий для преподавателя</label>
+                        <div class="mb-3">
+                            <label for="notes" class="form-label pb-2">Комментарий для преподавателя</label>
                             <div class="mb-2">
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-improve-text="fix_typos" data-field-id="notes">
                                     <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
@@ -91,8 +96,8 @@
                             </label>
                         </div>
 
-                        <div class="form-group">
-                            <label for="video_url">Видео</label>
+                        <div class="mb-3">
+                            <label for="video_url" class="form-label">Видео</label>
 
                             @if (old('video_url')!="")
                                 <input id="video_url" type="text" class="form-control" value="{{old('video_url')}}"
@@ -108,12 +113,15 @@
                             @endif
                         </div>
 
-                        <button type="submit" class="btn btn-success">Сохранить</button>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-success">Сохранить</button>
+                        </div>
                     </form>
-                </div>
             </div>
         </div>
     </div>
-    </div>
-    </div>
 @endsection
+@push('editor')
+<script type="text/javascript" src="{{ asset('build/js/vendor/easymde.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('build/js/easymde-bridge.js') }}"></script>
+@endpush

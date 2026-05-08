@@ -163,7 +163,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME:-codingprojects}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-codingprojects}
     ports:
-      - "5435:5432"
+      - "127.0.0.1:5435:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:

@@ -36,8 +36,4 @@ class Program extends Model
         return $this->belongsToMany('App\User', 'programs_authors', 'program_id', 'user_id');
     }
 
-    public static function textbooks()
-    {
-        return self::where('available_as_textbook', true)->get();
-    }
 }

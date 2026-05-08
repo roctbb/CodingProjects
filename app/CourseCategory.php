@@ -8,8 +8,5 @@ class CourseCategory extends Model
 {
     protected $table = 'course_categories';
 
-    public function courses()
-    {
-        return $this->belongsToMany('App\Course', 'course_course_category',  'category_id', 'course_id');
-    }
+    protected $fillable = ['title', 'description', 'image', 'available'];
 }

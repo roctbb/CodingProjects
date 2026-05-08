@@ -2,12 +2,12 @@
     @if (\Request::is('insider/*'))
     <div class="modal fade" id="deadline-modal-{{$task->id}}" tabindex="-1" role="dialog"
          aria-labelledby="deadline-modal-{{$task->id}}Label" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="deadline-modal-{{$task->id}}Label">Дедлайн для задачи</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        
                     </button>
                 </div>
                 <div class="modal-body">
@@ -15,7 +15,7 @@
                           method="POST"
                          >
                         {{ csrf_field() }}
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="price" class="col-md-4">Дедлайн</label>
 
                             <div class="col-md-12">
@@ -27,7 +27,7 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="price" class="col-md-4">Штраф (баллы * штраф)</label>
 
                             <div class="col-md-12">
