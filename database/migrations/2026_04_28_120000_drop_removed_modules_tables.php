@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class DropRemovedModulesTables extends Migration
 {
@@ -61,7 +62,7 @@ class DropRemovedModulesTables extends Migration
             'educational_results',
             'result_scales',
         ] as $table) {
-            Schema::dropIfExists($table);
+            $this->dropTableIfExists($table);
         }
 
         Schema::enableForeignKeyConstraints();
@@ -91,5 +92,19 @@ class DropRemovedModulesTables extends Migration
         Schema::table($table, function (Blueprint $table) use ($column) {
             $table->dropColumn($column);
         });
+    }
+
+    private function dropTableIfExists(string $table): void
+    {
+        if (!Schema::hasTable($table)) {
+            return;
+        }
+
+        if (Schema::getConnection()->getDriverName() === 'pgsql') {
+            DB::statement('DROP TABLE IF EXISTS "' . str_replace('"', '""', $table) . '" CASCADE');
+            return;
+        }
+
+        Schema::dropIfExists($table);
     }
 }
