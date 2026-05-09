@@ -11,7 +11,7 @@ class CompletedCourse extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'mark', 'name', 'provider', 'class'
+        'mark', 'name'
     ];
 
     public function course()

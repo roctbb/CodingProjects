@@ -17,11 +17,12 @@ FROM php:8.4-cli AS builder
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     unzip \
+    libcurl4-openssl-dev \
     libzip-dev \
     libxml2-dev \
     libpq-dev \
     zip \
-    && docker-php-ext-install -j"$(nproc)" zip pdo pdo_pgsql xml \
+    && docker-php-ext-install -j"$(nproc)" curl zip pdo pdo_pgsql xml \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
@@ -53,11 +54,12 @@ RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framewor
 FROM php:8.4-fpm AS app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcurl4-openssl-dev \
     libzip-dev \
     libxml2-dev \
     libpq-dev \
     zip \
-    && docker-php-ext-install -j"$(nproc)" zip pdo pdo_pgsql xml \
+    && docker-php-ext-install -j"$(nproc)" curl zip pdo pdo_pgsql xml \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*

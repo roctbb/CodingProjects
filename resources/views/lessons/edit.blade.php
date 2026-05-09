@@ -5,114 +5,123 @@
 @endsection
 
 @section('content')
-    <div class="form-page">
-        <div class="form-page-header gc-card mb-3">
-            <div>
+    <div class="container-xl px-0">
+        <div class="gc-card gc-page-header mb-3">
+            <div class="min-width-0">
                 <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
-                <h2 class="mb-1">Изменение урока</h2>
+                <h2 class="fw-bold lh-sm mb-1">Изменение урока</h2>
                 <p class="mb-0 text-muted text-truncate">{{$lesson->name}}</p>
             </div>
         </div>
 
-        <div class="form-layout form-layout--single">
-            <div class="gc-card form-card">
-                <form method="POST" enctype="multipart/form-data" class="form-stack">
+        <div class="row g-3 align-items-start">
+            <div class="col-12 col-lg-8">
+                <div class="gc-card overflow-hidden">
+                    <div class="gc-section-header">
+                        <h5 class="mb-1">Основное</h5>
+                        <p class="text-muted small mb-0">Содержание, глава и параметры урока.</p>
+                    </div>
+                    <form id="lesson-edit-form" method="POST" enctype="multipart/form-data" class="p-3 p-md-4">
                     {{ csrf_field() }}
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Название</label>
-                        @if (old('name')!="")
-                            <input id="name" type="text" class="form-control" value="{{old('name')}}"
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="name" class="form-label">Название</label>
+                            <input id="name" type="text" class="form-control rounded-3" value="{{old('name', $lesson->name)}}"
                                    name="name" required>
-                        @else
-                            <input id="name" type="text" class="form-control" value="{{$lesson->name}}"
-                                   name="name" required>
-                        @endif
-                        @if ($errors->has('name'))
-                            <span class="text-danger d-block">
+                            @if ($errors->has('name'))
+                                <span class="text-danger small d-block mt-1">
                                     <strong>{{ $errors->first('name') }}</strong>
                                 </span>
-                        @endif
-                    </div>
+                            @endif
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="start_date" class="form-label">Дата начала</label>
-                        @if (old('start_date')!="" || $lesson->getStartDate($course)==null)
-                            <input id="start_date" type="text" class="form-control date"
-                                   value="{{old("start_date")}}"
+                        <div class="col-md-4">
+                            <label for="start_date" class="form-label">Дата начала</label>
+                            <input id="start_date" type="text" class="form-control rounded-3 date"
+                                   value="{{old('start_date', $lesson->getStartDate($course) ? $lesson->getStartDate($course)->format('Y-m-d') : '')}}"
                                    name="start_date">
-                        @else
-                            <input id="start_date" type="text" class="form-control date"
-                                   value="{{$lesson->getStartDate($course)->format('Y-m-d')}}"
-                                   name="start_date">
-                        @endif
-                        @if ($errors->has("start_date"))
-                            <span class="text-danger d-block">
+                            @if ($errors->has("start_date"))
+                                <span class="text-danger small d-block mt-1">
                                     <strong>{{ $errors->first("start_date") }}</strong>
                                 </span>
-                        @endif
-                    </div>
+                            @endif
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="chapter" class="form-label">Глава</label>
-                        @if (old('chapter')!="")
-                            <select class="form-select" name="chapter">
+                        <div class="col-12">
+                            <label for="chapter" class="form-label">Глава</label>
+                            <select id="chapter" class="form-select rounded-3" name="chapter">
                                 @foreach($lesson->program->chapters as $chapter)
                                     <option value="{{$chapter->id}}"
-                                            @if ($chapter->id==old('chapter')) selected @endif>{{$chapter->name}}</option>
+                                            @if ($chapter->id==old('chapter', $lesson->chapter->id)) selected @endif>{{$chapter->name}}</option>
                                 @endforeach
                             </select>
-                        @else
-                            <select class="form-select" name="chapter">
-                                @foreach($lesson->program->chapters as $chapter)
-                                    <option value="{{$chapter->id}}"
-                                            @if ($chapter->id==$lesson->chapter->id) selected @endif>{{$chapter->name}}</option>
-                                @endforeach
-                            </select>
-                        @endif
-                        @if ($errors->has('chapter'))
-                            <span class="text-danger d-block">
+                            @if ($errors->has('chapter'))
+                                <span class="text-danger small d-block mt-1">
                                     <strong>{{ $errors->first('chapter') }}</strong>
                                 </span>
-                        @endif
-                    </div>
+                            @endif
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Описание</label>
-                        @if (old('description')!="")
-                            <textarea id="description" class="form-control" data-markdown-editor data-markdown-autosave="true"
-                                      name="description">{{old('description')}}</textarea>
-                        @else
-                            <textarea id="description" class="form-control" data-markdown-editor data-markdown-autosave="true"
-                                      name="description">{{$lesson->description}}</textarea>
-                        @endif
-                        @if ($errors->has('description'))
-                            <span class="text-danger d-block">
+                        <div class="col-12">
+                            <div class="lesson-access-grid">
+                                <label class="gc-switch-card form-check form-switch">
+                                    <input type="checkbox" class="form-check-input ms-0 me-2" id="open" name="open" value="yes"
+                                           @if (old('open', $lesson->is_open ? 'yes' : '') == 'yes') checked @endif>
+                                    <span class="form-check-label">Открытый урок</span>
+                                </label>
+
+                                <label class="gc-switch-card form-check form-switch">
+                                    <input type="checkbox" class="form-check-input ms-0 me-2" id="early_access_enabled" name="early_access_enabled" value="on"
+                                           @if (old('early_access_enabled', $lesson->early_access_enabled ? 'on' : '') == 'on') checked @endif>
+                                    <span class="form-check-label">Доступен для раннего доступа</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="description" class="form-label">Описание</label>
+                            <textarea id="description" class="form-control rounded-3" data-markdown-editor data-markdown-autosave="true"
+                                      name="description">{{old('description', $lesson->description)}}</textarea>
+                            @if ($errors->has('description'))
+                                <span class="text-danger small d-block mt-1">
                                     <strong>{{ $errors->first('description') }}</strong>
                                 </span>
-                        @endif
-                    </div>
+                            @endif
+                        </div>
 
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="open" name="open" value="yes"
-                               @if ($lesson->is_open) checked @endif>
-                        <label class="form-check-label" for="open">Сделать занятие открытым</label>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="import" class="form-label">Импорт</label>
-                        <input id="import" type="file" class="form-control"
+                        <div class="col-12">
+                            <label for="import" class="form-label">Импорт</label>
+                            <input id="import" type="file" class="form-control rounded-3"
                                name="import">
-                        @if ($errors->has("import"))
-                            <span class="text-danger d-block">
+                            @if ($errors->has("import"))
+                                <span class="text-danger small d-block mt-1">
                                     <strong>{{ $errors->first("import") }}</strong>
                                 </span>
-                        @endif
+                            @endif
+                        </div>
                     </div>
 
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-success">Сохранить</button>
-                    </div>
                 </form>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-4">
+                <aside class="gc-card course-create-aside p-3 p-md-4 sticky-lg-top">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-layer-group"></i></span>
+                        <div class="min-width-0">
+                            <h5 class="mb-1">Состояние урока</h5>
+                            <p class="mb-0 text-muted small text-truncate">{{ $course->name }}</p>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 mb-3">
+                        <div class="gc-info-tile"><span>Глава</span><strong>{{ optional($lesson->chapter)->name }}</strong></div>
+                        <div class="gc-info-tile"><span>Дата начала</span><strong>{{ $lesson->getStartDate($course) ? $lesson->getStartDate($course)->format('Y-m-d') : 'Не задана' }}</strong></div>
+                        <div class="gc-info-tile"><span>Доступ</span><strong>{{ $lesson->is_open ? 'Открытый урок' : 'Только в курсе' }}</strong></div>
+                        <div class="gc-info-tile"><span>Ранний доступ</span><strong>{{ $lesson->early_access_enabled ? 'Разрешен' : 'Выключен' }}</strong></div>
+                    </div>
+                    <button type="submit" form="lesson-edit-form" class="btn btn-success rounded-3 fw-semibold w-100">Сохранить</button>
+                </aside>
             </div>
         </div>
     </div>

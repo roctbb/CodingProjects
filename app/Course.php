@@ -14,7 +14,7 @@ class Course extends Model
     protected $table = "courses";
 
     protected $fillable = [
-        'name', 'description', 'image', 'start_date', 'end_date', 'state', 'level', 'invite'
+        'name', 'description', 'image', 'start_date', 'end_date', 'state', 'level', 'invite', 'default_chapter_id'
     ];
 
     protected $casts = [
@@ -32,14 +32,14 @@ class Course extends Model
         return $this->belongsToMany('App\User', 'course_students', 'course_id', 'user_id')->withPivot(['is_remote'])->orderBy('name');
     }
 
-    public function provider()
-    {
-        return $this->hasOne('App\Provider', 'id', 'provider_id');
-    }
-
     public function program()
     {
         return $this->belongsTo('App\Program', 'program_id', 'id');
+    }
+
+    public function defaultChapter()
+    {
+        return $this->belongsTo('App\ProgramChapter', 'default_chapter_id', 'id');
     }
 
     public function teachers()
@@ -99,9 +99,7 @@ class Course extends Model
     public function isAvailable($lesson)
     {
         $user = User::findOrFail(\Auth::User()->id);
-        if (!$this->isStarted($lesson)) return false;
-        if ($user->role == 'admin' || $this->teachers->contains($user)) return true;
-        return true;
+        return $lesson->isAvailableForUser($this, $user);
     }
 
     public function points(User $student)
@@ -157,7 +155,6 @@ class Course extends Model
         foreach ($this->students as $student) {
             $completed_course = new CompletedCourse();
             $completed_course->name = $this->name;
-            $completed_course->provider = $this->provider->short_name;
             $completed_course->user_id = $student->id;
             $completed_course->course_id = $this->id;
             /*$id = $student->id;
@@ -188,7 +185,7 @@ class Course extends Model
             $tasks = $step->tasks;
 
             foreach ($tasks as $task) {
-                if (!$task->isVisible($user->id, $course)) continue;
+                if (!$task->isVisible($user, $course)) continue;
                 if (!$task->is_star) $max_points += $task->max_mark;
                 $points += $user->submissions->where('task_id', $task->id)->max('mark');
             }

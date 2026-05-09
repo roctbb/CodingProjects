@@ -36,12 +36,22 @@ return [
     ],
 
     'geekpaste_url' => env('GEEKPASTE_URL', 'https://paste.geekclass.ru/'),
+    'geekpaste_api_key' => env('GEEKPASTE_API_KEY'),
 
     'yandexgpt' => [
         'api_key' => env('YANDEX_GPT_API_KEY'),
         'folder_id' => env('YANDEX_GPT_FOLDER_ID'),
         'model' => env('YANDEX_GPT_MODEL', 'yandexgpt-lite'),
         'url' => env('YANDEX_GPT_URL', 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'),
+    ],
+
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'bot_username' => env('TELEGRAM_BOT_USERNAME'),
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+        'api_url' => env('TELEGRAM_API_URL', 'https://api.telegram.org'),
+        'proxy' => env('TELEGRAM_PROXY'),
+        'timeout' => env('TELEGRAM_TIMEOUT', 10),
     ],
 
 ];

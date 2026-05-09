@@ -24,7 +24,6 @@ export default defineConfig({
         notebookRender: path.resolve(__dirname, 'resources/assets/js/notebook-render.js'),
         yandexMetrika: path.resolve(__dirname, 'resources/assets/js/yandex-metrika.js'),
         app: path.resolve(__dirname, 'resources/assets/sass/app.scss'),
-        legacyTheme: path.resolve(__dirname, 'resources/assets/sass/legacy-theme.scss'),
         notebook: path.resolve(__dirname, 'resources/assets/sass/notebook.scss')
       },
       output: {
@@ -41,7 +40,6 @@ export default defineConfig({
         assetFileNames: (assetInfo) => {
           const name = assetInfo.name || '';
           if (name === 'app.css') return 'css/app.css';
-          if (name === 'legacyTheme.css') return 'css/legacy-theme.css';
           if (name === 'notebook.css') return 'css/notebook.css';
           if (name.endsWith('.css')) return 'css/[name][extname]';
           if (/\.(woff2?|ttf|eot|otf)$/i.test(name)) return 'fonts/[name][extname]';

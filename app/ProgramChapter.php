@@ -38,10 +38,7 @@ class ProgramChapter extends Model
 
     public function isDoneByUser($course, $user)
     {
-        foreach ($course->program->lessons->where('chapter_id', $this->id) as $lesson) {
-            if (!$lesson->isDoneByUser($course, $user)) return false;
-        }
-        return true;
+        return $this->getStudentPercent($course, $user) >= 100;
     }
 
     public function isStarted($course)
@@ -55,39 +52,74 @@ class ProgramChapter extends Model
 
     public function getStudentsPercent($course)
     {
-        $done = 0;
-        foreach ($course->students as $student) {
-            if ($this->isDoneByUser($course, $student))
-                $done++;
+        $lessonIds = $this->lessonIdsForCourse($course);
+        $studentIds = $course->relationLoaded('students')
+            ? $course->students->pluck('id')
+            : $course->students()->pluck('users.id');
+
+        if ($lessonIds->isEmpty() || $studentIds->isEmpty()) {
+            return 0;
         }
-        return $done * 100 / max($course->students->count(), 1);
+
+        $stats = LessonStudentStats::where('course_id', $course->id)
+            ->whereIn('lesson_id', $lessonIds)
+            ->whereIn('student_id', $studentIds)
+            ->get(['student_id', 'points', 'max_points', 'percent'])
+            ->groupBy('student_id');
+
+        $done = 0;
+        foreach ($studentIds as $studentId) {
+            $studentStats = $stats->get($studentId, collect());
+            $maxPoints = (int) $studentStats->sum('max_points');
+            $points = (int) $studentStats->sum('points');
+
+            if (
+                ($maxPoints > 0 && $points >= $maxPoints) ||
+                ($maxPoints === 0 && $studentStats->count() > 0 && $studentStats->min('percent') >= 100)
+            ) {
+                $done++;
+            }
+        }
+
+        return $done * 100 / max($studentIds->count(), 1);
     }
 
     public function getStudentPercent($course, $student)
     {
+        $lessonIds = $this->lessonIdsForCourse($course);
 
-        $temp_steps = collect([]);
-        foreach ($course->program->lessons->where('chapter_id', $this->id) as $lesson) {
-            $temp_steps = $temp_steps->merge($lesson->steps);
+        if ($lessonIds->isEmpty()) {
+            return 0;
         }
 
-        $max_points = 0;
-        $points = 0;
-        foreach ($temp_steps as $step) {
+        $stats = LessonStudentStats::where('course_id', $course->id)
+            ->where('student_id', $student->id)
+            ->whereIn('lesson_id', $lessonIds)
+            ->get(['points', 'max_points', 'percent']);
 
-            $tasks = $step->tasks;
+        $max_points = (int) $stats->sum('max_points');
+        $points = (int) $stats->sum('points');
 
-
-            foreach ($tasks as $task) {
-                if (!$task->isVisible($student->id, $course)) continue;
-                if (!$task->is_star) $max_points += $task->max_mark;
-                $points += $student->submissions->where('task_id', $task->id)->max('mark');
-            }
-
-        }
-        if ($max_points != 0) {
+        if ($max_points > 0) {
             return min(100, $points * 100 / $max_points);
         }
+
+        if ($stats->count() > 0 && $stats->min('percent') >= 100) {
+            return 100;
+        }
+
         return 0;
+    }
+
+    private function lessonIdsForCourse($course)
+    {
+        if ($course->relationLoaded('program') && $course->program && $course->program->relationLoaded('lessons')) {
+            return $course->program->lessons
+                ->where('chapter_id', $this->id)
+                ->pluck('id')
+                ->values();
+        }
+
+        return $this->lessons()->pluck('id');
     }
 }

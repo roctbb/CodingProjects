@@ -24,13 +24,16 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $fillable = [
         'name', 'email', 'password', 'role', 'school', 'grade_year', 'birthday',
-        'hobbies', 'interests', 'git', 'telegram', 'comments', 'letter', 'email_verified_at', 'last_login_at',
+        'hobbies', 'interests', 'git', 'telegram', 'telegram_chat_id', 'telegram_link_token', 'telegram_link_token_expires_at', 'custom_title', 'custom_title_expires_at', 'avatar_frame', 'avatar_frame_expires_at', 'comments', 'letter', 'email_verified_at', 'last_login_at',
         'last_login_ip'
     ];
     protected $casts = [
         'birthday' => 'datetime',
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
+        'telegram_link_token_expires_at' => 'datetime',
+        'custom_title_expires_at' => 'datetime',
+        'avatar_frame_expires_at' => 'datetime',
     ];
 
     protected $prerequisite_cache = [];
@@ -132,15 +135,12 @@ class User extends Authenticatable implements MustVerifyEmail
             return $this->score;
         }
 
-        $this->score = 0;
-        
-        // Get all solutions grouped by task
-        $group = Solution::where('user_id', $this->id)->get()->groupBy('task_id');
-        foreach ($group as $task) {
-            $this->score += $task->sortByDesc('mark')->first()->mark;
-        }
-
-        $completedCourses = $this->completedCourses()->get();
+        $this->score = (int) Solution::where('user_id', $this->id)
+            ->whereNotNull('mark')
+            ->selectRaw('MAX(mark) as best_mark')
+            ->groupBy('task_id')
+            ->pluck('best_mark')
+            ->sum();
 
         // Calculate scores from completed courses
         $markScores = [
@@ -150,12 +150,29 @@ class User extends Authenticatable implements MustVerifyEmail
             'D+' => 50, 'D' => 50, 'D-' => 50
         ];
 
-        foreach ($completedCourses as $course) {
-            $this->score += $markScores[$course->mark] ?? 600;
+        $completedCourseMarks = $this->completedCourses()
+            ->selectRaw('mark, COUNT(*) as courses_count')
+            ->groupBy('mark')
+            ->pluck('courses_count', 'mark');
+
+        foreach ($completedCourseMarks as $mark => $coursesCount) {
+            $this->score += ($markScores[$mark] ?? 600) * $coursesCount;
         }
 
         Cache::put($cacheKey, $this->score, 3600);
         return $this->score;
+    }
+
+    public function setComputedScore($score)
+    {
+        $this->score = (int) $score;
+        return $this;
+    }
+
+    public function setComputedRank($rank)
+    {
+        $this->rank = $rank;
+        return $this;
     }
 
     public function rank()
@@ -185,6 +202,44 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->rank;
     }
 
+    public function rankPosition($rank = null)
+    {
+        $rank = $rank ?: $this->rank();
+
+        if (!$rank) {
+            return 0;
+        }
+
+        return (int) Rank::where('from', '<=', $rank->from)->count();
+    }
+
+    public function awardRankPromotionIfNeeded($oldRank)
+    {
+        $newRank = $this->rank();
+
+        if (!$oldRank || !$newRank || $oldRank->id == $newRank->id) {
+            return false;
+        }
+
+        \Illuminate\Support\Facades\Notification::send($this, (new \App\Notifications\NewRank())->delay(Carbon::now()->addSeconds(1)));
+
+        if ($newRank->from <= $oldRank->from) {
+            return true;
+        }
+
+        $coins = 5 * $this->rankPosition($newRank);
+        CoinTransaction::registerOnce(
+            $this->id,
+            $coins,
+            'Rank bonus #' . $newRank->id,
+            '🌟 Бонус за новое звание: +' . $coins . ' GC',
+            'success',
+            'fas fa-arrow-up'
+        );
+
+        return true;
+    }
+
     public function transactions()
     {
         return $this->hasMany('App\CoinTransaction', 'user_id', 'id');
@@ -193,6 +248,99 @@ class User extends Authenticatable implements MustVerifyEmail
     public function balance()
     {
         return $this->transactions()->sum('price');
+    }
+
+    public function customTitleCost()
+    {
+        return 30;
+    }
+
+    public function customTitleDurationDays()
+    {
+        return 14;
+    }
+
+    public function hasActiveCustomTitle()
+    {
+        return $this->custom_title
+            && $this->custom_title_expires_at
+            && $this->custom_title_expires_at->isFuture();
+    }
+
+    public function activeCustomTitle()
+    {
+        return $this->hasActiveCustomTitle() ? $this->custom_title : null;
+    }
+
+    public static function avatarFrames()
+    {
+        return [
+            'neon' => [
+                'name' => 'Неон',
+                'description' => 'Холодное сияние для ночного кодинга.',
+                'cost' => 30,
+                'days' => 30,
+                'icon' => 'fas fa-bolt',
+            ],
+            'pixel' => [
+                'name' => 'Пиксель',
+                'description' => 'Ретро-рамка в духе 8-битных игр.',
+                'cost' => 35,
+                'days' => 30,
+                'icon' => 'fas fa-th-large',
+            ],
+            'terminal' => [
+                'name' => 'Терминал',
+                'description' => 'Темная рамка с зеленым контуром.',
+                'cost' => 45,
+                'days' => 30,
+                'icon' => 'fas fa-terminal',
+            ],
+            'gold' => [
+                'name' => 'Золото',
+                'description' => 'Спокойный премиальный контур.',
+                'cost' => 90,
+                'days' => 30,
+                'icon' => 'fas fa-crown',
+            ],
+            'rainbow' => [
+                'name' => 'Радуга',
+                'description' => 'Анимированная рамка с мягким движением.',
+                'cost' => 120,
+                'days' => 30,
+                'icon' => 'fas fa-rainbow',
+            ],
+        ];
+    }
+
+    public function hasActiveAvatarFrame()
+    {
+        return $this->avatar_frame
+            && $this->avatar_frame_expires_at
+            && $this->avatar_frame_expires_at->isFuture()
+            && array_key_exists($this->avatar_frame, self::avatarFrames());
+    }
+
+    public function activeAvatarFrame()
+    {
+        return $this->hasActiveAvatarFrame() ? $this->avatar_frame : null;
+    }
+
+    public function activeAvatarFrameConfig()
+    {
+        $frame = $this->activeAvatarFrame();
+
+        return $frame ? self::avatarFrames()[$frame] : null;
+    }
+
+    public function avatarFrameCost($frame)
+    {
+        return self::avatarFrames()[$frame]['cost'] ?? null;
+    }
+
+    public function avatarFrameDurationDays($frame)
+    {
+        return self::avatarFrames()[$frame]['days'] ?? 30;
     }
 
     public function getHtmlTransactions()
@@ -231,15 +379,21 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getStickers()
     {
         return Cache::remember("user:{$this->id}:stickers", 60, function () {
-            $stickers = collect([]);
-            foreach ($this->courses as $course) {
-                foreach ($course->program->lessons as $lesson) {
-                    if ($lesson->percent($this, $course) > 90) {
-                        $stickers->push($lesson->sticker);
-                    }
-                }
+            $lessonIds = LessonStudentStats::where('student_id', $this->id)
+                ->where('percent', '>', 90)
+                ->pluck('lesson_id')
+                ->unique();
+
+            if ($lessonIds->isEmpty()) {
+                return collect([]);
             }
-            return $stickers->unique();
+
+            return Lesson::whereIn('id', $lessonIds)
+                ->whereNotNull('sticker')
+                ->pluck('sticker')
+                ->filter()
+                ->unique()
+                ->values();
         });
     }
 
@@ -251,15 +405,25 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getStickerDescriptions()
     {
         return Cache::remember("user:{$this->id}:sticker_descriptions", 60, function () {
-            $descriptions = [];
-            foreach ($this->courses as $course) {
-                foreach ($course->program->lessons as $lesson) {
-                    if ($lesson->percent($this, $course) > 90) {
-                        $descriptions[$lesson->sticker] = $lesson->name;
-                    }
-                }
+            $lessonIds = LessonStudentStats::where('student_id', $this->id)
+                ->where('percent', '>', 90)
+                ->pluck('lesson_id')
+                ->unique();
+
+            if ($lessonIds->isEmpty()) {
+                return [];
             }
-            return $descriptions;
+
+            return Lesson::whereIn('id', $lessonIds)
+                ->whereNotNull('sticker')
+                ->get(['name', 'sticker'])
+                ->filter(function ($lesson) {
+                    return $lesson->sticker;
+                })
+                ->mapWithKeys(function ($lesson) {
+                    return [$lesson->sticker => $lesson->name];
+                })
+                ->all();
         });
     }
 

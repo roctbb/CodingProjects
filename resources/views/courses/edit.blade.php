@@ -5,15 +5,21 @@
 @endsection
 
 @section('content')
+    @php
+        $selectedCategoryIds = collect(old('categories', $course->categories->pluck('id')->all()))->map(fn ($id) => (int) $id);
+        $selectedTeacherIds = collect(old('teachers', $course->teachers->pluck('id')->all()))->map(fn ($id) => (int) $id);
+        $selectedStudentIds = collect(old('students', $course->students->pluck('id')->all()))->map(fn ($id) => (int) $id);
+        $courseStartDate = $course->start_date ? $course->start_date->format('Y-m-d') : '';
+    @endphp
 
-    <div class="form-page">
-        <div class="form-page-header gc-card mb-3">
+    <div class="container-xl px-0">
+        <div class="gc-card gc-page-header mb-3">
             <div class="min-width-0">
                 <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
                 <h2 class="mb-1 text-truncate">Настройки курса</h2>
                 <p class="mb-0 text-muted text-truncate">{{ $course->name }}</p>
             </div>
-            <div class="form-page-status">
+            <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
                 <span class="badge course-status-pill course-status-pill--primary">{{ $course->state }}</span>
                 @if($course->mode)
                     <span class="badge course-status-pill course-status-pill--muted">{{ $course->mode }}</span>
@@ -21,224 +27,174 @@
             </div>
         </div>
 
-        <div class="gc-card form-card form-card--wide">
-                    <form method="POST" enctype="multipart/form-data" class="form-grid form-grid--settings">
-                        {{ csrf_field() }}
-                        <div class="mb-3">
-                            <label for="name">Название</label>
+        <div class="gc-card overflow-hidden">
+            <form method="POST" enctype="multipart/form-data">
+                {{ csrf_field() }}
 
-                            @if (old('name')!="")
-                                <input id="name" type="text" class="form-control" name="name" value="{{old('name')}}"
-                                       required>
-                            @else
-                                <input id="name" type="text" class="form-control" name="name" value="{{$course->name}}"
-                                       required>
-                            @endif
-                            @if ($errors->has('name'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('name') }}</strong>
-                                    </span>
-                            @endif
+                <div class="p-3 p-md-4">
+                    <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                        <div>
+                            <h5 class="mb-1">Основное</h5>
+                            <p class="mb-0 text-muted small">Название, описание и публичные ссылки курса.</p>
                         </div>
-                        @if (Auth::user()->role=='admin')
-                            <div class="mb-3">
-                                <label for="mode" class="pb-2">Тип курса:</label><br>
-                                <select class="form-select" id="mode" name="mode">
-                                    <option value="private" @if($course->mode == 'private') selected @endif>Скрытый</option>
-                                    <option value="offline" @if($course->mode == 'offline') selected @endif>Офлайн</option>
-                                    <option value="zoom" @if($course->mode == 'zoom') selected @endif>Платный онлайн курс</option>
-                                    <option value="paid" @if($course->mode == 'paid') selected @endif>Платный онлайн курс без преподавателя</option>
-                                    <option value="open" @if($course->mode == 'open') selected @endif>Бесплатный онлайн курс</option>
-                                </select>
-                            </div>
+                    </div>
 
-                            <div class="mb-3">
-                                <label for="categories" class="pb-2">Образовательные
-                                    направления:</label><br>
-                                <select class="form-select" id="categories" name="categories[]" multiple>
-                                    @foreach (\App\CourseCategory::all() as $category)
-                                        <option value="{{ $category->id }}" @if($course->categories->contains($category->id)) selected @endif>{{$category->title}}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="name" class="form-label">Название</label>
+                            <input id="name" type="text" class="form-control rounded-3" name="name" value="{{ old('name', $course->name) }}" required>
+                            @error('name')
+                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                            @enderror
+                        </div>
 
-                        @endif
+                        <div class="col-12 col-md-6">
+                            <label for="site" class="form-label">Ссылка на описание курса</label>
+                            <input id="site" type="text" class="form-control rounded-3" name="site" value="{{ old('site', $course->site) }}">
+                            @error('site')
+                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                            @enderror
+                        </div>
 
-                        @if (Auth::user()->role=='admin')
-                            <div class="mb-3">
-                                <label for="teachers" class="pb-2">Учителя:</label><br>
-                                <select class="form-select" id="teachers" name="teachers[]" multiple>
-                                    @foreach (\App\User::where('role', 'teacher')->orWhere('role', 'admin')->get() as $teacher)
-                                        <option value="{{ $teacher->id }}" @if($course->teachers->contains($teacher->id)) selected @endif>{{$teacher->name}}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                        <div class="col-12 col-md-6">
+                            <label for="image" class="form-label">Ссылка на обложку</label>
+                            <input id="image" type="text" class="form-control rounded-3" name="image" value="{{ old('image', $course->image) }}">
+                            @error('image')
+                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                            @enderror
+                        </div>
 
-                        @endif
+                        <div class="col-12 col-md-6">
+                            <label for="git" class="form-label">Git репозиторий</label>
+                            <input id="git" type="text" class="form-control rounded-3" name="git" value="{{ old('git', $course->git) }}">
+                            @error('git')
+                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                            @enderror
+                        </div>
 
-                        @if ($course->state == 'draft')
-                            <div class="mb-3">
-                                <label for="start_date">Дата начала:</label>
-                                @if (old('start_date')!="" || $course->start_date==null)
-                                    <input id="start_date" type="text" class="form-control date"
-                                           value="{{old("start_date")}}"
-                                           name="start_date">
-                                @else
-                                    <input id="start_date" type="text" class="form-control date"
-                                           value="{{$course->start_date->format('Y-m-d')}}"
-                                           name="start_date">
-                                @endif
+                        <div class="col-12">
+                            <label for="description" class="form-label">Описание</label>
+                            <textarea id="description" class="form-control rounded-3" name="description" rows="5" required>{{ old('description', $course->description) }}</textarea>
+                            @error('description')
+                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
 
-
-                                @if ($errors->has("start_date"))
-                                    <span class="text-danger d-block">
-                                        <strong>{{ $errors->first("start_date") }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        @endif
-
+                @if (Auth::user()->role=='admin')
+                    <div class="border-top p-3 p-md-4">
                         <div class="mb-3">
-                            <label for="students" class="pb-2">Студенты:</label><br>
-                            <select class="form-select" id="students" name="students[]" multiple>
-                                @foreach (\App\User::all() as $student)
-                                    <option value="{{ $student->id }}" @if($course->students->contains($student->id)) selected @endif>{{$student->name}}</option>
+                            <h5 class="mb-1">Доступ и команда</h5>
+                            <p class="mb-0 text-muted small">Тип курса, направления и преподаватели.</p>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="mode" class="form-label">Тип курса</label>
+                                <select class="form-select rounded-3" id="mode" name="mode">
+                                    <option value="private" @selected(old('mode', $course->mode) == 'private')>Скрытый</option>
+                                    <option value="offline" @selected(old('mode', $course->mode) == 'offline')>Офлайн</option>
+                                    <option value="zoom" @selected(old('mode', $course->mode) == 'zoom')>Платный онлайн курс</option>
+                                    <option value="paid" @selected(old('mode', $course->mode) == 'paid')>Платный онлайн курс без преподавателя</option>
+                                    <option value="open" @selected(old('mode', $course->mode) == 'open')>Бесплатный онлайн курс</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="invite" class="form-label">Инвайт</label>
+                                <input id="invite" type="text" class="form-control rounded-3" name="invite" value="{{ old('invite', $course->invite) }}">
+                                @error('invite')
+                                    <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+
+                            <div class="col-12">
+                                <label for="categories" class="form-label d-flex align-items-center justify-content-between gap-2">
+                                    <span>Образовательные направления</span>
+                                    <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="categories-selected-count">{{ $selectedCategoryIds->count() }} выбрано</span>
+                                </label>
+                                <select class="form-select rounded-3" id="categories" name="categories[]" multiple data-selected-count="#categories-selected-count">
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category->id }}" @selected($selectedCategoryIds->contains($category->id))>{{ $category->title }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="teachers" class="form-label d-flex align-items-center justify-content-between gap-2">
+                                    <span>Учителя</span>
+                                    <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="teachers-selected-count">{{ $selectedTeacherIds->count() }} выбрано</span>
+                                </label>
+                                <select class="form-select rounded-3" id="teachers" name="teachers[]" multiple data-selected-count="#teachers-selected-count">
+                                    @foreach ($teachers as $teacher)
+                                        <option value="{{ $teacher->id }}" @selected($selectedTeacherIds->contains($teacher->id))>{{ $teacher->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="border-top p-3 p-md-4">
+                    <div class="mb-3">
+                        <h5 class="mb-1">Ученики и расписание</h5>
+                        <p class="mb-0 text-muted small">Состав группы, дни занятий и импорт материалов.</p>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="students" class="form-label d-flex align-items-center justify-content-between gap-2">
+                                <span>Студенты</span>
+                                <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="students-selected-count">{{ $selectedStudentIds->count() }} выбрано</span>
+                            </label>
+                            <select class="form-select rounded-3" id="students" name="students[]" multiple data-selected-count="#students-selected-count">
+                                @foreach ($students as $student)
+                                    <option value="{{ $student->id }}" @selected($selectedStudentIds->contains($student->id))>{{ $student->name }}</option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="git">Инвайт</label>
+                        @if ($course->state == 'draft')
+                            <div class="col-12 col-md-6">
+                                <label for="start_date" class="form-label">Дата начала</label>
+                                <input id="start_date" type="text" class="form-control rounded-3 date" value="{{ old('start_date', $courseStartDate) }}" name="start_date">
+                                @error('start_date')
+                                    <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        @endif
 
-                            @if (old('invite')!="")
-                                <input id="invite" type="text" class="form-control" name="invite"
-                                       value="{{old('invite')}}">
-                            @else
-                                <input id="invite" type="text" class="form-control" name="invite"
-                                       value="{{$course->invite}}"
-                                >
-                            @endif
-                            @if ($errors->has('invite'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('invite') }}</strong>
-                                    </span>
-                            @endif
+                        <div class="col-12 col-md-6">
+                            <label for="weekdays" class="form-label">Дни недели</label>
+                            <input id="weekdays" type="text" class="form-control rounded-3" name="weekdays" value="{{ old('weekdays', $course->weekdays) }}" placeholder="1;4">
+                            @error('weekdays')
+                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                            @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="git">Git репозиторий</label>
-
-                            @if (old('git')!="")
-                                <input id="git" type="text" class="form-control" name="git" value="{{old('git')}}">
-                            @else
-                                <input id="git" type="text" class="form-control" name="git" value="{{$course->git}}"
-                                >
-                            @endif
-                            @if ($errors->has('git'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('git') }}</strong>
-                                    </span>
-                            @endif
+                        <div class="col-12 col-md-6">
+                            <label for="telegram" class="form-label">Telegram чат</label>
+                            <input id="telegram" type="text" class="form-control rounded-3" name="telegram" value="{{ old('telegram', $course->telegram) }}">
+                            @error('telegram')
+                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                            @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="telegram">Telegram чат</label>
-
-                            @if (old('telegram')!="")
-                                <input id="telegram" type="text" class="form-control" name="telegram"
-                                       value="{{old('telegram')}}">
-                            @else
-                                <input id="telegram" type="text" class="form-control" name="telegram"
-                                       value="{{$course->telegram}}">
-                            @endif
-                            @if ($errors->has('telegram'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('telegram') }}</strong>
-                                    </span>
-                            @endif
+                        <div class="col-12">
+                            <label for="import" class="form-label">Импорт</label>
+                            <input id="import" type="file" class="form-control rounded-3" name="import">
+                            @error('import')
+                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                            @enderror
                         </div>
+                    </div>
+                </div>
 
-                        <div class="mb-3">
-                            <label for="site">Ссылка на описание курса</label>
-
-                            @if (old('site')!="")
-                                <input id="site" type="text" class="form-control" name="site" value="{{old('site')}}">
-                            @else
-                                <input id="site" type="text" class="form-control" name="site" value="{{$course->site}}"
-                                >
-                            @endif
-                            @if ($errors->has('site'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('site') }}</strong>
-                                    </span>
-                            @endif
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="image">Ссылка на обложку</label>
-
-                            @if (old('image')!="")
-                                <input id="image" type="text" class="form-control" name="image"
-                                       value="{{old('image')}}">
-                            @else
-                                <input id="image" type="text" class="form-control" name="image"
-                                       value="{{$course->image}}"
-                                >
-                            @endif
-                            @if ($errors->has('image'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('image') }}</strong>
-                                    </span>
-                            @endif
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="description">Описание</label>
-                            <textarea id="description" class="form-control" name="description"
-                                      required>@if (old('description')!=""){{old('description')}}@else{{$course->description}}@endif</textarea>
-                            @if ($errors->has('description'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('description') }}</strong>
-                                    </span>
-                            @endif
-                        </div>
-
-                        <hr>
-
-                        <div class="mb-3">
-                            <label for="weekdays">Дни недели</label>
-
-                            @if (old('weekdays')!="")
-                                <input id="weekdays" type="text" class="form-control" name="weekdays"
-                                       value="{{old('weekdays')}}" placeholder="1;4">
-                            @else
-                                <input id="weekdays" type="text" class="form-control" name="weekdays"
-                                       value="{{$course->weekdays}}" placeholder="1;4">
-                            @endif
-                            @if ($errors->has('weekdays'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('weekdays') }}</strong>
-                                    </span>
-                            @endif
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="import">Импорт</label>
-                            <input id="import" type="file" class="form-control"
-                                   name="import">
-
-                            @if ($errors->has("import"))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first("import") }}</strong>
-                                    </span>
-                            @endif
-                        </div>
-
-
-                        <div class="form-actions form-actions--full">
-                            <button type="submit" class="btn btn-success">Сохранить настройки</button>
-                        </div>
-                    </form>
+                <div class="gc-form-footer justify-content-end">
+                    <button type="submit" class="btn btn-success rounded-3 fw-semibold px-4">Сохранить настройки</button>
+                </div>
+            </form>
         </div>
     </div>
 @endsection

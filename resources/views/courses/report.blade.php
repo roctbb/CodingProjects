@@ -15,57 +15,106 @@
 
 
 @section('content')
-    <div class="report-page">
-        <div class="management-header gc-card mb-3">
+    @php
+        $reportTasks = $lessons->flatMap(function ($lesson) {
+            return $lesson->steps->flatMap(function ($step) {
+                return $step->tasks;
+            });
+        });
+        $averageProgress = round($students->avg('percent'));
+        $studentsAtRisk = $students->filter(fn ($student) => $student->percent < 50)->count();
+        $totalStudentLessons = $students->count() * $lessons->count();
+        $completedStudentLessons = $students->sum(function ($student) use ($lessons, $lessonStats) {
+            return $lessons->filter(function ($lesson) use ($student, $lessonStats) {
+                $stats = $lessonStats[$lesson->id][$student->id] ?? null;
+                return $stats && $stats->percent >= 100;
+            })->count();
+        });
+        $lessonCompletionPercent = $totalStudentLessons > 0 ? round($completedStudentLessons / $totalStudentLessons * 100) : 0;
+        $pendingSolutionsCount = $reportTasks
+            ->flatMap(fn ($task) => $task->solutions)
+            ->filter(fn ($solution) => $solution->mark === null && $students->contains('id', $solution->user_id))
+            ->count();
+    @endphp
+    <div class="container-fluid px-0">
+        <div class="gc-card gc-page-header report-page-header mb-3">
             <div class="min-width-0">
                 <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
                 <h2 class="mb-1">Отчет по курсу</h2>
                 <p class="mb-0 text-muted text-truncate">{{ $course->name }}</p>
             </div>
-            <div class="assessment-summary">
-                <div><strong>{{ $students->count() }}</strong><span>учеников</span></div>
-                <div><strong>{{ $lessons->count() }}</strong><span>уроков</span></div>
-                <div><strong>{{ round($students->avg('percent')) }}%</strong><span>средний прогресс</span></div>
+            <div class="row row-cols-3 g-2 flex-shrink-0 report-summary">
+                <div class="col"><div class="gc-summary-tile"><strong>{{ $students->count() }}</strong><span>учеников</span></div></div>
+                <div class="col"><div class="gc-summary-tile"><strong>{{ $lessons->count() }}</strong><span>уроков</span></div></div>
+                <div class="col"><div class="gc-summary-tile"><strong>{{ $reportTasks->count() }}</strong><span>задач</span></div></div>
             </div>
         </div>
 
-    <div class="row g-3 report-layout">
+        <div class="report-overview-grid mb-3">
+            <div class="report-overview-card">
+                <span>Средний прогресс</span>
+                <strong>{{ $averageProgress }}%</strong>
+                <small>по всем ученикам</small>
+            </div>
+            <div class="report-overview-card">
+                <span>На проверке</span>
+                <strong>{{ $pendingSolutionsCount }}</strong>
+                <small>решений ждут оценки</small>
+            </div>
+            <div class="report-overview-card">
+                <span>Ниже 50%</span>
+                <strong>{{ $studentsAtRisk }}</strong>
+                <small>учеников требуют внимания</small>
+            </div>
+            <div class="report-overview-card">
+                <span>Освоение уроков</span>
+                <strong>{{ $lessonCompletionPercent }}%</strong>
+                <small>{{ $completedStudentLessons }} из {{ $totalStudentLessons }}</small>
+            </div>
+        </div>
+
+    <div class="row g-3 align-items-start">
 
         <div class="col-12 col-xl-9">
             <div class="tab-content" id="v-pills-tabContent">
                 @foreach ($students as $key => $student)
                     <div class="tab-pane fade show @if ($key == 0) active @endif" id="student{{$student->id}}"
                          role="tabpanel"
-                         aria-labelledby="v-pills-tab">
+                         aria-labelledby="student{{$student->id}}-tab">
 
-                        <div class="gc-card report-student-card w-100">
-                            <div class="card-body" id="cardbody{{$student->id}}">
-                                <div class="report-student-heading">
-                                    <div>
-                                        <h4 class="card-title mb-1">{{ $student->name }}</h4>
-                                        <small class="text-muted">{{ $student->points }} / {{ $student->max_points }} XP</small>
+                        <div class="gc-card report-student-card overflow-hidden w-100" id="cardbody{{$student->id}}">
+                            <div class="gc-section-header gc-section-header--between report-student-card__header">
+                                <div class="report-student-head d-flex align-items-start justify-content-between gap-3">
+                                    <div class="d-flex align-items-center gap-2 min-width-0">
+                                        <x-gc-avatar :user="$student" size="md" class="flex-shrink-0" alt="" />
+                                        <div class="min-width-0">
+                                            <div class="d-flex flex-wrap align-items-center gap-1 mb-1 min-width-0">
+                                                <h4 class="fw-bold mb-0 text-truncate">{{ $student->name }}</h4>
+                                                @include('profile.partials.custom_title_badge', ['profileUser' => $student, 'compact' => true])
+                                            </div>
+                                            <small class="text-muted">{{ $student->points }} / {{ $student->max_points }} XP</small>
+                                        </div>
                                     </div>
-                                    <strong>{{ round($student->percent) }}%</strong>
+                                    <strong class="report-student-percent">{{ round($student->percent) }}%</strong>
                                 </div>
-                                <div class="progress mb-3">
+                            </div>
+                            <div class="report-student-card__body">
+                                <div class="progress report-student-progress {{ $student->percent < 40 ? 'is-low' : ($student->percent < 60 ? 'is-mid' : 'is-high') }} mb-3">
                                     @if ($student->percent < 40)
-                                        <div class="progress-bar progress-bar-striped bg-danger" role="progressbar"
+                                        <div class="progress-bar report-student-progress__bar" role="progressbar"
                                               data-progress-width="{{$student->percent}}%"
-                                              data-progress-height="2px"
                                               aria-valuenow="{{$student->percent}}" aria-valuemin="0"
                                               aria-valuemax="100"></div>
 
                                     @elseif($student->percent < 60)
-                                        <div class="progress-bar progress-bar-striped bg-warning" role="progressbar"
+                                        <div class="progress-bar report-student-progress__bar" role="progressbar"
                                               data-progress-width="{{$student->percent}}%"
-                                              data-progress-height="2px"
                                               aria-valuenow="{{$student->percent}}" aria-valuemin="0"
                                               aria-valuemax="100"></div>
 
                                     @else
-                                        <div class="progress-bar progress-bar-striped bg-success" role="progressbar"
+                                        <div class="progress-bar report-student-progress__bar" role="progressbar"
                                               data-progress-width="{{$student->percent}}%"
-                                              data-progress-height="2px"
                                               aria-valuenow="{{$student->percent}}" aria-valuemin="0"
                                               aria-valuemax="100"></div>
 
@@ -82,106 +131,88 @@
                                          @endif></div>
 
                                 @endif
-                                <table class="table table-hover report-lessons-table">
-                                    @foreach($lessons as $lesson)
+                                <div class="d-flex align-items-center justify-content-between gap-2 mt-4 mb-2">
+                                    <h5 class="mb-0">Прогресс по урокам</h5>
+                                    <span class="text-muted small">{{ $lessons->count() }} уроков</span>
+                                </div>
+                                <div class="report-lessons-list d-grid gap-2">
+                                @foreach($lessons as $lesson)
+                                    @php
+                                        $lessonStat = $lessonStats[$lesson->id][$student->id] ?? null;
+                                        $lessonPercent = $lessonStat ? $lessonStat->percent : 0;
+                                        $lessonPoints = $lessonStat ? $lessonStat->points : 0;
+                                        $lessonMaxPoints = $lessonStat ? $lessonStat->max_points : 0;
+                                        $lessonProgressWidth = max(0, min(100, (int) round($lessonPercent)));
+                                        $lessonProgressClass = $lessonPercent < 40 ? 'is-low' : ($lessonPercent < 60 ? 'is-mid' : 'is-high');
+                                    @endphp
 
-                                        <tr>
-                                            <td class="w-50">
-
-                                                <a data-bs-toggle="collapse"
+                                    <div class="report-lesson-row">
+                                        <div class="report-lesson-main">
+                                            <div class="min-width-0">
+                                                <a class="report-lesson-link d-inline-flex align-items-center gap-2"
+                                                   data-bs-toggle="collapse"
                                                    href="#student{{$student->id}}marks{{$lesson->id}}"
                                                    aria-expanded="false"
-                                                   aria-controls="student{{$student->id}}marks{{$lesson->id}}"> {{$lesson->name}}
+                                                   aria-controls="student{{$student->id}}marks{{$lesson->id}}">
+                                                    <span class="text-truncate">{{$lesson->name}}</span>
+                                                    <i class="fas fa-chevron-down report-lesson-link__icon"></i>
                                                 </a>
-
-
                                                 @if (!$lesson->isAvailableForUser($course, $student))
-                                                    <strong><span class="text-danger">!!!</span></strong> @endif</td>
-                                            <td>
-                                                <div class="progress m-1">
-                                                    @if ($lesson->percent($student, $course) < 40)
-                                                        <div class="progress-bar progress-bar-striped bg-danger"
-                                                             role="progressbar"
-                                                              data-progress-width="{{$lesson->percent($student, $course)}}%"
-                                                             aria-valuenow="{{$lesson->percent($student, $course)}}"
-                                                             aria-valuemin="0"
-                                                             aria-valuemax="100">{{$lesson->points($student, $course)}}
-                                                            / {{$lesson->max_points($student, $course)}}</div>
-
-                                                    @elseif($lesson->percent($student, $course) < 60)
-                                                        <div class="progress-bar progress-bar-striped bg-warning"
-                                                             role="progressbar"
-                                                              data-progress-width="{{$lesson->percent($student, $course)}}%"
-                                                             aria-valuenow="{{$lesson->percent($student, $course)}}"
-                                                             aria-valuemin="0"
-                                                             aria-valuemax="100">
-                                                            Очки опыта: {{$lesson->points($student, $course)}}
-                                                            / {{$lesson->max_points($student, $course)}}</div>
-
-                                                    @else
-                                                        <div class="progress-bar progress-bar-striped bg-success"
-                                                             role="progressbar"
-                                                              data-progress-width="{{$lesson->percent($student, $course)}}%"
-                                                             aria-valuenow="{{$lesson->percent($student, $course)}}"
-                                                             aria-valuemin="0"
-                                                             aria-valuemax="100">
-                                                            Очки опыта: {{$lesson->points($student, $course)}}
-                                                            / {{$lesson->max_points($student, $course)}}</div>
-
-                                                    @endif
+                                                    <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle ms-2 report-lesson-lock">закрыт</span>
+                                                @endif
+                                            </div>
+                                            <div class="report-lesson-metrics">
+                                                <span class="report-lesson-score">{{$lessonPoints}} / {{$lessonMaxPoints}} XP</span>
+                                                <div class="report-score-progress {{ $lessonProgressClass }}"
+                                                     role="progressbar"
+                                                     aria-valuenow="{{$lessonProgressWidth}}"
+                                                     aria-valuemin="0"
+                                                     aria-valuemax="100"
+                                                     aria-label="{{$lesson->name}}: {{$lessonPoints}} / {{$lessonMaxPoints}}">
+                                                    <span class="report-score-progress__bar progress-width-{{$lessonProgressWidth}}" data-progress-width="{{$lessonPercent}}%"></span>
+                                                    <span class="report-score-progress__value">{{round($lessonPercent)}}%</span>
                                                 </div>
+                                            </div>
+                                        </div>
 
-                                                <div class="collapse" id="student{{$student->id}}marks{{$lesson->id}}">
+                                        <div class="collapse mt-2" id="student{{$student->id}}marks{{$lesson->id}}">
+                                            <ul class="report-task-list list-unstyled mb-0">
+                                            @foreach($lesson->steps as $step)
+                                                @php
+                                                    $tasks = $step->tasks;
+                                                @endphp
+                                                @foreach($tasks as $task)
+                                                    @php
+                                                        $filtered = $task->solutions->filter(function ($value) use ($student) {
+                                                            return $value->user_id == $student->id;
+                                                        });
+                                                        $bestSolution = \App\Solution::bestScoredIn($filtered);
+                                                        $mark = $bestSolution ? $bestSolution->mark : 0;
+                                                        $markClass = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary') : 'bg-body-tertiary';
+                                                        $should_check = false;
+                                                        if (count($filtered)!=0 && $filtered->last()->mark==null) $should_check=true;
+                                                    @endphp
+                                                    <li class="report-task-row">
+                                                        <a class="report-task-link text-decoration-none"
+                                                           target="_blank"
+                                                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">{{$task->name}}</a>
 
-                                                    @foreach($lesson->steps as $step)
-                                                        @php
-                                                            $tasks = $step->tasks;
-                                                        @endphp
-                                                        @foreach($tasks as $task)
-                                                            @php
-                                                                $filtered = $task->solutions->filter(function ($value) use ($student) {
-                                                                    return $value->user_id == $student->id;
-                                                                });
-                                                                $mark = $filtered->max('mark');
-                                                                $mark = $mark == null?0:$mark;
-                                                                $should_check = false;
-                                                                if (count($filtered)!=0 && $filtered->last()->mark==null) $should_check=true;
-
-                                                            @endphp
-                                                            <li class="report-task-row">
-
-
-                                                                <a target="_blank"
-                                                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">{{$task->name}}</a>
-
-
-                                                                @php $blocked = $task->isBlocked($student->id, $course->id); @endphp
-                                                                @if ($blocked)
-                                                                    <span class="badge bg-danger float-end">0</span>
-                                                                @elseif ($should_check)
-                                                                    <span class="badge bg-warning text-dark float-end">{{$mark}}</span>
-                                                                @elseif ($mark == 0)
-                                                                    <span class="badge bg-light text-dark float-end">{{$mark}}</span>
-                                                                @else
-                                                                    <span class="badge bg-primary float-end">{{$mark}}</span>
-                                                                @endif
-
-                                                            </li>
-                                                        @endforeach
-                                                    @endforeach
-
-                                                </div>
-                                            </td>
-
-
-                                        </tr>
-
-
-
-
-
-                                    @endforeach
-                                </table>
+                                                        @php $blocked = $task->isBlocked($student->id, $course->id); @endphp
+                                                        @if ($blocked)
+                                                            <span class="badge rounded-pill bg-body-tertiary report-task-mark report-task-mark--blocked">0 / {{$task->max_mark}}</span>
+                                                        @elseif ($should_check)
+                                                            <span class="badge rounded-pill bg-body-tertiary report-task-mark report-task-mark--review">{{$mark}} / {{$task->max_mark}}</span>
+                                                        @else
+                                                            <span class="badge rounded-pill {{ $markClass }} report-task-mark">{{$mark}} / {{$task->max_mark}}</span>
+                                                        @endif
+                                                    </li>
+                                                @endforeach
+                                            @endforeach
+                                            </ul>
+                                        </div>
+                                    </div>
+                                @endforeach
+                                </div>
 
                             </div>
 
@@ -192,21 +223,46 @@
             </div>
         </div>
         <div class="col-12 col-xl-3">
-            <div class="nav flex-column nav-pills report-student-nav gc-card" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                @foreach ($students as $key => $student)
-                    <a class="nav-link @if ($key == 0) active @endif" id="students-tab" data-bs-toggle="pill"
-                       href="#student{{$student->id}}" role="tab"
-                       aria-controls="student{{$student->id}}" aria-selected="true"
-                       data-plotly-resize-target="pulse{{$student->id}}"><span class="text-truncate">{{$student->name}}</span>
-                        @if ($student->percent < 40)
-                            <span class="badge bg-danger">&nbsp;</span>
-                        @elseif($student->percent < 60)
-                            <span class="badge bg-warning text-dark">&nbsp;</span>
-                        @else
-                            <span class="badge bg-success">&nbsp;</span>
-                        @endif
-                    </a>
-                @endforeach
+            <div class="gc-card report-students-card overflow-hidden sticky-xl-top">
+                <div class="gc-section-header gc-section-header--between report-students-card__header">
+                    <div class="min-width-0">
+                        <h6 class="mb-0">Ученики</h6>
+                        <span class="text-muted small">Сводка по прогрессу</span>
+                    </div>
+                    <span class="badge rounded-pill bg-body-tertiary report-student-search-count flex-shrink-0" data-report-student-count>{{ $students->count() }} из {{ $students->count() }}</span>
+                </div>
+                <div class="p-2 border-bottom report-student-search">
+                    <div class="input-group input-group-sm gc-search-box">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="search" class="form-control" placeholder="Найти ученика" aria-label="Найти ученика" data-report-student-search data-report-student-list="#v-pills-tab">
+                        <button class="btn d-none" type="button" data-report-student-clear aria-label="Очистить поиск"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="nav flex-column nav-pills p-2 gap-1 report-students-nav" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                    @foreach ($students as $key => $student)
+                        @php
+                            $studentProgressWidth = max(0, min(100, (int) round($student->percent)));
+                            $studentProgressClass = $student->percent < 40 ? 'is-low' : ($student->percent < 60 ? 'is-mid' : 'is-high');
+                        @endphp
+                        <a class="nav-link report-student-link @if ($key == 0) active @endif" id="student{{$student->id}}-tab" data-bs-toggle="pill"
+                           href="#student{{$student->id}}" role="tab"
+                           aria-controls="student{{$student->id}}" aria-selected="@if ($key == 0) true @else false @endif"
+                           data-plotly-resize-target="pulse{{$student->id}}"
+                           data-report-student-name="{{$student->name}} {{ $student->activeCustomTitle() }} {{ $student->points }} {{ $student->max_points }}">
+                            <span class="min-width-0">
+                                <span class="report-student-link__name">
+                                    <span class="text-truncate">{{$student->name}}</span>
+                                    @include('profile.partials.custom_title_badge', ['profileUser' => $student, 'compact' => true])
+                                </span>
+                                <small class="report-student-link__meta">{{ $student->points }} / {{ $student->max_points }} XP</small>
+                            </span>
+                            <span class="report-nav-progress {{ $studentProgressClass }}" title="Прогресс: {{ round($student->percent) }}%">
+                                <span class="report-nav-progress__bar progress-width-{{$studentProgressWidth}}" data-progress-width="{{$student->percent}}%"></span>
+                                <span class="report-nav-progress__value">{{ round($student->percent) }}%</span>
+                            </span>
+                        </a>
+                    @endforeach
+                </div>
             </div>
         </div>
     </div>

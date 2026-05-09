@@ -6,9 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') - {{ config('app.name', 'Laravel') }}</title>
 
-    @include('layouts.partials.npm-vendor-assets')
-    <link href="{{ asset('build/css/legacy-theme.css') }}" rel="stylesheet">
-    <script type="module" src="{{ asset('build/js/mathjax-config.js') }}"></script>
+	    @include('layouts.partials.npm-vendor-assets')
+	    <script type="module" src="{{ asset('build/js/mathjax-config.js') }}"></script>
     <script id="MathJax-script" async src="{{ asset('build/js/vendor/mathjax/tex-mml-chtml.js') }}"></script>
 
     @include('layouts.partials.pipeline-theme-scripts')
@@ -30,6 +29,19 @@
                         <i class="fas fa-graduation-cap"></i> Мои курсы
                     </a>
                 </li>
+                <li>
+                    <a class="gc-sidebar__link {{ Request::is('insider/pulse*') ? 'active' : '' }}" href="{{ url('/insider/pulse') }}">
+                        <i class="fas fa-wave-square"></i> Пульс
+                    </a>
+                </li>
+                @if(Auth::user()->role == 'teacher' || Auth::user()->role == 'admin')
+                    <li>
+                        <a class="gc-sidebar__link {{ Request::is('insider/reviews*') ? 'active' : '' }}" href="{{ url('/insider/reviews') }}">
+                            <i class="fas fa-code-branch"></i> Проверка
+                        </a>
+                    </li>
+                @endif
+                @include('layouts.partials.sidebar-course-links')
                 <li>
                     <a class="gc-sidebar__link {{ Request::is('insider/market*') ? 'active' : '' }}" href="{{ url('insider/market') }}">
                         <i class="fas fa-store"></i> Магазин
@@ -62,6 +74,21 @@
                 </a>
             </li>
             <li>
+                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://exam.geekclass.ru">
+                    <i class="fas fa-file-alt"></i> Exam
+                </a>
+            </li>
+            <li>
+                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://arena.geekclass.ru">
+                    <i class="fas fa-trophy"></i> Arena
+                </a>
+            </li>
+            <li>
+                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://battle.geekclass.ru">
+                    <i class="fas fa-code"></i> CodeBattle
+                </a>
+            </li>
+            <li>
                 <button class="gc-sidebar__link" id="gcThemeToggle">
                     <i class="fas fa-moon"></i> <span>Тема</span>
                 </button>
@@ -72,7 +99,7 @@
             <div class="gc-sidebar__user">
                 <div class="dropdown">
                     <button class="gc-sidebar__user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ Auth::user()->imageUrl() }}" class="gc-sidebar__avatar" alt="">
+                        <x-gc-avatar :user="Auth::user()" img-class="gc-sidebar__avatar" alt="" />
                         <span>{{ Auth::user()->name }}</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -98,8 +125,8 @@
 
             @if (Auth::check())
                 <div class="dropdown ms-auto">
-                    <button class="btn btn-link p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ Auth::user()->imageUrl() }}" class="avatar" alt="">
+                    <button class="gc-topbar__avatar-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Меню профиля">
+                        <x-gc-avatar :user="Auth::user()" alt="" />
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{{ url('insider/profile') }}">Профиль</a></li>
@@ -115,18 +142,7 @@
         </div>
 
         <div class="gc-content">
-            @if(Session::has('alert-class') && Session::get('alert-destination') == 'head')
-                <div class="gc-toast-container">
-                    <div class="toast show align-items-center text-bg-{{ str_replace('alert-', '', Session::get('alert-class')) }} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
-                        <div class="d-flex">
-                            <div class="toast-body">
-                                <strong>{{ Session::get('alert-title') }}</strong> {{ Session::get('alert-text') }}
-                            </div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Закрыть"></button>
-                        </div>
-                    </div>
-                </div>
-            @endif
+            @include('layouts.partials.session-alert')
 
             @yield('tabs')
             @yield('content')

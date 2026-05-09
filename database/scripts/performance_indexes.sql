@@ -4,7 +4,6 @@
 -- Courses table
 ALTER TABLE courses ADD INDEX IF NOT EXISTS idx_state (state);
 ALTER TABLE courses ADD INDEX IF NOT EXISTS idx_is_open (is_open);
-ALTER TABLE courses ADD INDEX IF NOT EXISTS idx_provider (provider_id);
 
 -- Solutions table (for bulk loading submissions)
 ALTER TABLE solutions ADD INDEX IF NOT EXISTS idx_user_task (user_id, task_id);

@@ -5,8 +5,8 @@
 @endsection
 
 @section('content')
-    <div class="form-page">
-        <div class="form-page-header gc-card mb-3">
+    <div class="container-xl px-0">
+        <div class="gc-card gc-page-header mb-3">
             <div>
                 <a class="assessment-back-link" href="{{ url()->previous() }}"><i class="icon ion-chevron-left"></i> Назад</a>
                 <h2 class="mb-1">Добавление главы</h2>
@@ -14,32 +14,30 @@
             </div>
         </div>
 
-        <div class="form-layout form-layout--single">
-            <div class="gc-card form-card">
-                <form method="POST" enctype="multipart/form-data" class="form-stack">
+        <div class="col-12 col-lg-8 col-xl-6">
+            <div class="gc-card overflow-hidden">
+                <form method="POST" enctype="multipart/form-data">
                     {{ csrf_field() }}
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Название</label>
-                        <input id="name" type="text" class="form-control" name="name" value="{{old('name')}}" required>
-                        @if ($errors->has('name'))
-                            <span class="text-danger d-block">
-                                <strong>{{ $errors->first('name') }}</strong>
-                            </span>
-                        @endif
+                    <div class="p-3 p-md-4">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Название</label>
+                            <input id="name" type="text" class="form-control rounded-3" name="name" value="{{old('name')}}" required>
+                            @error('name')
+                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                            @enderror
+                        </div>
+
+                        <div class="mb-0">
+                            <label for="description" class="form-label">Описание</label>
+                            <textarea id="description" class="form-control rounded-3" name="description" rows="5">{{old('description')}}</textarea>
+                            @error('description')
+                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                            @enderror
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Описание</label>
-                        <textarea id="description" class="form-control" name="description" rows="5">{{old('description')}}</textarea>
-                        @if ($errors->has('description'))
-                            <span class="text-danger d-block">
-                                <strong>{{ $errors->first('description') }}</strong>
-                            </span>
-                        @endif
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-success">Добавить главу</button>
+                    <div class="gc-form-footer justify-content-end gap-2">
+                        <button type="submit" class="btn btn-success rounded-3 fw-semibold px-4">Добавить главу</button>
                     </div>
                 </form>
             </div>

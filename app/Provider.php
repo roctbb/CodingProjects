@@ -10,10 +10,4 @@ class Provider extends Model
 {
     protected $table = "providers";
 
-
-    public function courses()
-    {
-        return $this->hasMany('App\Course', 'provider_id', 'id')->orderBy('id');
-    }
-
 }

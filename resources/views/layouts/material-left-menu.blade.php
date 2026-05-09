@@ -6,8 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title') - {{ config('app.name', 'Laravel') }}</title>
 
-    @include('layouts.partials.npm-vendor-assets')
-    <link href="{{ asset('build/css/legacy-theme.css') }}" rel="stylesheet">
+	    @include('layouts.partials.npm-vendor-assets')
+	    @include('layouts.partials.pipeline-theme-scripts')
     @yield('head')
 </head>
 <body>
@@ -26,6 +26,7 @@
                         <i class="fas fa-graduation-cap"></i> Мои курсы
                     </a>
                 </li>
+                @include('layouts.partials.sidebar-course-links')
                 <li>
                     <a class="gc-sidebar__link {{ Request::is('insider/market*') ? 'active' : '' }}" href="{{ url('/insider/market') }}">
                         <i class="fas fa-store"></i> Магазин
@@ -52,17 +53,37 @@
             @endif
         </ul>
 
-        <div class="gc-sidebar__section-label">Инструменты</div>
-        <ul class="gc-sidebar__nav" style="flex: 0">
+        <div class="gc-sidebar__section-label">Ресурсы</div>
+        <ul class="gc-sidebar__nav flex-grow-0">
             <li>
-                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://blog.geekclass.ru">
-                    <i class="fas fa-newspaper"></i> Блог
+                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://storage.geekclass.ru">
+                    <i class="fas fa-cloud"></i> Storage
                 </a>
             </li>
             <li>
-                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://notes.geekclass.ru">
-                    <i class="fas fa-sticky-note"></i> GeekPaste
+                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://paste.geekclass.ru">
+                    <i class="fas fa-clipboard"></i> Paste
                 </a>
+            </li>
+            <li>
+                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://exam.geekclass.ru">
+                    <i class="fas fa-file-alt"></i> Exam
+                </a>
+            </li>
+            <li>
+                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://arena.geekclass.ru">
+                    <i class="fas fa-trophy"></i> Arena
+                </a>
+            </li>
+            <li>
+                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://battle.geekclass.ru">
+                    <i class="fas fa-code"></i> CodeBattle
+                </a>
+            </li>
+            <li>
+                <button class="gc-sidebar__link" id="gcThemeToggle">
+                    <i class="fas fa-moon"></i> <span>Тема</span>
+                </button>
             </li>
         </ul>
 
@@ -70,7 +91,7 @@
             <div class="gc-sidebar__user">
                 <div class="dropdown">
                     <button class="gc-sidebar__user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ Auth::user()->imageUrl() }}" class="gc-sidebar__avatar" alt="">
+                        <x-gc-avatar :user="Auth::user()" img-class="gc-sidebar__avatar" alt="" />
                         <span>{{ Auth::user()->name }}</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -98,8 +119,8 @@
 
             @if (Auth::check())
                 <div class="dropdown ms-auto">
-                    <button class="btn btn-link p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ Auth::user()->imageUrl() }}" class="avatar" alt="">
+                    <button class="gc-topbar__avatar-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Меню профиля">
+                        <x-gc-avatar :user="Auth::user()" alt="" />
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{{ url('insider/profile') }}">Профиль</a></li>
@@ -115,12 +136,7 @@
         </div>
 
         <div class="gc-content">
-            @if(Session::has('alert-class') && Session::get('alert-destination') == 'head')
-                <div class="alert {{ Session::get('alert-class') }} alert-dismissible fade show" role="alert">
-                    <strong>{{ Session::get('alert-title') }}</strong> {{ Session::get('alert-text') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
-                </div>
-            @endif
+            @include('layouts.partials.session-alert')
 
             @yield('content')
         </div>

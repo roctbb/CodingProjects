@@ -17,7 +17,9 @@ class Kernel extends ConsoleKernel
         Commands\LowerEmails::class,
         Commands\TestEmails::class,
         Commands\FixTyposCommand::class,
-        Commands\RecalculateCoursePoints::class
+        Commands\RecalculateCoursePoints::class,
+        Commands\PollTelegramBot::class,
+        Commands\RandomCoinDrop::class
     ];
 
     /**
@@ -29,6 +31,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('birthdays')->daily();
+        $schedule->command('coins:random-drop')->daily();
+        $schedule->command('telegram:poll --once')->everyMinute()->withoutOverlapping();
         //          ->hourly();
     }
 

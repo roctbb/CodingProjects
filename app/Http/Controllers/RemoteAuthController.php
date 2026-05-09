@@ -24,7 +24,7 @@ class RemoteAuthController extends Controller
         $url = $request->get('redirect_url');
 
         if (!$url || !filter_var($url, FILTER_VALIDATE_URL)) {
-            abort(422, "Invalid or no url provided");
+            abort(422, 'Некорректная ссылка для перехода.');
         }
 
 

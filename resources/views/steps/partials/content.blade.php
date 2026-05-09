@@ -3,167 +3,196 @@
         <div class="tab-pane fade @if (!$empty && $zero_theory && $one_tasker) show active @endif"
              id="task{{$task->id}}"
              role="tabpanel" aria-labelledby="tasks-tab{{$task->id}}">
+            @php
+                $geekpasteAttemptResetStatuses = $geekpasteAttemptResetStatuses ?? [];
+                $isInsider = \Request::is('insider/*');
+                $isManager = $isInsider && ($course->teachers->contains($user) || $user->role=='admin');
+                $deadline = $isInsider ? $task->getDeadline($course->id) : null;
+                $latestUserSolution = $isInsider && Auth::check() ? $task->latestSolutionForUser(Auth::id()) : null;
+                $hasUserSolution = $latestUserSolution !== null;
+                $geekpasteExtraAttemptCost = \App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST;
+                $geekpasteAttemptResetStatus = $geekpasteAttemptResetStatuses[$task->id] ?? null;
+                $canBuyGeekPasteExtraAttempt = $geekpasteAttemptResetStatus
+                    && $user->role == 'student'
+                    && !$isManager
+                    && Auth::check()
+                    && Auth::user()->balance() >= $geekpasteExtraAttemptCost;
+                $taskType = $task->is_code ? 'code' : ($task->is_quiz ? 'quiz' : 'text');
+                $taskTypeLabel = ['code' => 'Код', 'quiz' => 'Квиз', 'text' => 'Ответ'][$taskType];
+                $taskTypeIcon = ['code' => 'fas fa-code', 'quiz' => 'fas fa-question-circle', 'text' => 'fas fa-pen'][$taskType];
+                $taskStatusClass = '';
+                if ($hasUserSolution) {
+                    $taskStatusClass = is_null($latestUserSolution->mark)
+                        ? 'is-review'
+                        : ((int) $latestUserSolution->mark >= (int) $task->max_mark ? 'is-complete' : 'is-submitted');
+                }
+                $taskScoreBadgeClass = $hasUserSolution ? $latestUserSolution->scoreBadgeClass('bg-body') : 'bg-body';
+            @endphp
             <div class="row">
                 <div class="col">
                     @if ($task->is_star)
-                        <div class="alert alert-success" role="alert">
-                            <strong>Это необязательная задача.</strong> За ее решение вы получите
-                            дополнительный опыт.
+                        <div class="step-task-note step-task-note--optional" role="note">
+                            <span class="text-warning-emphasis flex-shrink-0"><i class="fas fa-star"></i></span>
+                            <div class="min-width-0">
+                                <strong class="d-block">Необязательная задача</strong>
+                                <span class="text-muted small">За ее решение вы получите дополнительный опыт.</span>
+                            </div>
                         </div>
                     @endif
-                    <div class="card step-task-card">
-                        <div class="card-header step-task-card__header">
-                            <span class="step-task-card__title">{{$task->name}}</span>
-                            @if (\Request::is('insider/*'))
-                                @if ($task->getDeadline($course->id))
-
-                                    @php
-                                        $exp = $task->getDeadline($course->id)->expiration;
-                                    @endphp
-                                    @if (\Carbon\Carbon::now()->gt($exp))
-                                        <img
-                                                class="border border-danger rounded"
-                                                title="Дедлайн"
-                                                src="{{ url('images/icons/deadline.png') }}" height="23"/>
-                                    @elseif (\Carbon\Carbon::now()->addDays(3)->gt($exp))
-                                        <img
-                                                class="border border-warning rounded"
-                                                title="Дедлайн"
-                                                src="{{ url('images/icons/deadline.png') }}" height="23"/>
-                                    @else
-                                        <img
-                                                title="Дедлайн"
-                                                src="{{ url('images/icons/deadline.png') }}" height="23"/>
+                    <div class="gc-card step-task-card step-task-card--{{$taskType}} @if ($task->is_star) is-optional @endif @if ($hasUserSolution) is-submitted @endif overflow-hidden">
+                        <div class="step-task-card__header gc-section-header">
+                            <div class="min-width-0">
+                                <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                                    <span class="step-task-type step-task-type--{{$taskType}}">
+                                        <i class="{{$taskTypeIcon}}"></i>{{$taskTypeLabel}}
+                                    </span>
+                                    <h4 class="step-task-card__title fw-bold mb-0">{{$task->name}}</h4>
+                                    <span class="badge rounded-pill bg-body-tertiary">{{$task->max_mark}} XP</span>
+                                    @if ($deadline)
+                                        @php
+                                            $exp = $deadline->expiration;
+                                            $deadlineClass = \Carbon\Carbon::now()->gt($exp)
+                                                ? 'bg-danger-subtle text-danger-emphasis border-danger-subtle'
+                                                : (\Carbon\Carbon::now()->addDays(3)->gt($exp)
+                                                    ? 'bg-warning-subtle text-warning-emphasis border-warning-subtle'
+                                                    : 'bg-body-tertiary text-muted');
+                                        @endphp
+                                        <span class="badge rounded-pill border {{ $deadlineClass }}">
+                                            <i class="fas fa-calendar-alt me-1"></i>{{ $deadline->expiration->format('d.m.Y') }}
+                                        </span>
                                     @endif
-                                    {{ $task->getDeadline($course->id)->expiration->format('d.m.Y')}}
-
-                                @endif
-                            @endif
-
-
-                            <span class="step-task-card__meta">
-                            @if ($task->price > 0)
-                                      <img src="{{ url('images/icons/icons8-coins-48.png') }}"
-                                      height="23" alt="">
-                                &nbsp;{{$task->price}}
-                            @endif
-                            </span>
-                            @if (\Request::is('insider/*') && ($course->teachers->contains($user) || $user->role=='admin'))
-
-                                <a class="float-end btn btn-link btn-sm p-0 ms-2 text-danger"
+                                    @if ($task->price > 0)
+                                        <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                                            <i class="fas fa-coins me-1"></i>{{$task->price}}
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                            @if ($isManager)
+                                <div class="step-task-actions d-flex flex-wrap justify-content-lg-end gap-1">
+                                <a class="btn btn-outline-danger btn-sm rounded-3"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"
-                                   data-confirm="Вы уверены?"><i
-                                             class="icon ion-android-close"></i></a>
-                                <a class="float-end btn btn-link btn-sm p-0 ms-2 text-success"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}"><i
-                                             class="icon ion-android-create"></i></a>
+                                   title="Удалить задачу"
+                                   data-confirm="Вы уверены?"><i class="icon ion-android-close"></i></a>
+                                <a class="btn btn-outline-secondary btn-sm rounded-3"
+                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}"
+                                   title="Редактировать задачу"><i class="icon ion-android-create"></i></a>
                                 @include('steps/partials/deadline_modal')
                                 <button type="button" title="Установить дедлайн" data-bs-toggle="modal"
                                    data-bs-target="#deadline-modal-{{$task->id}}"
-                                   class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"><i
-                                             class="icon ion-ios-calendar"></i></button>
+                                   class="btn btn-outline-secondary btn-sm rounded-3"><i class="icon ion-ios-calendar"></i></button>
                                 <a title="Фантомное решение (добавить пустое решение для всех студентов)"
-                                   class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"><i
-                                             class="icon ion-ios-color-wand"></i></a>
-                                <a title="Сгенерировать форму perr-review" class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/peer')}}"><i
-                                             class="icon ion-person-stalker"></i></a>
+                                   class="btn btn-outline-secondary btn-sm rounded-3"
+                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"><i class="icon ion-ios-color-wand"></i></a>
+                                <a title="Сгенерировать форму peer-review" class="btn btn-outline-secondary btn-sm rounded-3"
+                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/peer')}}"><i class="icon ion-person-stalker"></i></a>
                                 @if ($task->is_code)
                                     <a title="Перепроверить все решения (обнулить баллы и отправить последнее решение каждого студента на перепроверку)"
-                                        class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
+                                        class="btn btn-outline-secondary btn-sm rounded-3"
                                         href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/recheck-all')}}"
-                                        data-confirm="Вы уверены? Это обнулит все баллы и отправит последние решения на перепроверку."><i
-                                                 class="icon ion-refresh"></i></a>
+                                        data-confirm="Вы уверены? Это обнулит все баллы и отправит последние решения на перепроверку."><i class="icon ion-refresh"></i></a>
                                 @endif
-                                <a class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i
-                                             class="icon ion-arrow-right-c"></i></a>
-                                <a class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i
-                                             class="icon ion-arrow-left-c"></i></a>
+                                <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть вправо"
+                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i class="icon ion-arrow-right-c"></i></a>
+                                <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть влево"
+                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i class="icon ion-arrow-left-c"></i></a>
                                 @if ($step->previousStep() != null)
-                                    <a class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
-                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i
-                                                 class="icon ion-arrow-up-c"></i></a>
+                                    <a class="btn btn-outline-secondary btn-sm rounded-3" title="Перенести выше"
+                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i class="icon ion-arrow-up-c"></i></a>
                                 @endif
                                 @if ($step->nextStep() != null)
-                                    <a class="float-end btn btn-link btn-sm p-0 ms-2 text-muted"
-                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i
-                                                 class="icon ion-arrow-down-c"></i></a>
+                                    <a class="btn btn-outline-secondary btn-sm rounded-3" title="Перенести ниже"
+                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i class="icon ion-arrow-down-c"></i></a>
                                 @endif
+                                </div>
                             @endif
                         </div>
-                        <div class="card-body markdown">
+                        <div class="markdown step-task-card__body">
                             {!! parsedown_math($task->text) !!}
-                            @if (\Request::is('insider/*'))
+                            @if ($isInsider)
                                 @php $blocked = $task->isBlocked(Auth::User()->id, $course->id); @endphp
                                 @if ($blocked)
-                                    <div class="alert alert-danger" role="alert">
-                                        Задача заблокирована для вас. Новые сдачи запрещены.
+                                    <div class="step-task-note step-task-note--danger bg-danger-subtle text-danger-emphasis mb-3" role="note">
+                                        <span class="flex-shrink-0"><i class="fas fa-lock"></i></span>
+                                        <div class="min-width-0">
+                                            <strong class="d-block">Задача заблокирована</strong>
+                                            <span class="small">Новые сдачи запрещены.</span>
+                                        </div>
                                     </div>
                                 @endif
                                 @if ($task->is_code)
                                     @if (!$blocked)
-                                        <p>
+                                        <div class="step-code-submit mb-3 d-flex flex-wrap align-items-center gap-2">
                                             <a href="{{ config('services.geekpaste_url').'/?task_id=' . $task->id . '&course_id=' . $course->id }}"
-                                               class="btn btn-primary" target="_blank">Сдать решение</a></p>
+                                               class="btn btn-success rounded-3 fw-semibold" target="_blank" rel="noopener">
+                                                <i class="fas fa-code me-1"></i>Сдать решение
+                                            </a>
+                                            @if ($canBuyGeekPasteExtraAttempt)
+                                                <form method="POST" action="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/geekpaste-extra-attempt') }}" class="d-inline-flex">
+                                                    {{ csrf_field() }}
+                                                    <button type="submit" class="btn btn-sm solution-special-action"
+                                                            data-confirm="Купить одну дополнительную попытку GeekPaste за {{ $geekpasteExtraAttemptCost }} GC?">
+                                                        <i class="fas fa-plus-circle"></i>
+                                                        + попытка за {{ $geekpasteExtraAttemptCost }} GC
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
                                     @endif
                                 @endif
 
                                 @if ($user->role == 'student' and $task->solution!=null and $task->isFullDone(Auth::User()->id))
-                                    <h3>Авторское решение</h3>
-                                    {!! parsedown_math($task->solution) !!}
+                                    <div class="step-author-solution mb-3">
+                                        <h3 class="h6 mb-2">Авторское решение</h3>
+                                        {!! parsedown_math($task->solution) !!}
+                                    </div>
                                 @endif
                                 @if (($course->teachers->contains($user) || $user->role=='admin') and $task->solution != null)
-                                    <p>
-                                        <a data-bs-toggle="collapse" href="#solution{{$task->id}}" role="button"
+                                    <p class="mb-3">
+                                        <a class="btn btn-sm gc-action-button step-author-toggle" data-bs-toggle="collapse" href="#solution{{$task->id}}" role="button"
                                            aria-expanded="false"
                                            aria-controls="collapseExample">
-                                            Авторское решение &raquo;
+                                            Авторское решение
                                         </a>
                                     </p>
-                                    <div class="collapse" id="solution{{$task->id}}">
-                                        {!! parsedown_math($task->solution) !!}
+                                    <div class="collapse mb-3" id="solution{{$task->id}}">
+                                        <div class="step-author-solution">
+                                            {!! parsedown_math($task->solution) !!}
+                                        </div>
                                     </div>
                                 @endif
                                 @if ($task->is_quiz)
                                     @if (!$blocked)
                                         <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}"
                                               method="POST"
-                                              class="d-flex gap-2"
+                                              class="step-quiz-answer-form"
                                               data-check-task data-task-id="{{$task->id}}">
                                             {{ csrf_field() }}
-                                            <label for="text{{$task->id}}"><strong>Ответ:&nbsp;</strong></label>
-                                            <input type="text" name="text" class="form-control form-control-sm"
-                                                   id="text{{$task->id}}"/>&nbsp;
-                                            <button type="submit" class="btn btn-success btn-sm">Отправить
+                                            <label for="text{{$task->id}}" class="form-label fw-semibold mb-0">Ответ</label>
+                                            <input type="text" name="text" class="form-control form-control-sm rounded-3"
+                                                   id="text{{$task->id}}"/>
+                                            <button type="submit" class="btn btn-success btn-sm rounded-3">Отправить
                                             </button>
                                         </form>
                                         @if ($errors->has('text'))
-                                            <br><span
-                                                    class="text-danger d-block"><strong>{{ $errors->first('text') }}</strong></span>
+                                            <span class="text-danger small d-block mb-3"><strong>{{ $errors->first('text') }}</strong></span>
                                         @endif
                                     @endif
                                 @endif
-                                <span class="badge bg-secondary">Очков опыта: {{$task->max_mark}}</span>
-                                @if ($blocked)
-                                    <span class="badge bg-danger" id="TSK_{{$task->id}}">Очков опыта: 0</span>
-                                    <span class="small" id="TSK_COM_{{$task->id}}">Задача заблокирована</span>
-                                @elseif ($task->is_quiz && $task->solutions()->where('user_id', Auth::User()->id)->exists())
-                                    @php
-                                        $solution = $task->solutions()
-                                            ->where('user_id', Auth::User()->id)
-                                            ->orderByDesc('submitted')
-                                            ->first();
-                                    @endphp
-                                    <span class="badge bg-primary"
-                                          id="TSK_{{$task->id}}">Очков опыта: {{$solution->mark}}</span>
-                                    <span class="small" id="TSK_COM_{{$task->id}}">{{$solution->comment}}</span>
-                                @else
-                                    <span class="badge bg-primary" id="TSK_{{$task->id}}"></span>
-                                    <span class="small" id="TSK_COM_{{$task->id}}"></span>
-                                @endif
+                                <div class="step-task-status-row {{ $blocked ? 'is-blocked' : $taskStatusClass }} @if (!$blocked && !($task->is_quiz && $hasUserSolution)) d-none @endif"
+                                     data-task-status-row>
+                                    @if ($blocked)
+                                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-semibold" id="TSK_{{$task->id}}">0 XP</span>
+                                        <span class="small text-muted" id="TSK_COM_{{$task->id}}">Задача заблокирована</span>
+                                    @elseif ($task->is_quiz && $hasUserSolution)
+                                        <span class="badge rounded-pill {{ $taskScoreBadgeClass }} step-task-score"
+                                              id="TSK_{{$task->id}}">{{$latestUserSolution->mark}} XP</span>
+                                        <span class="small text-muted" id="TSK_COM_{{$task->id}}">{{$latestUserSolution->comment}}</span>
+                                    @else
+                                        <span class="badge rounded-pill bg-body step-task-score" id="TSK_{{$task->id}}"></span>
+                                        <span class="small text-muted" id="TSK_COM_{{$task->id}}"></span>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -175,52 +204,72 @@
                     @if ($course->teachers->contains($user) || $user->role == 'admin')
                         <div class="row my-3">
                             <div class="col">
-                                <div class="card">
-                                    <table class="table table-stripped">
+                                <div class="gc-card step-progress-card overflow-hidden">
+                                    <div class="gc-section-header gc-section-header--between">
+                                        <div>
+                                            <h6 class="mb-0">Прогресс учеников</h6>
+                                            <p class="text-muted small mb-0">Быстрый переход к проверке по каждому ученику.</p>
+                                        </div>
+                                        <span class="badge rounded-pill bg-body-tertiary text-nowrap">{{ $course->students->count() }} учеников</span>
+                                    </div>
+                                    <div class="table-responsive step-progress-table-wrap">
+                                    <table class="table table-hover table-sm align-middle mb-0 gc-data-table step-student-progress-table">
+                                        <thead class="text-uppercase small">
+                                        <tr>
+                                            <th>Ученик</th>
+                                            <th class="text-end">Баллы</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
                                         @foreach($course->students as $student)
                                             @php
                                                 $filtered = $task->solutions->filter(function ($value) use ($student) {
                                                 return $value->user_id == $student->id;
                                                 });
+                                                $bestSolution = \App\Solution::bestScoredIn($filtered);
                                                 $blocked = $task->isBlocked($student->id, $course->id);
                                                 if ($blocked) {
                                                     $mark = 0;
                                                     $need_check = false;
-                                                    $class = 'bg-danger';
+                                                    $class = 'bg-danger-subtle text-danger border border-danger-subtle fw-semibold';
                                                 } else {
-                                                    $mark = $filtered->max('mark');
-                                                    $mark = $mark == null?0:$mark;
+                                                    $mark = $bestSolution ? $bestSolution->mark : 0;
                                                     $need_check = false;
                                                     if ($filtered->count()!=0 && $filtered->last()->mark==null)
                                                     {
                                                     $need_check = true;
                                                     }
-                                                    $class = 'bg-light text-dark';
+                                                    $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary text-muted fw-semibold') : 'bg-body-tertiary text-muted fw-semibold';
                                                     if ($mark >= $task->max_mark * 0.5)
                                                     {
-                                                    $class = 'bg-primary';
+                                                    $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary text-muted fw-semibold') : 'bg-body-tertiary text-muted fw-semibold';
                                                     }
                                                     if ($mark >= $task->max_mark * 0.7)
                                                     {
-                                                    $class = 'bg-success';
+                                                    $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary text-muted fw-semibold') : 'bg-body-tertiary text-muted fw-semibold';
                                                     }
                                                     if ($need_check)
                                                     {
-                                                    $class = 'bg-warning text-dark';
+                                                    $class = 'bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold';
                                                     }
                                                 }
                                             @endphp
                                             <tr>
-                                                <td><a href="/insider/profile/{{ $student->id }}"
-                                                       target="_blank">{{$student->name}}</a></td>
-                                                <td><a target="_blank"
+                                                <td data-label="Ученик"><a class="step-progress-student" href="/insider/profile/{{ $student->id }}"
+                                                       target="_blank">
+                                                        <span class="text-truncate">{{$student->name}}</span>
+                                                        @include('profile.partials.custom_title_badge', ['profileUser' => $student, 'compact' => true])
+                                                    </a></td>
+                                                <td class="text-end" data-label="Баллы"><a class="text-decoration-none" target="_blank"
                                                        href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">
-                                                        <span class="badge {{$class}}">{{$mark}}</span>
+                                                        <span class="badge rounded-pill step-progress-mark {{$class}}">{{$mark}} / {{ $task->max_mark }}</span>
                                                     </a>
                                                 </td>
                                             </tr>
                                         @endforeach
+                                        </tbody>
                                     </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>

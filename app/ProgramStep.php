@@ -129,7 +129,7 @@ class ProgramStep extends Model
 
         $tasks = $this->tasks;
         foreach ($tasks as $task) {
-            if ($course && !$task->isVisible($student->id, $course)) continue;
+            if ($course && !$task->isVisible($student, $course)) continue;
             if (!$task->is_star) $results['max_points'] += $task->max_mark;
             $mark = $student->submissions->where('task_id', $task->id)->max('mark');
             $results['points'] += $mark ? $mark : 0;

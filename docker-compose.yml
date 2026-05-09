@@ -14,6 +14,14 @@ x-app-environment: &app-environment
   REDIS_HOST: ${REDIS_HOST:-redis}
   REDIS_PORT: ${REDIS_PORT:-6379}
   REDIS_CLIENT: ${REDIS_CLIENT:-phpredis}
+  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+  TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+  TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+  TELEGRAM_API_URL: ${TELEGRAM_API_URL:-https://api.telegram.org}
+  TELEGRAM_PROXY: ${TELEGRAM_PROXY:-}
+  TELEGRAM_TIMEOUT: ${TELEGRAM_TIMEOUT:-10}
+  GEEKPASTE_URL: ${GEEKPASTE_URL:-https://paste.geekclass.ru}
+  GEEKPASTE_API_KEY: ${GEEKPASTE_API_KEY:-}
 
 x-app-healthcheck: &app-healthcheck
   test: ["CMD-SHELL", "php artisan about --only=environment >/dev/null 2>&1"]
@@ -44,9 +52,36 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck: *app-healthcheck
     volumes:
       - storage_app:/var/www/html/storage/app
+    networks:
+      - app
+
+  migrate:
+    build:
+      context: .
+      dockerfile: conf/Dockerfile
+      target: app
+    container_name: codingprojects-migrate
+    restart: "no"
+    command: php artisan migrate --force
+    env_file:
+      - .env
+    environment:
+      <<: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - app
 
@@ -110,6 +145,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck: *app-healthcheck
     volumes:
       - storage_app:/var/www/html/storage/app
@@ -138,6 +175,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck: *app-healthcheck
     volumes:
       - storage_app:/var/www/html/storage/app

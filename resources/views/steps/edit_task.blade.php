@@ -5,161 +5,204 @@
 @endsection
 
 @section('content')
-    <div class="form-page">
-        <div class="form-page-header gc-card mb-3">
-            <div>
-                <h2 class="mb-1">Изменение задачи</h2>
-                <p class="mb-0 text-muted text-truncate">{{$task->name}}</p>
+    <div class="container-xl px-0">
+        <div class="gc-card gc-page-header mb-3">
+            <div class="min-width-0">
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id.'/steps/'.$task->step->id.'#task'.$task->id) }}"><i class="icon ion-chevron-left"></i> К задаче</a>
+                <h2 class="fw-bold lh-sm mb-1">Изменение задачи</h2>
+                <p class="mb-0 text-muted text-truncate">{{$task->step->name}}</p>
             </div>
         </div>
 
-        <div class="form-layout">
-            <div class="gc-card form-card form-card--wide">
-                    <form method="POST" enctype="multipart/form-data" class="form-stack">
-                        {{ csrf_field() }}
-                        <div class="mb-3">
+        <form id="task-edit-form" method="POST" enctype="multipart/form-data">
+            {{ csrf_field() }}
+
+            <div class="row g-3 align-items-start">
+                <div class="col-12 col-lg-8 d-grid gap-3">
+            <div class="gc-card overflow-hidden">
+                <div class="gc-section-header">
+                    <h5 class="mb-1">Основное</h5>
+                    <p class="text-muted small mb-0">Название, очки и тип задачи.</p>
+                </div>
+                <div class="p-3 p-md-4">
+                    <div class="row g-3">
+                        <div class="col-lg-8">
                             <label for="name" class="form-label">Название</label>
-
-                            @if (old('name')!="")
-                                <input id="name" type="text" class="form-control" name="name" value="{{old('name')}}"
-                                       required>
-                            @else
-                                <input id="name" type="text" class="form-control" name="name" value="{{$task->name}}"
-                                       required>
-                            @endif
+                            <input id="name" type="text" class="form-control rounded-3" name="name" value="{{old('name', $task->name)}}"
+                                   required>
                             @if ($errors->has('name'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('name') }}</strong>
-                                    </span>
+                                <span class="text-danger small d-block mt-1">
+                                    <strong>{{ $errors->first('name') }}</strong>
+                                </span>
                             @endif
                         </div>
 
-                        <div class="mb-3">
-                            <label for="max_mark" class="form-label">Очков опыта</label>
-
-                            @if (old('max_mark')!="")
-                                <input type="text" name="max_mark" class="form-control" id="max_mark"
-                                       value="{{old('name')}}"
-                                       required/>
-                            @else
-                                <input type="text" name="max_mark" class="form-control" id="max_mark"
-                                       value="{{$task->max_mark}}" required/>
-                            @endif
-
+                        <div class="col-sm-6 col-lg-2">
+                            <label for="max_mark" class="form-label">XP</label>
+                            <input type="number" name="max_mark" class="form-control rounded-3" id="max_mark"
+                                   value="{{old('max_mark', $task->max_mark)}}" min="0" max="1000" required/>
                             @if ($errors->has('max_mark'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('max_mark') }}</strong>
-                                    </span>
-                            @endif
-
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="text" class="form-label">Текст</label>
-                            <div class="mb-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary" data-improve-text="fix_typos" data-field-id="text">
-                                    <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-info" data-improve-text="improve_style" data-field-id="text">
-                                    <i class="icon ion-android-create"></i> Улучшить стиль
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" data-improve-text="both" data-field-id="text">
-                                    <i class="icon ion-android-star"></i> Исправить и улучшить
-                                </button>
-                            </div>
-                            <textarea id="text" class="form-control" data-markdown-editor
-                                      name="text">@if (old('text')!=""){{old('text')}}@else{{$task->text}}@endif</textarea>
-                            @if ($errors->has('text'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('text') }}</strong>
-                                    </span>
+                                <span class="text-danger small d-block mt-1">
+                                    <strong>{{ $errors->first('max_mark') }}</strong>
+                                </span>
                             @endif
                         </div>
 
-                        <div class="mb-3">
-                            <label for="solution" class="form-label">Решение</label>
-                            <div class="mb-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary" data-improve-text="fix_typos" data-field-id="solution">
-                                    <i class="icon ion-android-checkbox-outline"></i> Исправить опечатки
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-info" data-improve-text="improve_style" data-field-id="solution">
-                                    <i class="icon ion-android-create"></i> Улучшить стиль
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-success" data-improve-text="both" data-field-id="solution">
-                                    <i class="icon ion-android-star"></i> Исправить и улучшить
-                                </button>
-                            </div>
-                            <textarea id="solution" class="form-control" data-markdown-editor
-                                      name="solution">@if (old('solution')!=""){{old('solution')}}@else{{$task->solution}}@endif</textarea>
-                            @if ($errors->has('solution'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('solution') }}</strong>
-                                    </span>
-                            @endif
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="is_star" class="form-label">Дополнительное</label>
-                            <input type="checkbox" id="is_star" name="is_star" value="on"
-                                   @if ($task->is_star) checked @endif/>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="is_hidden" class="form-label">Скрытая задача</label>
-                            <input type="checkbox" id="is_hidden" name="is_hidden" value="on"
-                                   @if ($task->is_hidden) checked @endif/>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="is_code" class="form-label">Автопроверка</label>
-                            <input type="checkbox" id="is_code" name="is_code" value="on"
-                                   @if ($task->is_code) checked @endif/>
-                        </div>
-
-
-                        <div class="mb-3">
+                        <div class="col-sm-6 col-lg-2">
                             <label for="price" class="form-label">Премия</label>
-
-                            @if (old('price')!="")
-                                <input type="text" name="price" class="form-control" id="price"
-                                       value="{{old('price')}}"/>
-                            @else
-                                <input type="text" name="price" class="form-control" id="price"
-                                       value="{{$task->price}}"/>
-                            @endif
-
+                            <input type="number" name="price" class="form-control rounded-3" id="price"
+                                   value="{{old('price', $task->price)}}" min="0"/>
                             @if ($errors->has('price'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('price') }}</strong>
-                                    </span>
+                                <span class="text-danger small d-block mt-1">
+                                    <strong>{{ $errors->first('price') }}</strong>
+                                </span>
                             @endif
                         </div>
 
-                        <div class="mb-3">
-                            <label for="answer" class="form-label">Ответ</label>
+                        <div class="col-12">
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="gc-switch-card form-check form-switch h-100">
+                                        <input type="checkbox" class="form-check-input ms-0 me-2" id="is_star" name="is_star" value="on"
+                                               @if (old('is_star', $task->is_star ? 'on' : '') == 'on') checked @endif>
+                                        <span class="form-check-label">Дополнительная</span>
+                                    </label>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="gc-switch-card form-check form-switch h-100">
+                                        <input type="checkbox" class="form-check-input ms-0 me-2" id="is_hidden" name="is_hidden" value="on"
+                                               @if (old('is_hidden', $task->is_hidden ? 'on' : '') == 'on') checked @endif>
+                                        <span class="form-check-label">Скрытая задача</span>
+                                    </label>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="gc-switch-card form-check form-switch h-100">
+                                        <input type="checkbox" class="form-check-input ms-0 me-2" id="is_code" name="is_code" value="on"
+                                               @if (old('is_code', $task->is_code ? 'on' : '') == 'on') checked @endif>
+                                        <span class="form-check-label">Автопроверка</span>
+                                    </label>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="gc-switch-card form-check form-switch h-100">
+                                        <input type="checkbox" class="form-check-input ms-0 me-2" id="xp_booster_enabled" name="xp_booster_enabled" value="on"
+                                               @if (old('xp_booster_enabled', $task->xp_booster_enabled ? 'on' : '') == 'on') checked @endif>
+                                        <span class="form-check-label">Бустер +5 XP</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                            @if (old('answer')!="")
-                                <input type="text" name="answer" class="form-control" id="answer"
-                                       value="{{old('answer')}}"/>
-                            @else
-                                <input type="text" name="answer" class="form-control" id="answer"
-                                       value="{{$task->answer}}"/>
+            <div class="gc-card overflow-hidden">
+                <div class="gc-section-header">
+                    <h5 class="mb-1">Условие</h5>
+                    <p class="text-muted small mb-0">Текст задачи, который видит ученик.</p>
+                </div>
+                <div class="p-3 p-md-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
+                        <label for="text" class="form-label mb-0">Текст</label>
+                        <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Улучшение текста задачи">
+                            <button type="button" class="btn btn-outline-primary rounded-start-3" data-improve-text="fix_typos" data-field-id="text">
+                                <i class="icon ion-android-checkbox-outline"></i> Опечатки
+                            </button>
+                            <button type="button" class="btn btn-outline-info" data-improve-text="improve_style" data-field-id="text">
+                                <i class="icon ion-android-create"></i> Стиль
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary rounded-end-3" data-improve-text="both" data-field-id="text">
+                                <i class="icon ion-android-star"></i> Всё
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="text" class="form-control rounded-3" data-markdown-editor
+                              name="text">{{old('text', $task->text)}}</textarea>
+                            @if ($errors->has('text'))
+                        <span class="text-danger small d-block mt-1">
+                            <strong>{{ $errors->first('text') }}</strong>
+                        </span>
                             @endif
+                </div>
+            </div>
+
+            <div class="gc-card overflow-hidden">
+                <div class="gc-section-header">
+                    <h5 class="mb-1">Проверка и ответ</h5>
+                    <p class="text-muted small mb-0">Авторское решение и короткий ответ для квизов.</p>
+                </div>
+                <div class="p-3 p-md-4">
+                    <div class="mb-3">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
+                            <label for="solution" class="form-label mb-0">Решение</label>
+                            <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Улучшение решения">
+                                <button type="button" class="btn btn-outline-primary rounded-start-3" data-improve-text="fix_typos" data-field-id="solution">
+                                    <i class="icon ion-android-checkbox-outline"></i> Опечатки
+                                </button>
+                                <button type="button" class="btn btn-outline-info" data-improve-text="improve_style" data-field-id="solution">
+                                    <i class="icon ion-android-create"></i> Стиль
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary rounded-end-3" data-improve-text="both" data-field-id="solution">
+                                    <i class="icon ion-android-star"></i> Всё
+                                </button>
+                            </div>
+                        </div>
+                        <textarea id="solution" class="form-control rounded-3" data-markdown-editor
+                                  name="solution">{{old('solution', $task->solution)}}</textarea>
+                        @if ($errors->has('solution'))
+                            <span class="text-danger small d-block mt-1">
+                                <strong>{{ $errors->first('solution') }}</strong>
+                            </span>
+                        @endif
+                    </div>
+
+                    <div class="mb-0">
+                            <label for="answer" class="form-label">Ответ</label>
+                        <input type="text" name="answer" class="form-control rounded-3" id="answer"
+                               value="{{old('answer', $task->answer)}}"/>
 
                             @if ($errors->has('answer'))
-                                <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('answer') }}</strong>
-                                    </span>
+                            <span class="text-danger small d-block mt-1">
+                                <strong>{{ $errors->first('answer') }}</strong>
+                            </span>
+                            @endif
+                    </div>
+                </div>
+            </div>
+
+                </div>
+
+                <div class="col-12 col-lg-4">
+                    <aside class="gc-card course-create-aside p-3 p-md-4 sticky-lg-top">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-tasks"></i></span>
+                            <div class="min-width-0">
+                                <h5 class="mb-1">Задача</h5>
+                                <p class="mb-0 text-muted small text-truncate">{{ $task->step->lesson->name }}</p>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2 mb-3">
+                            <div class="gc-info-tile"><span>Название</span><strong>{{ $task->name }}</strong></div>
+                            <div class="gc-info-tile"><span>Оценивание</span><strong>{{ $task->max_mark }} XP @if($task->price > 0) · {{ $task->price }} монет @endif</strong></div>
+                            <div class="gc-info-tile"><span>Тип</span><strong>{{ $task->is_code ? 'Автопроверка' : ($task->is_quiz ? 'Квиз' : 'Ручная проверка') }}</strong></div>
+                            @if($task->is_hidden || $task->is_star || $task->xp_booster_enabled)
+                                <div class="d-flex flex-wrap gap-1">
+                                    @if($task->is_hidden)
+                                        <span class="badge rounded-pill bg-body-tertiary">Скрытая</span>
+                                    @endif
+                                    @if($task->is_star)
+                                        <span class="badge rounded-pill bg-body-tertiary">Дополнительная</span>
+                                    @endif
+                                    @if($task->xp_booster_enabled)
+                                        <span class="badge rounded-pill bg-body-tertiary"><i class="fas fa-wand-magic-sparkles me-1"></i>Бустер +5 XP</span>
+                                    @endif
+                                </div>
                             @endif
                         </div>
-
-
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-success">Сохранить</button>
-                        </div>
-                    </form>
+                        <button type="submit" form="task-edit-form" class="btn btn-success rounded-3 fw-semibold w-100">Сохранить</button>
+                    </aside>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 @endsection
 @push('editor')

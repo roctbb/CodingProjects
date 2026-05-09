@@ -11,7 +11,7 @@
                 [
                     'kind' => 'link',
                     'title' => 'Редактировать этап',
-                    'class' => 'btn btn-success btn-sm p-2',
+                    'class' => 'btn btn-outline-secondary btn-sm rounded-3 gc-icon-button',
                     'icon' => 'icon ion-android-create',
                     'href' => url('/insider/courses/' . $course->id . '/steps/' . $step->id . '/edit'),
                     'leading' => true,
@@ -19,7 +19,7 @@
                 [
                     'kind' => 'button',
                     'title' => 'Добавить задачу',
-                    'class' => 'btn btn-success btn-sm p-2',
+                    'class' => 'btn btn-outline-secondary btn-sm rounded-3 gc-icon-button',
                     'icon' => 'icon ion-android-add-circle',
                     'attributes' => [
                         'data-bs-toggle' => 'modal',
@@ -29,28 +29,28 @@
                 [
                     'kind' => 'link',
                     'title' => 'Режим занятия',
-                    'class' => 'btn btn-success btn-sm p-2',
+                    'class' => 'btn btn-outline-secondary btn-sm rounded-3 gc-icon-button',
                     'icon' => 'icon ion-android-desktop',
                     'href' => url('/insider/courses/' . $course->id . '/perform/' . $step->id),
                 ],
                 [
                     'kind' => 'link',
                     'title' => 'Поднять этап',
-                    'class' => 'btn btn-success btn-sm p-2',
+                    'class' => 'btn btn-outline-secondary btn-sm rounded-3 gc-icon-button',
                     'icon' => 'ion-arrow-up-c',
                     'href' => url('/insider/courses/' . $course->id . '/steps/' . $step->id . '/lower'),
                 ],
                 [
                     'kind' => 'link',
                     'title' => 'Опустить этап',
-                    'class' => 'btn btn-success btn-sm p-2',
+                    'class' => 'btn btn-outline-secondary btn-sm rounded-3 gc-icon-button',
                     'icon' => 'ion-arrow-down-c',
                     'href' => url('/insider/courses/' . $course->id . '/steps/' . $step->id . '/upper'),
                 ],
                 [
                     'kind' => 'link',
                     'title' => 'Удалить этап',
-                    'class' => 'btn btn-danger btn-sm p-2',
+                    'class' => 'btn btn-outline-danger btn-sm rounded-3 gc-icon-button',
                     'icon' => 'ion-close-round',
                     'href' => url('/insider/courses/' . $course->id . '/steps/' . $step->id . '/delete'),
                     'attributes' => [
@@ -59,7 +59,28 @@
                 ],
             ];
         @endphp
-        <ul class="nav nav-pills justify-content-end step-top-tabs @if (!$hasContentTabs) step-top-tabs--actions-only @endif"
+        @if (!$hasContentTabs && $isManager)
+            <div class="step-header-actions" aria-label="Действия этапа">
+                @foreach($stepActions as $action)
+                    @if ($action['kind'] === 'button')
+                        <button type="button" class="{{ $action['class'] }}" title="{{ $action['title'] }}"
+                            @foreach(($action['attributes'] ?? []) as $attribute => $value)
+                                {{ $attribute }}="{{ $value }}"
+                            @endforeach
+                        >
+                            <i class="{{ $action['icon'] }}"></i>
+                        </button>
+                    @else
+                        <a href="{{ $action['href'] }}" class="{{ $action['class'] }}" title="{{ $action['title'] }}"
+                            @foreach(($action['attributes'] ?? []) as $attribute => $value)
+                                {{ $attribute }}="{{ $value }}"
+                            @endforeach
+                        ><i class="{{ $action['icon'] }}"></i></a>
+                    @endif
+                @endforeach
+            </div>
+        @elseif ($hasContentTabs || $isManager)
+        <ul class="nav nav-pills step-top-tabs"
             id="pills-tab" role="tablist">
             @if ($hasTheoryTab)
                 <li class="nav-item">
@@ -73,6 +94,7 @@
                         $taskStatusIcon = null;
                         $taskStatusTitle = null;
                         $taskStatusClass = null;
+                        $taskDeadline = null;
 
                         if ($isInsider) {
                             if ($task->isSubmitted($user->id)) {
@@ -89,20 +111,24 @@
                                     $taskStatusIcon = url('images/icons/icons8-error-48.png');
                                     $taskStatusTitle = 'Требует доработки';
                                 }
-                            } elseif ($task->getDeadline($course->id)) {
-                                $deadline = $task->getDeadline($course->id)->expiration;
+                            } else {
+                                $taskDeadline = $task->getDeadline($course->id);
+                            }
+
+                            if (!$taskStatusIcon && isset($taskDeadline) && $taskDeadline) {
+                                $deadline = $taskDeadline->expiration;
                                 if (\Carbon\Carbon::now()->gt($deadline)) {
                                     $taskStatusIcon = url('images/icons/deadline.png');
                                     $taskStatusTitle = 'Дедлайн';
                                     $taskStatusClass = 'border border-danger rounded';
-                                } elseif (\Carbon\Carbon::now()->addDays(3)->gt($deadline)) {
-                                    $taskStatusIcon = url('images/icons/deadline.png');
-                                    $taskStatusTitle = 'Дедлайн';
-                                    $taskStatusClass = 'border border-warning rounded';
-                                }
-                            }
-                        }
-                    @endphp
+	                                } elseif (\Carbon\Carbon::now()->addDays(3)->gt($deadline)) {
+	                                    $taskStatusIcon = url('images/icons/deadline.png');
+	                                    $taskStatusTitle = 'Дедлайн';
+	                                    $taskStatusClass = 'border border-warning rounded';
+	                                }
+	                            }
+	                        }
+	                    @endphp
                     <li class="nav-item">
                         <a class="nav-link task-pill step-top-tab-link" data-bs-toggle="pill" id="tasks-tab{{$task->id}}"
                            href="#task{{$task->id}}"
@@ -140,6 +166,7 @@
                 @endforeach
             @endif
         </ul>
+        @endif
     </div>
 
 </div>

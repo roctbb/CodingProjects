@@ -57,6 +57,7 @@ class DropRemovedModulesTables extends Migration
             'event_partis',
             'events',
             'students_educational_results',
+            'students_scales',
             'educational_results',
             'result_scales',
         ] as $table) {

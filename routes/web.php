@@ -30,6 +30,7 @@ Route::get('/1561test', function () {
 Route::get('/telegram-bot', function () {
     return redirect('/open/steps/647');
 });
+Route::post('/telegram/webhook/{secret?}', 'TelegramBotController@webhook');
 
 Route::get('/', function () {
     if (\Illuminate\Support\Facades\Auth::check()) {
@@ -64,12 +65,18 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/market/create', 'MarketController@create');
     Route::get('/market/{id}/edit', 'MarketController@editView');
     Route::post('/market/{id}/edit', 'MarketController@edit');
+    Route::get('/market/{id}/archive', 'MarketController@archive');
+    Route::get('/market/{id}/restore', 'MarketController@restore');
     Route::get('/market/{id}/buy', 'MarketController@buy');
+    Route::post('/market/{id}/bid', 'MarketController@bid');
+    Route::get('/market/{id}/finish-auction', 'MarketController@finishAuction');
     Route::get('/market/ship/{id}', 'MarketController@ship');
     Route::get('/market/cancel/{id}', 'MarketController@cancel');
 
 
     Route::get('/courses', 'CoursesController@index')->name('Courses');
+    Route::get('/pulse', 'CoursesController@pulse');
+    Route::get('/reviews', 'CoursesController@reviews');
 
     Route::get('/courses/create', 'CoursesController@createView')->name('Create course');
     Route::post('/courses/create', 'CoursesController@create');
@@ -90,6 +97,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/chapters/{chapter_id}/edit', 'CoursesController@editChapterView');
     Route::get('/courses/{course_id}/chapters/{chapter_id}/upper', 'CoursesController@makeChapterUpper');
     Route::get('/courses/{course_id}/chapters/{chapter_id}/lower', 'CoursesController@makeChapterLower');
+    Route::post('/courses/{course_id}/chapters/{chapter_id}/default', 'CoursesController@setDefaultChapter');
     Route::post('/courses/{course_id}/chapters/{chapter_id}/edit', 'CoursesController@editChapter');
 
 
@@ -99,6 +107,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/courses/{course_id}/lessons/{id}/edit', 'LessonsController@editView');
     Route::post('/courses/{course_id}/lessons/{id}/edit', 'LessonsController@edit');
+    Route::post('/courses/{course_id}/lessons/{id}/deadline', 'LessonsController@makeDeadline');
+    Route::post('/courses/{course_id}/lessons/{id}/early-access', 'LessonsController@buyEarlyAccess');
     Route::get('/courses/{course_id}/lessons/{id}/export', 'LessonsController@export');
     Route::get('/courses/{course_id}/lessons/{id}/export-md', 'LessonsController@exportMarkdown');
     Route::get('/courses/{course_id}/lessons/{id}/lower', 'LessonsController@makeLower');
@@ -134,6 +144,9 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/courses/{course_id}/tasks/{id}/edit', 'TasksController@edit');
     Route::post('/courses/{course_id}/tasks/{id}/solution', 'TasksController@postSolution');
     Route::get('/courses/{course_id}/tasks/{id}/solution/{solution_id}/recheck', 'TasksController@askForRecheck');
+    Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/deadline-penalty', 'TasksController@payDeadlinePenalty');
+    Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/xp-booster', 'TasksController@useXpBooster');
+    Route::post('/courses/{course_id}/tasks/{id}/geekpaste-extra-attempt', 'TasksController@buyGeekPasteExtraAttempt');
     Route::get('/courses/{course_id}/tasks/{id}/phantom', 'TasksController@phantomSolution');
     Route::get('/courses/{course_id}/tasks/{id}/student/{student_id}', 'TasksController@reviewSolutions');
     Route::get('/courses/{course_id}/tasks/{id}/block/{student_id}', 'TasksController@blockStudent');
@@ -147,6 +160,10 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/profile/{id}/edit', 'ProfileController@editView');
     Route::post('/profile/{id}/edit', 'ProfileController@edit');
+    Route::get('/profile/{id}/telegram-link', 'ProfileController@telegramLink');
+    Route::post('/profile/{id}/telegram-unlink', 'ProfileController@telegramUnlink');
+    Route::post('/profile/{id}/custom-title', 'ProfileController@buyCustomTitle');
+    Route::post('/profile/{id}/avatar-frame', 'ProfileController@buyAvatarFrame');
     Route::post('/profile/{id}/course', 'ProfileController@course');
     Route::get('/profile/delete-course/{id}', 'ProfileController@deleteCourse');
     Route::get('/profile/{user_id}/delete-course/{course_id}', 'ProfileController@deleteCurrentCourse');

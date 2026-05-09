@@ -28,13 +28,17 @@ class HasAccessToTask
 
         $user = User::findOrFail(Auth::User()->id);
 
-        $course = Course::findOrFail($request->course_id);
+        $course = Course::with('teachers', 'students', 'steps')->findOrFail($request->course_id);
         if ($course->teachers->contains($user)) {
             return $next($request);
         }
 
         $task = Task::findOrFail($request->id);
-        if ($course->students->contains($user) and $course->steps->contains($task->step)) {
+        if (
+            $course->students->contains($user)
+            && $course->steps->contains($task->step)
+            && $task->isVisible($user, $course)
+        ) {
             return $next($request);
         }
 

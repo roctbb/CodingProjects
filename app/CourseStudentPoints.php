@@ -31,16 +31,29 @@ class CourseStudentPoints extends Model
      */
     public static function recalculate($courseId, $studentId)
     {
-        $course = Course::with('program.lessons', 'program.lessons.steps', 'program.lessons.steps.tasks')->findOrFail($courseId);
-        $student = User::with('submissions')->findOrFail($studentId);
+        $course = Course::with([
+            'program.lessons.info',
+            'program.lessons.steps.tasks',
+            'program.lessons.earlyAccesses' => function ($query) use ($courseId, $studentId) {
+                $query->where('course_id', $courseId)->where('user_id', $studentId);
+            },
+            'students:id',
+            'teachers:id',
+        ])->findOrFail($courseId);
+        $student = User::with([
+            'submissions' => function ($query) use ($courseId) {
+                $query->where('course_id', $courseId)
+                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark');
+            },
+        ])->findOrFail($studentId);
 
         $max_points = 0;
         $points = 0;
 
-        // Get all steps for started lessons
+        // Get all steps for lessons available to this student
         $all_steps = collect([]);
         foreach ($course->program->lessons as $lesson) {
-            if ($lesson->isStarted($course)) {
+            if ($lesson->isAvailableForUser($course, $student)) {
                 $all_steps = $all_steps->merge($lesson->steps);
             }
         }
@@ -48,11 +61,11 @@ class CourseStudentPoints extends Model
         // Calculate points
         foreach ($all_steps as $step) {
             foreach ($step->tasks as $task) {
-                if (!$task->isVisible($studentId, $course)) continue;
+                if (!$task->isVisible($student, $course)) continue;
                 if (!$task->is_star) {
                     $max_points += $task->max_mark;
                 }
-                $points += $student->submissions->where('task_id', $task->id)->max('mark');
+                $points += (int) $student->submissions->where('task_id', $task->id)->max('mark');
             }
         }
 
@@ -63,5 +76,78 @@ class CourseStudentPoints extends Model
             ['course_id' => $courseId, 'student_id' => $studentId],
             ['points' => $points, 'max_points' => $max_points, 'percent' => $percent]
         );
+    }
+
+    public static function recalculateForStudents($courseId, $studentIds = null)
+    {
+        $studentIds = collect($studentIds === null ? Course::findOrFail($courseId)->students()->pluck('users.id') : $studentIds)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($studentIds->isEmpty()) {
+            return collect();
+        }
+
+        $course = Course::with([
+            'program.lessons.info',
+            'program.lessons.steps.tasks',
+            'program.lessons.earlyAccesses' => function ($query) use ($courseId, $studentIds) {
+                $query->where('course_id', $courseId)->whereIn('user_id', $studentIds);
+            },
+            'students:id',
+            'teachers:id',
+        ])->findOrFail($courseId);
+
+        $students = User::with([
+            'submissions' => function ($query) use ($courseId) {
+                $query->where('course_id', $courseId)
+                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark');
+            },
+        ])->whereIn('id', $studentIds)->get();
+
+        $rows = [];
+        $now = now();
+
+        foreach ($students as $student) {
+            $max_points = 0;
+            $points = 0;
+
+            foreach ($course->program->lessons as $lesson) {
+                if (!$lesson->isAvailableForUser($course, $student)) {
+                    continue;
+                }
+
+                foreach ($lesson->steps as $step) {
+                    foreach ($step->tasks as $task) {
+                        if (!$task->isVisible($student, $course)) continue;
+                        if (!$task->is_star) {
+                            $max_points += $task->max_mark;
+                        }
+                        $points += (int) $student->submissions->where('task_id', $task->id)->max('mark');
+                    }
+                }
+            }
+
+            $rows[] = [
+                'course_id' => $course->id,
+                'student_id' => $student->id,
+                'points' => $points,
+                'max_points' => $max_points,
+                'percent' => $max_points > 0 ? min(100, $points * 100 / $max_points) : 0,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if (!empty($rows)) {
+            self::upsert(
+                $rows,
+                ['course_id', 'student_id'],
+                ['points', 'max_points', 'percent', 'updated_at']
+            );
+        }
+
+        return collect($rows);
     }
 }

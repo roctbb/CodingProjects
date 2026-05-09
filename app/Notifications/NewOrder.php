@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Channels\TelegramBotChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -31,7 +32,7 @@ class NewOrder extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['mail'];
+        return ['mail', TelegramBotChannel::class];
     }
 
     /**
@@ -58,5 +59,11 @@ class NewOrder extends Notification implements ShouldQueue
         return [
             //
         ];
+    }
+
+    public function toTelegram($notifiable)
+    {
+        return '🛒 Новая покупка: <strong>' . e($this->deal->user->name) . '</strong> заказал(а) <strong>"' .
+            e($this->deal->good->name) . '"</strong> за <strong>' . e($this->deal->displayPrice()) . ' GC</strong>.';
     }
 }

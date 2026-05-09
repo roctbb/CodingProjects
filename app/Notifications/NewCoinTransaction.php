@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\CoinTransaction;
+use App\Notifications\Channels\TelegramBotChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,15 +14,21 @@ class NewCoinTransaction extends Notification
     use Queueable;
 
     private $transaction;
+    private $text;
+    private $type;
+    private $icon;
 
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct(CoinTransaction $transaction)
+    public function __construct(CoinTransaction $transaction, $text = null, $type = 'success', $icon = null)
     {
         $this->transaction = $transaction;
+        $this->text = $text;
+        $this->type = $type;
+        $this->icon = $icon;
     }
 
     /**
@@ -32,7 +39,7 @@ class NewCoinTransaction extends Notification
      */
     public function via($notifiable)
     {
-        return $this->transaction->price > 0 ? ['database'] : [];
+        return $this->transaction->price > 0 ? ['database', TelegramBotChannel::class] : [];
     }
 
     /**
@@ -49,9 +56,15 @@ class NewCoinTransaction extends Notification
     
         $comment = e(strip_tags($comment));
     
-        return [
-            "text" => "🏧 Вам начислено {$price} GK ({$comment})",
-            "type" => "success"
+        $data = [
+            "text" => $this->text ?: "🏧 Вам начислено {$price} GC ({$comment})",
+            "type" => $this->type ?: "success"
         ];
+
+        if ($this->icon) {
+            $data['icon'] = $this->icon;
+        }
+
+        return $data;
     }
 }

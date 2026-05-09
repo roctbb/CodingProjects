@@ -7,63 +7,50 @@
 @section('auth-background-image', url('/images/bg/'.random_int(1,7).'.jpg'))
 
 @section('content')
-    <div class="main-container fullscreen">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-xl-5 col-lg-6 col-md-7">
-                    <div class="text-center">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <a class="navbar-brand text-white" href="{{ url('/') }}">
-            <span><img src="{{ url('images/icons/icons8-idea-64.png') }}" height="35" alt="">&nbsp;</span>
-                                    {{ config('app.name', 'Laravel') }}
-                                </a>
-                                <h3 class="card-title text-white fw-light mt-3 mb-3">
-                                    Восстановление пароля</h3>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                @if (session('status'))
-                                    <div class="alert alert-success">
-                                        {{ session('status') }}
-                                    </div>
-                                @endif
-
-                                <form method="POST" action="{{ route('password.email') }}"
-                                      class="form-signin text-start">
-
-                                    <div class="card">
-                                        <div class="card-body">
-                                            {{ csrf_field() }}
-
-                                            <div class="mb-3">
-                                                <label for="email" class="form-label">E-Mail адрес</label>
-
-                                                <input id="email" type="email" class="form-control form-control-lg"
-                                                       name="email" value="{{ old('email') }}" required>
-
-                                                @if ($errors->has('email'))
-                                                    <span class="text-danger d-block">
-                                        <strong>{{ $errors->first('email') }}</strong>
-                                    </span>
-                                                @endif
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <button type="submit" class="btn btn-primary">
-                                                    Восстановить пароль
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="text-center text-white mb-3">
+        <a href="{{ url('/') }}" class="auth-brand d-inline-flex align-items-center gap-2 text-decoration-none text-white">
+            <img src="{{ url('images/icons/icons8-idea-64.png') }}" width="28" height="28" alt="">
+            <span class="fs-5 fw-semibold">{{ config('app.name', 'Laravel') }}</span>
+        </a>
     </div>
 
+    @if (session('status'))
+        <div class="gc-session-alert gc-session-alert--success auth-card gc-alert-row" role="status">
+            <span class="gc-session-alert__icon">
+                <i class="fas fa-check"></i>
+            </span>
+            <div class="min-width-0">{{ session('status') }}</div>
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('password.email') }}" class="auth-card p-4">
+        {{ csrf_field() }}
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-key"></i></span>
+            <div class="min-width-0">
+                <span class="gc-eyebrow">доступ</span>
+                <h1 class="h4 fw-bold mb-0">Восстановление пароля</h1>
+            </div>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input id="email" type="email" class="form-control rounded-3" name="email" value="{{ old('email') }}" placeholder="you@example.com" required>
+            <label for="email">Email</label>
+
+            @if ($errors->has('email'))
+                <span class="text-danger small d-block mt-1">
+                    <strong>{{ $errors->first('email') }}</strong>
+                </span>
+            @endif
+        </div>
+
+        <button type="submit" class="btn btn-success rounded-3 fw-semibold w-100 py-2">
+            Восстановить пароль
+        </button>
+
+        <div class="border-top pt-3 mt-3 text-center small">
+            <a href="{{ url('/login') }}" class="text-decoration-none fw-semibold">Вернуться ко входу</a>
+        </div>
+    </form>
 @endsection

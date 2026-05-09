@@ -4,28 +4,45 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Peer review - {{ $task->name }}</title>
-    <link rel="stylesheet" href="{{ asset('build/css/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('build/css/legacy-theme.css') }}">
-</head>
+    <script>
+        (function () {
+            try {
+                var theme = localStorage.getItem('gc-theme');
+                if (theme) document.documentElement.setAttribute('data-bs-theme', theme);
+            } catch (e) {}
+        })();
+	    </script>
+	    <link rel="stylesheet" href="{{ asset('build/css/app.css') }}">
+	</head>
 <body class="peer-review">
-<main class="peer-review-page">
-    <section class="management-header gc-card mb-3">
+<main class="container-xl py-4">
+    <section class="gc-card gc-page-header mb-3">
         <div class="min-width-0">
             <h2 class="mb-1">Peer review</h2>
             <p class="mb-0 text-muted text-truncate">{{ $task->name }}</p>
         </div>
-        <div class="assessment-summary">
-            <div><strong>{{ $students->count() }}</strong><span>участников</span></div>
-            <div><strong>2</strong><span>проверки на работу</span></div>
+        <div class="row g-2 flex-nowrap peer-review-stats">
+            <div class="col">
+                <div class="gc-summary-tile peer-review-stat">
+                    <strong>{{ $students->count() }}</strong>
+                    <span>участников</span>
+                </div>
+            </div>
+            <div class="col">
+                <div class="gc-summary-tile peer-review-stat">
+                    <strong>2</strong>
+                    <span>проверки на работу</span>
+                </div>
+            </div>
         </div>
     </section>
 
-    <section class="gc-card management-table-card mb-4">
+    <section class="gc-card overflow-hidden mb-4">
         <div class="table-responsive">
-            <table class="table management-table mb-0">
-                <thead>
+            <table class="table table-hover align-middle mb-0 gc-data-table">
+                <thead class="text-uppercase small">
                 <tr>
-                    <th>ID</th>
+                    <th class="text-muted">ID</th>
                     <th>Ученик</th>
                     <th>Reviewer 1</th>
                     <th>Reviewer 2</th>
@@ -36,14 +53,29 @@
                 @foreach($students as $id => $student)
                     <tr>
                         <td class="text-muted">{{ $id }}</td>
-                        <td class="fw-semibold">{{ $student->name }}</td>
-                        <td>{{ $student->reviewer1->name }}</td>
-                        <td>{{ $student->reviewer2->name }}</td>
+                        <td class="fw-semibold">
+                            <span class="d-inline-flex align-items-center gap-1 min-width-0">
+                                <span class="text-truncate">{{ $student->name }}</span>
+                                @include('profile.partials.custom_title_badge', ['profileUser' => $student, 'compact' => true])
+                            </span>
+                        </td>
+                        <td>
+                            <span class="d-inline-flex align-items-center gap-1 min-width-0">
+                                <span class="text-truncate">{{ $student->reviewer1->name }}</span>
+                                @include('profile.partials.custom_title_badge', ['profileUser' => $student->reviewer1, 'compact' => true])
+                            </span>
+                        </td>
+                        <td>
+                            <span class="d-inline-flex align-items-center gap-1 min-width-0">
+                                <span class="text-truncate">{{ $student->reviewer2->name }}</span>
+                                @include('profile.partials.custom_title_badge', ['profileUser' => $student->reviewer2, 'compact' => true])
+                            </span>
+                        </td>
                         <td>
                             @if($student->solution == 'Нет')
-                                <span class="badge bg-light text-dark">Нет</span>
+                                <span class="badge rounded-pill bg-body-tertiary">Нет</span>
                             @else
-                                <span class="badge bg-success">Есть</span>
+                                <span class="badge rounded-pill bg-body-tertiary">Есть</span>
                             @endif
                         </td>
                     </tr>
@@ -54,31 +86,39 @@
     </section>
 
     @foreach($students as $id => $student)
-        <section class="gc-card peer-review-sheet mb-4">
-            <div class="peer-review-sheet__header">
+        <section class="gc-card peer-review-sheet overflow-hidden mb-4">
+            <div class="gc-section-header gc-section-header--between">
                 <div>
                     <span class="text-muted small">ID {{ $id }}</span>
-                    <h3 class="mb-0">{{ $student->name }}</h3>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <h3 class="mb-0">{{ $student->name }}</h3>
+                        @include('profile.partials.custom_title_badge', ['profileUser' => $student])
+                    </div>
                 </div>
-                <span class="badge bg-primary">протокол проверки</span>
+                <span class="badge rounded-pill bg-body-tertiary">протокол проверки</span>
             </div>
 
-            <div class="peer-review-task markdown">
-                <h4>Условие задачи и правила оценивания</h4>
-                {!! parsedown($task->text) !!}
+            <div class="gc-section-header">
+                <div class="markdown peer-review-task-brief">
+                    <h4 class="mt-0">Условие задачи и правила оценивания</h4>
+                    {!! parsedown($task->text) !!}
+                </div>
             </div>
 
-            <div class="peer-review-solutions">
+            <div class="peer-review-solutions p-3 p-md-4">
                 <h4>Решения для проверки</h4>
-                <p class="text-muted">Для каждого решения оставьте оценку по критериям и короткий комментарий.</p>
+                <p class="text-muted mb-3">Для каждого решения оставьте оценку по критериям и короткий комментарий.</p>
 
                 @forelse($student->works as $solution)
-                    <article class="peer-review-work">
+                    <article class="peer-review-work rounded-3 overflow-hidden mb-3">
                         <div class="peer-review-work__header">
-                            <strong>Работа ID {{ $ids[$solution->user->id] }}</strong>
-                            <span class="text-muted">{{ $solution->user->name }}</span>
+                            <strong class="text-truncate">Работа ID {{ $ids[$solution->user->id] }}</strong>
+                            <span class="text-muted d-inline-flex align-items-center gap-1 min-width-0">
+                                <span class="text-truncate">{{ $solution->user->name }}</span>
+                                @include('profile.partials.custom_title_badge', ['profileUser' => $solution->user, 'compact' => true])
+                            </span>
                         </div>
-                        <div class="peer-review-work__body">
+                        <div class="peer-review-work__body p-3 bg-body">
                             {!! nl2br(e($solution->text)) !!}
                         </div>
                         <div class="peer-review-comment-box">
@@ -89,7 +129,7 @@
                         </div>
                     </article>
                 @empty
-                    <div class="alert alert-light border mb-0">Для этого ученика нет решений для проверки.</div>
+                    <div class="peer-review-empty">Для этого ученика нет решений для проверки.</div>
                 @endforelse
             </div>
         </section>

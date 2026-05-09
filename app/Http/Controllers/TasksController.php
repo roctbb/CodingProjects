@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\CoinTransaction;
 use App\Course;
+use App\CourseActivity;
 use App\CourseStudentPoints;
+use App\Jobs\RecalculateCoursePoints;
 use App\Jobs\RecalculateCourseStudentPoints;
 use App\LessonStudentStats;
 use App\ProgramStep;
 use App\Http\Controllers\Controller;
 use App\Question;
 use App\QuestionVariant;
+use App\Services\GeekPasteClient;
 use App\Solution;
 use App\Task;
 use App\User;
@@ -62,6 +65,7 @@ class TasksController extends Controller
         $task = Task::create(['text' => $request->text, 'step_id' => $step->id, 'name' => $request->name, 'max_mark' => $request->max_mark, 'sort_index' => $order,
             'is_star' => $request->is_star == 'on' ? true : false,
             'is_hidden' => $request->is_hidden == 'on' ? true : false,
+            'xp_booster_enabled' => $request->xp_booster_enabled == 'on' ? true : false,
             'only_remote' => $request->only_remote == 'on' ? true : false,
             'only_class' => $request->only_class == 'on' ? true : false]);
         $task->solution = $request->solution;
@@ -76,10 +80,7 @@ class TasksController extends Controller
         $task->save();
 
         // Recalculate points for all students after adding new task
-        $course = Course::findOrFail($course_id);
-        foreach ($course->students as $student) {
-            RecalculateCourseStudentPoints::dispatch($course_id, $student->id);
-        }
+        RecalculateCoursePoints::dispatch($course_id);
 
         return redirect('/insider/courses/' . $course_id . '/steps/' . $step->id . '#task' . $task->id);
     }
@@ -91,10 +92,7 @@ class TasksController extends Controller
         $task->delete();
 
         // Recalculate points for all students after deleting task
-        $course = Course::findOrFail($course_id);
-        foreach ($course->students as $student) {
-            RecalculateCourseStudentPoints::dispatch($course_id, $student->id);
-        }
+        RecalculateCoursePoints::dispatch($course_id);
 
         return redirect('/insider/courses/' . $course_id . '/steps/' . $step_id);
     }
@@ -103,7 +101,7 @@ class TasksController extends Controller
     {
         $task = Task::findOrFail($id);
         $course = Course::findOrFail($course_id);
-        return view('steps.edit_task', compact('task'));
+        return view('steps.edit_task', compact('task', 'course'));
     }
 
     public function edit($course_id, $id, Request $request)
@@ -132,6 +130,11 @@ class TasksController extends Controller
         } else {
             $task->is_hidden = false;
         }
+        if ($request->xp_booster_enabled == 'on') {
+            $task->xp_booster_enabled = true;
+        } else {
+            $task->xp_booster_enabled = false;
+        }
         if ($request->only_class == 'on') {
             $task->only_class = true;
         } else {
@@ -158,10 +161,7 @@ class TasksController extends Controller
         $task->save();
 
         // Recalculate points for all students after editing task
-        $course = Course::findOrFail($course_id);
-        foreach ($course->students as $student) {
-            RecalculateCourseStudentPoints::dispatch($course_id, $student->id);
-        }
+        RecalculateCoursePoints::dispatch($course_id);
 
         $step_id = $task->step_id;
         return redirect('/insider/courses/' . $course_id . '/steps/' . $step_id . '#task' . $id);
@@ -182,9 +182,7 @@ class TasksController extends Controller
         }
 
         // Recalculate cached points since hidden task is now visible for all students
-        foreach ($course->students as $user) {
-            RecalculateCourseStudentPoints::dispatch($course_id, $user->id);
-        }
+        RecalculateCoursePoints::dispatch($course_id);
 
         return redirect('/insider/courses/' . $course_id . '/steps/' . $task->step->id . '#task' . $id);
     }
@@ -226,22 +224,21 @@ class TasksController extends Controller
         if ($task->is_quiz) {
             $old_rank = $user->rank();
             if ($task->answer == $request->text) {
-                if ($task->price > 0 and !$task->isFullDone(Auth::User()->id)) {
-                    CoinTransaction::register(Auth::User()->id, $task->price, "Task #" . $task->id);
-                }
-
                 $deadline = $task->getDeadline($course_id);
+                $solution->applyDeadlinePenalty($task->max_mark, $deadline);
+                $solution->comment = $solution->hasActiveDeadlinePenalty()
+                    ? "Правильно. Сдано с опозданием. Штраф: -{$solution->deadline_penalty_amount} XP."
+                    : "Правильно.";
 
-                if (!$deadline or Carbon::now()->lt($deadline->expiration->addDay())) {
-                    $solution->mark = $task->max_mark;
-                    $solution->comment = "Правильно.";
-                } else {
-                    $solution->mark = ceil($task->max_mark * $deadline->penalty);
-                    $solution->comment = "Правильно. Сдано с опозданием.";
+                if ($task->price > 0 && $solution->qualifiesForTaskPriceReward() && !$task->hasRewardableFullSolution($user->id)) {
+                    CoinTransaction::register($user->id, $task->price, "Task #" . $task->id);
                 }
 
             } else {
                 $solution->mark = 0;
+                $solution->raw_mark = 0;
+                $solution->deadline_penalty_amount = 0;
+                $solution->deadline_penalty_days = 0;
                 $solution->comment = "Неверный ответ.";
             }
 
@@ -251,21 +248,19 @@ class TasksController extends Controller
                 $solution->teacher_id = 1;
             }
             $solution->checked = Carbon::now();
-            $solution->save();
+        }
 
+        $solution->save();
+        CourseActivity::recordSolutionSubmitted($solution);
+
+        if ($task->is_quiz) {
             // Recalculate cached points after auto-grading quiz
             CourseStudentPoints::recalculate($course_id, $user->id);
             LessonStudentStats::recalculateForStudent($course_id, $user->id);
 
             $user->rescore();
-            $new_rank = $user->rank();
-            if ($new_rank != $old_rank) {
-                $when = \Carbon\Carbon::now()->addSeconds(1);
-                Notification::send($user, (new \App\Notifications\NewRank())->delay($when));
-            }
+            $user->awardRankPromotionIfNeeded($old_rank);
         }
-
-        $solution->save();
 
         if (!$task->is_quiz && !$task->is_code) {
             $when = \Carbon\Carbon::now()->addSeconds(1);
@@ -282,6 +277,7 @@ class TasksController extends Controller
 
         $responseData['mark'] = $solution->mark;
         $responseData['comment'] = $solution->comment;
+        $responseData['score_badge_class'] = $solution->scoreBadgeClass('bg-body');
 
         return $request->expectsJson()
             ? $responseData
@@ -339,6 +335,12 @@ class TasksController extends Controller
             ->get();
         foreach ($solutions as $solution) {
             $solution->mark = 0;
+            $solution->raw_mark = 0;
+            $solution->deadline_penalty_amount = 0;
+            $solution->deadline_penalty_days = 0;
+            $solution->deadline_penalty_paid_at = null;
+            $solution->xp_booster_amount = 0;
+            $solution->xp_booster_used_at = null;
             $solution->comment = 'Решение заблокировано (плагиат).';
             $solution->teacher_id = Auth::User()->id;
             if ($solution->checked == null) {
@@ -387,15 +389,14 @@ class TasksController extends Controller
         $old_rank = $solution->user->rank();
         $deadline = $solution->task->getDeadline($course_id);
 
-        if (!$deadline or $solution->created_at->lt($deadline->expiration->addDay())) {
-            $solution->mark = $request->mark;
-            $solution->comment = $request->comment;
-        } else {
-            $solution->mark = ceil($request->mark * $deadline->penalty);
-            $solution->comment = "Сдано с опозданием.\n\n" . $request->comment;
+        $solution->applyDeadlinePenalty($request->mark, $deadline);
+        $comment = $request->comment;
+        if ($solution->hasActiveDeadlinePenalty()) {
+            $comment = trim("Сдано с опозданием. Штраф: -{$solution->deadline_penalty_amount} XP.\n\n" . $comment);
         }
+        $solution->comment = $comment;
 
-        if ($solution->task->price > 0 and $solution->mark == $solution->task->max_mark and !$solution->task->isFullDone($solution->user_id)) {
+        if ($solution->task->price > 0 && $solution->qualifiesForTaskPriceReward() && !$solution->task->hasRewardableFullSolution($solution->user_id)) {
             CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
         }
 
@@ -403,6 +404,7 @@ class TasksController extends Controller
         $solution->teacher_id = Auth::User()->id;
         $solution->checked = Carbon::now();
         $solution->save();
+        CourseActivity::recordSolutionChecked($solution);
 
         // Recalculate cached points for the student in this course
         CourseStudentPoints::recalculate($course_id, $solution->user_id);
@@ -411,18 +413,175 @@ class TasksController extends Controller
         LessonStudentStats::recalculateForStudent($course_id, $solution->user_id);
 
         $solution->user->rescore();
-        $new_rank = $solution->user->rank();
 
         $when = \Carbon\Carbon::now()->addSeconds(1);
         Notification::send($solution->user, (new \App\Notifications\NewMark($solution))->delay($when));
 
-        if ($new_rank != $old_rank) {
-            $when = \Carbon\Carbon::now()->addSeconds(1);
-            Notification::send($solution->user, (new \App\Notifications\NewRank())->delay($when));
-        }
+        $solution->user->awardRankPromotionIfNeeded($old_rank);
 
         return redirect()->back();
 
+    }
+
+    public function payDeadlinePenalty($course_id, $id, $solution_id)
+    {
+        $solution = Solution::where('id', $solution_id)
+            ->where('task_id', $id)
+            ->where('course_id', $course_id)
+            ->firstOrFail();
+        $user = Auth::user();
+
+        if ($solution->user_id != $user->id) {
+            abort(403);
+        }
+
+        if (!$solution->hasActiveDeadlinePenalty()) {
+            $this->make_info_alert('Штраф уже снят', 'У этого решения нет активного штрафа за дедлайн.');
+            return redirect()->back();
+        }
+
+        $cost = $solution->deadlinePenaltyCost();
+
+        if ($user->balance() < $cost) {
+            $this->make_error_alert('Не хватает GC', 'Чтобы снять штраф, нужно ' . $cost . ' GC.');
+            return redirect()->back();
+        }
+
+        $old_rank = $user->rank();
+
+        $solution->deadline_penalty_paid_at = Carbon::now();
+        $solution->applyDeadlinePenalty($solution->raw_mark === null ? $solution->mark : $solution->raw_mark, $solution->task->getDeadline($course_id));
+        $shouldRewardTaskPrice = $solution->task->price > 0
+            && $solution->qualifiesForTaskPriceReward()
+            && !$solution->task->hasRewardableFullSolution($solution->user_id);
+
+        CoinTransaction::register($user->id, -1 * $cost, 'Снятие штрафа за дедлайн. Решение #' . $solution->id);
+
+        $solution->save();
+        CourseActivity::recordDeadlinePenaltyPaid($solution, $cost);
+
+        if ($shouldRewardTaskPrice) {
+            CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
+        }
+
+        CourseStudentPoints::recalculate($course_id, $user->id);
+        LessonStudentStats::recalculateForStudent($course_id, $user->id);
+
+        $user->rescore();
+        $user->awardRankPromotionIfNeeded($old_rank);
+
+        $this->make_success_alert('Штраф снят', 'XP за решение пересчитан, со счета списано ' . $cost . ' GC.');
+
+        return redirect()->back();
+    }
+
+    public function useXpBooster($course_id, $id, $solution_id)
+    {
+        $solution = Solution::where('id', $solution_id)
+            ->where('task_id', $id)
+            ->where('course_id', $course_id)
+            ->firstOrFail();
+        $user = Auth::user();
+
+        if ($solution->user_id != $user->id) {
+            abort(403);
+        }
+
+        if (!$solution->task->xp_booster_enabled) {
+            $this->make_info_alert('Бустер недоступен', 'Для этой задачи нельзя применить XP-бустер.');
+            return redirect()->back();
+        }
+
+        if ($solution->hasXpBooster()) {
+            $this->make_info_alert('Бустер уже применен', 'К этому решению уже применяли XP-бустер.');
+            return redirect()->back();
+        }
+
+        if ($solution->mark === null || $solution->mark >= $solution->task->max_mark) {
+            $this->make_info_alert('Бустер не нужен', 'Это решение уже набрало максимум XP или еще не проверено.');
+            return redirect()->back();
+        }
+
+        $cost = $solution->xpBoosterCost();
+
+        if ($user->balance() < $cost) {
+            $this->make_error_alert('Не хватает GC', 'Чтобы применить бустер, нужно ' . $cost . ' GC.');
+            return redirect()->back();
+        }
+
+        $old_rank = $user->rank();
+        $markBeforeBooster = $solution->mark;
+
+        $solution->xp_booster_used_at = Carbon::now();
+        $solution->applyDeadlinePenalty($solution->raw_mark === null ? $solution->mark : $solution->raw_mark, $solution->task->getDeadline($course_id));
+
+        if ($solution->mark <= $markBeforeBooster) {
+            $solution->xp_booster_used_at = null;
+            $solution->xp_booster_amount = 0;
+            $this->make_info_alert('Бустер не сработает', 'Бустер применяется до штрафа за дедлайн и не увеличит итоговый XP для этого решения.');
+            return redirect()->back();
+        }
+
+        CoinTransaction::register($user->id, -1 * $cost, 'XP booster Solution #' . $solution->id);
+
+        $solution->save();
+        CourseActivity::recordXpBoosterUsed($solution, $cost, $solution->mark - $markBeforeBooster);
+
+        CourseStudentPoints::recalculate($course_id, $user->id);
+        LessonStudentStats::recalculateForStudent($course_id, $user->id);
+
+        $user->rescore();
+        $user->awardRankPromotionIfNeeded($old_rank);
+
+        $this->make_success_alert('Бустер применен', 'Решение получило +' . ($solution->mark - $markBeforeBooster) . ' XP, со счета списано ' . $cost . ' GC.');
+
+        return redirect()->back();
+    }
+
+    public function buyGeekPasteExtraAttempt($course_id, $id)
+    {
+        $task = Task::findOrFail($id);
+        $course = Course::findOrFail($course_id);
+        $user = Auth::user();
+
+        if (!$task->is_code) {
+            $this->make_info_alert('Попытка недоступна', 'Дополнительные попытки доступны только для задач с кодом.');
+            return redirect()->back();
+        }
+
+        if ($task->isBlocked($user->id, $course->id)) {
+            $this->make_error_alert('Задача заблокирована', 'Для этой задачи новые сдачи запрещены.');
+            return redirect()->back();
+        }
+
+        if ($course->teachers->contains('id', $user->id) || $user->role != 'student') {
+            abort(403);
+        }
+
+        $cost = GeekPasteClient::EXTRA_ATTEMPT_COST;
+        if ($user->balance() < $cost) {
+            $this->make_error_alert('Не хватает GC', 'Дополнительная попытка стоит ' . $cost . ' GC.');
+            return redirect()->back();
+        }
+
+        $geekpaste = app(GeekPasteClient::class);
+        if (!$geekpaste->canBuyExtraGptAttempt($user->id, $task->id, $course->id)) {
+            $this->make_info_alert('Попытка пока не нужна', 'GeekPaste не подтвердил, что лимит GPT-сдач для этой задачи исчерпан.');
+            return redirect()->back();
+        }
+
+        $result = $geekpaste->addExtraGptAttempt($user->id, $task->id, $course->id);
+        if (!$result || !($result['extra_attempt_added'] ?? false)) {
+            $this->make_error_alert('Не удалось добавить попытку', 'GeekPaste не подтвердил сброс лимита. GC не списаны.');
+            return redirect()->back();
+        }
+
+        CoinTransaction::register($user->id, -1 * $cost, 'GeekPaste extra attempt Task #' . $task->id);
+        CourseActivity::recordGeekPasteAttemptBought($task, $course, $user, $cost);
+
+        $this->make_success_alert('Попытка добавлена', 'Можно отправить еще одно решение в GeekPaste. Со счета списано ' . $cost . ' GC.');
+
+        return redirect('/insider/courses/' . $course_id . '/steps/' . $task->step_id . '#task' . $task->id);
     }
 
     public function makeLower($course_id, $id, Request $request)
@@ -540,7 +699,10 @@ class TasksController extends Controller
             ->unique();
 
         $recheckCount = 0;
-        $client = new Client();
+        $client = new Client([
+            'connect_timeout' => 2,
+            'timeout' => 5,
+        ]);
 
         foreach ($studentIds as $studentId) {
             // Zero out all solutions for this student/task/course
@@ -549,6 +711,12 @@ class TasksController extends Controller
                 ->where('course_id', $course_id)
                 ->update([
                     'mark' => 0,
+                    'raw_mark' => 0,
+                    'deadline_penalty_amount' => 0,
+                    'deadline_penalty_days' => 0,
+                    'deadline_penalty_paid_at' => null,
+                    'xp_booster_amount' => 0,
+                    'xp_booster_used_at' => null,
                     'comment' => null,
                     'checked' => null
                 ]);
@@ -561,18 +729,21 @@ class TasksController extends Controller
                 ->first();
 
             if ($lastSolution && !empty($lastSolution->text)) {
-                // Extract code ID from the solution text (assuming it's a GeekPaste URL)
-                preg_match('/\?id=([^&\s]+)/', $lastSolution->text, $matches);
-                if (isset($matches[1])) {
-                    $codeId = $matches[1];
+                $codeId = $this->extractGeekPasteId($lastSolution->text);
+                if ($codeId) {
                     try {
 
                         // Send recheck request to GeekPaste API
                         $response = $client->post(config('services.geekpaste_url') . '/recheck', [
-                            'query' => ['id' => $codeId]
+                            'http_errors' => false,
+                            'query' => ['id' => $codeId],
                         ]);
 
-                        $recheckCount++;
+                        if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+                            $recheckCount++;
+                        } else {
+                            \Log::warning("GeekPaste recheck failed for student {$studentId}: HTTP " . $response->getStatusCode());
+                        }
                     } catch (GuzzleException $e) {
                         // Log error but continue with other students
                         \Log::error("Failed to recheck solution for student {$studentId}: " . $e->getMessage());
@@ -582,5 +753,14 @@ class TasksController extends Controller
         }
 
         return redirect()->back()->with('success', "Отправлено на перепроверку решений: {$recheckCount}");
+    }
+
+    private function extractGeekPasteId($text): ?string
+    {
+        if (preg_match('/(?:\\?|&amp;|&)id=([A-Za-z0-9_-]+)/', html_entity_decode($text), $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 }

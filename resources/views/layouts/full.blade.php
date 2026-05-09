@@ -6,30 +6,33 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title') - {{ config('app.name', 'Laravel') }}</title>
 
-    @include('layouts.partials.npm-vendor-assets')
-    <link href="{{ asset('build/css/legacy-theme.css') }}" rel="stylesheet">
-    {!! \NoCaptcha::renderJs() !!}
+	    @include('layouts.partials.npm-vendor-assets')
+	    {!! \NoCaptcha::renderJs() !!}
     @yield('head')
 </head>
-<body>
+<body class="gc-public-shell">
 
-<header class="d-flex align-items-center px-3 px-md-4 py-3 bg-white border-bottom">
-    <a href="{{ url('/') }}" class="d-flex align-items-center gap-2 text-decoration-none text-dark me-auto">
-        <img src="{{ url('images/icons/icons8-idea-64.png') }}" height="36" alt="">
-        <span class="fw-medium fs-5">{{ config('app.name', 'Laravel') }}</span>
+<header class="gc-public-header d-flex align-items-center gap-3 px-3 px-md-4 py-3 bg-body border-bottom">
+    <a href="{{ url('/') }}" class="gc-public-brand d-flex align-items-center gap-2 text-decoration-none text-body me-auto">
+        <img src="{{ url('images/icons/icons8-idea-64.png') }}" width="32" height="32" alt="">
+        <span class="fw-semibold fs-5">{{ config('app.name', 'Laravel') }}</span>
     </a>
 
-    <nav class="d-none d-md-flex gap-3 me-3">
+    <nav class="d-none d-md-flex align-items-center gap-1 me-1">
         @if (Auth::check())
-            <a class="text-dark text-decoration-none" href="{{ url('/insider/courses') }}">Мои курсы</a>
+            <a class="gc-public-link" href="{{ url('/insider/courses') }}">Мои курсы</a>
         @else
-            <a class="text-dark text-decoration-none" href="{{ url('courses') }}">Каталог курсов</a>
+            <a class="gc-public-link" href="{{ url('courses') }}">Каталог курсов</a>
         @endif
     </nav>
 
+    <button class="btn btn-outline-secondary rounded-3 gc-public-icon-btn" id="gcThemeToggle" type="button" aria-label="Переключить тему">
+        <i class="fas fa-moon"></i>
+    </button>
+
     @if (Auth::check())
         <div class="dropdown">
-            <button class="btn btn-link text-dark text-decoration-none dropdown-toggle p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <button class="btn btn-outline-secondary rounded-3 fw-semibold dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 {{ Auth::user()->name }}
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -43,33 +46,31 @@
             </ul>
         </div>
     @else
-        <a class="btn btn-primary" href="/login">Вход</a>
+        <a class="btn btn-success rounded-3 fw-semibold px-3" href="/login">Вход</a>
     @endif
 </header>
 
 <main class="container-lg py-4">
-    @if(Session::has('alert-class') && Session::get('alert-destination') == 'head')
-        <div class="alert {{ Session::get('alert-class') }} alert-dismissible fade show" role="alert">
-            <strong>{{ Session::get('alert-title') }}</strong> {{ Session::get('alert-text') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
-        </div>
-    @endif
+    @include('layouts.partials.session-alert')
 
     @yield('content')
 
-    <footer class="border-top pt-4 mt-5">
-        <div class="row">
+    <footer class="gc-public-footer border-top pt-4 mt-5">
+        <div class="row g-4">
             <div class="col-12 col-md-3 col-lg-2">
                 <img src="{{ url('/images/logo.png') }}" width="120" alt="CodingProjects" class="mb-2">
                 <small class="d-block text-muted">&copy; 2016–{{ now()->year }}</small>
             </div>
-            <div class="col-6 col-md-9 col-lg-10 mt-3">
+            <div class="col-12 col-md-9 col-lg-10">
                 <h6>CodingProjects</h6>
-                <ul class="list-unstyled text-muted small">
-                    <li><a class="text-muted" target="_blank" href="https://gekkon-club.ru/courses">Курсы</a></li>
-                    <li><a class="text-muted" target="_blank" href="https://github.com/geekon-school/">GitHub</a></li>
-                    <li><a class="text-muted" target="_blank" href="https://storage.geekclass.ru">Storage</a></li>
-                    <li><a class="text-muted" target="_blank" href="https://paste.geekclass.ru">Paste</a></li>
+                <ul class="list-unstyled small d-flex flex-wrap gap-2 mb-0">
+                    <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://gekkon-club.ru/courses">Курсы</a></li>
+                    <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://github.com/geekon-school/">GitHub</a></li>
+                    <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://storage.geekclass.ru">Storage</a></li>
+                    <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://paste.geekclass.ru">Paste</a></li>
+                    <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://exam.geekclass.ru">Exam</a></li>
+                    <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://arena.geekclass.ru">Arena</a></li>
+                    <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://battle.geekclass.ru">CodeBattle</a></li>
                 </ul>
             </div>
         </div>

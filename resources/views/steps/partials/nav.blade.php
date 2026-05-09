@@ -8,25 +8,38 @@
 <nav class="step-sidebar" id="stepsSidebar">
     <ul class="nav nav-pills flex-column step-sidebar__brand-list">
         <li class="nav-item">
-            @if ($isInsider)
-                <a class="nav-link step-sidebar__brand" href="{{ $courseBackUrl }}">
-                    <i class="icon ion-chevron-left"></i>
-                    <img src="{{ url('images/bhlogo.png') }}" height="35" alt=""/>
-                </a>
-            @else
-                <span class="nav-link step-sidebar__brand">
-                    <img src="{{ url('images/bhlogo.png') }}" height="35" alt=""/>
-                </span>
-            @endif
+            <a class="nav-link step-sidebar__brand" href="{{ url('/') }}">
+                <img src="{{ url('images/icons/icons8-idea-64.png') }}" height="32" alt=""/>
+                <span>GeekClass</span>
+            </a>
         </li>
+        @if ($isInsider)
+            <li class="nav-item">
+                <a class="nav-link step-sidebar__back" href="{{ $courseBackUrl }}">
+                    <i class="icon ion-chevron-left"></i>
+                    <span>К курсу</span>
+                </a>
+            </li>
+        @endif
     </ul>
+
+    <div class="step-sidebar__lesson">
+        <span>Раздел</span>
+        <strong title="{{ $step->lesson->name }}">{{ $step->lesson->name }}</strong>
+    </div>
 
     <ul class="nav nav-pills flex-column step-sidebar__list">
         @foreach($step->lesson->steps as $lesson_step)
+            @php
+                $visibleSidebarTasks = $isManager || !$isInsider
+                    ? $lesson_step->tasks
+                    : $lesson_step->tasks->filter(fn ($task) => $task->isVisible($user, $course));
+            @endphp
             <li class="nav-item">
                 <a class="nav-link @if ($lesson_step->id == $step->id) active @endif"
-                   href="{{ url($stepBaseUrl . $lesson_step->id) }}">{{ $lesson_step->name }}
-                    @if ($isInsider && $lesson_step->tasks->count() != 0)
+                   href="{{ url($stepBaseUrl . $lesson_step->id) }}">
+                    <span class="step-sidebar__link-label">{{ $lesson_step->name }}</span>
+                    @if ($isInsider && $visibleSidebarTasks->count() != 0)
                         <i class="ion ion-trophy"></i>
                     @endif
                 </a>
@@ -35,9 +48,9 @@
     </ul>
 
     @if ($isManager)
-        <p class="mt-3 text-center">
+        <p class="mt-3 mb-0">
             <a href="{{ url('/insider/courses/' . $course->id . '/lessons/' . $step->lesson->id . '/create') }}"
-               class="btn btn-success btn-sm">Новый этап</a>
+               class="btn btn-success btn-sm rounded-3 fw-semibold w-100 step-sidebar__add">Новый этап</a>
         </p>
     @endif
 </nav>

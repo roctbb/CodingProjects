@@ -22,7 +22,8 @@ class MarketController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('admin')->only(['createView', 'editView', 'edit', 'create', 'ship', 'cancel', 'orders']);
+        $this->middleware('admin')->only(['createView', 'editView', 'edit', 'create', 'archive', 'restore', 'finishAuction']);
+        $this->middleware('teacher')->only(['ship', 'cancel', 'orders']);
     }
 
     /**
@@ -33,16 +34,39 @@ class MarketController extends Controller
     public function index()
     {
         $user = User::findOrFail(Auth::User()->id);
-        $goods = MarketGood::where('in_stock', true)->orderBy('id', 'desc')->get();
-        $archive = MarketGood::where('in_stock', false)->get();
-        return view('market.index', compact('goods', 'user', 'archive'));
+        $canManageMarket = $user->role == 'teacher' || $user->role == 'admin';
+        $goodsQuery = MarketGood::where('in_stock', true)->with(['auctionBids.user']);
+
+        if (!$canManageMarket) {
+            $goodsQuery->where('number', '>', 0);
+        }
+
+        $activeGoods = $goodsQuery->orderBy('id', 'desc')->get();
+        $goods = $activeGoods->where('sale_type', '!=', MarketGood::SALE_TYPE_AUCTION)->values();
+        $auctions = $activeGoods->where('sale_type', MarketGood::SALE_TYPE_AUCTION)->values();
+        $archive = $canManageMarket ? MarketGood::where('in_stock', false)->with(['auctionBids.user', 'deals.user'])->orderBy('id', 'desc')->get() : collect();
+        $active_orders = $canManageMarket ? MarketDeal::where('shipped', false)->with(['user', 'good'])->orderBy('created_at', 'desc')->get() : collect();
+        $shipped_orders = $canManageMarket
+            ? MarketDeal::where('shipped', true)
+                ->with(['user', 'good'])
+                ->orderBy('updated_at', 'desc')
+                ->paginate(25, ['*'], 'shipped_page')
+                ->withQueryString()
+                ->fragment('market-orders')
+            : collect();
+
+        return view('market.index', compact('goods', 'auctions', 'user', 'archive', 'active_orders', 'shipped_orders', 'canManageMarket'));
     }
 
     public function orders()
     {
         $user = User::findOrFail(Auth::User()->id);
         $active_orders = MarketDeal::where('shipped', false)->with(['user', 'good'])->orderBy('created_at', 'desc')->get();
-        $shipped_orders = MarketDeal::where('shipped', true)->with(['user', 'good'])->orderBy('updated_at', 'desc')->limit(50)->get();
+        $shipped_orders = MarketDeal::where('shipped', true)
+            ->with(['user', 'good'])
+            ->orderBy('updated_at', 'desc')
+            ->paginate(25, ['*'], 'shipped_page')
+            ->withQueryString();
         return view('market.orders', compact('user', 'active_orders', 'shipped_orders'));
     }
 
@@ -67,18 +91,34 @@ class MarketController extends Controller
             'image' => 'required|string',
             'number' => 'required|numeric|min:0',
             'price' => 'required|numeric|min:0',
+            'sale_type' => 'nullable|in:regular,auction',
         ]);
 
         $good = MarketGood::findOrFail($id);
+        $saleType = $request->input('sale_type', MarketGood::SALE_TYPE_REGULAR);
+
+        if ($good->isAuction() && $good->auctionBids()->count() > 0) {
+            $saleSettingsChanged = $saleType !== $good->sale_type
+                || (int) $request->price !== (int) $good->price
+                || (int) $request->number !== (int) $good->number;
+
+            if ($saleSettingsChanged) {
+                $this->make_error_alert('Ошибка!', 'У аукциона уже есть ставки. Тип продажи, стартовую стоимость и количество мест менять нельзя.', $destination = 'head');
+                return redirect()->back()->withInput();
+            }
+        }
+
         $good->name = $request->name;
         $good->description = clean($request->description);
         $good->image = $request->image;
         $good->number = $request->number;
         $good->price = $request->price;
+        $good->sale_type = $saleType;
 
         if ($request->in_stock == 'on') {
             $good->in_stock = true;
         } else {
+            $good->cancelActiveAuctionBids();
             $good->in_stock = false;
         }
 
@@ -95,6 +135,7 @@ class MarketController extends Controller
             'image' => 'required|string',
             'number' => 'required|numeric|min:0',
             'price' => 'required|numeric|min:0',
+            'sale_type' => 'nullable|in:regular,auction',
         ]);
 
         $good = new MarketGood();
@@ -103,6 +144,7 @@ class MarketController extends Controller
         $good->image = $request->image;
         $good->number = $request->number;
         $good->price = $request->price;
+        $good->sale_type = $request->input('sale_type', MarketGood::SALE_TYPE_REGULAR);
 
         if ($request->in_stock == 'on') {
             $good->in_stock = true;
@@ -112,6 +154,29 @@ class MarketController extends Controller
 
 
         $good->save();
+        return redirect('/insider/market/');
+    }
+
+    public function archive($id)
+    {
+        $good = MarketGood::findOrFail($id);
+        $good->cancelActiveAuctionBids();
+        $good->in_stock = false;
+        $good->save();
+
+        $this->make_success_alert("Готово!", 'Товар "' . $good->name . '" перенесён в архив.', $destination = 'head');
+
+        return redirect('/insider/market/');
+    }
+
+    public function restore($id)
+    {
+        $good = MarketGood::findOrFail($id);
+        $good->in_stock = true;
+        $good->save();
+
+        $this->make_success_alert("Готово!", 'Товар "' . $good->name . '" возвращён в магазин.', $destination = 'head');
+
         return redirect('/insider/market/');
     }
 
@@ -132,6 +197,50 @@ class MarketController extends Controller
         return redirect('/insider/market/');
     }
 
+    public function bid($id, Request $request)
+    {
+        $this->validate($request, [
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        $user = User::findOrFail(Auth::User()->id);
+        $good = MarketGood::findOrFail($id);
+
+        if ($user->role == 'teacher' || $user->role == 'admin') {
+            $this->make_error_alert('Ставка не принята', 'Ставки доступны ученикам. Завершить аукцион можно из меню товара.', $destination = 'head');
+            return redirect('/insider/market/');
+        }
+
+        try {
+            $bid = $good->placeBid($user, $request->amount);
+            $this->make_success_alert('Ставка принята!', 'Ваша ставка на "' . $good->name . '": ' . $bid->amount . ' GC.', $destination = 'head');
+        } catch (\RuntimeException $exception) {
+            $this->make_error_alert('Ставка не принята', $exception->getMessage(), $destination = 'head');
+        }
+
+        return redirect('/insider/market/');
+    }
+
+    public function finishAuction($id)
+    {
+        $good = MarketGood::findOrFail($id);
+
+        try {
+            $deals = $good->finishAuction();
+
+            $receiver = User::findOrFail(1);
+            foreach ($deals as $deal) {
+                $receiver->notify(new NewOrder($deal));
+            }
+
+            $this->make_success_alert('Аукцион завершён!', 'Создано заказов: ' . $deals->count() . '.', $destination = 'head');
+        } catch (\RuntimeException $exception) {
+            $this->make_error_alert('Ошибка!', $exception->getMessage(), $destination = 'head');
+        }
+
+        return redirect('/insider/market/');
+    }
+
     public function ship($id, Request $request)
     {
         $user = User::findOrFail(Auth::User()->id);
@@ -144,7 +253,13 @@ class MarketController extends Controller
         $order->shipped_by = Auth::User()->id;
         $order->save();
 
-        return redirect('/insider/market/');
+        $returnUrl = $request->input('return_url');
+        $returnPath = $returnUrl ? parse_url($returnUrl, PHP_URL_PATH) : null;
+        if ($returnPath && str_starts_with($returnPath, '/insider/market')) {
+            return redirect()->to($returnUrl);
+        }
+
+        return redirect()->back();
     }
 
     public function cancel($id, Request $request)
@@ -152,7 +267,14 @@ class MarketController extends Controller
         $user = User::findOrFail(Auth::User()->id);
         $order = MarketDeal::findOrFail($id);
 
-        CoinTransaction::where('user_id', $order->user_id)->where('comment', 'like', '%Good #' . $order->good_id . '%')->orderBy('id', 'desc')->first()->delete();
+        if ($order->source == 'auction') {
+            CoinTransaction::register($order->user_id, $order->displayPrice(), 'Auction order cancel Good #' . $order->good_id);
+        } else {
+            $transaction = CoinTransaction::where('user_id', $order->user_id)->where('comment', 'like', '%Good #' . $order->good_id . '%')->orderBy('id', 'desc')->first();
+            if ($transaction) {
+                $transaction->delete();
+            }
+        }
         $order->delete();
 
         return redirect('/insider/market/');

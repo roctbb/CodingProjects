@@ -35,14 +35,14 @@ class OpenStepsController extends Controller
 
     public function details($id)
     {
-        $step = ProgramStep::findOrFail($id);
+        $step = ProgramStep::with('tasks')->findOrFail($id);
 
         if (!$step->lesson->is_open) abort(503);
 
         $zero_theory = $step->theory == null || $step->theory == "";
-        $one_tasker = $step->tasks->count() == 1;
-        $empty = $zero_theory && $step->tasks->count() == 0;
-        $tasks = $step->tasks;
+        $tasks = $step->tasks->where('is_hidden', false);
+        $one_tasker = $tasks->count() == 1;
+        $empty = $zero_theory && $tasks->count() == 0;
         $quizer = false;
         $course = null;
         $user = Auth::user();

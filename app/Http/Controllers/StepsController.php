@@ -9,6 +9,7 @@ use App\Lesson;
 use App\Question;
 use App\QuestionVariant;
 use App\Solution;
+use App\Services\GeekPasteClient;
 use App\Task;
 use App\User;
 use Carbon\Carbon;
@@ -39,20 +40,31 @@ class StepsController extends Controller
 
     public function details($course_id, $id)
     {
-        $user = User::findOrFail(Auth::User()->id);
-        $course = Course::findOrFail($course_id);
-        $step = ProgramStep::findOrFail($id);
+        $user = User::with('submissions')->findOrFail(Auth::User()->id);
+        $course = Course::with('teachers', 'students')->findOrFail($course_id);
+        $step = ProgramStep::with([
+            'lesson.steps',
+            'tasks.solutions' => function ($query) use ($course_id) {
+                $query->where('course_id', $course_id);
+            },
+            'tasks.deadlines' => function ($query) use ($course_id) {
+                $query->where('course_id', $course_id);
+            },
+            'tasks.blockedTasks' => function ($query) use ($course_id) {
+                $query->where('course_id', $course_id);
+            },
+        ])->findOrFail($id);
         $tasks = [];
         \App\ActionLog::record(Auth::User()->id, 'step', $id);
 
 
-        $tasks = $step->tasks()->with('solutions')->get()->filter(function($task) use ($user, $course) {
-            return $task->isVisible($user->id, $course);
+        $tasks = $step->tasks->filter(function($task) use ($user, $course) {
+            return $task->isVisible($user, $course);
         });
 
         $zero_theory = $step->theory == null || $step->theory == "";
-        $one_tasker = $step->tasks->count() == 1 && $zero_theory;
-        $empty = $zero_theory && $step->tasks->count() == 0;
+        $one_tasker = $tasks->count() == 1 && $zero_theory;
+        $empty = $zero_theory && $tasks->count() == 0;
 
         $quizer = true;
         foreach ($tasks as $task)
@@ -60,20 +72,44 @@ class StepsController extends Controller
 
         $quizer = $quizer && $zero_theory && !$empty;
 
-        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course'));
+        $geekpasteAttemptResetStatuses = [];
+        $isStudent = $user->role == 'student' && !$course->teachers->contains('id', $user->id);
+        if ($isStudent) {
+            $geekpaste = app(GeekPasteClient::class);
+            foreach ($tasks as $task) {
+                if (!$task->is_code || $task->isBlocked($user->id, $course->id)) {
+                    continue;
+                }
+
+                $status = $geekpaste->gptRateLimitStatus($user->id, $task->id, $course->id);
+                if ($geekpaste->allowsExtraAttempt($status)) {
+                    $geekpasteAttemptResetStatuses[$task->id] = $status;
+                }
+            }
+        }
+
+        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'geekpasteAttemptResetStatuses'));
     }
 
     public function perform($course_id, $id)
     {
-        $user = User::findOrFail(Auth::User()->id);
-        $step = ProgramStep::findOrFail($id);
-        $course = Course::findOrFail($course_id);
+        $user = User::with('submissions')->findOrFail(Auth::User()->id);
+        $step = ProgramStep::with([
+            'lesson.steps',
+            'tasks.solutions' => function ($query) use ($course_id) {
+                $query->where('course_id', $course_id);
+            },
+            'tasks.blockedTasks' => function ($query) use ($course_id) {
+                $query->where('course_id', $course_id);
+            },
+        ])->findOrFail($id);
+        $course = Course::with('teachers', 'students')->findOrFail($course_id);
         $tasks = $step->tasks->filter(function($task) use ($user, $course) {
-            return $task->isVisible($user->id, $course);
+            return $task->isVisible($user, $course);
         });
         $zero_theory = $step->theory == null || $step->theory == "";
-        $one_tasker = $step->tasks->count() == 1;
-        $empty = $zero_theory && $step->tasks->count() == 0;
+        $one_tasker = $tasks->count() == 1;
+        $empty = $zero_theory && $tasks->count() == 0;
         return view('perform.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'course'));
     }
 
@@ -81,7 +117,8 @@ class StepsController extends Controller
     {
         $is_lesson = false;
         $lesson = Lesson::findOrFail($id);
-        return view('steps.create', compact('is_lesson', 'lesson'));
+        $course = Course::findOrFail($course_id);
+        return view('steps.create', compact('is_lesson', 'lesson', 'course'));
     }
 
     public function create($course_id, $id, Request $request)
@@ -101,7 +138,8 @@ class StepsController extends Controller
     public function editView($course_id, $id)
     {
         $step = ProgramStep::findOrFail($id);
-        return view('steps.edit', compact('step'));
+        $course = Course::findOrFail($course_id);
+        return view('steps.edit', compact('step', 'course'));
     }
 
 

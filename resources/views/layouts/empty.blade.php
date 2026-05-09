@@ -6,19 +6,13 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title') - {{ config('app.name', 'Laravel') }}</title>
 
-    @include('layouts.partials.npm-vendor-assets')
-    <link href="{{ asset('build/css/legacy-theme.css') }}" rel="stylesheet">
-    @yield('head')
+	    @include('layouts.partials.npm-vendor-assets')
+	    @yield('head')
 </head>
 <body>
 
 <main class="container mt-4">
-    @if(Session::has('alert-class') && Session::get('alert-destination') == 'head')
-        <div class="alert {{ Session::get('alert-class') }} alert-dismissible fade show" role="alert">
-            <strong>{{ Session::get('alert-title') }}</strong> {{ Session::get('alert-text') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
-        </div>
-    @endif
+    @include('layouts.partials.session-alert')
     @yield('content')
 </main>
 

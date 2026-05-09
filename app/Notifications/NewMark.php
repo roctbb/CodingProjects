@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Channels\TelegramBotChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -31,7 +32,7 @@ class NewMark extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['mail'];
+        return ['mail', TelegramBotChannel::class];
     }
 
     /**
@@ -61,5 +62,16 @@ class NewMark extends Notification implements ShouldQueue
         return [
             //
         ];
+    }
+
+    public function toTelegram($notifiable)
+    {
+        $url = url("/insider/courses/" . $this->solution->course_id . "/steps/" . $this->solution->task->step->id . "#task" . $this->solution->task->id);
+
+        return '✅ Решение проверено: <strong>"' . e($this->solution->task->name) . '"</strong> в курсе <strong>"' .
+            e($this->solution->course->name) . '</strong>.' . "\n" .
+            'Очков опыта: <strong>' . e($this->solution->mark) . ' / ' . e($this->solution->task->max_mark) . '</strong>' . "\n" .
+            'Комментарий: ' . e($this->solution->comment ?: '-') . "\n" .
+            '<a href="' . e($url) . '">Открыть задачу</a>';
     }
 }

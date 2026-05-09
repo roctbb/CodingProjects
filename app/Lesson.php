@@ -4,17 +4,19 @@ namespace App;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Lesson extends Model
 {
     protected $table = 'lessons';
 
     protected $fillable = [
-        'name', 'description', 'image', 'start_date'
+        'name', 'description', 'image', 'start_date', 'early_access_enabled'
     ];
 
     protected $casts = [
         'start_date' => 'datetime',
+        'early_access_enabled' => 'boolean',
     ];
 
     protected $results_cache = array();
@@ -73,6 +75,48 @@ class Lesson extends Model
         return $this->hasMany('App\LessonInfo', "lesson_id");
     }
 
+    public function earlyAccesses()
+    {
+        return $this->hasMany('App\LessonEarlyAccess', 'lesson_id', 'id');
+    }
+
+    public function earlyAccessCost()
+    {
+        return 10;
+    }
+
+    public function hasEarlyAccess($course, $user)
+    {
+        if (!$course || !$user) {
+            return false;
+        }
+
+        if ($this->relationLoaded('earlyAccesses')) {
+            return $this->earlyAccesses
+                    ->where('course_id', $course->id)
+                    ->where('user_id', $user->id)
+                    ->count() != 0;
+        }
+
+        return LessonEarlyAccess::where('course_id', $course->id)
+            ->where('lesson_id', $this->id)
+            ->where('user_id', $user->id)
+            ->exists();
+    }
+
+    public function canBuyEarlyAccess($course, $user)
+    {
+        if (!$course || !$user || !$this->early_access_enabled || $this->isStarted($course)) {
+            return false;
+        }
+
+        if (!$course->students->contains('id', $user->id)) {
+            return false;
+        }
+
+        return !$this->hasEarlyAccess($course, $user);
+    }
+
     public function getStartDate($course)
     {
         $info = $this->info->where('course_id', $course->id)->first();
@@ -108,15 +152,14 @@ class Lesson extends Model
         if ($user == null) {
             return false;
         }
-        if (!$this->isStarted($course)) return false;
         return $this->isAvailableForUser($course, $user);
     }
 
     public function isAvailableForUser($course, $user)
     {
-        if (!$this->isStarted($course)) return false;
         if ($user->role == 'admin' || $course->teachers->contains($user)) return true;
-        return true;
+        if (!$course->students->contains('id', $user->id)) return false;
+        return $this->isStarted($course) || $this->hasEarlyAccess($course, $user);
     }
 
     public function isDone($course)
@@ -130,10 +173,23 @@ class Lesson extends Model
 
     public function isDoneByUser($course, $user)
     {
-        if (!$this->isStarted($course)) return false;
         if ($user->role == 'admin' || $course->teachers->contains($user)) return true;
+        if (!$this->isAvailableForUser($course, $user)) return false;
+        $this->loadMissing('steps.tasks.solutions');
         foreach ($this->tasks()->where('is_star', false) as $task) {
-            if (!$task->isVisible($user->id, $course)) continue;
+            if (!$task->isVisible($user, $course)) continue;
+            if ($user->relationLoaded('submissions')) {
+                $minMark = $task->max_mark > 1 ? round($task->max_mark * 3 / 4) : 1;
+                $isDone = $user->submissions
+                    ->where('course_id', $course->id)
+                    ->where('task_id', $task->id)
+                    ->where('mark', '>=', $minMark)
+                    ->count() != 0;
+
+                if (!$isDone) return false;
+                continue;
+            }
+
             if (!$task->isDone($user->id)) return false;
         }
         return true;
@@ -162,42 +218,39 @@ class Lesson extends Model
     public function import($lesson_json)
     {
         $new_lesson = json_decode($lesson_json);
-        foreach ($new_lesson->steps as $step) {
-            $tasks = $step->tasks;
-            unset($step->tasks);
-            $new_step = new ProgramStep();
-            foreach ($step as $property => $value) {
-                try {
-                    $new_step->$property = $value;
+        if (json_last_error() !== JSON_ERROR_NONE || !$new_lesson || !isset($new_lesson->steps)) {
+            throw new \InvalidArgumentException('Некорректный JSON урока.');
+        }
+
+        DB::transaction(function () use ($new_lesson) {
+            foreach ($new_lesson->steps as $step) {
+                $tasks = $step->tasks ?? [];
+                unset($step->tasks);
+                $new_step = new ProgramStep();
+                foreach ($step as $property => $value) {
+                    if (!is_array($value) && !is_object($value)) {
+                        $new_step->$property = $value;
+                    }
                 }
-                catch (\Exception $e) {
 
-                }
-            }
+                $new_step->lesson_id = $this->id;
+                $new_step->program_id = $this->program_id;
+                $new_step->save();
 
-            $new_step->lesson_id = $this->id;
-            $new_step->program_id = $this->program_id;
-            $new_step->save();
-
-            foreach ($tasks as $task) {
-                $new_task = new Task();
-                foreach ($task as $property => $value) {
-                    try {
-                        // Skip relationships and only assign scalar values
+                foreach ($tasks as $task) {
+                    $new_task = new Task();
+                    foreach ($task as $property => $value) {
                         if (!is_array($value) && !is_object($value)) {
                             $new_task->$property = $value;
                         }
                     }
-                    catch (\Exception $e) {
 
-                    }
+                    $new_task->step_id = $new_step->id;
+                    $new_task->save();
                 }
-
-                $new_task->step_id = $new_step->id;
-                $new_task->save();
             }
-        }
-        $this->save();
+            $this->save();
+        });
     }
 
 }

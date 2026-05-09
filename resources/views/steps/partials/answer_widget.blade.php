@@ -1,11 +1,20 @@
-<div class="card-body markdown">
-    {!! parsedown_math($task->text) !!}
+                <div class="markdown step-task-card__body">
+                    {!! parsedown_math($task->text) !!}
 
-    @php $blocked = isset($course) ? $task->isBlocked(Auth::User()->id, $course->id) : false; @endphp
+    @php
+        $blocked = isset($course) ? $task->isBlocked(Auth::id(), $course->id) : false;
+        $latestUserSolution = $task->latestSolutionForUser(Auth::id());
+        $hasUserSolution = $latestUserSolution !== null;
+        $taskScoreBadgeClass = $hasUserSolution ? $latestUserSolution->scoreBadgeClass('bg-body') : 'bg-body';
+    @endphp
 
     @if ($blocked)
-        <div class="alert alert-danger" role="alert">
-            Задача заблокирована для вас. Новые сдачи запрещены.
+        <div class="step-task-note step-task-note--danger bg-danger-subtle text-danger-emphasis mb-3" role="note">
+            <span class="flex-shrink-0"><i class="fas fa-lock"></i></span>
+            <div class="min-width-0">
+                <strong class="d-block">Задача заблокирована</strong>
+                <span class="small">Новые сдачи запрещены.</span>
+            </div>
         </div>
     @endif
 
@@ -13,32 +22,30 @@
         @if (!$blocked)
             <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}"
               method="POST"
-              class="d-flex gap-2" data-check-task data-task-id="{{$task->id}}">
+              class="step-quiz-answer-form" data-check-task data-task-id="{{$task->id}}">
                 {{ csrf_field() }}
-                <label for="text{{$task->id}}"><strong>Ответ:&nbsp;</strong></label>
-                <input type="text" name="text" class="form-control form-control-sm"
-                id="text{{$task->id}}"/>&nbsp;
-                <button type="submit" class="btn btn-success btn-sm">Отправить</button>
+                <label for="text{{$task->id}}" class="form-label fw-semibold mb-0">Ответ</label>
+                <input type="text" name="text" class="form-control form-control-sm rounded-3"
+                id="text{{$task->id}}"/>
+                <button type="submit" class="btn btn-success btn-sm rounded-3 fw-semibold">Отправить</button>
 
             </form>
             @if ($errors->has('text'))
-                <br><span
-                class="text-danger d-block"><strong>{{ $errors->first('text') }}</strong></span>
+                <span class="text-danger small d-block mb-3"><strong>{{ $errors->first('text') }}</strong></span>
             @endif
         @endif
     @endif
-    <span class="badge bg-secondary">Очков опыта: {{$task->max_mark}}</span>
-    @if ($blocked)
-        <span class="badge bg-danger" id="TSK_{{$task->id}}">Очков опыта: 0</span>
-        <span class="small" id="TSK_COM_{{$task->id}}">Задача заблокирована</span>
-    @elseif ($task->is_quiz && $task->solutions()->where('user_id', Auth::User()->id)->count()!=0)
-        @php
-            $solution = $task->solutions()->where('user_id', Auth::User()->id)->orderBy('id', 'DESC')->get()->first();
-        @endphp
-        <span class="badge bg-primary" id="TSK_{{$task->id}}">Очков опыта: {{$solution->mark}}</span>
-        <span class="small" id="TSK_COM_{{$task->id}}">{{$solution->comment}}</span>
-    @else
-        <span class="badge bg-primary" id="TSK_{{$task->id}}"></span>
-        <span class="small" id="TSK_COM_{{$task->id}}"></span>
-    @endif
+    <div class="step-task-status-row @if (!$blocked && !($task->is_quiz && $hasUserSolution)) d-none @endif"
+         data-task-status-row>
+        @if ($blocked)
+            <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-semibold" id="TSK_{{$task->id}}">0 XP</span>
+            <span class="small text-muted" id="TSK_COM_{{$task->id}}">Задача заблокирована</span>
+        @elseif ($task->is_quiz && $hasUserSolution)
+            <span class="badge rounded-pill {{ $taskScoreBadgeClass }} step-task-score" id="TSK_{{$task->id}}">{{$latestUserSolution->mark}} XP</span>
+            <span class="small text-muted" id="TSK_COM_{{$task->id}}">{{$latestUserSolution->comment}}</span>
+        @else
+            <span class="badge rounded-pill bg-body step-task-score" id="TSK_{{$task->id}}"></span>
+            <span class="small text-muted" id="TSK_COM_{{$task->id}}"></span>
+        @endif
+    </div>
 </div>

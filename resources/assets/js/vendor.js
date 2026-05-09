@@ -1,6 +1,7 @@
 import axios from 'axios';
 import autosize from 'autosize';
 import flatpickr from 'flatpickr';
+import { Russian } from 'flatpickr/dist/l10n/ru.js';
 import hljs from 'highlight.js/lib/core';
 import python from 'highlight.js/lib/languages/python';
 import javascript from 'highlight.js/lib/languages/javascript';
@@ -29,6 +30,7 @@ import * as bootstrap from 'bootstrap';
 window.axios = axios;
 window.autosize = autosize;
 window.flatpickr = flatpickr;
+window.flatpickr.localize(Russian);
 window.hljs = hljs;
 window.bootstrap = bootstrap;
 
@@ -46,8 +48,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     var url = document.location.toString();
+    const stepDetailsPage = document.querySelector('[data-step-details-page]');
+    const stepTabs = document.querySelector('[data-step-content-tabs]');
     const linkifySelector = document.body.dataset.linkifySelector || 'div.markdown, [data-linkify]';
     const linkifySkipSelector = 'nav, aside, form, button, textarea, select, option, .dropdown-menu, .gc-sidebar';
+
+    const getTabTriggerForHash = function (hash) {
+        if (!hash || hash === '#') return null;
+
+        return Array.from(document.querySelectorAll('[data-bs-toggle="tab"], [data-bs-toggle="pill"]')).find(function (el) {
+            return (el.getAttribute('href') || el.getAttribute('data-bs-target')) === hash;
+        });
+    };
 
     const applyLinkify = function (root) {
         root.querySelectorAll(linkifySelector).forEach(function (element) {
@@ -61,6 +73,160 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
 
+    const enhanceStepMedia = function (root) {
+        root.querySelectorAll('.step-content .markdown img:not([data-step-media-ready])').forEach(function (image) {
+            if (image.closest('.step-media-figure')) return;
+
+            image.dataset.stepMediaReady = '1';
+            image.loading = 'lazy';
+            image.decoding = 'async';
+
+            const imageLink = image.closest('a');
+            const singleImageLink = imageLink && imageLink.children.length === 1 ? imageLink : null;
+            const mediaNode = singleImageLink || image;
+            const figure = document.createElement('figure');
+            figure.className = 'step-media-figure';
+
+            mediaNode.before(figure);
+
+            if (singleImageLink) {
+                singleImageLink.classList.add('step-media-link');
+                singleImageLink.target = '_blank';
+                singleImageLink.rel = 'noopener';
+                figure.appendChild(singleImageLink);
+            } else if (!imageLink && (image.currentSrc || image.src)) {
+                const link = document.createElement('a');
+                link.className = 'step-media-link';
+                link.href = image.currentSrc || image.src;
+                link.target = '_blank';
+                link.rel = 'noopener';
+                figure.appendChild(link);
+                link.appendChild(image);
+            } else {
+                figure.classList.add('step-media-figure--plain');
+                figure.appendChild(image);
+            }
+
+            const captionText = image.getAttribute('alt');
+            if (captionText) {
+                const caption = document.createElement('figcaption');
+                caption.textContent = captionText;
+                figure.appendChild(caption);
+            }
+        });
+    };
+
+    const syncStepReadingToc = function () {
+        const layout = document.querySelector('[data-step-content-layout]');
+        const toc = document.querySelector('[data-step-reading-toc]');
+        if (!layout || !toc) return;
+
+        const activePane = layout.querySelector('.tab-pane.active.markdown');
+        const headings = activePane ? Array.from(activePane.querySelectorAll('h2, h3')) : [];
+        const escapeHtml = function (value) {
+            return value.replace(/[&<>"']/g, function (char) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;',
+                }[char];
+            });
+        };
+
+        if (headings.length < 2) {
+            toc.hidden = true;
+            toc.innerHTML = '';
+            layout.classList.remove('has-toc');
+            return;
+        }
+
+        const links = headings.map(function (heading, index) {
+            if (!heading.id) {
+                heading.id = 'step-heading-' + index + '-' + heading.textContent.trim().toLowerCase()
+                    .replace(/[^a-zа-я0-9]+/gi, '-')
+                    .replace(/^-|-$/g, '');
+            }
+
+            return '<a class="step-reading-toc__link step-reading-toc__link--' + heading.tagName.toLowerCase() +
+                '" href="#' + heading.id + '">' + escapeHtml(heading.textContent) + '</a>';
+        });
+
+        toc.innerHTML = '<div class="step-reading-toc__title">В этой теме</div><nav>' + links.join('') + '</nav>';
+        toc.hidden = false;
+        layout.classList.add('has-toc');
+        updateStepReadingState();
+    };
+
+    const enhanceStepCodeBlocks = function (root) {
+        root.querySelectorAll('.step-content pre:not([data-step-code-ready])').forEach(function (pre) {
+            const code = pre.querySelector('code');
+            if (!code) return;
+
+            pre.dataset.stepCodeReady = '1';
+            pre.classList.add('step-code-block');
+
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'step-code-copy';
+            button.textContent = 'Копировать';
+            button.addEventListener('click', function () {
+                const text = code.textContent;
+
+                if (!navigator.clipboard || !navigator.clipboard.writeText) {
+                    button.textContent = 'Недоступно';
+                    window.setTimeout(function () {
+                        button.textContent = 'Копировать';
+                    }, 1400);
+                    return;
+                }
+
+                navigator.clipboard.writeText(text).then(function () {
+                    button.textContent = 'Скопировано';
+                    button.classList.add('is-copied');
+                    window.setTimeout(function () {
+                        button.textContent = 'Копировать';
+                        button.classList.remove('is-copied');
+                    }, 1400);
+                }).catch(function () {
+                    button.textContent = 'Не удалось';
+                    window.setTimeout(function () {
+                        button.textContent = 'Копировать';
+                    }, 1400);
+                });
+            });
+
+            pre.appendChild(button);
+        });
+    };
+
+    const updateStepReadingState = function () {
+        const layout = document.querySelector('[data-step-content-layout]');
+        const progress = document.querySelector('[data-step-reading-progress]');
+        const fill = progress ? progress.querySelector('span') : null;
+        const activePane = layout ? layout.querySelector('.tab-pane.active.markdown') : null;
+
+        if (!activePane || !progress || !fill) return;
+
+        const scrollRoot = document.scrollingElement || document.documentElement;
+        const total = Math.max(1, scrollRoot.scrollHeight - window.innerHeight);
+        const percent = Math.max(0, Math.min(1, scrollRoot.scrollTop / total));
+        const rect = activePane.getBoundingClientRect();
+
+        progress.hidden = total < window.innerHeight * 0.15;
+        fill.style.transform = 'scaleX(' + percent + ')';
+
+        const headings = Array.from(activePane.querySelectorAll('h2[id], h3[id]'));
+        const activeHeading = headings.reduce(function (current, heading) {
+            return heading.getBoundingClientRect().top <= 130 ? heading : current;
+        }, headings[0]);
+
+        document.querySelectorAll('.step-reading-toc__link').forEach(function (link) {
+            link.classList.toggle('is-active', activeHeading && link.getAttribute('href') === '#' + activeHeading.id);
+        });
+    };
+
     const replaceButtonText = function (button, pattern, replacement) {
         Array.from(button.childNodes).some(function (node) {
             if (node.nodeType !== Node.TEXT_NODE || !pattern.test(node.textContent)) return false;
@@ -69,25 +235,56 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
 
-    // Tab activation from URL hash
-    if (url.match('#')) {
-        var hash = '#' + url.split('#')[1];
-        var tabEl = document.querySelector('a[href="' + hash + '"], [data-bs-target="' + hash + '"]');
+    // Tab activation from URL hash. Step pages initialize their tabs below so they can
+    // avoid the browser's eager anchor scroll to hidden tab panes.
+    if (url.match('#') && !stepTabs) {
+        var hash = window.location.hash;
+        var tabEl = getTabTriggerForHash(hash);
         if (tabEl) new bootstrap.Tab(tabEl).show();
     }
+
+    var syncTabContentHeight = function (container) {
+        if (!container) return;
+        var activePane = container.querySelector('.tab-pane.active');
+        if (!activePane) return;
+
+        window.requestAnimationFrame(function () {
+            var minimumHeight = Math.min(activePane.offsetHeight, Math.max(320, window.innerHeight * 0.62));
+            var nextMinHeight = Math.max(0, Math.round(minimumHeight));
+            container.style.minHeight = nextMinHeight + 'px';
+        });
+    };
+
+    document.querySelectorAll('.tab-content').forEach(syncTabContentHeight);
 
     document.querySelectorAll('.nav-tabs a, [data-bs-toggle="tab"], [data-bs-toggle="pill"]').forEach(function (el) {
         el.addEventListener('shown.bs.tab', function (event) {
             var hash = event.target.getAttribute('href') || event.target.getAttribute('data-bs-target');
-            if (hash && hash !== '#') window.location.hash = hash;
+            var targetPane = null;
+
+            if (hash && hash !== '#') {
+                history.replaceState(null, '', window.location.pathname + window.location.search + hash);
+                targetPane = document.querySelector(hash);
+            }
+
+            syncTabContentHeight(targetPane ? targetPane.closest('.tab-content') : null);
+            syncStepReadingToc();
+            updateStepReadingState();
         });
     });
 
     if (window.flatpickr) {
-        window.flatpickr('.date', { dateFormat: 'Y-m-d' });
+        window.flatpickr('.date', { dateFormat: 'Y-m-d', locale: Russian });
     }
 
     applyLinkify(document);
+    enhanceStepMedia(document);
+    enhanceStepCodeBlocks(document);
+    syncStepReadingToc();
+    updateStepReadingState();
+
+    window.addEventListener('scroll', updateStepReadingState, { passive: true });
+    window.addEventListener('resize', updateStepReadingState);
 
     // Initialize Bootstrap tooltips
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
@@ -103,9 +300,7 @@ document.addEventListener('DOMContentLoaded', function () {
         window.MathJax.typesetPromise();
     }
 
-    const stepTabs = document.querySelector('[data-step-content-tabs]');
-
-    if (document.querySelector('[data-step-details-page]')) {
+    if (stepDetailsPage) {
         document.querySelectorAll('blockquote').forEach(function (el) {
             el.classList.add('alert', 'alert-info', 'callout-border-info');
         });
@@ -123,12 +318,32 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (stepTabs) {
-        var firstTabPane = document.querySelector('.tab-pane');
-        if (firstTabPane) firstTabPane.classList.add('active', 'show');
+        var stepHash = window.location.hash;
+        var stepHashTab = getTabTriggerForHash(stepHash);
 
-        if (stepTabs.dataset.zeroTheory === 'true') {
-            var firstPill = document.querySelector('.task-pill');
-            if (firstPill) firstPill.classList.add('active');
+        if (stepHashTab) {
+            new bootstrap.Tab(stepHashTab).show();
+
+            window.requestAnimationFrame(function () {
+                window.scrollTo({ top: 0, behavior: 'auto' });
+                syncTabContentHeight(document.querySelector('.step-content'));
+                syncStepReadingToc();
+                updateStepReadingState();
+            });
+        } else {
+            var activeStepPane = document.querySelector('.step-content .tab-pane.active');
+            if (!activeStepPane) {
+                var firstTabPane = document.querySelector('.step-content .tab-pane');
+                if (firstTabPane) firstTabPane.classList.add('active', 'show');
+            }
+
+            if (stepTabs.dataset.zeroTheory === 'true') {
+                var activePill = document.querySelector('.step-top-tabs .nav-link.active');
+                var firstPill = document.querySelector('.task-pill');
+                if (!activePill && firstPill) firstPill.classList.add('active');
+            }
+
+            syncTabContentHeight(document.querySelector('.step-content'));
         }
 
         document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function (el) {
@@ -160,6 +375,243 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-progress-width]').forEach(function (progressBar) {
         var width = parseFloat(progressBar.dataset.progressWidth);
         if (!Number.isNaN(width)) progressBar.style.width = Math.max(0, Math.min(100, width)) + '%';
+    });
+
+    document.querySelectorAll('[data-progress-height]').forEach(function (progressElement) {
+        var target = progressElement.classList.contains('progress') ? progressElement : progressElement.closest('.progress');
+        if (target) target.style.height = progressElement.dataset.progressHeight;
+    });
+
+    document.querySelectorAll('select[data-selected-count]').forEach(function (select) {
+        var target = document.querySelector(select.dataset.selectedCount);
+        if (!target) return;
+
+        var updateSelectedCount = function () {
+            var selectedCount = Array.from(select.selectedOptions || []).length;
+            target.textContent = selectedCount + ' выбрано';
+            target.classList.toggle('is-empty', selectedCount === 0);
+        };
+
+        select.addEventListener('change', updateSelectedCount);
+        updateSelectedCount();
+    });
+
+    document.querySelectorAll('[data-report-student-search]').forEach(function (input) {
+        var list = document.querySelector(input.dataset.reportStudentList);
+        if (!list) return;
+        var wrapper = input.closest('.report-students-card') || input.closest('.p-2');
+        var counter = wrapper ? wrapper.querySelector('[data-report-student-count]') : null;
+        var clearButton = wrapper ? wrapper.querySelector('[data-report-student-clear]') : null;
+
+        var emptyState = document.createElement('div');
+        emptyState.className = 'text-muted small px-2 py-3 text-center d-none';
+        emptyState.textContent = 'Ничего не найдено';
+        list.after(emptyState);
+
+        var applyStudentFilter = function () {
+            var query = input.value.trim().toLowerCase();
+            var links = Array.from(list.querySelectorAll('[data-report-student-name]'));
+            var firstVisible = null;
+            var visibleCount = 0;
+
+            links.forEach(function (link) {
+                var haystack = (link.dataset.reportStudentName || link.textContent || '').toLowerCase();
+                var isVisible = !query || haystack.indexOf(query) !== -1;
+                link.classList.toggle('d-none', !isVisible);
+                if (isVisible) {
+                    visibleCount += 1;
+                    if (!firstVisible) firstVisible = link;
+                }
+            });
+
+            emptyState.classList.toggle('d-none', Boolean(firstVisible));
+            if (counter) counter.textContent = visibleCount + ' из ' + links.length;
+            if (clearButton) clearButton.classList.toggle('d-none', !query);
+
+            if (firstVisible && !list.querySelector('.nav-link.active:not(.d-none)')) {
+                new bootstrap.Tab(firstVisible).show();
+            }
+        };
+
+        input.addEventListener('input', applyStudentFilter);
+
+        if (clearButton) {
+            clearButton.addEventListener('click', function () {
+                input.value = '';
+                input.focus();
+                applyStudentFilter();
+            });
+        }
+    });
+
+    document.querySelectorAll('[data-assessment-student-search]').forEach(function (input) {
+        var table = document.querySelector(input.dataset.assessmentTable);
+        if (!table) return;
+
+        var wrapper = input.closest('.assessment-toolbar') || input.closest('.input-group');
+        var rows = Array.from(table.querySelectorAll('[data-assessment-row]'));
+        var counter = wrapper ? wrapper.querySelector('[data-assessment-student-count]') : null;
+        var clearButton = wrapper ? wrapper.querySelector('[data-assessment-student-clear]') : null;
+        var tbody = table.querySelector('tbody');
+        var emptyRow = document.createElement('tr');
+        var firstRow = rows[0];
+        var columnCount = firstRow ? firstRow.children.length : 1;
+
+        emptyRow.className = 'assessment-empty-row d-none';
+        emptyRow.innerHTML = '<td colspan="' + columnCount + '" class="text-center text-muted py-4">Ничего не найдено</td>';
+        if (tbody) tbody.appendChild(emptyRow);
+
+        var applyAssessmentFilter = function () {
+            var query = input.value.trim().toLowerCase();
+            var visibleCount = 0;
+
+            rows.forEach(function (row) {
+                var haystack = (row.dataset.assessmentStudentName || row.textContent || '').toLowerCase();
+                var isVisible = !query || haystack.indexOf(query) !== -1;
+                row.classList.toggle('d-none', !isVisible);
+                if (isVisible) visibleCount += 1;
+            });
+
+            emptyRow.classList.toggle('d-none', visibleCount !== 0);
+            if (counter) counter.textContent = visibleCount + ' из ' + rows.length;
+            if (clearButton) clearButton.classList.toggle('d-none', !query);
+        };
+
+        input.addEventListener('input', applyAssessmentFilter);
+
+        if (clearButton) {
+            clearButton.addEventListener('click', function () {
+                input.value = '';
+                input.focus();
+                applyAssessmentFilter();
+            });
+        }
+    });
+
+    document.querySelectorAll('[data-blocked-search]').forEach(function (input) {
+        var table = document.querySelector(input.dataset.blockedTable);
+        if (!table) return;
+
+        var wrapper = input.closest('.blocked-toolbar') || input.closest('.input-group');
+        var rows = Array.from(table.querySelectorAll('[data-blocked-row]'));
+        var counter = wrapper ? wrapper.querySelector('[data-blocked-count]') : null;
+        var clearButton = wrapper ? wrapper.querySelector('[data-blocked-clear]') : null;
+        var tbody = table.querySelector('tbody');
+        var emptyRow = document.createElement('tr');
+        var firstRow = rows[0];
+        var columnCount = firstRow ? firstRow.children.length : 1;
+
+        emptyRow.className = 'blocked-empty-row d-none';
+        emptyRow.innerHTML = '<td colspan="' + columnCount + '" class="text-center text-muted py-4">Ничего не найдено</td>';
+        if (tbody) tbody.appendChild(emptyRow);
+
+        var applyBlockedFilter = function () {
+            var query = input.value.trim().toLowerCase();
+            var visibleCount = 0;
+
+            rows.forEach(function (row) {
+                var haystack = (row.dataset.blockedSearchText || row.textContent || '').toLowerCase();
+                var isVisible = !query || haystack.indexOf(query) !== -1;
+                row.classList.toggle('d-none', !isVisible);
+                if (isVisible) visibleCount += 1;
+            });
+
+            emptyRow.classList.toggle('d-none', visibleCount !== 0);
+            if (counter) counter.textContent = visibleCount + ' из ' + rows.length;
+            if (clearButton) clearButton.classList.toggle('d-none', !query);
+        };
+
+        input.addEventListener('input', applyBlockedFilter);
+
+        if (clearButton) {
+            clearButton.addEventListener('click', function () {
+                input.value = '';
+                input.focus();
+                applyBlockedFilter();
+            });
+        }
+    });
+
+    document.querySelectorAll('[data-market-search]').forEach(function (input) {
+        var grid = document.querySelector(input.dataset.marketGrid);
+        if (!grid) return;
+
+        var wrapper = input.closest('.market-goods-toolbar') || input.closest('.input-group');
+        var goods = Array.from(grid.querySelectorAll('[data-market-good]'));
+        var counter = wrapper ? wrapper.querySelector('[data-market-count]') : null;
+        var clearButton = wrapper ? wrapper.querySelector('[data-market-clear]') : null;
+        var emptyState = document.createElement('div');
+
+        emptyState.className = 'gc-card market-search-empty text-center text-muted p-4 d-none';
+        emptyState.innerHTML = '<div class="bg-body-tertiary text-muted rounded-circle d-inline-flex align-items-center justify-content-center fs-4 p-3 mb-3"><i class="fas fa-search"></i></div><h5>Ничего не найдено</h5><p class="mx-auto mb-0">Попробуйте изменить запрос.</p>';
+        grid.after(emptyState);
+
+        var applyMarketFilter = function () {
+            var query = input.value.trim().toLowerCase();
+            var visibleCount = 0;
+
+            goods.forEach(function (good) {
+                var haystack = (good.dataset.marketGoodText || good.textContent || '').toLowerCase();
+                var isVisible = !query || haystack.indexOf(query) !== -1;
+                good.classList.toggle('d-none', !isVisible);
+                if (isVisible) visibleCount += 1;
+            });
+
+            emptyState.classList.toggle('d-none', visibleCount !== 0);
+            if (counter) counter.textContent = visibleCount + ' из ' + goods.length;
+            if (clearButton) clearButton.classList.toggle('d-none', !query);
+        };
+
+        input.addEventListener('input', applyMarketFilter);
+
+        if (clearButton) {
+            clearButton.addEventListener('click', function () {
+                input.value = '';
+                input.focus();
+                applyMarketFilter();
+            });
+        }
+    });
+
+    document.querySelectorAll('[data-community-search]').forEach(function (input) {
+        var grid = document.querySelector(input.dataset.communityGrid);
+        if (!grid) return;
+
+        var wrapper = input.closest('.community-toolbar') || input.closest('.input-group');
+        var users = Array.from(grid.querySelectorAll('[data-community-user]'));
+        var counter = wrapper ? wrapper.querySelector('[data-community-count]') : null;
+        var clearButton = wrapper ? wrapper.querySelector('[data-community-clear]') : null;
+        var emptyState = document.createElement('div');
+
+        emptyState.className = 'gc-card community-search-empty text-center text-muted p-4 d-none';
+        emptyState.innerHTML = '<div class="bg-body-tertiary text-muted rounded-circle d-inline-flex align-items-center justify-content-center fs-4 p-3 mb-3"><i class="fas fa-users"></i></div><h5>Ничего не найдено</h5><p class="mx-auto mb-0">Попробуйте изменить запрос.</p>';
+        grid.after(emptyState);
+
+        var applyCommunityFilter = function () {
+            var query = input.value.trim().toLowerCase();
+            var visibleCount = 0;
+
+            users.forEach(function (user) {
+                var haystack = (user.dataset.communityUserText || user.textContent || '').toLowerCase();
+                var isVisible = !query || haystack.indexOf(query) !== -1;
+                user.classList.toggle('d-none', !isVisible);
+                if (isVisible) visibleCount += 1;
+            });
+
+            emptyState.classList.toggle('d-none', visibleCount !== 0);
+            if (counter) counter.textContent = visibleCount + ' из ' + users.length;
+            if (clearButton) clearButton.classList.toggle('d-none', !query);
+        };
+
+        input.addEventListener('input', applyCommunityFilter);
+
+        if (clearButton) {
+            clearButton.addEventListener('click', function () {
+                input.value = '';
+                input.focus();
+                applyCommunityFilter();
+            });
+        }
     });
 
     document.querySelectorAll('[data-background-image]').forEach(function (element) {
@@ -317,19 +769,29 @@ document.addEventListener('DOMContentLoaded', function () {
             var data = [{
                 x: JSON.parse(element.dataset.pulseKeys),
                 y: JSON.parse(element.dataset.pulseValues),
-                type: 'scatter', line: { shape: 'spline' }
+                type: 'scatter',
+                line: { color: '#2563eb', shape: 'spline', width: 2 },
+                marker: { color: '#2563eb', size: 4 }
             }];
             if (element.dataset.taskKeys && element.dataset.taskValues) {
                 data.push({
                     x: JSON.parse(element.dataset.taskKeys),
                     y: JSON.parse(element.dataset.taskValues),
-                    type: 'scatter', yaxis: 'y2', line: { shape: 'spline' }, fill: 'tonexty'
+                    type: 'scatter',
+                    yaxis: 'y2',
+                    line: { color: '#16a34a', shape: 'spline', width: 1.5 },
+                    fill: 'tonexty',
+                    fillcolor: 'rgba(22, 163, 74, 0.08)',
+                    marker: { color: '#16a34a', size: 4 }
                 });
             }
             window.Plotly.newPlot(element, data, {
-                xaxis: { zeroline: false, showline: false },
-                yaxis: { zeroline: false, showline: false },
-                yaxis2: { side: 'right', zeroline: false, showline: false, overlaying: 'y' },
+                font: { color: '#64748b' },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                xaxis: { gridcolor: 'rgba(100, 116, 139, 0.12)', zeroline: false, showline: false },
+                yaxis: { gridcolor: 'rgba(100, 116, 139, 0.12)', zeroline: false, showline: false },
+                yaxis2: { side: 'right', gridcolor: 'rgba(100, 116, 139, 0.08)', zeroline: false, showline: false, overlaying: 'y' },
                 margin: { l: 15, r: 20, b: 30, t: 3, pad: 0 },
                 showlegend: false
             }, { staticPlot: false, displayModeBar: false, responsive: false });
@@ -351,8 +813,20 @@ document.addEventListener('DOMContentLoaded', function () {
         var text = form.querySelector('[name=text]').value;
         window.axios.post(form.action, 'text=' + encodeURI(text))
             .then(function (response) {
-                document.getElementById('TSK_' + taskId).textContent = 'Очков опыта: ' + response.data.mark;
-                document.getElementById('TSK_COM_' + taskId).textContent = response.data.comment;
+                var taskScore = document.getElementById('TSK_' + taskId);
+                var taskComment = document.getElementById('TSK_COM_' + taskId);
+                var taskStatusRow = taskScore ? taskScore.closest('[data-task-status-row]') : null;
+                if (taskStatusRow) taskStatusRow.classList.remove('d-none');
+                if (taskScore) {
+                    taskScore.textContent = response.data.mark + ' XP';
+                    if (response.data.score_badge_class) {
+                        taskScore.classList.remove('bg-body', 'bg-body-tertiary', 'solution-score-badge--special');
+                        response.data.score_badge_class.split(' ').forEach(function (className) {
+                            if (className) taskScore.classList.add(className);
+                        });
+                    }
+                }
+                if (taskComment) taskComment.textContent = response.data.comment || '';
             });
     });
 });

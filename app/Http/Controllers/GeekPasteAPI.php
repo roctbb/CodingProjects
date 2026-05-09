@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\CoinTransaction;
 use App\Course;
+use App\CourseActivity;
 use App\CourseStudentPoints;
 use App\LessonStudentStats;
 use App\Solution;
@@ -11,7 +12,6 @@ use App\Task;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Notification;
 use Firebase\JWT\Key;
 
 class GeekPasteAPI extends Controller
@@ -32,6 +32,7 @@ class GeekPasteAPI extends Controller
             $task = Task::findOrFail($task_id);
             $user = User::findOrFail($user_id);
             $course = Course::findOrFail($course_id);
+            $old_rank = $user->rank();
 
             // Reject if task is blocked for this user in this course
             if ($task->isBlocked($user->id, $course->id)) {
@@ -49,6 +50,8 @@ class GeekPasteAPI extends Controller
                 ->first();
 
             // If solution exists, update it; otherwise create new one
+            $isNewSolution = !$solution;
+
             if (!$solution) {
                 $solution = new Solution();
                 $solution->task_id = $task->id;
@@ -59,30 +62,28 @@ class GeekPasteAPI extends Controller
                 $solution->teacher_id = $course->teachers->first()->id;
             }
 
-            $solution->mark = min($points, $task->max_mark);
-            $solution->comment = $comments;
+            $solution->applyDeadlinePenalty(min($points, $task->max_mark), $task->getDeadline($course->id));
+            $solution->comment = $solution->hasActiveDeadlinePenalty()
+                ? trim("Сдано с опозданием. Штраф: -{$solution->deadline_penalty_amount} XP.\n\n" . $comments)
+                : $comments;
             $solution->checked = Carbon::now();
 
 
-            if ($solution->task->price > 0 and $solution->mark == $solution->task->max_mark and !$solution->task->isFullDone($solution->user_id)) {
+            if ($solution->task->price > 0 && $solution->qualifiesForTaskPriceReward() && !$solution->task->hasRewardableFullSolution($solution->user_id)) {
                 CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
             }
             $solution->save();
+            if ($isNewSolution) {
+                CourseActivity::recordSolutionSubmitted($solution);
+            }
+            CourseActivity::recordSolutionChecked($solution);
 
             // Recalculate cached points after auto-grading code
             CourseStudentPoints::recalculate($course->id, $solution->user_id);
             LessonStudentStats::recalculateForStudent($course->id, $solution->user_id);
 
-            $old_rank = $solution->user->rank();
-
-            $solution->user->rescore();
-            $new_rank = $solution->user->rank();
-
-            $when = \Carbon\Carbon::now()->addSeconds(1);
-            if ($new_rank != $old_rank) {
-                $when = \Carbon\Carbon::now()->addSeconds(1);
-                Notification::send($solution->user, (new \App\Notifications\NewRank())->delay($when));
-            }
+            $user->rescore();
+            $user->awardRankPromotionIfNeeded($old_rank);
 
             return response()->json(['state' => 'ok']);
         } catch (\Exception $e) {

@@ -44,7 +44,14 @@ class BirthdaySender extends Command
 
         foreach ($students as $student) {
             $age = $data->year - $student->birthday->year;
-            \App\CoinTransaction::register($student->id, $age, "ДР ".$data->year);
+            \App\CoinTransaction::registerOnce(
+                $student->id,
+                $age,
+                "ДР ".$data->year,
+                '🎂 С днем рождения! Вам начислено ' . $age . ' GC.',
+                'success',
+                'fas fa-birthday-cake'
+            );
         }
     }
 }
