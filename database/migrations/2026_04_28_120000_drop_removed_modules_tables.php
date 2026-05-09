@@ -78,12 +78,14 @@ class DropRemovedModulesTables extends Migration
             return;
         }
 
-        try {
-            Schema::table($table, function (Blueprint $table) use ($column) {
-                $table->dropForeign([$column]);
-            });
-        } catch (\Throwable $e) {
-            // Some legacy columns were created without Laravel's conventional FK name.
+        if (Schema::getConnection()->getDriverName() !== 'pgsql') {
+            try {
+                Schema::table($table, function (Blueprint $table) use ($column) {
+                    $table->dropForeign([$column]);
+                });
+            } catch (\Throwable $e) {
+                // Some legacy columns were created without Laravel's conventional FK name.
+            }
         }
 
         Schema::table($table, function (Blueprint $table) use ($column) {
