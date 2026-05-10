@@ -193,6 +193,7 @@ class CourseActivity extends Model
                 'achievement_description' => $achievement->description,
                 'icon_key' => $achievement->icon_key,
                 'visual_key' => $achievement->payload['visual_key'] ?? null,
+                'svg_icon' => $achievement->payload['svg_icon'] ?? null,
             ],
         ]);
     }
@@ -454,6 +455,18 @@ class CourseActivity extends Model
             default:
                 return 'fas fa-magic';
         }
+    }
+
+    public function svgIcon(): ?string
+    {
+        $payload = $this->payload ?: [];
+
+        if ($this->type !== static::TYPE_AI_ACHIEVEMENT_EARNED) {
+            return null;
+        }
+
+        return Achievement::sanitizeSvgIcon($payload['svg_icon'] ?? null)
+            ?: Achievement::svgForVisualKey($payload['visual_key'] ?? null);
     }
 
     public function toneClass()

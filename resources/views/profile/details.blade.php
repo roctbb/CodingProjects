@@ -314,7 +314,7 @@
                                     || ($achievement->course && $achievement->course->teachers->contains('id', $guest->id));
                                 $canDeleteAchievement = $guest->role == 'admin';
                                 $achievementVisualKey = $achievement->visualKey();
-                                $achievementVisualSvg = \App\Achievement::svgForVisualKey($achievementVisualKey);
+                                $achievementVisualSvg = $achievement->displaySvg();
                             @endphp
                             <article class="profile-achievement" id="achievement-{{ $achievement->id }}">
                                 @if($canEditAchievement || $canDeleteAchievement)
@@ -426,6 +426,12 @@
                                                             @endforeach
                                                         </select>
                                                     </div>
+                                                    @if($achievement->svgIcon())
+                                                        <label class="form-check d-flex align-items-start gap-2 mt-3 mb-0">
+                                                            <input type="checkbox" class="form-check-input mt-1" name="clear_svg_icon" value="1">
+                                                            <span class="form-check-label">Заменить уникальную SVG выбранным символом</span>
+                                                        </label>
+                                                    @endif
                                                 </div>
                                                 <div class="modal-footer gc-form-footer">
                                                     <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Отмена</button>

@@ -167,6 +167,7 @@ class ProfileController extends Controller
             'description' => 'required|string|max:1000',
             'icon_key' => 'required|string|in:' . $iconKeys,
             'visual_key' => 'nullable|string|in:' . implode(',', array_keys(Achievement::visualOptions())),
+            'clear_svg_icon' => 'nullable|boolean',
         ]);
 
         $achievement->title = trim(strip_tags((string) $request->title));
@@ -174,6 +175,9 @@ class ProfileController extends Controller
         $achievement->icon_key = $request->icon_key;
         $payload = $achievement->payload ?: [];
         $payload['visual_key'] = $request->visual_key ?: null;
+        if ($request->has('clear_svg_icon')) {
+            unset($payload['svg_icon']);
+        }
         $achievement->payload = $payload;
         $achievement->save();
 
@@ -188,6 +192,7 @@ class ProfileController extends Controller
                 $payload['achievement_description'] = $achievement->description;
                 $payload['icon_key'] = $achievement->icon_key;
                 $payload['visual_key'] = $achievement->payload['visual_key'] ?? null;
+                $payload['svg_icon'] = $achievement->payload['svg_icon'] ?? null;
                 $activity->payload = $payload;
                 $activity->save();
             });

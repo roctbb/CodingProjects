@@ -2225,7 +2225,8 @@ body {
 .solution-achievement-preview__icon svg,
 .solution-achievement-variant__icon svg,
 .profile-achievement__icon svg,
-.gc-icon-tile svg {
+.gc-icon-tile svg,
+.pulse-feed__icon svg {
   display: block;
   height: 1.35rem;
   width: 1.35rem;
@@ -2297,7 +2298,7 @@ body {
   align-items: end;
   display: grid;
   gap: 0.42rem;
-  grid-template-columns: auto minmax(7rem, 1fr) auto minmax(8rem, 1fr);
+  grid-template-columns: auto minmax(7rem, 1fr) auto minmax(8rem, 1fr) auto minmax(5rem, 6rem);
 }
 
 .solution-achievement-variant__actions {
@@ -7038,21 +7039,27 @@ a:hover {
 }
 
 .gc-multiselect {
+  display: block;
   position: relative;
+  width: 100%;
 }
 
 .gc-multiselect__toggle {
   align-items: center;
   background: var(--gc-surface);
   border-color: var(--gc-border);
-  border-radius: 0.72rem;
+  border-radius: 0.65rem;
   color: var(--gc-on-surface);
   display: flex;
   font-weight: 650;
   justify-content: space-between;
-  min-height: 2.65rem;
-  padding: 0.55rem 0.8rem;
+  min-height: 2.55rem;
+  padding: 0.52rem 0.78rem;
   text-align: left;
+}
+
+.gc-multiselect__toggle::after {
+  margin-left: 0.65rem;
 }
 
 .gc-multiselect__toggle:hover,
@@ -7069,14 +7076,21 @@ a:hover {
 }
 
 .gc-multiselect__label {
+  display: block;
   min-width: 0;
-  padding-right: 0.75rem;
+}
+
+.gc-multiselect .filter-option,
+.gc-multiselect .filter-option-inner,
+.gc-multiselect .filter-option-inner-inner {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .gc-multiselect__menu {
   background: var(--gc-surface);
   border: 1px solid var(--gc-border);
-  border-radius: 0.82rem;
+  border-radius: 0.65rem;
   box-shadow: var(--gc-shadow-md);
   color: var(--gc-on-surface);
   max-height: min(24rem, 52vh);
@@ -7088,8 +7102,9 @@ a:hover {
 .gc-multiselect__search {
   background: var(--gc-surface-variant);
   border-color: var(--gc-border);
-  border-radius: 0.65rem;
+  border-radius: 0.55rem;
   color: var(--gc-on-surface);
+  min-height: 2.15rem;
 }
 
 .gc-multiselect__actions {
@@ -7116,11 +7131,12 @@ a:hover {
 
 .gc-multiselect__option {
   align-items: center;
-  border-radius: 0.55rem;
+  border-radius: 0.45rem;
   color: var(--gc-on-surface);
   cursor: pointer;
-  display: flex;
+  display: grid;
   gap: 0.6rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   min-height: 2.2rem;
   padding: 0.42rem 0.55rem;
 }
@@ -7131,6 +7147,13 @@ a:hover {
   color: var(--gc-on-surface);
 }
 
+.gc-multiselect__option.active,
+.gc-multiselect__option.selected {
+  background: color-mix(in srgb, var(--gc-primary) 10%, var(--gc-surface));
+  color: var(--gc-on-surface);
+  font-weight: 700;
+}
+
 .gc-multiselect__option .form-check-input {
   flex: 0 0 auto;
   margin: 0;
@@ -7138,6 +7161,17 @@ a:hover {
 
 .gc-multiselect__option-text {
   min-width: 0;
+}
+
+.gc-multiselect__check {
+  color: var(--gc-primary);
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0;
+}
+
+.gc-multiselect__option.selected .gc-multiselect__check {
+  opacity: 1;
 }
 
 [data-bs-theme="dark"] .gc-multiselect__toggle,

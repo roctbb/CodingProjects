@@ -10,7 +10,7 @@
 
 @section('content')
     @php
-        $pendingSolutionsCount = $solutions->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped)->count();
+        $pendingSolutionsCount = $solutions->filter(fn ($solution) => $solution->isPendingReview())->count();
         $checkedSolutionsCount = $solutions->count() - $pendingSolutionsCount;
         $isBlocked = ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin') && $task->isBlocked($student->id, $course->id);
     @endphp
@@ -108,7 +108,7 @@
             @php
                 $solutionScoreBadgeClass = $solution->scoreBadgeClass();
                 $solutionChecked = $solution->mark !== null;
-                $solutionPendingReview = $solution->submitted && $solution->mark === null && !$solution->review_skipped;
+                $solutionPendingReview = $solution->isPendingReview();
                 $solutionGradeFormId = ($solutionChecked ? 'solution-recheck-form-' : 'solution-grade-form-') . $solution->id;
             @endphp
             <div class="gc-card solution-review-card mb-3 @if($solutionPendingReview) is-pending @else is-checked @endif" id="solution-{{ $solution->id }}">

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Achievement;
+use App\CoinTransaction;
 use App\CourseActivity;
 use App\Solution;
 use Carbon\Carbon;
@@ -84,9 +85,11 @@ class SolutionAchievementGenerator
         if (!is_string($visualKey) || $visualKey === '' || !array_key_exists($visualKey, Achievement::visualOptions())) {
             $visualKey = null;
         }
+        $svgIcon = Achievement::sanitizeSvgIcon($result['svg_icon'] ?? null);
 
         $title = Str::limit(trim(strip_tags((string) ($result['title'] ?? 'Сильное решение'))), 120, '');
         $description = Str::limit(trim(strip_tags((string) ($result['description'] ?? 'Решение заслужило отдельную отметку.'))), 1000, '');
+        $coinReward = $manual ? max(0, (int) ($result['coin_reward'] ?? 0)) : 0;
 
         try {
             $achievement = Achievement::create([
@@ -102,9 +105,11 @@ class SolutionAchievementGenerator
                 'payload' => [
                     'tone' => $result['tone'] ?? null,
                     'visual_key' => $visualKey,
+                    'svg_icon' => $svgIcon,
                     'solution_source' => $result['solution_source'] ?? null,
                     'language' => $result['language'] ?? null,
                     'model' => $result['model'] ?? $this->achievementModel(),
+                    'coin_reward' => $coinReward,
                     'prompt_version' => 2,
                     'manual' => $manual,
                 ],
@@ -122,8 +127,25 @@ class SolutionAchievementGenerator
         }
 
         CourseActivity::recordAchievementEarned($achievement);
+        $this->awardManualAchievementCoins($achievement, $coinReward);
 
         return $achievement;
+    }
+
+    protected function awardManualAchievementCoins(Achievement $achievement, int $coinReward): void
+    {
+        if ($coinReward <= 0 || !($achievement->payload['manual'] ?? false)) {
+            return;
+        }
+
+        CoinTransaction::registerOnce(
+            $achievement->user_id,
+            $coinReward,
+            'Achievement Task #' . $achievement->task_id . ' User #' . $achievement->user_id,
+            '🏅 За достижение «' . $achievement->title . '» начислено ' . $coinReward . ' GC.',
+            'success',
+            'fas fa-award'
+        );
     }
 
     protected function buildContext(Solution $solution): ?array
@@ -315,7 +337,9 @@ class SolutionAchievementGenerator
             . 'Запрещенные начала description: "Отмечаю", "Оригинальная", "Язык задаёт", "Решение демонстрирует", "Авторская идея". '
             . 'Хвали только наблюдаемое качество решения, не личность ученика. Не сравнивай с другими учениками. '
             . 'Не раскрывай полный код и приватные детали. Не выдумывай факты, которых нет в решении. '
-            . 'Верни только JSON без markdown: {"variants":[{"title":"...","description":"...","icon_key":"...","visual_key":"...","tone":"funny|metaphor|technical"}]}. '
+            . 'Для каждого варианта нарисуй простую уникальную SVG-иконку в поле svg_icon: ровно один тег <svg viewBox="0 0 48 48">...</svg>, монохромно через currentColor, без style/class/id/text/image/foreignObject/filter/mask/defs/animate. '
+            . 'Используй только svg, g, path, circle, rect, line, polyline, polygon, ellipse и безопасные геометрические атрибуты. Иконка должна визуально поддерживать название достижения. '
+            . 'Верни только JSON без markdown: {"variants":[{"title":"...","description":"...","icon_key":"...","visual_key":"...","svg_icon":"<svg viewBox=\"0 0 48 48\">...</svg>","tone":"funny|metaphor|technical"}]}. '
             . 'title до 45 символов, description 1 короткое предложение до 220 символов, icon_key только один из списка: ' . $iconKeys . '. '
             . 'visual_key выбери один из списка, если подходит: ' . $visualKeys . '; если ни один не подходит, верни пустую строку.';
 
@@ -411,6 +435,7 @@ class SolutionAchievementGenerator
             'description' => Str::limit($description !== '' ? $description : 'Решение набрало максимум и заслужило отдельную отметку.', 240, ''),
             'icon_key' => $iconKey,
             'visual_key' => $visualKey,
+            'svg_icon' => Achievement::sanitizeSvgIcon($data['svg_icon'] ?? null),
             'tone' => Str::limit(trim(strip_tags((string) ($data['tone'] ?? 'technical'))), 40, ''),
         ];
     }

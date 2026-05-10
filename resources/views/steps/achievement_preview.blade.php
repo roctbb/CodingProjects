@@ -76,7 +76,8 @@
                     @php
                         $variantIconKey = $variant['icon_key'] ?? 'sparkles';
                         $variantVisualKey = $variant['visual_key'] ?? '';
-                        $variantSvg = \App\Achievement::svgForVisualKey($variantVisualKey);
+                        $variantSvgIcon = \App\Achievement::sanitizeSvgIcon($variant['svg_icon'] ?? null);
+                        $variantSvg = $variantSvgIcon ?: \App\Achievement::svgForVisualKey($variantVisualKey);
                     @endphp
                     <form method="post"
                           action="{{ url('insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/achievement') }}"
@@ -121,11 +122,22 @@
                                         <option value="{{ $visualKey }}" @if(old('visual_key', $variantVisualKey) === $visualKey) selected @endif>{{ $visualLabel }}</option>
                                     @endforeach
                                 </select>
+                                <label class="form-label" for="achievement-coins-{{ $solution->id }}-{{ $variantIndex }}">GC</label>
+                                <input id="achievement-coins-{{ $solution->id }}-{{ $variantIndex }}"
+                                       type="number"
+                                       name="coin_reward"
+                                       class="form-control rounded-3"
+                                       min="0"
+                                       max="1000"
+                                       value="{{ old('coin_reward', 15) }}">
                             </div>
                             <input type="hidden" name="tone" value="{{ $variant['tone'] ?? '' }}">
                             <input type="hidden" name="solution_source" value="{{ $variant['solution_source'] ?? '' }}">
                             <input type="hidden" name="language" value="{{ $variant['language'] ?? '' }}">
                             <input type="hidden" name="model" value="{{ $variant['model'] ?? '' }}">
+                            @if($variantSvgIcon)
+                                <input type="hidden" name="svg_icon" value="{{ $variantSvgIcon }}">
+                            @endif
                         </div>
                         <div class="solution-achievement-variant__actions">
                             <button type="submit" class="btn btn-success btn-sm rounded-3 fw-semibold">Выдать</button>

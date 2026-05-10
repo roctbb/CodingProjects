@@ -61,6 +61,10 @@ class CoinTransaction extends Authenticatable
             return 'XP-бустер решения #' . $matches[1];
         }
 
+        if (preg_match('/^Achievement Task #(\d+) User #(\d+)$/', $comment, $matches)) {
+            return 'Награда за достижение по задаче #' . $matches[1];
+        }
+
         if (preg_match('/^GeekPaste extra attempt Task #(\d+)$/', $comment, $matches)) {
             return 'Дополнительная попытка GeekPaste для задачи #' . $matches[1];
         }

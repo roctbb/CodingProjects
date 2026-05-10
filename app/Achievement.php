@@ -83,6 +83,111 @@ class Achievement extends Model
         }
     }
 
+    public static function sanitizeSvgIcon(?string $svg): ?string
+    {
+        $svg = trim((string) $svg);
+        if ($svg === '' || strlen($svg) > 6000 || !class_exists('\DOMDocument')) {
+            return null;
+        }
+
+        $previous = libxml_use_internal_errors(true);
+        $document = new \DOMDocument('1.0', 'UTF-8');
+        $loaded = $document->loadXML($svg, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        if (!$loaded || !$document->documentElement || strtolower($document->documentElement->tagName) !== 'svg') {
+            return null;
+        }
+
+        $allowedTags = ['svg', 'g', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'ellipse'];
+        $allowedAttributes = [
+            'svg' => ['viewBox', 'role', 'aria-hidden', 'focusable'],
+            '*' => ['d', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray', 'opacity', 'cx', 'cy', 'r', 'x', 'y', 'width', 'height', 'rx', 'ry', 'x1', 'y1', 'x2', 'y2', 'points', 'transform'],
+        ];
+
+        $clean = new \DOMDocument('1.0', 'UTF-8');
+        $cleanSvg = static::sanitizeSvgNode($document->documentElement, $clean, $allowedTags, $allowedAttributes);
+        if (!$cleanSvg) {
+            return null;
+        }
+
+        if (!$cleanSvg->hasAttribute('viewBox')) {
+            $cleanSvg->setAttribute('viewBox', '0 0 48 48');
+        }
+        $cleanSvg->setAttribute('role', 'img');
+        $cleanSvg->setAttribute('aria-hidden', 'true');
+        $cleanSvg->setAttribute('focusable', 'false');
+        $clean->appendChild($cleanSvg);
+
+        $result = trim($clean->saveXML($clean->documentElement));
+
+        return $result !== '' && strlen($result) <= 6000 ? $result : null;
+    }
+
+    protected static function sanitizeSvgNode(\DOMElement $node, \DOMDocument $clean, array $allowedTags, array $allowedAttributes): ?\DOMElement
+    {
+        $tag = strtolower($node->tagName);
+        if (!in_array($tag, $allowedTags, true)) {
+            return null;
+        }
+
+        $cleanNode = $clean->createElement($tag);
+        $attributes = array_merge($allowedAttributes['*'] ?? [], $allowedAttributes[$tag] ?? []);
+        foreach ($node->attributes ?? [] as $attribute) {
+            $name = $attribute->nodeName;
+            $value = trim((string) $attribute->nodeValue);
+
+            if (!in_array($name, $attributes, true) || !static::isSafeSvgAttributeValue($name, $value)) {
+                continue;
+            }
+
+            $cleanNode->setAttribute($name, $value);
+        }
+
+        foreach ($node->childNodes as $child) {
+            if ($child instanceof \DOMElement) {
+                $cleanChild = static::sanitizeSvgNode($child, $clean, $allowedTags, $allowedAttributes);
+                if ($cleanChild) {
+                    $cleanNode->appendChild($cleanChild);
+                }
+            }
+        }
+
+        return $cleanNode;
+    }
+
+    protected static function isSafeSvgAttributeValue(string $name, string $value): bool
+    {
+        if ($value === '' || strlen($value) > 1200 || preg_match('/(?:javascript|data:|url\s*\(|<|>|&|on[a-z]+\s*=)/i', $value)) {
+            return false;
+        }
+
+        if (in_array($name, ['fill', 'stroke'], true)) {
+            return preg_match('/^(none|currentColor|transparent|#[0-9a-fA-F]{3,8}|var\(--[a-z0-9_-]+(?:,\s*#[0-9a-fA-F]{3,8})?\))$/', $value) === 1;
+        }
+
+        if ($name === 'viewBox') {
+            return preg_match('/^-?\d+(?:\.\d+)?\s+-?\d+(?:\.\d+)?\s+\d+(?:\.\d+)?\s+\d+(?:\.\d+)?$/', $value) === 1;
+        }
+
+        if (in_array($name, ['role', 'aria-hidden', 'focusable', 'stroke-linecap', 'stroke-linejoin'], true)) {
+            return preg_match('/^[a-zA-Z-]+$/', $value) === 1;
+        }
+
+        return preg_match('/^[0-9a-zA-Z\s,._#%()+\-]*$/', $value) === 1;
+    }
+
+    public function svgIcon(): ?string
+    {
+        return static::sanitizeSvgIcon($this->payload['svg_icon'] ?? null);
+    }
+
+    public function displaySvg(): ?string
+    {
+        return $this->svgIcon() ?: static::svgForVisualKey($this->visualKey());
+    }
+
     public function visualKey()
     {
         $visualKey = $this->payload['visual_key'] ?? null;

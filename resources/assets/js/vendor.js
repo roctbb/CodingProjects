@@ -460,18 +460,26 @@ document.addEventListener('DOMContentLoaded', function () {
         select.dataset.enhancedMultiselectReady = '1';
 
         var wrapper = document.createElement('div');
-        wrapper.className = 'gc-multiselect dropdown';
+        wrapper.className = 'gc-multiselect bootstrap-select show-tick dropdown';
 
         var button = document.createElement('button');
         button.type = 'button';
-        button.className = 'gc-multiselect__toggle btn btn-outline-secondary dropdown-toggle w-100';
+        button.className = 'gc-multiselect__toggle btn btn-light dropdown-toggle w-100';
         button.setAttribute('data-bs-toggle', 'dropdown');
         button.setAttribute('data-bs-auto-close', 'outside');
         button.setAttribute('aria-expanded', 'false');
 
+        var filterOption = document.createElement('span');
+        filterOption.className = 'filter-option';
+
+        var filterOptionInner = document.createElement('span');
+        filterOptionInner.className = 'filter-option-inner';
+
         var buttonText = document.createElement('span');
-        buttonText.className = 'gc-multiselect__label text-truncate';
-        button.appendChild(buttonText);
+        buttonText.className = 'filter-option-inner-inner gc-multiselect__label text-truncate';
+        filterOptionInner.appendChild(buttonText);
+        filterOption.appendChild(filterOptionInner);
+        button.appendChild(filterOption);
 
         var menu = document.createElement('div');
         menu.className = 'gc-multiselect__menu dropdown-menu w-100 p-2';
@@ -522,8 +530,13 @@ document.addEventListener('DOMContentLoaded', function () {
             text.className = 'gc-multiselect__option-text text-truncate';
             text.textContent = option.textContent.trim();
 
+            var check = document.createElement('span');
+            check.className = 'gc-multiselect__check icon ion-checkmark';
+            check.setAttribute('aria-hidden', 'true');
+
             item.appendChild(checkbox);
             item.appendChild(text);
+            item.appendChild(check);
             list.appendChild(item);
 
             checkbox.addEventListener('change', function () {
@@ -557,6 +570,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 buttonText.textContent = selected.length + ' выбрано';
                 button.classList.remove('is-empty');
             }
+
+            options.forEach(function (entry) {
+                entry.item.classList.toggle('selected', entry.option.selected);
+                entry.item.classList.toggle('active', entry.option.selected);
+            });
         };
 
         var applySearch = function () {

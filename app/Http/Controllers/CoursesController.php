@@ -272,6 +272,7 @@ class CoursesController extends Controller
             $updated = Solution::whereIn('id', $pendingSolutionIds)->update([
                 'review_skipped' => true,
                 'recheck_requested' => false,
+                'recheck_comment' => null,
             ]);
         }
 

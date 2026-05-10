@@ -94,7 +94,7 @@ class Solution extends Model
 
     public function skipPendingReview()
     {
-        if ($this->mark !== null || $this->submitted === null || $this->review_skipped) {
+        if (!$this->isPendingReview()) {
             return false;
         }
 
@@ -103,6 +103,13 @@ class Solution extends Model
         $this->recheck_comment = null;
 
         return $this->save();
+    }
+
+    public function isPendingReview()
+    {
+        return $this->submitted !== null
+            && !$this->review_skipped
+            && ($this->mark === null || $this->recheck_requested);
     }
 
     public function isSubmittedAfterDeadline($deadline = null)

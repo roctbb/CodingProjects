@@ -142,12 +142,17 @@
                         : null;
                     $subtitle = $activity->subtitle();
                     $summary = $activity->payload['summary'] ?? ($activity->payload['achievement_description'] ?? null);
+                    $activitySvgIcon = $activity->svgIcon();
                 @endphp
                 <a class="pulse-feed__item {{ $activity->toneClass() }} @if($activityFrame) pulse-feed__item--framed pulse-feed__item--frame-{{ $activityFrame }} @endif"
                    href="{{ $activity->url() }}"
                    title="{{ trim($activity->title().' '.$subtitle) }}">
                     <span class="pulse-feed__icon">
-                        <i class="{{ $activity->iconClass() }}"></i>
+                        @if($activitySvgIcon)
+                            {!! $activitySvgIcon !!}
+                        @else
+                            <i class="{{ $activity->iconClass() }}"></i>
+                        @endif
                     </span>
                     <span class="pulse-feed__body min-width-0">
                         <span class="pulse-feed__title">

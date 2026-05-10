@@ -369,7 +369,10 @@ class TasksController extends Controller
             ->where('task_id', $id)
             ->where('user_id', $student_id)
             ->whereNotNull('submitted')
-            ->whereNull('mark')
+            ->where(function ($query) {
+                $query->whereNull('mark')
+                    ->orWhere('recheck_requested', true);
+            })
             ->where(function ($query) {
                 $query->where('review_skipped', false)
                     ->orWhereNull('review_skipped');
@@ -441,6 +444,7 @@ class TasksController extends Controller
         $previewVariants = collect($preview['variants'] ?? [$preview])->map(function ($variant) use ($preview) {
             $iconKey = $variant['icon_key'] ?? 'sparkles';
             $visualKey = $variant['visual_key'] ?? null;
+            $svgIcon = Achievement::sanitizeSvgIcon($variant['svg_icon'] ?? null);
 
             return [
                 'title' => $variant['title'] ?? 'Сильное решение',
@@ -448,7 +452,8 @@ class TasksController extends Controller
                 'icon_key' => $iconKey,
                 'icon_class' => Achievement::iconOptions()[$iconKey] ?? Achievement::iconOptions()['sparkles'],
                 'visual_key' => $visualKey,
-                'visual_svg' => Achievement::svgForVisualKey($visualKey),
+                'svg_icon' => $svgIcon,
+                'visual_svg' => $svgIcon ?: Achievement::svgForVisualKey($visualKey),
                 'tone' => $variant['tone'] ?? null,
                 'solution_source' => $variant['solution_source'] ?? ($preview['solution_source'] ?? null),
                 'language' => $variant['language'] ?? ($preview['language'] ?? null),
@@ -555,13 +560,15 @@ class TasksController extends Controller
                     'description' => 'required|string|max:1000',
                     'icon_key' => 'required|string|in:' . $iconKeys,
                     'visual_key' => 'nullable|string|in:' . implode(',', array_keys(Achievement::visualOptions())),
+                    'svg_icon' => 'nullable|string|max:6000',
+                    'coin_reward' => 'nullable|integer|min:0|max:1000',
                     'tone' => 'nullable|string|max:40',
                     'solution_source' => 'nullable|string|max:80',
                     'language' => 'nullable|string|max:80',
                     'model' => 'nullable|string|max:80',
                 ]);
 
-                $requestPreview = $request->only(['title', 'description', 'icon_key', 'visual_key', 'tone', 'solution_source', 'language', 'model']);
+                $requestPreview = $request->only(['title', 'description', 'icon_key', 'visual_key', 'svg_icon', 'coin_reward', 'tone', 'solution_source', 'language', 'model']);
                 $achievement = $generator->createForSolution($solution, $requestPreview, true);
             } else {
                 $achievement = $generator->generateForSolution($solution, true);
@@ -583,7 +590,11 @@ class TasksController extends Controller
             return redirect()->back();
         }
 
-        $this->make_success_alert('Достижение выдано', 'Оно появилось в профиле ученика и в пульсе.');
+        $coinReward = (int) ($achievement->payload['coin_reward'] ?? 0);
+        $this->make_success_alert(
+            'Достижение выдано',
+            'Оно появилось в профиле ученика и в пульсе.' . ($coinReward > 0 ? ' Начислено ' . $coinReward . ' GC.' : '')
+        );
 
         return redirect('/insider/profile/' . $solution->user_id . '#achievement-' . $achievement->id);
     }

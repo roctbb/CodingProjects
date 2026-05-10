@@ -6,4 +6,8 @@
         } catch (e) {}
     })();
 </script>
-<link rel="stylesheet" href="{{ asset('build/css/app.css') }}">
+@php
+    $appStylesPath = public_path('build/css/app.css');
+    $appStylesVersion = file_exists($appStylesPath) ? filemtime($appStylesPath) : null;
+@endphp
+<link rel="stylesheet" href="{{ asset('build/css/app.css') }}@if($appStylesVersion)?v={{ $appStylesVersion }}@endif">
