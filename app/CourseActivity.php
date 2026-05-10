@@ -192,6 +192,7 @@ class CourseActivity extends Model
                 'achievement_title' => $achievement->title,
                 'achievement_description' => $achievement->description,
                 'icon_key' => $achievement->icon_key,
+                'visual_key' => $achievement->payload['visual_key'] ?? null,
             ],
         ]);
     }

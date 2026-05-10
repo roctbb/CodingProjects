@@ -24,7 +24,13 @@ class SolutionAchievementGenerator
     {
         $preview = $this->previewForSolution($solution, $ignoreEligibility);
 
-        return $preview ? $this->createForSolution($solution, $preview, $ignoreEligibility) : null;
+        if (!$preview) {
+            return null;
+        }
+
+        $variant = $preview['variants'][0] ?? $preview;
+
+        return $this->createForSolution($solution, $variant, $ignoreEligibility);
     }
 
     public function previewForSolution(Solution $solution, bool $ignoreEligibility = false): ?array
@@ -47,6 +53,17 @@ class SolutionAchievementGenerator
         $result = $this->generateAchievementPayload($solution, $context);
         $result['solution_source'] = $context['source'];
         $result['language'] = $context['language'] ?? null;
+        $result['model'] = $this->achievementModel();
+
+        if (!empty($result['variants'])) {
+            $result['variants'] = collect($result['variants'])->map(function ($variant) use ($context) {
+                $variant['solution_source'] = $context['source'];
+                $variant['language'] = $context['language'] ?? null;
+                $variant['model'] = $this->achievementModel();
+
+                return $variant;
+            })->values()->all();
+        }
 
         return $result;
     }
@@ -62,6 +79,10 @@ class SolutionAchievementGenerator
         $iconKey = $result['icon_key'] ?? 'sparkles';
         if (!array_key_exists($iconKey, Achievement::iconOptions())) {
             $iconKey = 'sparkles';
+        }
+        $visualKey = $result['visual_key'] ?? null;
+        if (!is_string($visualKey) || $visualKey === '' || !array_key_exists($visualKey, Achievement::visualOptions())) {
+            $visualKey = null;
         }
 
         $title = Str::limit(trim(strip_tags((string) ($result['title'] ?? 'Сильное решение'))), 120, '');
@@ -80,10 +101,11 @@ class SolutionAchievementGenerator
                 'icon_key' => $iconKey,
                 'payload' => [
                     'tone' => $result['tone'] ?? null,
+                    'visual_key' => $visualKey,
                     'solution_source' => $result['solution_source'] ?? null,
                     'language' => $result['language'] ?? null,
-                    'model' => config('services.chatgpt.model'),
-                    'prompt_version' => 1,
+                    'model' => $result['model'] ?? $this->achievementModel(),
+                    'prompt_version' => 2,
                     'manual' => $manual,
                 ],
                 'published_at' => Carbon::now(),
@@ -281,15 +303,24 @@ class SolutionAchievementGenerator
         $course = $solution->course;
         $instruction = trim((string) $task->ai_achievement_instruction);
         $iconKeys = implode(', ', array_keys(Achievement::iconOptions()));
+        $visualKeys = implode(', ', array_keys(array_filter(Achievement::visualOptions(), fn ($label, $key) => $key !== '', ARRAY_FILTER_USE_BOTH)));
 
-        $prompt = 'Ты придумываешь персональное достижение ученику за одно сильное решение задачи. '
+        $prompt = 'Ты придумываешь игровое достижение-бейдж ученику за одно сильное решение задачи. '
+            . 'Это не ревью и не технический отчет. Нужен короткий запоминающийся бейдж как в игре. '
+            . 'Сгенерируй ровно 3 разных варианта: забавный, образный и более технический. '
+            . 'title: 1-3 слова, образное прозвище, роль или предмет; можно с легкой иронией. '
+            . 'Не называй title сухо по технологии вроде "3D-память и циклы"; лучше "Квантовый сантехник", "Хранитель петли", "Архитектор труб". '
+            . 'description: строго начни со слова "За ". Объясни, за какую конкретную идею/механику решения выдан бейдж, желательно связав ее с названием или смыслом задачи. '
+            . 'Пиши понятно для человека, который не читал код: "За разработку языка программирования, где..." вместо "Отмечаю авторскую идею...". '
+            . 'Запрещенные начала description: "Отмечаю", "Оригинальная", "Язык задаёт", "Решение демонстрирует", "Авторская идея". '
             . 'Хвали только наблюдаемое качество решения, не личность ученика. Не сравнивай с другими учениками. '
             . 'Не раскрывай полный код и приватные детали. Не выдумывай факты, которых нет в решении. '
-            . 'Верни только JSON без markdown: {"title":"...","description":"...","icon_key":"...","tone":"..."}. '
-            . 'title до 55 символов, description 1-2 коротких предложения, icon_key только один из списка: ' . $iconKeys . '.';
+            . 'Верни только JSON без markdown: {"variants":[{"title":"...","description":"...","icon_key":"...","visual_key":"...","tone":"funny|metaphor|technical"}]}. '
+            . 'title до 45 символов, description 1 короткое предложение до 220 символов, icon_key только один из списка: ' . $iconKeys . '. '
+            . 'visual_key выбери один из списка, если подходит: ' . $visualKeys . '; если ни один не подходит, верни пустую строку.';
 
         if ($task->is_code) {
-            $prompt .= ' Это решение с кодом: можно отмечать идею, архитектуру, аккуратность, обработку случаев или читаемость, но не утверждай, что код идеален без оснований.';
+            $prompt .= ' Это решение с кодом: сначала найди главную метафору/механику программы, языка или алгоритма, и бейдж посвяти ей. Не утверждай, что код идеален без оснований.';
         }
 
         if ($instruction !== '') {
@@ -311,9 +342,17 @@ class SolutionAchievementGenerator
         $response = $this->chatGpt->generate([
             ['role' => 'system', 'content' => $prompt],
             ['role' => 'user', 'content' => $content],
-        ], ['timeout' => 90]);
+        ], [
+            'model' => $this->achievementModel(),
+            'timeout' => 120,
+        ]);
 
         return $this->normalizePayload($response);
+    }
+
+    protected function achievementModel(): string
+    {
+        return config('services.chatgpt.achievement_model') ?: config('services.chatgpt.model');
     }
 
     protected function normalizePayload(string $response): array
@@ -329,18 +368,49 @@ class SolutionAchievementGenerator
             throw new \RuntimeException('AI achievement response is not valid JSON');
         }
 
+        $variants = [];
+        if (!empty($data['variants']) && is_array($data['variants'])) {
+            $variants = collect($data['variants'])
+                ->filter(fn ($variant) => is_array($variant))
+                ->take(3)
+                ->map(fn ($variant) => $this->normalizeVariantPayload($variant))
+                ->values()
+                ->all();
+        }
+
+        if (empty($variants)) {
+            $variants = [$this->normalizeVariantPayload($data)];
+        }
+
+        $first = $variants[0];
+        $first['variants'] = $variants;
+
+        return $first;
+    }
+
+    protected function normalizeVariantPayload(array $data): array
+    {
         $iconKey = $data['icon_key'] ?? 'sparkles';
         if (!array_key_exists($iconKey, Achievement::iconOptions())) {
             $iconKey = 'sparkles';
+        }
+        $visualKey = $data['visual_key'] ?? null;
+        if (!is_string($visualKey) || $visualKey === '' || !array_key_exists($visualKey, Achievement::visualOptions())) {
+            $visualKey = null;
         }
 
         $title = trim(strip_tags((string) ($data['title'] ?? '')));
         $description = trim(strip_tags((string) ($data['description'] ?? '')));
 
+        if ($description !== '' && !Str::startsWith(mb_strtolower($description), 'за ')) {
+            $description = 'За ' . lcfirst($description);
+        }
+
         return [
             'title' => Str::limit($title !== '' ? $title : 'Сильное решение', 55, ''),
             'description' => Str::limit($description !== '' ? $description : 'Решение набрало максимум и заслужило отдельную отметку.', 240, ''),
             'icon_key' => $iconKey,
+            'visual_key' => $visualKey,
             'tone' => Str::limit(trim(strip_tags((string) ($data['tone'] ?? 'technical'))), 40, ''),
         ];
     }

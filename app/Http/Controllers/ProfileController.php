@@ -142,12 +142,13 @@ class ProfileController extends Controller
             ->sortByDesc('published_at')
             ->values();
         $achievementIconOptions = Achievement::iconOptions();
+        $achievementVisualOptions = Achievement::visualOptions();
 
         // Use cached sticker retrieval and descriptions
         $stickers = $user->getStickers();
         $sticker_description = $user->getStickerDescriptions();
 
-        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'avatarFrames', 'activeAvatarFrame', 'achievements', 'achievementIconOptions'));
+        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'avatarFrames', 'activeAvatarFrame', 'achievements', 'achievementIconOptions', 'achievementVisualOptions'));
     }
 
     public function updateAchievement($user_id, $achievement_id, Request $request)
@@ -165,11 +166,15 @@ class ProfileController extends Controller
             'title' => 'required|string|max:120',
             'description' => 'required|string|max:1000',
             'icon_key' => 'required|string|in:' . $iconKeys,
+            'visual_key' => 'nullable|string|in:' . implode(',', array_keys(Achievement::visualOptions())),
         ]);
 
         $achievement->title = trim(strip_tags((string) $request->title));
         $achievement->description = trim(strip_tags((string) $request->description));
         $achievement->icon_key = $request->icon_key;
+        $payload = $achievement->payload ?: [];
+        $payload['visual_key'] = $request->visual_key ?: null;
+        $achievement->payload = $payload;
         $achievement->save();
 
         CourseActivity::where('type', CourseActivity::TYPE_AI_ACHIEVEMENT_EARNED)
@@ -182,6 +187,7 @@ class ProfileController extends Controller
                 $payload['achievement_title'] = $achievement->title;
                 $payload['achievement_description'] = $achievement->description;
                 $payload['icon_key'] = $achievement->icon_key;
+                $payload['visual_key'] = $achievement->payload['visual_key'] ?? null;
                 $activity->payload = $payload;
                 $activity->save();
             });

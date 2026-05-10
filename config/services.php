@@ -48,6 +48,7 @@ return [
     'chatgpt' => [
         'key' => env('GPT_KEY'),
         'model' => env('GPT_MODEL', 'gpt-5-mini'),
+        'achievement_model' => env('GPT_ACHIEVEMENT_MODEL', 'gpt-5.5'),
         'gateway' => env('GPT_GATEWAY', 'https://gpt-gateway.ai.medsenger.ru:4443/v1/responses'),
     ],
 

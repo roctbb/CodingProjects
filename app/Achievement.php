@@ -58,6 +58,8 @@ class Achievement extends Model
             'circuit' => 'Схема',
             'compass' => 'Маршрут',
             'spark' => 'Искра',
+            'quantum' => 'Квантовый эффект',
+            'language' => 'Язык',
         ];
     }
 
@@ -72,6 +74,10 @@ class Achievement extends Model
                 return '<svg viewBox="0 0 48 48" role="img" aria-hidden="true" focusable="false"><circle cx="24" cy="24" r="16" fill="none" stroke="currentColor" stroke-width="3"/><path d="M30 12l-4 15-12 9 4-15 12-9z" fill="currentColor"/><circle cx="24" cy="24" r="2.5" fill="var(--gc-surface, #fff)"/></svg>';
             case 'spark':
                 return '<svg viewBox="0 0 48 48" role="img" aria-hidden="true" focusable="false"><path d="M24 7l3.8 11.2L39 22l-11.2 3.8L24 37l-3.8-11.2L9 22l11.2-3.8L24 7z" fill="currentColor"/><path d="M36 32l1.7 4.3L42 38l-4.3 1.7L36 44l-1.7-4.3L30 38l4.3-1.7L36 32z" fill="currentColor" opacity=".65"/></svg>';
+            case 'quantum':
+                return '<svg viewBox="0 0 48 48" role="img" aria-hidden="true" focusable="false"><circle cx="24" cy="24" r="4" fill="currentColor"/><ellipse cx="24" cy="24" rx="17" ry="7" fill="none" stroke="currentColor" stroke-width="3" transform="rotate(25 24 24)"/><ellipse cx="24" cy="24" rx="17" ry="7" fill="none" stroke="currentColor" stroke-width="3" transform="rotate(-25 24 24)"/><path d="M35 13l3-3m-3 25l3 3M10 24h5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+            case 'language':
+                return '<svg viewBox="0 0 48 48" role="img" aria-hidden="true" focusable="false"><path d="M10 12h28v24H10z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M16 20l5 4-5 4m9 3h8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 12V8h18v4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
             default:
                 return null;
         }
@@ -81,7 +87,7 @@ class Achievement extends Model
     {
         $visualKey = $this->payload['visual_key'] ?? null;
 
-        return array_key_exists($visualKey, static::visualOptions()) && $visualKey !== '' ? $visualKey : null;
+        return is_string($visualKey) && $visualKey !== '' && array_key_exists($visualKey, static::visualOptions()) ? $visualKey : null;
     }
 
     public function iconClass()

@@ -313,6 +313,8 @@
                                 $canEditAchievement = $guest->role == 'admin'
                                     || ($achievement->course && $achievement->course->teachers->contains('id', $guest->id));
                                 $canDeleteAchievement = $guest->role == 'admin';
+                                $achievementVisualKey = $achievement->visualKey();
+                                $achievementVisualSvg = \App\Achievement::svgForVisualKey($achievementVisualKey);
                             @endphp
                             <article class="profile-achievement" id="achievement-{{ $achievement->id }}">
                                 @if($canEditAchievement || $canDeleteAchievement)
@@ -343,7 +345,13 @@
                                         @endif
                                     </span>
                                 @endif
-                                <span class="profile-achievement__icon"><i class="{{ $achievement->iconClass() }}"></i></span>
+                                <span class="profile-achievement__icon">
+                                    @if($achievementVisualSvg)
+                                        {!! $achievementVisualSvg !!}
+                                    @else
+                                        <i class="{{ $achievement->iconClass() }}"></i>
+                                    @endif
+                                </span>
                                 <div class="profile-achievement__body min-width-0">
                                     <h6 class="profile-achievement__title">{{ $achievement->title }}</h6>
                                     <p class="profile-achievement__description">{{ $achievement->description }}</p>
@@ -366,7 +374,13 @@
                                         <div class="modal-content border-0 rounded-3 shadow-sm overflow-hidden">
                                             <div class="modal-header border-bottom p-3">
                                                 <div class="d-flex align-items-center gap-2 min-width-0">
-                                                    <span class="gc-icon-tile flex-shrink-0"><i class="{{ $achievement->iconClass() }}"></i></span>
+                                                    <span class="gc-icon-tile flex-shrink-0">
+                                                        @if($achievementVisualSvg)
+                                                            {!! $achievementVisualSvg !!}
+                                                        @else
+                                                            <i class="{{ $achievement->iconClass() }}"></i>
+                                                        @endif
+                                                    </span>
                                                     <h5 class="modal-title text-truncate">Редактировать достижение</h5>
                                                 </div>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
@@ -392,12 +406,22 @@
                                                                   rows="4"
                                                                   required>{{ old('description', $achievement->description) }}</textarea>
                                                     </div>
-                                                    <div class="mb-0">
+                                                    <div class="mb-3">
                                                         <label for="achievement-icon-{{ $achievement->id }}" class="form-label">Иконка</label>
                                                         <select id="achievement-icon-{{ $achievement->id }}" name="icon_key" class="form-select rounded-3">
                                                             @foreach($achievementIconOptions as $iconKey => $iconClass)
                                                                 <option value="{{ $iconKey }}" @if(old('icon_key', $achievement->icon_key) === $iconKey) selected @endif>
                                                                     {{ $iconKey }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-0">
+                                                        <label for="achievement-visual-{{ $achievement->id }}" class="form-label">SVG-символ</label>
+                                                        <select id="achievement-visual-{{ $achievement->id }}" name="visual_key" class="form-select rounded-3">
+                                                            @foreach($achievementVisualOptions as $visualKey => $visualLabel)
+                                                                <option value="{{ $visualKey }}" @if(old('visual_key', $achievementVisualKey ?? '') === $visualKey) selected @endif>
+                                                                    {{ $visualLabel }}
                                                                 </option>
                                                             @endforeach
                                                         </select>

@@ -438,16 +438,38 @@ class TasksController extends Controller
             return redirect()->back();
         }
 
+        $previewVariants = collect($preview['variants'] ?? [$preview])->map(function ($variant) use ($preview) {
+            $iconKey = $variant['icon_key'] ?? 'sparkles';
+            $visualKey = $variant['visual_key'] ?? null;
+
+            return [
+                'title' => $variant['title'] ?? 'Сильное решение',
+                'description' => $variant['description'] ?? 'За сильное решение задачи.',
+                'icon_key' => $iconKey,
+                'icon_class' => Achievement::iconOptions()[$iconKey] ?? Achievement::iconOptions()['sparkles'],
+                'visual_key' => $visualKey,
+                'visual_svg' => Achievement::svgForVisualKey($visualKey),
+                'tone' => $variant['tone'] ?? null,
+                'solution_source' => $variant['solution_source'] ?? ($preview['solution_source'] ?? null),
+                'language' => $variant['language'] ?? ($preview['language'] ?? null),
+                'model' => $variant['model'] ?? ($preview['model'] ?? null),
+            ];
+        })->values()->all();
+
         return redirect('/insider/courses/' . $course_id . '/tasks/' . $id . '/student/' . $solution->user_id . '#solution-' . $solution->id)
             ->with('achievement_preview', [
                 'solution_id' => $solution->id,
-                'title' => $preview['title'],
-                'description' => $preview['description'],
-                'icon_key' => $preview['icon_key'],
-                'icon_class' => Achievement::iconOptions()[$preview['icon_key']] ?? Achievement::iconOptions()['sparkles'],
-                'tone' => $preview['tone'] ?? null,
-                'solution_source' => $preview['solution_source'] ?? null,
-                'language' => $preview['language'] ?? null,
+                'variants' => $previewVariants,
+                'title' => $previewVariants[0]['title'] ?? 'Сильное решение',
+                'description' => $previewVariants[0]['description'] ?? 'За сильное решение задачи.',
+                'icon_key' => $previewVariants[0]['icon_key'] ?? 'sparkles',
+                'icon_class' => $previewVariants[0]['icon_class'] ?? Achievement::iconOptions()['sparkles'],
+                'visual_key' => $previewVariants[0]['visual_key'] ?? null,
+                'visual_svg' => $previewVariants[0]['visual_svg'] ?? null,
+                'tone' => $previewVariants[0]['tone'] ?? null,
+                'solution_source' => $previewVariants[0]['solution_source'] ?? null,
+                'language' => $previewVariants[0]['language'] ?? null,
+                'model' => $previewVariants[0]['model'] ?? null,
             ]);
     }
 
@@ -481,12 +503,14 @@ class TasksController extends Controller
                     'title' => 'required|string|max:120',
                     'description' => 'required|string|max:1000',
                     'icon_key' => 'required|string|in:' . $iconKeys,
+                    'visual_key' => 'nullable|string|in:' . implode(',', array_keys(Achievement::visualOptions())),
                     'tone' => 'nullable|string|max:40',
                     'solution_source' => 'nullable|string|max:80',
                     'language' => 'nullable|string|max:80',
+                    'model' => 'nullable|string|max:80',
                 ]);
 
-                $requestPreview = $request->only(['title', 'description', 'icon_key', 'tone', 'solution_source', 'language']);
+                $requestPreview = $request->only(['title', 'description', 'icon_key', 'visual_key', 'tone', 'solution_source', 'language', 'model']);
                 $achievement = $generator->createForSolution($solution, $requestPreview, true);
             } else {
                 $achievement = $generator->generateForSolution($solution, true);
