@@ -86,6 +86,13 @@ class GeekPasteClient
         $apiKey = config('services.geekpaste_api_key');
 
         if ($baseUrl === '' || !$apiKey) {
+            Log::warning('GeekPaste request skipped because credentials are not configured', [
+                'method' => $method,
+                'path' => $path,
+                'base_url_configured' => $baseUrl !== '',
+                'api_key_configured' => (bool) $apiKey,
+            ]);
+
             return null;
         }
 
@@ -99,23 +106,41 @@ class GeekPasteClient
             Log::warning('GeekPaste request failed: ' . $e->getMessage(), [
                 'method' => $method,
                 'path' => $path,
+                'base_url' => $baseUrl,
             ]);
 
             return null;
         }
+
+        $body = (string) $response->getBody();
 
         if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
             Log::warning('GeekPaste request returned non-success status', [
                 'method' => $method,
                 'path' => $path,
+                'base_url' => $baseUrl,
                 'status' => $response->getStatusCode(),
+                'response_body' => mb_substr($body, 0, 1000),
             ]);
 
             return null;
         }
 
-        $data = json_decode((string) $response->getBody(), true);
+        $data = json_decode($body, true);
 
-        return is_array($data) ? $data : null;
+        if (!is_array($data)) {
+            Log::warning('GeekPaste request returned invalid JSON', [
+                'method' => $method,
+                'path' => $path,
+                'base_url' => $baseUrl,
+                'status' => $response->getStatusCode(),
+                'json_error' => json_last_error_msg(),
+                'response_body' => mb_substr($body, 0, 1000),
+            ]);
+
+            return null;
+        }
+
+        return $data;
     }
 }

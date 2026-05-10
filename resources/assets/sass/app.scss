@@ -6131,14 +6131,14 @@ a:hover {
 }
 
 .home-pulse-card__area {
-  fill: color-mix(in srgb, var(--home-pulse-accent) 18%, transparent);
+  fill: color-mix(in srgb, var(--home-pulse-accent) 15%, transparent);
 }
 
 .home-pulse-card__line {
   fill: none;
   stroke: var(--home-pulse-accent);
   stroke-linecap: round;
-  stroke-linejoin: bevel;
+  stroke-linejoin: round;
   stroke-width: 3.5;
   vector-effect: non-scaling-stroke;
 }
@@ -6266,28 +6266,21 @@ a:hover {
 
 .pulse-overview__grid-line {
   fill: none;
-  opacity: 0.62;
+  opacity: 0.32;
   stroke: var(--gc-border);
   stroke-width: 1;
 }
 
 .pulse-overview__area {
-  fill: color-mix(in srgb, var(--pulse-accent) 18%, transparent);
+  fill: color-mix(in srgb, var(--pulse-accent) 15%, transparent);
 }
 
 .pulse-overview__line {
   fill: none;
   stroke: var(--pulse-accent);
   stroke-linecap: round;
-  stroke-linejoin: bevel;
+  stroke-linejoin: round;
   stroke-width: 4;
-  vector-effect: non-scaling-stroke;
-}
-
-.pulse-overview__beat {
-  fill: var(--gc-surface);
-  stroke: var(--pulse-accent);
-  stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
 

@@ -37,9 +37,45 @@
             $formatChartPoint = function ($point) use ($formatChartNumber) {
                 return $formatChartNumber($point['x']).','.$formatChartNumber($point['y']);
             };
-            $pulsePoints = $pulseSeries->values()->map(function ($point, $index) use ($chartPadding, $chartInnerWidth, $chartInnerHeight, $chartHeight, $seriesCount) {
+            $buildPulseLine = function ($points) use ($formatChartNumber, $formatChartPoint) {
+                $points = array_values($points);
+                $count = count($points);
+
+                if ($count === 0) {
+                    return '';
+                }
+
+                if ($count === 1) {
+                    return 'M '.$formatChartPoint($points[0]);
+                }
+
+                $path = 'M '.$formatChartPoint($points[0]);
+
+                for ($i = 0; $i < $count - 1; $i++) {
+                    $p0 = $points[max(0, $i - 1)];
+                    $p1 = $points[$i];
+                    $p2 = $points[$i + 1];
+                    $p3 = $points[min($count - 1, $i + 2)];
+                    $control1 = [
+                        'x' => $p1['x'] + (($p2['x'] - $p0['x']) / 6),
+                        'y' => $p1['y'] + (($p2['y'] - $p0['y']) / 6),
+                    ];
+                    $control2 = [
+                        'x' => $p2['x'] - (($p3['x'] - $p1['x']) / 6),
+                        'y' => $p2['y'] - (($p3['y'] - $p1['y']) / 6),
+                    ];
+
+                    $path .= ' C '.$formatChartPoint($control1).' '.$formatChartPoint($control2).' '.$formatChartPoint($p2);
+                }
+
+                return $path;
+            };
+            $maxPulseValue = max(0, (int) $pulseSeries->max('value'));
+            $visualPulseMax = $maxPulseValue > 0 ? min(100, max(8, $maxPulseValue * 1.18)) : 100;
+            $pulsePoints = $pulseSeries->values()->map(function ($point, $index) use ($chartPadding, $chartInnerWidth, $chartInnerHeight, $chartHeight, $seriesCount, $visualPulseMax) {
                 $x = $seriesCount === 1 ? $chartPadding : $chartPadding + ($chartInnerWidth * $index / ($seriesCount - 1));
-                $y = $chartHeight - $chartPadding - ($chartInnerHeight * ((int) $point['value'] / 100));
+                $visualValue = min(1, max(0, (int) $point['value'] / $visualPulseMax));
+                $y = $chartHeight - $chartPadding - ($chartInnerHeight * $visualValue);
 
                 return [
                     'x' => $x,
@@ -49,35 +85,18 @@
             })->values();
             $pulseLine = '';
             $pulseArea = '';
-            $pulseMarkers = collect();
 
             if ($pulsePoints->isNotEmpty()) {
                 $points = $pulsePoints->all();
                 $firstPoint = $points[0];
                 $lastPoint = $points[count($points) - 1];
                 $baseline = $chartHeight - $chartPadding;
-                $lineCommands = collect($points)->slice(1)->map(fn ($point) => ' L '.$formatChartPoint($point))->implode('');
 
-                $pulseLine = 'M '.$formatChartPoint($firstPoint).$lineCommands;
+                $pulseLine = $buildPulseLine($points);
                 $pulseArea = 'M '.$formatChartNumber($firstPoint['x']).','.$formatChartNumber($baseline)
                     .' L '.$formatChartPoint($firstPoint)
-                    .$lineCommands
+                    .substr($pulseLine, strlen('M '.$formatChartPoint($firstPoint)))
                     .' L '.$formatChartNumber($lastPoint['x']).','.$formatChartNumber($baseline).' Z';
-
-                $lastMarkerIndex = -99;
-                $pulseMarkers = collect($points)->filter(function ($point, $index) use ($points, &$lastMarkerIndex) {
-                    $previous = $points[max(0, $index - 1)]['value'] ?? 0;
-                    $next = $points[min(count($points) - 1, $index + 1)]['value'] ?? 0;
-                    $isPeak = $point['value'] >= 18 && $point['value'] >= $previous && $point['value'] > $next;
-                    $hasSpace = $index - $lastMarkerIndex >= 4;
-
-                    if ($isPeak && $hasSpace) {
-                        $lastMarkerIndex = $index;
-                        return true;
-                    }
-
-                    return false;
-                })->values();
             }
             $pulseChange = (int) ($pulse['change'] ?? 0);
         @endphp
@@ -100,15 +119,11 @@
 
             <div class="pulse-overview__chart" aria-label="График пульса за 24 часа">
                 <svg viewBox="0 0 {{ $chartWidth }} {{ $chartHeight }}" role="img" focusable="false" preserveAspectRatio="none">
-                    <path class="pulse-overview__grid-line" d="M {{ $chartPadding }} {{ $chartPadding + ($chartInnerHeight * 0.25) }} H {{ $chartWidth - $chartPadding }}" />
-                    <path class="pulse-overview__grid-line" d="M {{ $chartPadding }} {{ $chartPadding + ($chartInnerHeight * 0.5) }} H {{ $chartWidth - $chartPadding }}" />
-                    <path class="pulse-overview__grid-line" d="M {{ $chartPadding }} {{ $chartPadding + ($chartInnerHeight * 0.75) }} H {{ $chartWidth - $chartPadding }}" />
+                    <path class="pulse-overview__grid-line" d="M {{ $chartPadding }} {{ $chartPadding + ($chartInnerHeight * 0.34) }} H {{ $chartWidth - $chartPadding }}" />
+                    <path class="pulse-overview__grid-line" d="M {{ $chartPadding }} {{ $chartPadding + ($chartInnerHeight * 0.68) }} H {{ $chartWidth - $chartPadding }}" />
                     @if($pulseArea)
                         <path class="pulse-overview__area" d="{{ $pulseArea }}" />
                         <path class="pulse-overview__line" d="{{ $pulseLine }}" />
-                        @foreach($pulseMarkers as $marker)
-                            <circle class="pulse-overview__beat" cx="{{ $formatChartNumber($marker['x']) }}" cy="{{ $formatChartNumber($marker['y']) }}" r="2.4" />
-                        @endforeach
                     @endif
                 </svg>
                 <div class="pulse-overview__axis">

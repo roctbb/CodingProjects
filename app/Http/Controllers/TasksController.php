@@ -418,7 +418,13 @@ class TasksController extends Controller
         } catch (\Throwable $e) {
             \Log::error('Manual achievement preview failed', [
                 'solution_id' => $solution->id,
+                'course_id' => $course_id,
+                'task_id' => $id,
+                'user_id' => $solution->user_id,
+                'exception' => get_class($e),
                 'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
 
             $this->make_error_alert('Предпросмотр не получился', 'Не удалось сгенерировать достижение для этого решения. Попробуйте позже.');

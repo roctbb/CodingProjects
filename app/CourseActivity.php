@@ -256,16 +256,17 @@ class CourseActivity extends Model
     private static function pulseImpulse($ageMinutes, $type)
     {
         $ageMinutes = max(0, (float) $ageMinutes);
-        $sharpPeak = exp(-0.5 * pow(($ageMinutes - 5) / 4.8, 2)) * 1.35;
-        $secondaryWave = exp(-0.5 * pow(($ageMinutes - 22) / 10, 2)) * 0.42;
-        $longTail = exp(-$ageMinutes / 190) * 0.16;
+        $sharpPeak = exp(-0.5 * pow(($ageMinutes - 6) / 3.2, 2)) * 1.62;
+        $shoulder = exp(-0.5 * pow(($ageMinutes - 13) / 5.4, 2)) * 0.35;
+        $secondaryWave = exp(-0.5 * pow(($ageMinutes - 28) / 12, 2)) * 0.34;
+        $longTail = exp(-$ageMinutes / 165) * 0.11;
 
         if ($type === static::TYPE_TASK_AI_SUMMARY || $type === static::TYPE_AI_ACHIEVEMENT_EARNED) {
             $secondaryWave *= 1.35;
             $longTail *= 1.35;
         }
 
-        return $sharpPeak + $secondaryWave + $longTail;
+        return $sharpPeak + $shoulder + $secondaryWave + $longTail;
     }
 
     private static function pulseWeight($type)
