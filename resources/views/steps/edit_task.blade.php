@@ -89,7 +89,28 @@
                                         <span class="form-check-label">Бустер +5 XP</span>
                                     </label>
                                 </div>
+                                <div class="col-md-4">
+                                    <label class="gc-switch-card form-check form-switch h-100">
+                                        <input type="checkbox" class="form-check-input ms-0 me-2" id="generates_ai_achievement" name="generates_ai_achievement" value="on"
+                                               @if (old('generates_ai_achievement', $task->generates_ai_achievement ? 'on' : '') == 'on') checked @endif>
+                                        <span class="form-check-label">AI-достижение</span>
+                                    </label>
+                                </div>
                             </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="ai_achievement_instruction" class="form-label">Фокус AI-достижения</label>
+                            <textarea id="ai_achievement_instruction"
+                                      name="ai_achievement_instruction"
+                                      class="form-control rounded-3"
+                                      rows="2"
+                                      placeholder="Например: отмечай необычную идею, аккуратность кода или красивый ход">{{ old('ai_achievement_instruction', $task->ai_achievement_instruction) }}</textarea>
+                            @if ($errors->has('ai_achievement_instruction'))
+                                <span class="text-danger small d-block mt-1">
+                                    <strong>{{ $errors->first('ai_achievement_instruction') }}</strong>
+                                </span>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -184,7 +205,7 @@
                             <div class="gc-info-tile"><span>Название</span><strong>{{ $task->name }}</strong></div>
                             <div class="gc-info-tile"><span>Оценивание</span><strong>{{ $task->max_mark }} XP @if($task->price > 0) · {{ $task->price }} монет @endif</strong></div>
                             <div class="gc-info-tile"><span>Тип</span><strong>{{ $task->is_code ? 'Автопроверка' : ($task->is_quiz ? 'Квиз' : 'Ручная проверка') }}</strong></div>
-                            @if($task->is_hidden || $task->is_star || $task->xp_booster_enabled)
+                            @if($task->is_hidden || $task->is_star || $task->xp_booster_enabled || $task->generates_ai_achievement)
                                 <div class="d-flex flex-wrap gap-1">
                                     @if($task->is_hidden)
                                         <span class="badge rounded-pill bg-body-tertiary">Скрытая</span>
@@ -194,6 +215,9 @@
                                     @endif
                                     @if($task->xp_booster_enabled)
                                         <span class="badge rounded-pill bg-body-tertiary"><i class="fas fa-wand-magic-sparkles me-1"></i>Бустер +5 XP</span>
+                                    @endif
+                                    @if($task->generates_ai_achievement)
+                                        <span class="badge rounded-pill bg-body-tertiary"><i class="fas fa-trophy me-1"></i>AI-достижение</span>
                                     @endif
                                 </div>
                             @endif

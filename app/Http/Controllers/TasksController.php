@@ -6,6 +6,7 @@ use App\CoinTransaction;
 use App\Course;
 use App\CourseActivity;
 use App\CourseStudentPoints;
+use App\Jobs\GenerateSolutionAchievement;
 use App\Jobs\RecalculateCoursePoints;
 use App\Jobs\RecalculateCourseStudentPoints;
 use App\LessonStudentStats;
@@ -37,7 +38,7 @@ class TasksController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('task');
-        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent', 'aiTaskSummary']);
+        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent', 'skipSolutionReview', 'skipStudentReviews', 'aiTaskSummary']);
     }
 
     /**
@@ -53,7 +54,8 @@ class TasksController extends Controller
             'text' => 'required|string',
             'name' => 'required|string',
             'price' => 'nullable|numeric|min:0',
-            'max_mark' => 'required|integer|min:0|max:1000'
+            'max_mark' => 'required|integer|min:0|max:1000',
+            'ai_achievement_instruction' => 'nullable|string|max:1000'
         ]);
 
 
@@ -68,6 +70,8 @@ class TasksController extends Controller
             'is_star' => $request->is_star == 'on' ? true : false,
             'is_hidden' => $request->is_hidden == 'on' ? true : false,
             'xp_booster_enabled' => $request->xp_booster_enabled == 'on' ? true : false,
+            'generates_ai_achievement' => $request->generates_ai_achievement == 'on' ? true : false,
+            'ai_achievement_instruction' => $request->generates_ai_achievement == 'on' ? trim((string) $request->ai_achievement_instruction) : null,
             'only_remote' => $request->only_remote == 'on' ? true : false,
             'only_class' => $request->only_class == 'on' ? true : false]);
         $task->solution = $request->solution;
@@ -113,7 +117,8 @@ class TasksController extends Controller
             'text' => 'required|string',
             'name' => 'required|string',
             'price' => 'nullable|numeric|min:0',
-            'max_mark' => 'required|integer|min:0|max:1000'
+            'max_mark' => 'required|integer|min:0|max:1000',
+            'ai_achievement_instruction' => 'nullable|string|max:1000'
         ]);
 
         $task->text = $request->text;
@@ -136,6 +141,13 @@ class TasksController extends Controller
             $task->xp_booster_enabled = true;
         } else {
             $task->xp_booster_enabled = false;
+        }
+        if ($request->generates_ai_achievement == 'on') {
+            $task->generates_ai_achievement = true;
+            $task->ai_achievement_instruction = trim((string) $request->ai_achievement_instruction);
+        } else {
+            $task->generates_ai_achievement = false;
+            $task->ai_achievement_instruction = null;
         }
         if ($request->only_class == 'on') {
             $task->only_class = true;
@@ -311,6 +323,47 @@ class TasksController extends Controller
         return view('steps.review', compact('task', 'student', 'solutions', 'course'));
     }
 
+    public function skipSolutionReview($course_id, $id, $solution_id)
+    {
+        $solution = Solution::where('course_id', $course_id)
+            ->where('task_id', $id)
+            ->findOrFail($solution_id);
+
+        if ($solution->skipPendingReview()) {
+            $this->make_success_alert('Решение пропущено', 'Оно больше не будет висеть в очереди проверки.');
+        } else {
+            $this->make_info_alert('Без изменений', 'Это решение уже проверено, пропущено или ещё не отправлено.');
+        }
+
+        return redirect()->back();
+    }
+
+    public function skipStudentReviews($course_id, $id, $student_id)
+    {
+        $solutionIds = Solution::where('course_id', $course_id)
+            ->where('task_id', $id)
+            ->where('user_id', $student_id)
+            ->whereNotNull('submitted')
+            ->whereNull('mark')
+            ->where(function ($query) {
+                $query->where('review_skipped', false)
+                    ->orWhereNull('review_skipped');
+            })
+            ->pluck('id');
+
+        $updated = 0;
+        if ($solutionIds->isNotEmpty()) {
+            $updated = Solution::whereIn('id', $solutionIds)->update([
+                'review_skipped' => true,
+                'recheck_requested' => false,
+            ]);
+        }
+
+        $this->make_success_alert('Решения пропущены', 'Снято с проверки: ' . $updated . '.');
+
+        return redirect()->back();
+    }
+
     public function blockStudent($course_id, $id, $student_id)
     {
         $task = Task::findOrFail($id);
@@ -407,6 +460,7 @@ class TasksController extends Controller
         $solution->checked = Carbon::now();
         $solution->save();
         CourseActivity::recordSolutionChecked($solution);
+        $this->dispatchAiAchievementGeneration($solution);
 
         // Recalculate cached points for the student in this course
         CourseStudentPoints::recalculate($course_id, $solution->user_id);
@@ -425,7 +479,23 @@ class TasksController extends Controller
 
     }
 
-    public function aiTaskSummary($course_id, $id, ChatGptService $chatGpt, GeekPasteClient $geekPaste)
+    private function dispatchAiAchievementGeneration(Solution $solution)
+    {
+        if (!$solution->isEligibleForAiAchievement()) {
+            return;
+        }
+
+        try {
+            GenerateSolutionAchievement::dispatch($solution->id)->afterResponse();
+        } catch (\Throwable $e) {
+            \Log::warning('AI achievement dispatch failed', [
+                'solution_id' => $solution->id,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function aiTaskSummary($course_id, $id, Request $request, ChatGptService $chatGpt, GeekPasteClient $geekPaste)
     {
         $course = Course::with('teachers')->findOrFail($course_id);
         $task = Task::with('step.lesson')->findOrFail($id);
@@ -449,6 +519,9 @@ class TasksController extends Controller
             return redirect()->back();
         }
 
+        $instruction = trim((string) $request->input('summary_instruction', ''));
+        $instruction = Str::limit($instruction, 1000, '');
+
         $prompt = 'Ты редактор школьного медиа. По решениям учеников сделай живую короткую новость для ленты курса. '
             . 'Не оценивай и не ранжируй учеников. Не выдумывай деталей, которых нет в ответах. '
             . 'Собери общие идеи, необычные находки и общий тон работ. ';
@@ -457,12 +530,19 @@ class TasksController extends Controller
             $prompt .= 'Это автопроверяемая задача с кодом: пересказывай задумки, механики и получившиеся проекты, а не делай ревью кода. ';
         }
 
+        if ($instruction !== '') {
+            $prompt .= 'Учитель добавил фокус пересказа, обязательно учти его: ' . $instruction . ' ';
+        }
+
         $prompt .= 'Пиши на русском, 2-4 коротких абзаца, без markdown-заголовков, без списка, до 1200 символов.';
 
         try {
+            $instructionBlock = $instruction !== ''
+                ? "Фокус учителя:\n{$instruction}\n\n"
+                : '';
             $summary = $chatGpt->generate([
                 ['role' => 'system', 'content' => $prompt],
-                ['role' => 'user', 'content' => "Курс: {$course->name}\nЗадача: {$task->name}\nУсловие задачи:\n" . Str::limit(strip_tags((string) $task->text), 3000) . "\n\nРешения учеников:\n" . $answers],
+                ['role' => 'user', 'content' => "Курс: {$course->name}\nЗадача: {$task->name}\n{$instructionBlock}Условие задачи:\n" . Str::limit(strip_tags((string) $task->text), 3000) . "\n\nРешения учеников:\n" . $answers],
             ], ['timeout' => 90]);
         } catch (\Throwable $e) {
             \Log::error('Task AI summary failed', [
@@ -474,10 +554,10 @@ class TasksController extends Controller
             return redirect()->back();
         }
 
-        CourseActivity::recordTaskAiSummary($course, $task, $user, $summary);
-        $this->make_success_alert('Новость добавлена в пульс', 'AI-пересказ результатов задачи опубликован в разделе «Пульс».');
+        CourseActivity::recordTaskAiSummary($course, $task, $user, $summary, $instruction);
+        $this->make_success_alert('Новость добавлена в пульс', 'Полный AI-пересказ теперь показан на странице задачи.');
 
-        return redirect('/insider/pulse');
+        return redirect('/insider/courses/' . $course->id . '/steps/' . $task->step_id . '#task-ai-summary-' . $task->id);
     }
 
     private function buildLocalTaskSummaryAnswers(Course $course, Task $task): string
@@ -603,6 +683,7 @@ class TasksController extends Controller
 
         $solution->save();
         CourseActivity::recordDeadlinePenaltyPaid($solution, $cost);
+        $this->dispatchAiAchievementGeneration($solution);
 
         if ($shouldRewardTaskPrice) {
             CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
@@ -792,39 +873,6 @@ class TasksController extends Controller
         }
 
         return redirect('/insider/courses/' . $course_id . '/steps/' . $task->step->id . '#task' . $id);
-    }
-
-    public function reviewTable($course_id, $id, Request $request)
-    {
-        $task = Task::findOrFail($id);
-        $course = Course::findOrFail($course_id);
-        # $solutions = $task->solutions;
-        $students = $course->students->shuffle();
-        $ids = [];
-
-        for ($i = 0; $i < $students->count(); $i++) {
-            $ids[$students[$i]->id] = $i;
-            $students[$i]->works = collect([]);
-        }
-        for ($i = 0; $i < $students->count(); $i++) {
-            $students[$i]->reviewer1 = $students[($i + 1) % $students->count()];
-            $students[$i]->reviewer2 = $students[($i + 2) % $students->count()];
-
-            try {
-                $solution = $task->solutions->where('user_id', $students[$i]->id)->where('course_id', $course_id)->first();
-                $students[$i]->solution = $solution->text;
-                $students[$ids[$students[$i]->reviewer1->id]]->works->push($solution);
-                $students[$ids[$students[$i]->reviewer2->id]]->works->push($solution);
-            } catch (\Exception $e) {
-                $students[$i]->solution = 'Нет';
-            }
-
-
-        }
-
-        return view('reviewer.peer', compact('task', 'students', 'ids'));
-
-
     }
 
     public function recheckAllSolutions($course_id, $id)

@@ -124,7 +124,7 @@
                                         } else {
                                             $mark = $bestSolution ? $bestSolution->mark : 0;
                                             $need_check = false;
-                                            if ($filtered->count()!=0 && $filtered->last()->mark==null)
+                                            if ($filtered->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped)->isNotEmpty())
                                             {
                                                 $need_check = true;
                                             }

@@ -9,11 +9,12 @@ class Task extends Model
     protected $table = 'tasks';
 
     protected $fillable = [
-        'text', 'step_id', 'deadline', 'name', 'max_mark', 'is_star', 'only_class', 'only_remote', 'sort_index', 'is_quiz', 'is_code', 'is_hidden', 'xp_booster_enabled'
+        'text', 'step_id', 'deadline', 'name', 'max_mark', 'is_star', 'only_class', 'only_remote', 'sort_index', 'is_quiz', 'is_code', 'is_hidden', 'xp_booster_enabled', 'generates_ai_achievement', 'ai_achievement_instruction'
     ];
 
     protected $casts = [
         'deadline' => 'datetime',
+        'generates_ai_achievement' => 'boolean',
     ];
 
     public function step()
@@ -61,7 +62,24 @@ class Task extends Model
 
     public function isOnCheck($user_id)
     {
-        return $this->solutionsForUser($user_id)->where('mark', null)->count() != 0;
+        if ($this->relationLoaded('solutions')) {
+            return $this->solutionsForUser($user_id)
+                    ->filter(function ($solution) {
+                        return $solution->submitted !== null
+                            && $solution->mark === null
+                            && !$solution->review_skipped;
+                    })
+                    ->count() != 0;
+        }
+
+        return $this->solutionsForUser($user_id)
+                ->whereNotNull('submitted')
+                ->whereNull('mark')
+                ->where(function ($query) {
+                    $query->where('review_skipped', false)
+                        ->orWhereNull('review_skipped');
+                })
+                ->exists();
     }
 
     public function isSubmitted($user_id)

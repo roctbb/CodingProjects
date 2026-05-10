@@ -21,6 +21,7 @@ class Solution extends Model
         'checked' => 'datetime',
         'deadline_penalty_paid_at' => 'datetime',
         'xp_booster_used_at' => 'datetime',
+        'review_skipped' => 'boolean',
     ];
 
     public function deadline()
@@ -53,6 +54,10 @@ class Solution extends Model
         return $query
             ->whereNotNull('submitted')
             ->whereNull('mark')
+            ->where(function ($query) {
+                $query->where('review_skipped', false)
+                    ->orWhereNull('review_skipped');
+            })
             ->whereNotExists(function ($query) {
                 $query->select(DB::raw(1))
                     ->from('solutions as checked_solutions')
@@ -69,6 +74,18 @@ class Solution extends Model
                             });
                     });
             });
+    }
+
+    public function skipPendingReview()
+    {
+        if ($this->mark !== null || $this->submitted === null || $this->review_skipped) {
+            return false;
+        }
+
+        $this->review_skipped = true;
+        $this->recheck_requested = false;
+
+        return $this->save();
     }
 
     public function isSubmittedAfterDeadline($deadline = null)
@@ -225,6 +242,20 @@ class Solution extends Model
         return $this->task
             && !$this->hasXpBooster()
             && $this->mark == $this->task->max_mark;
+    }
+
+    public function isEligibleForAiAchievement()
+    {
+        if (!$this->task || !$this->task->generates_ai_achievement) {
+            return false;
+        }
+
+        if (!$this->submitted || $this->mark === null || (int) $this->task->max_mark <= 0) {
+            return false;
+        }
+
+        return (int) $this->mark >= (int) $this->task->max_mark
+            && $this->markWithoutXpBooster() >= (int) $this->task->max_mark;
     }
 
     public function hasDeadlinePenalty()

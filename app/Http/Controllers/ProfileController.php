@@ -111,6 +111,8 @@ class ProfileController extends Controller
                 'courses.teachers',
                 'completedCourses.course.students',
                 'orders.good',
+                'achievements.course',
+                'achievements.task',
             ])->findOrFail($guest->id);
         } else {
             $user = User::with([
@@ -121,6 +123,8 @@ class ProfileController extends Controller
                 'courses.teachers',
                 'completedCourses.course.students',
                 'orders.good',
+                'achievements.course',
+                'achievements.task',
             ])->findOrFail($id);
         }
 
@@ -131,12 +135,16 @@ class ProfileController extends Controller
         $coinBalance = $user->balance();
         $avatarFrames = User::avatarFrames();
         $activeAvatarFrame = $user->activeAvatarFrame();
+        $achievements = $user->achievements
+            ->where('status', \App\Achievement::STATUS_PUBLISHED)
+            ->sortByDesc('published_at')
+            ->values();
 
         // Use cached sticker retrieval and descriptions
         $stickers = $user->getStickers();
         $sticker_description = $user->getStickerDescriptions();
 
-        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'avatarFrames', 'activeAvatarFrame'));
+        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'avatarFrames', 'activeAvatarFrame', 'achievements'));
     }
 
     public function editView($id)

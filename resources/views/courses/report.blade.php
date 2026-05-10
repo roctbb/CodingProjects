@@ -33,7 +33,7 @@
         $lessonCompletionPercent = $totalStudentLessons > 0 ? round($completedStudentLessons / $totalStudentLessons * 100) : 0;
         $pendingSolutionsCount = $reportTasks
             ->flatMap(fn ($task) => $task->solutions)
-            ->filter(fn ($solution) => $solution->mark === null && $students->contains('id', $solution->user_id))
+            ->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped && $students->contains('id', $solution->user_id))
             ->count();
     @endphp
     <div class="container-fluid px-0">
@@ -189,8 +189,7 @@
                                                         $bestSolution = \App\Solution::bestScoredIn($filtered);
                                                         $mark = $bestSolution ? $bestSolution->mark : 0;
                                                         $markClass = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary') : 'bg-body-tertiary';
-                                                        $should_check = false;
-                                                        if (count($filtered)!=0 && $filtered->last()->mark==null) $should_check=true;
+                                                        $should_check = $filtered->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped)->isNotEmpty();
                                                     @endphp
                                                     <li class="report-task-row">
                                                         <a class="report-task-link text-decoration-none"

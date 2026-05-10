@@ -296,6 +296,42 @@
                 </div>
             </div>
 
+            @if($achievements->count())
+                <div class="gc-card overflow-hidden mb-4" id="achievements">
+                    <div class="d-flex align-items-center justify-content-between gap-3 gc-section-header">
+                        <div class="d-flex align-items-center gap-2 min-width-0">
+                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-trophy"></i></span>
+                            <div class="min-width-0">
+                                <span class="gc-eyebrow">{{ $achievements->count() }} достижений</span>
+                                <h5 class="mb-0 text-truncate">Достижения</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-achievement-grid p-3 p-md-4">
+                        @foreach($achievements->take(12) as $achievement)
+                            <article class="profile-achievement">
+                                <span class="profile-achievement__icon"><i class="{{ $achievement->iconClass() }}"></i></span>
+                                <div class="profile-achievement__body min-width-0">
+                                    <h6 class="profile-achievement__title">{{ $achievement->title }}</h6>
+                                    <p class="profile-achievement__description">{{ $achievement->description }}</p>
+                                    <div class="profile-achievement__meta">
+                                        @if($achievement->task)
+                                            <span>{{ $achievement->task->name }}</span>
+                                        @endif
+                                        @if($achievement->course)
+                                            <span>{{ $achievement->course->name }}</span>
+                                        @endif
+                                        @if($achievement->published_at)
+                                            <span>{{ $achievement->published_at->format('d.m.Y') }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             @if($canViewMoneyHistory)
                 <div class="gc-card overflow-hidden mb-4" id="gc-history">
                     <div class="d-flex align-items-center justify-content-between gap-3 gc-section-header">

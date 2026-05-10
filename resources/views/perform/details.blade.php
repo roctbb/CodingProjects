@@ -2,6 +2,10 @@
 
 @section('title', $course->name . ' - ' . $step->name)
 
+@section('head')
+    @include('layouts.partials.mathjax')
+@endsection
+
 @section('content')
     <div class="container-lg py-4">
         <div class="gc-card gc-page-header mb-3">

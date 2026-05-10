@@ -20,6 +20,8 @@
                 $taskType = $task->is_code ? 'code' : ($task->is_quiz ? 'quiz' : 'text');
                 $taskTypeLabel = ['code' => 'Код', 'quiz' => 'Квиз', 'text' => 'Ответ'][$taskType];
                 $taskTypeIcon = ['code' => 'fas fa-code', 'quiz' => 'fas fa-question-circle', 'text' => 'fas fa-pen'][$taskType];
+                $latestAiSummary = ($latestTaskAiSummaries ?? collect())->get($task->id);
+                $latestAiPayload = $latestAiSummary ? ($latestAiSummary->payload ?? []) : [];
                 $taskStatusClass = '';
                 if ($hasUserSolution) {
                     $taskStatusClass = is_null($latestUserSolution->mark)
@@ -38,6 +40,30 @@
                                 <span class="text-muted small">За ее решение вы получите дополнительный опыт.</span>
                             </div>
                         </div>
+                    @endif
+                    @if (!empty($latestAiPayload['summary']))
+                        <section class="task-ai-summary-card mb-3" id="task-ai-summary-{{$task->id}}">
+                            <div class="task-ai-summary__head">
+                                <span class="task-ai-summary__icon"><i class="fas fa-newspaper"></i></span>
+                                <div class="min-width-0">
+                                    <h5 class="task-ai-summary__title mb-0">AI-пересказ решений</h5>
+                                    <p class="task-ai-summary__meta mb-0">
+                                        {{ $latestAiSummary->created_at->format('d.m.Y H:i') }}
+                                        @if ($latestAiSummary->user)
+                                            · {{ $latestAiSummary->user->name }}
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="task-ai-summary__text">
+                                {!! nl2br(e($latestAiPayload['summary'])) !!}
+                            </div>
+                            @if (!empty($latestAiPayload['instruction']))
+                                <div class="task-ai-summary__focus">
+                                    <strong>Фокус:</strong> {{ $latestAiPayload['instruction'] }}
+                                </div>
+                            @endif
+                        </section>
                     @endif
                     <div class="gc-card step-task-card step-task-card--{{$taskType}} @if ($task->is_star) is-optional @endif @if ($hasUserSolution) is-submitted @endif overflow-hidden">
                         <div class="step-task-card__header gc-section-header">
@@ -84,17 +110,13 @@
                                 <a title="Фантомное решение (добавить пустое решение для всех студентов)"
                                    class="btn btn-outline-secondary btn-sm rounded-3"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"><i class="icon ion-ios-color-wand"></i></a>
-                                <a title="Сгенерировать форму peer-review" class="btn btn-outline-secondary btn-sm rounded-3"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/peer')}}"><i class="icon ion-person-stalker"></i></a>
-                                <form method="POST" action="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/ai-summary') }}" class="d-inline-flex m-0">
-                                    {{ csrf_field() }}
-                                    <button type="submit"
-                                            title="AI-пересказ решений в пульс"
-                                            class="btn btn-outline-secondary btn-sm rounded-3"
-                                            data-confirm="Сгенерировать AI-новость по решениям задачи и опубликовать ее в пульсе?">
-                                        <i class="fas fa-newspaper"></i>
-                                    </button>
-                                </form>
+                                <button type="button"
+                                        title="AI-пересказ решений"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#task-ai-summary-modal-{{$task->id}}"
+                                        class="btn btn-outline-secondary btn-sm rounded-3">
+                                    <i class="fas fa-newspaper"></i>
+                                </button>
                                 @if ($task->is_code)
                                     <a title="Перепроверить все решения (обнулить баллы и отправить последнее решение каждого студента на перепроверку)"
                                         class="btn btn-outline-secondary btn-sm rounded-3"
@@ -205,6 +227,56 @@
                             @endif
                         </div>
                     </div>
+                    @if ($isManager)
+                        <div class="modal fade" id="task-ai-summary-modal-{{$task->id}}" tabindex="-1" aria-labelledby="task-ai-summary-title-{{$task->id}}" aria-hidden="true">
+                            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                                <div class="modal-content task-ai-summary-modal">
+                                    <div class="modal-header">
+                                        <div class="task-ai-summary__head min-width-0">
+                                            <span class="task-ai-summary__icon"><i class="fas fa-newspaper"></i></span>
+                                            <div class="min-width-0">
+                                                <h5 class="task-ai-summary__title mb-0" id="task-ai-summary-title-{{$task->id}}">AI-пересказ решений</h5>
+                                                <p class="task-ai-summary__meta mb-0 text-truncate">{{ $task->name }}</p>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                    </div>
+                                    <div class="modal-body task-ai-summary-modal__body">
+                                        @if ($latestAiSummary)
+                                            <p class="task-ai-summary__meta mb-0">
+                                                Последний пересказ: {{ $latestAiSummary->created_at->format('d.m.Y H:i') }}.
+                                                Текст показан над задачей.
+                                            </p>
+                                        @else
+                                            <p class="task-ai-summary__meta mb-0">Пересказ еще не генерировался.</p>
+                                        @endif
+
+                                        <form method="POST"
+                                              action="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/ai-summary') }}"
+                                              class="task-ai-summary__form">
+                                            {{ csrf_field() }}
+                                            <div class="task-ai-summary__field">
+                                                <label for="summary-instruction-{{$task->id}}" class="form-label">На что обратить внимание</label>
+                                                <textarea class="form-control"
+                                                          id="summary-instruction-{{$task->id}}"
+                                                          name="summary_instruction"
+                                                          rows="3"
+                                                          maxlength="1000"
+                                                          placeholder="Смысловая часть, технические приемы, необычные сюжеты, частые ошибки">{{ old('summary_instruction') }}</textarea>
+                                            </div>
+                                            <div class="task-ai-summary__actions">
+                                                <button type="submit"
+                                                        class="btn btn-primary btn-sm rounded-3"
+                                                        data-confirm="Сгенерировать AI-новость по решениям задачи и опубликовать ее в пульсе?">
+                                                    <i class="fas fa-magic me-1"></i>Сгенерировать
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
             @if (\Request::is('insider/*'))
@@ -244,7 +316,7 @@
                                                 } else {
                                                     $mark = $bestSolution ? $bestSolution->mark : 0;
                                                     $need_check = false;
-                                                    if ($filtered->count()!=0 && $filtered->last()->mark==null)
+                                                    if ($filtered->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped)->isNotEmpty())
                                                     {
                                                     $need_check = true;
                                                     }

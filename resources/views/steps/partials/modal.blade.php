@@ -70,6 +70,22 @@
                                     <input type="checkbox" class="form-check-input ms-0 mt-0" id="task-xp-booster-enabled" name="xp_booster_enabled" value="on"/>
                                     <label for="task-xp-booster-enabled" class="form-check-label">Разрешить бустер +5 XP</label>
                                 </div>
+                                <div class="form-check form-switch mb-0 ps-0 d-flex align-items-center gap-2">
+                                    <input type="checkbox" class="form-check-input ms-0 mt-0" id="task-generates-ai-achievement" name="generates_ai_achievement" value="on"/>
+                                    <label for="task-generates-ai-achievement" class="form-check-label">AI-достижение за максимум</label>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="task-ai-achievement-instruction" class="form-label">Фокус AI-достижения</label>
+                                <textarea id="task-ai-achievement-instruction"
+                                          class="form-control rounded-3"
+                                          name="ai_achievement_instruction"
+                                          rows="2"
+                                          placeholder="Например: отмечай необычную идею, аккуратность кода или красивый ход">{{ old('ai_achievement_instruction') }}</textarea>
+                                @error('ai_achievement_instruction')
+                                    <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                                @enderror
                             </div>
 
                             <div class="mb-0">

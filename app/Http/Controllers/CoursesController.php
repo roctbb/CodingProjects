@@ -33,7 +33,7 @@ class CoursesController extends Controller
     {
         $this->middleware('auth')->except('details', 'open_index');
         $this->middleware('course')->only(['details', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
-        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'reviews', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
+        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'reviews', 'resetPendingReviews', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
     }
 
     /**
@@ -135,25 +135,8 @@ class CoursesController extends Controller
             ->keyBy('course_id');
 
         $upcomingDeadlines = collect([]);
-        $pendingSolutions = collect([]);
         $pendingSolutionsTotal = 0;
-        $courseActivities = collect([]);
-        $courseActivitiesTotal = 0;
-
-        if ($activeCourseIds->count()) {
-            $courseActivities = CourseActivity::with([
-                    'user:id,name,custom_title,custom_title_expires_at,avatar_frame,avatar_frame_expires_at',
-                    'course:id,name',
-                    'lesson:id,name',
-                    'task:id,name',
-                ])
-                ->whereIn('course_id', $activeCourseIds)
-                ->orderBy('created_at', 'desc')
-                ->take(7)
-                ->get();
-            $courseActivitiesTotal = $courseActivities->count() > 6 ? '6+' : $courseActivities->count();
-            $courseActivities = $courseActivities->take(6);
-        }
+        $pulse = CourseActivity::pulseForCourses($activeCourseIds);
 
         if (!($user->role == 'teacher' || $user->role == 'admin')) {
             $submittedTaskIds = Solution::where('user_id', $user->id)
@@ -184,12 +167,10 @@ class CoursesController extends Controller
                 ->with(['course:id,name', 'task:id,name', 'user:id,name,image,custom_title,custom_title_expires_at,avatar_frame,avatar_frame_expires_at'])
                 ->whereIn('course_id', $managedActiveCourseIds)
                 ->pendingReview()
-                ->orderBy('submitted');
+                ->orderByDesc('submitted')
+                ->orderByDesc('id');
 
             $pendingSolutionsTotal = (clone $pendingSolutionsQuery)->count();
-            $pendingSolutions = $pendingSolutionsQuery
-                ->take(4)
-                ->get();
         }
 
         $notifications = collect([]);
@@ -219,7 +200,7 @@ class CoursesController extends Controller
                 })->sortBy('birthday_distance_days')->values();
         });
 
-        return response()->view('home', compact('courses', 'user', 'my_courses', 'open_courses', 'private_courses', 'availableCourses', 'activeCourses', 'draftCourses', 'archiveCourses', 'birthdayUsers', 'notifications', 'courseProgress', 'upcomingDeadlines', 'pendingSolutions', 'pendingSolutionsTotal', 'courseActivities', 'courseActivitiesTotal', 'isTeacher'));
+        return response()->view('home', compact('courses', 'user', 'my_courses', 'open_courses', 'private_courses', 'availableCourses', 'activeCourses', 'draftCourses', 'archiveCourses', 'birthdayUsers', 'notifications', 'courseProgress', 'upcomingDeadlines', 'pendingSolutionsTotal', 'pulse', 'isTeacher'));
     }
 
     public function pulse()
@@ -263,10 +244,40 @@ class CoursesController extends Controller
             ])
             ->whereIn('course_id', $managedActiveCourseIds)
             ->pendingReview()
-            ->orderBy('submitted')
+            ->orderByDesc('submitted')
+            ->orderByDesc('id')
             ->paginate(40);
 
         return view('courses.reviews', compact('user', 'pendingSolutions'));
+    }
+
+    public function resetPendingReviews()
+    {
+        $user = Auth::user();
+        $managedActiveCourseIds = Course::query()
+            ->where('state', 'started')
+            ->when($user->role != 'admin', function ($query) use ($user) {
+                $query->whereHas('teachers', function ($query) use ($user) {
+                    $query->where('users.id', $user->id);
+                });
+            })
+            ->pluck('id');
+
+        $pendingSolutionIds = Solution::whereIn('course_id', $managedActiveCourseIds)
+            ->pendingReview()
+            ->pluck('id');
+
+        $updated = 0;
+        if ($pendingSolutionIds->isNotEmpty()) {
+            $updated = Solution::whereIn('id', $pendingSolutionIds)->update([
+                'review_skipped' => true,
+                'recheck_requested' => false,
+            ]);
+        }
+
+        $this->make_success_alert('Очередь очищена', 'Пропущено непроверенных решений: ' . $updated . '.');
+
+        return redirect()->back();
     }
 
     public function report($id)

@@ -15,6 +15,7 @@ class CourseActivity extends Model
     const TYPE_LESSON_OPENED = 'lesson_opened';
     const TYPE_GEEKPASTE_ATTEMPT_BOUGHT = 'geekpaste_attempt_bought';
     const TYPE_TASK_AI_SUMMARY = 'task_ai_summary';
+    const TYPE_AI_ACHIEVEMENT_EARNED = 'ai_achievement_earned';
     const PULSE_WINDOW_HOURS = 24;
     const PULSE_SAMPLE_MINUTES = 20;
     const PULSE_HALFLIFE_HOURS = 6;
@@ -142,11 +143,18 @@ class CourseActivity extends Model
         ]);
     }
 
-    public static function recordTaskAiSummary(Course $course, Task $task, User $user, string $summary)
+    public static function recordTaskAiSummary(Course $course, Task $task, User $user, string $summary, ?string $instruction = null)
     {
         $task->loadMissing('step.lesson');
         $step = $task->step;
         $lesson = $step ? $step->lesson : null;
+        $payload = static::basePayload($course, $lesson, $task) + [
+            'summary' => $summary,
+        ];
+
+        if ($instruction !== null && trim($instruction) !== '') {
+            $payload['instruction'] = trim($instruction);
+        }
 
         return static::recordActivity([
             'course_id' => $course->id,
@@ -155,8 +163,35 @@ class CourseActivity extends Model
             'task_id' => $task->id,
             'user_id' => $user->id,
             'type' => static::TYPE_TASK_AI_SUMMARY,
+            'payload' => $payload,
+        ]);
+    }
+
+    public static function recordAchievementEarned(Achievement $achievement)
+    {
+        $achievement->loadMissing('course', 'task.step.lesson', 'user');
+        $course = $achievement->course;
+        $task = $achievement->task;
+        $step = $task ? $task->step : null;
+        $lesson = $step ? $step->lesson : null;
+
+        if (!$course || !$task) {
+            return null;
+        }
+
+        return static::recordActivity([
+            'course_id' => $course->id,
+            'lesson_id' => $lesson ? $lesson->id : null,
+            'step_id' => $step ? $step->id : null,
+            'task_id' => $task->id,
+            'solution_id' => $achievement->solution_id,
+            'user_id' => $achievement->user_id,
+            'type' => static::TYPE_AI_ACHIEVEMENT_EARNED,
             'payload' => static::basePayload($course, $lesson, $task) + [
-                'summary' => $summary,
+                'achievement_id' => $achievement->id,
+                'achievement_title' => $achievement->title,
+                'achievement_description' => $achievement->description,
+                'icon_key' => $achievement->icon_key,
             ],
         ]);
     }
@@ -230,6 +265,8 @@ class CourseActivity extends Model
                 return 3.0;
             case static::TYPE_TASK_AI_SUMMARY:
                 return 2.5;
+            case static::TYPE_AI_ACHIEVEMENT_EARNED:
+                return 3.0;
             case static::TYPE_DEADLINE_PENALTY_PAID:
             case static::TYPE_EARLY_ACCESS_BOUGHT:
             case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
@@ -345,6 +382,8 @@ class CourseActivity extends Model
                 return 'взял(а) ещё попытку GeekPaste';
             case static::TYPE_TASK_AI_SUMMARY:
                 return 'опубликовал(а) AI-пересказ «' . $taskName . '»';
+            case static::TYPE_AI_ACHIEVEMENT_EARNED:
+                return 'получил(а) достижение «' . ($payload['achievement_title'] ?? 'Сильное решение') . '»';
             default:
                 return 'Новое событие в курсе';
         }
@@ -372,6 +411,8 @@ class CourseActivity extends Model
 
     public function iconClass()
     {
+        $payload = $this->payload ?: [];
+
         switch ($this->type) {
             case static::TYPE_SOLUTION_SUBMITTED:
                 return 'fas fa-paper-plane';
@@ -388,8 +429,10 @@ class CourseActivity extends Model
                 return 'fas fa-robot';
             case static::TYPE_TASK_AI_SUMMARY:
                 return 'fas fa-newspaper';
+            case static::TYPE_AI_ACHIEVEMENT_EARNED:
+                return Achievement::iconOptions()[$payload['icon_key'] ?? 'sparkles'] ?? 'fas fa-magic';
             default:
-                return 'fas fa-sparkles';
+                return 'fas fa-magic';
         }
     }
 
@@ -406,6 +449,8 @@ class CourseActivity extends Model
                 return 'is-open';
             case static::TYPE_TASK_AI_SUMMARY:
                 return 'is-summary';
+            case static::TYPE_AI_ACHIEVEMENT_EARNED:
+                return 'is-achievement';
             default:
                 return 'is-submit';
         }
@@ -414,6 +459,10 @@ class CourseActivity extends Model
     public function url()
     {
         if ($this->step_id && $this->task_id) {
+            if ($this->type === static::TYPE_AI_ACHIEVEMENT_EARNED && $this->user_id) {
+                return url('/insider/profile/' . $this->user_id . '#achievements');
+            }
+
             return url('/insider/courses/' . $this->course_id . '/steps/' . $this->step_id . '#task' . $this->task_id);
         }
 

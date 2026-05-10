@@ -5,19 +5,19 @@
                 <div class="home-profile-head">
                     <x-gc-avatar :user="$user" size="lg" class="home-profile-head__avatar" alt="" />
                     <div class="home-profile-head__body">
-                        <h6 class="home-profile-head__title"><a href="{{ url('/insider/profile/'.$user->id) }}" class="text-decoration-none">{{ $user->name }}</a></h6>
+                        <h5 class="home-profile-head__title mb-1"><a href="{{ url('/insider/profile/'.$user->id) }}" class="text-decoration-none">{{ $user->name }}</a></h5>
                         <div class="home-profile-head__badges">
                             @include('profile.partials.custom_title_badge', ['profileUser' => $user, 'compact' => true])
-                            <span class="badge rounded-pill bg-body-tertiary"><i class="fas fa-arrow-up me-1"></i>{{ $rank->name }}</span>
+                            <span class="badge rounded-pill bg-body-tertiary home-profile-badge"><i class="fas fa-arrow-up me-1"></i>{{ $rank->name }}</span>
                             @if ($user->is_trainee)
-                                <span class="badge rounded-pill bg-body-tertiary">Стажер</span>
+                                <span class="badge rounded-pill bg-body-tertiary home-profile-badge">Стажер</span>
                             @endif
                             @if ($user->is_teacher)
-                                <span class="badge rounded-pill bg-body-tertiary">Преподаватель</span>
+                                <span class="badge rounded-pill bg-body-tertiary home-profile-badge">Преподаватель</span>
                             @endif
                         </div>
                     </div>
-                    <a href="{{ url('/insider/profile/'.$user->id) }}" class="btn btn-outline-secondary btn-sm rounded-3 gc-icon-button home-profile-open" aria-label="Открыть профиль"><i class="fas fa-arrow-right"></i></a>
+
                 </div>
 
                 <div class="row g-2 border-top pt-3 mb-3">
@@ -77,7 +77,6 @@
                             <small class="text-muted">Ближайшие даты</small>
                         </div>
                     </div>
-                    <span class="badge rounded-pill bg-body-tertiary">{{ $birthdayUsers->count() }}</span>
                 </div>
                 <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
                     @forelse($birthdayUsers->take(8) as $buser)

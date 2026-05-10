@@ -78,6 +78,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses', 'CoursesController@index')->name('Courses');
     Route::get('/pulse', 'CoursesController@pulse');
     Route::get('/reviews', 'CoursesController@reviews');
+    Route::post('/reviews/reset-pending', 'CoursesController@resetPendingReviews');
 
     Route::get('/courses/create', 'CoursesController@createView')->name('Create course');
     Route::post('/courses/create', 'CoursesController@create');
@@ -137,7 +138,6 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/tasks/{id}/down', 'TasksController@toNextTask');
     Route::get('/courses/{course_id}/tasks/{id}/left', 'TasksController@makeLower');
     Route::get('/courses/{course_id}/tasks/{id}/right', 'TasksController@makeUpper');
-    Route::get('/courses/{course_id}/tasks/{id}/peer', 'TasksController@reviewTable');
     Route::post('/courses/{course_id}/tasks/{id}/deadline', 'TasksController@makeDeadline');
     Route::get('/courses/{course_id}/tasks/{id}/recheck-all', 'TasksController@recheckAllSolutions');
     Route::post('/courses/{course_id}/tasks/{id}/ai-summary', 'TasksController@aiTaskSummary');
@@ -146,6 +146,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/courses/{course_id}/tasks/{id}/edit', 'TasksController@edit');
     Route::post('/courses/{course_id}/tasks/{id}/solution', 'TasksController@postSolution');
     Route::get('/courses/{course_id}/tasks/{id}/solution/{solution_id}/recheck', 'TasksController@askForRecheck');
+    Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/skip-review', 'TasksController@skipSolutionReview');
+    Route::post('/courses/{course_id}/tasks/{id}/student/{student_id}/skip-review', 'TasksController@skipStudentReviews');
     Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/deadline-penalty', 'TasksController@payDeadlinePenalty');
     Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/xp-booster', 'TasksController@useXpBooster');
     Route::post('/courses/{course_id}/tasks/{id}/geekpaste-extra-attempt', 'TasksController@buyGeekPasteExtraAttempt');

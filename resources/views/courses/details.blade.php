@@ -718,8 +718,7 @@
                                             $bestSolution = \App\Solution::bestScoredIn($filtered);
                                             $mark = $bestSolution ? $bestSolution->mark : 0;
                                             $markClass = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary') : 'bg-body-tertiary';
-                                            $should_check = false;
-                                            if (count($filtered) != 0 && $filtered->last()->mark == null) $should_check = true;
+                                            $should_check = $filtered->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped)->isNotEmpty();
                                         @endphp
 
                                         <tr>

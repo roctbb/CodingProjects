@@ -20,15 +20,20 @@
     @else
         <div class="course-index-card gc-card">
     @endif
-        <div class="d-flex flex-column flex-grow-1 p-3">
-            <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-                <h6 class="fw-bold lh-sm text-body mb-0">{{ $course->name }}</h6>
-                @if($statusLabel)
-                    <span class="badge rounded-pill bg-body-tertiary flex-shrink-0">{{ $statusLabel }}</span>
-                @endif
+        <div class="course-index-card__body">
+            <span class="course-index-card__icon"><i class="fas fa-graduation-cap"></i></span>
+            <div class="course-index-card__content">
+                <div class="course-index-card__head">
+                    <h6 class="course-index-card__title">{{ $course->name }}</h6>
+                    @if($statusLabel)
+                        <span class="badge rounded-pill bg-body-tertiary flex-shrink-0">{{ $statusLabel }}</span>
+                    @endif
+                </div>
+                <p class="course-index-card__description">{{ \Illuminate\Support\Str::limit($course->description, 110) }}</p>
             </div>
-            <p class="text-muted small lh-sm mb-3">{{ \Illuminate\Support\Str::limit($course->description, 90) }}</p>
-            <div class="flex-grow-1"></div>
+            @if($isLinked)
+                <span class="home-card-arrow course-index-card__arrow"><i class="fas fa-arrow-right"></i></span>
+            @endif
 
             @if ($percent !== null)
                 <div class="course-index-card__progress">
@@ -46,7 +51,7 @@
             @endif
 
             @if($isArchive || $isAvailable)
-                <div class="border-top mt-3 pt-2 d-flex align-items-center justify-content-between gap-2">
+                <div class="course-index-card__footer">
                     @if($isArchive)
                     <div class="d-flex align-items-center gap-2 min-width-0 text-muted small">
                         <i class="far fa-calendar-alt"></i>

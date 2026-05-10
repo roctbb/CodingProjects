@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Course;
+use App\CourseActivity;
 use App\ProgramStep;
 use App\Http\Controllers\Controller;
 use App\Lesson;
@@ -62,6 +63,19 @@ class StepsController extends Controller
             return $task->isVisible($user, $course);
         });
 
+        $latestTaskAiSummaries = collect();
+        if ($tasks->isNotEmpty()) {
+            $latestTaskAiSummaries = CourseActivity::with('user:id,name')
+                ->where('course_id', $course->id)
+                ->where('type', CourseActivity::TYPE_TASK_AI_SUMMARY)
+                ->whereIn('task_id', $tasks->pluck('id')->values())
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->get()
+                ->unique('task_id')
+                ->keyBy('task_id');
+        }
+
         $zero_theory = $step->theory == null || $step->theory == "";
         $one_tasker = $tasks->count() == 1 && $zero_theory;
         $empty = $zero_theory && $tasks->count() == 0;
@@ -88,7 +102,7 @@ class StepsController extends Controller
             }
         }
 
-        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'geekpasteAttemptResetStatuses'));
+        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'geekpasteAttemptResetStatuses', 'latestTaskAiSummaries'));
     }
 
     public function perform($course_id, $id)

@@ -365,6 +365,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany('App\MarketDeal', 'user_id', 'id');
     }
 
+    public function achievements()
+    {
+        return $this->hasMany('App\Achievement', 'user_id', 'id');
+    }
+
     public function isBirthday()
     {
         if (!$this->birthday) return false;

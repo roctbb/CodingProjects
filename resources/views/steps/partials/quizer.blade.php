@@ -43,9 +43,6 @@
                         <a class="btn btn-outline-secondary btn-sm rounded-3"
                            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"
                            title="Фантомное решение"><i class="icon ion-ios-color-wand"></i></a>
-                        <a class="btn btn-outline-secondary btn-sm rounded-3"
-                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/peer')}}"
-                           title="Сгенерировать peer-review"><i class="icon ion-person-stalker"></i></a>
                         <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть вправо"
                            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i class="icon ion-arrow-right-c"></i></a>
                         <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть влево"

@@ -6,6 +6,7 @@ use App\CoinTransaction;
 use App\Course;
 use App\CourseActivity;
 use App\CourseStudentPoints;
+use App\Jobs\GenerateSolutionAchievement;
 use App\LessonStudentStats;
 use App\Solution;
 use App\Task;
@@ -77,6 +78,7 @@ class GeekPasteAPI extends Controller
                 CourseActivity::recordSolutionSubmitted($solution);
             }
             CourseActivity::recordSolutionChecked($solution);
+            $this->dispatchAiAchievementGeneration($solution);
 
             // Recalculate cached points after auto-grading code
             CourseStudentPoints::recalculate($course->id, $solution->user_id);
@@ -90,6 +92,22 @@ class GeekPasteAPI extends Controller
             return response()->json(['state' => 'error', 'message' => $e->getMessage()]);
         }
 
+    }
+
+    private function dispatchAiAchievementGeneration(Solution $solution)
+    {
+        if (!$solution->isEligibleForAiAchievement()) {
+            return;
+        }
+
+        try {
+            GenerateSolutionAchievement::dispatch($solution->id)->afterResponse();
+        } catch (\Throwable $e) {
+            \Log::warning('AI achievement dispatch failed', [
+                'solution_id' => $solution->id,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 
 }

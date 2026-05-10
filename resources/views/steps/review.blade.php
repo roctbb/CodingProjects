@@ -4,9 +4,13 @@
     {{$student->name}}: {{$task->name}}
 @endsection
 
+@section('head')
+    @include('layouts.partials.mathjax')
+@endsection
+
 @section('content')
     @php
-        $pendingSolutionsCount = $solutions->filter(fn ($solution) => $solution->mark === null)->count();
+        $pendingSolutionsCount = $solutions->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped)->count();
         $checkedSolutionsCount = $solutions->count() - $pendingSolutionsCount;
         $isBlocked = ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin') && $task->isBlocked($student->id, $course->id);
     @endphp
@@ -31,6 +35,12 @@
                     <a class="btn btn-sm gc-action-button solution-action" href="{{ url('/insider/courses/'.$course->id.'/assessments') }}"><i class="fas fa-table"></i> Журнал</a>
                     <a class="btn btn-sm gc-action-button solution-action" href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit') }}"><i class="fas fa-pen"></i> Редактировать</a>
                     @if ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin')
+                        @if($pendingSolutionsCount)
+                            <form method="post" action="{{ url('insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id.'/skip-review') }}" onsubmit="return confirm('Пропустить все непроверенные решения этого ученика по задаче?');">
+                                {{ csrf_field() }}
+                                <button type="submit" class="btn btn-sm gc-action-button solution-action">Пропустить все</button>
+                            </form>
+                        @endif
                         @if ($isBlocked)
                             <a class="btn btn-sm gc-action-button solution-action"
                                href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/unblock/'.$student->id) }}"
@@ -75,8 +85,9 @@
         @forelse ($solutions as $key => $solution)
             @php
                 $solutionScoreBadgeClass = $solution->scoreBadgeClass();
+                $solutionPendingReview = $solution->submitted && $solution->mark === null && !$solution->review_skipped;
             @endphp
-            <div class="gc-card solution-review-card mb-3 @if($solution->mark === null) is-pending @else is-checked @endif" id="solution-{{ $solution->id }}">
+            <div class="gc-card solution-review-card mb-3 @if($solutionPendingReview) is-pending @else is-checked @endif" id="solution-{{ $solution->id }}">
                 <div class="gc-section-header gc-section-header--between solution-review-card__header">
                     <div class="solution-review-card__title min-width-0">
                         <strong class="text-truncate">Решение #{{ $solutions->count() - $key }}</strong>
@@ -88,6 +99,8 @@
                         @else
                             <span class="badge rounded-pill {{ $solutionScoreBadgeClass }}">{{ $solution->mark }} / {{ $task->max_mark }} XP</span>
                         @endif
+                    @elseif($solution->review_skipped)
+                        <span class="badge rounded-pill bg-body-tertiary text-muted border fw-semibold">Пропущено</span>
                     @else
                         <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold">На проверке</span>
                     @endif
@@ -121,6 +134,14 @@
                             {{ csrf_field() }}
                             <div class="solution-grade-form__header">
                                 <strong class="small text-uppercase text-muted">Оценка</strong>
+                                @if($solutionPendingReview)
+                                    <button type="submit"
+                                            class="btn btn-link btn-sm text-muted p-0"
+                                            form="skip-review-{{ $solution->id }}"
+                                            onclick="return confirm('Пропустить это решение в очереди проверки?');">
+                                        Пропустить
+                                    </button>
+                                @endif
                             </div>
                             <div class="solution-grade-grid">
                                 <div class="solution-grade-field solution-grade-field--mark">
@@ -145,6 +166,11 @@
                                 </div>
                             </div>
                         </form>
+                        @if($solutionPendingReview)
+                            <form id="skip-review-{{ $solution->id }}" method="post" action="{{ url('insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/skip-review') }}">
+                                {{ csrf_field() }}
+                            </form>
+                        @endif
                     </div>
                 </div>
             </div>

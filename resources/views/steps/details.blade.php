@@ -13,6 +13,10 @@
 
 @endsection
 
+@section('head')
+    @include('layouts.partials.mathjax')
+@endsection
+
 @section('content')
     <div class="step-page-shell" data-step-details-page>
         <div class="step-reading-progress" data-step-reading-progress hidden>

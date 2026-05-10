@@ -143,30 +143,25 @@
                     @endforeach
 
                     @if($isTeacher && $pendingSolutionsTotal)
-                        <div class="gc-card home-review-strip" role="status">
-                            <a class="home-review-head home-review-head--link" href="{{ url('/insider/reviews') }}" aria-label="Открыть список непроверенных решений">
+                        @php
+                            $pendingSolutionsMod10 = $pendingSolutionsTotal % 10;
+                            $pendingSolutionsMod100 = $pendingSolutionsTotal % 100;
+                            $pendingSolutionsWord = ($pendingSolutionsMod10 == 1 && $pendingSolutionsMod100 != 11)
+                                ? 'решение'
+                                : (in_array($pendingSolutionsMod10, [2, 3, 4]) && !in_array($pendingSolutionsMod100, [12, 13, 14]) ? 'решения' : 'решений');
+                        @endphp
+                        <a class="gc-card home-review-strip home-review-notice" href="{{ url('/insider/reviews') }}" aria-label="Открыть список непроверенных решений">
+                            <span class="home-review-head">
                                 <span class="home-review-icon"><i class="fas fa-code-branch"></i></span>
-                                <strong class="min-width-0">На проверке</strong>
-                                <span class="badge rounded-pill bg-body-tertiary">{{ $pendingSolutionsTotal }}</span>
-                                <i class="fas fa-arrow-right home-review-head__arrow"></i>
-                            </a>
-                            <div class="home-review-list">
-                                @foreach($pendingSolutions as $solution)
-                                    <a href="{{ url('insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/student/'.$solution->user_id.'#solution-'.$solution->id) }}" class="home-review-item" title="{{ $solution->user->name }} · {{ $solution->task->name ?? 'Задача' }}">
-                                        <x-gc-avatar :user="$solution->user" size="sm" class="home-review-avatar" alt="" />
-                                        <span class="home-review-name">
-                                            <span>{{ $solution->user->name }}</span>
-                                            @include('profile.partials.custom_title_badge', ['profileUser' => $solution->user, 'compact' => true])
-                                        </span>
-                                        <span class="home-review-task">{{ $solution->task->name ?? 'Задача' }}</span>
-                                        <small class="home-review-date"><i class="far fa-clock"></i>{{ $solution->submitted->format('d.m') }}</small>
-                                    </a>
-                                @endforeach
-                                @if($pendingSolutionsTotal > $pendingSolutions->count())
-                                    <span class="home-review-more">+{{ $pendingSolutionsTotal - $pendingSolutions->count() }}</span>
-                                @endif
-                            </div>
-                        </div>
+                                <span class="min-width-0">
+                                    <span class="home-review-eyebrow">Ожидают проверки</span>
+                                    <span class="home-review-label">{{ $pendingSolutionsTotal }} {{ $pendingSolutionsWord }}</span>
+                                </span>
+                            </span>
+                            <span class="home-review-notice__action">
+                                <span class="home-card-arrow"><i class="fas fa-arrow-right"></i></span>
+                            </span>
+                        </a>
                     @elseif(!$isTeacher && ($upcomingDeadlines->count() || $courseProgress->count()))
                         <div class="gc-card home-next-card overflow-hidden mb-4">
                             <div class="gc-section-header gc-section-header--inline">

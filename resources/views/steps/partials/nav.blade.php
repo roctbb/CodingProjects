@@ -8,25 +8,15 @@
 <nav class="step-sidebar" id="stepsSidebar">
     <ul class="nav nav-pills flex-column step-sidebar__brand-list">
         <li class="nav-item">
-            <a class="nav-link step-sidebar__brand" href="{{ url('/') }}">
+            <a class="nav-link step-sidebar__brand" href="{{ $courseBackUrl ?: url('/') }}">
+                @if ($isInsider)
+                    <i class="icon ion-chevron-left step-sidebar__brand-back"></i>
+                @endif
                 <img src="{{ url('images/icons/icons8-idea-64.png') }}" height="32" alt=""/>
                 <span>GeekClass</span>
             </a>
         </li>
-        @if ($isInsider)
-            <li class="nav-item">
-                <a class="nav-link step-sidebar__back" href="{{ $courseBackUrl }}">
-                    <i class="icon ion-chevron-left"></i>
-                    <span>К курсу</span>
-                </a>
-            </li>
-        @endif
     </ul>
-
-    <div class="step-sidebar__lesson">
-        <span>Раздел</span>
-        <strong title="{{ $step->lesson->name }}">{{ $step->lesson->name }}</strong>
-    </div>
 
     <ul class="nav nav-pills flex-column step-sidebar__list">
         @foreach($step->lesson->steps as $lesson_step)

@@ -9,6 +9,7 @@
 	    @include('layouts.partials.npm-vendor-assets')
 	    <script type="module" src="{{ asset('build/js/nbv.js') }}"></script>
     <link href="{{ asset('build/css/notebook.css') }}" rel="stylesheet">
+    @yield('head')
 </head>
 <body class="bg-body min-vh-100">
 

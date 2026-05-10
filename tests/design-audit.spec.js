@@ -41,7 +41,6 @@ const pages = [
   { role: 'admin', name: 'step-create', path: '/insider/courses/158/lessons/651/create' },
   { role: 'admin', name: 'step-edit', path: '/insider/courses/158/steps/3840/edit' },
   { role: 'admin', name: 'task-edit', path: '/insider/courses/158/tasks/2268/edit' },
-  { role: 'admin', name: 'task-peer-review', path: '/insider/courses/158/tasks/2268/peer' },
   { role: 'admin', name: 'perform-step', path: '/insider/courses/158/perform/3840' },
 ];
 

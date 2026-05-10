@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var url = document.location.toString();
     const stepDetailsPage = document.querySelector('[data-step-details-page]');
     const stepTabs = document.querySelector('[data-step-content-tabs]');
+    const performTabs = document.querySelector('[data-perform-tabs]');
     const linkifySelector = document.body.dataset.linkifySelector || 'div.markdown, [data-linkify]';
     const linkifySkipSelector = 'nav, aside, form, button, textarea, select, option, .dropdown-menu, .gc-sidebar';
 
@@ -235,9 +236,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
 
-    // Tab activation from URL hash. Step pages initialize their tabs below so they can
-    // avoid the browser's eager anchor scroll to hidden tab panes.
-    if (url.match('#') && !stepTabs) {
+    // Tab activation from URL hash. Step and perform pages initialize their tabs below
+    // so they can avoid the browser's eager anchor scroll to hidden tab panes.
+    if (url.match('#') && !stepTabs && !performTabs) {
         var hash = window.location.hash;
         var tabEl = getTabTriggerForHash(hash);
         if (tabEl) new bootstrap.Tab(tabEl).show();
@@ -309,12 +310,30 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (document.querySelector('[data-perform-tabs]')) {
-        var firstPane = document.querySelector('.tab-pane');
-        if (firstPane) {
-            firstPane.classList.remove('fade');
-            firstPane.classList.add('show', 'active');
+    if (performTabs) {
+        var performHash = window.location.hash;
+        var performHashTab = getTabTriggerForHash(performHash);
+        var performHashPane = performHash ? performTabs.querySelector(performHash) : null;
+
+        if (performHashTab && performHashPane) {
+            new bootstrap.Tab(performHashTab).show();
+        } else {
+            var activePerformPane = performTabs.querySelector('.tab-pane.active');
+            if (!activePerformPane) {
+                activePerformPane = performTabs.querySelector('.tab-pane');
+                if (activePerformPane) activePerformPane.classList.add('show', 'active');
+            }
+
+            if (activePerformPane) {
+                var activePerformTab = getTabTriggerForHash('#' + activePerformPane.id);
+                if (activePerformTab) {
+                    activePerformTab.classList.add('active');
+                    activePerformTab.setAttribute('aria-selected', 'true');
+                }
+            }
         }
+
+        syncTabContentHeight(performTabs);
     }
 
     if (stepTabs) {

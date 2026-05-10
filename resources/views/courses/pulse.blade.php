@@ -126,7 +126,7 @@
                         ? $activity->user->activeAvatarFrame()
                         : null;
                     $subtitle = $activity->subtitle();
-                    $summary = $activity->payload['summary'] ?? null;
+                    $summary = $activity->payload['summary'] ?? ($activity->payload['achievement_description'] ?? null);
                 @endphp
                 <a class="pulse-feed__item {{ $activity->toneClass() }} @if($activityFrame) pulse-feed__item--framed pulse-feed__item--frame-{{ $activityFrame }} @endif"
                    href="{{ $activity->url() }}"

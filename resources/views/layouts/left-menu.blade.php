@@ -7,8 +7,6 @@
     <title>@yield('title') - {{ config('app.name', 'Laravel') }}</title>
 
 	    @include('layouts.partials.npm-vendor-assets')
-	    <script type="module" src="{{ asset('build/js/mathjax-config.js') }}"></script>
-    <script id="MathJax-script" async src="{{ asset('build/js/vendor/mathjax/tex-mml-chtml.js') }}"></script>
 
     @include('layouts.partials.pipeline-theme-scripts')
     @yield('head')
