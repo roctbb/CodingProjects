@@ -66,7 +66,7 @@ class Task extends Model
             return $this->solutionsForUser($user_id)
                     ->filter(function ($solution) {
                         return $solution->submitted !== null
-                            && $solution->mark === null
+                            && ($solution->mark === null || $solution->recheck_requested)
                             && !$solution->review_skipped;
                     })
                     ->count() != 0;
@@ -74,7 +74,10 @@ class Task extends Model
 
         return $this->solutionsForUser($user_id)
                 ->whereNotNull('submitted')
-                ->whereNull('mark')
+                ->where(function ($query) {
+                    $query->whereNull('mark')
+                        ->orWhere('recheck_requested', true);
+                })
                 ->where(function ($query) {
                     $query->where('review_skipped', false)
                         ->orWhereNull('review_skipped');

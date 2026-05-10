@@ -10,6 +10,71 @@ var nbv = (function() {
 
     var d = document;
     var st = {}; // settings
+    var allowedHtmlTags = new Set([
+        'A', 'B', 'BLOCKQUOTE', 'BR', 'CODE', 'DEL', 'DIV', 'EM', 'H1', 'H2', 'H3',
+        'H4', 'H5', 'H6', 'HR', 'I', 'IMG', 'LI', 'OL', 'P', 'PRE', 'SPAN', 'STRONG',
+        'TABLE', 'TBODY', 'TD', 'TH', 'THEAD', 'TR', 'U', 'UL'
+    ]);
+    var allowedHtmlAttrs = new Set([
+        'alt', 'class', 'colspan', 'height', 'href', 'rel', 'rowspan', 'src', 'target',
+        'title', 'width'
+    ]);
+
+    function isSafeUrl(value, allowDataImages) {
+        try {
+            var trimmed = String(value || '').trim();
+            if (!trimmed) {
+                return true;
+            }
+            if (allowDataImages && /^data:image\/(?:png|jpeg|gif|webp);base64,/i.test(trimmed)) {
+                return true;
+            }
+            var url = new URL(trimmed, window.location.origin);
+            return ['http:', 'https:', 'mailto:'].indexOf(url.protocol) !== -1;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function sanitizeHtml(html) {
+        var template = d.createElement('template');
+        template.innerHTML = String(html || '');
+
+        Array.from(template.content.querySelectorAll('*')).forEach(function (node) {
+            if (!allowedHtmlTags.has(node.tagName)) {
+                node.replaceWith(d.createTextNode(node.textContent || ''));
+                return;
+            }
+
+            Array.from(node.attributes).forEach(function (attr) {
+                var name = attr.name.toLowerCase();
+                var value = attr.value;
+
+                if (name.indexOf('on') === 0 || !allowedHtmlAttrs.has(name)) {
+                    node.removeAttribute(attr.name);
+                    return;
+                }
+
+                if ((name === 'href' || name === 'src') && !isSafeUrl(value, name === 'src')) {
+                    node.removeAttribute(attr.name);
+                    return;
+                }
+
+                if (name === 'target') {
+                    node.setAttribute('rel', 'noopener noreferrer');
+                }
+            });
+        });
+
+        return template.innerHTML;
+    }
+
+    function createSvgImage(svg) {
+        var img = d.createElement('img');
+        img.setAttribute('src', 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))));
+        img.setAttribute('style', 'max-width: 100%');
+        return img;
+    }
 
     function render_ipynb(obj, target, settings) {
         if (!window.marked || !window.Prism) {
@@ -214,7 +279,7 @@ var nbv = (function() {
                 break;
 
             case 'text/html':
-                dm.innerHTML = dt.data[fmt].join('');
+                dm.innerHTML = sanitizeHtml(dt.data[fmt].join(''));
 
                 // we may have generated some HTML tables we need to style
                 var dfs = dm.getElementsByClassName('dataframe');
@@ -238,7 +303,7 @@ var nbv = (function() {
                 break;
 
             case 'image/svg+xml':
-                dm.innerHTML = dt.data[fmt].join('');
+                dm.appendChild(createSvgImage(dt.data[fmt].join('')));
                 break;
 
             default:
@@ -296,7 +361,7 @@ var nbv = (function() {
 
     function handle_mdown(cell) {
         var el = d.createElement('div');
-        el.innerHTML = marked(cell.source.join(''));
+        el.innerHTML = sanitizeHtml(marked(cell.source.join('')));
 
         return el;
     }
@@ -324,7 +389,7 @@ var nbv = (function() {
                 case 'html':
                     p = d.createElement('div');
                     // guessing here, haven't seen a v3 HTML element
-                    p.innerHTML = cell[k].join('');
+                    p.innerHTML = sanitizeHtml(cell[k].join(''));
                     break;
                 case 'png':
                 case 'jpeg':

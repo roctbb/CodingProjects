@@ -46,7 +46,7 @@
                             <div class="task-ai-summary__head">
                                 <span class="task-ai-summary__icon"><i class="fas fa-newspaper"></i></span>
                                 <div class="min-width-0">
-                                    <h5 class="task-ai-summary__title mb-0">AI-пересказ решений</h5>
+                                    <h5 class="task-ai-summary__title mb-0">Пересказ решений</h5>
                                     <p class="task-ai-summary__meta mb-0">
                                         {{ $latestAiSummary->created_at->format('d.m.Y H:i') }}
                                         @if ($latestAiSummary->user)
@@ -111,7 +111,7 @@
                                    class="btn btn-outline-secondary btn-sm rounded-3"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"><i class="icon ion-ios-color-wand"></i></a>
                                 <button type="button"
-                                        title="AI-пересказ решений"
+                                        title="Пересказ решений"
                                         data-bs-toggle="modal"
                                         data-bs-target="#task-ai-summary-modal-{{$task->id}}"
                                         class="btn btn-outline-secondary btn-sm rounded-3">
@@ -235,7 +235,7 @@
                                         <div class="task-ai-summary__head min-width-0">
                                             <span class="task-ai-summary__icon"><i class="fas fa-newspaper"></i></span>
                                             <div class="min-width-0">
-                                                <h5 class="task-ai-summary__title mb-0" id="task-ai-summary-title-{{$task->id}}">AI-пересказ решений</h5>
+                                                <h5 class="task-ai-summary__title mb-0" id="task-ai-summary-title-{{$task->id}}">Пересказ решений</h5>
                                                 <p class="task-ai-summary__meta mb-0 text-truncate">{{ $task->name }}</p>
                                             </div>
                                         </div>
@@ -289,38 +289,46 @@
                                     <div class="gc-section-header gc-section-header--between">
                                         <div>
                                             <h6 class="mb-0">Прогресс учеников</h6>
-                                            <p class="text-muted small mb-0">Быстрый переход к проверке по каждому ученику.</p>
+                                            <p class="text-muted small mb-0">Карточки решений по каждому ученику.</p>
                                         </div>
-                                        <span class="badge rounded-pill bg-body-tertiary text-nowrap">{{ $course->students->count() }} учеников</span>
+                                        <div class="input-group input-group-sm gc-search-box step-progress-search">
+                                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                            <input type="search"
+                                                   class="form-control"
+                                                   placeholder="Найти ученика"
+                                                   aria-label="Найти ученика"
+                                                   data-step-progress-search
+                                                   data-step-progress-grid="#step-progress-grid-{{ $task->id }}">
+                                            <span class="input-group-text gc-search-box__count" data-step-progress-count>{{ $course->students->count() }} из {{ $course->students->count() }}</span>
+                                        </div>
                                     </div>
-                                    <div class="table-responsive step-progress-table-wrap">
-                                    <table class="table table-hover table-sm align-middle mb-0 gc-data-table step-student-progress-table">
-                                        <thead class="text-uppercase small">
-                                        <tr>
-                                            <th>Ученик</th>
-                                            <th class="text-end">Баллы</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
+                                    <div class="step-progress-grid-wrap">
+                                        <div class="step-progress-grid" id="step-progress-grid-{{ $task->id }}">
                                         @foreach($course->students as $student)
                                             @php
                                                 $filtered = $task->solutions->filter(function ($value) use ($student) {
                                                 return $value->user_id == $student->id;
                                                 });
                                                 $bestSolution = \App\Solution::bestScoredIn($filtered);
+                                                $latestSolution = $filtered->sortByDesc('submitted')->first();
                                                 $blocked = $task->isBlocked($student->id, $course->id);
                                                 if ($blocked) {
                                                     $mark = 0;
                                                     $need_check = false;
                                                     $class = 'bg-danger-subtle text-danger border border-danger-subtle fw-semibold';
+                                                    $stateClass = 'is-blocked';
+                                                    $stateLabel = 'Заблокировано';
                                                 } else {
                                                     $mark = $bestSolution ? $bestSolution->mark : 0;
                                                     $need_check = false;
+                                                    $recheckRequested = $filtered->filter(fn ($solution) => $solution->recheck_requested)->isNotEmpty();
                                                     if ($filtered->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped)->isNotEmpty())
                                                     {
                                                     $need_check = true;
                                                     }
                                                     $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary text-muted fw-semibold') : 'bg-body-tertiary text-muted fw-semibold';
+                                                    $stateClass = ($need_check || $recheckRequested) ? 'is-pending' : ($bestSolution ? 'is-checked' : 'is-empty');
+                                                    $stateLabel = $recheckRequested ? 'На перепроверку' : ($need_check ? 'На проверке' : ($bestSolution ? 'Проверено' : 'Нет решений'));
                                                     if ($mark >= $task->max_mark * 0.5)
                                                     {
                                                     $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary text-muted fw-semibold') : 'bg-body-tertiary text-muted fw-semibold';
@@ -334,22 +342,43 @@
                                                     $class = 'bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold';
                                                     }
                                                 }
+                                                $maxMark = max(1, (int) $task->max_mark);
+                                                $progressPercent = min(100, max(0, round(((int) $mark / $maxMark) * 100)));
+                                                $solutionsCount = $filtered->count();
+                                                $searchTitle = trim($student->name . ' ' . ($student->activeCustomTitle() ?? '') . ' ' . $stateLabel . ' ' . $mark . ' ' . $task->max_mark);
                                             @endphp
-                                            <tr>
-                                                <td data-label="Ученик"><a class="step-progress-student" href="/insider/profile/{{ $student->id }}"
-                                                       target="_blank">
+                                            <a class="step-progress-cardlet {{ $stateClass }}"
+                                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}"
+                                               target="_blank"
+                                               data-step-progress-card
+                                               data-step-progress-text="{{ $searchTitle }}">
+                                                <span class="step-progress-cardlet__head">
+                                                    <span class="step-progress-student">
                                                         <span class="text-truncate">{{$student->name}}</span>
                                                         @include('profile.partials.custom_title_badge', ['profileUser' => $student, 'compact' => true])
-                                                    </a></td>
-                                                <td class="text-end" data-label="Баллы"><a class="text-decoration-none" target="_blank"
-                                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">
-                                                        <span class="badge rounded-pill step-progress-mark {{$class}}">{{$mark}} / {{ $task->max_mark }}</span>
-                                                    </a>
-                                                </td>
-                                            </tr>
+                                                    </span>
+                                                    <span class="badge rounded-pill step-progress-mark {{$class}}">{{$mark}} / {{ $task->max_mark }}</span>
+                                                </span>
+                                                <span class="step-progress-cardlet__bar" aria-hidden="true">
+                                                    <span style="width: {{ $progressPercent }}%"></span>
+                                                </span>
+                                                <span class="step-progress-cardlet__meta">
+                                                    <span>{{ $stateLabel }}</span>
+                                                    <span>
+                                                        @if($solutionsCount > 0)
+                                                            {{ $solutionsCount }} реш.
+                                                            @if($latestSolution && $latestSolution->submitted)
+                                                                · {{ $latestSolution->submitted->format('d.m H:i') }}
+                                                            @endif
+                                                        @else
+                                                            перейти к ученику
+                                                        @endif
+                                                    </span>
+                                                </span>
+                                            </a>
                                         @endforeach
-                                        </tbody>
-                                    </table>
+                                        </div>
+                                        <div class="step-progress-empty text-muted small text-center d-none" data-step-progress-empty>Ничего не найдено</div>
                                     </div>
                                 </div>
                             </div>

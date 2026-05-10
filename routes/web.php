@@ -145,9 +145,11 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::post('/courses/{course_id}/tasks/{id}/edit', 'TasksController@edit');
     Route::post('/courses/{course_id}/tasks/{id}/solution', 'TasksController@postSolution');
-    Route::get('/courses/{course_id}/tasks/{id}/solution/{solution_id}/recheck', 'TasksController@askForRecheck');
+    Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/recheck', 'TasksController@askForRecheck');
     Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/skip-review', 'TasksController@skipSolutionReview');
     Route::post('/courses/{course_id}/tasks/{id}/student/{student_id}/skip-review', 'TasksController@skipStudentReviews');
+    Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/achievement-preview', 'TasksController@previewSolutionAchievement');
+    Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/achievement', 'TasksController@awardSolutionAchievement');
     Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/deadline-penalty', 'TasksController@payDeadlinePenalty');
     Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/xp-booster', 'TasksController@useXpBooster');
     Route::post('/courses/{course_id}/tasks/{id}/geekpaste-extra-attempt', 'TasksController@buyGeekPasteExtraAttempt');
@@ -169,6 +171,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/profile/{id}/custom-title', 'ProfileController@buyCustomTitle');
     Route::post('/profile/{id}/avatar-frame', 'ProfileController@buyAvatarFrame');
     Route::post('/profile/{id}/course', 'ProfileController@course');
+    Route::post('/profile/{user_id}/achievement/{achievement_id}', 'ProfileController@updateAchievement');
     Route::get('/profile/delete-course/{id}', 'ProfileController@deleteCourse');
     Route::get('/profile/{user_id}/delete-course/{course_id}', 'ProfileController@deleteCurrentCourse');
     Route::post('/profile/{user_id}/money', 'ProfileController@addMoney');

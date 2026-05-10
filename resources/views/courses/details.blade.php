@@ -81,7 +81,7 @@
                                     @foreach($marks as $mark)
                                         @if ($mark->cert_link != null)
                                             <li>
-                                                <a target="_blank" href="{{$mark->cert_link}}" class="course-row-between">
+                                                <a target="_blank" rel="noopener" href="{{ safe_url($mark->cert_link) }}" class="course-row-between">
                                                     <span class="d-inline-flex align-items-center gap-1 min-width-0">
                                                         <span class="text-truncate">{{$mark->user->name}}</span>
                                                         @include('profile.partials.custom_title_badge', ['profileUser' => $mark->user, 'compact' => true])
@@ -506,10 +506,10 @@
                                 <div class="gc-info-tile min-width-0"><span>Инвайт</span><strong>{{$course->invite}}</strong></div>
                             @endif
                             @if ($course->git != null)
-                                <div class="gc-info-tile min-width-0"><span>Git</span><a class="text-truncate d-block" href="{{$course->git}}">{{$course->git}}</a></div>
+                                <div class="gc-info-tile min-width-0"><span>Git</span><a class="text-truncate d-block" href="{{ safe_url($course->git) }}">{{$course->git}}</a></div>
                             @endif
                             @if ($course->telegram != null)
-                                <div class="gc-info-tile min-width-0"><span>Telegram</span><a class="text-truncate d-block" href="{{$course->telegram}}">{{$course->telegram}}</a></div>
+                                <div class="gc-info-tile min-width-0"><span>Telegram</span><a class="text-truncate d-block" href="{{ safe_url($course->telegram) }}">{{$course->telegram}}</a></div>
                             @endif
                         </div>
 
@@ -718,7 +718,7 @@
                                             $bestSolution = \App\Solution::bestScoredIn($filtered);
                                             $mark = $bestSolution ? $bestSolution->mark : 0;
                                             $markClass = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary') : 'bg-body-tertiary';
-                                            $should_check = $filtered->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped)->isNotEmpty();
+                                            $should_check = $filtered->filter(fn ($solution) => $solution->submitted && ($solution->mark === null || $solution->recheck_requested) && !$solution->review_skipped)->isNotEmpty();
                                         @endphp
 
                                         <tr>

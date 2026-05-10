@@ -37,7 +37,7 @@ return [
         ],
         'math' => [
             'HTML.Doctype'             => 'HTML 4.01 Transitional',
-            'HTML.Allowed'             => 'div,b,strong,i,em,u,a[href|title],ul,ol,li,p[style],br,span[style],img[width|height|alt|src],table,tr,td,h1,h2,h3,h4,h5,h6,pre,code',
+            'HTML.Allowed'             => 'div,b,strong,i,em,u,a[href|title|target],ul,ol,li,p[style],br,span[style|class],img[width|height|alt|src],table,thead,tbody,tr,th,td,blockquote,hr,h1,h2,h3,h4,h5,h6,pre[class],code[class],del',
             'CSS.AllowedProperties'    => 'font,font-size,font-weight,font-style,font-family,text-decoration,padding-left,color,background-color,text-align',
             'AutoFormat.AutoParagraph' => false,
             'AutoFormat.RemoveEmpty'   => false,

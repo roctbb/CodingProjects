@@ -18,9 +18,9 @@ class Rank extends Model
 
         foreach ($ranks as $rank)
             if ($current_rank == $rank)
-                $result.='<li><strong>'.$rank->name.' ('.$rank->from.')</strong></li>';
+                $result.='<li><strong>'.e($rank->name).' ('.e($rank->from).')</strong></li>';
             else
-                $result.='<li>'.$rank->name.' ('.$rank->from.')</li>';
+                $result.='<li>'.e($rank->name).' ('.e($rank->from).')</li>';
         $result.='</ul>';
         return $result;
     }

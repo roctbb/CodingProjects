@@ -6,6 +6,7 @@ use App\CoinTransaction;
 use App\Course;
 use App\CourseActivity;
 use App\CourseStudentPoints;
+use App\Achievement;
 use App\Jobs\GenerateSolutionAchievement;
 use App\Jobs\RecalculateCoursePoints;
 use App\Jobs\RecalculateCourseStudentPoints;
@@ -16,6 +17,7 @@ use App\Question;
 use App\QuestionVariant;
 use App\Services\GeekPasteClient;
 use App\Services\ChatGptService;
+use App\Services\SolutionAchievementGenerator;
 use App\Solution;
 use App\Task;
 use App\User;
@@ -38,7 +40,7 @@ class TasksController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('task');
-        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent', 'skipSolutionReview', 'skipStudentReviews', 'aiTaskSummary']);
+        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent', 'skipSolutionReview', 'skipStudentReviews', 'previewSolutionAchievement', 'awardSolutionAchievement', 'aiTaskSummary']);
     }
 
     /**
@@ -298,11 +300,25 @@ class TasksController extends Controller
             : redirect('/insider/courses/' . $course_id . '/steps/' . $step_id . '#task' . $id);
     }
 
-    public function askForRecheck($course_id, $id, $solution_id) {
-        $solution = Solution::findOrFail($solution_id);
+    public function askForRecheck(Request $request, $course_id, $id, $solution_id) {
+        $request->validate([
+            'recheck_comment' => ['required', 'string', 'min:10', 'max:1000'],
+            'recheck_solution_id' => ['nullable', 'integer'],
+        ], [
+            'recheck_comment.required' => 'Напишите, с чем именно вы не согласны.',
+            'recheck_comment.min' => 'Комментарий должен быть чуть подробнее.',
+            'recheck_comment.max' => 'Комментарий слишком длинный.',
+        ]);
+
+        $solution = Solution::where('id', $solution_id)
+            ->where('course_id', $course_id)
+            ->where('task_id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
         if (!$solution->recheck_requested and $solution->task->is_code) {
             $solution->recheck_requested = true;
+            $solution->recheck_comment = trim($request->input('recheck_comment'));
             $solution->save();
 
             $when = \Carbon\Carbon::now()->addSeconds(1);
@@ -317,10 +333,19 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         $student = User::findOrFail($student_id);
         $course = Course::findOrFail($course_id);
-        $solutions = $task->solutions->filter(function ($value) use ($student) {
-            return $value->user_id == $student->id;
-        });
-        return view('steps.review', compact('task', 'student', 'solutions', 'course'));
+        $solutions = Solution::where('course_id', $course_id)
+            ->where('task_id', $task->id)
+            ->where('user_id', $student->id)
+            ->with('teacher')
+            ->orderByDesc('submitted')
+            ->orderByDesc('id')
+            ->get();
+        $taskAchievement = Achievement::where('course_id', $course_id)
+            ->where('task_id', $task->id)
+            ->where('user_id', $student->id)
+            ->first();
+
+        return view('steps.review', compact('task', 'student', 'solutions', 'course', 'taskAchievement'));
     }
 
     public function skipSolutionReview($course_id, $id, $solution_id)
@@ -356,12 +381,130 @@ class TasksController extends Controller
             $updated = Solution::whereIn('id', $solutionIds)->update([
                 'review_skipped' => true,
                 'recheck_requested' => false,
+                'recheck_comment' => null,
             ]);
         }
 
         $this->make_success_alert('Решения пропущены', 'Снято с проверки: ' . $updated . '.');
 
         return redirect()->back();
+    }
+
+    public function previewSolutionAchievement($course_id, $id, $solution_id, SolutionAchievementGenerator $generator)
+    {
+        $solution = Solution::with('task.step.lesson', 'course.teachers', 'user')
+            ->where('course_id', $course_id)
+            ->where('task_id', $id)
+            ->findOrFail($solution_id);
+        $user = Auth::user();
+
+        if ($user->role != 'admin' && (!$solution->course || !$solution->course->teachers->contains('id', $user->id))) {
+            abort(403);
+        }
+
+        $existingAchievement = Achievement::where('course_id', $course_id)
+            ->where('task_id', $id)
+            ->where('user_id', $solution->user_id)
+            ->first();
+
+        if ($existingAchievement) {
+            $this->make_info_alert('Достижение уже есть', 'У ученика уже есть достижение за эту задачу. Его можно отредактировать в профиле.');
+
+            return redirect('/insider/profile/' . $solution->user_id . '#achievement-' . $existingAchievement->id);
+        }
+
+        try {
+            $preview = $generator->previewForSolution($solution, true);
+        } catch (\Throwable $e) {
+            \Log::error('Manual achievement preview failed', [
+                'solution_id' => $solution->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            $this->make_error_alert('Предпросмотр не получился', 'Не удалось сгенерировать достижение для этого решения. Попробуйте позже.');
+
+            return redirect()->back();
+        }
+
+        if (!$preview) {
+            $this->make_error_alert('Предпросмотр не получился', 'Не удалось получить текст решения для генерации достижения.');
+
+            return redirect()->back();
+        }
+
+        return redirect('/insider/courses/' . $course_id . '/tasks/' . $id . '/student/' . $solution->user_id . '#solution-' . $solution->id)
+            ->with('achievement_preview', [
+                'solution_id' => $solution->id,
+                'title' => $preview['title'],
+                'description' => $preview['description'],
+                'icon_key' => $preview['icon_key'],
+                'icon_class' => Achievement::iconOptions()[$preview['icon_key']] ?? Achievement::iconOptions()['sparkles'],
+                'tone' => $preview['tone'] ?? null,
+                'solution_source' => $preview['solution_source'] ?? null,
+                'language' => $preview['language'] ?? null,
+            ]);
+    }
+
+    public function awardSolutionAchievement($course_id, $id, $solution_id, Request $request, SolutionAchievementGenerator $generator)
+    {
+        $solution = Solution::with('task.step.lesson', 'course.teachers', 'user')
+            ->where('course_id', $course_id)
+            ->where('task_id', $id)
+            ->findOrFail($solution_id);
+        $user = Auth::user();
+
+        if ($user->role != 'admin' && (!$solution->course || !$solution->course->teachers->contains('id', $user->id))) {
+            abort(403);
+        }
+
+        $existingAchievement = Achievement::where('course_id', $course_id)
+            ->where('task_id', $id)
+            ->where('user_id', $solution->user_id)
+            ->first();
+
+        if ($existingAchievement) {
+            $this->make_info_alert('Достижение уже есть', 'У ученика уже есть достижение за эту задачу. Его можно отредактировать в профиле.');
+
+            return redirect('/insider/profile/' . $solution->user_id . '#achievement-' . $existingAchievement->id);
+        }
+
+        try {
+            if ($request->has(['title', 'description', 'icon_key'])) {
+                $iconKeys = implode(',', array_keys(Achievement::iconOptions()));
+                $this->validate($request, [
+                    'title' => 'required|string|max:120',
+                    'description' => 'required|string|max:1000',
+                    'icon_key' => 'required|string|in:' . $iconKeys,
+                    'tone' => 'nullable|string|max:40',
+                    'solution_source' => 'nullable|string|max:80',
+                    'language' => 'nullable|string|max:80',
+                ]);
+
+                $requestPreview = $request->only(['title', 'description', 'icon_key', 'tone', 'solution_source', 'language']);
+                $achievement = $generator->createForSolution($solution, $requestPreview, true);
+            } else {
+                $achievement = $generator->generateForSolution($solution, true);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('Manual achievement generation failed', [
+                'solution_id' => $solution->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            $this->make_error_alert('Достижение не получилось', 'Не удалось сгенерировать достижение для этого решения. Попробуйте позже.');
+
+            return redirect()->back();
+        }
+
+        if (!$achievement) {
+            $this->make_error_alert('Достижение не получилось', 'Не удалось получить текст решения для генерации достижения.');
+
+            return redirect()->back();
+        }
+
+        $this->make_success_alert('Достижение выдано', 'Оно появилось в профиле ученика и в пульсе.');
+
+        return redirect('/insider/profile/' . $solution->user_id . '#achievement-' . $achievement->id);
     }
 
     public function blockStudent($course_id, $id, $student_id)
@@ -458,6 +601,7 @@ class TasksController extends Controller
 
         $solution->teacher_id = Auth::User()->id;
         $solution->checked = Carbon::now();
+        $solution->recheck_requested = false;
         $solution->save();
         CourseActivity::recordSolutionChecked($solution);
         $this->dispatchAiAchievementGeneration($solution);
@@ -550,12 +694,12 @@ class TasksController extends Controller
                 'task_id' => $task->id,
                 'message' => $e->getMessage(),
             ]);
-            $this->make_error_alert('AI-пересказ не получился', 'Не удалось получить ответ от ChatGPT. Попробуйте позже.');
+            $this->make_error_alert('Пересказ не получился', 'Не удалось получить ответ от ChatGPT. Попробуйте позже.');
             return redirect()->back();
         }
 
         CourseActivity::recordTaskAiSummary($course, $task, $user, $summary, $instruction);
-        $this->make_success_alert('Новость добавлена в пульс', 'Полный AI-пересказ теперь показан на странице задачи.');
+        $this->make_success_alert('Новость добавлена в пульс', 'Полный пересказ теперь показан на странице задачи.');
 
         return redirect('/insider/courses/' . $course->id . '/steps/' . $task->step_id . '#task-ai-summary-' . $task->id);
     }

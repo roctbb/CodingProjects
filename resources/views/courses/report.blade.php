@@ -189,7 +189,7 @@
                                                         $bestSolution = \App\Solution::bestScoredIn($filtered);
                                                         $mark = $bestSolution ? $bestSolution->mark : 0;
                                                         $markClass = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary') : 'bg-body-tertiary';
-                                                        $should_check = $filtered->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped)->isNotEmpty();
+                                                        $should_check = $filtered->filter(fn ($solution) => $solution->submitted && ($solution->mark === null || $solution->recheck_requested) && !$solution->review_skipped)->isNotEmpty();
                                                     @endphp
                                                     <li class="report-task-row">
                                                         <a class="report-task-link text-decoration-none"

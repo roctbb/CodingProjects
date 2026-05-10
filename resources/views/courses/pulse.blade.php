@@ -37,9 +37,6 @@
             $formatChartPoint = function ($point) use ($formatChartNumber) {
                 return $formatChartNumber($point['x']).','.$formatChartNumber($point['y']);
             };
-            $clampChartValue = function ($value, $min, $max) {
-                return max($min, min($max, $value));
-            };
             $pulsePoints = $pulseSeries->values()->map(function ($point, $index) use ($chartPadding, $chartInnerWidth, $chartInnerHeight, $chartHeight, $seriesCount) {
                 $x = $seriesCount === 1 ? $chartPadding : $chartPadding + ($chartInnerWidth * $index / ($seriesCount - 1));
                 $y = $chartHeight - $chartPadding - ($chartInnerHeight * ((int) $point['value'] / 100));
@@ -47,40 +44,40 @@
                 return [
                     'x' => $x,
                     'y' => $y,
+                    'value' => (int) $point['value'],
                 ];
             })->values();
             $pulseLine = '';
             $pulseArea = '';
+            $pulseMarkers = collect();
 
             if ($pulsePoints->isNotEmpty()) {
                 $points = $pulsePoints->all();
                 $firstPoint = $points[0];
                 $lastPoint = $points[count($points) - 1];
                 $baseline = $chartHeight - $chartPadding;
-                $curveCommands = '';
+                $lineCommands = collect($points)->slice(1)->map(fn ($point) => ' L '.$formatChartPoint($point))->implode('');
 
-                for ($index = 0; $index < count($points) - 1; $index++) {
-                    $p0 = $points[max(0, $index - 1)];
-                    $p1 = $points[$index];
-                    $p2 = $points[$index + 1];
-                    $p3 = $points[min(count($points) - 1, $index + 2)];
-                    $smoothness = 0.18;
-                    $control1 = [
-                        'x' => $p1['x'] + (($p2['x'] - $p0['x']) * $smoothness),
-                        'y' => $clampChartValue($p1['y'] + (($p2['y'] - $p0['y']) * $smoothness), $chartPadding, $baseline),
-                    ];
-                    $control2 = [
-                        'x' => $p2['x'] - (($p3['x'] - $p1['x']) * $smoothness),
-                        'y' => $clampChartValue($p2['y'] - (($p3['y'] - $p1['y']) * $smoothness), $chartPadding, $baseline),
-                    ];
-                    $curveCommands .= ' C '.$formatChartPoint($control1).' '.$formatChartPoint($control2).' '.$formatChartPoint($p2);
-                }
-
-                $pulseLine = 'M '.$formatChartPoint($firstPoint).$curveCommands;
+                $pulseLine = 'M '.$formatChartPoint($firstPoint).$lineCommands;
                 $pulseArea = 'M '.$formatChartNumber($firstPoint['x']).','.$formatChartNumber($baseline)
                     .' L '.$formatChartPoint($firstPoint)
-                    .$curveCommands
+                    .$lineCommands
                     .' L '.$formatChartNumber($lastPoint['x']).','.$formatChartNumber($baseline).' Z';
+
+                $lastMarkerIndex = -99;
+                $pulseMarkers = collect($points)->filter(function ($point, $index) use ($points, &$lastMarkerIndex) {
+                    $previous = $points[max(0, $index - 1)]['value'] ?? 0;
+                    $next = $points[min(count($points) - 1, $index + 1)]['value'] ?? 0;
+                    $isPeak = $point['value'] >= 18 && $point['value'] >= $previous && $point['value'] > $next;
+                    $hasSpace = $index - $lastMarkerIndex >= 4;
+
+                    if ($isPeak && $hasSpace) {
+                        $lastMarkerIndex = $index;
+                        return true;
+                    }
+
+                    return false;
+                })->values();
             }
             $pulseChange = (int) ($pulse['change'] ?? 0);
         @endphp
@@ -109,6 +106,9 @@
                     @if($pulseArea)
                         <path class="pulse-overview__area" d="{{ $pulseArea }}" />
                         <path class="pulse-overview__line" d="{{ $pulseLine }}" />
+                        @foreach($pulseMarkers as $marker)
+                            <circle class="pulse-overview__beat" cx="{{ $formatChartNumber($marker['x']) }}" cy="{{ $formatChartNumber($marker['y']) }}" r="2.4" />
+                        @endforeach
                     @endif
                 </svg>
                 <div class="pulse-overview__axis">

@@ -4,7 +4,7 @@
     <div class="col">
         <div class="gc-card step-submit-card overflow-hidden">
             <div class="gc-section-header gc-section-header--inline">
-                <span class="gc-icon-tile flex-shrink-0"><i class="icon ion-android-send"></i></span>
+                <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-paper-plane"></i></span>
                 <div class="min-width-0">
                     <h6 class="mb-0">Добавить решение</h6>
                     <p class="text-muted small mb-0 text-truncate">Ссылка, текст ответа или пояснение к работе.</p>

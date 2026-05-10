@@ -47,6 +47,46 @@ document.addEventListener('DOMContentLoaded', function () {
         new bootstrap.Toast(el).show();
     });
 
+    document.querySelectorAll('[data-ai-achievement-toggle]').forEach(function (toggle) {
+        const form = toggle.closest('form') || document;
+        const field = form.querySelector('[data-ai-achievement-field]');
+        if (!field) return;
+
+        const updateAiAchievementField = function () {
+            field.hidden = !toggle.checked;
+        };
+
+        updateAiAchievementField();
+        toggle.addEventListener('change', updateAiAchievementField);
+    });
+
+    document.querySelectorAll('[data-solution-recheck-toggle]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const feedback = document.getElementById(button.dataset.solutionFeedbackId);
+            const form = document.getElementById(button.dataset.solutionFormId);
+            if (!feedback || !form) return;
+
+            feedback.hidden = true;
+            form.hidden = false;
+            form.classList.remove('is-hidden');
+
+            const markInput = form.querySelector('[name="mark"]');
+            if (markInput) markInput.focus();
+        });
+    });
+
+    document.querySelectorAll('[data-solution-recheck-cancel]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const feedback = document.getElementById(button.dataset.solutionFeedbackId);
+            const form = document.getElementById(button.dataset.solutionFormId);
+            if (!feedback || !form) return;
+
+            form.hidden = true;
+            form.classList.add('is-hidden');
+            feedback.hidden = false;
+        });
+    });
+
     var url = document.location.toString();
     const stepDetailsPage = document.querySelector('[data-step-details-page]');
     const stepTabs = document.querySelector('[data-step-content-tabs]');
@@ -549,6 +589,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 applyBlockedFilter();
             });
         }
+    });
+
+    document.querySelectorAll('[data-step-progress-search]').forEach(function (input) {
+        var grid = document.querySelector(input.dataset.stepProgressGrid);
+        if (!grid) return;
+
+        var wrapper = input.closest('.step-progress-card') || input.closest('.input-group');
+        var cards = Array.from(grid.querySelectorAll('[data-step-progress-card]'));
+        var counter = wrapper ? wrapper.querySelector('[data-step-progress-count]') : null;
+        var emptyState = wrapper ? wrapper.querySelector('[data-step-progress-empty]') : null;
+
+        var applyStepProgressFilter = function () {
+            var query = input.value.trim().toLowerCase();
+            var visibleCount = 0;
+
+            cards.forEach(function (card) {
+                var haystack = (card.dataset.stepProgressText || card.textContent || '').toLowerCase();
+                var isVisible = !query || haystack.indexOf(query) !== -1;
+                card.classList.toggle('d-none', !isVisible);
+                if (isVisible) visibleCount += 1;
+            });
+
+            if (counter) counter.textContent = visibleCount + ' из ' + cards.length;
+            if (emptyState) emptyState.classList.toggle('d-none', visibleCount !== 0);
+        };
+
+        input.addEventListener('input', applyStepProgressFilter);
+        applyStepProgressFilter();
     });
 
     document.querySelectorAll('[data-market-search]').forEach(function (input) {

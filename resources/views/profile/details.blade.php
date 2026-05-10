@@ -309,7 +309,11 @@
                     </div>
                     <div class="profile-achievement-grid p-3 p-md-4">
                         @foreach($achievements->take(12) as $achievement)
-                            <article class="profile-achievement">
+                            @php
+                                $canEditAchievement = $guest->role == 'admin'
+                                    || ($achievement->course && $achievement->course->teachers->contains('id', $guest->id));
+                            @endphp
+                            <article class="profile-achievement" id="achievement-{{ $achievement->id }}">
                                 <span class="profile-achievement__icon"><i class="{{ $achievement->iconClass() }}"></i></span>
                                 <div class="profile-achievement__body min-width-0">
                                     <h6 class="profile-achievement__title">{{ $achievement->title }}</h6>
@@ -325,8 +329,68 @@
                                             <span>{{ $achievement->published_at->format('d.m.Y') }}</span>
                                         @endif
                                     </div>
+                                    @if($canEditAchievement)
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm rounded-3 profile-achievement__edit"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#achievement-edit-{{ $achievement->id }}">
+                                            Редактировать
+                                        </button>
+                                    @endif
                                 </div>
                             </article>
+                            @if($canEditAchievement)
+                                <div class="modal fade" id="achievement-edit-{{ $achievement->id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 rounded-3 shadow-sm overflow-hidden">
+                                            <div class="modal-header border-bottom p-3">
+                                                <div class="d-flex align-items-center gap-2 min-width-0">
+                                                    <span class="gc-icon-tile flex-shrink-0"><i class="{{ $achievement->iconClass() }}"></i></span>
+                                                    <h5 class="modal-title text-truncate">Редактировать достижение</h5>
+                                                </div>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                            </div>
+                                            <form method="POST" action="{{ url('/insider/profile/'.$user->id.'/achievement/'.$achievement->id) }}">
+                                                @csrf
+                                                <div class="modal-body p-3 p-md-4">
+                                                    <div class="mb-3">
+                                                        <label for="achievement-title-{{ $achievement->id }}" class="form-label">Название</label>
+                                                        <input id="achievement-title-{{ $achievement->id }}"
+                                                               type="text"
+                                                               name="title"
+                                                               class="form-control rounded-3"
+                                                               maxlength="120"
+                                                               value="{{ old('title', $achievement->title) }}"
+                                                               required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="achievement-description-{{ $achievement->id }}" class="form-label">Описание</label>
+                                                        <textarea id="achievement-description-{{ $achievement->id }}"
+                                                                  name="description"
+                                                                  class="form-control rounded-3"
+                                                                  rows="4"
+                                                                  required>{{ old('description', $achievement->description) }}</textarea>
+                                                    </div>
+                                                    <div class="mb-0">
+                                                        <label for="achievement-icon-{{ $achievement->id }}" class="form-label">Иконка</label>
+                                                        <select id="achievement-icon-{{ $achievement->id }}" name="icon_key" class="form-select rounded-3">
+                                                            @foreach($achievementIconOptions as $iconKey => $iconClass)
+                                                                <option value="{{ $iconKey }}" @if(old('icon_key', $achievement->icon_key) === $iconKey) selected @endif>
+                                                                    {{ $iconKey }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer gc-form-footer">
+                                                    <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Отмена</button>
+                                                    <button type="submit" class="btn btn-success rounded-3">Сохранить</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         @endforeach
                     </div>
                 </div>

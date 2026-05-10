@@ -11,22 +11,12 @@ if (!function_exists('parsedown_math')) {
     function parsedown_math($text)
     {
         $parser = new Parsedown();
-        $parser->setMarkupEscaped(false);
-        $parser->setSafeMode(false);
+        $parser->setMarkupEscaped(true);
+        $parser->setSafeMode(true);
 
         $html = $parser->text($text);
 
-        // Post-process to unescape mathematical formulas
-        // This handles both inline ($...$) and display ($$...$$) formulas
-        $html = preg_replace_callback('/\$\$([^$]+)\$\$/', function($matches) {
-            return '$$' . html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8') . '$$';
-        }, $html);
-
-        $html = preg_replace_callback('/\$([^$]+)\$/', function($matches) {
-            return '$' . html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8') . '$';
-        }, $html);
-
-        return $html;
+        return clean($html, 'math');
     }
 }
 
@@ -34,6 +24,31 @@ if (!function_exists('parsedown')) {
     function parsedown($text)
     {
         return parsedown_math($text);
+    }
+}
+
+if (!function_exists('safe_url')) {
+    function safe_url($url, $fallback = '#')
+    {
+        $url = trim((string) $url);
+
+        if ($url === '') {
+            return $fallback;
+        }
+
+        if (preg_match('#^(https?:)?//#i', $url)) {
+            return $url;
+        }
+
+        if (preg_match('#^(mailto|tel):#i', $url)) {
+            return $url;
+        }
+
+        if (preg_match('#^/[^\s\\\\]*$#', $url)) {
+            return $url;
+        }
+
+        return $fallback;
     }
 }
 

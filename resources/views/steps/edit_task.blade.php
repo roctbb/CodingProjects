@@ -91,16 +91,16 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="gc-switch-card form-check form-switch h-100">
-                                        <input type="checkbox" class="form-check-input ms-0 me-2" id="generates_ai_achievement" name="generates_ai_achievement" value="on"
+                                        <input type="checkbox" class="form-check-input ms-0 me-2" id="generates_ai_achievement" name="generates_ai_achievement" value="on" data-ai-achievement-toggle
                                                @if (old('generates_ai_achievement', $task->generates_ai_achievement ? 'on' : '') == 'on') checked @endif>
-                                        <span class="form-check-label">AI-достижение</span>
+                                        <span class="form-check-label">Достижение</span>
                                     </label>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="col-12">
-                            <label for="ai_achievement_instruction" class="form-label">Фокус AI-достижения</label>
+                        <div class="col-12" data-ai-achievement-field @if (old('generates_ai_achievement', $task->generates_ai_achievement ? 'on' : '') != 'on') hidden @endif>
+                            <label for="ai_achievement_instruction" class="form-label">Фокус достижения</label>
                             <textarea id="ai_achievement_instruction"
                                       name="ai_achievement_instruction"
                                       class="form-control rounded-3"
@@ -217,7 +217,7 @@
                                         <span class="badge rounded-pill bg-body-tertiary"><i class="fas fa-wand-magic-sparkles me-1"></i>Бустер +5 XP</span>
                                     @endif
                                     @if($task->generates_ai_achievement)
-                                        <span class="badge rounded-pill bg-body-tertiary"><i class="fas fa-trophy me-1"></i>AI-достижение</span>
+                                        <span class="badge rounded-pill bg-body-tertiary"><i class="fas fa-trophy me-1"></i>Достижение</span>
                                     @endif
                                 </div>
                             @endif

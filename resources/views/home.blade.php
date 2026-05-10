@@ -136,7 +136,7 @@
                         <div class="gc-card gc-alert-row home-notification home-notification--{{ $notificationType }} alert-dismissible fade show" role="alert">
                             <span class="home-notification__icon"><i class="{{ $notificationIcon }}"></i></span>
                             <div class="min-width-0 flex-grow-1">
-                                {!! $notification->data['text'] !!}
+                                {!! clean($notification->data['text'] ?? '') !!}
                             </div>
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
                         </div>

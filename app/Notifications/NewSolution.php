@@ -43,10 +43,21 @@ class NewSolution extends Notification implements ShouldQueue
      */
     public function toMail($notifiable)
     {
-        return (new MailMessage)->greeting('Добрый день!')->subject('Новое решение')
-            ->line($this->solution->User->name . " загрузил новое решение для задачи
-                     " . $this->solution->task->name . " (курс " . $this->solution->course->name . ").")
-            ->action('Оценить', url("/insider/courses/" . $this->solution->course_id . "/tasks/" . $this->solution->task->id . "/student/" . $this->solution->User->id));
+        $isRecheck = $this->isRecheckRequest();
+        $comment = $this->recheckComment();
+        $message = (new MailMessage)
+            ->greeting('Добрый день!')
+            ->subject($isRecheck ? 'Запрос на перепроверку' : 'Новое решение')
+            ->line($isRecheck
+                ? $this->solution->User->name . ' просит перепроверить решение задачи "' . $this->solution->task->name . '" в курсе "' . $this->solution->course->name . '".'
+                : $this->solution->User->name . " загрузил новое решение для задачи
+                     " . $this->solution->task->name . " (курс " . $this->solution->course->name . ").");
+
+        if ($isRecheck) {
+            $message->line('С чем ученик не согласен: ' . $comment);
+        }
+
+        return $message->action($isRecheck ? 'Открыть перепроверку' : 'Оценить', $this->solutionUrl());
     }
 
     /**
@@ -64,10 +75,34 @@ class NewSolution extends Notification implements ShouldQueue
 
     public function toTelegram($notifiable)
     {
-        $url = url("/insider/courses/" . $this->solution->course_id . "/tasks/" . $this->solution->task->id . "/student/" . $this->solution->user->id);
+        $url = $this->solutionUrl();
+
+        if ($this->isRecheckRequest()) {
+            return '🔁 Запрос на перепроверку: <strong>' . e($this->solution->user->name) . '</strong> просит пересмотреть решение задачи <strong>"' .
+                e($this->solution->task->name) . '"</strong> в курсе <strong>"' . e($this->solution->course->name) . '"</strong>.' . "\n" .
+                'С чем ученик не согласен: ' . e($this->recheckComment()) . "\n" .
+                '<a href="' . e($url) . '">Открыть перепроверку</a>';
+        }
 
         return '📝 Новое решение: <strong>' . e($this->solution->user->name) . '</strong> загрузил(а) решение задачи <strong>"' .
             e($this->solution->task->name) . '"</strong> в курсе <strong>"' . e($this->solution->course->name) . '"</strong>.' . "\n" .
             '<a href="' . e($url) . '">Открыть решение</a>';
+    }
+
+    private function isRecheckRequest()
+    {
+        return (bool) $this->solution->recheck_requested;
+    }
+
+    private function recheckComment()
+    {
+        $comment = trim((string) $this->solution->recheck_comment);
+
+        return $comment === '' ? 'Комментарий не указан.' : $comment;
+    }
+
+    private function solutionUrl()
+    {
+        return url("/insider/courses/" . $this->solution->course_id . "/tasks/" . $this->solution->task->id . "/student/" . $this->solution->user->id);
     }
 }

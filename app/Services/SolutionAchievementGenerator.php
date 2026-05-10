@@ -20,15 +20,22 @@ class SolutionAchievementGenerator
         $this->geekPaste = $geekPaste;
     }
 
-    public function generateForSolution(Solution $solution): ?Achievement
+    public function generateForSolution(Solution $solution, bool $ignoreEligibility = false): ?Achievement
+    {
+        $preview = $this->previewForSolution($solution, $ignoreEligibility);
+
+        return $preview ? $this->createForSolution($solution, $preview, $ignoreEligibility) : null;
+    }
+
+    public function previewForSolution(Solution $solution, bool $ignoreEligibility = false): ?array
     {
         $solution->loadMissing('task.step.lesson', 'course', 'user');
 
-        if (!$solution->isEligibleForAiAchievement()) {
+        if (Achievement::where('user_id', $solution->user_id)->where('task_id', $solution->task_id)->exists()) {
             return null;
         }
 
-        if (Achievement::where('user_id', $solution->user_id)->where('task_id', $solution->task_id)->exists()) {
+        if (!$ignoreEligibility && !$solution->isEligibleForAiAchievement()) {
             return null;
         }
 
@@ -38,6 +45,27 @@ class SolutionAchievementGenerator
         }
 
         $result = $this->generateAchievementPayload($solution, $context);
+        $result['solution_source'] = $context['source'];
+        $result['language'] = $context['language'] ?? null;
+
+        return $result;
+    }
+
+    public function createForSolution(Solution $solution, array $result, bool $manual = false): ?Achievement
+    {
+        $solution->loadMissing('task.step.lesson', 'course', 'user');
+
+        if (Achievement::where('user_id', $solution->user_id)->where('task_id', $solution->task_id)->exists()) {
+            return null;
+        }
+
+        $iconKey = $result['icon_key'] ?? 'sparkles';
+        if (!array_key_exists($iconKey, Achievement::iconOptions())) {
+            $iconKey = 'sparkles';
+        }
+
+        $title = Str::limit(trim(strip_tags((string) ($result['title'] ?? 'Сильное решение'))), 120, '');
+        $description = Str::limit(trim(strip_tags((string) ($result['description'] ?? 'Решение заслужило отдельную отметку.'))), 1000, '');
 
         try {
             $achievement = Achievement::create([
@@ -47,15 +75,16 @@ class SolutionAchievementGenerator
                 'solution_id' => $solution->id,
                 'source' => Achievement::SOURCE_AI_TASK_SOLUTION,
                 'status' => Achievement::STATUS_PUBLISHED,
-                'title' => $result['title'],
-                'description' => $result['description'],
-                'icon_key' => $result['icon_key'],
+                'title' => $title,
+                'description' => $description,
+                'icon_key' => $iconKey,
                 'payload' => [
                     'tone' => $result['tone'] ?? null,
-                    'solution_source' => $context['source'],
-                    'language' => $context['language'] ?? null,
+                    'solution_source' => $result['solution_source'] ?? null,
+                    'language' => $result['language'] ?? null,
                     'model' => config('services.chatgpt.model'),
                     'prompt_version' => 1,
+                    'manual' => $manual,
                 ],
                 'published_at' => Carbon::now(),
             ]);

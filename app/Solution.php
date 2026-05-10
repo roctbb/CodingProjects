@@ -21,6 +21,7 @@ class Solution extends Model
         'checked' => 'datetime',
         'deadline_penalty_paid_at' => 'datetime',
         'xp_booster_used_at' => 'datetime',
+        'recheck_requested' => 'boolean',
         'review_skipped' => 'boolean',
     ];
 
@@ -53,7 +54,10 @@ class Solution extends Model
     {
         return $query
             ->whereNotNull('submitted')
-            ->whereNull('mark')
+            ->where(function ($query) {
+                $query->whereNull('mark')
+                    ->orWhere('recheck_requested', true);
+            })
             ->where(function ($query) {
                 $query->where('review_skipped', false)
                     ->orWhereNull('review_skipped');
@@ -84,6 +88,7 @@ class Solution extends Model
 
         $this->review_skipped = true;
         $this->recheck_requested = false;
+        $this->recheck_comment = null;
 
         return $this->save();
     }

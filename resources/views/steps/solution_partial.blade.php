@@ -45,10 +45,36 @@
 
                     @if ($solution->mark != $solution->task->max_mark and $solution->task->is_code)
                         @if ($solution->recheck_requested)
-                            <span class="badge rounded-pill bg-body-tertiary mt-3">Запрошена перепроверка</span>
+                            <div class="solution-recheck-note mt-3">
+                                <div class="solution-block__label">Запрошена перепроверка</div>
+                                @if(trim((string) $solution->recheck_comment) !== '')
+                                    <div class="small" data-linkify>{!! nl2br(e($solution->recheck_comment)) !!}</div>
+                                @else
+                                    <div class="small text-muted fst-italic">Комментарий не указан</div>
+                                @endif
+                            </div>
                         @elseif (!$task->isFullDone(Auth::User()->id))
-                            <a href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution/'. $solution->id . '/recheck') }}"
-                               class="btn btn-success btn-sm rounded-3 fw-semibold mt-3">Попросить перепроверить</a>
+                            <form method="POST"
+                                  action="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution/'. $solution->id . '/recheck') }}"
+                                  class="solution-recheck-form mt-3">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="recheck_solution_id" value="{{ $solution->id }}">
+                                <label for="recheck-comment-{{ $solution->id }}" class="form-label">Почему нужна перепроверка?</label>
+                                <textarea id="recheck-comment-{{ $solution->id }}"
+                                          class="form-control form-control-sm rounded-3"
+                                          name="recheck_comment"
+                                          rows="2"
+                                          required
+                                          minlength="10"
+                                          maxlength="1000"
+                                          placeholder="Напишите, с чем именно вы не согласны">{{ old('recheck_solution_id') == $solution->id ? old('recheck_comment') : '' }}</textarea>
+                                @if(old('recheck_solution_id') == $solution->id && $errors->has('recheck_comment'))
+                                    <span class="text-danger small d-block mt-1"><strong>{{ $errors->first('recheck_comment') }}</strong></span>
+                                @endif
+                                <div class="solution-recheck-form__actions">
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm rounded-3 fw-semibold">Попросить перепроверить</button>
+                                </div>
+                            </form>
                         @endif
 
                     @endif

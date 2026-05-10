@@ -17,9 +17,9 @@ class CourseActivity extends Model
     const TYPE_TASK_AI_SUMMARY = 'task_ai_summary';
     const TYPE_AI_ACHIEVEMENT_EARNED = 'ai_achievement_earned';
     const PULSE_WINDOW_HOURS = 24;
-    const PULSE_SAMPLE_MINUTES = 20;
-    const PULSE_HALFLIFE_HOURS = 6;
-    const PULSE_RESPONSE_SCALE = 22;
+    const PULSE_SAMPLE_MINUTES = 8;
+    const PULSE_SIGNAL_LOOKBACK_HOURS = 30;
+    const PULSE_RESPONSE_SCALE = 18;
 
     protected $table = 'course_activities';
 
@@ -208,7 +208,7 @@ class CourseActivity extends Model
         $activities = static::query()
             ->select(['type', 'created_at'])
             ->whereIn('course_id', $courseIds)
-            ->where('created_at', '>=', $now->copy()->subHours(48))
+            ->where('created_at', '>=', $now->copy()->subHours(static::PULSE_SIGNAL_LOOKBACK_HOURS))
             ->orderBy('created_at')
             ->get();
 
@@ -239,19 +239,33 @@ class CourseActivity extends Model
 
     private static function pulseValueAt($activities, Carbon $pointAt)
     {
-        $windowStart = $pointAt->copy()->subHours(static::PULSE_WINDOW_HOURS);
+        $windowStart = $pointAt->copy()->subHours(static::PULSE_SIGNAL_LOOKBACK_HOURS);
         $rawPulse = $activities->reduce(function ($score, $activity) use ($pointAt, $windowStart) {
             if (!$activity->created_at || $activity->created_at->gt($pointAt) || $activity->created_at->lt($windowStart)) {
                 return $score;
             }
 
-            $ageHours = max(0, $activity->created_at->diffInMinutes($pointAt) / 60);
-            $decay = pow(0.5, $ageHours / static::PULSE_HALFLIFE_HOURS);
+            $ageMinutes = max(0, $activity->created_at->diffInMinutes($pointAt));
 
-            return $score + static::pulseWeight($activity->type) * $decay;
+            return $score + static::pulseWeight($activity->type) * static::pulseImpulse($ageMinutes, $activity->type);
         }, 0);
 
         return min(100, (int) round(100 * (1 - exp(-$rawPulse / static::PULSE_RESPONSE_SCALE))));
+    }
+
+    private static function pulseImpulse($ageMinutes, $type)
+    {
+        $ageMinutes = max(0, (float) $ageMinutes);
+        $sharpPeak = exp(-0.5 * pow(($ageMinutes - 5) / 4.8, 2)) * 1.35;
+        $secondaryWave = exp(-0.5 * pow(($ageMinutes - 22) / 10, 2)) * 0.42;
+        $longTail = exp(-$ageMinutes / 190) * 0.16;
+
+        if ($type === static::TYPE_TASK_AI_SUMMARY || $type === static::TYPE_AI_ACHIEVEMENT_EARNED) {
+            $secondaryWave *= 1.35;
+            $longTail *= 1.35;
+        }
+
+        return $sharpPeak + $secondaryWave + $longTail;
     }
 
     private static function pulseWeight($type)
@@ -327,15 +341,19 @@ class CourseActivity extends Model
 
     private static function emptyPulse(Carbon $now)
     {
+        $sampleCount = (int) ((static::PULSE_WINDOW_HOURS * 60) / static::PULSE_SAMPLE_MINUTES);
+
         return [
             'current' => 0,
             'label' => 'нет сигнала',
             'level' => 'empty',
             'change' => 0,
             'trend' => 'ровно',
-            'series' => collect(range(23, 0))->map(function ($hoursAgo) use ($now) {
+            'series' => collect(range($sampleCount, 0))->map(function ($stepAgo) use ($now) {
+                $pointAt = $now->copy()->subMinutes($stepAgo * static::PULSE_SAMPLE_MINUTES);
+
                 return [
-                    'label' => $now->copy()->subHours($hoursAgo)->format('H:00'),
+                    'label' => $pointAt->format('H:i'),
                     'value' => 0,
                 ];
             })->all(),
@@ -381,7 +399,7 @@ class CourseActivity extends Model
             case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
                 return 'взял(а) ещё попытку GeekPaste';
             case static::TYPE_TASK_AI_SUMMARY:
-                return 'опубликовал(а) AI-пересказ «' . $taskName . '»';
+                return 'опубликовал(а) пересказ «' . $taskName . '»';
             case static::TYPE_AI_ACHIEVEMENT_EARNED:
                 return 'получил(а) достижение «' . ($payload['achievement_title'] ?? 'Сильное решение') . '»';
             default:

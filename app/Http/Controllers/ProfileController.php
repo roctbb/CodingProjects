@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\CoinTransaction;
 use App\CompletedCourse;
 use App\Course;
+use App\CourseActivity;
+use App\Achievement;
 use App\Http\Controllers\Controller;
 use App\Rank;
 use App\Solution;
@@ -27,7 +29,7 @@ class ProfileController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('self')->except(['index', 'details']);
+        $this->middleware('self')->except(['index', 'details', 'updateAchievement']);
         $this->middleware('teacher')->only(['addMoney']);
         $this->middleware('admin')->only(['deleteCourse', 'course', 'deleteCurrentCourse', 'addMoney']);
     }
@@ -111,7 +113,7 @@ class ProfileController extends Controller
                 'courses.teachers',
                 'completedCourses.course.students',
                 'orders.good',
-                'achievements.course',
+                'achievements.course.teachers',
                 'achievements.task',
             ])->findOrFail($guest->id);
         } else {
@@ -123,7 +125,7 @@ class ProfileController extends Controller
                 'courses.teachers',
                 'completedCourses.course.students',
                 'orders.good',
-                'achievements.course',
+                'achievements.course.teachers',
                 'achievements.task',
             ])->findOrFail($id);
         }
@@ -139,12 +141,67 @@ class ProfileController extends Controller
             ->where('status', \App\Achievement::STATUS_PUBLISHED)
             ->sortByDesc('published_at')
             ->values();
+        $achievementIconOptions = Achievement::iconOptions();
 
         // Use cached sticker retrieval and descriptions
         $stickers = $user->getStickers();
         $sticker_description = $user->getStickerDescriptions();
 
-        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'avatarFrames', 'activeAvatarFrame', 'achievements'));
+        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'avatarFrames', 'activeAvatarFrame', 'achievements', 'achievementIconOptions'));
+    }
+
+    public function updateAchievement($user_id, $achievement_id, Request $request)
+    {
+        $achievement = Achievement::with('course.teachers')
+            ->where('user_id', $user_id)
+            ->findOrFail($achievement_id);
+
+        if (!$this->canManageAchievement(Auth::user(), $achievement)) {
+            abort(403);
+        }
+
+        $iconKeys = implode(',', array_keys(Achievement::iconOptions()));
+        $this->validate($request, [
+            'title' => 'required|string|max:120',
+            'description' => 'required|string|max:1000',
+            'icon_key' => 'required|string|in:' . $iconKeys,
+        ]);
+
+        $achievement->title = trim(strip_tags((string) $request->title));
+        $achievement->description = trim(strip_tags((string) $request->description));
+        $achievement->icon_key = $request->icon_key;
+        $achievement->save();
+
+        CourseActivity::where('type', CourseActivity::TYPE_AI_ACHIEVEMENT_EARNED)
+            ->where('solution_id', $achievement->solution_id)
+            ->where('task_id', $achievement->task_id)
+            ->where('user_id', $achievement->user_id)
+            ->get()
+            ->each(function ($activity) use ($achievement) {
+                $payload = $activity->payload ?: [];
+                $payload['achievement_title'] = $achievement->title;
+                $payload['achievement_description'] = $achievement->description;
+                $payload['icon_key'] = $achievement->icon_key;
+                $activity->payload = $payload;
+                $activity->save();
+            });
+
+        $this->make_success_alert('Достижение обновлено', 'Изменения сохранены в профиле и пульсе.');
+
+        return redirect('/insider/profile/' . $achievement->user_id . '#achievement-' . $achievement->id);
+    }
+
+    private function canManageAchievement($user, Achievement $achievement)
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->role == 'admin') {
+            return true;
+        }
+
+        return $achievement->course && $achievement->course->teachers->contains('id', $user->id);
     }
 
     public function editView($id)
