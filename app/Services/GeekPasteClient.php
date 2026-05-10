@@ -68,6 +68,19 @@ class GeekPasteClient
         ]);
     }
 
+    public function solution(string $codeId): ?array
+    {
+        $codeId = trim($codeId);
+        if ($codeId === '') {
+            return null;
+        }
+
+        return $this->request('GET', '/api/solutions/' . rawurlencode($codeId), [
+            'connect_timeout' => 2,
+            'timeout' => 15,
+        ]);
+    }
+
     public function canBuyExtraGptAttempt(int $userId, int $taskId, ?int $courseId = null): bool
     {
         $status = $this->gptRateLimitStatus($userId, $taskId, $courseId);

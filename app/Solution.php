@@ -64,6 +64,18 @@ class Solution extends Model
             })
             ->whereNotExists(function ($query) {
                 $query->select(DB::raw(1))
+                    ->from('solutions as max_mark_solutions')
+                    ->join('tasks as max_mark_tasks', 'max_mark_tasks.id', '=', 'max_mark_solutions.task_id')
+                    ->whereColumn('max_mark_solutions.course_id', 'solutions.course_id')
+                    ->whereColumn('max_mark_solutions.task_id', 'solutions.task_id')
+                    ->whereColumn('max_mark_solutions.user_id', 'solutions.user_id')
+                    ->whereNotNull('max_mark_solutions.submitted')
+                    ->whereNotNull('max_mark_solutions.mark')
+                    ->where('max_mark_tasks.max_mark', '>', 0)
+                    ->whereColumn('max_mark_solutions.mark', '>=', 'max_mark_tasks.max_mark');
+            })
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
                     ->from('solutions as checked_solutions')
                     ->whereColumn('checked_solutions.course_id', 'solutions.course_id')
                     ->whereColumn('checked_solutions.task_id', 'solutions.task_id')

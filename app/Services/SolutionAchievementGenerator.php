@@ -119,38 +119,49 @@ class SolutionAchievementGenerator
 
     protected function buildGeekPasteContext(Solution $solution): ?array
     {
-        $payload = $this->geekPaste->taskSolutions($solution->task_id, 500);
+        $solutionText = trim((string) $solution->text);
+        $codeId = $this->extractGeekPasteCodeId($solutionText);
+
+        if ($codeId !== null) {
+            $payload = $this->geekPaste->solution($codeId);
+            $matched = is_array($payload) ? $this->extractGeekPasteItem($payload) : null;
+
+            if ($matched && $this->matchesGeekPasteSolution($matched, $solution)) {
+                $context = $this->contextFromGeekPasteItem($matched);
+                if ($context !== null) {
+                    return $context;
+                }
+            }
+        }
+
+        $payload = $this->geekPaste->taskSolutions($solution->task_id, 500, null, null);
         if (!is_array($payload)) {
             throw new \RuntimeException('GeekPaste did not return task solutions');
         }
 
-        $solutionText = trim((string) $solution->text);
         $items = collect($payload['solutions'] ?? [])
             ->filter(function ($item) use ($solution) {
                 if (!is_array($item)) {
                     return false;
                 }
 
-                if (!empty($item['user_id']) && (int) $item['user_id'] !== (int) $solution->user_id) {
-                    return false;
-                }
-
-                if (array_key_exists('course_id', $item) && $item['course_id'] !== null && $item['course_id'] !== '') {
-                    return (int) $item['course_id'] === (int) $solution->course_id;
-                }
-
-                return true;
+                return $this->matchesGeekPasteSolution($item, $solution);
             })
             ->values();
 
-        $matched = $items->first(function ($item) use ($solutionText) {
+        $matched = $items->first(function ($item) use ($solutionText, $codeId) {
             if ($solutionText === '') {
                 return false;
             }
 
-            foreach (['solution', 'solution_text', 'url', 'link', 'paste_url'] as $key) {
+            foreach (['id', 'code_id', 'solution', 'solution_text', 'url', 'link', 'paste_url'] as $key) {
                 $candidate = trim((string) ($item[$key] ?? ''));
-                if ($candidate !== '' && ($candidate === $solutionText || Str::contains($candidate, $solutionText) || Str::contains($solutionText, $candidate))) {
+                if ($candidate !== '' && (
+                    $candidate === $solutionText
+                    || ($codeId !== null && $candidate === $codeId)
+                    || Str::contains($candidate, $solutionText)
+                    || Str::contains($solutionText, $candidate)
+                )) {
                     return true;
                 }
             }
@@ -159,18 +170,109 @@ class SolutionAchievementGenerator
         }) ?: $items->first();
 
         if (!$matched) {
+            Log::warning('AI achievement GeekPaste solution was not found', [
+                'solution_id' => $solution->id,
+                'task_id' => $solution->task_id,
+                'course_id' => $solution->course_id,
+                'user_id' => $solution->user_id,
+                'geekpaste_code_id' => $codeId,
+                'solutions_count' => $items->count(),
+            ]);
+
             return null;
         }
 
-        $code = trim((string) ($matched['raw_code'] ?? ''));
-        $text = trim((string) ($matched['solution_text'] ?? ''));
+        $context = $this->contextFromGeekPasteItem($matched);
+        if ($context === null) {
+            Log::warning('AI achievement GeekPaste solution is empty', [
+                'solution_id' => $solution->id,
+                'task_id' => $solution->task_id,
+                'course_id' => $solution->course_id,
+                'user_id' => $solution->user_id,
+                'geekpaste_code_id' => $codeId,
+                'geekpaste_solution_id' => $matched['id'] ?? null,
+                'geekpaste_check_state' => $matched['check_state'] ?? null,
+            ]);
+        }
+
+        return $context;
+    }
+
+    protected function extractGeekPasteItem(array $payload): ?array
+    {
+        foreach (['solution', 'data'] as $key) {
+            if (isset($payload[$key]) && is_array($payload[$key])) {
+                return $payload[$key];
+            }
+        }
+
+        foreach (['id', 'code_id', 'solution_text', 'raw_code', 'task_id'] as $key) {
+            if (array_key_exists($key, $payload)) {
+                return $payload;
+            }
+        }
+
+        return null;
+    }
+
+    protected function matchesGeekPasteSolution(array $item, Solution $solution): bool
+    {
+        foreach (['task_id', 'course_id', 'user_id'] as $key) {
+            if (array_key_exists($key, $item) && $item[$key] !== null && $item[$key] !== '') {
+                if ((int) $item[$key] !== (int) $solution->{$key}) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    protected function contextFromGeekPasteItem(array $item): ?array
+    {
+        $code = $this->stringifyGeekPasteValue($item['raw_code'] ?? '');
+        $text = $this->stringifyGeekPasteValue($item['solution_text'] ?? '');
         $solutionBody = $code !== '' ? $code : $text;
+
+        if ($solutionBody === '') {
+            return null;
+        }
 
         return [
             'source' => 'geekpaste',
             'solution_text' => $solutionBody,
-            'language' => $matched['lang'] ?? null,
+            'language' => $item['lang'] ?? null,
         ];
+    }
+
+    protected function stringifyGeekPasteValue($value): string
+    {
+        if (is_array($value)) {
+            return trim((string) json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        }
+
+        return trim((string) $value);
+    }
+
+    protected function extractGeekPasteCodeId(string $solutionText): ?string
+    {
+        if ($solutionText === '') {
+            return null;
+        }
+
+        if (preg_match('/[?&]id=([A-Za-z0-9_-]+)/', $solutionText, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('#paste\.geekclass\.ru/(?:raw/|view/)?([A-Za-z0-9_-]+)#', $solutionText, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('/^[A-Za-z0-9_-]{4,}$/', $solutionText)) {
+            return $solutionText;
+        }
+
+        return null;
     }
 
     protected function generateAchievementPayload(Solution $solution, array $context): array
