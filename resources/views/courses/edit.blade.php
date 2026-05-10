@@ -114,7 +114,7 @@
                                     <span>Образовательные направления</span>
                                     <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="categories-selected-count">{{ $selectedCategoryIds->count() }} выбрано</span>
                                 </label>
-                                <select class="form-select rounded-3" id="categories" name="categories[]" multiple data-selected-count="#categories-selected-count">
+                                <select class="form-select rounded-3" id="categories" name="categories[]" multiple data-selected-count="#categories-selected-count" data-enhanced-multiselect data-placeholder="Выберите направления" data-search-placeholder="Найти направление">
                                     @foreach ($categories as $category)
                                         <option value="{{ $category->id }}" @selected($selectedCategoryIds->contains($category->id))>{{ $category->title }}</option>
                                     @endforeach
@@ -126,7 +126,7 @@
                                     <span>Учителя</span>
                                     <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="teachers-selected-count">{{ $selectedTeacherIds->count() }} выбрано</span>
                                 </label>
-                                <select class="form-select rounded-3" id="teachers" name="teachers[]" multiple data-selected-count="#teachers-selected-count">
+                                <select class="form-select rounded-3" id="teachers" name="teachers[]" multiple data-selected-count="#teachers-selected-count" data-enhanced-multiselect data-placeholder="Выберите учителей" data-search-placeholder="Найти учителя">
                                     @foreach ($teachers as $teacher)
                                         <option value="{{ $teacher->id }}" @selected($selectedTeacherIds->contains($teacher->id))>{{ $teacher->name }}</option>
                                     @endforeach
@@ -145,10 +145,10 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label for="students" class="form-label d-flex align-items-center justify-content-between gap-2">
-                                <span>Студенты</span>
+                                <span>Ученики</span>
                                 <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="students-selected-count">{{ $selectedStudentIds->count() }} выбрано</span>
                             </label>
-                            <select class="form-select rounded-3" id="students" name="students[]" multiple data-selected-count="#students-selected-count">
+                            <select class="form-select rounded-3" id="students" name="students[]" multiple data-selected-count="#students-selected-count" data-enhanced-multiselect data-placeholder="Выберите учеников" data-search-placeholder="Найти ученика">
                                 @foreach ($students as $student)
                                     <option value="{{ $student->id }}" @selected($selectedStudentIds->contains($student->id))>{{ $student->name }}</option>
                                 @endforeach

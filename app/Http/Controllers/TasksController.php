@@ -40,7 +40,7 @@ class TasksController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('task');
-        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent', 'skipSolutionReview', 'skipStudentReviews', 'previewSolutionAchievement', 'awardSolutionAchievement', 'aiTaskSummary']);
+        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent', 'skipSolutionReview', 'skipStudentReviews', 'showSolutionAchievementPreview', 'previewSolutionAchievement', 'awardSolutionAchievement', 'aiTaskSummary']);
     }
 
     /**
@@ -456,7 +456,7 @@ class TasksController extends Controller
             ];
         })->values()->all();
 
-        return redirect('/insider/courses/' . $course_id . '/tasks/' . $id . '/student/' . $solution->user_id . '#solution-' . $solution->id)
+        return redirect('/insider/courses/' . $course_id . '/tasks/' . $id . '/solution/' . $solution->id . '/achievement-preview')
             ->with('achievement_preview', [
                 'solution_id' => $solution->id,
                 'variants' => $previewVariants,
@@ -471,6 +471,57 @@ class TasksController extends Controller
                 'language' => $previewVariants[0]['language'] ?? null,
                 'model' => $previewVariants[0]['model'] ?? null,
             ]);
+    }
+
+    public function showSolutionAchievementPreview($course_id, $id, $solution_id)
+    {
+        $solution = Solution::with('task.step.lesson', 'course.teachers', 'user')
+            ->where('course_id', $course_id)
+            ->where('task_id', $id)
+            ->findOrFail($solution_id);
+        $user = Auth::user();
+
+        if ($user->role != 'admin' && (!$solution->course || !$solution->course->teachers->contains('id', $user->id))) {
+            abort(403);
+        }
+
+        $existingAchievement = Achievement::where('course_id', $course_id)
+            ->where('task_id', $id)
+            ->where('user_id', $solution->user_id)
+            ->first();
+
+        if ($existingAchievement) {
+            $this->make_info_alert('Достижение уже есть', 'У ученика уже есть достижение за эту задачу. Его можно отредактировать в профиле.');
+
+            return redirect('/insider/profile/' . $solution->user_id . '#achievement-' . $existingAchievement->id);
+        }
+
+        $achievementPreview = session('achievement_preview');
+        if (!$achievementPreview || (int) ($achievementPreview['solution_id'] ?? 0) !== (int) $solution->id) {
+            $this->make_info_alert('Предпросмотр не найден', 'Сначала запустите генерацию достижения у нужного решения.');
+
+            return redirect('/insider/courses/' . $course_id . '/tasks/' . $id . '/student/' . $solution->user_id . '#solution-' . $solution->id);
+        }
+
+        session()->reflash();
+
+        $course = $solution->course;
+        $task = $solution->task;
+        $student = $solution->user;
+        $achievementPreviewVariants = collect($achievementPreview['variants'] ?? [$achievementPreview]);
+        $achievementIconOptions = Achievement::iconOptions();
+        $achievementVisualOptions = Achievement::visualOptions();
+
+        return view('steps.achievement_preview', compact(
+            'course',
+            'task',
+            'student',
+            'solution',
+            'achievementPreview',
+            'achievementPreviewVariants',
+            'achievementIconOptions',
+            'achievementVisualOptions'
+        ));
     }
 
     public function awardSolutionAchievement($course_id, $id, $solution_id, Request $request, SolutionAchievementGenerator $generator)

@@ -455,6 +455,158 @@ document.addEventListener('DOMContentLoaded', function () {
         updateSelectedCount();
     });
 
+    document.querySelectorAll('select[data-enhanced-multiselect][multiple]').forEach(function (select) {
+        if (select.dataset.enhancedMultiselectReady === '1') return;
+        select.dataset.enhancedMultiselectReady = '1';
+
+        var wrapper = document.createElement('div');
+        wrapper.className = 'gc-multiselect dropdown';
+
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'gc-multiselect__toggle btn btn-outline-secondary dropdown-toggle w-100';
+        button.setAttribute('data-bs-toggle', 'dropdown');
+        button.setAttribute('data-bs-auto-close', 'outside');
+        button.setAttribute('aria-expanded', 'false');
+
+        var buttonText = document.createElement('span');
+        buttonText.className = 'gc-multiselect__label text-truncate';
+        button.appendChild(buttonText);
+
+        var menu = document.createElement('div');
+        menu.className = 'gc-multiselect__menu dropdown-menu w-100 p-2';
+
+        var search = document.createElement('input');
+        search.type = 'search';
+        search.className = 'form-control form-control-sm gc-multiselect__search';
+        search.placeholder = select.dataset.searchPlaceholder || 'Найти';
+        search.autocomplete = 'off';
+        menu.appendChild(search);
+
+        var actions = document.createElement('div');
+        actions.className = 'gc-multiselect__actions';
+
+        var selectVisible = document.createElement('button');
+        selectVisible.type = 'button';
+        selectVisible.className = 'btn btn-sm btn-link px-0';
+        selectVisible.textContent = 'Выбрать все';
+
+        var clearVisible = document.createElement('button');
+        clearVisible.type = 'button';
+        clearVisible.className = 'btn btn-sm btn-link px-0 text-muted';
+        clearVisible.textContent = 'Снять';
+
+        actions.appendChild(selectVisible);
+        actions.appendChild(clearVisible);
+        menu.appendChild(actions);
+
+        var list = document.createElement('div');
+        list.className = 'gc-multiselect__list';
+        menu.appendChild(list);
+
+        var empty = document.createElement('div');
+        empty.className = 'gc-multiselect__empty text-muted small text-center py-3 d-none';
+        empty.textContent = 'Ничего не найдено';
+        menu.appendChild(empty);
+
+        var options = Array.from(select.options || []).map(function (option) {
+            var item = document.createElement('label');
+            item.className = 'gc-multiselect__option dropdown-item';
+
+            var checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'form-check-input';
+            checkbox.checked = option.selected;
+
+            var text = document.createElement('span');
+            text.className = 'gc-multiselect__option-text text-truncate';
+            text.textContent = option.textContent.trim();
+
+            item.appendChild(checkbox);
+            item.appendChild(text);
+            list.appendChild(item);
+
+            checkbox.addEventListener('change', function () {
+                option.selected = checkbox.checked;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+
+            return {
+                option: option,
+                checkbox: checkbox,
+                item: item,
+                text: option.textContent.trim(),
+                haystack: option.textContent.trim().toLowerCase(),
+            };
+        });
+
+        var updateButton = function () {
+            var selected = options.filter(function (entry) {
+                return entry.option.selected;
+            });
+
+            if (selected.length === 0) {
+                buttonText.textContent = select.dataset.placeholder || 'Ничего не выбрано';
+                button.classList.add('is-empty');
+            } else if (selected.length <= 2) {
+                buttonText.textContent = selected.map(function (entry) {
+                    return entry.text;
+                }).join(', ');
+                button.classList.remove('is-empty');
+            } else {
+                buttonText.textContent = selected.length + ' выбрано';
+                button.classList.remove('is-empty');
+            }
+        };
+
+        var applySearch = function () {
+            var query = search.value.trim().toLowerCase();
+            var visibleCount = 0;
+
+            options.forEach(function (entry) {
+                var isVisible = query === '' || entry.haystack.indexOf(query) !== -1;
+                entry.item.classList.toggle('d-none', !isVisible);
+                if (isVisible) visibleCount += 1;
+            });
+
+            empty.classList.toggle('d-none', visibleCount !== 0);
+        };
+
+        var setVisibleOptions = function (checked) {
+            options.forEach(function (entry) {
+                if (entry.item.classList.contains('d-none')) return;
+                entry.option.selected = checked;
+                entry.checkbox.checked = checked;
+            });
+
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        menu.addEventListener('click', function (event) {
+            event.stopPropagation();
+        });
+
+        search.addEventListener('input', applySearch);
+        selectVisible.addEventListener('click', function () {
+            setVisibleOptions(true);
+        });
+        clearVisible.addEventListener('click', function () {
+            setVisibleOptions(false);
+        });
+        select.addEventListener('change', function () {
+            options.forEach(function (entry) {
+                entry.checkbox.checked = entry.option.selected;
+            });
+            updateButton();
+        });
+
+        wrapper.appendChild(button);
+        wrapper.appendChild(menu);
+        select.after(wrapper);
+        select.classList.add('d-none');
+        updateButton();
+    });
+
     document.querySelectorAll('[data-report-student-search]').forEach(function (input) {
         var list = document.querySelector(input.dataset.reportStudentList);
         if (!list) return;
@@ -885,10 +1037,49 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function showFullscreenLoading(message) {
+        if (document.querySelector('.gc-fullscreen-loading')) return;
+
+        var overlay = document.createElement('div');
+        overlay.className = 'gc-fullscreen-loading';
+        overlay.setAttribute('role', 'status');
+        overlay.setAttribute('aria-live', 'polite');
+        var panel = document.createElement('div');
+        var spinner = document.createElement('div');
+        var title = document.createElement('div');
+        var hint = document.createElement('div');
+        panel.className = 'gc-fullscreen-loading__panel';
+        spinner.className = 'gc-fullscreen-loading__spinner';
+        spinner.setAttribute('aria-hidden', 'true');
+        title.className = 'gc-fullscreen-loading__title';
+        title.textContent = message || 'Идет обработка';
+        hint.className = 'gc-fullscreen-loading__hint';
+        hint.textContent = 'Это может занять немного времени. Страница откроется автоматически.';
+        panel.appendChild(spinner);
+        panel.appendChild(title);
+        panel.appendChild(hint);
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+    }
+
     // Confirm dialogs
     document.addEventListener('click', function (event) {
-        var link = event.target.closest('[data-confirm]');
+        var link = event.target.closest('a[data-confirm], button[data-confirm]');
         if (link && !confirm(link.dataset.confirm)) event.preventDefault();
+    });
+
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+        if (!form.matches('form[data-confirm], form[data-fullscreen-loading]')) return;
+
+        if (form.dataset.confirm && !confirm(form.dataset.confirm)) {
+            event.preventDefault();
+            return;
+        }
+
+        if (form.hasAttribute('data-fullscreen-loading')) {
+            showFullscreenLoading(form.dataset.loadingMessage);
+        }
     });
 
     // Check task forms

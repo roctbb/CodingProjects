@@ -109,8 +109,6 @@
                 $solutionScoreBadgeClass = $solution->scoreBadgeClass();
                 $solutionChecked = $solution->mark !== null;
                 $solutionPendingReview = $solution->submitted && $solution->mark === null && !$solution->review_skipped;
-                $achievementPreview = session('achievement_preview');
-                $achievementPreviewMatches = $achievementPreview && (int) ($achievementPreview['solution_id'] ?? 0) === (int) $solution->id;
                 $solutionGradeFormId = ($solutionChecked ? 'solution-recheck-form-' : 'solution-grade-form-') . $solution->id;
             @endphp
             <div class="gc-card solution-review-card mb-3 @if($solutionPendingReview) is-pending @else is-checked @endif" id="solution-{{ $solution->id }}">
@@ -135,8 +133,8 @@
                                 <button type="submit"
                                         class="solution-review-card__icon-action solution-review-card__icon-action--achievement"
                                         form="preview-achievement-{{ $solution->id }}"
-                                        title="{{ $achievementPreviewMatches ? 'Обновить предпросмотр достижения' : 'Предпросмотр достижения' }}"
-                                        aria-label="{{ $achievementPreviewMatches ? 'Обновить предпросмотр достижения' : 'Предпросмотр достижения' }}">
+                                        title="Сгенерировать достижение"
+                                        aria-label="Сгенерировать достижение">
                                     <i class="fas fa-award"></i>
                                 </button>
                             @else
@@ -246,102 +244,18 @@
                                 </div>
                             </form>
                         </div>
-                        @if($achievementPreviewMatches)
-                            <div class="solution-achievement-preview">
-                                @php
-                                    $achievementPreviewVariants = collect($achievementPreview['variants'] ?? [$achievementPreview]);
-                                    $achievementIconOptions = \App\Achievement::iconOptions();
-                                    $achievementVisualOptions = \App\Achievement::visualOptions();
-                                @endphp
-                                <div class="solution-achievement-preview__head">
-                                    <span class="solution-achievement-preview__icon">
-                                        @if(!empty($achievementPreview['visual_svg']))
-                                            {!! $achievementPreview['visual_svg'] !!}
-                                        @else
-                                            <i class="{{ $achievementPreview['icon_class'] }}"></i>
-                                        @endif
-                                    </span>
-                                    <div class="min-width-0">
-                                        <div class="solution-achievement-preview__eyebrow">Предпросмотр достижения</div>
-                                        <h6 class="solution-achievement-preview__title">Выберите вариант или поправьте текст</h6>
-                                    </div>
-                                    <button type="submit"
-                                            form="preview-achievement-{{ $solution->id }}"
-                                            class="btn btn-outline-secondary btn-sm rounded-3 solution-achievement-preview__refresh">
-                                        <i class="fas fa-sync-alt me-1"></i>Еще варианты
-                                    </button>
-                                </div>
-                                <div class="solution-achievement-preview__variants">
-                                    @foreach($achievementPreviewVariants as $variantIndex => $variant)
-                                        @php
-                                            $variantIconKey = $variant['icon_key'] ?? 'sparkles';
-                                            $variantVisualKey = $variant['visual_key'] ?? '';
-                                            $variantSvg = \App\Achievement::svgForVisualKey($variantVisualKey);
-                                        @endphp
-                                        <form method="post"
-                                              action="{{ url('insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/achievement') }}"
-                                              class="solution-achievement-variant">
-                                            {{ csrf_field() }}
-                                            <span class="solution-achievement-variant__icon">
-                                                @if($variantSvg)
-                                                    {!! $variantSvg !!}
-                                                @else
-                                                    <i class="{{ $achievementIconOptions[$variantIconKey] ?? $achievementIconOptions['sparkles'] }}"></i>
-                                                @endif
-                                            </span>
-                                            <div class="solution-achievement-variant__fields min-width-0">
-                                                <label class="form-label" for="achievement-title-{{ $solution->id }}-{{ $variantIndex }}">Название</label>
-                                                <input id="achievement-title-{{ $solution->id }}-{{ $variantIndex }}"
-                                                       type="text"
-                                                       name="title"
-                                                       class="form-control rounded-3"
-                                                       maxlength="120"
-                                                       value="{{ $variant['title'] ?? 'Сильное решение' }}"
-                                                       required>
-                                                <label class="form-label" for="achievement-description-{{ $solution->id }}-{{ $variantIndex }}">Описание</label>
-                                                <textarea id="achievement-description-{{ $solution->id }}-{{ $variantIndex }}"
-                                                          name="description"
-                                                          class="form-control rounded-3"
-                                                          rows="2"
-                                                          required>{{ $variant['description'] ?? 'За сильное решение задачи.' }}</textarea>
-                                                <div class="solution-achievement-variant__selects">
-                                                    <label class="form-label" for="achievement-icon-{{ $solution->id }}-{{ $variantIndex }}">Иконка</label>
-                                                    <select id="achievement-icon-{{ $solution->id }}-{{ $variantIndex }}"
-                                                            name="icon_key"
-                                                            class="form-select rounded-3">
-                                                        @foreach($achievementIconOptions as $iconKey => $iconClass)
-                                                            <option value="{{ $iconKey }}" @if($variantIconKey === $iconKey) selected @endif>{{ $iconKey }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <label class="form-label" for="achievement-visual-{{ $solution->id }}-{{ $variantIndex }}">SVG</label>
-                                                    <select id="achievement-visual-{{ $solution->id }}-{{ $variantIndex }}"
-                                                            name="visual_key"
-                                                            class="form-select rounded-3">
-                                                        @foreach($achievementVisualOptions as $visualKey => $visualLabel)
-                                                            <option value="{{ $visualKey }}" @if($variantVisualKey === $visualKey) selected @endif>{{ $visualLabel }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                <input type="hidden" name="tone" value="{{ $variant['tone'] ?? '' }}">
-                                                <input type="hidden" name="solution_source" value="{{ $variant['solution_source'] ?? '' }}">
-                                                <input type="hidden" name="language" value="{{ $variant['language'] ?? '' }}">
-                                                <input type="hidden" name="model" value="{{ $variant['model'] ?? '' }}">
-                                            </div>
-                                            <div class="solution-achievement-variant__actions">
-                                                <button type="submit" class="btn btn-success btn-sm rounded-3 fw-semibold">Выдать</button>
-                                            </div>
-                                        </form>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
                         @if($solutionPendingReview)
                             <form id="skip-review-{{ $solution->id }}" method="post" action="{{ url('insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/skip-review') }}">
                                 {{ csrf_field() }}
                             </form>
                         @endif
                         @if(!$taskAchievement)
-                            <form id="preview-achievement-{{ $solution->id }}" method="post" action="{{ url('insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/achievement-preview') }}">
+                            <form id="preview-achievement-{{ $solution->id }}"
+                                  method="post"
+                                  action="{{ url('insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/achievement-preview') }}"
+                                  data-confirm="Вы точно хотите сгенерировать достижение для этого решения?"
+                                  data-fullscreen-loading
+                                  data-loading-message="Генерирую варианты достижения">
                                 {{ csrf_field() }}
                             </form>
                         @endif
