@@ -305,8 +305,8 @@ class SolutionAchievementGenerator
             $content .= "Язык: {$context['language']}\n";
         }
 
-        $content .= "Условие задачи:\n" . Str::limit(strip_tags((string) $task->text), 2500)
-            . "\n\nРешение ученика:\n" . Str::limit($context['solution_text'], 5000);
+        $content .= "Условие задачи:\n" . Str::limit(strip_tags((string) $task->text), 10000)
+            . "\n\nРешение ученика:\n" . Str::limit($context['solution_text'], 60000);
 
         $response = $this->chatGpt->generate([
             ['role' => 'system', 'content' => $prompt],

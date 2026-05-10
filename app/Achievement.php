@@ -50,6 +50,40 @@ class Achievement extends Model
         ];
     }
 
+    public static function visualOptions()
+    {
+        return [
+            '' => 'Обычная иконка',
+            'pipes' => 'Трубы и поток',
+            'circuit' => 'Схема',
+            'compass' => 'Маршрут',
+            'spark' => 'Искра',
+        ];
+    }
+
+    public static function svgForVisualKey(?string $visualKey)
+    {
+        switch ($visualKey) {
+            case 'pipes':
+                return '<svg viewBox="0 0 48 48" role="img" aria-hidden="true" focusable="false"><path d="M10 13h12v8h7" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M38 35H26v-8h-7" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 21l5 5-5 5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 27l-5-5 5-5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="13" r="3" fill="currentColor"/><circle cx="38" cy="35" r="3" fill="currentColor"/></svg>';
+            case 'circuit':
+                return '<svg viewBox="0 0 48 48" role="img" aria-hidden="true" focusable="false"><path d="M12 14h10v20h14" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 24h12" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="12" cy="14" r="4" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="36" cy="24" r="4" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="36" cy="34" r="4" fill="none" stroke="currentColor" stroke-width="3"/></svg>';
+            case 'compass':
+                return '<svg viewBox="0 0 48 48" role="img" aria-hidden="true" focusable="false"><circle cx="24" cy="24" r="16" fill="none" stroke="currentColor" stroke-width="3"/><path d="M30 12l-4 15-12 9 4-15 12-9z" fill="currentColor"/><circle cx="24" cy="24" r="2.5" fill="var(--gc-surface, #fff)"/></svg>';
+            case 'spark':
+                return '<svg viewBox="0 0 48 48" role="img" aria-hidden="true" focusable="false"><path d="M24 7l3.8 11.2L39 22l-11.2 3.8L24 37l-3.8-11.2L9 22l11.2-3.8L24 7z" fill="currentColor"/><path d="M36 32l1.7 4.3L42 38l-4.3 1.7L36 44l-1.7-4.3L30 38l4.3-1.7L36 32z" fill="currentColor" opacity=".65"/></svg>';
+            default:
+                return null;
+        }
+    }
+
+    public function visualKey()
+    {
+        $visualKey = $this->payload['visual_key'] ?? null;
+
+        return array_key_exists($visualKey, static::visualOptions()) && $visualKey !== '' ? $visualKey : null;
+    }
+
     public function iconClass()
     {
         return static::iconOptions()[$this->icon_key] ?? static::iconOptions()['sparkles'];
