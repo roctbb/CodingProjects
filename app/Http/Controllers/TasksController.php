@@ -14,11 +14,13 @@ use App\Http\Controllers\Controller;
 use App\Question;
 use App\QuestionVariant;
 use App\Services\GeekPasteClient;
+use App\Services\ChatGptService;
 use App\Solution;
 use App\Task;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Auth;
 use Notification;
 use GuzzleHttp\Exception\GuzzleException;
@@ -35,7 +37,7 @@ class TasksController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('task');
-        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent']);
+        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent', 'aiTaskSummary']);
     }
 
     /**
@@ -421,6 +423,148 @@ class TasksController extends Controller
 
         return redirect()->back();
 
+    }
+
+    public function aiTaskSummary($course_id, $id, ChatGptService $chatGpt, GeekPasteClient $geekPaste)
+    {
+        $course = Course::with('teachers')->findOrFail($course_id);
+        $task = Task::with('step.lesson')->findOrFail($id);
+        $user = Auth::user();
+
+        if ($user->role != 'admin' && !$course->teachers->contains('id', $user->id)) {
+            abort(403);
+        }
+
+        $answers = $task->is_code
+            ? $this->buildGeekPasteTaskSummaryAnswers($course, $task, $geekPaste)
+            : $this->buildLocalTaskSummaryAnswers($course, $task);
+
+        if ($answers === null) {
+            $this->make_error_alert('Не удалось получить решения', 'GeekPaste не вернул код решений для этой задачи. Проверьте настройки интеграции и попробуйте позже.');
+            return redirect()->back();
+        }
+
+        if (trim($answers) === '') {
+            $this->make_error_alert('Нет решений', 'Пока нечего пересказывать: у задачи нет отправленных решений.');
+            return redirect()->back();
+        }
+
+        $prompt = 'Ты редактор школьного медиа. По решениям учеников сделай живую короткую новость для ленты курса. '
+            . 'Не оценивай и не ранжируй учеников. Не выдумывай деталей, которых нет в ответах. '
+            . 'Собери общие идеи, необычные находки и общий тон работ. ';
+
+        if ($task->is_code) {
+            $prompt .= 'Это автопроверяемая задача с кодом: пересказывай задумки, механики и получившиеся проекты, а не делай ревью кода. ';
+        }
+
+        $prompt .= 'Пиши на русском, 2-4 коротких абзаца, без markdown-заголовков, без списка, до 1200 символов.';
+
+        try {
+            $summary = $chatGpt->generate([
+                ['role' => 'system', 'content' => $prompt],
+                ['role' => 'user', 'content' => "Курс: {$course->name}\nЗадача: {$task->name}\nУсловие задачи:\n" . Str::limit(strip_tags((string) $task->text), 3000) . "\n\nРешения учеников:\n" . $answers],
+            ], ['timeout' => 90]);
+        } catch (\Throwable $e) {
+            \Log::error('Task AI summary failed', [
+                'course_id' => $course->id,
+                'task_id' => $task->id,
+                'message' => $e->getMessage(),
+            ]);
+            $this->make_error_alert('AI-пересказ не получился', 'Не удалось получить ответ от ChatGPT. Попробуйте позже.');
+            return redirect()->back();
+        }
+
+        CourseActivity::recordTaskAiSummary($course, $task, $user, $summary);
+        $this->make_success_alert('Новость добавлена в пульс', 'AI-пересказ результатов задачи опубликован в разделе «Пульс».');
+
+        return redirect('/insider/pulse');
+    }
+
+    private function buildLocalTaskSummaryAnswers(Course $course, Task $task): string
+    {
+        $solutions = Solution::with('user:id,name')
+            ->where('course_id', $course->id)
+            ->where('task_id', $task->id)
+            ->whereNotNull('submitted')
+            ->orderBy('submitted', 'desc')
+            ->get()
+            ->unique('user_id')
+            ->take(30)
+            ->values();
+
+        if ($solutions->isEmpty()) {
+            return '';
+        }
+
+        return $solutions->map(function ($solution, $index) {
+            $studentName = optional($solution->user)->name ?: 'Ученик ' . ($index + 1);
+            $text = trim(strip_tags((string) $solution->text));
+
+            return ($index + 1) . '. ' . $studentName . ":\n" . Str::limit($text, 1600);
+        })->implode("\n\n");
+    }
+
+    private function buildGeekPasteTaskSummaryAnswers(Course $course, Task $task, GeekPasteClient $geekPaste): ?string
+    {
+        $payload = $geekPaste->taskSolutions($task->id, 500);
+
+        if (!is_array($payload)) {
+            return null;
+        }
+
+        $solutions = collect($payload['solutions'] ?? [])
+            ->filter(function ($solution) use ($course) {
+                if (!is_array($solution)) {
+                    return false;
+                }
+
+                if (!array_key_exists('course_id', $solution) || $solution['course_id'] === null || $solution['course_id'] === '') {
+                    return true;
+                }
+
+                return (int) $solution['course_id'] === (int) $course->id;
+            })
+            ->filter(function ($solution) {
+                $text = trim((string) (!empty($solution['solution_text']) ? $solution['solution_text'] : ($solution['raw_code'] ?? '')));
+
+                return $text !== '' && !empty($solution['user_id']);
+            })
+            ->unique(function ($solution) {
+                return (int) $solution['user_id'];
+            })
+            ->take(30)
+            ->values();
+
+        if ($solutions->isEmpty()) {
+            return '';
+        }
+
+        $studentNames = User::whereIn('id', $solutions->pluck('user_id')->filter()->values()->all())
+            ->pluck('name', 'id');
+
+        return $solutions->map(function ($solution, $index) use ($studentNames) {
+            $studentId = (int) $solution['user_id'];
+            $studentName = $studentNames[$studentId] ?? 'Ученик ' . ($index + 1);
+            $text = trim((string) (!empty($solution['solution_text']) ? $solution['solution_text'] : ($solution['raw_code'] ?? '')));
+
+            $meta = [];
+            if (!empty($solution['lang'])) {
+                $meta[] = 'язык: ' . $solution['lang'];
+            }
+            if (array_key_exists('check_points', $solution) && $solution['check_points'] !== null) {
+                $meta[] = 'баллы автопроверки: ' . $solution['check_points'];
+            }
+            if (!empty($solution['check_comments'])) {
+                $meta[] = 'комментарий проверки: ' . Str::limit(strip_tags((string) $solution['check_comments']), 300);
+            }
+
+            $prefix = ($index + 1) . '. ' . $studentName;
+            if (!empty($meta)) {
+                $prefix .= ' (' . implode('; ', $meta) . ')';
+            }
+
+            return $prefix . ":\n" . Str::limit($text, 2200);
+        })->implode("\n\n");
     }
 
     public function payDeadlinePenalty($course_id, $id, $solution_id)

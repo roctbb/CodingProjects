@@ -2,12 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ChatGptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use GuzzleHttp\Client;
 
 class YandexGPTController extends Controller
 {
+    private $chatGpt;
+
+    public function __construct(?ChatGptService $chatGpt = null)
+    {
+        $this->chatGpt = $chatGpt ?: app(ChatGptService::class);
+    }
+
     public function improveText(Request $request)
     {
         $request->validate([
@@ -19,7 +26,7 @@ class YandexGPTController extends Controller
         $action = $request->input('action');
 
         try {
-            $improvedText = $this->callYandexGPT($text, $action);
+            $improvedText = $this->callChatGpt($text, $action);
 
             return response()->json([
                 'success' => true,
@@ -27,7 +34,7 @@ class YandexGPTController extends Controller
                 'improved_text' => $improvedText
             ]);
         } catch (\Exception $e) {
-            Log::error('YandexGPT API Error: ' . $e->getMessage());
+            Log::error('ChatGPT text improvement error: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -36,105 +43,19 @@ class YandexGPTController extends Controller
         }
     }
 
-    private function callYandexGPT($text, $action)
+    private function callChatGpt($text, $action)
     {
-        $apiKey = config('services.yandexgpt.api_key');
-        $folderId = config('services.yandexgpt.folder_id');
-        $model = config('services.yandexgpt.model');
-        $url = config('services.yandexgpt.url');
-
-        if (!$apiKey || !$folderId) {
-            throw new \Exception('YandexGPT API credentials not configured');
-        }
-
         $prompt = $this->getPromptForAction($action);
 
-        $client = new Client();
+        return $this->chatGpt->generate([
+            ['role' => 'system', 'content' => $prompt],
+            ['role' => 'user', 'content' => $text],
+        ], ['timeout' => 60]);
+    }
 
-        try {
-            $response = $client->post($url, [
-                'headers' => [
-                    'Authorization' => 'Api-Key ' . $apiKey,
-                    'Content-Type' => 'application/json'
-                ],
-                'json' => [
-                    'modelUri' => "gpt://{$folderId}/{$model}",
-                    'completionOptions' => [
-                        'stream' => false,
-                        'temperature' => 0.3,
-                        'maxTokens' => 2000
-                    ],
-                    'messages' => [
-                        [
-                            'role' => 'system',
-                            'text' => $prompt
-                        ],
-                        [
-                            'role' => 'user',
-                            'text' => $text
-                        ]
-                    ]
-                ]
-            ]);
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
-            $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 0;
-            $responseBody = $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : '';
-
-            Log::error('YandexGPT API Request Exception', [
-                'status_code' => $statusCode,
-                'response_body' => $responseBody,
-                'message' => $e->getMessage()
-            ]);
-
-            if ($statusCode === 401) {
-                throw new \Exception('YandexGPT API authentication failed. Please check your API key and folder ID.');
-            } elseif ($statusCode === 404) {
-                throw new \Exception('YandexGPT API endpoint not found. Please check the API URL and model configuration.');
-            } elseif ($statusCode === 429) {
-                throw new \Exception('YandexGPT API rate limit exceeded. Please try again later.');
-            } else {
-                throw new \Exception('YandexGPT API request failed: ' . $e->getMessage());
-            }
-        }
-
-        if ($response->getStatusCode() !== 200) {
-            $responseBody = $response->getBody()->getContents();
-            Log::error('YandexGPT API non-200 response', [
-                'status_code' => $response->getStatusCode(),
-                'response_body' => $responseBody
-            ]);
-            throw new \Exception('YandexGPT API request failed with status ' . $response->getStatusCode() . ': ' . $responseBody);
-        }
-
-        $responseBody = $response->getBody()->getContents();
-        $data = json_decode($responseBody, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            Log::error('YandexGPT API JSON decode error', [
-                'json_error' => json_last_error_msg(),
-                'response_body' => $responseBody
-            ]);
-            throw new \Exception('Invalid JSON response from YandexGPT API: ' . json_last_error_msg());
-        }
-
-        if (!isset($data['result']['alternatives'][0]['message']['text'])) {
-            Log::error('YandexGPT API invalid response format', [
-                'response_data' => $data
-            ]);
-            throw new \Exception('Invalid response format from YandexGPT API. Expected text not found in response.');
-        }
-
-        $improvedText = $data['result']['alternatives'][0]['message']['text'];
-
-        if (empty(trim($improvedText))) {
-            Log::warning('YandexGPT API returned empty text', [
-                'original_text' => $text,
-                'response_data' => $data
-            ]);
-            throw new \Exception('YandexGPT API returned empty text. Please try again.');
-        }
-
-        return $improvedText;
+    private function callYandexGPT($text, $action)
+    {
+        return $this->callChatGpt($text, $action);
     }
 
     private function getPromptForAction($action)

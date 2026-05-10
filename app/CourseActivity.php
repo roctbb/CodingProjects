@@ -14,6 +14,11 @@ class CourseActivity extends Model
     const TYPE_EARLY_ACCESS_BOUGHT = 'early_access_bought';
     const TYPE_LESSON_OPENED = 'lesson_opened';
     const TYPE_GEEKPASTE_ATTEMPT_BOUGHT = 'geekpaste_attempt_bought';
+    const TYPE_TASK_AI_SUMMARY = 'task_ai_summary';
+    const PULSE_WINDOW_HOURS = 24;
+    const PULSE_SAMPLE_MINUTES = 20;
+    const PULSE_HALFLIFE_HOURS = 6;
+    const PULSE_RESPONSE_SCALE = 22;
 
     protected $table = 'course_activities';
 
@@ -137,6 +142,169 @@ class CourseActivity extends Model
         ]);
     }
 
+    public static function recordTaskAiSummary(Course $course, Task $task, User $user, string $summary)
+    {
+        $task->loadMissing('step.lesson');
+        $step = $task->step;
+        $lesson = $step ? $step->lesson : null;
+
+        return static::recordActivity([
+            'course_id' => $course->id,
+            'lesson_id' => $lesson ? $lesson->id : null,
+            'step_id' => $step ? $step->id : null,
+            'task_id' => $task->id,
+            'user_id' => $user->id,
+            'type' => static::TYPE_TASK_AI_SUMMARY,
+            'payload' => static::basePayload($course, $lesson, $task) + [
+                'summary' => $summary,
+            ],
+        ]);
+    }
+
+    public static function pulseForCourses($courseIds, ?Carbon $now = null)
+    {
+        $courseIds = collect($courseIds)->filter()->values();
+        $now = $now ?: Carbon::now();
+
+        if ($courseIds->isEmpty()) {
+            return static::emptyPulse($now);
+        }
+
+        $activities = static::query()
+            ->select(['type', 'created_at'])
+            ->whereIn('course_id', $courseIds)
+            ->where('created_at', '>=', $now->copy()->subHours(48))
+            ->orderBy('created_at')
+            ->get();
+
+        $sampleCount = (int) ((static::PULSE_WINDOW_HOURS * 60) / static::PULSE_SAMPLE_MINUTES);
+        $series = collect(range($sampleCount, 0))->map(function ($stepAgo) use ($activities, $now) {
+            $pointAt = $now->copy()->subMinutes($stepAgo * static::PULSE_SAMPLE_MINUTES);
+            $value = static::pulseValueAt($activities, $pointAt);
+
+            return [
+                'label' => $pointAt->format('H:i'),
+                'value' => $value,
+            ];
+        })->values();
+
+        $current = (int) $series->last()['value'];
+        $previous = static::pulseValueAt($activities, $now->copy()->subHours(6));
+        $change = $current - $previous;
+
+        return [
+            'current' => $current,
+            'label' => static::pulseLabel($current),
+            'level' => static::pulseLevel($current),
+            'change' => $change,
+            'trend' => static::pulseTrend($change),
+            'series' => $series->all(),
+        ];
+    }
+
+    private static function pulseValueAt($activities, Carbon $pointAt)
+    {
+        $windowStart = $pointAt->copy()->subHours(static::PULSE_WINDOW_HOURS);
+        $rawPulse = $activities->reduce(function ($score, $activity) use ($pointAt, $windowStart) {
+            if (!$activity->created_at || $activity->created_at->gt($pointAt) || $activity->created_at->lt($windowStart)) {
+                return $score;
+            }
+
+            $ageHours = max(0, $activity->created_at->diffInMinutes($pointAt) / 60);
+            $decay = pow(0.5, $ageHours / static::PULSE_HALFLIFE_HOURS);
+
+            return $score + static::pulseWeight($activity->type) * $decay;
+        }, 0);
+
+        return min(100, (int) round(100 * (1 - exp(-$rawPulse / static::PULSE_RESPONSE_SCALE))));
+    }
+
+    private static function pulseWeight($type)
+    {
+        switch ($type) {
+            case static::TYPE_SOLUTION_SUBMITTED:
+                return 4.0;
+            case static::TYPE_SOLUTION_CHECKED:
+                return 3.5;
+            case static::TYPE_XP_BOOSTER_USED:
+                return 3.0;
+            case static::TYPE_TASK_AI_SUMMARY:
+                return 2.5;
+            case static::TYPE_DEADLINE_PENALTY_PAID:
+            case static::TYPE_EARLY_ACCESS_BOUGHT:
+            case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
+                return 2.0;
+            case static::TYPE_LESSON_OPENED:
+                return 1.5;
+            default:
+                return 1.0;
+        }
+    }
+
+    private static function pulseLabel($value)
+    {
+        if ($value >= 75) {
+            return 'кипит';
+        }
+
+        if ($value >= 50) {
+            return 'живо';
+        }
+
+        if ($value >= 25) {
+            return 'спокойно';
+        }
+
+        return $value > 0 ? 'тихо' : 'нет сигнала';
+    }
+
+    private static function pulseLevel($value)
+    {
+        if ($value >= 75) {
+            return 'hot';
+        }
+
+        if ($value >= 50) {
+            return 'live';
+        }
+
+        if ($value >= 25) {
+            return 'steady';
+        }
+
+        return $value > 0 ? 'quiet' : 'empty';
+    }
+
+    private static function pulseTrend($change)
+    {
+        if ($change >= 8) {
+            return 'растёт';
+        }
+
+        if ($change <= -8) {
+            return 'падает';
+        }
+
+        return 'ровно';
+    }
+
+    private static function emptyPulse(Carbon $now)
+    {
+        return [
+            'current' => 0,
+            'label' => 'нет сигнала',
+            'level' => 'empty',
+            'change' => 0,
+            'trend' => 'ровно',
+            'series' => collect(range(23, 0))->map(function ($hoursAgo) use ($now) {
+                return [
+                    'label' => $now->copy()->subHours($hoursAgo)->format('H:00'),
+                    'value' => 0,
+                ];
+            })->all(),
+        ];
+    }
+
     public function title()
     {
         return $this->hasActor()
@@ -175,6 +343,8 @@ class CourseActivity extends Model
                 return 'Открылся урок «' . $lessonName . '»';
             case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
                 return 'взял(а) ещё попытку GeekPaste';
+            case static::TYPE_TASK_AI_SUMMARY:
+                return 'опубликовал(а) AI-пересказ «' . $taskName . '»';
             default:
                 return 'Новое событие в курсе';
         }
@@ -216,6 +386,8 @@ class CourseActivity extends Model
                 return 'fas fa-unlock-alt';
             case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
                 return 'fas fa-robot';
+            case static::TYPE_TASK_AI_SUMMARY:
+                return 'fas fa-newspaper';
             default:
                 return 'fas fa-sparkles';
         }
@@ -232,6 +404,8 @@ class CourseActivity extends Model
             case static::TYPE_EARLY_ACCESS_BOUGHT:
             case static::TYPE_LESSON_OPENED:
                 return 'is-open';
+            case static::TYPE_TASK_AI_SUMMARY:
+                return 'is-summary';
             default:
                 return 'is-submit';
         }

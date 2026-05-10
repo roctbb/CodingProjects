@@ -183,8 +183,7 @@ class CoursesController extends Controller
             $pendingSolutionsQuery = Solution::select(['id', 'course_id', 'task_id', 'user_id', 'submitted'])
                 ->with(['course:id,name', 'task:id,name', 'user:id,name,image,custom_title,custom_title_expires_at,avatar_frame,avatar_frame_expires_at'])
                 ->whereIn('course_id', $managedActiveCourseIds)
-                ->whereNotNull('submitted')
-                ->whereNull('mark')
+                ->pendingReview()
                 ->orderBy('submitted');
 
             $pendingSolutionsTotal = (clone $pendingSolutionsQuery)->count();
@@ -239,8 +238,9 @@ class CoursesController extends Controller
             ->whereIn('course_id', $activeCourseIds)
             ->orderBy('created_at', 'desc')
             ->paginate(40);
+        $pulse = CourseActivity::pulseForCourses($activeCourseIds);
 
-        return view('courses.pulse', compact('user', 'activities'));
+        return view('courses.pulse', compact('user', 'activities', 'pulse'));
     }
 
     public function reviews()
@@ -262,8 +262,7 @@ class CoursesController extends Controller
                 'user:id,name,image,custom_title,custom_title_expires_at,avatar_frame,avatar_frame_expires_at',
             ])
             ->whereIn('course_id', $managedActiveCourseIds)
-            ->whereNotNull('submitted')
-            ->whereNull('mark')
+            ->pendingReview()
             ->orderBy('submitted')
             ->paginate(40);
 

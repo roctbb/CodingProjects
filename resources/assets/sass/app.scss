@@ -4988,7 +4988,7 @@ a:hover {
 
 .pending-review-page {
   margin: 0 auto;
-  max-width: 62rem;
+  max-width: 92rem;
   overflow: hidden;
   padding: 0;
 }
@@ -5016,9 +5016,9 @@ a:hover {
 }
 
 .pending-review-page__list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
   padding: 0.75rem;
 }
 
@@ -5032,9 +5032,19 @@ a:hover {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
+  min-height: 5.2rem;
   min-width: 0;
   padding: 0.7rem 0.8rem;
   text-decoration: none;
+}
+
+.pending-review-card {
+  column-gap: 0.85rem;
+  grid-template-areas:
+    "avatar body arrow"
+    "avatar time arrow";
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  row-gap: 0.32rem;
 }
 
 .pending-review-card:hover {
@@ -5044,25 +5054,34 @@ a:hover {
 
 .pending-review-card__avatar.gc-avatar-frame {
   flex: 0 0 auto;
+  grid-area: avatar;
+  justify-self: center;
 }
 
 .pending-review-card__body {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.16rem;
+  grid-area: body;
+  min-width: 0;
 }
 
 .pending-review-card__top {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.28rem;
   line-height: 1.2;
+  min-width: 0;
 }
 
 .pending-review-card__student {
   font-size: 0.98rem;
   font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pending-review-card__top .profile-custom-title {
@@ -5096,11 +5115,18 @@ a:hover {
 }
 
 .pending-review-card__time {
-  align-items: flex-end;
+  align-items: center;
   display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  gap: 0.18rem 0.45rem;
+  grid-area: time;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.pending-review-card__time span + span::before {
+  content: "·";
+  margin-right: 0.45rem;
 }
 
 .pending-review-card__arrow {
@@ -5109,6 +5135,7 @@ a:hover {
   border-radius: 999px;
   color: var(--gc-on-surface-muted);
   display: inline-flex;
+  grid-area: arrow;
   height: 2rem;
   justify-content: center;
   width: 2rem;
@@ -5119,15 +5146,30 @@ a:hover {
   padding: 0.75rem 1rem 0.25rem;
 }
 
+@media (min-width: 1400px) {
+  .pending-review-page__list {
+    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  }
+}
+
 @media (max-width: 767.98px) {
+  .pending-review-page {
+    max-width: 100%;
+  }
+
+  .pending-review-page__list {
+    grid-template-columns: 1fr;
+  }
+
   .pending-review-card,
   .pending-review-page__empty {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
 
-  .pending-review-card__time {
-    align-items: flex-start;
-    grid-column: 2 / 4;
+  .pending-review-card {
+    grid-template-areas:
+      "avatar body arrow"
+      "avatar time arrow";
   }
 }
 
@@ -5366,7 +5408,7 @@ a:hover {
 
 .pulse-feed {
   margin: 0 auto;
-  max-width: 58rem;
+  max-width: 92rem;
   overflow: hidden;
   padding: 0;
 }
@@ -5391,10 +5433,118 @@ a:hover {
   width: 2.15rem;
 }
 
-.pulse-feed__list {
+.pulse-overview {
+  --pulse-accent: var(--gc-on-surface-muted);
+  align-items: stretch;
+  border-bottom: 1px solid var(--gc-border);
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
+  padding: 0.85rem 1rem 0.95rem;
+}
+
+.pulse-overview--hot {
+  --pulse-accent: #dc2626;
+}
+
+.pulse-overview--live {
+  --pulse-accent: var(--gc-success);
+}
+
+.pulse-overview--steady {
+  --pulse-accent: var(--gc-primary);
+}
+
+.pulse-overview--quiet {
+  --pulse-accent: var(--gc-warning);
+}
+
+.pulse-overview__summary {
+  align-content: center;
+  display: grid;
+  gap: 0.32rem;
+  min-width: 0;
+}
+
+.pulse-overview__eyebrow {
+  color: var(--gc-on-surface-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.pulse-overview__value-row {
+  align-items: baseline;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 0.48rem;
+  min-width: 0;
+}
+
+.pulse-overview__value-row strong {
+  color: var(--pulse-accent);
+  font-size: 2.45rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 0.95;
+}
+
+.pulse-overview__value-row span {
+  color: var(--gc-on-surface);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.pulse-overview__summary small,
+.pulse-overview__axis {
+  color: var(--gc-on-surface-muted);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.pulse-overview__chart {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.pulse-overview__chart svg {
+  display: block;
+  height: 5.75rem;
+  width: 100%;
+}
+
+.pulse-overview__grid-line {
+  fill: none;
+  opacity: 0.62;
+  stroke: var(--gc-border);
+  stroke-width: 1;
+}
+
+.pulse-overview__area {
+  fill: color-mix(in srgb, var(--pulse-accent) 18%, transparent);
+}
+
+.pulse-overview__line {
+  fill: none;
+  stroke: var(--pulse-accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.pulse-overview__axis {
+  display: flex;
+  justify-content: space-between;
+}
+
+.pulse-feed__list {
+  display: grid;
   gap: 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
   padding: 0.75rem;
 }
 
@@ -5408,6 +5558,7 @@ a:hover {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 5.2rem;
   min-width: 0;
   padding: 0.7rem 0.8rem;
   text-decoration: none;
@@ -5416,6 +5567,15 @@ a:hover {
 .pulse-feed__item:hover {
   color: var(--gc-on-surface);
   text-decoration: none;
+}
+
+.pulse-feed__item {
+  column-gap: 0.85rem;
+  grid-template-areas:
+    "icon body"
+    "icon time";
+  grid-template-columns: auto minmax(0, 1fr);
+  row-gap: 0.32rem;
 }
 
 .pulse-feed__item--framed {
@@ -5461,6 +5621,7 @@ a:hover {
   border-radius: 999px;
   color: #1c7ed6;
   display: inline-flex;
+  grid-area: icon;
   height: 2rem;
   justify-content: center;
   width: 2rem;
@@ -5485,6 +5646,11 @@ a:hover {
   color: #2b8a3e;
 }
 
+.pulse-feed__item.is-summary .pulse-feed__icon {
+  background: rgba(45, 156, 204, 0.13);
+  color: var(--gc-primary);
+}
+
 .pulse-feed__icon.is-muted {
   background: var(--gc-surface);
   color: var(--gc-on-surface-muted);
@@ -5493,7 +5659,9 @@ a:hover {
 .pulse-feed__body {
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
+  gap: 0.16rem;
+  grid-area: body;
+  min-width: 0;
 }
 
 .pulse-feed__title {
@@ -5526,18 +5694,33 @@ a:hover {
 }
 
 .pulse-feed__meta,
-.pulse-feed__time {
+.pulse-feed__time,
+.pulse-feed__news {
   color: var(--gc-on-surface-muted);
   font-size: 0.82rem;
   line-height: 1.25;
 }
 
+.pulse-feed__news {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  display: -webkit-box;
+  overflow: hidden;
+}
+
 .pulse-feed__time {
-  align-items: flex-end;
+  align-items: center;
   display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  gap: 0.18rem 0.45rem;
+  grid-area: time;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.pulse-feed__time span + span::before {
+  content: "·";
+  margin-right: 0.45rem;
 }
 
 .pulse-feed__pagination {
@@ -5545,15 +5728,29 @@ a:hover {
   padding: 0.75rem 1rem 0.25rem;
 }
 
+@media (min-width: 1400px) {
+  .pulse-feed__list {
+    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  }
+}
+
 @media (max-width: 767.98px) {
+  .pulse-feed {
+    max-width: 100%;
+  }
+
+  .pulse-feed__list {
+    grid-template-columns: 1fr;
+  }
+
+  .pulse-overview {
+    grid-template-columns: 1fr;
+    padding: 0.85rem 0.75rem 0.95rem;
+  }
+
   .pulse-feed__item,
   .pulse-feed__empty {
     grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .pulse-feed__time {
-    align-items: flex-start;
-    grid-column: 2;
   }
 }
 
@@ -5655,6 +5852,11 @@ a:hover {
 [data-bs-theme="dark"] .pulse-feed__item.is-open .pulse-feed__icon {
   background: rgba(74, 222, 128, 0.14);
   color: #86efac;
+}
+
+[data-bs-theme="dark"] .pulse-feed__item.is-summary .pulse-feed__icon {
+  background: rgba(96, 165, 250, 0.14);
+  color: #93c5fd;
 }
 
 .course-index-card {

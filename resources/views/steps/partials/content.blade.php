@@ -86,6 +86,15 @@
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"><i class="icon ion-ios-color-wand"></i></a>
                                 <a title="Сгенерировать форму peer-review" class="btn btn-outline-secondary btn-sm rounded-3"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/peer')}}"><i class="icon ion-person-stalker"></i></a>
+                                <form method="POST" action="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/ai-summary') }}" class="d-inline-flex m-0">
+                                    {{ csrf_field() }}
+                                    <button type="submit"
+                                            title="AI-пересказ решений в пульс"
+                                            class="btn btn-outline-secondary btn-sm rounded-3"
+                                            data-confirm="Сгенерировать AI-новость по решениям задачи и опубликовать ее в пульсе?">
+                                        <i class="fas fa-newspaper"></i>
+                                    </button>
+                                </form>
                                 @if ($task->is_code)
                                     <a title="Перепроверить все решения (обнулить баллы и отправить последнее решение каждого студента на перепроверку)"
                                         class="btn btn-outline-secondary btn-sm rounded-3"

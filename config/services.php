@@ -45,6 +45,12 @@ return [
         'url' => env('YANDEX_GPT_URL', 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'),
     ],
 
+    'chatgpt' => [
+        'key' => env('GPT_KEY'),
+        'model' => env('GPT_MODEL', 'gpt-5-mini'),
+        'gateway' => env('GPT_GATEWAY', 'https://gpt-gateway.ai.medsenger.ru:4443/v1/responses'),
+    ],
+
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),

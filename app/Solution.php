@@ -4,6 +4,7 @@ namespace App;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Solution extends Model
 {
@@ -45,6 +46,29 @@ class Solution extends Model
     public function submittedAt()
     {
         return $this->submitted ?: $this->created_at ?: Carbon::now();
+    }
+
+    public function scopePendingReview($query)
+    {
+        return $query
+            ->whereNotNull('submitted')
+            ->whereNull('mark')
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('solutions as checked_solutions')
+                    ->whereColumn('checked_solutions.course_id', 'solutions.course_id')
+                    ->whereColumn('checked_solutions.task_id', 'solutions.task_id')
+                    ->whereColumn('checked_solutions.user_id', 'solutions.user_id')
+                    ->whereNotNull('checked_solutions.submitted')
+                    ->whereNotNull('checked_solutions.mark')
+                    ->where(function ($query) {
+                        $query->whereColumn('checked_solutions.submitted', '>', 'solutions.submitted')
+                            ->orWhere(function ($query) {
+                                $query->whereColumn('checked_solutions.submitted', 'solutions.submitted')
+                                    ->whereColumn('checked_solutions.id', '>', 'solutions.id');
+                            });
+                    });
+            });
     }
 
     public function isSubmittedAfterDeadline($deadline = null)

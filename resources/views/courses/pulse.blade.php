@@ -23,6 +23,102 @@
             <span class="badge rounded-pill bg-body-tertiary">{{ $activities->total() }}</span>
         </div>
 
+        @php
+            $pulseSeries = collect($pulse['series'] ?? []);
+            $chartWidth = 320;
+            $chartHeight = 92;
+            $chartPadding = 7;
+            $chartInnerWidth = $chartWidth - ($chartPadding * 2);
+            $chartInnerHeight = $chartHeight - ($chartPadding * 2);
+            $seriesCount = max(1, $pulseSeries->count());
+            $formatChartNumber = function ($value) {
+                return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
+            };
+            $formatChartPoint = function ($point) use ($formatChartNumber) {
+                return $formatChartNumber($point['x']).','.$formatChartNumber($point['y']);
+            };
+            $clampChartValue = function ($value, $min, $max) {
+                return max($min, min($max, $value));
+            };
+            $pulsePoints = $pulseSeries->values()->map(function ($point, $index) use ($chartPadding, $chartInnerWidth, $chartInnerHeight, $chartHeight, $seriesCount) {
+                $x = $seriesCount === 1 ? $chartPadding : $chartPadding + ($chartInnerWidth * $index / ($seriesCount - 1));
+                $y = $chartHeight - $chartPadding - ($chartInnerHeight * ((int) $point['value'] / 100));
+
+                return [
+                    'x' => $x,
+                    'y' => $y,
+                ];
+            })->values();
+            $pulseLine = '';
+            $pulseArea = '';
+
+            if ($pulsePoints->isNotEmpty()) {
+                $points = $pulsePoints->all();
+                $firstPoint = $points[0];
+                $lastPoint = $points[count($points) - 1];
+                $baseline = $chartHeight - $chartPadding;
+                $curveCommands = '';
+
+                for ($index = 0; $index < count($points) - 1; $index++) {
+                    $p0 = $points[max(0, $index - 1)];
+                    $p1 = $points[$index];
+                    $p2 = $points[$index + 1];
+                    $p3 = $points[min(count($points) - 1, $index + 2)];
+                    $smoothness = 0.18;
+                    $control1 = [
+                        'x' => $p1['x'] + (($p2['x'] - $p0['x']) * $smoothness),
+                        'y' => $clampChartValue($p1['y'] + (($p2['y'] - $p0['y']) * $smoothness), $chartPadding, $baseline),
+                    ];
+                    $control2 = [
+                        'x' => $p2['x'] - (($p3['x'] - $p1['x']) * $smoothness),
+                        'y' => $clampChartValue($p2['y'] - (($p3['y'] - $p1['y']) * $smoothness), $chartPadding, $baseline),
+                    ];
+                    $curveCommands .= ' C '.$formatChartPoint($control1).' '.$formatChartPoint($control2).' '.$formatChartPoint($p2);
+                }
+
+                $pulseLine = 'M '.$formatChartPoint($firstPoint).$curveCommands;
+                $pulseArea = 'M '.$formatChartNumber($firstPoint['x']).','.$formatChartNumber($baseline)
+                    .' L '.$formatChartPoint($firstPoint)
+                    .$curveCommands
+                    .' L '.$formatChartNumber($lastPoint['x']).','.$formatChartNumber($baseline).' Z';
+            }
+            $pulseChange = (int) ($pulse['change'] ?? 0);
+        @endphp
+
+        <div class="pulse-overview pulse-overview--{{ $pulse['level'] ?? 'empty' }}">
+            <div class="pulse-overview__summary">
+                <span class="pulse-overview__eyebrow">Пульс сейчас</span>
+                <div class="pulse-overview__value-row">
+                    <strong>{{ $pulse['current'] ?? 0 }}</strong>
+                    <span>{{ $pulse['label'] ?? 'нет сигнала' }}</span>
+                </div>
+                <small>
+                    {{ $pulse['trend'] ?? 'ровно' }}
+                    @if($pulseChange !== 0)
+                        {{ $pulseChange > 0 ? '+' : '' }}{{ $pulseChange }}
+                    @endif
+                    за 6 часов
+                </small>
+            </div>
+
+            <div class="pulse-overview__chart" aria-label="График пульса за 24 часа">
+                <svg viewBox="0 0 {{ $chartWidth }} {{ $chartHeight }}" role="img" focusable="false" preserveAspectRatio="none">
+                    <path class="pulse-overview__grid-line" d="M {{ $chartPadding }} {{ $chartPadding + ($chartInnerHeight * 0.25) }} H {{ $chartWidth - $chartPadding }}" />
+                    <path class="pulse-overview__grid-line" d="M {{ $chartPadding }} {{ $chartPadding + ($chartInnerHeight * 0.5) }} H {{ $chartWidth - $chartPadding }}" />
+                    <path class="pulse-overview__grid-line" d="M {{ $chartPadding }} {{ $chartPadding + ($chartInnerHeight * 0.75) }} H {{ $chartWidth - $chartPadding }}" />
+                    @if($pulseArea)
+                        <path class="pulse-overview__area" d="{{ $pulseArea }}" />
+                        <path class="pulse-overview__line" d="{{ $pulseLine }}" />
+                    @endif
+                </svg>
+                <div class="pulse-overview__axis">
+                    <span>{{ $pulseSeries->first()['label'] ?? '' }}</span>
+                    <span>24 часа</span>
+                    <span>{{ $pulseSeries->last()['label'] ?? '' }}</span>
+                </div>
+            </div>
+        </div>
+
         <div class="pulse-feed__list">
             @forelse($activities as $activity)
                 @php
@@ -30,6 +126,7 @@
                         ? $activity->user->activeAvatarFrame()
                         : null;
                     $subtitle = $activity->subtitle();
+                    $summary = $activity->payload['summary'] ?? null;
                 @endphp
                 <a class="pulse-feed__item {{ $activity->toneClass() }} @if($activityFrame) pulse-feed__item--framed pulse-feed__item--frame-{{ $activityFrame }} @endif"
                    href="{{ $activity->url() }}"
@@ -49,6 +146,9 @@
                         </span>
                         @if($subtitle)
                             <span class="pulse-feed__meta">{{ $subtitle }}</span>
+                        @endif
+                        @if($summary)
+                            <span class="pulse-feed__news">{{ $summary }}</span>
                         @endif
                     </span>
                     <span class="pulse-feed__time">

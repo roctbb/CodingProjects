@@ -707,7 +707,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // YandexGPT improve text
+    // ChatGPT improve text
     document.addEventListener('click', function (event) {
         var button = event.target.closest('[data-improve-text]');
         if (!button) return;
@@ -722,7 +722,7 @@ document.addEventListener('DOMContentLoaded', function () {
         button.disabled = true;
         replaceButtonText(button, /Исправить|Улучшить/, 'Обработка...');
 
-        fetch('/insider/yandexgpt/improve-text', {
+        fetch('/insider/chatgpt/improve-text', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

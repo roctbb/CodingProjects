@@ -56,7 +56,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/jwt', 'RemoteAuthController@remoteAuth');
 
-    // YandexGPT text improvement API
+    // ChatGPT text improvement API
+    Route::post('/chatgpt/improve-text', 'YandexGPTController@improveText');
     Route::post('/yandexgpt/improve-text', 'YandexGPTController@improveText');
 
     Route::get('/market', 'MarketController@index');
@@ -139,6 +140,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/tasks/{id}/peer', 'TasksController@reviewTable');
     Route::post('/courses/{course_id}/tasks/{id}/deadline', 'TasksController@makeDeadline');
     Route::get('/courses/{course_id}/tasks/{id}/recheck-all', 'TasksController@recheckAllSolutions');
+    Route::post('/courses/{course_id}/tasks/{id}/ai-summary', 'TasksController@aiTaskSummary');
 
 
     Route::post('/courses/{course_id}/tasks/{id}/edit', 'TasksController@edit');
