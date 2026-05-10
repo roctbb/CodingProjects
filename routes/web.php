@@ -172,6 +172,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/profile/{id}/avatar-frame', 'ProfileController@buyAvatarFrame');
     Route::post('/profile/{id}/course', 'ProfileController@course');
     Route::post('/profile/{user_id}/achievement/{achievement_id}', 'ProfileController@updateAchievement');
+    Route::post('/profile/{user_id}/achievement/{achievement_id}/delete', 'ProfileController@deleteAchievement');
     Route::get('/profile/delete-course/{id}', 'ProfileController@deleteCourse');
     Route::get('/profile/{user_id}/delete-course/{course_id}', 'ProfileController@deleteCurrentCourse');
     Route::post('/profile/{user_id}/money', 'ProfileController@addMoney');

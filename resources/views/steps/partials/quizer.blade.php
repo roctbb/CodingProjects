@@ -6,6 +6,7 @@
             $taskType = $task->is_code ? 'code' : ($task->is_quiz ? 'quiz' : 'text');
             $taskTypeLabel = ['code' => 'Код', 'quiz' => 'Квиз', 'text' => 'Ответ'][$taskType];
             $taskTypeIcon = ['code' => 'fas fa-code', 'quiz' => 'fas fa-question-circle', 'text' => 'fas fa-pen'][$taskType];
+            $earnedAchievementId = ($earnedTaskAchievements ?? collect())->get($task->id);
             $taskStatusClass = '';
             if ($hasUserSolution) {
                 $taskStatusClass = is_null($latestUserSolution->mark)
@@ -23,6 +24,13 @@
                         </span>
                         <h4 class="step-task-card__title fw-bold mb-0">{{$task->name}}</h4>
                         <span class="badge rounded-pill bg-body-tertiary">{{$task->max_mark}} XP</span>
+                        @if($earnedAchievementId)
+                            <a class="badge rounded-pill step-task-achievement-badge"
+                               href="{{ url('/insider/profile/'.$user->id.'#achievement-'.$earnedAchievementId) }}"
+                               title="Достижение получено">
+                                <i class="fas fa-trophy"></i>Достижение
+                            </a>
+                        @endif
                         @if ($task->price > 0)
                             <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle">
                                 <i class="fas fa-coins me-1"></i>{{$task->price}}

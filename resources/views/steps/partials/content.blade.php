@@ -22,6 +22,7 @@
                 $taskTypeIcon = ['code' => 'fas fa-code', 'quiz' => 'fas fa-question-circle', 'text' => 'fas fa-pen'][$taskType];
                 $latestAiSummary = ($latestTaskAiSummaries ?? collect())->get($task->id);
                 $latestAiPayload = $latestAiSummary ? ($latestAiSummary->payload ?? []) : [];
+                $earnedAchievementId = ($earnedTaskAchievements ?? collect())->get($task->id);
                 $taskStatusClass = '';
                 if ($hasUserSolution) {
                     $taskStatusClass = is_null($latestUserSolution->mark)
@@ -74,6 +75,13 @@
                                     </span>
                                     <h4 class="step-task-card__title fw-bold mb-0">{{$task->name}}</h4>
                                     <span class="badge rounded-pill bg-body-tertiary">{{$task->max_mark}} XP</span>
+                                    @if($earnedAchievementId)
+                                        <a class="badge rounded-pill step-task-achievement-badge"
+                                           href="{{ url('/insider/profile/'.$user->id.'#achievement-'.$earnedAchievementId) }}"
+                                           title="Достижение получено">
+                                            <i class="fas fa-trophy"></i>Достижение
+                                        </a>
+                                    @endif
                                     @if ($deadline)
                                         @php
                                             $exp = $deadline->expiration;

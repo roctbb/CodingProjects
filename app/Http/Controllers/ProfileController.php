@@ -29,7 +29,7 @@ class ProfileController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('self')->except(['index', 'details', 'updateAchievement']);
+        $this->middleware('self')->except(['index', 'details', 'updateAchievement', 'deleteAchievement']);
         $this->middleware('teacher')->only(['addMoney']);
         $this->middleware('admin')->only(['deleteCourse', 'course', 'deleteCurrentCourse', 'addMoney']);
     }
@@ -189,6 +189,29 @@ class ProfileController extends Controller
         $this->make_success_alert('Достижение обновлено', 'Изменения сохранены в профиле и пульсе.');
 
         return redirect('/insider/profile/' . $achievement->user_id . '#achievement-' . $achievement->id);
+    }
+
+    public function deleteAchievement($user_id, $achievement_id)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role != 'admin') {
+            abort(403);
+        }
+
+        $achievement = Achievement::where('user_id', $user_id)->findOrFail($achievement_id);
+        $profileUserId = $achievement->user_id;
+
+        CourseActivity::where('type', CourseActivity::TYPE_AI_ACHIEVEMENT_EARNED)
+            ->where('solution_id', $achievement->solution_id)
+            ->where('task_id', $achievement->task_id)
+            ->where('user_id', $achievement->user_id)
+            ->delete();
+
+        $achievement->delete();
+
+        $this->make_success_alert('Достижение удалено', 'Оно больше не показывается в профиле и пульсе.');
+
+        return redirect('/insider/profile/' . $profileUserId . '#achievements');
     }
 
     private function canManageAchievement($user, Achievement $achievement)

@@ -4392,6 +4392,26 @@ a:hover {
   font-size: 0.82rem;
 }
 
+.step-task-achievement-badge {
+  align-items: center;
+  background: color-mix(in srgb, var(--gc-warning) 15%, var(--gc-surface)) !important;
+  border: 1px solid color-mix(in srgb, var(--gc-warning) 30%, var(--gc-border));
+  color: #8a5600 !important;
+  display: inline-flex;
+  font-weight: 800;
+  gap: 0.28rem;
+  line-height: 1;
+  padding: 0.36rem 0.55rem;
+  text-decoration: none;
+}
+
+.step-task-achievement-badge:hover,
+.step-task-achievement-badge:focus-visible {
+  background: color-mix(in srgb, var(--gc-warning) 22%, var(--gc-surface)) !important;
+  color: #6f4300 !important;
+  outline: 0;
+}
+
 .step-task-card__meta {
   color: var(--gc-on-surface-muted);
   display: inline-flex;
@@ -7108,6 +7128,46 @@ a:hover {
   grid-template-columns: auto minmax(0, 1fr);
   min-height: 7rem;
   padding: 0.85rem;
+  padding-right: 4.55rem;
+  position: relative;
+}
+
+.profile-achievement__actions {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.28rem;
+  position: absolute;
+  right: 0.55rem;
+  top: 0.55rem;
+}
+
+.profile-achievement__action {
+  align-items: center;
+  background: var(--gc-surface);
+  border: 1px solid var(--gc-border);
+  border-radius: 0.52rem;
+  color: var(--gc-on-surface-muted);
+  display: inline-flex;
+  height: 1.9rem;
+  justify-content: center;
+  padding: 0;
+  transition: background-color var(--gc-transition), border-color var(--gc-transition), color var(--gc-transition);
+  width: 1.9rem;
+}
+
+.profile-achievement__action:hover,
+.profile-achievement__action:focus-visible {
+  background: color-mix(in srgb, var(--gc-primary) 8%, var(--gc-surface));
+  border-color: color-mix(in srgb, var(--gc-primary) 24%, var(--gc-border));
+  color: var(--gc-primary);
+  outline: 0;
+}
+
+.profile-achievement__action--danger:hover,
+.profile-achievement__action--danger:focus-visible {
+  background: color-mix(in srgb, var(--gc-danger) 8%, var(--gc-surface));
+  border-color: color-mix(in srgb, var(--gc-danger) 24%, var(--gc-border));
+  color: var(--gc-danger);
 }
 
 .profile-achievement__icon {

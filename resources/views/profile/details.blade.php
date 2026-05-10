@@ -312,8 +312,37 @@
                             @php
                                 $canEditAchievement = $guest->role == 'admin'
                                     || ($achievement->course && $achievement->course->teachers->contains('id', $guest->id));
+                                $canDeleteAchievement = $guest->role == 'admin';
                             @endphp
                             <article class="profile-achievement" id="achievement-{{ $achievement->id }}">
+                                @if($canEditAchievement || $canDeleteAchievement)
+                                    <span class="profile-achievement__actions">
+                                        @if($canEditAchievement)
+                                            <button type="button"
+                                                    class="profile-achievement__action"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#achievement-edit-{{ $achievement->id }}"
+                                                    title="Редактировать достижение"
+                                                    aria-label="Редактировать достижение">
+                                                <i class="fas fa-pen"></i>
+                                            </button>
+                                        @endif
+                                        @if($canDeleteAchievement)
+                                            <form method="POST"
+                                                  action="{{ url('/insider/profile/'.$user->id.'/achievement/'.$achievement->id.'/delete') }}"
+                                                  class="d-inline-flex">
+                                                @csrf
+                                                <button type="submit"
+                                                        class="profile-achievement__action profile-achievement__action--danger"
+                                                        title="Удалить достижение"
+                                                        aria-label="Удалить достижение"
+                                                        data-confirm="Удалить достижение «{{ $achievement->title }}» из профиля и пульса?">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </span>
+                                @endif
                                 <span class="profile-achievement__icon"><i class="{{ $achievement->iconClass() }}"></i></span>
                                 <div class="profile-achievement__body min-width-0">
                                     <h6 class="profile-achievement__title">{{ $achievement->title }}</h6>
@@ -329,14 +358,6 @@
                                             <span>{{ $achievement->published_at->format('d.m.Y') }}</span>
                                         @endif
                                     </div>
-                                    @if($canEditAchievement)
-                                        <button type="button"
-                                                class="btn btn-outline-secondary btn-sm rounded-3 profile-achievement__edit"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#achievement-edit-{{ $achievement->id }}">
-                                            Редактировать
-                                        </button>
-                                    @endif
                                 </div>
                             </article>
                             @if($canEditAchievement)

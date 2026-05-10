@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Course;
 use App\CourseActivity;
+use App\Achievement;
 use App\ProgramStep;
 use App\Http\Controllers\Controller;
 use App\Lesson;
@@ -64,6 +65,7 @@ class StepsController extends Controller
         });
 
         $latestTaskAiSummaries = collect();
+        $earnedTaskAchievements = collect();
         if ($tasks->isNotEmpty()) {
             $latestTaskAiSummaries = CourseActivity::with('user:id,name')
                 ->where('course_id', $course->id)
@@ -74,6 +76,13 @@ class StepsController extends Controller
                 ->get()
                 ->unique('task_id')
                 ->keyBy('task_id');
+
+            $earnedTaskAchievements = Achievement::query()
+                ->where('course_id', $course->id)
+                ->where('user_id', $user->id)
+                ->where('status', Achievement::STATUS_PUBLISHED)
+                ->whereIn('task_id', $tasks->pluck('id')->values())
+                ->pluck('id', 'task_id');
         }
 
         $zero_theory = $step->theory == null || $step->theory == "";
@@ -102,7 +111,7 @@ class StepsController extends Controller
             }
         }
 
-        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'geekpasteAttemptResetStatuses', 'latestTaskAiSummaries'));
+        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'geekpasteAttemptResetStatuses', 'latestTaskAiSummaries', 'earnedTaskAchievements'));
     }
 
     public function perform($course_id, $id)
