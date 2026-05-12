@@ -2651,6 +2651,7 @@ body {
 .report-risk-badge--low { background: rgba(25, 135, 84, 0.1); border-color: rgba(25, 135, 84, 0.18); color: #157347; }
 .report-risk-badge--none { background: var(--gc-surface-variant); border-color: var(--gc-border); color: var(--gc-on-surface-muted); }
 .report-risk-badge--ai { background: rgba(13, 110, 253, 0.08); border-color: rgba(13, 110, 253, 0.16); color: #35618f; }
+.report-suspicion-badge { border-radius: 999px !important; font-size: 0.66rem; font-weight: 780; line-height: 1; padding: 0.18rem 0.42rem; }
 .report-chart-card { border-bottom: 1px solid var(--gc-border); padding: 0.25rem 0 0.65rem; }
 .report-chart-legend { align-items: center; color: var(--gc-on-surface-muted); display: flex; font-size: 0.74rem; font-weight: 720; gap: 0.8rem; justify-content: flex-end; line-height: 1; margin-bottom: 0.1rem; }
 .report-chart-legend span { align-items: center; display: inline-flex; gap: 0.3rem; }
@@ -2660,17 +2661,22 @@ body {
 .report-chart { min-height: 150px; }
 .report-chapter-risk-list { display: grid; gap: 0.38rem; }
 .report-chapter-risk-row { align-items: center; background: var(--gc-surface); border: 1px solid var(--gc-border); border-radius: 0.4rem; display: grid; gap: 0.75rem; grid-template-columns: minmax(0, 1fr) max-content; min-height: 2.1rem; padding: 0.36rem 0.55rem; }
-.report-chapter-heading { align-items: center; background: #f7fafc; border-bottom: 1px solid var(--gc-border); border-top: 1px solid var(--gc-border); color: var(--gc-on-surface); display: grid; gap: 0.75rem; grid-template-columns: minmax(0, 1fr) max-content; margin-top: 0.95rem; min-height: 2.15rem; padding: 0.44rem 0.55rem; }
+.report-chapter-heading { align-items: center; background: #f7fafc; border-bottom: 1px solid var(--gc-border); border-top: 1px solid var(--gc-border); color: var(--gc-on-surface); display: grid; gap: 0.75rem; grid-template-columns: minmax(0, 1fr) max-content; margin-top: 0.95rem; min-height: 2.15rem; padding: 0.44rem 1rem; }
 .report-chapter-heading h6 { color: #334155; font-size: 0.84rem; font-weight: 780; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .report-chapter-heading + .report-lesson-row { border-top: 0; }
 .report-lessons-list { gap: 0 !important; min-width: 0; }
-.report-lesson-row { background: var(--gc-surface); border: 0; border-bottom: 1px solid var(--gc-border); border-radius: 0; padding: 0; }
+.report-lesson-row { background: var(--gc-surface); border: 0; border-bottom: 1px solid var(--gc-border); border-radius: 0; padding: 0 1rem; }
 .report-lesson-row:first-child { border-top: 1px solid var(--gc-border); }
-.report-lesson-main { align-items: center; display: grid; gap: 0.8rem; grid-template-columns: minmax(0, 1fr) minmax(24rem, 28rem); min-height: 2.55rem; padding: 0.36rem 0; }
+.report-lesson-main { align-items: center; display: grid; gap: 0.8rem; grid-template-columns: minmax(0, 1fr) minmax(24rem, 28rem); min-height: 2.82rem; padding: 0.34rem 0; }
 .report-lesson-row .badge.rounded-pill { border-radius: 0.32rem !important; }
+.report-lesson-info { min-width: 0; }
 .report-lesson-link { color: var(--gc-on-surface); font-size: 0.91rem; font-weight: 740; line-height: 1.25; max-width: 100%; min-width: 0; text-decoration: none; }
 .report-lesson-link:hover { color: var(--gc-on-surface); text-decoration: underline; text-decoration-color: var(--gc-border-hover); text-underline-offset: 0.18rem; }
+.report-lesson-link:focus { outline: 0; }
+.report-lesson-link:focus-visible { background: rgba(45, 156, 204, 0.08); border-radius: 0.28rem; box-shadow: 0 0 0 0.14rem rgba(45, 156, 204, 0.12); }
 .report-lesson-link__icon { color: var(--gc-on-surface-muted); font-size: 0.68rem; transform: translateY(0.02rem); }
+.report-lesson-meta { align-items: center; color: var(--gc-on-surface-muted); display: flex; gap: 0.4rem; line-height: 1.1; margin-top: 0.14rem; min-height: 0.78rem; }
+.report-lesson-date { color: var(--gc-on-surface-muted); display: block; font-size: 0.72rem; font-weight: 640; line-height: 1.1; }
 .report-lesson-lock { background: var(--gc-surface-variant) !important; border-color: var(--gc-border) !important; color: var(--gc-on-surface-muted) !important; font-size: 0.72rem; transform: translateY(-0.05rem); }
 .report-lesson-metrics { align-items: center; display: grid; gap: 0.45rem; grid-template-columns: minmax(6rem, 7rem) minmax(5.5rem, max-content) minmax(5.6rem, 7rem); justify-content: end; min-width: 0; }
 .report-lesson-risk-slot { align-items: center; display: inline-flex; justify-content: flex-end; min-width: 0; }
@@ -2682,6 +2688,7 @@ body {
 .report-score-progress.is-low .report-score-progress__bar { background: rgba(239, 68, 68, 0.52); }
 .report-score-progress.is-mid .report-score-progress__bar { background: rgba(245, 158, 11, 0.55); }
 .report-score-progress__value { color: var(--gc-on-surface); display: block; font-size: 0.62rem; font-weight: 820; line-height: 1; position: relative; z-index: 1; }
+.report-lesson-details { padding: 0.62rem 0 0.72rem; }
 .report-task-list { display: grid; gap: 0.45rem; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); }
 .report-task-row { align-items: flex-start; background: color-mix(in srgb, var(--gc-surface) 94%, transparent); border: 1px solid var(--gc-border); border-radius: 0.55rem; box-shadow: 0 3px 10px rgba(15, 23, 42, 0.018); display: flex; gap: 0.55rem; justify-content: space-between; list-style: none; min-width: 0; padding: 0.55rem 0.62rem; transition: background-color var(--gc-transition), border-color var(--gc-transition), box-shadow var(--gc-transition); }
 .report-task-row:hover { background: var(--gc-surface); border-color: rgba(15, 23, 42, 0.1); box-shadow: 0 5px 14px rgba(15, 23, 42, 0.03); }
@@ -2728,6 +2735,8 @@ body {
 }
 .report-students-nav .nav-link > span:first-child { min-width: 0; }
 .report-student-link__name { align-items: center; color: var(--gc-on-surface); display: grid; font-size: 0.86rem; font-weight: 700; gap: 0.26rem; grid-template-columns: 1rem minmax(0, 1fr) auto; line-height: 1.15; max-width: 100%; min-width: 0; overflow: hidden; white-space: nowrap; }
+.report-student-link__name .profile-custom-title { max-width: 5.8rem; min-width: 0; overflow: hidden; padding-left: 0.34rem; padding-right: 0.42rem; }
+.report-student-link__name .profile-custom-title span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .report-student-link__meta { color: var(--gc-on-surface-muted); display: block; font-size: 0.76rem; font-weight: 650; line-height: 1.2; margin-top: 0.12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .report-student-search-count { font-weight: 650; line-height: 1.1; }
 .report-student-risk-slot { align-items: center; display: inline-flex; height: 1rem; justify-content: center; width: 1rem; }
@@ -2755,7 +2764,7 @@ body {
   .report-integrity-reset { justify-content: center; width: 100%; }
   .report-lesson-main { grid-template-columns: 1fr; }
   .report-lesson-metrics { grid-template-columns: 1fr; justify-content: stretch; }
-  .report-lesson-row { padding: 0.65rem; }
+  .report-lesson-row { padding: 0 1rem; }
 }
 
 .market-orders-actions { white-space: nowrap; }

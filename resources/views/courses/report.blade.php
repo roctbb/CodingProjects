@@ -178,9 +178,9 @@
                                 @if ($pulse_keys->has($student->id))
                                     <div class="report-chart-card mb-3">
                                         <div class="report-chart-legend">
-                                            <span><i class="report-chart-dot report-chart-dot--pulse"></i> XP</span>
+                                            <span><i class="report-chart-dot report-chart-dot--pulse"></i> просмотры</span>
                                             @if ($task_keys->has($student->id))
-                                                <span><i class="report-chart-dot report-chart-dot--tasks"></i> сдачи</span>
+                                                <span><i class="report-chart-dot report-chart-dot--tasks"></i> опыт</span>
                                             @endif
                                         </div>
                                         <div id="pulse{{$student->id}}" class="report-chart w-100"
@@ -233,8 +233,11 @@
                                     <div class="report-chapter-heading">
                                         <h6 class="mb-0">{{ $groupChapter ? $groupChapter->name : 'Без главы' }}</h6>
                                         @if ($chapterIntegrity && $chapterIntegrity['synced'] > 0 && $chapterIntegrity['risk_level'] !== 'low')
-                                            @php $chapterRiskClass = $riskBadgeClasses[$chapterIntegrity['risk_level']] ?? $riskBadgeClasses['none']; @endphp
-                                            <span class="badge rounded-pill {{ $chapterRiskClass }}">GP {{ $chapterIntegrity['risk_level'] }}</span>
+                                            @php
+                                                $chapterRiskClass = $riskBadgeClasses[$chapterIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
+                                                $chapterSuspicionLabel = (($chapterIntegrity['similarity_warnings'] ?? 0) > 0 || $chapterIntegrity['max_similarity_percent'] !== null) ? 'списывание' : 'AI';
+                                            @endphp
+                                            <span class="badge rounded-pill report-suspicion-badge {{ $chapterRiskClass }}">{{ $chapterSuspicionLabel }}</span>
                                         @endif
                                     </div>
                                     @foreach($groupLessons as $lesson)
@@ -252,7 +255,7 @@
 
                                         <div class="report-lesson-row">
                                             <div class="report-lesson-main">
-                                                <div class="min-width-0">
+                                                <div class="report-lesson-info min-width-0">
                                                     <a class="report-lesson-link d-inline-flex align-items-center gap-2"
                                                        data-bs-toggle="collapse"
                                                        href="#student{{$student->id}}marks{{$lesson->id}}"
@@ -261,20 +264,23 @@
                                                         <span class="text-truncate">{{$lesson->name}}</span>
                                                         <i class="fas fa-chevron-down report-lesson-link__icon"></i>
                                                     </a>
-                                                    @if ($lessonStartDate)
-                                                        <span class="badge rounded-pill report-date-badge ms-2">
-                                                            открыт {{ $lessonStartDate->format('d.m.Y') }}
-                                                        </span>
-                                                    @endif
-                                                    @if (!$lesson->isAvailableForUser($course, $student))
-                                                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle ms-2 report-lesson-lock">закрыт</span>
-                                                    @endif
+                                                    <div class="report-lesson-meta">
+                                                        @if ($lessonStartDate)
+                                                            <span class="report-lesson-date">открыт {{ $lessonStartDate->format('d.m.Y') }}</span>
+                                                        @endif
+                                                        @if (!$lesson->isAvailableForUser($course, $student))
+                                                            <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle report-lesson-lock">закрыт</span>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                                 <div class="report-lesson-metrics">
                                                     <span class="report-lesson-risk-slot {{ $lessonHasIntegrityRisk ? '' : 'is-empty' }}">
                                                         @if ($lessonHasIntegrityRisk)
-                                                            @php $lessonRiskClass = $riskBadgeClasses[$lessonIntegrity['risk_level']] ?? $riskBadgeClasses['none']; @endphp
-                                                            <span class="badge rounded-pill {{ $lessonRiskClass }}">GP {{ $lessonIntegrity['risk_level'] }}</span>
+                                                            @php
+                                                                $lessonRiskClass = $riskBadgeClasses[$lessonIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
+                                                                $lessonSuspicionLabel = (($lessonIntegrity['similarity_warnings'] ?? 0) > 0 || $lessonIntegrity['max_similarity_percent'] !== null) ? 'списывание' : 'AI';
+                                                            @endphp
+                                                            <span class="badge rounded-pill report-suspicion-badge {{ $lessonRiskClass }}">{{ $lessonSuspicionLabel }}</span>
                                                         @endif
                                                     </span>
                                                     <span class="report-lesson-score">{{$lessonPoints}} / {{$lessonMaxPoints}} XP</span>
@@ -290,7 +296,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="collapse mt-2" id="student{{$student->id}}marks{{$lesson->id}}">
+                                            <div class="collapse report-lesson-details" id="student{{$student->id}}marks{{$lesson->id}}">
                                                 <ul class="report-task-list list-unstyled mb-0">
                                                 @foreach($lesson->steps as $step)
                                                     @php
@@ -316,6 +322,7 @@
                                                             @if ($taskIntegrity && $taskIntegrity['synced'] > 0 && $taskIntegrity['risk_level'] !== 'low')
                                                                 @php
                                                                     $taskRiskClass = $riskBadgeClasses[$taskIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
+                                                                    $taskSuspicionLabel = (($taskIntegrity['similarity_warnings'] ?? 0) > 0 || $taskIntegrity['max_similarity_percent'] !== null) ? 'списывание' : 'AI';
                                                                     $taskRiskTitle = trim(implode(' · ', array_filter([
                                                                         $taskIntegrity['max_llm_probability'] !== null ? 'LLM '.$taskIntegrity['max_llm_probability'].'%' : null,
                                                                         $taskIntegrity['max_similarity_percent'] !== null ? 'схожесть '.$taskIntegrity['max_similarity_percent'].'%' : null,
@@ -323,14 +330,8 @@
                                                                         $taskIntegrity['similarity_warnings'] > 0 ? 'списывание '.$taskIntegrity['similarity_warnings'] : null,
                                                                     ])));
                                                                 @endphp
-                                                                <span class="badge rounded-pill {{ $taskRiskClass }}" title="{{ $taskRiskTitle ?: 'GeekPaste' }}">
-                                                                    @if ($taskIntegrity['max_llm_probability'] !== null)
-                                                                        AI {{ $taskIntegrity['max_llm_probability'] }}%
-                                                                    @elseif ($taskIntegrity['max_similarity_percent'] !== null)
-                                                                        схожесть {{ $taskIntegrity['max_similarity_percent'] }}%
-                                                                    @else
-                                                                        GP
-                                                                    @endif
+                                                                <span class="badge rounded-pill report-suspicion-badge {{ $taskRiskClass }}" title="{{ $taskRiskTitle ?: 'GeekPaste' }}">
+                                                                    {{ $taskSuspicionLabel }}
                                                                 </span>
                                                             @endif
                                                             @if ($blocked)
