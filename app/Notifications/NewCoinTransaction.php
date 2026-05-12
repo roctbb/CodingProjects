@@ -39,7 +39,7 @@ class NewCoinTransaction extends Notification
      */
     public function via($notifiable)
     {
-        return $this->transaction->price > 0 ? ['database', TelegramBotChannel::class] : [];
+        return $this->transaction->price > 0 || $this->text ? ['database', TelegramBotChannel::class] : [];
     }
 
     /**

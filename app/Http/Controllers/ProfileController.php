@@ -29,9 +29,9 @@ class ProfileController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('self')->except(['index', 'details', 'updateAchievement', 'deleteAchievement']);
+        $this->middleware('self')->except(['index', 'details', 'updateAchievement', 'deleteAchievement', 'addMoney']);
         $this->middleware('teacher')->only(['addMoney']);
-        $this->middleware('admin')->only(['deleteCourse', 'course', 'deleteCurrentCourse', 'addMoney']);
+        $this->middleware('admin')->only(['deleteCourse', 'course', 'deleteCurrentCourse']);
     }
 
     /**
@@ -132,7 +132,8 @@ class ProfileController extends Controller
             ])->findOrFail($id);
         }
 
-        $canViewMoneyHistory = $guest->id == $user->id || $guest->role == 'teacher' || $guest->role == 'admin';
+        $canManageMoney = $this->canManageMoney($guest, $user);
+        $canViewMoneyHistory = $guest->id == $user->id || $canManageMoney || $guest->role == 'admin';
         $coinTransactions = $canViewMoneyHistory
             ? $user->transactions()->latest()->take(20)->get()
             : collect();
@@ -150,7 +151,7 @@ class ProfileController extends Controller
         $stickers = $user->getStickers();
         $sticker_description = $user->getStickerDescriptions();
 
-        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'avatarFrames', 'activeAvatarFrame', 'achievements', 'achievementIconOptions', 'achievementVisualOptions'));
+        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'canManageMoney', 'avatarFrames', 'activeAvatarFrame', 'achievements', 'achievementIconOptions', 'achievementVisualOptions'));
     }
 
     public function updateAchievement($user_id, $achievement_id, Request $request)
@@ -240,6 +241,29 @@ class ProfileController extends Controller
         return $achievement->course && $achievement->course->teachers->contains('id', $user->id);
     }
 
+    private function canManageMoney($manager, User $profileUser)
+    {
+        if (!$manager) {
+            return false;
+        }
+
+        if ($manager->role == 'admin') {
+            return true;
+        }
+
+        if ($manager->role != 'teacher') {
+            return false;
+        }
+
+        return Course::whereHas('teachers', function ($query) use ($manager) {
+                $query->where('users.id', $manager->id);
+            })
+            ->whereHas('students', function ($query) use ($profileUser) {
+                $query->where('users.id', $profileUser->id);
+            })
+            ->exists();
+    }
+
     public function editView($id)
     {
         $guest = User::findOrFail(Auth::User()->id);
@@ -283,14 +307,37 @@ class ProfileController extends Controller
 
     public function addMoney($id, Request $request)
     {
+        $user = User::findOrFail($id);
+
+        if (!$this->canManageMoney(Auth::user(), $user)) {
+            abort(403);
+        }
+
         $this->validate($request, [
             'description' => 'required|string',
-            'amount' => 'integer|min:-100|max:100|required'
+            'amount' => 'integer|not_in:0|min:-10000|max:10000|required'
         ]);
 
-        CoinTransaction::register($id, $request->amount, clean($request->description));
+        $amount = (int) $request->amount;
+        $description = clean($request->description);
+        $isWriteOff = $amount < 0;
+        $notificationText = $isWriteOff
+            ? 'Списано ' . abs($amount) . ' GC: ' . $description
+            : 'Начислено ' . $amount . ' GC: ' . $description;
 
-        $this->make_success_alert('Успех!', 'Деньги начислены.');
+        CoinTransaction::register(
+            $user->id,
+            $amount,
+            $description,
+            $notificationText,
+            $isWriteOff ? 'warning' : 'success',
+            $isWriteOff ? 'fas fa-minus-circle' : 'fas fa-coins'
+        );
+
+        $this->make_success_alert(
+            'Операция сохранена',
+            $isWriteOff ? 'GC списаны с баланса ученика.' : 'GC начислены ученику.'
+        );
 
         return redirect()->back();
     }

@@ -650,6 +650,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var sortStudentLinks = function () {
             var sortMode = sortSelect ? sortSelect.value : 'name';
+            var valueMode = sortMode === 'name' ? 'percent' : sortMode;
             var links = Array.from(list.querySelectorAll('[data-report-student-name]'));
 
             links.sort(function (first, second) {
@@ -675,6 +676,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             links.forEach(function (link) {
                 list.appendChild(link);
+                link.querySelectorAll('[data-report-sort-value]').forEach(function (value) {
+                    value.classList.toggle('d-none', value.dataset.reportSortValue !== valueMode);
+                });
             });
         };
 
@@ -1068,7 +1072,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         document.querySelectorAll('[data-plotly-report-chart]').forEach(function (element) {
-            element.style.height = '200px';
+            element.style.height = '150px';
             var data = [{
                 x: JSON.parse(element.dataset.pulseKeys),
                 y: JSON.parse(element.dataset.pulseValues),
@@ -1092,10 +1096,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 font: { color: '#64748b' },
                 paper_bgcolor: 'rgba(0,0,0,0)',
                 plot_bgcolor: 'rgba(0,0,0,0)',
-                xaxis: { gridcolor: 'rgba(100, 116, 139, 0.12)', zeroline: false, showline: false },
-                yaxis: { gridcolor: 'rgba(100, 116, 139, 0.12)', zeroline: false, showline: false },
-                yaxis2: { side: 'right', gridcolor: 'rgba(100, 116, 139, 0.08)', zeroline: false, showline: false, overlaying: 'y' },
-                margin: { l: 15, r: 20, b: 30, t: 3, pad: 0 },
+                xaxis: { gridcolor: 'rgba(100, 116, 139, 0.10)', tickfont: { size: 10 }, zeroline: false, showline: false },
+                yaxis: { gridcolor: 'rgba(100, 116, 139, 0.10)', tickfont: { size: 10 }, zeroline: false, showline: false },
+                yaxis2: { side: 'right', gridcolor: 'rgba(0,0,0,0)', showgrid: false, showticklabels: false, ticks: '', zeroline: false, showline: false, overlaying: 'y' },
+                margin: { l: 24, r: 6, b: 24, t: 2, pad: 0 },
                 showlegend: false
             }, { staticPlot: false, displayModeBar: false, responsive: false });
         });

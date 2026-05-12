@@ -110,14 +110,16 @@
                 </div>
             </div>
 
-            @if ($guest->role == 'admin' || $guest->id == $user->id)
+            @if ($guest->role == 'admin' || $guest->id == $user->id || $canManageMoney)
                 <div class="gc-card p-2 d-flex gap-2 mt-3 profile-actions-card">
-                    <a href="{{ url('insider/profile/'.$user->id.'/edit') }}" class="btn btn-outline-primary rounded-3 btn-sm flex-fill fw-semibold">
-                        <i class="fas fa-edit me-1"></i>Редактировать
-                    </a>
-                    @if ($guest->role == 'teacher' || $guest->role == 'admin')
+                    @if ($guest->role == 'admin' || $guest->id == $user->id)
+                        <a href="{{ url('insider/profile/'.$user->id.'/edit') }}" class="btn btn-outline-primary rounded-3 btn-sm flex-fill fw-semibold">
+                            <i class="fas fa-edit me-1"></i>Редактировать
+                        </a>
+                    @endif
+                    @if ($canManageMoney)
                         <button type="button" class="btn btn-outline-secondary rounded-3 btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addMoney">
-                            <i class="fas fa-coins me-1"></i>Начислить
+                            <i class="fas fa-coins me-1"></i>Операция GC
                         </button>
                     @endif
                 </div>
@@ -676,35 +678,41 @@
         </div>
     </div>
 
-    {{-- Add money modal --}}
-    <div class="modal fade" id="addMoney" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 rounded-3 shadow-sm overflow-hidden">
-                <div class="modal-header border-bottom p-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-coins"></i></span>
-                        <h5 class="modal-title">Начисление GC</h5>
+    @if ($canManageMoney)
+        {{-- GC operation modal --}}
+        <div class="modal fade" id="addMoney" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 rounded-3 shadow-sm overflow-hidden">
+                    <div class="modal-header border-bottom p-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-coins"></i></span>
+                            <div>
+                                <h5 class="modal-title">Операция с GC</h5>
+                                <div class="text-muted small">Плюс начисляет, минус списывает монеты.</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                    <form action="{{ url('/insider/profile/'.$user->id.'/money') }}" method="POST">
+                        @csrf
+                        <div class="modal-body p-3 p-md-4">
+                            <div class="mb-3">
+                                <label for="money-description" class="form-label">Причина</label>
+                                <input type="text" name="description" class="form-control rounded-3" id="money-description" placeholder="Например: возврат, награда, списание за заказ">
+                            </div>
+                            <div>
+                                <label for="money-amount" class="form-label">Изменение баланса</label>
+                                <input type="number" name="amount" min="-10000" max="10000" step="1" class="form-control rounded-3" id="money-amount" placeholder="Например: 15 или -220">
+                                <div class="form-text">Для списания укажите отрицательное число, например −220.</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer gc-form-footer">
+                            <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Отмена</button>
+                            <button type="submit" class="btn btn-success rounded-3">Сохранить операцию</button>
+                        </div>
+                    </form>
                 </div>
-                <form action="{{ url('/insider/profile/'.$user->id.'/money') }}" method="POST">
-                    @csrf
-                    <div class="modal-body p-3 p-md-4">
-                        <div class="mb-3">
-                            <label for="money-description" class="form-label">За что?</label>
-                            <input type="text" name="description" class="form-control rounded-3" id="money-description">
-                        </div>
-                        <div>
-                            <label for="money-amount" class="form-label">Сколько?</label>
-                            <input type="number" name="amount" class="form-control rounded-3" id="money-amount">
-                        </div>
-                    </div>
-                    <div class="modal-footer gc-form-footer">
-                        <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Отмена</button>
-                        <button type="submit" class="btn btn-success rounded-3">Начислить</button>
-                    </div>
-                </form>
             </div>
         </div>
-    </div>
+    @endif
 @endsection

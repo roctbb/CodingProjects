@@ -109,6 +109,12 @@
                                 @php
                                     $studentIntegrity = $geekPasteIntegrityStats[$student->id] ?? null;
                                     $overallIntegrity = $studentIntegrity['overall'] ?? null;
+                                    $riskyChapterIntegrity = [];
+                                    foreach (($studentIntegrity['chapters'] ?? []) as $chapterId => $chapterIntegrity) {
+                                        if (($chapterIntegrity['synced'] ?? 0) > 0 && in_array($chapterIntegrity['risk_level'] ?? 'none', ['high', 'medium'])) {
+                                            $riskyChapterIntegrity[$chapterId] = $chapterIntegrity;
+                                        }
+                                    }
                                 @endphp
                                 <div class="progress report-student-progress {{ $student->percent < 40 ? 'is-low' : ($student->percent < 60 ? 'is-mid' : 'is-high') }} mb-3">
                                     @if ($student->percent < 40)
@@ -150,6 +156,11 @@
                                         @if ($overallIntegrity['similarity_warnings'] > 0)
                                             <span class="badge rounded-pill report-risk-badge report-risk-badge--high">списывание {{ $overallIntegrity['similarity_warnings'] }}</span>
                                         @endif
+                                        @if (($overallIntegrity['dismissed'] ?? 0) > 0)
+                                            <span class="badge rounded-pill report-soft-badge" title="Скрыто учителем">
+                                                скрыто {{ $overallIntegrity['dismissed'] }}
+                                            </span>
+                                        @endif
                                         @if ($overallIntegrity['risk_level'] !== 'low' && $overallIntegrity['risk_level'] !== 'none')
                                             <form method="POST"
                                                   action="{{ url('/insider/courses/'.$course->id.'/report/students/'.$student->id.'/geekpaste-warning/reset') }}"
@@ -165,41 +176,46 @@
                                     </div>
                                 @endif
                                 @if ($pulse_keys->has($student->id))
-                                    <div id="pulse{{$student->id}}" class="mb-2 w-100"
-                                          data-plotly-report-chart
-                                         data-pulse-keys='{{ $pulse_keys[$student->id] }}'
-                                         data-pulse-values='{{ $pulse_values[$student->id] }}'
-                                         @if ($task_keys->has($student->id))
-                                             data-task-keys='{{ $task_keys[$student->id] }}'
-                                             data-task-values='{{ $task_values[$student->id] }}'
-                                         @endif></div>
-
+                                    <div class="report-chart-card mb-3">
+                                        <div class="report-chart-legend">
+                                            <span><i class="report-chart-dot report-chart-dot--pulse"></i> XP</span>
+                                            @if ($task_keys->has($student->id))
+                                                <span><i class="report-chart-dot report-chart-dot--tasks"></i> сдачи</span>
+                                            @endif
+                                        </div>
+                                        <div id="pulse{{$student->id}}" class="report-chart w-100"
+                                             data-plotly-report-chart
+                                             data-pulse-keys='{{ $pulse_keys[$student->id] }}'
+                                             data-pulse-values='{{ $pulse_values[$student->id] }}'
+                                             @if ($task_keys->has($student->id))
+                                                 data-task-keys='{{ $task_keys[$student->id] }}'
+                                                 data-task-values='{{ $task_values[$student->id] }}'
+                                             @endif></div>
+                                    </div>
                                 @endif
-                                @if ($studentIntegrity && !empty($studentIntegrity['chapters']))
+                                @if (!empty($riskyChapterIntegrity))
                                     <div class="report-section-head mt-4 mb-2">
                                         <h5 class="mb-0">Риски по главам</h5>
-                                        <span class="text-muted small">GeekPaste</span>
+                                        <span class="text-muted small">{{ count($riskyChapterIntegrity) }} с риском</span>
                                     </div>
                                     <div class="report-chapter-risk-list mb-3">
-                                        @foreach($studentIntegrity['chapters'] as $chapterId => $chapterIntegrity)
-                                            @if ($chapterIntegrity['synced'] > 0)
-                                                @php
-                                                    $chapterRiskClass = $riskBadgeClasses[$chapterIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
-                                                    $chapterName = optional($chapterLookup->get($chapterId))->name ?: 'Без главы';
-                                                @endphp
-                                                <div class="report-chapter-risk-row">
-                                                    <span class="fw-semibold text-truncate">{{ $chapterName }}</span>
-                                                    <span class="d-flex flex-wrap align-items-center gap-1">
-                                                        <span class="badge rounded-pill {{ $chapterRiskClass }}">{{ $chapterIntegrity['risk_level'] }}</span>
-                                                        @if ($chapterIntegrity['max_llm_probability'] !== null)
-                                                            <span class="badge rounded-pill report-soft-badge">LLM {{ $chapterIntegrity['max_llm_probability'] }}%</span>
-                                                        @endif
-                                                        @if ($chapterIntegrity['max_similarity_percent'] !== null)
-                                                            <span class="badge rounded-pill report-soft-badge">схожесть {{ $chapterIntegrity['max_similarity_percent'] }}%</span>
-                                                        @endif
-                                                    </span>
-                                                </div>
-                                            @endif
+                                        @foreach($riskyChapterIntegrity as $chapterId => $chapterIntegrity)
+                                            @php
+                                                $chapterRiskClass = $riskBadgeClasses[$chapterIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
+                                                $chapterName = optional($chapterLookup->get($chapterId))->name ?: 'Без главы';
+                                            @endphp
+                                            <div class="report-chapter-risk-row">
+                                                <span class="fw-semibold text-truncate">{{ $chapterName }}</span>
+                                                <span class="d-flex flex-wrap align-items-center gap-1">
+                                                    <span class="badge rounded-pill {{ $chapterRiskClass }}">{{ $chapterIntegrity['risk_level'] }}</span>
+                                                    @if ($chapterIntegrity['max_llm_probability'] !== null)
+                                                        <span class="badge rounded-pill report-soft-badge">LLM {{ $chapterIntegrity['max_llm_probability'] }}%</span>
+                                                    @endif
+                                                    @if ($chapterIntegrity['max_similarity_percent'] !== null)
+                                                        <span class="badge rounded-pill report-soft-badge">схожесть {{ $chapterIntegrity['max_similarity_percent'] }}%</span>
+                                                    @endif
+                                                </span>
+                                            </div>
                                         @endforeach
                                     </div>
                                 @endif
@@ -230,6 +246,7 @@
                                             $lessonProgressWidth = max(0, min(100, (int) round($lessonPercent)));
                                             $lessonProgressClass = $lessonPercent < 40 ? 'is-low' : ($lessonPercent < 60 ? 'is-mid' : 'is-high');
                                             $lessonIntegrity = $studentIntegrity['lessons'][$lesson->id] ?? null;
+                                            $lessonHasIntegrityRisk = $lessonIntegrity && $lessonIntegrity['synced'] > 0 && $lessonIntegrity['risk_level'] !== 'low';
                                             $lessonStartDate = $lesson->getStartDate($course);
                                         @endphp
 
@@ -254,10 +271,12 @@
                                                     @endif
                                                 </div>
                                                 <div class="report-lesson-metrics">
-                                                    @if ($lessonIntegrity && $lessonIntegrity['synced'] > 0 && $lessonIntegrity['risk_level'] !== 'low')
-                                                        @php $lessonRiskClass = $riskBadgeClasses[$lessonIntegrity['risk_level']] ?? $riskBadgeClasses['none']; @endphp
-                                                        <span class="badge rounded-pill {{ $lessonRiskClass }}">GP {{ $lessonIntegrity['risk_level'] }}</span>
-                                                    @endif
+                                                    <span class="report-lesson-risk-slot {{ $lessonHasIntegrityRisk ? '' : 'is-empty' }}">
+                                                        @if ($lessonHasIntegrityRisk)
+                                                            @php $lessonRiskClass = $riskBadgeClasses[$lessonIntegrity['risk_level']] ?? $riskBadgeClasses['none']; @endphp
+                                                            <span class="badge rounded-pill {{ $lessonRiskClass }}">GP {{ $lessonIntegrity['risk_level'] }}</span>
+                                                        @endif
+                                                    </span>
                                                     <span class="report-lesson-score">{{$lessonPoints}} / {{$lessonMaxPoints}} XP</span>
                                                     <div class="report-score-progress {{ $lessonProgressClass }}"
                                                          role="progressbar"
@@ -376,6 +395,8 @@
                             $navRiskRank = ['none' => 0, 'low' => 1, 'medium' => 2, 'high' => 3][$navRiskLevel] ?? 0;
                             $navLlmProbability = $navIntegrity['max_llm_probability'] ?? -1;
                             $navSimilarityPercent = $navIntegrity['max_similarity_percent'] ?? -1;
+                            $navLlmLabel = $navLlmProbability >= 0 ? 'LLM '.$navLlmProbability.'%' : 'LLM -';
+                            $navSimilarityLabel = $navSimilarityPercent >= 0 ? 'схож. '.$navSimilarityPercent.'%' : 'схож. -';
                         @endphp
                         <a class="nav-link report-student-link @if ($key == 0) active @endif" id="student{{$student->id}}-tab" data-bs-toggle="pill"
                            href="#student{{$student->id}}" role="tab"
@@ -389,12 +410,14 @@
                            data-report-student-sort-similarity="{{ $navSimilarityPercent }}">
                             <span class="min-width-0">
                                 <span class="report-student-link__name">
+                                    <span class="report-student-risk-slot">
                                     @if ($navRiskLevel === 'high' || $navRiskLevel === 'medium')
                                         <span class="report-student-risk-dot report-student-risk-dot--{{ $navRiskLevel }}"
                                               title="GeekPaste: {{ $navRiskLevel === 'high' ? 'высокий риск' : 'средний риск' }}">
                                             <i class="fas fa-exclamation-triangle"></i>
                                         </span>
                                     @endif
+                                    </span>
                                     <span class="text-truncate">{{$student->name}}</span>
                                     @include('profile.partials.custom_title_badge', ['profileUser' => $student, 'compact' => true])
                                 </span>
@@ -402,7 +425,9 @@
                             </span>
                             <span class="report-nav-progress {{ $studentProgressClass }}" title="Прогресс: {{ round($student->percent) }}%">
                                 <span class="report-nav-progress__bar progress-width-{{$studentProgressWidth}}" data-progress-width="{{$student->percent}}%"></span>
-                                <span class="report-nav-progress__value">{{ round($student->percent) }}%</span>
+                                <span class="report-nav-progress__value" data-report-sort-value="percent">{{ round($student->percent) }}%</span>
+                                <span class="report-nav-progress__value d-none" data-report-sort-value="llm">{{ $navLlmLabel }}</span>
+                                <span class="report-nav-progress__value d-none" data-report-sort-value="similarity">{{ $navSimilarityLabel }}</span>
                             </span>
                         </a>
                     @endforeach

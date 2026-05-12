@@ -2638,7 +2638,7 @@ body {
 .report-student-progress.is-mid .report-student-progress__bar { background: #ca8a04; }
 .report-section-head { align-items: center; display: flex; gap: 0.75rem; justify-content: space-between; }
 .report-section-head h5 { color: var(--gc-on-surface); font-size: 1rem; font-weight: 760; line-height: 1.2; }
-.report-integrity-strip { align-items: center; background: color-mix(in srgb, var(--gc-surface-variant) 72%, var(--gc-surface)); border: 1px solid var(--gc-border); border-radius: 0.55rem; display: flex; flex-wrap: wrap; gap: 0.45rem; padding: 0.45rem 0.55rem; }
+.report-integrity-strip { align-items: center; background: color-mix(in srgb, var(--gc-surface-variant) 72%, var(--gc-surface)); border: 1px solid var(--gc-border); border-radius: 0.45rem; display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.38rem 0.5rem; }
 .report-integrity-reset { align-items: center; background: var(--gc-surface); border: 1px solid var(--gc-border); border-radius: 0.4rem; color: var(--gc-on-surface-muted); display: inline-flex; font-size: 0.78rem; font-weight: 720; gap: 0.35rem; line-height: 1; padding: 0.3rem 0.45rem; }
 .report-integrity-reset:hover { background: var(--gc-primary-light); border-color: color-mix(in srgb, var(--gc-primary) 28%, var(--gc-border)); color: var(--gc-primary-hover); }
 .report-risk-badge,
@@ -2646,32 +2646,42 @@ body {
 .report-date-badge { border: 1px solid var(--gc-border); border-radius: 0.36rem !important; font-size: 0.75rem; font-weight: 760; letter-spacing: 0; line-height: 1.1; padding: 0.24rem 0.46rem; }
 .report-soft-badge,
 .report-date-badge { background: var(--gc-surface-variant); color: var(--gc-on-surface-muted); }
-.report-risk-badge--high { background: rgba(220, 53, 69, 0.1); border-color: rgba(220, 53, 69, 0.2); color: #b4232f; }
-.report-risk-badge--medium { background: rgba(202, 138, 4, 0.12); border-color: rgba(202, 138, 4, 0.22); color: #8a5a00; }
+.report-risk-badge--high { background: rgba(190, 80, 88, 0.08); border-color: rgba(190, 80, 88, 0.18); color: #9d3440; }
+.report-risk-badge--medium { background: rgba(176, 121, 24, 0.1); border-color: rgba(176, 121, 24, 0.2); color: #7c570f; }
 .report-risk-badge--low { background: rgba(25, 135, 84, 0.1); border-color: rgba(25, 135, 84, 0.18); color: #157347; }
 .report-risk-badge--none { background: var(--gc-surface-variant); border-color: var(--gc-border); color: var(--gc-on-surface-muted); }
 .report-risk-badge--ai { background: rgba(13, 110, 253, 0.08); border-color: rgba(13, 110, 253, 0.16); color: #35618f; }
+.report-chart-card { border-bottom: 1px solid var(--gc-border); padding: 0.25rem 0 0.65rem; }
+.report-chart-legend { align-items: center; color: var(--gc-on-surface-muted); display: flex; font-size: 0.74rem; font-weight: 720; gap: 0.8rem; justify-content: flex-end; line-height: 1; margin-bottom: 0.1rem; }
+.report-chart-legend span { align-items: center; display: inline-flex; gap: 0.3rem; }
+.report-chart-dot { border-radius: 999px; display: inline-block; height: 0.45rem; width: 0.45rem; }
+.report-chart-dot--pulse { background: #2563eb; }
+.report-chart-dot--tasks { background: #16a34a; }
+.report-chart { min-height: 150px; }
 .report-chapter-risk-list { display: grid; gap: 0.38rem; }
-.report-chapter-risk-row { align-items: center; background: var(--gc-surface); border: 1px solid var(--gc-border); border-radius: 0.45rem; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: space-between; min-height: 2.25rem; padding: 0.42rem 0.62rem; }
-.report-chapter-heading { align-items: center; background: color-mix(in srgb, var(--gc-surface-variant) 72%, var(--gc-surface)); border-bottom: 1px solid var(--gc-border); border-top: 1px solid var(--gc-border); color: var(--gc-on-surface); display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: space-between; margin-top: 0.9rem; padding: 0.52rem 0.62rem; }
-.report-chapter-heading h6 { color: var(--gc-on-surface); font-size: 0.92rem; font-weight: 780; line-height: 1.2; }
+.report-chapter-risk-row { align-items: center; background: var(--gc-surface); border: 1px solid var(--gc-border); border-radius: 0.4rem; display: grid; gap: 0.75rem; grid-template-columns: minmax(0, 1fr) max-content; min-height: 2.1rem; padding: 0.36rem 0.55rem; }
+.report-chapter-heading { align-items: center; background: #f7fafc; border-bottom: 1px solid var(--gc-border); border-top: 1px solid var(--gc-border); color: var(--gc-on-surface); display: grid; gap: 0.75rem; grid-template-columns: minmax(0, 1fr) max-content; margin-top: 0.95rem; min-height: 2.15rem; padding: 0.44rem 0.55rem; }
+.report-chapter-heading h6 { color: #334155; font-size: 0.84rem; font-weight: 780; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .report-chapter-heading + .report-lesson-row { border-top: 0; }
 .report-lessons-list { gap: 0 !important; min-width: 0; }
-.report-lesson-row { background: var(--gc-surface); border: 0; border-bottom: 1px solid var(--gc-border); border-radius: 0; padding: 0.48rem 0; }
+.report-lesson-row { background: var(--gc-surface); border: 0; border-bottom: 1px solid var(--gc-border); border-radius: 0; padding: 0; }
 .report-lesson-row:first-child { border-top: 1px solid var(--gc-border); }
-.report-lesson-main { align-items: center; display: grid; gap: 0.75rem; grid-template-columns: minmax(0, 1fr) minmax(11rem, 16rem); }
+.report-lesson-main { align-items: center; display: grid; gap: 0.8rem; grid-template-columns: minmax(0, 1fr) minmax(24rem, 28rem); min-height: 2.55rem; padding: 0.36rem 0; }
 .report-lesson-row .badge.rounded-pill { border-radius: 0.32rem !important; }
-.report-lesson-link { color: var(--gc-on-surface); font-size: 0.96rem; font-weight: 740; line-height: 1.25; max-width: 100%; min-width: 0; text-decoration: none; }
+.report-lesson-link { color: var(--gc-on-surface); font-size: 0.91rem; font-weight: 740; line-height: 1.25; max-width: 100%; min-width: 0; text-decoration: none; }
 .report-lesson-link:hover { color: var(--gc-on-surface); text-decoration: underline; text-decoration-color: var(--gc-border-hover); text-underline-offset: 0.18rem; }
 .report-lesson-link__icon { color: var(--gc-on-surface-muted); font-size: 0.68rem; transform: translateY(0.02rem); }
 .report-lesson-lock { background: var(--gc-surface-variant) !important; border-color: var(--gc-border) !important; color: var(--gc-on-surface-muted) !important; font-size: 0.72rem; transform: translateY(-0.05rem); }
-.report-lesson-metrics { align-items: center; display: grid; gap: 0.5rem; grid-template-columns: auto minmax(5.5rem, 7rem); justify-content: end; min-width: 0; }
-.report-lesson-score { color: var(--gc-on-surface-muted); font-size: 0.86rem; font-weight: 740; white-space: nowrap; }
-.report-score-progress { align-items: center; background: rgba(15, 23, 42, 0.07); border: 0; border-radius: 999px; color: var(--gc-on-surface-muted); display: inline-flex; height: 0.78rem; justify-content: center; overflow: hidden; padding: 0; position: relative; width: 100%; }
+.report-lesson-metrics { align-items: center; display: grid; gap: 0.45rem; grid-template-columns: minmax(6rem, 7rem) minmax(5.5rem, max-content) minmax(5.6rem, 7rem); justify-content: end; min-width: 0; }
+.report-lesson-risk-slot { align-items: center; display: inline-flex; justify-content: flex-end; min-width: 0; }
+.report-lesson-risk-slot.is-empty { visibility: hidden; }
+.report-lesson-risk-slot .report-risk-badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.report-lesson-score { color: var(--gc-on-surface-muted); font-size: 0.82rem; font-weight: 740; text-align: right; white-space: nowrap; }
+.report-score-progress { align-items: center; background: rgba(15, 23, 42, 0.07); border: 0; border-radius: 999px; color: var(--gc-on-surface-muted); display: inline-flex; height: 0.68rem; justify-content: center; overflow: hidden; padding: 0; position: relative; width: 100%; }
 .report-score-progress__bar { background: rgba(34, 197, 94, 0.58); border-radius: inherit; bottom: 0; left: 0; position: absolute; top: 0; width: 0; }
 .report-score-progress.is-low .report-score-progress__bar { background: rgba(239, 68, 68, 0.52); }
 .report-score-progress.is-mid .report-score-progress__bar { background: rgba(245, 158, 11, 0.55); }
-.report-score-progress__value { color: var(--gc-on-surface); display: block; font-size: 0.68rem; font-weight: 820; line-height: 1; position: relative; z-index: 1; }
+.report-score-progress__value { color: var(--gc-on-surface); display: block; font-size: 0.62rem; font-weight: 820; line-height: 1; position: relative; z-index: 1; }
 .report-task-list { display: grid; gap: 0.45rem; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); }
 .report-task-row { align-items: flex-start; background: color-mix(in srgb, var(--gc-surface) 94%, transparent); border: 1px solid var(--gc-border); border-radius: 0.55rem; box-shadow: 0 3px 10px rgba(15, 23, 42, 0.018); display: flex; gap: 0.55rem; justify-content: space-between; list-style: none; min-width: 0; padding: 0.55rem 0.62rem; transition: background-color var(--gc-transition), border-color var(--gc-transition), box-shadow var(--gc-transition); }
 .report-task-row:hover { background: var(--gc-surface); border-color: rgba(15, 23, 42, 0.1); box-shadow: 0 5px 14px rgba(15, 23, 42, 0.03); }
@@ -2707,7 +2717,7 @@ body {
 .report-student-sort { background-color: var(--gc-surface-variant); border-color: transparent; border-radius: 0.4rem; color: var(--gc-on-surface); font-size: 0.82rem; font-weight: 650; min-height: 1.9rem; padding-bottom: 0.25rem; padding-top: 0.25rem; }
 .report-student-sort:focus { border-color: color-mix(in srgb, var(--gc-primary) 28%, var(--gc-border)); box-shadow: 0 0 0 0.18rem rgba(45, 156, 204, 0.12); }
 .report-students-nav { flex-wrap: nowrap; gap: 0 !important; overflow: visible; padding: 0.35rem !important; }
-.report-student-link { align-items: center; border: 0; border-radius: 0.5rem !important; color: var(--gc-on-surface-muted); display: flex; gap: 0.45rem; justify-content: space-between; min-height: 2.45rem; padding: 0.38rem 0.5rem !important; }
+.report-student-link { align-items: center; border: 0; border-radius: 0.45rem !important; color: var(--gc-on-surface-muted); display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr) max-content; min-height: 2.55rem; padding: 0.34rem 0.48rem !important; }
 .report-student-link + .report-student-link { margin-top: 0.08rem; }
 .report-student-link:hover { background: var(--gc-surface-variant); color: var(--gc-on-surface); }
 .report-students-nav .nav-link.active {
@@ -2717,17 +2727,18 @@ body {
   color: var(--gc-on-surface);
 }
 .report-students-nav .nav-link > span:first-child { min-width: 0; }
-.report-student-link__name { align-items: center; color: var(--gc-on-surface); display: inline-flex; font-size: 0.9rem; font-weight: 700; gap: 0.32rem; line-height: 1.15; max-width: 100%; min-width: 0; overflow: hidden; white-space: nowrap; }
+.report-student-link__name { align-items: center; color: var(--gc-on-surface); display: grid; font-size: 0.86rem; font-weight: 700; gap: 0.26rem; grid-template-columns: 1rem minmax(0, 1fr) auto; line-height: 1.15; max-width: 100%; min-width: 0; overflow: hidden; white-space: nowrap; }
 .report-student-link__meta { color: var(--gc-on-surface-muted); display: block; font-size: 0.76rem; font-weight: 650; line-height: 1.2; margin-top: 0.12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .report-student-search-count { font-weight: 650; line-height: 1.1; }
-.report-student-risk-dot { align-items: center; border-radius: 999px; display: inline-flex; flex: 0 0 auto; font-size: 0.63rem; height: 1.05rem; justify-content: center; width: 1.05rem; }
-.report-student-risk-dot--high { background: rgba(220, 53, 69, 0.1); color: #b4232f; }
-.report-student-risk-dot--medium { background: rgba(202, 138, 4, 0.12); color: #8a5a00; }
-.report-nav-progress { align-items: center; background: transparent; border: 0; border-radius: 0; color: #198754; display: inline-flex; flex: 0 0 auto; height: auto; justify-content: flex-end; min-width: 2.7rem; overflow: visible; padding: 0; position: relative; }
+.report-student-risk-slot { align-items: center; display: inline-flex; height: 1rem; justify-content: center; width: 1rem; }
+.report-student-risk-dot { align-items: center; border-radius: 999px; display: inline-flex; flex: 0 0 auto; font-size: 0.58rem; height: 0.92rem; justify-content: center; width: 0.92rem; }
+.report-student-risk-dot--high { background: rgba(190, 80, 88, 0.08); color: #b14a55; }
+.report-student-risk-dot--medium { background: rgba(176, 121, 24, 0.1); color: #8a691f; }
+.report-nav-progress { align-items: center; background: transparent; border: 0; border-radius: 0; color: #198754; display: inline-flex; flex: 0 0 auto; height: auto; justify-content: flex-end; min-width: 4.6rem; overflow: visible; padding: 0; position: relative; }
 .report-nav-progress__bar { display: none; }
 .report-nav-progress.is-low { color: #dc3545; }
 .report-nav-progress.is-mid { color: #ca8a04; }
-.report-nav-progress__value { color: inherit; font-size: 0.78rem; font-weight: 800; line-height: 1; position: relative; z-index: 1; }
+.report-nav-progress__value { color: inherit; font-size: 0.75rem; font-weight: 800; line-height: 1; position: relative; text-align: right; white-space: nowrap; z-index: 1; }
 .report-student-link.active .report-nav-progress { color: var(--gc-on-surface); }
 
 @media (max-width: 991.98px) {
@@ -3192,6 +3203,10 @@ body {
 [data-bs-theme="dark"] .report-integrity-strip,
 [data-bs-theme="dark"] .report-chapter-heading {
   background: rgba(51, 65, 85, 0.52);
+}
+
+[data-bs-theme="dark"] .report-chart-card {
+  border-color: var(--gc-border);
 }
 
 [data-bs-theme="dark"] .report-risk-badge--high,
