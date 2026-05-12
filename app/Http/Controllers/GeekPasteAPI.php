@@ -143,6 +143,10 @@ class GeekPasteAPI extends Controller
 
     private function applyGeekPasteIntegrity(Solution $solution, array $requestData, string $solutionText)
     {
+        if (trim($solutionText) === '') {
+            return;
+        }
+
         $codeId = $this->extractGeekPasteCodeId($solutionText);
         if ($codeId) {
             $solution->geekpaste_code_id = $codeId;

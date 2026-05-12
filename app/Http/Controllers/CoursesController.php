@@ -628,6 +628,10 @@ class CoursesController extends Controller
 
     private function addSolutionToGeekPasteIntegrityBucket(array $bucket, Solution $solution)
     {
+        if (!$solution->hasGeekPasteIntegrityData()) {
+            return $bucket;
+        }
+
         $bucket['submissions']++;
 
         if ($solution->geekpaste_integrity_synced_at || $solution->geekpaste_code_id) {

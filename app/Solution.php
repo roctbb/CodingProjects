@@ -296,6 +296,10 @@ class Solution extends Model
 
     public function hasGeekPasteIntegrityData(): bool
     {
+        if (trim((string) $this->text) === '') {
+            return false;
+        }
+
         return $this->geekpaste_integrity_synced_at
             || $this->geekpaste_code_id
             || $this->geekpaste_ai_warning

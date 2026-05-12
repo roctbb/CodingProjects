@@ -41,6 +41,7 @@ class SyncGeekPasteIntegrity extends Command
             ->whereNotNull('course_id')
             ->whereNotNull('user_id')
             ->whereNotNull('text')
+            ->whereRaw("TRIM(COALESCE(text, '')) <> ''")
             ->whereHas('task', function ($query) {
                 $query->where('is_code', true);
             });
@@ -137,6 +138,10 @@ class SyncGeekPasteIntegrity extends Command
 
     protected function fetchGeekPastePayload(Solution $solution): ?array
     {
+        if (trim((string) $solution->text) === '') {
+            return null;
+        }
+
         $codeId = $solution->geekpaste_code_id ?: $this->extractGeekPasteCodeId($solution->text);
         if ($codeId) {
             $payload = $this->geekPaste->solution($codeId);
