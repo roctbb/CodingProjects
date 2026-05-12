@@ -6,6 +6,8 @@ use App\Services\GeekPasteClient;
 use App\Solution;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Schema;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 class SyncGeekPasteIntegrity extends Command
 {
@@ -29,6 +31,11 @@ class SyncGeekPasteIntegrity extends Command
 
     public function handle()
     {
+        if (!Schema::hasColumn('solutions', 'geekpaste_integrity_synced_at')) {
+            $this->error('GeekPaste integrity columns are missing. Run php artisan migrate before syncing.');
+            return 1;
+        }
+
         $query = Solution::query()
             ->whereNotNull('task_id')
             ->whereNotNull('course_id')
@@ -61,16 +68,31 @@ class SyncGeekPasteIntegrity extends Command
         $total = $query->count();
         $this->info("GeekPaste integrity sync candidates: {$total}");
 
+        ProgressBar::setFormatDefinition(
+            'geekpaste_sync',
+            ' %current%/%max% [%bar%] %percent:3s%% | elapsed: %elapsed:6s% | eta: %estimated:-6s% | updated: %updated% | missing: %missing% | current: %current_solution%'
+        );
+
         $bar = $this->output->createProgressBar($total);
+        $bar->setFormat('geekpaste_sync');
+        $bar->setRedrawFrequency(1);
+        $bar->minSecondsBetweenRedraws(0.1);
+        $bar->maxSecondsBetweenRedraws(1);
+
         $updated = 0;
         $missing = 0;
+        $this->updateProgressMessages($bar, $updated, $missing, '-');
+        $bar->start();
 
         $query->chunkById(100, function ($solutions) use (&$updated, &$missing, $bar) {
             foreach ($solutions as $solution) {
+                $this->updateProgressMessages($bar, $updated, $missing, '#' . $solution->id);
+
                 $payload = $this->fetchGeekPastePayload($solution);
 
                 if (!$payload) {
                     $missing++;
+                    $this->updateProgressMessages($bar, $updated, $missing, '#' . $solution->id);
                     $bar->advance();
                     continue;
                 }
@@ -80,22 +102,37 @@ class SyncGeekPasteIntegrity extends Command
                 if (!empty($changes)) {
                     $updated++;
                     if ($this->option('dry-run')) {
-                        $this->line('');
-                        $this->line("Solution #{$solution->id}: " . json_encode($changes, JSON_UNESCAPED_UNICODE));
+                        $this->writeDryRunChange($bar, $solution, $changes);
                     } else {
                         $solution->save();
                     }
                 }
 
+                $this->updateProgressMessages($bar, $updated, $missing, '#' . $solution->id);
                 $bar->advance();
             }
         });
 
+        $this->updateProgressMessages($bar, $updated, $missing, 'done');
         $bar->finish();
         $this->line('');
         $this->info(($this->option('dry-run') ? 'Would update' : 'Updated') . ": {$updated}; missing in GeekPaste: {$missing}");
 
         return 0;
+    }
+
+    protected function updateProgressMessages(ProgressBar $bar, int $updated, int $missing, string $currentSolution): void
+    {
+        $bar->setMessage((string) $updated, 'updated');
+        $bar->setMessage((string) $missing, 'missing');
+        $bar->setMessage($currentSolution, 'current_solution');
+    }
+
+    protected function writeDryRunChange(ProgressBar $bar, Solution $solution, array $changes): void
+    {
+        $bar->clear();
+        $this->line("Solution #{$solution->id}: " . json_encode($changes, JSON_UNESCAPED_UNICODE));
+        $bar->display();
     }
 
     protected function fetchGeekPastePayload(Solution $solution): ?array
