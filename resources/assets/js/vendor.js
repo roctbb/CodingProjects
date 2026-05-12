@@ -631,13 +631,56 @@ document.addEventListener('DOMContentLoaded', function () {
         var wrapper = input.closest('.report-students-card') || input.closest('.p-2');
         var counter = wrapper ? wrapper.querySelector('[data-report-student-count]') : null;
         var clearButton = wrapper ? wrapper.querySelector('[data-report-student-clear]') : null;
+        var sortSelect = wrapper ? wrapper.querySelector('[data-report-student-sort]') : null;
+        var nameCollator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
 
         var emptyState = document.createElement('div');
         emptyState.className = 'text-muted small px-2 py-3 text-center d-none';
         emptyState.textContent = 'Ничего не найдено';
         list.after(emptyState);
 
+        var getSortName = function (link) {
+            return link.dataset.reportStudentSortName || link.dataset.reportStudentName || link.textContent || '';
+        };
+
+        var getSortNumber = function (link, key) {
+            var value = Number(link.dataset[key]);
+            return Number.isFinite(value) ? value : -1;
+        };
+
+        var sortStudentLinks = function () {
+            var sortMode = sortSelect ? sortSelect.value : 'name';
+            var links = Array.from(list.querySelectorAll('[data-report-student-name]'));
+
+            links.sort(function (first, second) {
+                if (sortMode === 'percent') {
+                    return getSortNumber(second, 'reportStudentSortPercent') - getSortNumber(first, 'reportStudentSortPercent')
+                        || nameCollator.compare(getSortName(first), getSortName(second));
+                }
+
+                if (sortMode === 'similarity') {
+                    return getSortNumber(second, 'reportStudentSortSimilarity') - getSortNumber(first, 'reportStudentSortSimilarity')
+                        || getSortNumber(second, 'reportStudentSortRisk') - getSortNumber(first, 'reportStudentSortRisk')
+                        || nameCollator.compare(getSortName(first), getSortName(second));
+                }
+
+                if (sortMode === 'llm') {
+                    return getSortNumber(second, 'reportStudentSortLlm') - getSortNumber(first, 'reportStudentSortLlm')
+                        || getSortNumber(second, 'reportStudentSortRisk') - getSortNumber(first, 'reportStudentSortRisk')
+                        || nameCollator.compare(getSortName(first), getSortName(second));
+                }
+
+                return nameCollator.compare(getSortName(first), getSortName(second));
+            });
+
+            links.forEach(function (link) {
+                list.appendChild(link);
+            });
+        };
+
         var applyStudentFilter = function () {
+            sortStudentLinks();
+
             var query = input.value.trim().toLowerCase();
             var links = Array.from(list.querySelectorAll('[data-report-student-name]'));
             var firstVisible = null;
@@ -663,6 +706,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         input.addEventListener('input', applyStudentFilter);
+        if (sortSelect) sortSelect.addEventListener('change', applyStudentFilter);
 
         if (clearButton) {
             clearButton.addEventListener('click', function () {
@@ -671,6 +715,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 applyStudentFilter();
             });
         }
+
+        applyStudentFilter();
     });
 
     document.querySelectorAll('[data-assessment-student-search]').forEach(function (input) {

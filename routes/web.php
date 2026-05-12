@@ -86,6 +86,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{id}/', 'CoursesController@details');
     Route::get('/courses/{id}/enroll', 'CoursesController@enroll');
     Route::get('/courses/{id}/report', 'CoursesController@report');
+    Route::post('/courses/{id}/report/students/{student_id}/geekpaste-warning/reset', 'CoursesController@resetStudentGeekPasteWarning');
     Route::get('/courses/{id}/blocked', 'CoursesController@blocked');
     Route::get('/courses/{id}/edit', 'CoursesController@editView');
     Route::get('/courses/{id}/start', 'CoursesController@start');

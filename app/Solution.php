@@ -17,6 +17,7 @@ class Solution extends Model
         'geekpaste_similarity_checked', 'geekpaste_similarity_warning',
         'geekpaste_similarity_critical', 'geekpaste_similarity_max_percent',
         'geekpaste_similarity_matches_count', 'geekpaste_integrity_synced_at',
+        'geekpaste_integrity_dismissed_at', 'geekpaste_integrity_dismissed_by',
     ];
 
     protected $appends = ['mark'];
@@ -33,6 +34,7 @@ class Solution extends Model
         'geekpaste_similarity_warning' => 'boolean',
         'geekpaste_similarity_critical' => 'boolean',
         'geekpaste_integrity_synced_at' => 'datetime',
+        'geekpaste_integrity_dismissed_at' => 'datetime',
     ];
 
     public function deadline()

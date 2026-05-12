@@ -20,6 +20,7 @@ use App\User;
 use App\BlockedTask;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Auth;
 
 class CoursesController extends Controller
@@ -32,8 +33,8 @@ class CoursesController extends Controller
     public function __construct()
     {
         $this->middleware('auth')->except('details', 'open_index');
-        $this->middleware('course')->only(['details', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
-        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'reviews', 'resetPendingReviews', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
+        $this->middleware('course')->only(['details', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
+        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'reviews', 'resetPendingReviews', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
     }
 
     /**
@@ -450,6 +451,53 @@ class CoursesController extends Controller
 
     }
 
+    public function resetStudentGeekPasteWarning($id, $student_id)
+    {
+        $course = Course::with('students')->findOrFail($id);
+
+        if (!$course->students->contains('id', (int) $student_id)) {
+            abort(404);
+        }
+
+        $updateValues = [
+            'geekpaste_ai_warning' => false,
+            'geekpaste_ai_confidence' => null,
+            'geekpaste_ai_reasons' => null,
+            'geekpaste_llm_probability' => null,
+            'geekpaste_similarity_warning' => false,
+            'geekpaste_similarity_critical' => false,
+            'geekpaste_similarity_max_percent' => null,
+            'geekpaste_similarity_matches_count' => 0,
+        ];
+
+        if (Schema::hasColumn('solutions', 'geekpaste_integrity_dismissed_at')) {
+            $updateValues['geekpaste_integrity_dismissed_at'] = Carbon::now();
+        }
+
+        if (Schema::hasColumn('solutions', 'geekpaste_integrity_dismissed_by')) {
+            $updateValues['geekpaste_integrity_dismissed_by'] = Auth::id();
+        }
+
+        $updated = Solution::where('course_id', $course->id)
+            ->where('user_id', (int) $student_id)
+            ->where(function ($query) {
+                $query->where('geekpaste_ai_warning', true)
+                    ->orWhere('geekpaste_similarity_warning', true)
+                    ->orWhere('geekpaste_similarity_critical', true)
+                    ->orWhereNotNull('geekpaste_llm_probability')
+                    ->orWhereNotNull('geekpaste_similarity_max_percent');
+            })
+            ->update($updateValues);
+
+        if ($updated > 0) {
+            $this->make_success_alert('Предупреждение снято', 'Сброшены локальные флаги GeekPaste для ученика.');
+        } else {
+            $this->make_info_alert('Без изменений', 'У ученика не было активных предупреждений GeekPaste.');
+        }
+
+        return redirect('/insider/courses/' . $course->id . '/report#student' . $student_id);
+    }
+
     private function buildReportLessonGroups(Course $course)
     {
         $allLessons = $course->program->lessons;
@@ -573,6 +621,7 @@ class CoursesController extends Controller
             'max_similarity_percent' => null,
             'has_high_ai_confidence' => false,
             'has_medium_ai_confidence' => false,
+            'dismissed' => 0,
             'risk_level' => 'none',
         ];
     }
@@ -583,6 +632,12 @@ class CoursesController extends Controller
 
         if ($solution->geekpaste_integrity_synced_at || $solution->geekpaste_code_id) {
             $bucket['synced']++;
+        }
+
+        if ($solution->geekpaste_integrity_dismissed_at) {
+            $bucket['dismissed']++;
+
+            return $bucket;
         }
 
         if ($solution->geekpaste_ai_warning) {
