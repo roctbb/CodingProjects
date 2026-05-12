@@ -294,6 +294,77 @@ class Solution extends Model
             && $this->markWithoutXpBooster() >= (int) $this->task->max_mark;
     }
 
+    public function hasGeekPasteIntegrityData(): bool
+    {
+        return $this->geekpaste_integrity_synced_at
+            || $this->geekpaste_code_id
+            || $this->geekpaste_ai_warning
+            || $this->geekpaste_ai_confidence
+            || $this->geekpaste_llm_probability !== null
+            || $this->geekpaste_similarity_checked
+            || $this->geekpaste_similarity_warning
+            || $this->geekpaste_similarity_critical
+            || $this->geekpaste_similarity_max_percent !== null
+            || (int) $this->geekpaste_similarity_matches_count > 0;
+    }
+
+    public function geekPasteIntegrityRiskLevel(): string
+    {
+        if (!$this->hasGeekPasteIntegrityData() || $this->geekpaste_integrity_dismissed_at) {
+            return 'none';
+        }
+
+        $llmProbability = $this->geekpaste_llm_probability;
+        $similarityPercent = $this->geekpaste_similarity_max_percent;
+
+        if (
+            $this->geekpaste_similarity_critical
+            || $this->geekpaste_ai_confidence === 'high'
+            || ($llmProbability !== null && (int) $llmProbability >= 80)
+            || ($similarityPercent !== null && (int) $similarityPercent >= 95)
+        ) {
+            return 'high';
+        }
+
+        if (
+            $this->geekpaste_ai_warning
+            || $this->geekpaste_similarity_warning
+            || $this->geekpaste_ai_confidence === 'medium'
+            || ($llmProbability !== null && (int) $llmProbability >= 60)
+            || ($similarityPercent !== null && (int) $similarityPercent >= 75)
+        ) {
+            return 'medium';
+        }
+
+        return 'low';
+    }
+
+    public function geekPasteIntegritySuspicionKind(): ?string
+    {
+        if (!$this->hasGeekPasteIntegrityData() || $this->geekpaste_integrity_dismissed_at) {
+            return null;
+        }
+
+        if (
+            $this->geekpaste_similarity_warning
+            || $this->geekpaste_similarity_critical
+            || $this->geekpaste_similarity_max_percent !== null
+            || (int) $this->geekpaste_similarity_matches_count > 0
+        ) {
+            return 'similarity';
+        }
+
+        if (
+            $this->geekpaste_ai_warning
+            || $this->geekpaste_ai_confidence
+            || $this->geekpaste_llm_probability !== null
+        ) {
+            return 'ai';
+        }
+
+        return null;
+    }
+
     public function hasDeadlinePenalty()
     {
         return $this->deadline_penalty_amount > 0;

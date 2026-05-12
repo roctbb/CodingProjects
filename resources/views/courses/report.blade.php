@@ -36,11 +36,18 @@
             ->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped && $students->contains('id', $solution->user_id))
             ->count();
         $chapterLookup = $course->program->chapters->keyBy('id');
-        $riskBadgeClasses = [
-            'high' => 'report-risk-badge report-risk-badge--high',
-            'medium' => 'report-risk-badge report-risk-badge--medium',
-            'low' => 'report-risk-badge report-risk-badge--low',
-            'none' => 'report-risk-badge report-risk-badge--none',
+        $riskToneClasses = [
+            'high' => 'report-risk-badge--high',
+            'medium' => 'report-risk-badge--medium',
+            'low' => 'report-risk-badge--low',
+            'none' => 'report-risk-badge--none',
+            'ai' => 'report-risk-badge--ai',
+        ];
+        $riskLabels = [
+            'high' => 'высокий риск',
+            'medium' => 'средний риск',
+            'low' => 'низкий риск',
+            'none' => 'нет данных о риске',
         ];
     @endphp
     <div class="container-fluid px-0">
@@ -139,26 +146,42 @@
                                 </div>
                                 @if ($overallIntegrity && $overallIntegrity['synced'] > 0)
                                     @php
-                                        $overallRiskClass = $riskBadgeClasses[$overallIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
+                                        $overallRiskTone = $riskToneClasses[$overallIntegrity['risk_level']] ?? $riskToneClasses['none'];
+                                        $overallRiskLabel = $riskLabels[$overallIntegrity['risk_level']] ?? $overallIntegrity['risk_level'];
                                     @endphp
                                     <div class="report-integrity-strip mb-3">
                                         <span class="text-muted small fw-semibold">Академическая честность</span>
-                                        <span class="badge rounded-pill {{ $overallRiskClass }}">риск: {{ $overallIntegrity['risk_level'] }}</span>
+                                        <span class="report-integrity-icon {{ $overallRiskTone }}" title="Риск: {{ $overallRiskLabel }}">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </span>
                                         @if ($overallIntegrity['max_llm_probability'] !== null)
-                                            <span class="badge rounded-pill report-soft-badge">LLM max {{ $overallIntegrity['max_llm_probability'] }}%</span>
+                                            <span class="report-integrity-metric" title="LLM max {{ $overallIntegrity['max_llm_probability'] }}%">
+                                                <i class="fas fa-robot"></i>
+                                                <span>{{ $overallIntegrity['max_llm_probability'] }}%</span>
+                                            </span>
                                         @endif
                                         @if ($overallIntegrity['max_similarity_percent'] !== null)
-                                            <span class="badge rounded-pill report-soft-badge">схожесть max {{ $overallIntegrity['max_similarity_percent'] }}%</span>
+                                            <span class="report-integrity-metric" title="Схожесть max {{ $overallIntegrity['max_similarity_percent'] }}%">
+                                                <i class="fas fa-copy"></i>
+                                                <span>{{ $overallIntegrity['max_similarity_percent'] }}%</span>
+                                            </span>
                                         @endif
                                         @if ($overallIntegrity['ai_warnings'] > 0)
-                                            <span class="badge rounded-pill report-risk-badge report-risk-badge--ai">AI флаги {{ $overallIntegrity['ai_warnings'] }}</span>
+                                            <span class="report-integrity-metric report-risk-badge--ai" title="AI флаги: {{ $overallIntegrity['ai_warnings'] }}">
+                                                <i class="fas fa-robot"></i>
+                                                <span>{{ $overallIntegrity['ai_warnings'] }}</span>
+                                            </span>
                                         @endif
                                         @if ($overallIntegrity['similarity_warnings'] > 0)
-                                            <span class="badge rounded-pill report-risk-badge report-risk-badge--high">списывание {{ $overallIntegrity['similarity_warnings'] }}</span>
+                                            <span class="report-integrity-metric report-risk-badge--high" title="Подозрения на списывание: {{ $overallIntegrity['similarity_warnings'] }}">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                <span>{{ $overallIntegrity['similarity_warnings'] }}</span>
+                                            </span>
                                         @endif
                                         @if (($overallIntegrity['dismissed'] ?? 0) > 0)
-                                            <span class="badge rounded-pill report-soft-badge" title="Скрыто учителем">
-                                                скрыто {{ $overallIntegrity['dismissed'] }}
+                                            <span class="report-integrity-metric is-muted" title="Скрыто учителем: {{ $overallIntegrity['dismissed'] }}">
+                                                <i class="fas fa-eye-slash"></i>
+                                                <span>{{ $overallIntegrity['dismissed'] }}</span>
                                             </span>
                                         @endif
                                         @if ($overallIntegrity['risk_level'] !== 'low' && $overallIntegrity['risk_level'] !== 'none')
@@ -201,18 +224,27 @@
                                     <div class="report-chapter-risk-list mb-3">
                                         @foreach($riskyChapterIntegrity as $chapterId => $chapterIntegrity)
                                             @php
-                                                $chapterRiskClass = $riskBadgeClasses[$chapterIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
+                                                $chapterRiskTone = $riskToneClasses[$chapterIntegrity['risk_level']] ?? $riskToneClasses['none'];
+                                                $chapterRiskLabel = $riskLabels[$chapterIntegrity['risk_level']] ?? $chapterIntegrity['risk_level'];
                                                 $chapterName = optional($chapterLookup->get($chapterId))->name ?: 'Без главы';
                                             @endphp
                                             <div class="report-chapter-risk-row">
                                                 <span class="fw-semibold text-truncate">{{ $chapterName }}</span>
-                                                <span class="d-flex flex-wrap align-items-center gap-1">
-                                                    <span class="badge rounded-pill {{ $chapterRiskClass }}">{{ $chapterIntegrity['risk_level'] }}</span>
+                                                <span class="report-integrity-icons">
+                                                    <span class="report-integrity-icon {{ $chapterRiskTone }}" title="Риск: {{ $chapterRiskLabel }}">
+                                                        <i class="fas fa-shield-alt"></i>
+                                                    </span>
                                                     @if ($chapterIntegrity['max_llm_probability'] !== null)
-                                                        <span class="badge rounded-pill report-soft-badge">LLM {{ $chapterIntegrity['max_llm_probability'] }}%</span>
+                                                        <span class="report-integrity-metric" title="LLM {{ $chapterIntegrity['max_llm_probability'] }}%">
+                                                            <i class="fas fa-robot"></i>
+                                                            <span>{{ $chapterIntegrity['max_llm_probability'] }}%</span>
+                                                        </span>
                                                     @endif
                                                     @if ($chapterIntegrity['max_similarity_percent'] !== null)
-                                                        <span class="badge rounded-pill report-soft-badge">схожесть {{ $chapterIntegrity['max_similarity_percent'] }}%</span>
+                                                        <span class="report-integrity-metric" title="Схожесть {{ $chapterIntegrity['max_similarity_percent'] }}%">
+                                                            <i class="fas fa-copy"></i>
+                                                            <span>{{ $chapterIntegrity['max_similarity_percent'] }}%</span>
+                                                        </span>
                                                     @endif
                                                 </span>
                                             </div>
@@ -234,10 +266,13 @@
                                         <h6 class="mb-0">{{ $groupChapter ? $groupChapter->name : 'Без главы' }}</h6>
                                         @if ($chapterIntegrity && $chapterIntegrity['synced'] > 0 && $chapterIntegrity['risk_level'] !== 'low')
                                             @php
-                                                $chapterRiskClass = $riskBadgeClasses[$chapterIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
+                                                $chapterRiskTone = $riskToneClasses[$chapterIntegrity['risk_level']] ?? $riskToneClasses['none'];
                                                 $chapterSuspicionLabel = (($chapterIntegrity['similarity_warnings'] ?? 0) > 0 || $chapterIntegrity['max_similarity_percent'] !== null) ? 'списывание' : 'AI';
                                             @endphp
-                                            <span class="badge rounded-pill report-suspicion-badge {{ $chapterRiskClass }}">{{ $chapterSuspicionLabel }}</span>
+                                            <span class="report-suspicion-icon {{ $chapterRiskTone }}"
+                                                  title="{{ $chapterSuspicionLabel }}">
+                                                <i class="fas {{ $chapterSuspicionLabel === 'AI' ? 'fa-robot' : 'fa-exclamation-triangle' }}"></i>
+                                            </span>
                                         @endif
                                     </div>
                                     @foreach($groupLessons as $lesson)
@@ -277,10 +312,13 @@
                                                     <span class="report-lesson-risk-slot {{ $lessonHasIntegrityRisk ? '' : 'is-empty' }}">
                                                         @if ($lessonHasIntegrityRisk)
                                                             @php
-                                                                $lessonRiskClass = $riskBadgeClasses[$lessonIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
+                                                                $lessonRiskTone = $riskToneClasses[$lessonIntegrity['risk_level']] ?? $riskToneClasses['none'];
                                                                 $lessonSuspicionLabel = (($lessonIntegrity['similarity_warnings'] ?? 0) > 0 || $lessonIntegrity['max_similarity_percent'] !== null) ? 'списывание' : 'AI';
                                                             @endphp
-                                                            <span class="badge rounded-pill report-suspicion-badge {{ $lessonRiskClass }}">{{ $lessonSuspicionLabel }}</span>
+                                                            <span class="report-suspicion-icon {{ $lessonRiskTone }}"
+                                                                  title="{{ $lessonSuspicionLabel }}">
+                                                                <i class="fas {{ $lessonSuspicionLabel === 'AI' ? 'fa-robot' : 'fa-exclamation-triangle' }}"></i>
+                                                            </span>
                                                         @endif
                                                     </span>
                                                     <span class="report-lesson-score">{{$lessonPoints}} / {{$lessonMaxPoints}} XP</span>
@@ -318,29 +356,32 @@
                                                                target="_blank"
                                                                href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">{{$task->name}}</a>
 
-                                                            @php $blocked = $task->isBlocked($student->id, $course->id); @endphp
-                                                            @if ($taskIntegrity && $taskIntegrity['synced'] > 0 && $taskIntegrity['risk_level'] !== 'low')
-                                                                @php
-                                                                    $taskRiskClass = $riskBadgeClasses[$taskIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
-                                                                    $taskSuspicionLabel = (($taskIntegrity['similarity_warnings'] ?? 0) > 0 || $taskIntegrity['max_similarity_percent'] !== null) ? 'списывание' : 'AI';
-                                                                    $taskRiskTitle = trim(implode(' · ', array_filter([
-                                                                        $taskIntegrity['max_llm_probability'] !== null ? 'LLM '.$taskIntegrity['max_llm_probability'].'%' : null,
-                                                                        $taskIntegrity['max_similarity_percent'] !== null ? 'схожесть '.$taskIntegrity['max_similarity_percent'].'%' : null,
-                                                                        $taskIntegrity['ai_warnings'] > 0 ? 'AI флаги '.$taskIntegrity['ai_warnings'] : null,
-                                                                        $taskIntegrity['similarity_warnings'] > 0 ? 'списывание '.$taskIntegrity['similarity_warnings'] : null,
-                                                                    ])));
-                                                                @endphp
-                                                                <span class="badge rounded-pill report-suspicion-badge {{ $taskRiskClass }}" title="{{ $taskRiskTitle ?: 'GeekPaste' }}">
-                                                                    {{ $taskSuspicionLabel }}
-                                                                </span>
-                                                            @endif
-                                                            @if ($blocked)
-                                                                <span class="badge rounded-pill bg-body-tertiary report-task-mark report-task-mark--blocked">0 / {{$task->max_mark}}</span>
-                                                            @elseif ($should_check)
-                                                                <span class="badge rounded-pill bg-body-tertiary report-task-mark report-task-mark--review">{{$mark}} / {{$task->max_mark}}</span>
-                                                            @else
-                                                                <span class="badge rounded-pill {{ $markClass }} report-task-mark">{{$mark}} / {{$task->max_mark}}</span>
-                                                            @endif
+                                                            <span class="report-task-meta">
+                                                                @php $blocked = $task->isBlocked($student->id, $course->id); @endphp
+                                                                @if ($taskIntegrity && $taskIntegrity['synced'] > 0 && $taskIntegrity['risk_level'] !== 'low')
+                                                                    @php
+                                                                        $taskRiskTone = $riskToneClasses[$taskIntegrity['risk_level']] ?? $riskToneClasses['none'];
+                                                                        $taskSuspicionLabel = (($taskIntegrity['similarity_warnings'] ?? 0) > 0 || $taskIntegrity['max_similarity_percent'] !== null) ? 'списывание' : 'AI';
+                                                                        $taskRiskTitle = trim(implode(' · ', array_filter([
+                                                                            $taskIntegrity['max_llm_probability'] !== null ? 'LLM '.$taskIntegrity['max_llm_probability'].'%' : null,
+                                                                            $taskIntegrity['max_similarity_percent'] !== null ? 'схожесть '.$taskIntegrity['max_similarity_percent'].'%' : null,
+                                                                            $taskIntegrity['ai_warnings'] > 0 ? 'AI флаги '.$taskIntegrity['ai_warnings'] : null,
+                                                                            $taskIntegrity['similarity_warnings'] > 0 ? 'списывание '.$taskIntegrity['similarity_warnings'] : null,
+                                                                        ])));
+                                                                    @endphp
+                                                                    <span class="report-task-suspicion-dot {{ $taskRiskTone }}"
+                                                                          title="{{ $taskSuspicionLabel }}{{ $taskRiskTitle ? ': '.$taskRiskTitle : '' }}">
+                                                                        <i class="fas {{ $taskSuspicionLabel === 'AI' ? 'fa-robot' : 'fa-exclamation-triangle' }}"></i>
+                                                                    </span>
+                                                                @endif
+                                                                @if ($blocked)
+                                                                    <span class="badge rounded-pill bg-body-tertiary report-task-mark report-task-mark--blocked">0 / {{$task->max_mark}}</span>
+                                                                @elseif ($should_check)
+                                                                    <span class="badge rounded-pill bg-body-tertiary report-task-mark report-task-mark--review">{{$mark}} / {{$task->max_mark}}</span>
+                                                                @else
+                                                                    <span class="badge rounded-pill {{ $markClass }} report-task-mark">{{$mark}} / {{$task->max_mark}}</span>
+                                                                @endif
+                                                            </span>
                                                         </li>
                                                     @endforeach
                                                 @endforeach

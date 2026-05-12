@@ -1980,6 +1980,32 @@ body {
   text-transform: uppercase;
 }
 
+.solution-integrity-panel {
+  background: color-mix(in srgb, var(--gc-surface-variant) 70%, var(--gc-surface));
+  border: 1px solid var(--gc-border);
+  border-radius: 0.62rem;
+  display: grid;
+  gap: 0.48rem;
+  margin-bottom: 0.85rem;
+  padding: 0.58rem 0.68rem;
+}
+.solution-integrity-panel.is-dismissed {
+  opacity: 0.78;
+}
+.solution-integrity-panel__head {
+  align-items: center;
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+}
+.solution-integrity-metrics {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.34rem;
+  min-width: 0;
+}
+
 .solution-answer,
 .solution-feedback {
   background: var(--gc-surface-variant);
@@ -2651,7 +2677,23 @@ body {
 .report-risk-badge--low { background: rgba(25, 135, 84, 0.1); border-color: rgba(25, 135, 84, 0.18); color: #157347; }
 .report-risk-badge--none { background: var(--gc-surface-variant); border-color: var(--gc-border); color: var(--gc-on-surface-muted); }
 .report-risk-badge--ai { background: rgba(13, 110, 253, 0.08); border-color: rgba(13, 110, 253, 0.16); color: #35618f; }
-.report-suspicion-badge { border-radius: 999px !important; font-size: 0.66rem; font-weight: 780; line-height: 1; padding: 0.18rem 0.42rem; }
+.report-integrity-icons { align-items: center; display: inline-flex; flex-wrap: wrap; gap: 0.34rem; justify-content: flex-end; min-width: 0; }
+.report-integrity-icon,
+.report-suspicion-icon,
+.report-task-suspicion-dot {
+  align-items: center;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  line-height: 1;
+}
+.report-integrity-icon { font-size: 0.66rem; height: 1.38rem; width: 1.38rem; }
+.report-suspicion-icon { font-size: 0.58rem; height: 1.12rem; opacity: 0.82; width: 1.12rem; }
+.report-integrity-metric { align-items: center; background: transparent !important; border: 0 !important; color: var(--gc-on-surface-muted); display: inline-flex; flex: 0 0 auto; font-size: 0.73rem; font-weight: 740; gap: 0.28rem; line-height: 1; min-height: 1.2rem; padding: 0.08rem 0; white-space: nowrap; }
+.report-integrity-metric i { font-size: 0.68rem; }
+.report-integrity-metric.is-muted { background: transparent; color: var(--gc-on-surface-muted); opacity: 0.76; }
 .report-chart-card { border-bottom: 1px solid var(--gc-border); padding: 0.25rem 0 0.65rem; }
 .report-chart-legend { align-items: center; color: var(--gc-on-surface-muted); display: flex; font-size: 0.74rem; font-weight: 720; gap: 0.8rem; justify-content: flex-end; line-height: 1; margin-bottom: 0.1rem; }
 .report-chart-legend span { align-items: center; display: inline-flex; gap: 0.3rem; }
@@ -2678,10 +2720,9 @@ body {
 .report-lesson-meta { align-items: center; color: var(--gc-on-surface-muted); display: flex; gap: 0.4rem; line-height: 1.1; margin-top: 0.14rem; min-height: 0.78rem; }
 .report-lesson-date { color: var(--gc-on-surface-muted); display: block; font-size: 0.72rem; font-weight: 640; line-height: 1.1; }
 .report-lesson-lock { background: var(--gc-surface-variant) !important; border-color: var(--gc-border) !important; color: var(--gc-on-surface-muted) !important; font-size: 0.72rem; transform: translateY(-0.05rem); }
-.report-lesson-metrics { align-items: center; display: grid; gap: 0.45rem; grid-template-columns: minmax(6rem, 7rem) minmax(5.5rem, max-content) minmax(5.6rem, 7rem); justify-content: end; min-width: 0; }
+.report-lesson-metrics { align-items: center; display: grid; gap: 0.45rem; grid-template-columns: 1.35rem minmax(5.5rem, max-content) minmax(5.6rem, 7rem); justify-content: end; min-width: 0; }
 .report-lesson-risk-slot { align-items: center; display: inline-flex; justify-content: flex-end; min-width: 0; }
 .report-lesson-risk-slot.is-empty { visibility: hidden; }
-.report-lesson-risk-slot .report-risk-badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .report-lesson-score { color: var(--gc-on-surface-muted); font-size: 0.82rem; font-weight: 740; text-align: right; white-space: nowrap; }
 .report-score-progress { align-items: center; background: rgba(15, 23, 42, 0.07); border: 0; border-radius: 999px; color: var(--gc-on-surface-muted); display: inline-flex; height: 0.68rem; justify-content: center; overflow: hidden; padding: 0; position: relative; width: 100%; }
 .report-score-progress__bar { background: rgba(34, 197, 94, 0.58); border-radius: inherit; bottom: 0; left: 0; position: absolute; top: 0; width: 0; }
@@ -2690,10 +2731,12 @@ body {
 .report-score-progress__value { color: var(--gc-on-surface); display: block; font-size: 0.62rem; font-weight: 820; line-height: 1; position: relative; z-index: 1; }
 .report-lesson-details { padding: 0.62rem 0 0.72rem; }
 .report-task-list { display: grid; gap: 0.45rem; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); }
-.report-task-row { align-items: flex-start; background: color-mix(in srgb, var(--gc-surface) 94%, transparent); border: 1px solid var(--gc-border); border-radius: 0.55rem; box-shadow: 0 3px 10px rgba(15, 23, 42, 0.018); display: flex; gap: 0.55rem; justify-content: space-between; list-style: none; min-width: 0; padding: 0.55rem 0.62rem; transition: background-color var(--gc-transition), border-color var(--gc-transition), box-shadow var(--gc-transition); }
+.report-task-row { align-items: start; background: color-mix(in srgb, var(--gc-surface) 94%, transparent); border: 1px solid var(--gc-border); border-radius: 0.55rem; box-shadow: 0 3px 10px rgba(15, 23, 42, 0.018); display: grid; gap: 0.55rem; grid-template-columns: minmax(0, 1fr) max-content; list-style: none; min-width: 0; padding: 0.55rem 0.62rem; transition: background-color var(--gc-transition), border-color var(--gc-transition), box-shadow var(--gc-transition); }
 .report-task-row:hover { background: var(--gc-surface); border-color: rgba(15, 23, 42, 0.1); box-shadow: 0 5px 14px rgba(15, 23, 42, 0.03); }
 .report-task-link { color: var(--gc-on-surface); display: -webkit-box; flex: 1 1 auto; font-size: 0.88rem; font-weight: 690; line-height: 1.25; min-width: 0; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .report-task-link:hover { color: var(--gc-primary); }
+.report-task-meta { align-items: flex-start; display: flex; flex: 0 0 auto; gap: 0.34rem; justify-content: flex-end; min-width: 0; }
+.report-task-suspicion-dot { font-size: 0.58rem; height: 1.25rem; opacity: 0.84; width: 1.25rem; }
 .report-task-mark {
   border: 1px solid var(--gc-border);
   border-radius: 999px !important;

@@ -110,6 +110,27 @@
                 $solutionChecked = $solution->mark !== null;
                 $solutionPendingReview = $solution->isPendingReview();
                 $solutionGradeFormId = ($solutionChecked ? 'solution-recheck-form-' : 'solution-grade-form-') . $solution->id;
+                $geekPasteHasData = $solution->hasGeekPasteIntegrityData();
+                $geekPasteRiskLevel = $solution->geekPasteIntegrityRiskLevel();
+                $geekPasteRiskTone = [
+                    'high' => 'report-risk-badge--high',
+                    'medium' => 'report-risk-badge--medium',
+                    'low' => 'report-risk-badge--low',
+                    'none' => 'report-risk-badge--none',
+                ][$geekPasteRiskLevel] ?? 'report-risk-badge--none';
+                $geekPasteRiskLabel = [
+                    'high' => 'высокий риск',
+                    'medium' => 'средний риск',
+                    'low' => 'низкий риск',
+                    'none' => 'нет активного риска',
+                ][$geekPasteRiskLevel] ?? $geekPasteRiskLevel;
+                $geekPasteConfidenceLabel = [
+                    'high' => 'высокая',
+                    'medium' => 'средняя',
+                    'low' => 'низкая',
+                ][$solution->geekpaste_ai_confidence] ?? $solution->geekpaste_ai_confidence;
+                $geekPasteSuspicionKind = $solution->geekPasteIntegritySuspicionKind();
+                $geekPasteRiskIcon = $geekPasteSuspicionKind === 'ai' ? 'fa-robot' : ($geekPasteSuspicionKind === 'similarity' ? 'fa-exclamation-triangle' : 'fa-shield-alt');
             @endphp
             <div class="gc-card solution-review-card mb-3 @if($solutionPendingReview) is-pending @else is-checked @endif" id="solution-{{ $solution->id }}">
                 <div class="gc-section-header gc-section-header--between solution-review-card__header">
@@ -162,6 +183,68 @@
                 <div class="solution-review-card__body">
                     <div class="solution-review-layout">
                         <div class="solution-review-layout__answer">
+                            @if($geekPasteHasData)
+                                <div class="solution-integrity-panel @if($solution->geekpaste_integrity_dismissed_at) is-dismissed @endif">
+                                    <div class="solution-integrity-panel__head">
+                                        <span class="solution-block__label mb-0">GeekPaste</span>
+                                        <span class="solution-integrity-icons">
+                                            <span class="report-integrity-icon {{ $geekPasteRiskTone }}"
+                                                  title="{{ $solution->geekpaste_integrity_dismissed_at ? 'Предупреждение снято' : 'Риск: '.$geekPasteRiskLabel }}">
+                                                <i class="fas {{ $solution->geekpaste_integrity_dismissed_at ? 'fa-eye-slash' : $geekPasteRiskIcon }}"></i>
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <div class="solution-integrity-metrics">
+                                        @if($solution->geekpaste_llm_probability !== null)
+                                            <span class="report-integrity-metric" title="Вероятность LLM">
+                                                <i class="fas fa-robot"></i>
+                                                <span>{{ $solution->geekpaste_llm_probability }}%</span>
+                                            </span>
+                                        @endif
+                                        @if($solution->geekpaste_similarity_max_percent !== null)
+                                            <span class="report-integrity-metric" title="Максимальная схожесть">
+                                                <i class="fas fa-copy"></i>
+                                                <span>{{ $solution->geekpaste_similarity_max_percent }}%</span>
+                                            </span>
+                                        @endif
+                                        @if((int) $solution->geekpaste_similarity_matches_count > 0)
+                                            <span class="report-integrity-metric" title="Найдено похожих сдач">
+                                                <i class="fas fa-link"></i>
+                                                <span>{{ $solution->geekpaste_similarity_matches_count }}</span>
+                                            </span>
+                                        @endif
+                                        @if($solution->geekpaste_ai_confidence)
+                                            <span class="report-integrity-metric report-risk-badge--ai" title="AI confidence">
+                                                <i class="fas fa-robot"></i>
+                                                <span>{{ $geekPasteConfidenceLabel }}</span>
+                                            </span>
+                                        @elseif($solution->geekpaste_ai_warning)
+                                            <span class="report-integrity-metric report-risk-badge--ai" title="AI предупреждение">
+                                                <i class="fas fa-robot"></i>
+                                                <span>AI</span>
+                                            </span>
+                                        @endif
+                                        @if($solution->geekpaste_integrity_dismissed_at)
+                                            <span class="report-integrity-metric is-muted" title="Снято {{ $solution->geekpaste_integrity_dismissed_at->format('d.m.Y H:i') }}">
+                                                <i class="fas fa-eye-slash"></i>
+                                                <span>снято</span>
+                                            </span>
+                                        @elseif($solution->geekpaste_integrity_synced_at)
+                                            <span class="report-integrity-metric is-muted" title="Синхронизировано {{ $solution->geekpaste_integrity_synced_at->format('d.m.Y H:i') }}">
+                                                <i class="fas fa-clock"></i>
+                                                <span>{{ $solution->geekpaste_integrity_synced_at->format('d.m') }}</span>
+                                            </span>
+                                        @endif
+                                        @if($solution->geekpaste_code_id)
+                                            <span class="report-integrity-metric is-muted" title="GeekPaste ID">
+                                                <i class="fas fa-code"></i>
+                                                <span>{{ $solution->geekpaste_code_id }}</span>
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+
                             <div class="solution-block__label">Ответ ученика</div>
                             <div class="solution-answer mb-0 @if(trim($solution->text) === '') is-empty @endif" data-linkify>
                                 @if(trim($solution->text) === '')
