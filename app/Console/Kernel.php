@@ -19,7 +19,8 @@ class Kernel extends ConsoleKernel
         Commands\FixTyposCommand::class,
         Commands\RecalculateCoursePoints::class,
         Commands\PollTelegramBot::class,
-        Commands\RandomCoinDrop::class
+        Commands\RandomCoinDrop::class,
+        Commands\SyncGeekPasteIntegrity::class
     ];
 
     /**

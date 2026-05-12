@@ -11,7 +11,12 @@ class Solution extends Model
     protected $table = 'solutions';
 
     protected $fillable = [
-        'text', 'step_id', 'submitted', 'user_id'
+        'text', 'step_id', 'submitted', 'user_id',
+        'geekpaste_code_id', 'geekpaste_ai_warning', 'geekpaste_ai_confidence',
+        'geekpaste_ai_reasons', 'geekpaste_llm_probability',
+        'geekpaste_similarity_checked', 'geekpaste_similarity_warning',
+        'geekpaste_similarity_critical', 'geekpaste_similarity_max_percent',
+        'geekpaste_similarity_matches_count', 'geekpaste_integrity_synced_at',
     ];
 
     protected $appends = ['mark'];
@@ -23,6 +28,11 @@ class Solution extends Model
         'xp_booster_used_at' => 'datetime',
         'recheck_requested' => 'boolean',
         'review_skipped' => 'boolean',
+        'geekpaste_ai_warning' => 'boolean',
+        'geekpaste_similarity_checked' => 'boolean',
+        'geekpaste_similarity_warning' => 'boolean',
+        'geekpaste_similarity_critical' => 'boolean',
+        'geekpaste_integrity_synced_at' => 'datetime',
     ];
 
     public function deadline()

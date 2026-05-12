@@ -285,6 +285,7 @@ class CoursesController extends Controller
     {
         $user = User::with('solutions', 'solutions.task')->findOrFail(Auth::User()->id);
         $course = Course::with([
+            'program.chapters',
             'program.lessons.info',
             'program.lessons.steps.tasks.solutions' => function ($query) use ($id) {
                 $query->where('course_id', $id);
@@ -298,9 +299,7 @@ class CoursesController extends Controller
         ])->findOrFail($id);
         $students = $course->students;
 
-            $lessons = $course->program->lessons->filter(function ($lesson) use ($course) {
-                return $lesson->isStarted($course);
-            });
+            [$lessons, $reportChapterGroups] = $this->buildReportLessonGroups($course);
 
             $temp_steps = collect([]);
             foreach ($lessons as $lesson) {
@@ -445,9 +444,205 @@ class CoursesController extends Controller
             }
 
             $steps = $temp_steps;
+            $geekPasteIntegrityStats = $this->buildGeekPasteIntegrityReport($students, $lessons);
 
-        return view('courses.report', compact('course', 'user', 'steps', 'students', 'lessons', 'pulse_keys', 'pulse_values', 'task_keys', 'task_values', 'lessonStats'));
+        return view('courses.report', compact('course', 'user', 'steps', 'students', 'lessons', 'reportChapterGroups', 'pulse_keys', 'pulse_values', 'task_keys', 'task_values', 'lessonStats', 'geekPasteIntegrityStats'));
 
+    }
+
+    private function buildReportLessonGroups(Course $course)
+    {
+        $allLessons = $course->program->lessons;
+        $chapters = $course->program->chapters;
+        $groups = collect();
+        $orderedLessons = collect();
+
+        foreach ($chapters as $chapter) {
+            $chapterLessons = $allLessons
+                ->where('chapter_id', $chapter->id)
+                ->sortBy('sort_index')
+                ->filter(function ($lesson) use ($course) {
+                    return $lesson->isStarted($course);
+                })
+                ->values();
+
+            if ($chapterLessons->isEmpty()) {
+                continue;
+            }
+
+            $groups->push([
+                'chapter' => $chapter,
+                'lessons' => $chapterLessons,
+            ]);
+            $orderedLessons = $orderedLessons->merge($chapterLessons);
+        }
+
+        $knownChapterIds = $chapters->pluck('id')->all();
+        $uncategorizedLessons = $allLessons
+            ->filter(function ($lesson) use ($course, $knownChapterIds) {
+                return (!$lesson->chapter_id || !in_array($lesson->chapter_id, $knownChapterIds))
+                    && $lesson->isStarted($course);
+            })
+            ->sortBy('sort_index')
+            ->values();
+
+        if ($uncategorizedLessons->isNotEmpty()) {
+            $groups->push([
+                'chapter' => null,
+                'lessons' => $uncategorizedLessons,
+            ]);
+            $orderedLessons = $orderedLessons->merge($uncategorizedLessons);
+        }
+
+        return [$orderedLessons->values(), $groups];
+    }
+
+    private function buildGeekPasteIntegrityReport($students, $lessons)
+    {
+        $stats = [];
+
+        foreach ($students as $student) {
+            $stats[$student->id] = [
+                'overall' => $this->emptyGeekPasteIntegrityBucket(),
+                'chapters' => [],
+                'lessons' => [],
+                'tasks' => [],
+            ];
+        }
+
+        foreach ($lessons as $lesson) {
+            $chapterId = $lesson->chapter_id ?: 0;
+
+            foreach ($lesson->steps as $step) {
+                foreach ($step->tasks as $task) {
+                    foreach ($task->solutions as $solution) {
+                        if (!isset($stats[$solution->user_id])) {
+                            continue;
+                        }
+
+                        if (!isset($stats[$solution->user_id]['chapters'][$chapterId])) {
+                            $stats[$solution->user_id]['chapters'][$chapterId] = $this->emptyGeekPasteIntegrityBucket();
+                        }
+
+                        if (!isset($stats[$solution->user_id]['lessons'][$lesson->id])) {
+                            $stats[$solution->user_id]['lessons'][$lesson->id] = $this->emptyGeekPasteIntegrityBucket();
+                        }
+
+                        if (!isset($stats[$solution->user_id]['tasks'][$task->id])) {
+                            $stats[$solution->user_id]['tasks'][$task->id] = $this->emptyGeekPasteIntegrityBucket();
+                        }
+
+                        $stats[$solution->user_id]['overall'] = $this->addSolutionToGeekPasteIntegrityBucket($stats[$solution->user_id]['overall'], $solution);
+                        $stats[$solution->user_id]['chapters'][$chapterId] = $this->addSolutionToGeekPasteIntegrityBucket($stats[$solution->user_id]['chapters'][$chapterId], $solution);
+                        $stats[$solution->user_id]['lessons'][$lesson->id] = $this->addSolutionToGeekPasteIntegrityBucket($stats[$solution->user_id]['lessons'][$lesson->id], $solution);
+                        $stats[$solution->user_id]['tasks'][$task->id] = $this->addSolutionToGeekPasteIntegrityBucket($stats[$solution->user_id]['tasks'][$task->id], $solution);
+                    }
+                }
+            }
+        }
+
+        foreach ($stats as $studentId => $studentStats) {
+            $stats[$studentId]['overall'] = $this->finalizeGeekPasteIntegrityBucket($studentStats['overall']);
+
+            foreach ($studentStats['chapters'] as $chapterId => $bucket) {
+                $stats[$studentId]['chapters'][$chapterId] = $this->finalizeGeekPasteIntegrityBucket($bucket);
+            }
+
+            foreach ($studentStats['lessons'] as $lessonId => $bucket) {
+                $stats[$studentId]['lessons'][$lessonId] = $this->finalizeGeekPasteIntegrityBucket($bucket);
+            }
+
+            foreach ($studentStats['tasks'] as $taskId => $bucket) {
+                $stats[$studentId]['tasks'][$taskId] = $this->finalizeGeekPasteIntegrityBucket($bucket);
+            }
+        }
+
+        return $stats;
+    }
+
+    private function emptyGeekPasteIntegrityBucket()
+    {
+        return [
+            'submissions' => 0,
+            'synced' => 0,
+            'ai_warnings' => 0,
+            'similarity_warnings' => 0,
+            'similarity_critical' => 0,
+            'similarity_matches_count' => 0,
+            'max_llm_probability' => null,
+            'max_similarity_percent' => null,
+            'has_high_ai_confidence' => false,
+            'has_medium_ai_confidence' => false,
+            'risk_level' => 'none',
+        ];
+    }
+
+    private function addSolutionToGeekPasteIntegrityBucket(array $bucket, Solution $solution)
+    {
+        $bucket['submissions']++;
+
+        if ($solution->geekpaste_integrity_synced_at || $solution->geekpaste_code_id) {
+            $bucket['synced']++;
+        }
+
+        if ($solution->geekpaste_ai_warning) {
+            $bucket['ai_warnings']++;
+        }
+
+        if ($solution->geekpaste_similarity_warning) {
+            $bucket['similarity_warnings']++;
+        }
+
+        if ($solution->geekpaste_similarity_critical) {
+            $bucket['similarity_critical']++;
+        }
+
+        $bucket['similarity_matches_count'] += (int) $solution->geekpaste_similarity_matches_count;
+
+        if ($solution->geekpaste_llm_probability !== null) {
+            $bucket['max_llm_probability'] = max((int) $solution->geekpaste_llm_probability, (int) ($bucket['max_llm_probability'] ?? 0));
+        }
+
+        if ($solution->geekpaste_similarity_max_percent !== null) {
+            $bucket['max_similarity_percent'] = max((int) $solution->geekpaste_similarity_max_percent, (int) ($bucket['max_similarity_percent'] ?? 0));
+        }
+
+        if ($solution->geekpaste_ai_confidence === 'high') {
+            $bucket['has_high_ai_confidence'] = true;
+        }
+
+        if ($solution->geekpaste_ai_confidence === 'medium') {
+            $bucket['has_medium_ai_confidence'] = true;
+        }
+
+        return $bucket;
+    }
+
+    private function finalizeGeekPasteIntegrityBucket(array $bucket)
+    {
+        $maxLlm = $bucket['max_llm_probability'];
+        $maxSimilarity = $bucket['max_similarity_percent'];
+
+        if (
+            $bucket['similarity_critical'] > 0 ||
+            $bucket['has_high_ai_confidence'] ||
+            ($maxLlm !== null && $maxLlm >= 80) ||
+            ($maxSimilarity !== null && $maxSimilarity >= 95)
+        ) {
+            $bucket['risk_level'] = 'high';
+        } elseif (
+            $bucket['ai_warnings'] > 0 ||
+            $bucket['similarity_warnings'] > 0 ||
+            $bucket['has_medium_ai_confidence'] ||
+            ($maxLlm !== null && $maxLlm >= 60) ||
+            ($maxSimilarity !== null && $maxSimilarity >= 75)
+        ) {
+            $bucket['risk_level'] = 'medium';
+        } elseif ($bucket['synced'] > 0) {
+            $bucket['risk_level'] = 'low';
+        }
+
+        return $bucket;
     }
 
     public function blocked($id)

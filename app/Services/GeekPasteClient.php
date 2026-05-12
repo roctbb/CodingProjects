@@ -81,6 +81,31 @@ class GeekPasteClient
         ]);
     }
 
+    public function studentSolutions(int $userId, ?int $taskId = null, int $perPage = 100, ?int $page = null, ?string $checkState = null): ?array
+    {
+        $query = [
+            'per_page' => max(1, min($perPage, 500)),
+        ];
+
+        if ($taskId !== null) {
+            $query['task_id'] = $taskId;
+        }
+
+        if ($page !== null) {
+            $query['page'] = $page;
+        }
+
+        if ($checkState !== null) {
+            $query['check_state'] = $checkState;
+        }
+
+        return $this->request('GET', '/api/students/' . $userId . '/solutions', [
+            'query' => $query,
+            'connect_timeout' => 2,
+            'timeout' => 15,
+        ]);
+    }
+
     public function canBuyExtraGptAttempt(int $userId, int $taskId, ?int $courseId = null): bool
     {
         $status = $this->gptRateLimitStatus($userId, $taskId, $courseId);

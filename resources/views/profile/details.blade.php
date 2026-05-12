@@ -594,19 +594,28 @@
                     @endif
                 </div>
                 <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
-                    @foreach($completedCourses as $course)
+                    @foreach($completedCourses as $completedCourse)
+                        @php
+                            $linkedCourse = $completedCourse->course;
+                            $canOpenCompletedCourse = $linkedCourse && (
+                                $guest->role == 'admin'
+                                || $guest->id == $completedCourse->user_id
+                                || $linkedCourse->students->contains('id', $guest->id)
+                                || $linkedCourse->teachers->contains('id', $guest->id)
+                            );
+                        @endphp
                         <div class="col">
                             <div class="gc-card h-100 p-3 profile-course-card">
                                 <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                                    <h6 class="fw-bold lh-sm mb-0">{{ $course->name }}</h6>
+                                    <h6 class="fw-bold lh-sm mb-0">{{ $completedCourse->name }}</h6>
                                     @if ($guest->role == 'admin')
-                                        <a href="{{ url('/insider/profile/delete-course/'.$course->id) }}" class="text-danger" data-confirm="Вы уверены?"><i class="fas fa-times"></i></a>
+                                        <a href="{{ url('/insider/profile/delete-course/'.$completedCourse->id) }}" class="text-danger" data-confirm="Вы уверены?"><i class="fas fa-times"></i></a>
                                     @endif
                                 </div>
                                 <div class="d-flex flex-wrap align-items-center gap-2">
-                                    <span class="gc-soft-badge">{{ $course->mark }}</span>
-                                    @if ($course->course_id && ($guest->role == 'teacher' || $course->course->students->contains($guest)))
-                                        <a href="{{ url('insider/courses/'.$course->course_id) }}" class="small text-decoration-none">Страница курса</a>
+                                    <span class="gc-soft-badge">{{ $completedCourse->mark }}</span>
+                                    @if ($canOpenCompletedCourse)
+                                        <a href="{{ url('insider/courses/'.$completedCourse->course_id) }}" class="small text-decoration-none">Страница курса</a>
                                     @endif
                                 </div>
                             </div>

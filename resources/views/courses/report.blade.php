@@ -35,6 +35,13 @@
             ->flatMap(fn ($task) => $task->solutions)
             ->filter(fn ($solution) => $solution->submitted && $solution->mark === null && !$solution->review_skipped && $students->contains('id', $solution->user_id))
             ->count();
+        $chapterLookup = $course->program->chapters->keyBy('id');
+        $riskBadgeClasses = [
+            'high' => 'bg-danger text-white',
+            'medium' => 'bg-warning text-dark',
+            'low' => 'bg-success-subtle text-success border border-success-subtle',
+            'none' => 'bg-body-tertiary text-muted',
+        ];
     @endphp
     <div class="container-fluid px-0">
         <div class="gc-card gc-page-header report-page-header mb-3">
@@ -99,6 +106,10 @@
                                 </div>
                             </div>
                             <div class="report-student-card__body">
+                                @php
+                                    $studentIntegrity = $geekPasteIntegrityStats[$student->id] ?? null;
+                                    $overallIntegrity = $studentIntegrity['overall'] ?? null;
+                                @endphp
                                 <div class="progress report-student-progress {{ $student->percent < 40 ? 'is-low' : ($student->percent < 60 ? 'is-mid' : 'is-high') }} mb-3">
                                     @if ($student->percent < 40)
                                         <div class="progress-bar report-student-progress__bar" role="progressbar"
@@ -120,6 +131,27 @@
 
                                     @endif
                                 </div>
+                                @if ($overallIntegrity && $overallIntegrity['synced'] > 0)
+                                    @php
+                                        $overallRiskClass = $riskBadgeClasses[$overallIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
+                                    @endphp
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                        <span class="text-muted small fw-semibold">Академическая честность</span>
+                                        <span class="badge rounded-pill {{ $overallRiskClass }}">риск: {{ $overallIntegrity['risk_level'] }}</span>
+                                        @if ($overallIntegrity['max_llm_probability'] !== null)
+                                            <span class="badge rounded-pill bg-body-tertiary text-body">LLM max {{ $overallIntegrity['max_llm_probability'] }}%</span>
+                                        @endif
+                                        @if ($overallIntegrity['max_similarity_percent'] !== null)
+                                            <span class="badge rounded-pill bg-body-tertiary text-body">схожесть max {{ $overallIntegrity['max_similarity_percent'] }}%</span>
+                                        @endif
+                                        @if ($overallIntegrity['ai_warnings'] > 0)
+                                            <span class="badge rounded-pill bg-info-subtle text-info border border-info-subtle">AI флаги {{ $overallIntegrity['ai_warnings'] }}</span>
+                                        @endif
+                                        @if ($overallIntegrity['similarity_warnings'] > 0)
+                                            <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle">списывание {{ $overallIntegrity['similarity_warnings'] }}</span>
+                                        @endif
+                                    </div>
+                                @endif
                                 @if ($pulse_keys->has($student->id))
                                     <div id="pulse{{$student->id}}" class="mb-2 w-100"
                                           data-plotly-report-chart
@@ -131,88 +163,161 @@
                                          @endif></div>
 
                                 @endif
+                                @if ($studentIntegrity && !empty($studentIntegrity['chapters']))
+                                    <div class="d-flex align-items-center justify-content-between gap-2 mt-4 mb-2">
+                                        <h5 class="mb-0">Риски по главам</h5>
+                                        <span class="text-muted small">GeekPaste</span>
+                                    </div>
+                                    <div class="d-grid gap-2 mb-3">
+                                        @foreach($studentIntegrity['chapters'] as $chapterId => $chapterIntegrity)
+                                            @if ($chapterIntegrity['synced'] > 0)
+                                                @php
+                                                    $chapterRiskClass = $riskBadgeClasses[$chapterIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
+                                                    $chapterName = optional($chapterLookup->get($chapterId))->name ?: 'Без главы';
+                                                @endphp
+                                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 border rounded-3 px-3 py-2">
+                                                    <span class="fw-semibold text-truncate">{{ $chapterName }}</span>
+                                                    <span class="d-flex flex-wrap align-items-center gap-1">
+                                                        <span class="badge rounded-pill {{ $chapterRiskClass }}">{{ $chapterIntegrity['risk_level'] }}</span>
+                                                        @if ($chapterIntegrity['max_llm_probability'] !== null)
+                                                            <span class="badge rounded-pill bg-body-tertiary text-body">LLM {{ $chapterIntegrity['max_llm_probability'] }}%</span>
+                                                        @endif
+                                                        @if ($chapterIntegrity['max_similarity_percent'] !== null)
+                                                            <span class="badge rounded-pill bg-body-tertiary text-body">схожесть {{ $chapterIntegrity['max_similarity_percent'] }}%</span>
+                                                        @endif
+                                                    </span>
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                @endif
                                 <div class="d-flex align-items-center justify-content-between gap-2 mt-4 mb-2">
                                     <h5 class="mb-0">Прогресс по урокам</h5>
                                     <span class="text-muted small">{{ $lessons->count() }} уроков</span>
                                 </div>
                                 <div class="report-lessons-list d-grid gap-2">
-                                @foreach($lessons as $lesson)
+                                @foreach($reportChapterGroups as $chapterGroup)
                                     @php
-                                        $lessonStat = $lessonStats[$lesson->id][$student->id] ?? null;
-                                        $lessonPercent = $lessonStat ? $lessonStat->percent : 0;
-                                        $lessonPoints = $lessonStat ? $lessonStat->points : 0;
-                                        $lessonMaxPoints = $lessonStat ? $lessonStat->max_points : 0;
-                                        $lessonProgressWidth = max(0, min(100, (int) round($lessonPercent)));
-                                        $lessonProgressClass = $lessonPercent < 40 ? 'is-low' : ($lessonPercent < 60 ? 'is-mid' : 'is-high');
+                                        $groupChapter = $chapterGroup['chapter'];
+                                        $groupLessons = $chapterGroup['lessons'];
+                                        $chapterIntegrity = $studentIntegrity['chapters'][$groupChapter ? $groupChapter->id : 0] ?? null;
                                     @endphp
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 px-1">
+                                        <h6 class="mb-0 text-muted fw-bold">{{ $groupChapter ? $groupChapter->name : 'Без главы' }}</h6>
+                                        @if ($chapterIntegrity && $chapterIntegrity['synced'] > 0 && $chapterIntegrity['risk_level'] !== 'low')
+                                            @php $chapterRiskClass = $riskBadgeClasses[$chapterIntegrity['risk_level']] ?? $riskBadgeClasses['none']; @endphp
+                                            <span class="badge rounded-pill {{ $chapterRiskClass }}">GP {{ $chapterIntegrity['risk_level'] }}</span>
+                                        @endif
+                                    </div>
+                                    @foreach($groupLessons as $lesson)
+                                        @php
+                                            $lessonStat = $lessonStats[$lesson->id][$student->id] ?? null;
+                                            $lessonPercent = $lessonStat ? $lessonStat->percent : 0;
+                                            $lessonPoints = $lessonStat ? $lessonStat->points : 0;
+                                            $lessonMaxPoints = $lessonStat ? $lessonStat->max_points : 0;
+                                            $lessonProgressWidth = max(0, min(100, (int) round($lessonPercent)));
+                                            $lessonProgressClass = $lessonPercent < 40 ? 'is-low' : ($lessonPercent < 60 ? 'is-mid' : 'is-high');
+                                            $lessonIntegrity = $studentIntegrity['lessons'][$lesson->id] ?? null;
+                                            $lessonStartDate = $lesson->getStartDate($course);
+                                        @endphp
 
-                                    <div class="report-lesson-row">
-                                        <div class="report-lesson-main">
-                                            <div class="min-width-0">
-                                                <a class="report-lesson-link d-inline-flex align-items-center gap-2"
-                                                   data-bs-toggle="collapse"
-                                                   href="#student{{$student->id}}marks{{$lesson->id}}"
-                                                   aria-expanded="false"
-                                                   aria-controls="student{{$student->id}}marks{{$lesson->id}}">
-                                                    <span class="text-truncate">{{$lesson->name}}</span>
-                                                    <i class="fas fa-chevron-down report-lesson-link__icon"></i>
-                                                </a>
-                                                @if (!$lesson->isAvailableForUser($course, $student))
-                                                    <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle ms-2 report-lesson-lock">закрыт</span>
-                                                @endif
-                                            </div>
-                                            <div class="report-lesson-metrics">
-                                                <span class="report-lesson-score">{{$lessonPoints}} / {{$lessonMaxPoints}} XP</span>
-                                                <div class="report-score-progress {{ $lessonProgressClass }}"
-                                                     role="progressbar"
-                                                     aria-valuenow="{{$lessonProgressWidth}}"
-                                                     aria-valuemin="0"
-                                                     aria-valuemax="100"
-                                                     aria-label="{{$lesson->name}}: {{$lessonPoints}} / {{$lessonMaxPoints}}">
-                                                    <span class="report-score-progress__bar progress-width-{{$lessonProgressWidth}}" data-progress-width="{{$lessonPercent}}%"></span>
-                                                    <span class="report-score-progress__value">{{round($lessonPercent)}}%</span>
+                                        <div class="report-lesson-row">
+                                            <div class="report-lesson-main">
+                                                <div class="min-width-0">
+                                                    <a class="report-lesson-link d-inline-flex align-items-center gap-2"
+                                                       data-bs-toggle="collapse"
+                                                       href="#student{{$student->id}}marks{{$lesson->id}}"
+                                                       aria-expanded="false"
+                                                       aria-controls="student{{$student->id}}marks{{$lesson->id}}">
+                                                        <span class="text-truncate">{{$lesson->name}}</span>
+                                                        <i class="fas fa-chevron-down report-lesson-link__icon"></i>
+                                                    </a>
+                                                    @if ($lessonStartDate)
+                                                        <span class="badge rounded-pill bg-body-tertiary text-muted ms-2">
+                                                            открыт {{ $lessonStartDate->format('d.m.Y') }}
+                                                        </span>
+                                                    @endif
+                                                    @if (!$lesson->isAvailableForUser($course, $student))
+                                                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle ms-2 report-lesson-lock">закрыт</span>
+                                                    @endif
+                                                </div>
+                                                <div class="report-lesson-metrics">
+                                                    @if ($lessonIntegrity && $lessonIntegrity['synced'] > 0 && $lessonIntegrity['risk_level'] !== 'low')
+                                                        @php $lessonRiskClass = $riskBadgeClasses[$lessonIntegrity['risk_level']] ?? $riskBadgeClasses['none']; @endphp
+                                                        <span class="badge rounded-pill {{ $lessonRiskClass }}">GP {{ $lessonIntegrity['risk_level'] }}</span>
+                                                    @endif
+                                                    <span class="report-lesson-score">{{$lessonPoints}} / {{$lessonMaxPoints}} XP</span>
+                                                    <div class="report-score-progress {{ $lessonProgressClass }}"
+                                                         role="progressbar"
+                                                         aria-valuenow="{{$lessonProgressWidth}}"
+                                                         aria-valuemin="0"
+                                                         aria-valuemax="100"
+                                                         aria-label="{{$lesson->name}}: {{$lessonPoints}} / {{$lessonMaxPoints}}">
+                                                        <span class="report-score-progress__bar progress-width-{{$lessonProgressWidth}}" data-progress-width="{{$lessonPercent}}%"></span>
+                                                        <span class="report-score-progress__value">{{round($lessonPercent)}}%</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div class="collapse mt-2" id="student{{$student->id}}marks{{$lesson->id}}">
-                                            <ul class="report-task-list list-unstyled mb-0">
-                                            @foreach($lesson->steps as $step)
-                                                @php
-                                                    $tasks = $step->tasks;
-                                                @endphp
-                                                @foreach($tasks as $task)
+                                            <div class="collapse mt-2" id="student{{$student->id}}marks{{$lesson->id}}">
+                                                <ul class="report-task-list list-unstyled mb-0">
+                                                @foreach($lesson->steps as $step)
                                                     @php
-                                                        $filtered = $task->solutions->filter(function ($value) use ($student) {
-                                                            return $value->user_id == $student->id;
-                                                        });
-                                                        $bestSolution = \App\Solution::bestScoredIn($filtered);
-                                                        $mark = $bestSolution ? $bestSolution->mark : 0;
-                                                        $markClass = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary') : 'bg-body-tertiary';
-                                                        $should_check = $filtered->filter(fn ($solution) => $solution->submitted && ($solution->mark === null || $solution->recheck_requested) && !$solution->review_skipped)->isNotEmpty();
+                                                        $tasks = $step->tasks;
                                                     @endphp
-                                                    <li class="report-task-row">
-                                                        <a class="report-task-link text-decoration-none"
-                                                           target="_blank"
-                                                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">{{$task->name}}</a>
+                                                    @foreach($tasks as $task)
+                                                        @php
+                                                            $filtered = $task->solutions->filter(function ($value) use ($student) {
+                                                                return $value->user_id == $student->id;
+                                                            });
+                                                            $bestSolution = \App\Solution::bestScoredIn($filtered);
+                                                            $mark = $bestSolution ? $bestSolution->mark : 0;
+                                                            $markClass = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary') : 'bg-body-tertiary';
+                                                            $should_check = $filtered->filter(fn ($solution) => $solution->submitted && ($solution->mark === null || $solution->recheck_requested) && !$solution->review_skipped)->isNotEmpty();
+                                                            $taskIntegrity = $studentIntegrity['tasks'][$task->id] ?? null;
+                                                        @endphp
+                                                        <li class="report-task-row">
+                                                            <a class="report-task-link text-decoration-none"
+                                                               target="_blank"
+                                                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">{{$task->name}}</a>
 
-                                                        @php $blocked = $task->isBlocked($student->id, $course->id); @endphp
-                                                        @if ($blocked)
-                                                            <span class="badge rounded-pill bg-body-tertiary report-task-mark report-task-mark--blocked">0 / {{$task->max_mark}}</span>
-                                                        @elseif ($should_check)
-                                                            <span class="badge rounded-pill bg-body-tertiary report-task-mark report-task-mark--review">{{$mark}} / {{$task->max_mark}}</span>
-                                                        @else
-                                                            <span class="badge rounded-pill {{ $markClass }} report-task-mark">{{$mark}} / {{$task->max_mark}}</span>
-                                                        @endif
-                                                    </li>
+                                                            @php $blocked = $task->isBlocked($student->id, $course->id); @endphp
+                                                            @if ($taskIntegrity && $taskIntegrity['synced'] > 0 && $taskIntegrity['risk_level'] !== 'low')
+                                                                @php
+                                                                    $taskRiskClass = $riskBadgeClasses[$taskIntegrity['risk_level']] ?? $riskBadgeClasses['none'];
+                                                                    $taskRiskTitle = trim(implode(' · ', array_filter([
+                                                                        $taskIntegrity['max_llm_probability'] !== null ? 'LLM '.$taskIntegrity['max_llm_probability'].'%' : null,
+                                                                        $taskIntegrity['max_similarity_percent'] !== null ? 'схожесть '.$taskIntegrity['max_similarity_percent'].'%' : null,
+                                                                        $taskIntegrity['ai_warnings'] > 0 ? 'AI флаги '.$taskIntegrity['ai_warnings'] : null,
+                                                                        $taskIntegrity['similarity_warnings'] > 0 ? 'списывание '.$taskIntegrity['similarity_warnings'] : null,
+                                                                    ])));
+                                                                @endphp
+                                                                <span class="badge rounded-pill {{ $taskRiskClass }}" title="{{ $taskRiskTitle ?: 'GeekPaste' }}">
+                                                                    @if ($taskIntegrity['max_llm_probability'] !== null)
+                                                                        AI {{ $taskIntegrity['max_llm_probability'] }}%
+                                                                    @elseif ($taskIntegrity['max_similarity_percent'] !== null)
+                                                                        схожесть {{ $taskIntegrity['max_similarity_percent'] }}%
+                                                                    @else
+                                                                        GP
+                                                                    @endif
+                                                                </span>
+                                                            @endif
+                                                            @if ($blocked)
+                                                                <span class="badge rounded-pill bg-body-tertiary report-task-mark report-task-mark--blocked">0 / {{$task->max_mark}}</span>
+                                                            @elseif ($should_check)
+                                                                <span class="badge rounded-pill bg-body-tertiary report-task-mark report-task-mark--review">{{$mark}} / {{$task->max_mark}}</span>
+                                                            @else
+                                                                <span class="badge rounded-pill {{ $markClass }} report-task-mark">{{$mark}} / {{$task->max_mark}}</span>
+                                                            @endif
+                                                        </li>
+                                                    @endforeach
                                                 @endforeach
-                                            @endforeach
-                                            </ul>
+                                                </ul>
+                                            </div>
                                         </div>
-                                    </div>
+                                    @endforeach
                                 @endforeach
                                 </div>
-
                             </div>
 
                         </div>
