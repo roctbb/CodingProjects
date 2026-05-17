@@ -72,7 +72,7 @@ class LessonStudentStats extends Model
 
     protected static function calculateLessonStats(Course $course, Lesson $lesson, User $student)
     {
-        // XP includes all visible lesson tasks; percent tracks only the common required path.
+        // XP includes all visible lesson tasks; percent compares earned XP with the common required path.
         $points = 0;
         $max_points = 0;
         $progressPoints = 0;
@@ -110,7 +110,7 @@ class LessonStudentStats extends Model
         return [
             'points' => $points,
             'max_points' => $max_points,
-            'percent' => $progressMaxPoints > 0 ? ($progressPoints * 100 / $progressMaxPoints) : 100,
+            'percent' => $progressMaxPoints > 0 ? ($points * 100 / $progressMaxPoints) : 100,
         ];
     }
 
