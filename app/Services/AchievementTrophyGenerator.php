@@ -3,11 +3,15 @@
 namespace App\Services;
 
 use App\Achievement;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class AchievementTrophyGenerator
 {
+    private const SIZE = '512x512';
+    private const QUALITY = 'medium';
+
     private ChatGptService $chatGpt;
 
     public function __construct(ChatGptService $chatGpt)
@@ -18,13 +22,22 @@ class AchievementTrophyGenerator
     public function generateForAchievement(Achievement $achievement): string
     {
         $prompt = $this->buildPrompt($achievement);
+        $model = $this->achievementImageModel();
+
+        Log::info('Achievement trophy generation started', [
+            'achievement_id' => $achievement->id,
+            'model' => $model,
+            'size' => self::SIZE,
+            'quality' => self::QUALITY,
+        ]);
+
         $image = $this->chatGpt->generateImage([
             ['role' => 'system', 'content' => $this->systemPrompt()],
             ['role' => 'user', 'content' => $prompt],
         ], [
-            'model' => $this->achievementImageModel(),
-            'size' => '1024x1024',
-            'quality' => 'high',
+            'model' => $model,
+            'size' => self::SIZE,
+            'quality' => self::QUALITY,
             'output_format' => 'png',
             'background' => 'transparent',
             'timeout' => 180,
@@ -37,7 +50,7 @@ class AchievementTrophyGenerator
         $payload['trophy_image'] = $relativePath;
         $payload['trophy_prompt'] = $prompt;
         $payload['trophy_generated_at'] = now()->toDateTimeString();
-        $payload['trophy_model'] = $image['model'] ?? $this->achievementImageModel();
+        $payload['trophy_model'] = $image['model'] ?? $model;
         $achievement->payload = $payload;
         $achievement->save();
 

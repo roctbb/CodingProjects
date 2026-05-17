@@ -203,7 +203,10 @@ class ProfileController extends Controller
             } catch (\Throwable $e) {
                 \Log::error('Achievement trophy regeneration failed', [
                     'achievement_id' => $achievement->id,
+                    'exception' => get_class($e),
                     'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
                 ]);
 
                 $this->syncAchievementActivityPayload($achievement);

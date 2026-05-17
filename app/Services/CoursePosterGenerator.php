@@ -9,8 +9,9 @@ use Illuminate\Support\Str;
 
 class CoursePosterGenerator
 {
-    private const WIDTH = 1024;
-    private const HEIGHT = 1536;
+    private const WIDTH = 768;
+    private const HEIGHT = 1152;
+    private const QUALITY = 'medium';
 
     private ChatGptService $chatGpt;
 
@@ -28,7 +29,7 @@ class CoursePosterGenerator
         ], [
             'model' => $this->posterModel(),
             'size' => self::WIDTH . 'x' . self::HEIGHT,
-            'quality' => 'high',
+            'quality' => self::QUALITY,
             'output_format' => 'png',
             'timeout' => 180,
         ]);
@@ -62,7 +63,7 @@ class CoursePosterGenerator
     {
         return 'Ты иллюстратор образовательной платформы по программированию. '
             . 'Сгенерируй именно растровое PNG-изображение, не SVG и не текстовое описание. '
-            . 'Нужен вертикальный постер 1024x1536 для рамки на стене в детской/учебной комнате. '
+            . 'Нужен вертикальный постер ' . self::WIDTH . 'x' . self::HEIGHT . ' для рамки на стене в детской/учебной комнате. '
             . 'Стиль: дружелюбная polished 2D game illustration, чистые формы, мягкий свет, технологичная тема, подходит школьникам. '
             . 'Не используй мелкий читаемый текст, логотипы, бренды, водяные знаки и реалистичные фотографии.';
     }
@@ -76,7 +77,7 @@ class CoursePosterGenerator
             . 'Описание программы: ' . Str::limit($description, 1800, '') . "\n\n"
             . 'Сделай образ по смыслу программы: предметы программирования, схемы, интерфейсы, алгоритмические формы, персонаж-маскот или абстрактная сцена. '
             . 'Композиция должна хорошо читаться в узком настенном постере, без рамки, без прозрачных областей, без текста и без водяных знаков. '
-            . 'Финальный результат должен быть вертикальным растровым PNG 1024x1536.';
+            . 'Финальный результат должен быть вертикальным растровым PNG ' . self::WIDTH . 'x' . self::HEIGHT . '.';
     }
 
     private function storeImage(Program $program, array $image): string

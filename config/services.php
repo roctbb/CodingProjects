@@ -51,7 +51,7 @@ return [
         'image_model' => env('GPT_IMAGE_MODEL', env('GPT_MODEL', 'gpt-5-mini')),
         'poster_model' => env('GPT_POSTER_MODEL', env('GPT_IMAGE_MODEL', env('GPT_MODEL', 'gpt-5-mini'))),
         'achievement_model' => env('GPT_ACHIEVEMENT_MODEL', 'gpt-5.5'),
-        'achievement_image_model' => env('GPT_ACHIEVEMENT_IMAGE_MODEL', env('GPT_IMAGE_MODEL', env('GPT_ACHIEVEMENT_MODEL', 'gpt-5.5'))),
+        'achievement_image_model' => env('GPT_ACHIEVEMENT_IMAGE_MODEL', env('GPT_IMAGE_MODEL', env('GPT_MODEL', 'gpt-5-mini'))),
         'gateway' => env('GPT_GATEWAY', 'https://gpt-gateway.ai.medsenger.ru:4443/v1/responses'),
     ],
 

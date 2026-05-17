@@ -4,7 +4,7 @@
     $isLinked = $isLinked ?? true;
     $href = $href ?? url('insider/courses/'.$course->id);
     $progress = $showProgress ? $courseProgress->get($course->id) : null;
-    $percent = $showProgress && empty($isTeacher) ? round(optional($progress)->percent ?? 0) : null;
+    $percent = $showProgress && empty($isTeacher) ? min(100, round(optional($progress)->percent ?? 0)) : null;
     $isArchive = $variant === 'archive';
     $isAvailable = $variant === 'available';
     $statusLabel = [

@@ -72,8 +72,16 @@ class LessonStudentStats extends Model
 
     protected static function calculateLessonStats(Course $course, Lesson $lesson, User $student)
     {
+        // XP includes all visible lesson tasks; percent tracks only the common required path.
         $points = 0;
         $max_points = 0;
+        $progressPoints = 0;
+        $progressMaxPoints = 0;
+        $bestMarksByTask = $student->submissions
+            ->groupBy('task_id')
+            ->map(function ($submissions) {
+                return (int) $submissions->max('mark');
+            });
 
         if (!self::isCommonProgressLesson($lesson, $course)) {
             return [
@@ -85,16 +93,24 @@ class LessonStudentStats extends Model
 
         foreach ($lesson->steps as $step) {
             foreach ($step->tasks as $task) {
-                if (!self::isCommonProgressTask($task)) continue;
-                $max_points += $task->max_mark;
-                $points += (int) $student->submissions->where('task_id', $task->id)->max('mark');
+                $bestMark = $bestMarksByTask->get($task->id, 0);
+
+                if ($task->isVisible($student, $course)) {
+                    $max_points += $task->max_mark;
+                    $points += $bestMark;
+                }
+
+                if (self::isCommonProgressTask($task)) {
+                    $progressMaxPoints += $task->max_mark;
+                    $progressPoints += $bestMark;
+                }
             }
         }
 
         return [
             'points' => $points,
             'max_points' => $max_points,
-            'percent' => $max_points > 0 ? ($points * 100 / $max_points) : 100,
+            'percent' => $progressMaxPoints > 0 ? ($progressPoints * 100 / $progressMaxPoints) : 100,
         ];
     }
 

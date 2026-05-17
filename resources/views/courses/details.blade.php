@@ -20,6 +20,7 @@
         $isLearner = $user->role == 'student' || ($user->role == 'teacher' && !$course->teachers->contains($user));
         $studentsCount = $course->students->count();
         $userBalance = $isLearner ? $user->balance() : 0;
+        $displayPercent = fn ($percent) => min(100, max(0, (float) $percent));
     @endphp
 
     <div class="course-page">
@@ -107,9 +108,9 @@
                         @php
                             $activeChapterPercent = null;
                             if ($isManager && $chapter->isStarted($course)) {
-                                $activeChapterPercent = round($chapterProgress[$chapter->id] ?? 0);
+                                $activeChapterPercent = round($displayPercent($chapterProgress[$chapter->id] ?? 0));
                             } elseif ($isLearner) {
-                                $activeChapterPercent = round($chapterProgress[$chapter->id] ?? 0);
+                                $activeChapterPercent = round($displayPercent($chapterProgress[$chapter->id] ?? 0));
                             }
                         @endphp
 
@@ -130,9 +131,9 @@
                                             @php
                                                 $chapterPercent = null;
                                                 if ($isManager && $current_chapter->isStarted($course)) {
-                                                    $chapterPercent = round($chapterProgress[$current_chapter->id] ?? 0);
+                                                    $chapterPercent = round($displayPercent($chapterProgress[$current_chapter->id] ?? 0));
                                                 } elseif ($isLearner) {
-                                                    $chapterPercent = round($chapterProgress[$current_chapter->id] ?? 0);
+                                                    $chapterPercent = round($displayPercent($chapterProgress[$current_chapter->id] ?? 0));
                                                 }
                                             @endphp
 
@@ -228,7 +229,8 @@
 	                        $spotlightIndex = $pathLessons->search(fn($pathLesson) => $pathLesson->id == $spotlightPathLesson->id);
                         $spotlightStats = $isLearner ? ($lessonStats[$spotlightPathLesson->id][$cstudent->id] ?? null) : null;
                         $spotlightPercent = $spotlightStats ? $spotlightStats->percent : 0;
-                        $spotlightProgressWidth = max(0, min(100, (int) round($spotlightPercent)));
+                        $spotlightDisplayPercent = $displayPercent($spotlightPercent);
+                        $spotlightProgressWidth = (int) round($spotlightDisplayPercent);
                         $spotlightPoints = $spotlightStats ? $spotlightStats->points : 0;
                         $spotlightMaxPoints = $spotlightStats ? $spotlightStats->max_points : 0;
                         $spotlightStartDate = $spotlightPathLesson->getStartDate($course);
@@ -251,9 +253,9 @@
 
                         @if ($isLearner && $spotlightMaxPoints != 0)
                             <div class="course-path-spotlight__progress">
-                                <strong>{{round($spotlightPercent)}}%</strong>
+                                <strong>{{round($spotlightDisplayPercent)}}%</strong>
                                 <div class="progress">
-                                    <div class="progress-bar progress-width-{{$spotlightProgressWidth}}" role="progressbar" data-progress-width="{{$spotlightPercent}}%" aria-valuenow="{{$spotlightProgressWidth}}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <div class="progress-bar progress-width-{{$spotlightProgressWidth}}" role="progressbar" data-progress-width="{{$spotlightDisplayPercent}}%" aria-valuenow="{{$spotlightProgressWidth}}" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
                             </div>
                         @endif
@@ -278,7 +280,8 @@
                             $startDate = $lesson->getStartDate($course);
                             $cstats = $isLearner ? ($lessonStats[$lesson->id][$cstudent->id] ?? null) : null;
                             $cpercent = $cstats ? $cstats->percent : 0;
-                            $cprogressWidth = max(0, min(100, (int) round($cpercent)));
+                            $cdisplayPercent = $displayPercent($cpercent);
+                            $cprogressWidth = (int) round($cdisplayPercent);
                             $cpoints = $cstats ? $cstats->points : 0;
 	                            $cmaxPoints = $cstats ? $cstats->max_points : 0;
 	                            $isDone = $isLearner && $cmaxPoints != 0 && $cpercent >= 90;
@@ -370,16 +373,18 @@
                                             $lessonStatRows = $students->map(function ($student) use ($lessonStats, $lesson) {
                                                 $stats = $lessonStats[$lesson->id][$student->id] ?? null;
                                                 $percent = $stats ? $stats->percent : 0;
+                                                $shownPercent = $displayPercent($percent);
 
                                                 return [
                                                     'student' => $student,
                                                     'percent' => $percent,
-                                                    'progressWidth' => max(0, min(100, (int) round($percent))),
+                                                    'displayPercent' => $shownPercent,
+                                                    'progressWidth' => (int) round($shownPercent),
                                                     'points' => $stats ? $stats->points : 0,
                                                     'maxPoints' => $stats ? $stats->max_points : 0,
                                                 ];
                                             });
-                                            $lessonAveragePercent = round($lessonStatRows->avg('percent') ?? 0);
+                                            $lessonAveragePercent = round($lessonStatRows->avg('displayPercent') ?? 0);
                                             $lessonCompletedCount = $lessonStatRows->filter(fn($row) => $row['percent'] >= 90)->count();
                                         @endphp
 
@@ -404,17 +409,18 @@
                                                     @php
                                                         $student = $statRow['student'];
                                                         $percent = $statRow['percent'];
+                                                        $displayedPercent = $statRow['displayPercent'];
                                                         $progressWidth = $statRow['progressWidth'];
                                                         $points = $statRow['points'];
                                                         $maxPoints = $statRow['maxPoints'];
                                                     @endphp
 
-                                                    <div class="course-stat-row small {{ $percent < 40 ? 'is-low' : ($percent < 60 ? 'is-mid' : 'is-high') }}" title="{{$student->name}}@if($student->activeCustomTitle()) · {{ $student->activeCustomTitle() }}@endif: {{$points}} / {{$maxPoints}} ({{round($percent)}}%)" aria-label="{{$student->name}}@if($student->activeCustomTitle()) · {{ $student->activeCustomTitle() }}@endif: {{$points}} / {{$maxPoints}} ({{round($percent)}}%)">
+                                                    <div class="course-stat-row small {{ $percent < 40 ? 'is-low' : ($percent < 60 ? 'is-mid' : 'is-high') }}" title="{{$student->name}}@if($student->activeCustomTitle()) · {{ $student->activeCustomTitle() }}@endif: {{$points}} / {{$maxPoints}} ({{round($displayedPercent)}}%)" aria-label="{{$student->name}}@if($student->activeCustomTitle()) · {{ $student->activeCustomTitle() }}@endif: {{$points}} / {{$maxPoints}} ({{round($displayedPercent)}}%)">
                                                         <span class="course-stat-name">
                                                             <span class="text-truncate">{{$student->name}}</span>
                                                         </span>
                                                         <span class="course-stat-mini">
-                                                            <span class="course-stat-mini__bar progress-width-{{$progressWidth}}" data-progress-width="{{$percent}}%"></span>
+                                                            <span class="course-stat-mini__bar progress-width-{{$progressWidth}}" data-progress-width="{{$displayedPercent}}%"></span>
                                                             <span class="course-stat-mini__value">{{$points}} / {{$maxPoints}}</span>
                                                         </span>
                                                     </div>
@@ -459,11 +465,11 @@
                                             <span class="course-path-progress__label">{{$cpoints}} / {{$cmaxPoints}} XP</span>
                                             <div class="progress">
                                                 @if ($cpercent < 40)
-                                                    <div class="progress-bar progress-bar-striped bg-danger progress-width-{{$cprogressWidth}}" role="progressbar" data-progress-width="{{$cpercent}}%" aria-valuenow="{{$cprogressWidth}}" aria-valuemin="0" aria-valuemax="100">{{round($cpercent)}}%</div>
+                                                    <div class="progress-bar progress-bar-striped bg-danger progress-width-{{$cprogressWidth}}" role="progressbar" data-progress-width="{{$cdisplayPercent}}%" aria-valuenow="{{$cprogressWidth}}" aria-valuemin="0" aria-valuemax="100">{{round($cdisplayPercent)}}%</div>
                                                 @elseif($cpercent < 60)
-                                                    <div class="progress-bar progress-bar-striped bg-warning progress-width-{{$cprogressWidth}}" role="progressbar" data-progress-width="{{$cpercent}}%" aria-valuenow="{{$cprogressWidth}}" aria-valuemin="0" aria-valuemax="100">{{round($cpercent)}}%</div>
+                                                    <div class="progress-bar progress-bar-striped bg-warning progress-width-{{$cprogressWidth}}" role="progressbar" data-progress-width="{{$cdisplayPercent}}%" aria-valuenow="{{$cprogressWidth}}" aria-valuemin="0" aria-valuemax="100">{{round($cdisplayPercent)}}%</div>
                                                 @else
-                                                    <div class="progress-bar progress-bar-striped bg-success progress-width-{{$cprogressWidth}}" role="progressbar" data-progress-width="{{$cpercent}}%" aria-valuenow="{{$cprogressWidth}}" aria-valuemin="0" aria-valuemax="100">{{round($cpercent)}}%</div>
+                                                    <div class="progress-bar progress-bar-striped bg-success progress-width-{{$cprogressWidth}}" role="progressbar" data-progress-width="{{$cdisplayPercent}}%" aria-valuenow="{{$cprogressWidth}}" aria-valuemin="0" aria-valuemax="100">{{round($cdisplayPercent)}}%</div>
                                                 @endif
                                             </div>
                                         @endif
@@ -626,7 +632,8 @@
                                     $studentRank = $leaderboardOffset + $loop->iteration;
                                     $studentPoints = isset($student->points) ? $student->points : 0;
                                     $studentPercent = isset($student->percent) ? $student->percent : 0;
-                                    $studentProgressWidth = max(0, min(100, (int) round($studentPercent)));
+                                    $studentDisplayPercent = $displayPercent($studentPercent);
+                                    $studentProgressWidth = (int) round($studentDisplayPercent);
                                 @endphp
                                 <li>
                                     <a class="course-leaderboard-item @if ($studentRank <= 3) is-top-{{$studentRank}} @endif @if ($student->id == $user->id) is-current-user @endif" href="{{url('/insider/profile/'.$student->id)}}">
@@ -639,9 +646,9 @@
                                                 <small class="text-muted text-truncate">{{$studentPoints}} XP</small>
                                             </span>
                                         </span>
-                                        <span class="course-student-progress" title="Прогресс: {{ round($studentPercent) }}%">
+                                        <span class="course-student-progress" title="Прогресс: {{ round($studentDisplayPercent) }}%">
                                             <span class="course-student-progress__bar" data-progress-width="{{ $studentProgressWidth }}%"></span>
-                                            <span class="course-student-progress__value">{{ round($studentPercent) }}%</span>
+                                            <span class="course-student-progress__value">{{ round($studentDisplayPercent) }}%</span>
                                         </span>
                                     </a>
                                 </li>

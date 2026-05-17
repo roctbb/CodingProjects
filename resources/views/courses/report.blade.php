@@ -21,7 +21,8 @@
                 return $step->tasks;
             });
         });
-        $averageProgress = round($students->avg('percent'));
+        $displayPercent = fn ($percent) => min(100, max(0, (float) $percent));
+        $averageProgress = round($students->avg(fn ($student) => $displayPercent($student->percent)) ?? 0);
         $studentsAtRisk = $students->filter(fn ($student) => $student->percent < 50)->count();
         $totalStudentLessons = $students->count() * $lessons->count();
         $completedStudentLessons = $students->sum(function ($student) use ($lessons, $lessonStats) {
@@ -109,7 +110,10 @@
                                             <small class="text-muted">{{ $student->points }} / {{ $student->max_points }} XP</small>
                                         </div>
                                     </div>
-                                    <strong class="report-student-percent">{{ round($student->percent) }}%</strong>
+                                    @php
+                                        $studentDisplayPercent = $displayPercent($student->percent);
+                                    @endphp
+                                    <strong class="report-student-percent">{{ round($studentDisplayPercent) }}%</strong>
                                 </div>
                             </div>
                             <div class="report-student-card__body">
@@ -126,20 +130,20 @@
                                 <div class="progress report-student-progress {{ $student->percent < 40 ? 'is-low' : ($student->percent < 60 ? 'is-mid' : 'is-high') }} mb-3">
                                     @if ($student->percent < 40)
                                         <div class="progress-bar report-student-progress__bar" role="progressbar"
-                                              data-progress-width="{{$student->percent}}%"
-                                              aria-valuenow="{{$student->percent}}" aria-valuemin="0"
+                                              data-progress-width="{{$studentDisplayPercent}}%"
+                                              aria-valuenow="{{$studentDisplayPercent}}" aria-valuemin="0"
                                               aria-valuemax="100"></div>
 
                                     @elseif($student->percent < 60)
                                         <div class="progress-bar report-student-progress__bar" role="progressbar"
-                                              data-progress-width="{{$student->percent}}%"
-                                              aria-valuenow="{{$student->percent}}" aria-valuemin="0"
+                                              data-progress-width="{{$studentDisplayPercent}}%"
+                                              aria-valuenow="{{$studentDisplayPercent}}" aria-valuemin="0"
                                               aria-valuemax="100"></div>
 
                                     @else
                                         <div class="progress-bar report-student-progress__bar" role="progressbar"
-                                              data-progress-width="{{$student->percent}}%"
-                                              aria-valuenow="{{$student->percent}}" aria-valuemin="0"
+                                              data-progress-width="{{$studentDisplayPercent}}%"
+                                              aria-valuenow="{{$studentDisplayPercent}}" aria-valuemin="0"
                                               aria-valuemax="100"></div>
 
                                     @endif
@@ -279,9 +283,10 @@
                                         @php
                                             $lessonStat = $lessonStats[$lesson->id][$student->id] ?? null;
                                             $lessonPercent = $lessonStat ? $lessonStat->percent : 0;
+                                            $lessonDisplayPercent = $displayPercent($lessonPercent);
                                             $lessonPoints = $lessonStat ? $lessonStat->points : 0;
                                             $lessonMaxPoints = $lessonStat ? $lessonStat->max_points : 0;
-                                            $lessonProgressWidth = max(0, min(100, (int) round($lessonPercent)));
+                                            $lessonProgressWidth = (int) round($lessonDisplayPercent);
                                             $lessonProgressClass = $lessonPercent < 40 ? 'is-low' : ($lessonPercent < 60 ? 'is-mid' : 'is-high');
                                             $lessonIntegrity = $studentIntegrity['lessons'][$lesson->id] ?? null;
                                             $lessonHasIntegrityRisk = $lessonIntegrity && $lessonIntegrity['synced'] > 0 && $lessonIntegrity['risk_level'] !== 'low';
@@ -328,8 +333,8 @@
                                                          aria-valuemin="0"
                                                          aria-valuemax="100"
                                                          aria-label="{{$lesson->name}}: {{$lessonPoints}} / {{$lessonMaxPoints}}">
-                                                        <span class="report-score-progress__bar progress-width-{{$lessonProgressWidth}}" data-progress-width="{{$lessonPercent}}%"></span>
-                                                        <span class="report-score-progress__value">{{round($lessonPercent)}}%</span>
+                                                        <span class="report-score-progress__bar progress-width-{{$lessonProgressWidth}}" data-progress-width="{{$lessonDisplayPercent}}%"></span>
+                                                        <span class="report-score-progress__value">{{round($lessonDisplayPercent)}}%</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -430,7 +435,8 @@
                 <div class="nav flex-column nav-pills p-2 gap-1 report-students-nav" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                     @foreach ($students as $key => $student)
                         @php
-                            $studentProgressWidth = max(0, min(100, (int) round($student->percent)));
+                            $studentDisplayPercent = $displayPercent($student->percent);
+                            $studentProgressWidth = (int) round($studentDisplayPercent);
                             $studentProgressClass = $student->percent < 40 ? 'is-low' : ($student->percent < 60 ? 'is-mid' : 'is-high');
                             $navIntegrity = $geekPasteIntegrityStats[$student->id]['overall'] ?? null;
                             $navRiskLevel = $navIntegrity['risk_level'] ?? 'none';
@@ -465,9 +471,9 @@
                                 </span>
                                 <small class="report-student-link__meta">{{ $student->points }} / {{ $student->max_points }} XP</small>
                             </span>
-                            <span class="report-nav-progress {{ $studentProgressClass }}" title="Прогресс: {{ round($student->percent) }}%">
-                                <span class="report-nav-progress__bar progress-width-{{$studentProgressWidth}}" data-progress-width="{{$student->percent}}%"></span>
-                                <span class="report-nav-progress__value" data-report-sort-value="percent">{{ round($student->percent) }}%</span>
+                            <span class="report-nav-progress {{ $studentProgressClass }}" title="Прогресс: {{ round($studentDisplayPercent) }}%">
+                                <span class="report-nav-progress__bar progress-width-{{$studentProgressWidth}}" data-progress-width="{{$studentDisplayPercent}}%"></span>
+                                <span class="report-nav-progress__value" data-report-sort-value="percent">{{ round($studentDisplayPercent) }}%</span>
                                 <span class="report-nav-progress__value d-none" data-report-sort-value="llm">{{ $navLlmLabel }}</span>
                                 <span class="report-nav-progress__value d-none" data-report-sort-value="similarity">{{ $navSimilarityLabel }}</span>
                             </span>

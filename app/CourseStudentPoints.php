@@ -32,6 +32,46 @@ class CourseStudentPoints extends Model
         return !$task->is_star && !$task->is_hidden;
     }
 
+    private static function calculateStats(Course $course, User $student)
+    {
+        // XP includes all visible course tasks; percent tracks only the common required path.
+        $points = 0;
+        $max_points = 0;
+        $progressPoints = 0;
+        $progressMaxPoints = 0;
+        $bestMarksByTask = $student->submissions
+            ->groupBy('task_id')
+            ->map(function ($submissions) {
+                return (int) $submissions->max('mark');
+            });
+
+        foreach ($course->program->lessons as $lesson) {
+            $isProgressLesson = self::isCommonProgressLesson($lesson, $course);
+
+            foreach ($lesson->steps as $step) {
+                foreach ($step->tasks as $task) {
+                    $bestMark = $bestMarksByTask->get($task->id, 0);
+
+                    if ($task->isVisible($student, $course)) {
+                        $max_points += $task->max_mark;
+                        $points += $bestMark;
+                    }
+
+                    if ($isProgressLesson && self::isCommonProgressTask($task)) {
+                        $progressMaxPoints += $task->max_mark;
+                        $progressPoints += $bestMark;
+                    }
+                }
+            }
+        }
+
+        return [
+            'points' => $points,
+            'max_points' => $max_points,
+            'percent' => $progressMaxPoints > 0 ? ($progressPoints * 100 / $progressMaxPoints) : 0,
+        ];
+    }
+
     /**
      * Recalculate points for a student in a course
      *
@@ -57,32 +97,12 @@ class CourseStudentPoints extends Model
             },
         ])->findOrFail($studentId);
 
-        $max_points = 0;
-        $points = 0;
-
-        // Get all steps for lessons available to everyone in the course.
-        $all_steps = collect([]);
-        foreach ($course->program->lessons as $lesson) {
-            if (self::isCommonProgressLesson($lesson, $course)) {
-                $all_steps = $all_steps->merge($lesson->steps);
-            }
-        }
-
-        // Calculate points
-        foreach ($all_steps as $step) {
-            foreach ($step->tasks as $task) {
-                if (!self::isCommonProgressTask($task)) continue;
-                $max_points += $task->max_mark;
-                $points += (int) $student->submissions->where('task_id', $task->id)->max('mark');
-            }
-        }
-
-        $percent = $max_points > 0 ? min(100, $points * 100 / $max_points) : 0;
+        $stats = self::calculateStats($course, $student);
 
         // Update or create the record
         return self::updateOrCreate(
             ['course_id' => $courseId, 'student_id' => $studentId],
-            ['points' => $points, 'max_points' => $max_points, 'percent' => $percent]
+            ['points' => $stats['points'], 'max_points' => $stats['max_points'], 'percent' => $stats['percent']]
         );
     }
 
@@ -118,29 +138,14 @@ class CourseStudentPoints extends Model
         $now = now();
 
         foreach ($students as $student) {
-            $max_points = 0;
-            $points = 0;
-
-            foreach ($course->program->lessons as $lesson) {
-                if (!self::isCommonProgressLesson($lesson, $course)) {
-                    continue;
-                }
-
-                foreach ($lesson->steps as $step) {
-                    foreach ($step->tasks as $task) {
-                        if (!self::isCommonProgressTask($task)) continue;
-                        $max_points += $task->max_mark;
-                        $points += (int) $student->submissions->where('task_id', $task->id)->max('mark');
-                    }
-                }
-            }
+            $stats = self::calculateStats($course, $student);
 
             $rows[] = [
                 'course_id' => $course->id,
                 'student_id' => $student->id,
-                'points' => $points,
-                'max_points' => $max_points,
-                'percent' => $max_points > 0 ? min(100, $points * 100 / $max_points) : 0,
+                'points' => $stats['points'],
+                'max_points' => $stats['max_points'],
+                'percent' => $stats['percent'],
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
