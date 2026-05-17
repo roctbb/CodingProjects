@@ -370,7 +370,7 @@
 
                                     @if ($isManager && count($students) < 70)
                                         @php
-                                            $lessonStatRows = $students->map(function ($student) use ($lessonStats, $lesson) {
+                                            $lessonStatRows = $students->map(function ($student) use ($lessonStats, $lesson, $displayPercent) {
                                                 $stats = $lessonStats[$lesson->id][$student->id] ?? null;
                                                 $percent = $stats ? $stats->percent : 0;
                                                 $shownPercent = $displayPercent($percent);
