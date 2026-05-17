@@ -900,22 +900,29 @@ class CoursesController extends Controller
             foreach ($course->program->chapters as $programChapter) {
                 $chapterLessonIds = $course->program->lessons
                     ->where('chapter_id', $programChapter->id)
+                    ->filter(function ($lesson) use ($course) {
+                        return $lesson->isStarted($course);
+                    })
                     ->pluck('id');
 
                 if ($isManager) {
                     $doneStudents = 0;
 
                     foreach ($students as $student) {
-                        $points = 0;
-                        $maxPoints = 0;
+                        if ($chapterLessonIds->isEmpty()) {
+                            continue;
+                        }
+
+                        $lessonPercents = collect();
 
                         foreach ($chapterLessonIds as $lessonId) {
                             $stat = $allLessonStats[$lessonId][$student->id] ?? null;
-                            $points += $stat ? (int) $stat->points : 0;
-                            $maxPoints += $stat ? (int) $stat->max_points : 0;
+                            if ($stat) {
+                                $lessonPercents->push((float) $stat->percent);
+                            }
                         }
 
-                        if ($maxPoints > 0 && $points >= $maxPoints) {
+                        if ($lessonPercents->count() === $chapterLessonIds->count() && $lessonPercents->min() >= 100) {
                             $doneStudents++;
                         }
                     }
@@ -924,16 +931,16 @@ class CoursesController extends Controller
                     continue;
                 }
 
-                $points = 0;
-                $maxPoints = 0;
+                $lessonPercents = collect();
 
                 foreach ($chapterLessonIds as $lessonId) {
                     $stat = isset($cstudent) ? ($allLessonStats[$lessonId][$cstudent->id] ?? null) : null;
-                    $points += $stat ? (int) $stat->points : 0;
-                    $maxPoints += $stat ? (int) $stat->max_points : 0;
+                    if ($stat) {
+                        $lessonPercents->push((float) $stat->percent);
+                    }
                 }
 
-                $chapterProgress->put($programChapter->id, $maxPoints > 0 ? min(100, $points * 100 / $maxPoints) : 0);
+                $chapterProgress->put($programChapter->id, $lessonPercents->isNotEmpty() ? $lessonPercents->avg() : 0);
             }
 
             // Render view without caching for now (caching causes stale data issues)

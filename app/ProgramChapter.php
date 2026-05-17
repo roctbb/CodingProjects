@@ -52,7 +52,7 @@ class ProgramChapter extends Model
 
     public function getStudentsPercent($course)
     {
-        $lessonIds = $this->lessonIdsForCourse($course);
+        $lessonIds = $this->startedLessonIdsForCourse($course);
         $studentIds = $course->relationLoaded('students')
             ? $course->students->pluck('id')
             : $course->students()->pluck('users.id');
@@ -64,19 +64,13 @@ class ProgramChapter extends Model
         $stats = LessonStudentStats::where('course_id', $course->id)
             ->whereIn('lesson_id', $lessonIds)
             ->whereIn('student_id', $studentIds)
-            ->get(['student_id', 'points', 'max_points', 'percent'])
+            ->get(['student_id', 'percent'])
             ->groupBy('student_id');
 
         $done = 0;
         foreach ($studentIds as $studentId) {
             $studentStats = $stats->get($studentId, collect());
-            $maxPoints = (int) $studentStats->sum('max_points');
-            $points = (int) $studentStats->sum('points');
-
-            if (
-                ($maxPoints > 0 && $points >= $maxPoints) ||
-                ($maxPoints === 0 && $studentStats->count() > 0 && $studentStats->min('percent') >= 100)
-            ) {
+            if ($studentStats->count() > 0 && $studentStats->min('percent') >= 100) {
                 $done++;
             }
         }
@@ -86,7 +80,7 @@ class ProgramChapter extends Model
 
     public function getStudentPercent($course, $student)
     {
-        $lessonIds = $this->lessonIdsForCourse($course);
+        $lessonIds = $this->startedLessonIdsForCourse($course);
 
         if ($lessonIds->isEmpty()) {
             return 0;
@@ -95,17 +89,10 @@ class ProgramChapter extends Model
         $stats = LessonStudentStats::where('course_id', $course->id)
             ->where('student_id', $student->id)
             ->whereIn('lesson_id', $lessonIds)
-            ->get(['points', 'max_points', 'percent']);
+            ->get(['percent']);
 
-        $max_points = (int) $stats->sum('max_points');
-        $points = (int) $stats->sum('points');
-
-        if ($max_points > 0) {
-            return min(100, $points * 100 / $max_points);
-        }
-
-        if ($stats->count() > 0 && $stats->min('percent') >= 100) {
-            return 100;
+        if ($stats->isNotEmpty()) {
+            return min(100, $stats->avg('percent'));
         }
 
         return 0;
@@ -121,5 +108,27 @@ class ProgramChapter extends Model
         }
 
         return $this->lessons()->pluck('id');
+    }
+
+    private function startedLessonIdsForCourse($course)
+    {
+        if ($course->relationLoaded('program') && $course->program && $course->program->relationLoaded('lessons')) {
+            return $course->program->lessons
+                ->where('chapter_id', $this->id)
+                ->filter(function ($lesson) use ($course) {
+                    return $lesson->isStarted($course);
+                })
+                ->pluck('id')
+                ->values();
+        }
+
+        return $this->lessons()
+            ->with('info')
+            ->get()
+            ->filter(function ($lesson) use ($course) {
+                return $lesson->isStarted($course);
+            })
+            ->pluck('id')
+            ->values();
     }
 }
