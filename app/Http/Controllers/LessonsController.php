@@ -168,9 +168,9 @@ class LessonsController extends Controller
             return redirect('/insider/courses/' . $course->id . '/steps/' . $lesson->steps->first()->id);
         }
 
-        $cost = $lesson->earlyAccessCost();
+        $cost = $user->earlyLessonAccessCost($lesson);
 
-        if ($user->balance() < $cost) {
+        if ($cost > 0 && $user->balance() < $cost) {
             $this->make_error_alert('Не хватает GC', 'Ранний доступ к уроку стоит ' . $cost . ' GC.');
             return redirect()->back();
         }
@@ -182,13 +182,28 @@ class LessonsController extends Controller
         ]);
 
         if ($access->wasRecentlyCreated) {
-            CoinTransaction::register($user->id, -1 * $cost, 'Early access Lesson #' . $lesson->id . ' Course #' . $course->id);
-            CourseActivity::recordEarlyAccessBought($course, $lesson, $user, $cost);
+            if ($cost > 0) {
+                CoinTransaction::register($user->id, -1 * $cost, 'Early access Lesson #' . $lesson->id . ' Course #' . $course->id);
+            }
+
+            CourseActivity::recordEarlyAccessBought(
+                $course,
+                $lesson,
+                $user,
+                $cost,
+                $cost <= 0 ? $user->activeLearningAvatarPetName() : null,
+                $cost <= 0 ? $user->activeLearningAvatarPetKey() : null
+            );
             CourseStudentPoints::recalculate($course->id, $user->id);
             LessonStudentStats::recalculate($course->id, $lesson->id, $user->id);
         }
 
-        $this->make_success_alert('Ранний доступ открыт', 'Списано ' . $cost . ' GC. Урок уже можно проходить.');
+        $this->make_success_alert(
+            'Ранний доступ открыт',
+            $cost > 0
+                ? 'Списано ' . $cost . ' GC. Урок уже можно проходить.'
+                : 'Брр Брр Потапим открыл урок бесплатно. Урок уже можно проходить.'
+        );
 
         return redirect('/insider/courses/' . $course->id . '/steps/' . $lesson->steps->first()->id);
     }

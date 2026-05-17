@@ -14,11 +14,13 @@ class SolutionAchievementGenerator
 {
     protected ChatGptService $chatGpt;
     protected GeekPasteClient $geekPaste;
+    protected AchievementTrophyGenerator $trophyGenerator;
 
-    public function __construct(ChatGptService $chatGpt, GeekPasteClient $geekPaste)
+    public function __construct(ChatGptService $chatGpt, GeekPasteClient $geekPaste, AchievementTrophyGenerator $trophyGenerator)
     {
         $this->chatGpt = $chatGpt;
         $this->geekPaste = $geekPaste;
+        $this->trophyGenerator = $trophyGenerator;
     }
 
     public function generateForSolution(Solution $solution, bool $ignoreEligibility = false): ?Achievement
@@ -124,6 +126,16 @@ class SolutionAchievementGenerator
             ]);
 
             return null;
+        }
+
+        try {
+            $this->trophyGenerator->generateForAchievement($achievement);
+        } catch (\Throwable $e) {
+            Log::warning('AI achievement trophy generation failed', [
+                'achievement_id' => $achievement->id,
+                'solution_id' => $solution->id,
+                'message' => $e->getMessage(),
+            ]);
         }
 
         CourseActivity::recordAchievementEarned($achievement);

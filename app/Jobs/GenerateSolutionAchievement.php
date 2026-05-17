@@ -15,7 +15,7 @@ class GenerateSolutionAchievement implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 2;
-    public $timeout = 120;
+    public $timeout = 240;
 
     protected $solutionId;
 

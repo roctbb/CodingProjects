@@ -7,6 +7,7 @@
         $canEditBirthday = $guest->role == 'teacher' || $guest->role == 'admin';
         $birthdayValue = old('birthday', optional($user->birthday)->format('Y-m-d'));
         $gradeValue = old('grade', $user->grade_year ? $user->grade() : '');
+        $genderValue = old('gender', $user->learningAvatarGenderKey());
     @endphp
 
     <form method="POST" enctype="multipart/form-data" class="container-xl px-0">
@@ -54,6 +55,26 @@
                                 </div>
                             @endif
 
+                            @if ($guest->role == 'admin')
+                                <div class="col-12 col-md-6">
+                                    <label for="gender" class="form-label">Пол персонажа</label>
+                                    <select id="gender" class="form-select rounded-3" name="gender" required>
+                                        @foreach(\App\User::learningAvatarGenders() as $genderKey => $genderLabel)
+                                            <option value="{{ $genderKey }}" @selected($genderValue === $genderKey)>{{ $genderLabel }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="form-text">Определяет, какой персонаж будет выбран в комнате профиля.</div>
+                                    @error('gender')
+                                        <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                                    @enderror
+                                </div>
+                            @else
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">Пол персонажа</label>
+                                    <div class="form-control rounded-3 bg-body-tertiary">{{ $user->genderLabel() }}</div>
+                                </div>
+                            @endif
+
                             <div class="col-12 col-md-{{ $canEditBirthday ? '6' : '8' }}">
                                 <label for="school" class="form-label">Место учебы</label>
                                 <input id="school" type="text" class="form-control rounded-3" name="school" value="{{ old('school', $user->school) }}" required>
@@ -64,7 +85,12 @@
 
                             <div class="col-12 col-md-4">
                                 <label for="grade" class="form-label">Класс</label>
-                                <input id="grade" type="number" min="1" max="11" class="form-control rounded-3" name="grade" value="{{ $gradeValue }}" required>
+                                <select id="grade" class="form-select rounded-3" name="grade" required>
+                                    @for($grade = 1; $grade <= 11; $grade++)
+                                        <option value="{{ $grade }}" @selected((string) $gradeValue === (string) $grade)>{{ $grade }}</option>
+                                    @endfor
+                                    <option value="12" @selected((string) $gradeValue === '12')>Выпускник</option>
+                                </select>
                                 @error('grade')
                                     <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                 @enderror

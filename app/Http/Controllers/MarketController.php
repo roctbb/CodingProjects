@@ -10,6 +10,7 @@ use App\Program;
 use App\Http\Controllers\Controller;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Auth;
 
 class MarketController extends Controller
@@ -44,6 +45,7 @@ class MarketController extends Controller
         $activeGoods = $goodsQuery->orderBy('id', 'desc')->get();
         $goods = $activeGoods->where('sale_type', '!=', MarketGood::SALE_TYPE_AUCTION)->values();
         $auctions = $activeGoods->where('sale_type', MarketGood::SALE_TYPE_AUCTION)->values();
+        $digitalGoods = $user->digitalStoreItems();
         $archive = $canManageMarket ? MarketGood::where('in_stock', false)->with(['auctionBids.user', 'deals.user'])->orderBy('id', 'desc')->get() : collect();
         $active_orders = $canManageMarket ? MarketDeal::where('shipped', false)->with(['user', 'good'])->orderBy('created_at', 'desc')->get() : collect();
         $shipped_orders = $canManageMarket
@@ -55,7 +57,7 @@ class MarketController extends Controller
                 ->fragment('market-orders')
             : collect();
 
-        return view('market.index', compact('goods', 'auctions', 'user', 'archive', 'active_orders', 'shipped_orders', 'canManageMarket'));
+        return view('market.index', compact('goods', 'auctions', 'digitalGoods', 'user', 'archive', 'active_orders', 'shipped_orders', 'canManageMarket'));
     }
 
     public function orders()
@@ -195,6 +197,52 @@ class MarketController extends Controller
         }
 
         return redirect('/insider/market/');
+    }
+
+    public function buyDigital($itemKey)
+    {
+        $user = User::findOrFail(Auth::User()->id);
+
+        try {
+            $item = DB::transaction(function () use ($user, $itemKey) {
+                $lockedUser = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+                $catalog = User::learningAvatarItemCatalog();
+                $itemCost = (int) ($catalog[$itemKey]['cost'] ?? 0);
+
+                if ($lockedUser->balance() < $itemCost) {
+                    throw new \RuntimeException('insufficient_balance');
+                }
+
+                $item = $lockedUser->learningAvatarBuyItem($itemKey);
+                CoinTransaction::register(
+                    $lockedUser->id,
+                    -1 * $item['cost'],
+                    'Learning avatar item ' . $item['key'] . ' User #' . $lockedUser->id,
+                    'Куплен цифровой предмет «' . $item['name'] . '»: -' . $item['cost'] . ' GC',
+                    'success',
+                    'fas fa-user-astronaut'
+                );
+
+                return $item;
+            });
+        } catch (\InvalidArgumentException $exception) {
+            $this->make_error_alert('Товар не найден', 'Такого цифрового товара нет в магазине.', $destination = 'head');
+            return redirect('/insider/market/#market-digital');
+        } catch (\RuntimeException $exception) {
+            if ($exception->getMessage() === 'insufficient_balance') {
+                $this->make_error_alert('Не хватает GC', 'Для покупки цифрового товара недостаточно монет.', $destination = 'head');
+            } elseif ($exception->getMessage() === 'digital_item_already_owned') {
+                $this->make_info_alert('Уже куплено', 'Этот предмет уже доступен в настройках комнаты.', $destination = 'head');
+            } else {
+                $this->make_error_alert('Покупка не прошла', 'Этот цифровой товар сейчас нельзя купить.', $destination = 'head');
+            }
+
+            return redirect('/insider/market/#market-digital');
+        }
+
+        $this->make_success_alert('Цифровой товар куплен', '«' . $item['name'] . '» теперь доступен в настройках комнаты профиля.', $destination = 'head');
+
+        return redirect('/insider/profile/' . $user->id . '#learning-avatar');
     }
 
     public function bid($id, Request $request)

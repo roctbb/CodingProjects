@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use App\Course;
 
@@ -78,7 +79,8 @@ class RegisterController extends Controller
             'password' => 'required|string|min:6|confirmed',
             'name' => 'required|string',
             'school' => 'required|string',
-            'grade' => 'required|integer|between:1,11',
+            'grade' => 'required|integer|between:1,12',
+            'gender' => ['required', 'string', Rule::in(array_keys(User::learningAvatarGenders()))],
             'birthday' => 'required|date|date_format:Y-m-d',
             'image' => 'image|max:1000',
             'g-recaptcha-response' => app('App\Services\Recaptcha')->getValidationString()
@@ -95,6 +97,7 @@ class RegisterController extends Controller
     {
         $user = User::create([
             'name' => $data['name'],
+            'gender' => $data['gender'],
             'email' => ltrim(rtrim(mb_strtolower($data['email']))),
             'password' => bcrypt($data['password']),
             'email_verified_at' => app('\App\Services\EmailVerify')->getDate()

@@ -13,6 +13,7 @@ use App\LessonStudentStats;
 use App\Program;
 use App\ProgramChapter;
 use App\Solution;
+use App\Services\CoursePosterGenerator;
 use App\TaskDeadline;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
@@ -33,8 +34,8 @@ class CoursesController extends Controller
     public function __construct()
     {
         $this->middleware('auth')->except('details', 'open_index');
-        $this->middleware('course')->only(['details', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
-        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'reviews', 'resetPendingReviews', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
+        $this->middleware('course')->only(['details', 'editView', 'start', 'stop', 'edit', 'generatePoster', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
+        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'generatePoster', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'reviews', 'resetPendingReviews', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
     }
 
     /**
@@ -965,7 +966,7 @@ class CoursesController extends Controller
 
     public function editView($id)
     {
-        $course = Course::with(['categories', 'teachers', 'students'])->findOrFail($id);
+        $course = Course::with(['program', 'categories', 'teachers', 'students'])->findOrFail($id);
         $categories = CourseCategory::orderBy('title')->get(['id', 'title']);
         $teachers = User::where('role', 'teacher')
             ->orWhere('role', 'admin')
@@ -1160,6 +1161,37 @@ class CoursesController extends Controller
 
         $course->save();
         return redirect('/insider/courses/' . $course->id);
+    }
+
+    public function generatePoster($id, CoursePosterGenerator $posterGenerator)
+    {
+        @set_time_limit(180);
+
+        $course = Course::with('program')->findOrFail($id);
+
+        if (!$course->program) {
+            $this->make_error_alert('Плакат не получился', 'У курса не выбрана программа, поэтому некуда сохранить общий плакат.');
+
+            return redirect('/insider/courses/' . $course->id . '/edit');
+        }
+
+        try {
+            $posterGenerator->generate($course->program);
+        } catch (\Throwable $e) {
+            \Log::error('Course poster generation failed', [
+                'course_id' => $course->id,
+                'program_id' => $course->program_id,
+                'message' => $e->getMessage(),
+            ]);
+
+            $this->make_error_alert('Плакат не получился', 'Не удалось сгенерировать плакат программы через GPT-прокси. Попробуйте позже.');
+
+            return redirect('/insider/courses/' . $course->id . '/edit');
+        }
+
+        $this->make_success_alert('Плакат готов', 'Новый плакат программы будет показываться в комнате учеников всех курсов этой программы.');
+
+        return redirect('/insider/courses/' . $course->id . '/edit');
     }
 
     public function create(Request $request)

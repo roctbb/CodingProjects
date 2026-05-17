@@ -67,7 +67,7 @@ services:
       target: app
     container_name: codingprojects-migrate
     restart: "no"
-    command: php artisan migrate --force
+    command: sh -c "php artisan migrate --force && php artisan db:seed --force"
     env_file:
       - .env
     environment:

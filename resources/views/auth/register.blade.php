@@ -69,14 +69,31 @@
                     @error('birthday') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-12 col-sm-6">
+                    <label for="gender" class="form-label">Пол персонажа</label>
+                    <select id="gender" class="form-select rounded-3" name="gender" required>
+                        <option value="" @selected(!old('gender'))>Выберите</option>
+                        @foreach(\App\User::learningAvatarGenders() as $genderKey => $genderLabel)
+                            <option value="{{ $genderKey }}" @selected(old('gender') === $genderKey)>{{ $genderLabel }}</option>
+                        @endforeach
+                    </select>
+                    <div class="form-text">По нему будет выбран персонаж в комнате профиля.</div>
+                    @error('gender') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-12 col-sm-6">
                     <label for="school" class="form-label">Место учебы</label>
                     <input id="school" type="text" class="form-control rounded-3" name="school" value="{{ old('school') }}" required>
                     <div class="form-text">Например, «Гимназия 1576»</div>
                     @error('school') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-12 col-sm-6">
-                    <label for="grade" class="form-label">Класс (число)</label>
-                    <input id="grade" type="number" class="form-control rounded-3" name="grade" value="{{ old('grade') }}" required>
+                    <label for="grade" class="form-label">Класс</label>
+                    <select id="grade" class="form-select rounded-3" name="grade" required>
+                        <option value="" @selected(old('grade') === null)>Выберите класс</option>
+                        @for($grade = 1; $grade <= 11; $grade++)
+                            <option value="{{ $grade }}" @selected((string) old('grade') === (string) $grade)>{{ $grade }}</option>
+                        @endfor
+                        <option value="12" @selected((string) old('grade') === '12')>Выпускник</option>
+                    </select>
                     @error('grade') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
             </div>

@@ -22,6 +22,16 @@ class CourseStudentPoints extends Model
         return $this->belongsTo('App\User', 'student_id', 'id');
     }
 
+    private static function isCommonProgressLesson(Lesson $lesson, Course $course)
+    {
+        return $lesson->isStarted($course);
+    }
+
+    private static function isCommonProgressTask(Task $task)
+    {
+        return !$task->is_star && !$task->is_hidden;
+    }
+
     /**
      * Recalculate points for a student in a course
      *
@@ -50,10 +60,10 @@ class CourseStudentPoints extends Model
         $max_points = 0;
         $points = 0;
 
-        // Get all steps for lessons available to this student
+        // Get all steps for lessons available to everyone in the course.
         $all_steps = collect([]);
         foreach ($course->program->lessons as $lesson) {
-            if ($lesson->isAvailableForUser($course, $student)) {
+            if (self::isCommonProgressLesson($lesson, $course)) {
                 $all_steps = $all_steps->merge($lesson->steps);
             }
         }
@@ -61,10 +71,8 @@ class CourseStudentPoints extends Model
         // Calculate points
         foreach ($all_steps as $step) {
             foreach ($step->tasks as $task) {
-                if (!$task->isVisible($student, $course)) continue;
-                if (!$task->is_star) {
-                    $max_points += $task->max_mark;
-                }
+                if (!self::isCommonProgressTask($task)) continue;
+                $max_points += $task->max_mark;
                 $points += (int) $student->submissions->where('task_id', $task->id)->max('mark');
             }
         }
@@ -114,16 +122,14 @@ class CourseStudentPoints extends Model
             $points = 0;
 
             foreach ($course->program->lessons as $lesson) {
-                if (!$lesson->isAvailableForUser($course, $student)) {
+                if (!self::isCommonProgressLesson($lesson, $course)) {
                     continue;
                 }
 
                 foreach ($lesson->steps as $step) {
                     foreach ($step->tasks as $task) {
-                        if (!$task->isVisible($student, $course)) continue;
-                        if (!$task->is_star) {
-                            $max_points += $task->max_mark;
-                        }
+                        if (!self::isCommonProgressTask($task)) continue;
+                        $max_points += $task->max_mark;
                         $points += (int) $student->submissions->where('task_id', $task->id)->max('mark');
                     }
                 }

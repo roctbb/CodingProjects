@@ -16,6 +16,7 @@ class CourseActivity extends Model
     const TYPE_GEEKPASTE_ATTEMPT_BOUGHT = 'geekpaste_attempt_bought';
     const TYPE_TASK_AI_SUMMARY = 'task_ai_summary';
     const TYPE_AI_ACHIEVEMENT_EARNED = 'ai_achievement_earned';
+    const TYPE_PET_ACTION = 'pet_action';
     const PULSE_WINDOW_HOURS = 24;
     const PULSE_SAMPLE_MINUTES = 8;
     const PULSE_SIGNAL_LOOKBACK_HOURS = 30;
@@ -85,12 +86,22 @@ class CourseActivity extends Model
         ]);
     }
 
-    public static function recordXpBoosterUsed(Solution $solution, int $cost, int $amount)
+    public static function recordXpBoosterUsed(Solution $solution, int $cost, int $amount, ?string $petName = null, ?string $petKey = null)
     {
-        return static::recordForSolution(static::TYPE_XP_BOOSTER_USED, $solution, [
+        $payload = [
             'cost' => $cost,
             'amount' => $amount,
-        ]);
+        ];
+
+        if ($petName) {
+            $payload['pet_name'] = $petName;
+        }
+
+        if ($petKey) {
+            $payload['pet_key'] = $petKey;
+        }
+
+        return static::recordForSolution(static::TYPE_XP_BOOSTER_USED, $solution, $payload);
     }
 
     public static function recordDeadlinePenaltyPaid(Solution $solution, int $cost)
@@ -100,11 +111,22 @@ class CourseActivity extends Model
         ]);
     }
 
-    public static function recordGeekPasteAttemptBought(Task $task, Course $course, User $user, int $cost)
+    public static function recordGeekPasteAttemptBought(Task $task, Course $course, User $user, int $cost, ?string $petName = null, ?string $petKey = null)
     {
         $task->loadMissing('step.lesson');
         $step = $task->step;
         $lesson = $step ? $step->lesson : null;
+        $payload = static::basePayload($course, $lesson, $task) + [
+            'cost' => $cost,
+        ];
+
+        if ($petName) {
+            $payload['pet_name'] = $petName;
+        }
+
+        if ($petKey) {
+            $payload['pet_key'] = $petKey;
+        }
 
         return static::recordActivity([
             'course_id' => $course->id,
@@ -113,21 +135,54 @@ class CourseActivity extends Model
             'task_id' => $task->id,
             'user_id' => $user->id,
             'type' => static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT,
-            'payload' => static::basePayload($course, $lesson, $task) + [
-                'cost' => $cost,
-            ],
+            'payload' => $payload,
         ]);
     }
 
-    public static function recordEarlyAccessBought(Course $course, Lesson $lesson, User $user, int $cost)
+    public static function recordEarlyAccessBought(Course $course, Lesson $lesson, User $user, int $cost, ?string $petName = null, ?string $petKey = null)
     {
+        $payload = static::basePayload($course, $lesson) + [
+            'cost' => $cost,
+        ];
+
+        if ($petName) {
+            $payload['pet_name'] = $petName;
+        }
+
+        if ($petKey) {
+            $payload['pet_key'] = $petKey;
+        }
+
         return static::recordActivity([
             'course_id' => $course->id,
             'lesson_id' => $lesson->id,
             'user_id' => $user->id,
             'type' => static::TYPE_EARLY_ACCESS_BOUGHT,
-            'payload' => static::basePayload($course, $lesson) + [
-                'cost' => $cost,
+            'payload' => $payload,
+        ]);
+    }
+
+    public static function recordPetActionForActiveCourse(User $user, string $action, array $payload = [])
+    {
+        if (!$user->exists) {
+            return null;
+        }
+
+        $course = $user->courses()
+            ->where('state', 'started')
+            ->orderByDesc('courses.id')
+            ->first(['courses.id', 'courses.name']);
+
+        if (!$course) {
+            return null;
+        }
+
+        return static::recordActivity([
+            'course_id' => $course->id,
+            'user_id' => $user->id,
+            'type' => static::TYPE_PET_ACTION,
+            'payload' => static::basePayload($course) + $payload + [
+                'pet_action' => $action,
             ],
         ]);
     }
@@ -194,6 +249,7 @@ class CourseActivity extends Model
                 'icon_key' => $achievement->icon_key,
                 'visual_key' => $achievement->payload['visual_key'] ?? null,
                 'svg_icon' => $achievement->payload['svg_icon'] ?? null,
+                'trophy_image' => $achievement->payload['trophy_image'] ?? null,
             ],
         ]);
     }
@@ -284,6 +340,8 @@ class CourseActivity extends Model
                 return 2.5;
             case static::TYPE_AI_ACHIEVEMENT_EARNED:
                 return 3.0;
+            case static::TYPE_PET_ACTION:
+                return 2.2;
             case static::TYPE_DEADLINE_PENALTY_PAID:
             case static::TYPE_EARLY_ACCESS_BOUGHT:
             case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
@@ -392,19 +450,33 @@ class CourseActivity extends Model
             case static::TYPE_SOLUTION_CHECKED:
                 return 'получил(а) ' . (int) ($payload['mark'] ?? 0) . ' XP';
             case static::TYPE_XP_BOOSTER_USED:
+                if (!empty($payload['pet_name'])) {
+                    return 'усилил(а) решение с помощью питомца «' . $payload['pet_name'] . '»';
+                }
+
                 return 'усилил(а) решение бустером';
             case static::TYPE_DEADLINE_PENALTY_PAID:
                 return 'снял(а) штраф за дедлайн';
             case static::TYPE_EARLY_ACCESS_BOUGHT:
+                if (!empty($payload['pet_name']) && (int) ($payload['cost'] ?? 0) <= 0) {
+                    return 'открыл(а) урок «' . $lessonName . '» раньше с помощью питомца «' . $payload['pet_name'] . '»';
+                }
+
                 return 'открыл(а) урок «' . $lessonName . '» раньше';
             case static::TYPE_LESSON_OPENED:
                 return 'Открылся урок «' . $lessonName . '»';
             case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
+                if (!empty($payload['pet_name']) && (int) ($payload['cost'] ?? 0) <= 0) {
+                    return 'получил(а) бесплатную попытку GeekPaste от питомца «' . $payload['pet_name'] . '»';
+                }
+
                 return 'взял(а) ещё попытку GeekPaste';
             case static::TYPE_TASK_AI_SUMMARY:
                 return 'опубликовал(а) пересказ «' . $taskName . '»';
             case static::TYPE_AI_ACHIEVEMENT_EARNED:
                 return 'получил(а) достижение «' . ($payload['achievement_title'] ?? 'Сильное решение') . '»';
+            case static::TYPE_PET_ACTION:
+                return static::petActionText($payload);
             default:
                 return 'Новое событие в курсе';
         }
@@ -425,6 +497,10 @@ class CourseActivity extends Model
 
         if ($this->type === static::TYPE_XP_BOOSTER_USED && !empty($payload['amount'])) {
             $parts[] = '+' . (int) $payload['amount'] . ' XP';
+        }
+
+        if ($this->type === static::TYPE_PET_ACTION && !empty($payload['amount'])) {
+            $parts[] = '+' . (int) $payload['amount'] . ' GC';
         }
 
         return implode(' · ', $parts);
@@ -448,6 +524,8 @@ class CourseActivity extends Model
                 return 'fas fa-unlock-alt';
             case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
                 return 'fas fa-robot';
+            case static::TYPE_PET_ACTION:
+                return 'fas fa-paw';
             case static::TYPE_TASK_AI_SUMMARY:
                 return 'fas fa-newspaper';
             case static::TYPE_AI_ACHIEVEMENT_EARNED:
@@ -474,6 +552,7 @@ class CourseActivity extends Model
         switch ($this->type) {
             case static::TYPE_XP_BOOSTER_USED:
             case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
+            case static::TYPE_PET_ACTION:
                 return 'is-boost';
             case static::TYPE_SOLUTION_CHECKED:
                 return 'is-score';
@@ -500,6 +579,24 @@ class CourseActivity extends Model
         }
 
         return url('/insider/courses/' . $this->course_id);
+    }
+
+    private static function petActionText(array $payload): string
+    {
+        $petName = trim((string) ($payload['pet_name'] ?? 'питомец'));
+        $quotedPetName = $petName !== '' && $petName !== 'питомец' ? ' «' . $petName . '»' : '';
+        $amount = (int) ($payload['amount'] ?? 0);
+
+        switch ($payload['pet_action'] ?? null) {
+            case 'daily_coin_gift':
+                return 'получил(а) ' . max(1, $amount ?: 3) . ' GC от питомца' . $quotedPetName;
+            case 'daily_big_coin_gift':
+                return 'получил(а) ' . max(1, $amount ?: 7) . ' GC от питомца' . $quotedPetName;
+            case 'free_xp_booster_gift':
+                return 'получил(а) бесплатный XP-бустер от питомца' . $quotedPetName;
+            default:
+                return 'получил(а) помощь от питомца' . $quotedPetName;
+        }
     }
 
     public function timeAgo()

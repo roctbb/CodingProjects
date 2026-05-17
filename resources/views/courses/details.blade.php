@@ -271,8 +271,8 @@
                             $isLessonStarted = $lesson->isStarted($course);
                             $hasEarlyAccess = $isLearner && $lesson->hasEarlyAccess($course, $user);
                             $canBuyEarlyAccess = $isLearner && $lesson->canBuyEarlyAccess($course, $user);
-                            $earlyAccessCost = $lesson->earlyAccessCost();
-                            $canAffordEarlyAccess = $canBuyEarlyAccess && $userBalance >= $earlyAccessCost;
+                            $earlyAccessCost = $isLearner ? $user->earlyLessonAccessCost($lesson) : $lesson->earlyAccessCost();
+                            $canAffordEarlyAccess = $canBuyEarlyAccess && ($earlyAccessCost <= 0 || $userBalance >= $earlyAccessCost);
                             $isAvailable = $lesson->isAvailable($course) || $isManager;
                             $showTeacherLock = $isManager && !$isLessonStarted;
                             $startDate = $lesson->getStartDate($course);
@@ -439,9 +439,13 @@
                                                 <form method="POST" action="{{ url('/insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/early-access') }}" class="m-0">
                                                     @csrf
                                                     <button type="submit" class="btn btn-sm solution-special-action course-early-access-action"
-                                                            data-confirm="Купить ранний доступ к этому уроку за {{ $earlyAccessCost }} GC?">
+                                                            data-confirm="{{ $earlyAccessCost > 0 ? 'Купить ранний доступ к этому уроку за '.$earlyAccessCost.' GC?' : 'Открыть этот урок бесплатно с помощью Брр Брр Потапим?' }}">
                                                         <i class="fas fa-key"></i>
-                                                        Открыть раньше за {{ $earlyAccessCost }} GC
+                                                        @if ($earlyAccessCost > 0)
+                                                            Открыть раньше за {{ $earlyAccessCost }} GC
+                                                        @else
+                                                            Открыть раньше бесплатно
+                                                        @endif
                                                     </button>
                                                 </form>
                                             @else

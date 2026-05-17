@@ -3,6 +3,8 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
+    "avatar:room-system:check": "node scripts/avatar/check-room-system-assets.js",
+    "avatar:room-system:verify-weather": "node scripts/avatar/verify-season-weather-assets.js",
     "prod": "npm run build",
     "production": "npm run build"
   },

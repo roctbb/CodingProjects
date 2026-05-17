@@ -60,6 +60,213 @@ document.addEventListener('DOMContentLoaded', function () {
         toggle.addEventListener('change', updateAiAchievementField);
     });
 
+    document.querySelectorAll('[data-learning-avatar-form]').forEach(function (form) {
+        const preview = document.getElementById(form.dataset.learningAvatarPreviewTarget);
+        if (!preview) return;
+        const balance = Number(form.dataset.learningAvatarBalance || 0);
+        const summary = form.querySelector('[data-learning-avatar-cost-summary]');
+        const submit = form.querySelector('[data-learning-avatar-submit]');
+        const characterPreviewPayload = form.querySelector('[data-learning-avatar-character-previews]');
+        let characterPreviewsByGrade = {};
+        if (characterPreviewPayload) {
+            try {
+                characterPreviewsByGrade = JSON.parse(characterPreviewPayload.textContent || '{}') || {};
+            } catch (error) {
+                characterPreviewsByGrade = {};
+            }
+        }
+        const escapeLearningAvatarSelectorValue = function (value) {
+            return window.CSS && CSS.escape ? CSS.escape(value) : String(value).replace(/"/g, '\\"');
+        };
+        const insertLearningAvatarLayer = function (layer) {
+            const order = Number(layer.dataset.learningAvatarLayerOrder || 99);
+            const nextLayer = Array.from(preview.querySelectorAll('[data-learning-avatar-layer-order]')).find(function (existingLayer) {
+                return Number(existingLayer.dataset.learningAvatarLayerOrder || 99) > order;
+            });
+
+            preview.insertBefore(layer, nextLayer || null);
+        };
+
+        const updateLearningAvatarSlot = function (select) {
+            const selectedOption = select.options[select.selectedIndex];
+            const equippedSlot = select.name.match(/^equipped\[([^\]]+)\]$/)?.[1];
+            if (!equippedSlot) return;
+
+            preview.querySelectorAll('[data-learning-avatar-layer-slot="' + escapeLearningAvatarSelectorValue(equippedSlot) + '"]').forEach(function (layer) {
+                layer.remove();
+            });
+
+            if (!selectedOption || !selectedOption.value || !selectedOption.dataset.previewSrc) {
+                return;
+            }
+
+            const slot = document.createElement('span');
+            slot.className = 'gc-learning-avatar__slot gc-learning-avatar__slot--' + selectedOption.dataset.previewSlot;
+            slot.dataset.learningAvatarLayerSlot = equippedSlot;
+            slot.dataset.learningAvatarLayerOrder = selectedOption.dataset.previewOrder || '99';
+            slot.setAttribute('style', selectedOption.dataset.previewStyle || '');
+
+            const image = document.createElement('img');
+            image.src = selectedOption.dataset.previewSrc;
+            image.alt = '';
+            image.loading = 'lazy';
+            image.className = 'gc-learning-avatar__layer gc-learning-avatar__layer--item';
+            image.style.objectFit = selectedOption.dataset.previewFit || 'contain';
+            image.style.objectPosition = selectedOption.dataset.previewObjectPosition || 'center center';
+
+            slot.appendChild(image);
+            insertLearningAvatarLayer(slot);
+        };
+
+        const characterPreviewFromLayer = function (layer) {
+            if (!layer || !layer.src) return null;
+
+            return {
+                src: layer.src,
+                order: layer.order || '99',
+                fullCanvas: layer.fullCanvas ? '1' : '0',
+                slot: layer.slot || 'character',
+                style: layer.style || '',
+                innerStyle: layer.innerStyle || '',
+                fit: layer.fit === 'cover' ? 'cover' : 'contain',
+                objectPosition: layer.objectPosition || 'center bottom'
+            };
+        };
+
+        const selectedCharacterPreview = function () {
+            const genderSelect = form.querySelector('select[name="appearance[gender]"]');
+            const gradeSelect = form.querySelector('select[name="appearance[grade]"]');
+            const gender = genderSelect ? genderSelect.value : 'boy';
+            const grade = gradeSelect ? gradeSelect.value : null;
+            const gradePreview = grade ? characterPreviewsByGrade[grade]?.[gender] : null;
+
+            if (gradePreview) {
+                return characterPreviewFromLayer(gradePreview);
+            }
+
+            const selectedOption = genderSelect?.options[genderSelect.selectedIndex];
+            if (!selectedOption || !selectedOption.dataset.characterSrc) return null;
+
+            return {
+                src: selectedOption.dataset.characterSrc,
+                order: selectedOption.dataset.characterOrder || '99',
+                fullCanvas: selectedOption.dataset.characterFullCanvas || '0',
+                slot: selectedOption.dataset.characterSlot || 'character',
+                style: selectedOption.dataset.characterStyle || '',
+                innerStyle: selectedOption.dataset.characterInnerStyle || '',
+                fit: selectedOption.dataset.characterFit || 'contain',
+                objectPosition: selectedOption.dataset.characterObjectPosition || 'center bottom'
+            };
+        };
+
+        const updateLearningAvatarCharacter = function (select) {
+            const character = selectedCharacterPreview();
+            if (!character) return;
+
+            preview.querySelectorAll('[data-learning-avatar-layer-slot="character"], .gc-learning-avatar__layer--full').forEach(function (layer) {
+                const src = layer.getAttribute('src') || '';
+                const isCharacterLayer = layer.dataset.learningAvatarLayerSlot === 'character'
+                    || src.indexOf('/characters/') !== -1
+                    || src.indexOf('/20_character_skin_basic') !== -1;
+
+                if (!isCharacterLayer) return;
+
+                layer.remove();
+            });
+
+            const image = document.createElement('img');
+            image.src = character.src;
+            image.alt = '';
+            image.loading = 'lazy';
+            image.className = 'gc-learning-avatar__layer';
+            image.dataset.learningAvatarLayerOrder = character.order || '99';
+
+            if (character.fullCanvas === '0') {
+                const slot = document.createElement('span');
+                slot.className = 'gc-learning-avatar__slot gc-learning-avatar__slot--' + (character.slot || 'character');
+                slot.dataset.learningAvatarLayerSlot = 'character';
+                slot.dataset.learningAvatarLayerOrder = character.order || '99';
+                slot.setAttribute('style', character.style || '');
+
+                image.classList.add('gc-learning-avatar__layer--item');
+                image.style.objectFit = character.fit || 'contain';
+                image.style.objectPosition = character.objectPosition || 'center bottom';
+                if (character.innerStyle) {
+                    image.style.cssText += '; ' + character.innerStyle;
+                }
+                slot.appendChild(image);
+                insertLearningAvatarLayer(slot);
+                return;
+            }
+
+            image.classList.add('gc-learning-avatar__layer--full');
+            image.dataset.learningAvatarLayerSlot = 'character';
+            insertLearningAvatarLayer(image);
+        };
+
+        const updateLearningAvatarCost = function () {
+            const purchased = new Map();
+
+            form.querySelectorAll('select[name^="equipped["]').forEach(function (select) {
+                const selectedOption = select.options[select.selectedIndex];
+                if (!selectedOption || !selectedOption.value || selectedOption.dataset.itemOwned === '1') return;
+
+                const cost = Number(selectedOption.dataset.itemCost || 0);
+                if (cost > 0) {
+                    purchased.set(selectedOption.value, {
+                        name: selectedOption.textContent.replace(/\s+/g, ' ').trim().replace(/\s+·.+$/, ''),
+                        cost: cost
+                    });
+                }
+            });
+
+            const total = Array.from(purchased.values()).reduce(function (sum, item) {
+                return sum + item.cost;
+            }, 0);
+
+            if (!summary) return;
+
+            summary.classList.remove('is-warning', 'is-muted');
+            if (total <= 0) {
+                summary.classList.add('is-muted');
+                summary.innerHTML = '<span>Новых покупок нет</span>';
+                form.removeAttribute('data-confirm');
+                if (submit) submit.disabled = false;
+                return;
+            }
+
+            const itemNames = Array.from(purchased.values()).map(function (item) {
+                return item.name;
+            }).join(', ');
+            const canAfford = total <= balance;
+            summary.classList.toggle('is-warning', !canAfford);
+            summary.innerHTML = '<span>' + (canAfford ? 'Будет списано' : 'Не хватает GC') + '</span><strong>' + total + ' GC</strong>';
+            form.dataset.confirm = 'Сохранить комнату и купить: ' + itemNames + ' за ' + total + ' GC?';
+            if (submit) submit.disabled = !canAfford;
+        };
+
+        form.querySelectorAll('select[name^="equipped["]').forEach(function (select) {
+            select.addEventListener('change', function () {
+                updateLearningAvatarSlot(select);
+                updateLearningAvatarCost();
+            });
+        });
+
+        form.querySelectorAll('select[name="appearance[gender]"]').forEach(function (select) {
+            select.addEventListener('change', function () {
+                updateLearningAvatarCharacter(select);
+            });
+        });
+
+        form.querySelectorAll('select[name="appearance[grade]"]').forEach(function (select) {
+            select.addEventListener('change', function () {
+                updateLearningAvatarCharacter(select);
+            });
+        });
+
+        updateLearningAvatarCost();
+    });
+
     document.querySelectorAll('[data-solution-recheck-toggle]').forEach(function (button) {
         button.addEventListener('click', function () {
             const feedback = document.getElementById(button.dataset.solutionFeedbackId);
@@ -625,6 +832,535 @@ document.addEventListener('DOMContentLoaded', function () {
         updateButton();
     });
 
+    var closeMarketFrameModal = function (modal) {
+        if (!modal) return;
+
+        modal.hidden = true;
+        modal.classList.remove('is-open');
+        document.body.classList.remove('market-digital-frame-modal-open');
+    };
+
+    document.querySelectorAll('[data-market-frame-modal]').forEach(function (modal) {
+        var wrapper = modal.closest('[data-avatar-frame-editor]') || document;
+        var openButton = wrapper.querySelector('[data-market-frame-modal-open]');
+        var focusTarget = modal.querySelector('.market-digital-frame-modal__body select, .market-digital-frame-modal__body input, .market-digital-frame-modal__body button');
+
+        if (openButton) {
+            openButton.addEventListener('click', function () {
+                modal.hidden = false;
+                modal.classList.add('is-open');
+                document.body.classList.add('market-digital-frame-modal-open');
+                if (focusTarget) focusTarget.focus({ preventScroll: true });
+            });
+        }
+
+        modal.querySelectorAll('[data-market-frame-modal-close]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                closeMarketFrameModal(modal);
+                if (openButton) openButton.focus({ preventScroll: true });
+            });
+        });
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') return;
+
+        document.querySelectorAll('[data-market-frame-modal].is-open').forEach(function (modal) {
+            closeMarketFrameModal(modal);
+            var wrapper = modal.closest('[data-avatar-frame-editor]');
+            var openButton = wrapper ? wrapper.querySelector('[data-market-frame-modal-open]') : null;
+            if (openButton) openButton.focus({ preventScroll: true });
+        });
+    });
+
+    document.querySelectorAll('[data-avatar-frame-editor]').forEach(function (editor) {
+        var previews = Array.from(editor.querySelectorAll('[data-avatar-frame-preview]'));
+        if (!previews.length) return;
+
+        var previewStage = editor.querySelector('[data-frame-preview-stage]');
+        var typeInputs = Array.from(editor.querySelectorAll('[name="avatar_frame_config[type]"]'));
+        var shapeInputs = Array.from(editor.querySelectorAll('[name="avatar_frame_config[shape]"]'));
+        var motionInputs = Array.from(editor.querySelectorAll('[name="avatar_frame_config[motion]"]'));
+        var patternInputs = Array.from(editor.querySelectorAll('[name="avatar_frame_config[pattern]"]'));
+        var avatarEffectInputs = Array.from(editor.querySelectorAll('[name="avatar_frame_config[avatar_effect]"]'));
+        var colorInputs = Array.from(editor.querySelectorAll('input[type="color"]'));
+        var angleInput = editor.querySelector('[data-frame-angle]');
+        var widthInput = editor.querySelector('[data-frame-width]');
+        var glowInput = editor.querySelector('[data-frame-glow]');
+        var speedInput = editor.querySelector('[data-frame-speed]');
+        var patternOpacityInput = editor.querySelector('[data-frame-pattern-opacity]');
+        var effectOpacityInput = editor.querySelector('[data-frame-effect-opacity]');
+        var animatedInput = editor.querySelector('[name="avatar_frame_config[animated]"][type="checkbox"]');
+        var animatedOptionsPanel = editor.querySelector('.profile-avatar-frame-editor__animation-options');
+        var animatedOptions = Array.from(editor.querySelectorAll('[data-frame-animated-option]'));
+        var patternStrengthField = editor.querySelector('[data-frame-pattern-strength-field]');
+        var avatarEffectStrengthField = editor.querySelector('[data-frame-avatar-effect-strength-field]');
+        var angleField = editor.querySelector('[data-frame-angle-field]');
+        var angleValue = editor.querySelector('[data-frame-angle-value]');
+        var widthValue = editor.querySelector('[data-frame-width-value]');
+        var glowValue = editor.querySelector('[data-frame-glow-value]');
+        var speedValue = editor.querySelector('[data-frame-speed-value]');
+        var patternOpacityValue = editor.querySelector('[data-frame-pattern-opacity-value]');
+        var effectOpacityValue = editor.querySelector('[data-frame-effect-opacity-value]');
+        var summaryType = editor.querySelector('[data-frame-summary-type]');
+        var summaryShape = editor.querySelector('[data-frame-summary-shape]');
+        var summaryPattern = editor.querySelector('[data-frame-summary-pattern]');
+        var summaryAnimation = editor.querySelector('[data-frame-summary-animation]');
+        var priceValue = editor.querySelector('[data-frame-price]');
+        var submitButton = editor.querySelector('[data-frame-submit]');
+        var userBalance = parseInt(editor.dataset.frameBalance || '', 10);
+        var defaultFrameConfig = {
+            type: 'linear',
+            shape: 'circle',
+            motion: 'spin',
+            pattern: 'sparkles',
+            avatar_effect: 'sheen',
+            angle: 135,
+            width: 6,
+            glow: 28,
+            speed: 100,
+            pattern_opacity: 72,
+            effect_opacity: 70,
+            animated: true,
+            colors: ['#22d3ee', '#8b5cf6', '#f97316', '#22c55e'],
+        };
+        var randomPalettes = [
+            ['#22d3ee', '#8b5cf6', '#f97316', '#22c55e'],
+            ['#f43f5e', '#f59e0b', '#22c55e', '#38bdf8'],
+            ['#0f172a', '#166534', '#22c55e', '#84cc16'],
+            ['#fef3c7', '#f59e0b', '#b45309', '#fde68a'],
+            ['#60a5fa', '#a78bfa', '#f472b6', '#fb7185'],
+            ['#14b8a6', '#22c55e', '#eab308', '#f97316'],
+        ];
+        var previewBgClasses = ['is-preview-light', 'is-preview-dark'];
+        editor.querySelectorAll('input, select').forEach(function (input) {
+            input.dataset.frameInitiallyDisabled = input.disabled ? '1' : '0';
+        });
+        if (submitButton) {
+            submitButton.dataset.frameInitiallyDisabled = submitButton.disabled ? '1' : '0';
+        }
+
+        var setFrameInputDisabled = function (input, disabled) {
+            input.disabled = input.dataset.frameInitiallyDisabled === '1' || disabled;
+        };
+
+        var frameCostFor = function (config) {
+            if (!submitButton) return 0;
+
+            var staticCost = parseInt(submitButton.dataset.frameStaticCost || '100', 10) || 100;
+            var animatedCost = parseInt(submitButton.dataset.frameAnimatedCost || '150', 10) || 150;
+
+            return config.animated ? animatedCost : staticCost;
+        };
+
+        var sanitizeColor = function (value) {
+            return /^#[0-9a-f]{6}$/i.test(value || '') ? value.toLowerCase() : '#22d3ee';
+        };
+
+        var selectedValue = function (inputs, fallback) {
+            var select = inputs.find(function (input) {
+                return input.tagName === 'SELECT';
+            });
+            if (select) return select.value || fallback;
+
+            var checked = inputs.find(function (input) {
+                return input.checked;
+            });
+
+            return checked ? checked.value : fallback;
+        };
+
+        var currentConfig = function () {
+            return {
+                type: selectedValue(typeInputs, 'linear'),
+                shape: selectedValue(shapeInputs, 'circle'),
+                motion: selectedValue(motionInputs, 'spin'),
+                pattern: selectedValue(patternInputs, 'none'),
+                avatarEffect: selectedValue(avatarEffectInputs, 'sheen'),
+                colors: colorInputs.map(function (input) {
+                    return sanitizeColor(input.value);
+                }).filter(Boolean),
+                angle: Math.max(0, Math.min(359, parseInt(angleInput ? angleInput.value : 135, 10) || 0)),
+                width: Math.max(2, Math.min(14, parseInt(widthInput ? widthInput.value : 6, 10) || 6)),
+                glow: Math.max(0, Math.min(52, parseInt(glowInput ? glowInput.value : 28, 10) || 0)),
+                speed: Math.max(60, Math.min(180, parseInt(speedInput ? speedInput.value : 100, 10) || 100)),
+                patternOpacity: Math.max(20, Math.min(100, parseInt(patternOpacityInput ? patternOpacityInput.value : 72, 10) || 72)),
+                effectOpacity: Math.max(20, Math.min(100, parseInt(effectOpacityInput ? effectOpacityInput.value : 70, 10) || 70)),
+                animated: animatedInput ? animatedInput.checked : true,
+            };
+        };
+
+        var gradientFor = function (config) {
+            var colors = config.colors.length >= 2 ? config.colors : ['#22d3ee', '#8b5cf6'];
+            if (config.type === 'conic') {
+                return 'conic-gradient(from ' + config.angle + 'deg, ' + colors.join(', ') + ', ' + colors[0] + ')';
+            }
+
+            if (config.type === 'radial') {
+                return 'radial-gradient(circle, ' + colors.join(', ') + ')';
+            }
+
+            return 'linear-gradient(' + config.angle + 'deg, ' + colors.join(', ') + ')';
+        };
+
+        var shapeFor = function (shape) {
+            var shapes = {
+                circle: ['999px', '999px'],
+                squircle: ['1.35rem', '1.1rem'],
+                badge: ['1.6rem 0.8rem', '1.25rem 0.62rem'],
+                soft: ['1rem', '0.8rem'],
+            };
+
+            return shapes[shape] || shapes.circle;
+        };
+
+        var patternFor = function (pattern) {
+            var patterns = {
+                sparkles: 'radial-gradient(circle at 50% 6%, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0.16rem, transparent 0.19rem), radial-gradient(circle at 94% 34%, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0.13rem, transparent 0.17rem), radial-gradient(circle at 76% 94%, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0.15rem, transparent 0.18rem), radial-gradient(circle at 9% 66%, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0.12rem, transparent 0.16rem), radial-gradient(circle at 13% 18%, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0.11rem, transparent 0.15rem)',
+                pixels: 'linear-gradient(90deg, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 50%, transparent 0) 0 0 / 0.55rem 0.55rem, linear-gradient(rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 50%, transparent 0) 0 0 / 0.55rem 0.55rem',
+                stripes: 'repeating-linear-gradient(135deg, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0 0.16rem, transparent 0.16rem 0.48rem)',
+            };
+
+            return patterns[pattern] || 'none';
+        };
+
+        var frameAnimationFor = function (config) {
+            if (!config.animated) return 'none';
+            var durationFor = function (seconds) {
+                return Math.round((seconds * 100 / config.speed) * 100) / 100 + 's';
+            };
+
+            var animations = {
+                spin: 'profile-avatar-rainbow-spin ' + durationFor(5.6) + ' linear infinite',
+                pulse: 'profile-avatar-frame-pulse ' + durationFor(2.8) + ' ease-in-out infinite',
+                sweep: 'profile-avatar-frame-sweep ' + durationFor(3.4) + ' linear infinite',
+                still: 'none',
+            };
+
+            return animations[config.motion] || animations.spin;
+        };
+
+        var avatarEffectFor = function (config) {
+            if (!config.animated || config.avatarEffect === 'none') {
+                return ['transparent', 'none', '0'];
+            }
+            var durationFor = function (seconds) {
+                return Math.round((seconds * 100 / config.speed) * 100) / 100 + 's';
+            };
+
+            var effects = {
+                sheen: ['linear-gradient(115deg, transparent 18%, rgba(255, 255, 255, 0.62) 45%, transparent 72%)', 'profile-avatar-sheen ' + durationFor(3.6) + ' ease-in-out infinite'],
+                scanner: ['linear-gradient(180deg, transparent 28%, rgba(34, 211, 238, 0.52) 50%, transparent 72%)', 'profile-avatar-scanner ' + durationFor(2.8) + ' ease-in-out infinite'],
+                spark: ['radial-gradient(circle at 25% 35%, rgba(255, 255, 255, 0.86) 0 0.12rem, transparent 0.14rem), radial-gradient(circle at 68% 58%, rgba(255, 255, 255, 0.72) 0 0.1rem, transparent 0.12rem)', 'profile-avatar-spark ' + durationFor(2.4) + ' ease-in-out infinite'],
+            };
+
+            var effect = effects[config.avatarEffect] || effects.sheen;
+            return effect.concat(String(Math.round(config.effectOpacity) / 100));
+        };
+
+        var labelFor = function (items, value, fallback) {
+            return items[value] || fallback;
+        };
+
+        var setPresetActive = function (activeButton) {
+            editor.querySelectorAll('[data-frame-preset]').forEach(function (item) {
+                item.classList.toggle('is-active', item === activeButton);
+            });
+        };
+
+        var applyPresetConfig = function (config, activeButton) {
+            config = config || {};
+
+            typeInputs.forEach(function (input) {
+                if (input.tagName === 'SELECT') {
+                    input.value = config.type || defaultFrameConfig.type;
+                    return;
+                }
+                input.checked = input.value === (config.type || defaultFrameConfig.type);
+            });
+            shapeInputs.forEach(function (input) {
+                if (input.tagName === 'SELECT') {
+                    input.value = config.shape || defaultFrameConfig.shape;
+                    return;
+                }
+                input.checked = input.value === (config.shape || defaultFrameConfig.shape);
+            });
+            motionInputs.forEach(function (input) {
+                if (input.tagName === 'SELECT') {
+                    input.value = config.motion || defaultFrameConfig.motion;
+                    return;
+                }
+                input.checked = input.value === (config.motion || defaultFrameConfig.motion);
+            });
+            patternInputs.forEach(function (input) {
+                if (input.tagName === 'SELECT') {
+                    input.value = config.pattern || defaultFrameConfig.pattern;
+                    return;
+                }
+                input.checked = input.value === (config.pattern || defaultFrameConfig.pattern);
+            });
+            avatarEffectInputs.forEach(function (input) {
+                if (input.tagName === 'SELECT') {
+                    input.value = config.avatar_effect || defaultFrameConfig.avatar_effect;
+                    return;
+                }
+                input.checked = input.value === (config.avatar_effect || defaultFrameConfig.avatar_effect);
+            });
+
+            colorInputs.forEach(function (input, index) {
+                input.value = sanitizeColor((config.colors && config.colors[index]) || defaultFrameConfig.colors[index] || defaultFrameConfig.colors[0]);
+            });
+
+            if (angleInput) angleInput.value = config.angle !== undefined ? config.angle : defaultFrameConfig.angle;
+            if (widthInput) widthInput.value = config.width !== undefined ? config.width : defaultFrameConfig.width;
+            if (glowInput) glowInput.value = config.glow !== undefined ? config.glow : defaultFrameConfig.glow;
+            if (speedInput) speedInput.value = config.speed !== undefined ? config.speed : defaultFrameConfig.speed;
+            if (patternOpacityInput) patternOpacityInput.value = config.pattern_opacity !== undefined ? config.pattern_opacity : defaultFrameConfig.pattern_opacity;
+            if (effectOpacityInput) effectOpacityInput.value = config.effect_opacity !== undefined ? config.effect_opacity : defaultFrameConfig.effect_opacity;
+            if (animatedInput) animatedInput.checked = config.animated !== undefined ? Boolean(config.animated) : defaultFrameConfig.animated;
+
+            setPresetActive(activeButton || null);
+            applyConfig();
+        };
+
+        var randomItem = function (items) {
+            return items[Math.floor(Math.random() * items.length)];
+        };
+
+        var setPaletteActive = function (activeButton) {
+            editor.querySelectorAll('[data-frame-palette]').forEach(function (item) {
+                item.classList.toggle('is-active', item === activeButton);
+            });
+        };
+
+        var applyPalette = function (colors, activeButton) {
+            if (!Array.isArray(colors)) return;
+
+            colorInputs.forEach(function (input, index) {
+                if (colors[index]) input.value = sanitizeColor(colors[index]);
+            });
+
+            setPresetActive(null);
+            setPaletteActive(activeButton || null);
+            applyConfig();
+        };
+
+        var applyColorOrder = function (transform) {
+            var colors = colorInputs.map(function (input) {
+                return sanitizeColor(input.value);
+            });
+
+            colors = transform(colors);
+            colorInputs.forEach(function (input, index) {
+                if (colors[index]) input.value = colors[index];
+            });
+
+            setPresetActive(null);
+            setPaletteActive(null);
+            applyConfig();
+        };
+
+        var applyConfig = function () {
+            var config = currentConfig();
+            var glowColor = config.colors[1] || config.colors[0] || '#22d3ee';
+            var shape = shapeFor(config.shape);
+            var avatarEffect = avatarEffectFor(config);
+
+            previews.forEach(function (preview) {
+                preview.style.setProperty('--profile-avatar-frame-bg', gradientFor(config));
+                preview.style.setProperty('--profile-avatar-frame-width', config.width + 'px');
+                preview.style.setProperty('--profile-avatar-frame-radius', shape[0]);
+                preview.style.setProperty('--profile-avatar-frame-inner-radius', shape[1]);
+                preview.style.setProperty('--profile-avatar-frame-pattern', patternFor(config.pattern));
+                preview.style.setProperty('--profile-avatar-pattern-opacity', config.patternOpacity + '%');
+                preview.style.setProperty('--profile-avatar-frame-shadow', '0 0 0 0.12rem color-mix(in srgb, ' + config.colors[0] + ' 18%, transparent), 0 0.8rem 2rem color-mix(in srgb, ' + glowColor + ' ' + config.glow + '%, transparent)');
+                preview.style.setProperty('--profile-avatar-frame-animation', frameAnimationFor(config));
+                preview.style.setProperty('--profile-avatar-effect-bg', avatarEffect[0]);
+                preview.style.setProperty('--profile-avatar-effect-animation', avatarEffect[1]);
+                preview.style.setProperty('--profile-avatar-effect-opacity', avatarEffect[2]);
+            });
+
+            colorInputs.forEach(function (input) {
+                var label = input.closest('.profile-avatar-frame-color');
+                if (label) label.style.setProperty('--frame-color', sanitizeColor(input.value));
+            });
+
+            if (angleValue) angleValue.textContent = config.angle + '°';
+            if (widthValue) widthValue.textContent = config.width + 'px';
+            if (glowValue) glowValue.textContent = config.glow + '%';
+            if (speedValue) speedValue.textContent = config.speed + '%';
+            if (patternOpacityValue) patternOpacityValue.textContent = config.patternOpacity + '%';
+            if (effectOpacityValue) effectOpacityValue.textContent = config.effectOpacity + '%';
+            if (angleField) angleField.classList.toggle('d-none', config.type === 'radial');
+            if (patternStrengthField) {
+                var patternHidden = config.pattern === 'none';
+                patternStrengthField.classList.toggle('d-none', patternHidden);
+                patternStrengthField.querySelectorAll('input').forEach(function (input) {
+                    setFrameInputDisabled(input, patternHidden);
+                });
+            }
+            if (summaryType) {
+                summaryType.textContent = labelFor({ linear: 'Линия', conic: 'Круг', radial: 'Сияние' }, config.type, 'Градиент');
+            }
+            if (summaryShape) {
+                summaryShape.textContent = labelFor({ circle: 'Круглая', squircle: 'Сквиркл', badge: 'Жетон', soft: 'Мягкая' }, config.shape, 'Форма');
+            }
+            if (summaryPattern) {
+                summaryPattern.textContent = config.pattern === 'none'
+                    ? 'Без паттерна'
+                    : labelFor({ sparkles: 'Искры', pixels: 'Пиксели', stripes: 'Штрихи' }, config.pattern, 'Паттерн') + ' · ' + config.patternOpacity + '%';
+            }
+            if (summaryAnimation) {
+                summaryAnimation.textContent = config.animated
+                    ? labelFor({ spin: 'Вращение', pulse: 'Пульс', sweep: 'Блик', still: 'Статика' }, config.motion, 'Живая') + ' · ' + config.speed + '%'
+                    : 'Статичная';
+            }
+            if (submitButton) {
+                var frameCost = frameCostFor(config);
+                var frameType = config.animated ? 'живую' : 'статичную';
+                var confirmTemplate = submitButton.dataset.frameConfirmTemplate || 'Купить свою {type} рамку за {cost} GC?';
+
+                if (priceValue) priceValue.textContent = frameCost;
+                submitButton.dataset.confirm = confirmTemplate
+                    .replace('{type}', frameType)
+                    .replace('{cost}', frameCost);
+                submitButton.disabled = submitButton.dataset.frameInitiallyDisabled === '1'
+                    || (!Number.isNaN(userBalance) && frameCost > userBalance);
+            }
+
+            animatedOptions.forEach(function (option) {
+                var optionHidden = !config.animated || (option === avatarEffectStrengthField && config.avatarEffect === 'none');
+                option.classList.toggle('d-none', optionHidden);
+                option.querySelectorAll('input').forEach(function (input) {
+                    setFrameInputDisabled(input, optionHidden);
+                });
+            });
+            if (animatedOptionsPanel) {
+                animatedOptionsPanel.classList.toggle('d-none', !config.animated);
+            }
+        };
+
+        editor.querySelectorAll('[data-frame-preset]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var config;
+                try {
+                    config = JSON.parse(button.dataset.framePreset || '{}');
+                } catch (error) {
+                    config = {};
+                }
+
+                applyPresetConfig(config, button);
+            });
+        });
+
+        var randomizeButton = editor.querySelector('[data-frame-randomize]');
+        if (randomizeButton) {
+            randomizeButton.addEventListener('click', function () {
+                applyPresetConfig({
+                    type: randomItem(['linear', 'conic', 'radial']),
+                    shape: randomItem(['circle', 'squircle', 'badge', 'soft']),
+                    motion: randomItem(['spin', 'pulse', 'sweep', 'still']),
+                    pattern: randomItem(['none', 'sparkles', 'pixels', 'stripes']),
+                    avatar_effect: randomItem(['none', 'sheen', 'scanner', 'spark']),
+                    angle: Math.floor(Math.random() * 360),
+                    width: randomItem([4, 5, 6, 7, 8, 9, 10]),
+                    glow: randomItem([12, 18, 24, 30, 36, 42]),
+                    speed: randomItem([70, 85, 100, 115, 130, 150]),
+                    pattern_opacity: randomItem([42, 55, 68, 76, 88, 100]),
+                    effect_opacity: randomItem([42, 55, 68, 76, 88, 100]),
+                    animated: Math.random() > 0.18,
+                    colors: randomItem(randomPalettes),
+                }, null);
+                setPaletteActive(null);
+            });
+        }
+
+        var resetButton = editor.querySelector('[data-frame-reset]');
+        if (resetButton) {
+            resetButton.addEventListener('click', function () {
+                applyPresetConfig(defaultFrameConfig, editor.querySelector('[data-frame-preset]'));
+                setPaletteActive(editor.querySelector('[data-frame-palette]'));
+            });
+        }
+
+        editor.querySelectorAll('[data-frame-preview-bg]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var mode = button.dataset.framePreviewBg || 'soft';
+                editor.querySelectorAll('[data-frame-preview-bg]').forEach(function (item) {
+                    item.classList.toggle('is-active', item === button);
+                });
+
+                if (!previewStage) return;
+                previewBgClasses.forEach(function (className) {
+                    previewStage.classList.remove(className);
+                });
+
+                if (mode === 'light') {
+                    previewStage.classList.add('is-preview-light');
+                } else if (mode === 'dark') {
+                    previewStage.classList.add('is-preview-dark');
+                }
+            });
+        });
+
+        editor.querySelectorAll('[data-frame-palette]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var colors;
+                try {
+                    colors = JSON.parse(button.dataset.framePalette || '[]');
+                } catch (error) {
+                    colors = [];
+                }
+
+                applyPalette(colors, button);
+            });
+        });
+
+        var rotateColorsButton = editor.querySelector('[data-frame-rotate-colors]');
+        if (rotateColorsButton) {
+            rotateColorsButton.addEventListener('click', function () {
+                applyColorOrder(function (colors) {
+                    return colors.length ? colors.slice(1).concat(colors[0]) : colors;
+                });
+            });
+        }
+
+        var reverseColorsButton = editor.querySelector('[data-frame-reverse-colors]');
+        if (reverseColorsButton) {
+            reverseColorsButton.addEventListener('click', function () {
+                applyColorOrder(function (colors) {
+                    return colors.slice().reverse();
+                });
+            });
+        }
+
+        typeInputs.concat(shapeInputs, motionInputs, patternInputs, avatarEffectInputs, colorInputs).forEach(function (input) {
+            input.addEventListener('input', function () {
+                setPresetActive(null);
+                if (input.type === 'color') setPaletteActive(null);
+                applyConfig();
+            });
+            input.addEventListener('change', function () {
+                setPresetActive(null);
+                if (input.type === 'color') setPaletteActive(null);
+                applyConfig();
+            });
+        });
+        [angleInput, widthInput, glowInput, speedInput, patternOpacityInput, effectOpacityInput, animatedInput].forEach(function (input) {
+            if (!input) return;
+            input.addEventListener('input', function () {
+                setPresetActive(null);
+                applyConfig();
+            });
+            input.addEventListener('change', function () {
+                setPresetActive(null);
+                applyConfig();
+            });
+        });
+
+        applyConfig();
+    });
+
     document.querySelectorAll('[data-report-student-search]').forEach(function (input) {
         var list = document.querySelector(input.dataset.reportStudentList);
         if (!list) return;
@@ -847,19 +1583,27 @@ document.addEventListener('DOMContentLoaded', function () {
         var goods = Array.from(grid.querySelectorAll('[data-market-good]'));
         var counter = wrapper ? wrapper.querySelector('[data-market-count]') : null;
         var clearButton = wrapper ? wrapper.querySelector('[data-market-clear]') : null;
+        var categoryButtons = Array.from(document.querySelectorAll('[data-market-category-filter]')).filter(function (button) {
+            return button.dataset.marketGrid === input.dataset.marketGrid;
+        });
         var emptyState = document.createElement('div');
 
         emptyState.className = 'gc-card market-search-empty text-center text-muted p-4 d-none';
-        emptyState.innerHTML = '<div class="bg-body-tertiary text-muted rounded-circle d-inline-flex align-items-center justify-content-center fs-4 p-3 mb-3"><i class="fas fa-search"></i></div><h5>Ничего не найдено</h5><p class="mx-auto mb-0">Попробуйте изменить запрос.</p>';
+        emptyState.innerHTML = '<div class="bg-body-tertiary text-muted rounded-circle d-inline-flex align-items-center justify-content-center fs-4 p-3 mb-3"><i class="fas fa-search"></i></div><h5>Ничего не найдено</h5><p class="mx-auto mb-0">Попробуйте изменить запрос или категорию.</p>';
         grid.after(emptyState);
 
         var applyMarketFilter = function () {
             var query = input.value.trim().toLowerCase();
+            var activeCategory = categoryButtons.find(function (button) {
+                return button.classList.contains('is-active');
+            })?.dataset.marketCategoryFilter || 'all';
             var visibleCount = 0;
 
             goods.forEach(function (good) {
                 var haystack = (good.dataset.marketGoodText || good.textContent || '').toLowerCase();
-                var isVisible = !query || haystack.indexOf(query) !== -1;
+                var matchesQuery = !query || haystack.indexOf(query) !== -1;
+                var matchesCategory = activeCategory === 'all' || good.dataset.marketGoodCategory === activeCategory;
+                var isVisible = matchesQuery && matchesCategory;
                 good.classList.toggle('d-none', !isVisible);
                 if (isVisible) visibleCount += 1;
             });
@@ -870,6 +1614,14 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         input.addEventListener('input', applyMarketFilter);
+        categoryButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                categoryButtons.forEach(function (item) {
+                    item.classList.toggle('is-active', item === button);
+                });
+                applyMarketFilter();
+            });
+        });
 
         if (clearButton) {
             clearButton.addEventListener('click', function () {
@@ -878,6 +1630,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 applyMarketFilter();
             });
         }
+
+        applyMarketFilter();
     });
 
     document.querySelectorAll('[data-community-search]').forEach(function (input) {

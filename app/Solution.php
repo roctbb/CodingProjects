@@ -255,8 +255,12 @@ class Solution extends Model
             ->first();
     }
 
-    public function xpBoosterCost()
+    public function xpBoosterCost($user = null)
     {
+        if ($user && $user->canUseFreeXpBooster()) {
+            return 0;
+        }
+
         return 10;
     }
 
@@ -270,7 +274,7 @@ class Solution extends Model
             && !$this->hasXpBooster()
             && $this->mark < $this->task->max_mark
             && $this->previewMarkWithXpBooster() > $this->mark
-            && $user->balance() >= $this->xpBoosterCost();
+            && ($this->xpBoosterCost($user) === 0 || $user->balance() >= $this->xpBoosterCost($user));
     }
 
     public function qualifiesForTaskPriceReward()

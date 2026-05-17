@@ -8,6 +8,79 @@
   max-width: 100%;
 }
 
+[data-bs-theme="dark"] .notebook-container {
+  color: var(--gc-on-surface, #e2e8f0);
+}
+
+[data-bs-theme="dark"] .notebook-container > div {
+  background-color: var(--gc-surface, #1e293b) !important;
+}
+
+[data-bs-theme="dark"] .notebook-container a {
+  color: var(--gc-primary-hover, #7dccea);
+}
+
+[data-bs-theme="dark"] .notebook-container pre {
+  background: #020617 !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .notebook-container pre code {
+  color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .notebook-container pre[style*="#fdd"] {
+  background-color: rgba(248, 113, 113, 0.14) !important;
+  color: #fecaca;
+}
+
+[data-bs-theme="dark"] .notebook-container table {
+  color: var(--gc-on-surface, #e2e8f0);
+}
+
+[data-bs-theme="dark"] .notebook-container table.dataframe,
+[data-bs-theme="dark"] .notebook-container table.dataframe td,
+[data-bs-theme="dark"] .notebook-container table.dataframe th {
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+[data-bs-theme="dark"] .notebook-container table.dataframe thead th {
+  background: var(--gc-surface-variant, #334155);
+  color: var(--gc-on-surface, #e2e8f0);
+}
+
+[data-bs-theme="dark"] .notebook-container table.dataframe tbody {
+  border-top-color: rgba(148, 163, 184, 0.35) !important;
+}
+
+[data-bs-theme="dark"] .notebook-container table.dataframe tbody tr:nth-child(odd) {
+  background-color: rgba(148, 163, 184, 0.08) !important;
+}
+
+[data-bs-theme="dark"] .notebook-container table.dataframe tbody tr:nth-child(even) {
+  background-color: transparent !important;
+}
+
+[data-bs-theme="dark"] .notebook-container td,
+[data-bs-theme="dark"] .notebook-container th {
+  color: var(--gc-on-surface, #e2e8f0);
+}
+
+[data-bs-theme="dark"] .notebook-container blockquote {
+  background-color: var(--gc-surface-variant, #334155);
+  border-color: var(--gc-surface-variant, #334155);
+  color: var(--gc-on-surface, #e2e8f0);
+}
+
+[data-bs-theme="dark"] .notebook-container div[style*="position: relative"] > span[style*="#303fba"] {
+  color: #7dd3fc !important;
+}
+
+[data-bs-theme="dark"] .notebook-container div[style*="position: relative"] > span[style*="#de4815"] {
+  color: #fb923c !important;
+}
+
 .lesson-content p {
   font-size: 1.1rem;
   font-weight: 400;

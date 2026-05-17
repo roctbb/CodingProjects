@@ -64,6 +64,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
 
+RUN { \
+        echo 'max_execution_time=180'; \
+        echo 'max_input_time=180'; \
+        echo 'default_socket_timeout=180'; \
+    } > /usr/local/etc/php/conf.d/codingprojects-timeouts.ini
+
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 WORKDIR /var/www/html

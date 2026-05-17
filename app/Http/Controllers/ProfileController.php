@@ -9,12 +9,14 @@ use App\CourseActivity;
 use App\Achievement;
 use App\Http\Controllers\Controller;
 use App\Rank;
+use App\Services\AchievementTrophyGenerator;
 use App\Solution;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Auth;
 
 
@@ -109,6 +111,7 @@ class ProfileController extends Controller
                 'manual_rank',
                 'managed_courses.students',
                 'managed_courses.teachers',
+                'courses.program',
                 'courses.students',
                 'courses.teachers',
                 'completedCourses.course.students',
@@ -122,6 +125,7 @@ class ProfileController extends Controller
                 'manual_rank',
                 'managed_courses.students',
                 'managed_courses.teachers',
+                'courses.program',
                 'courses.students',
                 'courses.teachers',
                 'completedCourses.course.students',
@@ -140,6 +144,9 @@ class ProfileController extends Controller
         $coinBalance = $user->balance();
         $avatarFrames = User::avatarFrames();
         $activeAvatarFrame = $user->activeAvatarFrame();
+        $customAvatarFrameCost = $user->customAvatarFrameCost();
+        $customAvatarFrameDefaults = User::sanitizeCustomAvatarFrameConfig(old('avatar_frame_config', $user->avatar_frame_config ?: User::customAvatarFrameDefaults()));
+        $learningAvatarData = $user->learningAvatarRenderData();
         $achievements = $user->achievements
             ->where('status', \App\Achievement::STATUS_PUBLISHED)
             ->sortByDesc('published_at')
@@ -151,16 +158,21 @@ class ProfileController extends Controller
         $stickers = $user->getStickers();
         $sticker_description = $user->getStickerDescriptions();
 
-        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'canManageMoney', 'avatarFrames', 'activeAvatarFrame', 'achievements', 'achievementIconOptions', 'achievementVisualOptions'));
+        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'canManageMoney', 'avatarFrames', 'activeAvatarFrame', 'customAvatarFrameCost', 'customAvatarFrameDefaults', 'learningAvatarData', 'achievements', 'achievementIconOptions', 'achievementVisualOptions'));
     }
 
-    public function updateAchievement($user_id, $achievement_id, Request $request)
+    public function updateAchievement($user_id, $achievement_id, Request $request, AchievementTrophyGenerator $trophyGenerator)
     {
         $achievement = Achievement::with('course.teachers')
             ->where('user_id', $user_id)
             ->findOrFail($achievement_id);
 
-        if (!$this->canManageAchievement(Auth::user(), $achievement)) {
+        $manager = Auth::user();
+        if (!$this->canManageAchievement($manager, $achievement)) {
+            abort(403);
+        }
+
+        if ($request->has('regenerate_trophy') && (!$manager || $manager->role != 'admin')) {
             abort(403);
         }
 
@@ -171,6 +183,7 @@ class ProfileController extends Controller
             'icon_key' => 'required|string|in:' . $iconKeys,
             'visual_key' => 'nullable|string|in:' . implode(',', array_keys(Achievement::visualOptions())),
             'clear_svg_icon' => 'nullable|boolean',
+            'regenerate_trophy' => 'nullable|boolean',
         ]);
 
         $achievement->title = trim(strip_tags((string) $request->title));
@@ -184,6 +197,34 @@ class ProfileController extends Controller
         $achievement->payload = $payload;
         $achievement->save();
 
+        if ($request->has('regenerate_trophy')) {
+            try {
+                $trophyGenerator->generateForAchievement($achievement);
+            } catch (\Throwable $e) {
+                \Log::error('Achievement trophy regeneration failed', [
+                    'achievement_id' => $achievement->id,
+                    'message' => $e->getMessage(),
+                ]);
+
+                $this->syncAchievementActivityPayload($achievement);
+                $this->make_error_alert('Кубок не обновился', 'Текст достижения сохранен, но картинку кубка не удалось перегенерировать.');
+
+                return redirect('/insider/profile/' . $achievement->user_id . '#achievement-' . $achievement->id);
+            }
+        }
+
+        $this->syncAchievementActivityPayload($achievement);
+
+        $message = $request->has('regenerate_trophy')
+            ? 'Изменения сохранены, картинка кубка обновлена.'
+            : 'Изменения сохранены в профиле и пульсе.';
+        $this->make_success_alert('Достижение обновлено', $message);
+
+        return redirect('/insider/profile/' . $achievement->user_id . '#achievement-' . $achievement->id);
+    }
+
+    private function syncAchievementActivityPayload(Achievement $achievement): void
+    {
         CourseActivity::where('type', CourseActivity::TYPE_AI_ACHIEVEMENT_EARNED)
             ->where('solution_id', $achievement->solution_id)
             ->where('task_id', $achievement->task_id)
@@ -196,13 +237,10 @@ class ProfileController extends Controller
                 $payload['icon_key'] = $achievement->icon_key;
                 $payload['visual_key'] = $achievement->payload['visual_key'] ?? null;
                 $payload['svg_icon'] = $achievement->payload['svg_icon'] ?? null;
+                $payload['trophy_image'] = $achievement->payload['trophy_image'] ?? null;
                 $activity->payload = $payload;
                 $activity->save();
             });
-
-        $this->make_success_alert('Достижение обновлено', 'Изменения сохранены в профиле и пульсе.');
-
-        return redirect('/insider/profile/' . $achievement->user_id . '#achievement-' . $achievement->id);
     }
 
     public function deleteAchievement($user_id, $achievement_id)
@@ -376,6 +414,10 @@ class ProfileController extends Controller
 
         $this->make_success_alert('Звание активно', 'Звание будет показываться в профиле до ' . $user->custom_title_expires_at->format('d.m.Y') . '.');
 
+        if ($request->input('return_to') === 'market') {
+            return redirect('/insider/market#market-digital');
+        }
+
         return redirect('/insider/profile/' . $user->id);
     }
 
@@ -390,12 +432,21 @@ class ProfileController extends Controller
         $frames = User::avatarFrames();
         $frameKey = $request->avatar_frame;
 
-        if (!array_key_exists($frameKey, $frames)) {
+        if ($frameKey !== 'custom' && !array_key_exists($frameKey, $frames)) {
             $this->make_error_alert('Рамка не найдена', 'Выберите рамку из списка.');
             return redirect()->back();
         }
 
-        $frame = $frames[$frameKey];
+        $customFrameConfig = $frameKey === 'custom'
+            ? User::sanitizeCustomAvatarFrameConfig($request->input('avatar_frame_config', []))
+            : null;
+        $frame = $frameKey === 'custom'
+            ? [
+                'name' => !empty($customFrameConfig['animated']) ? 'Своя живая рамка' : 'Своя статичная рамка',
+                'cost' => $user->customAvatarFrameCost(!empty($customFrameConfig['animated'])),
+                'days' => $user->customAvatarFrameDurationDays(),
+            ]
+            : $frames[$frameKey];
         $cost = (int) $frame['cost'];
 
         if ($user->balance() < $cost) {
@@ -408,6 +459,7 @@ class ProfileController extends Controller
             : Carbon::now();
 
         $user->avatar_frame = $frameKey;
+        $user->avatar_frame_config = $customFrameConfig;
         $user->avatar_frame_expires_at = $startsAt->copy()->addDays($user->avatarFrameDurationDays($frameKey));
         $user->save();
 
@@ -418,7 +470,37 @@ class ProfileController extends Controller
             'Рамка "' . $frame['name'] . '" будет показываться до ' . $user->avatar_frame_expires_at->format('d.m.Y') . '.'
         );
 
+        if ($request->input('return_to') === 'market') {
+            return redirect('/insider/market#market-digital');
+        }
+
         return redirect('/insider/profile/' . $user->id);
+    }
+
+    public function updateLearningAvatar($id, Request $request)
+    {
+        $user = User::findOrFail($id);
+        $manifestKeys = array_keys(User::learningAvatarManifests());
+
+        $this->validate($request, [
+            'manifest' => ['nullable', 'string', Rule::in($manifestKeys)],
+            'appearance' => 'nullable|array',
+            'equipped' => 'nullable|array',
+        ]);
+
+        $manifestKey = $request->input('manifest', $user->learningAvatarConfig()['manifest'] ?? 'room-system');
+        $requestedEquipped = $request->input('equipped', []);
+        $requestedAppearance = $request->input('appearance', []);
+
+        DB::transaction(function () use ($user, $manifestKey, $requestedEquipped, $requestedAppearance) {
+            $lockedUser = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $lockedUser->learning_avatar_config = $lockedUser->learningAvatarConfigFromOwnedSelection($manifestKey, $requestedEquipped, $requestedAppearance);
+            $lockedUser->save();
+        });
+
+        $this->make_success_alert('Комната сохранена', 'Выбранные предметы обновлены.');
+
+        return redirect('/insider/profile/' . $user->id . '#learning-avatar');
     }
 
     public function edit($id, Request $request)
@@ -429,7 +511,8 @@ class ProfileController extends Controller
         $this->validate($request, [
             'name' => 'required|string',
             'school' => 'required|string',
-            'grade' => 'integer|min:1|max:11|required',
+            'grade' => 'integer|min:1|max:12|required',
+            'gender' => ['nullable', 'string', Rule::in(array_keys(User::learningAvatarGenders()))],
             'hobbies' => 'required|string',
             'interests' => 'required|string',
             'image' => 'image|max:4000'
@@ -441,6 +524,9 @@ class ProfileController extends Controller
         $user->hobbies = $request->hobbies;
         $user->interests = $request->interests;
         $user->school = $request->school;
+        if ($guest->role == 'admin' && $request->filled('gender')) {
+            $user->gender = $request->gender;
+        }
         if (Auth::User()->role == 'teacher' || Auth::User()->role == 'admin') {
             $user->birthday = Carbon::createFromFormat('Y-m-d', $request->birthday);
         }

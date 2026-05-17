@@ -27,6 +27,16 @@ class LessonStudentStats extends Model
         return $this->belongsTo('App\User', 'student_id', 'id');
     }
 
+    private static function isCommonProgressLesson(Lesson $lesson, Course $course)
+    {
+        return $lesson->isStarted($course);
+    }
+
+    private static function isCommonProgressTask(Task $task)
+    {
+        return !$task->is_star && !$task->is_hidden;
+    }
+
     /**
      * Recalculate stats for a student in a specific lesson within a course
      *
@@ -65,12 +75,18 @@ class LessonStudentStats extends Model
         $points = 0;
         $max_points = 0;
 
+        if (!self::isCommonProgressLesson($lesson, $course)) {
+            return [
+                'points' => 0,
+                'max_points' => 0,
+                'percent' => 0,
+            ];
+        }
+
         foreach ($lesson->steps as $step) {
             foreach ($step->tasks as $task) {
-                if (!$task->isVisible($student, $course)) continue;
-                if (!$task->is_star) {
-                    $max_points += $task->max_mark;
-                }
+                if (!self::isCommonProgressTask($task)) continue;
+                $max_points += $task->max_mark;
                 $points += (int) $student->submissions->where('task_id', $task->id)->max('mark');
             }
         }
@@ -110,19 +126,17 @@ class LessonStudentStats extends Model
         $now = now();
 
         foreach ($course->program->lessons as $lesson) {
-            if ($lesson->isAvailableForUser($course, $student)) {
-                $stats = self::calculateLessonStats($course, $lesson, $student);
-                $rows[] = [
-                    'course_id' => $course->id,
-                    'lesson_id' => $lesson->id,
-                    'student_id' => $student->id,
-                    'points' => $stats['points'],
-                    'max_points' => $stats['max_points'],
-                    'percent' => $stats['percent'],
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
-            }
+            $stats = self::calculateLessonStats($course, $lesson, $student);
+            $rows[] = [
+                'course_id' => $course->id,
+                'lesson_id' => $lesson->id,
+                'student_id' => $student->id,
+                'points' => $stats['points'],
+                'max_points' => $stats['max_points'],
+                'percent' => $stats['percent'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
 
         if (!empty($rows)) {
@@ -167,10 +181,6 @@ class LessonStudentStats extends Model
 
         foreach ($students as $student) {
             foreach ($course->program->lessons as $lesson) {
-                if (!$lesson->isAvailableForUser($course, $student)) {
-                    continue;
-                }
-
                 $stats = self::calculateLessonStats($course, $lesson, $student);
                 $rows[] = [
                     'course_id' => $course->id,

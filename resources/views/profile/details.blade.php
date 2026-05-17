@@ -17,6 +17,22 @@
         $avatarFrames = $avatarFrames ?? \App\User::avatarFrames();
         $activeAvatarFrame = $activeAvatarFrame ?? $user->activeAvatarFrame();
         $activeAvatarFrameConfig = $user->activeAvatarFrameConfig();
+        $customAvatarFrameCost = $customAvatarFrameCost ?? $user->customAvatarFrameCost();
+        $customAvatarFrameDefaults = $customAvatarFrameDefaults ?? \App\User::customAvatarFrameDefaults();
+        $canBuyCustomAvatarFrame = $guest->id == $user->id && $coinBalance >= $customAvatarFrameCost;
+        $learningAvatarData = $learningAvatarData ?? $user->learningAvatarRenderData();
+        $learningAvatarConfig = $learningAvatarData['config'];
+        $learningAvatarOwned = $learningAvatarConfig['owned'] ?? [];
+        $learningAvatarAppearance = $learningAvatarData['appearance'] ?? [];
+        $learningAvatarOptionsBySlot = $learningAvatarData['optionsBySlot'];
+        $learningAvatarPreviewItemsBySlot = $learningAvatarData['previewItemsBySlot'];
+        $learningAvatarManifests = \App\User::learningAvatarManifests();
+        $currentLearningAvatarManifest = $learningAvatarConfig['manifest'] ?? 'room-system';
+        $learningAvatarManifestName = $learningAvatarManifests[$currentLearningAvatarManifest]['name'] ?? 'Комната программиста';
+        $learningAvatarSlotLabels = [
+            'desk_center' => 'Стол',
+            'pet_right' => 'Питомец',
+        ];
         $telegramBotConfigured = trim((string) config('services.telegram.bot_username')) !== '';
     @endphp
 
@@ -70,7 +86,7 @@
                         </div>
                         <div class="d-flex justify-content-between gap-3">
                             <span class="text-muted">Класс</span>
-                            <strong class="text-end fw-semibold">{{ $user->grade() }}</strong>
+                            <strong class="text-end fw-semibold">{{ $user->gradeLabel() }}</strong>
                         </div>
                         @if ($guest->id == $user->id || $guest->role == 'teacher' || $guest->role == 'admin')
                             <div class="d-flex justify-content-between gap-3">
@@ -174,95 +190,20 @@
                 </form>
 
                 <div class="gc-card profile-custom-title-card overflow-hidden mt-3">
-                    <div class="gc-section-header">
+                    <div class="p-3 d-grid gap-2">
                         <div class="d-flex align-items-center gap-2 min-width-0">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-certificate"></i></span>
+                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-store"></i></span>
                             <div class="min-width-0">
-                                <span class="gc-eyebrow">{{ $customTitleCost }} GC · 14 дней</span>
-                                <h6 class="mb-0 text-truncate">Кастомное звание</h6>
+                                <span class="gc-eyebrow">цифровые товары</span>
+                                <h6 class="mb-0 text-truncate">Звания и рамки</h6>
                             </div>
                         </div>
+                        <a href="{{ url('/insider/market#market-digital') }}" class="btn btn-outline-primary rounded-3 fw-semibold">
+                            Открыть магазин
+                        </a>
                     </div>
-                    <form action="{{ url('/insider/profile/'.$user->id.'/custom-title') }}" method="POST" class="p-3">
-                        @csrf
-                        <label for="custom-title" class="form-label">Звание</label>
-                        <input type="text"
-                               name="custom_title"
-                               id="custom-title"
-                               maxlength="32"
-                               class="form-control rounded-3"
-                               value="{{ old('custom_title', $activeCustomTitle ?: '') }}"
-                               placeholder="Например: Мастер циклов"
-                               @if(!$canBuyCustomTitle) disabled @endif>
-                        @if ($user->hasActiveCustomTitle())
-                            <div class="text-muted small mt-2">
-                                Активно до {{ $user->custom_title_expires_at->format('d.m.Y') }}
-                            </div>
-                        @endif
-                        <button type="submit"
-                                class="btn btn-sm solution-special-action w-100 justify-content-center mt-3"
-                                data-confirm="Купить кастомное звание на 14 дней за {{ $customTitleCost }} GC?"
-                                @if(!$canBuyCustomTitle) disabled @endif>
-                            <i class="fas fa-magic"></i>
-                            Купить за {{ $customTitleCost }} GC
-                        </button>
-                        @if (!$canBuyCustomTitle)
-                            <div class="text-muted small mt-2">Недостаточно GC.</div>
-                        @endif
-                    </form>
                 </div>
 
-                <div class="gc-card profile-avatar-shop-card overflow-hidden mt-3">
-                    <div class="gc-section-header">
-                        <div class="d-flex align-items-center gap-2 min-width-0">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-user-circle"></i></span>
-                            <div class="min-width-0">
-                                <span class="gc-eyebrow">от 30 GC · 30 дней</span>
-                                <h6 class="mb-0 text-truncate">Рамки аватарки</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="profile-avatar-shop-list p-3">
-                        @foreach($avatarFrames as $frameKey => $frame)
-                            @php
-                                $isActiveFrame = $activeAvatarFrame === $frameKey;
-                                $canBuyFrame = $coinBalance >= $frame['cost'];
-                            @endphp
-                            <form action="{{ url('/insider/profile/'.$user->id.'/avatar-frame') }}"
-                                  method="POST"
-                                  class="profile-avatar-frame-option @if($isActiveFrame) is-active @endif">
-                                @csrf
-                                <input type="hidden" name="avatar_frame" value="{{ $frameKey }}">
-                                <div class="profile-avatar-frame profile-avatar-frame--{{ $frameKey }} profile-avatar-frame--preview flex-shrink-0">
-                                    <img src="{{ $user->imageUrl() }}" class="avatar rounded-circle profile-avatar-frame__preview-img" alt="">
-                                    <span class="profile-avatar-frame__effect" aria-hidden="true"></span>
-                                </div>
-                                <div class="min-width-0 flex-grow-1">
-                                    <div class="d-flex align-items-center gap-1 fw-semibold text-truncate">
-                                        <i class="{{ $frame['icon'] }} text-muted small"></i>
-                                        <span class="text-truncate">{{ $frame['name'] }}</span>
-                                    </div>
-                                    <div class="text-muted small lh-sm">{{ $frame['description'] }}</div>
-                                </div>
-                                <button type="submit"
-                                        class="btn btn-outline-success btn-sm rounded-3 fw-semibold flex-shrink-0"
-                                        data-confirm="{{ $isActiveFrame ? 'Продлить' : 'Купить' }} рамку &quot;{{ $frame['name'] }}&quot; на {{ $frame['days'] }} дней за {{ $frame['cost'] }} GC?"
-                                        @if(!$canBuyFrame) disabled @endif>
-                                    @if($isActiveFrame)
-                                        Продлить
-                                    @else
-                                        {{ $frame['cost'] }} GC
-                                    @endif
-                                </button>
-                            </form>
-                        @endforeach
-                    </div>
-                    @if($activeAvatarFrameConfig && $user->avatar_frame_expires_at)
-                        <div class="border-top px-3 py-2 text-muted small">
-                            Активная рамка: {{ $activeAvatarFrameConfig['name'] }} до {{ $user->avatar_frame_expires_at->format('d.m.Y') }}
-                        </div>
-                    @endif
-                </div>
             @endif
         </div>
 
@@ -298,6 +239,99 @@
                 </div>
             </div>
 
+            <div class="gc-card overflow-hidden mb-4" id="learning-avatar">
+                <div class="d-flex align-items-center justify-content-between gap-3 gc-section-header">
+                    <div class="d-flex align-items-center gap-2 min-width-0">
+                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-user-astronaut"></i></span>
+                            <div class="min-width-0">
+                                <span class="gc-eyebrow">персонаж</span>
+                                <h5 class="mb-0 text-truncate">{{ $learningAvatarManifestName }}</h5>
+                            </div>
+                        </div>
+                    </div>
+
+                <div class="profile-learning-avatar-layout p-3 p-md-4">
+                    <div class="profile-learning-avatar-stage">
+                        <x-gc-learning-avatar :user="$user" :data="$learningAvatarData" id="learning-avatar-preview-{{ $user->id }}" data-learning-avatar-preview />
+                    </div>
+
+                    <div class="profile-learning-avatar-panel">
+                        <div class="d-flex align-items-start gap-2 mb-3">
+                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-layer-group"></i></span>
+                            <div class="min-width-0">
+                                <div class="fw-semibold">Настройки комнаты</div>
+                                <div class="text-muted small">Выберите купленные предметы для комнаты.</div>
+                            </div>
+                        </div>
+
+                        @if($guest->id == $user->id)
+                            <form method="POST"
+                                  action="{{ url('/insider/profile/'.$user->id.'/learning-avatar') }}"
+                                  class="profile-learning-avatar-form"
+                                  data-learning-avatar-form
+                                  data-learning-avatar-balance="{{ $coinBalance }}"
+                                  data-learning-avatar-preview-target="learning-avatar-preview-{{ $user->id }}">
+                                @csrf
+                                <input type="hidden" name="manifest" value="{{ $currentLearningAvatarManifest }}">
+                                @foreach($learningAvatarSlotLabels as $slotKey => $slotLabel)
+                                    <label class="profile-learning-avatar-field">
+                                        <span>{{ $slotLabel }}</span>
+                                        <select name="equipped[{{ $slotKey }}]" class="form-select form-select-sm rounded-3">
+                                            <option value="">Пусто</option>
+                                            @foreach(($learningAvatarOptionsBySlot[$slotKey] ?? []) as $itemKey => $item)
+                                                @php
+                                                    $isOwned = in_array($itemKey, $learningAvatarOwned, true);
+                                                @endphp
+                                                @continue(!$isOwned)
+                                                @php
+                                                    $previewLayer = $learningAvatarPreviewItemsBySlot[$slotKey][$itemKey] ?? null;
+                                                @endphp
+                                                <option value="{{ $itemKey }}"
+                                                        @selected(($learningAvatarConfig['equipped'][$slotKey] ?? '') === $itemKey)
+                                                        data-item-cost="0"
+                                                        data-item-owned="1"
+                                                        @if($previewLayer)
+                                                            data-preview-src="{{ $previewLayer['src'] }}"
+                                                            data-preview-slot="{{ $previewLayer['slot'] }}"
+                                                            data-preview-equipped-slot="{{ $previewLayer['equippedSlot'] }}"
+                                                            data-preview-order="{{ $learningAvatarData['renderOrder'][$slotKey] ?? 99 }}"
+                                                            data-preview-style="{{ $previewLayer['style'] }}"
+                                                            data-preview-fit="{{ $previewLayer['fit'] === 'cover' ? 'cover' : 'contain' }}"
+                                                            data-preview-object-position="{{ $previewLayer['objectPosition'] }}"
+                                                        @endif>
+                                                    {{ $item['name'] }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </label>
+                                @endforeach
+
+                                <button type="submit" class="btn btn-sm solution-special-action justify-content-center" data-learning-avatar-submit>
+                                    <i class="fas fa-save"></i>
+                                    Сохранить комнату
+                                </button>
+                                <a href="{{ url('/insider/market#market-digital') }}" class="btn btn-sm btn-outline-secondary rounded-3 justify-content-center">
+                                    Открыть цифровой магазин
+                                </a>
+                            </form>
+                        @else
+                            <div class="profile-learning-avatar-equipped">
+                                @foreach($learningAvatarSlotLabels as $slotKey => $slotLabel)
+                                    @php
+                                        $equippedItemKey = $learningAvatarConfig['equipped'][$slotKey] ?? null;
+                                        $equippedItem = $equippedItemKey ? ($learningAvatarOptionsBySlot[$slotKey][$equippedItemKey] ?? null) : null;
+                                    @endphp
+                                    <div class="profile-learning-avatar-equipped__row">
+                                        <span>{{ $slotLabel }}</span>
+                                        <strong>{{ $equippedItem['name'] ?? 'Пусто' }}</strong>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
             @if($achievements->count())
                 <div class="gc-card overflow-hidden mb-4" id="achievements">
                     <div class="d-flex align-items-center justify-content-between gap-3 gc-section-header">
@@ -317,6 +351,7 @@
                                 $canDeleteAchievement = $guest->role == 'admin';
                                 $achievementVisualKey = $achievement->visualKey();
                                 $achievementVisualSvg = $achievement->displaySvg();
+                                $achievementTrophyUrl = $achievement->trophyImageUrl();
                             @endphp
                             <article class="profile-achievement" id="achievement-{{ $achievement->id }}">
                                 @if($canEditAchievement || $canDeleteAchievement)
@@ -348,7 +383,9 @@
                                     </span>
                                 @endif
                                 <span class="profile-achievement__icon">
-                                    @if($achievementVisualSvg)
+                                    @if($achievementTrophyUrl)
+                                        <img src="{{ $achievementTrophyUrl }}" alt="">
+                                    @elseif($achievementVisualSvg)
                                         {!! $achievementVisualSvg !!}
                                     @else
                                         <i class="{{ $achievement->iconClass() }}"></i>
@@ -377,7 +414,9 @@
                                             <div class="modal-header border-bottom p-3">
                                                 <div class="d-flex align-items-center gap-2 min-width-0">
                                                     <span class="gc-icon-tile flex-shrink-0">
-                                                        @if($achievementVisualSvg)
+                                                        @if($achievementTrophyUrl)
+                                                            <img src="{{ $achievementTrophyUrl }}" alt="">
+                                                        @elseif($achievementVisualSvg)
                                                             {!! $achievementVisualSvg !!}
                                                         @else
                                                             <i class="{{ $achievement->iconClass() }}"></i>
@@ -437,6 +476,9 @@
                                                 </div>
                                                 <div class="modal-footer gc-form-footer">
                                                     <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Отмена</button>
+                                                    @if($guest->role == 'admin')
+                                                        <button type="submit" name="regenerate_trophy" value="1" class="btn btn-outline-primary rounded-3">Сохранить и перегенерировать кубок</button>
+                                                    @endif
                                                     <button type="submit" class="btn btn-success rounded-3">Сохранить</button>
                                                 </div>
                                             </form>

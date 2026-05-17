@@ -10,7 +10,7 @@
                 $deadline = $isInsider ? $task->getDeadline($course->id) : null;
                 $latestUserSolution = $isInsider && Auth::check() ? $task->latestSolutionForUser(Auth::id()) : null;
                 $hasUserSolution = $latestUserSolution !== null;
-                $geekpasteExtraAttemptCost = \App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST;
+                $geekpasteExtraAttemptCost = Auth::check() ? Auth::user()->geekPasteExtraAttemptCost() : \App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST;
                 $geekpasteAttemptResetStatus = $geekpasteAttemptResetStatuses[$task->id] ?? null;
                 $canBuyGeekPasteExtraAttempt = $geekpasteAttemptResetStatus
                     && $user->role == 'student'
@@ -170,9 +170,13 @@
                                                 <form method="POST" action="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/geekpaste-extra-attempt') }}" class="d-inline-flex">
                                                     {{ csrf_field() }}
                                                     <button type="submit" class="btn btn-sm solution-special-action"
-                                                            data-confirm="Купить одну дополнительную попытку GeekPaste за {{ $geekpasteExtraAttemptCost }} GC?">
+                                                            data-confirm="{{ $geekpasteExtraAttemptCost > 0 ? 'Купить одну дополнительную попытку GeekPaste за '.$geekpasteExtraAttemptCost.' GC?' : 'Использовать бесплатный сброс попытки GeekPaste от питомца?' }}">
                                                         <i class="fas fa-plus-circle"></i>
-                                                        + попытка за {{ $geekpasteExtraAttemptCost }} GC
+                                                        @if($geekpasteExtraAttemptCost > 0)
+                                                            + попытка за {{ $geekpasteExtraAttemptCost }} GC
+                                                        @else
+                                                            + бесплатная попытка
+                                                        @endif
                                                     </button>
                                                 </form>
                                             @endif

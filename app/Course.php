@@ -14,12 +14,14 @@ class Course extends Model
     protected $table = "courses";
 
     protected $fillable = [
-        'name', 'description', 'image', 'start_date', 'end_date', 'state', 'level', 'invite', 'default_chapter_id'
+        'name', 'description', 'image', 'start_date', 'end_date', 'state', 'level', 'invite', 'default_chapter_id',
+        'learning_avatar_poster', 'learning_avatar_poster_prompt', 'learning_avatar_poster_generated_at'
     ];
 
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
+        'learning_avatar_poster_generated_at' => 'datetime',
     ];
 
     public static function availableForEnroll()
@@ -64,6 +66,40 @@ class Course extends Model
         return url($this->image);
     }
 
+    public function learningAvatarPosterUrl(): ?string
+    {
+        $program = $this->relationLoaded('program')
+            ? $this->program
+            : ($this->exists && $this->program_id ? $this->program()->first() : null);
+        if ($program) {
+            $programPosterUrl = $program->learningAvatarPosterUrl();
+            if ($programPosterUrl) {
+                return $programPosterUrl;
+            }
+        }
+
+        if (!$this->learning_avatar_poster) {
+            return null;
+        }
+
+        if (Str::startsWith($this->learning_avatar_poster, ['http://', 'https://', '/'])) {
+            return $this->learning_avatar_poster;
+        }
+
+        if (Storage::exists($this->learning_avatar_poster)) {
+            $version = Storage::lastModified($this->learning_avatar_poster);
+
+            return url('/media/' . $this->learning_avatar_poster) . ($version ? '?v=' . $version : '');
+        }
+
+        $publicPath = public_path($this->learning_avatar_poster);
+        if (file_exists($publicPath)) {
+            return url($this->learning_avatar_poster) . '?v=' . filemtime($publicPath);
+        }
+
+        return null;
+    }
+
     public function categories()
     {
         return $this->belongsToMany('App\CourseCategory', 'course_course_category', 'course_id', 'category_id');
@@ -105,16 +141,39 @@ class Course extends Model
     public function points(User $student)
     {
         $sum = 0;
-        foreach ($this->lessons as $step)
-            $sum += $step->points($student, $this);
+        foreach ($this->lessons as $lesson) {
+            if (!$lesson->isStarted($this)) {
+                continue;
+            }
+
+            foreach ($lesson->steps as $step) {
+                foreach ($step->tasks as $task) {
+                    if ($task->is_star || $task->is_hidden) {
+                        continue;
+                    }
+                    $sum += (int) $student->submissions->where('task_id', $task->id)->max('mark');
+                }
+            }
+        }
         return $sum;
     }
 
     public function max_points(User $student)
     {
         $sum = 0;
-        foreach ($this->steps as $step)
-            $sum += $step->max_points($student, $this);
+        foreach ($this->lessons as $lesson) {
+            if (!$lesson->isStarted($this)) {
+                continue;
+            }
+
+            foreach ($lesson->steps as $step) {
+                foreach ($step->tasks as $task) {
+                    if (!$task->is_star && !$task->is_hidden) {
+                        $sum += $task->max_mark;
+                    }
+                }
+            }
+        }
         return $sum;
     }
 
@@ -168,32 +227,12 @@ class Course extends Model
 
     public function getPercent(User $user)
     {
-        $course = $this;
-        $lessons = $course->lessons()->get()->filter(function ($lesson) use ($course) {
-            return $lesson->isStarted($this);
-        });
-
-        $temp_steps = collect([]);
-        foreach ($lessons as $lesson) {
-            $temp_steps = $temp_steps->merge($lesson->steps);
+        $max_points = $this->max_points($user);
+        if ($max_points == 0) {
+            return 0;
         }
 
-        $percent = 100;
-        $max_points = 0;
-        $points = 0;
-        foreach ($temp_steps as $step) {
-            $tasks = $step->tasks;
-
-            foreach ($tasks as $task) {
-                if (!$task->isVisible($user, $course)) continue;
-                if (!$task->is_star) $max_points += $task->max_mark;
-                $points += $user->submissions->where('task_id', $task->id)->max('mark');
-            }
-        }
-        if ($max_points != 0) {
-            $percent = min(100, $points * 100 / $max_points);
-        }
-        return $percent;
+        return min(100, $this->points($user) * 100 / $max_points);
     }
 
 }

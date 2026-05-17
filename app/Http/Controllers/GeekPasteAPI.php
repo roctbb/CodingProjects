@@ -72,7 +72,7 @@ class GeekPasteAPI extends Controller
 
 
             if ($solution->task->price > 0 && $solution->qualifiesForTaskPriceReward() && !$solution->task->hasRewardableFullSolution($solution->user_id)) {
-                CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
+                CoinTransaction::register($solution->user_id, $user->taskCoinReward($solution->task->price), "Task #" . $solution->task->id);
             }
             $solution->save();
             if ($isNewSolution) {

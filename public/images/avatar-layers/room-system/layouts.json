@@ -1,0 +1,1107 @@
+{
+    "room_01_home_start": {
+        "window_weather": {
+            "x": 35,
+            "y": 130,
+            "width": 80,
+            "height": 362
+        },
+        "poster_wall": {
+            "x": 336,
+            "y": 178,
+            "width": 195,
+            "height": 283
+        },
+        "desk_center": {
+            "x": 88,
+            "y": 488,
+            "width": 510,
+            "height": 95
+        },
+        "safe_under_desk": {
+            "x": 93,
+            "y": 676,
+            "width": 134,
+            "height": 135
+        },
+        "character": {
+            "x": 439,
+            "y": 255,
+            "width": 302,
+            "height": 705
+        },
+        "shelf_trophy_1": {
+            "x": 664,
+            "y": 144,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 731,
+            "y": 144,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 792,
+            "y": 144,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 746,
+            "y": 839,
+            "width": 200,
+            "height": 170
+        },
+        "_weather": {
+            "x": -86,
+            "y": 74,
+            "width": 400,
+            "height": 509,
+            "scale": 509,
+            "cropX": 80,
+            "cropY": 0
+        }
+    },
+    "room_02_home_practice": {
+        "window_weather": {
+            "x": 15,
+            "y": 123,
+            "width": 113,
+            "height": 399
+        },
+        "poster_wall": {
+            "x": 393,
+            "y": 198,
+            "width": 176,
+            "height": 271
+        },
+        "desk_center": {
+            "x": 83,
+            "y": 490,
+            "width": 540,
+            "height": 100
+        },
+        "safe_under_desk": {
+            "x": 119,
+            "y": 690,
+            "width": 121,
+            "height": 118
+        },
+        "character": {
+            "x": 449,
+            "y": 265,
+            "width": 323,
+            "height": 673
+        },
+        "shelf_trophy_1": {
+            "x": 673,
+            "y": 154,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 727,
+            "y": 154,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 781,
+            "y": 153,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 724,
+            "y": 841,
+            "width": 200,
+            "height": 170
+        },
+        "_weather": {
+            "x": -231,
+            "y": 61,
+            "width": 600,
+            "height": 595,
+            "scale": 600,
+            "cropX": 80,
+            "cropY": 0
+        }
+    },
+    "room_03_coding_club": {
+        "window_weather": {
+            "x": 26,
+            "y": 106,
+            "width": 100,
+            "height": 393
+        },
+        "poster_wall": {
+            "x": 355,
+            "y": 157,
+            "width": 178,
+            "height": 319
+        },
+        "desk_center": {
+            "x": 85,
+            "y": 463,
+            "width": 520,
+            "height": 105
+        },
+        "safe_under_desk": {
+            "x": 97,
+            "y": 689,
+            "width": 126,
+            "height": 118
+        },
+        "character": {
+            "x": 452,
+            "y": 231,
+            "width": 340,
+            "height": 709
+        },
+        "shelf_trophy_1": {
+            "x": 612,
+            "y": 134,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 667,
+            "y": 135,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 722,
+            "y": 136,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 790,
+            "y": 780,
+            "width": 200,
+            "height": 170
+        },
+        "_weather": {
+            "x": -216,
+            "y": 79,
+            "width": 605,
+            "height": 574,
+            "scale": 605,
+            "cropX": 80,
+            "cropY": 0
+        }
+    },
+    "room_04_maker_workshop": {
+        "window_weather": {
+            "x": 33,
+            "y": 111,
+            "width": 91,
+            "height": 386
+        },
+        "poster_wall": {
+            "x": 289,
+            "y": 185,
+            "width": 170,
+            "height": 262
+        },
+        "desk_center": {
+            "x": 94,
+            "y": 493,
+            "width": 423,
+            "height": 105
+        },
+        "safe_under_desk": {
+            "x": 90,
+            "y": 743,
+            "width": 125,
+            "height": 122
+        },
+        "character": {
+            "x": 484,
+            "y": 272,
+            "width": 331,
+            "height": 683
+        },
+        "shelf_trophy_1": {
+            "x": 585,
+            "y": 104,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 646,
+            "y": 105,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 707,
+            "y": 106,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 799,
+            "y": 794,
+            "width": 200,
+            "height": 170
+        },
+        "_weather": {
+            "x": -47,
+            "y": 111,
+            "width": 800,
+            "height": 800,
+            "scale": 800,
+            "cropX": 80,
+            "cropY": 0
+        }
+    },
+    "room_05_hackathon_zone": {
+        "window_weather": {
+            "x": 6,
+            "y": 135,
+            "width": 106,
+            "height": 388
+        },
+        "poster_wall": {
+            "x": 247,
+            "y": 261,
+            "width": 134,
+            "height": 196
+        },
+        "desk_center": {
+            "x": 92,
+            "y": 512,
+            "width": 317,
+            "height": 107
+        },
+        "safe_under_desk": {
+            "x": 65,
+            "y": 736,
+            "width": 123,
+            "height": 131
+        },
+        "character": {
+            "x": 486,
+            "y": 288,
+            "width": 290,
+            "height": 640
+        },
+        "shelf_trophy_1": {
+            "x": 630,
+            "y": 130,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 688,
+            "y": 130,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 746,
+            "y": 130,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 791,
+            "y": 796,
+            "width": 200,
+            "height": 170
+        },
+        "_weather": {
+            "x": -261,
+            "y": 112,
+            "width": 656,
+            "height": 582,
+            "scale": 656,
+            "cropX": 80,
+            "cropY": 0
+        }
+    },
+    "room_06_algorithm_gym": {
+        "window_weather": {
+            "x": 29,
+            "y": 110,
+            "width": 106,
+            "height": 405
+        },
+        "poster_wall": {
+            "x": 347,
+            "y": 180,
+            "width": 156,
+            "height": 283
+        },
+        "desk_center": {
+            "x": 108,
+            "y": 468,
+            "width": 382,
+            "height": 101
+        },
+        "safe_under_desk": {
+            "x": 119,
+            "y": 632,
+            "width": 119,
+            "height": 113
+        },
+        "character": {
+            "x": 466,
+            "y": 258,
+            "width": 315,
+            "height": 687
+        },
+        "shelf_trophy_1": {
+            "x": 566,
+            "y": 100,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 627,
+            "y": 102,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 688,
+            "y": 102,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 760,
+            "y": 790,
+            "width": 220,
+            "height": 170
+        },
+        "_weather": {
+            "x": -324,
+            "y": 5,
+            "width": 820,
+            "height": 820,
+            "scale": 820,
+            "cropX": 80,
+            "cropY": 0
+        }
+    },
+    "room_07_project_auditorium": {
+        "window_weather": {
+            "x": 22,
+            "y": 172,
+            "width": 108,
+            "height": 334
+        },
+        "poster_wall": {
+            "x": 232,
+            "y": 285,
+            "width": 95,
+            "height": 149
+        },
+        "desk_center": {
+            "x": 48,
+            "y": 536,
+            "width": 394,
+            "height": 107
+        },
+        "safe_under_desk": {
+            "x": 78,
+            "y": 737,
+            "width": 113,
+            "height": 111
+        },
+        "character": {
+            "x": 551,
+            "y": 290,
+            "width": 285,
+            "height": 640
+        },
+        "shelf_trophy_1": {
+            "x": 200,
+            "y": 169,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 248,
+            "y": 171,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 301,
+            "y": 173,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 790,
+            "y": 780,
+            "width": 210,
+            "height": 170
+        },
+        "_weather": {
+            "x": -274,
+            "y": 47,
+            "width": 760,
+            "height": 760,
+            "scale": 760,
+            "cropX": 60,
+            "cropY": 0
+        }
+    },
+    "room_08_university_lab": {
+        "window_weather": {
+            "x": 38,
+            "y": 107,
+            "width": 122,
+            "height": 426
+        },
+        "poster_wall": {
+            "x": 369,
+            "y": 223,
+            "width": 145,
+            "height": 252
+        },
+        "desk_center": {
+            "x": 50,
+            "y": 528,
+            "width": 400,
+            "height": 100
+        },
+        "safe_under_desk": {
+            "x": 213,
+            "y": 700,
+            "width": 128,
+            "height": 138
+        },
+        "character": {
+            "x": 433,
+            "y": 317,
+            "width": 305,
+            "height": 630
+        },
+        "shelf_trophy_1": {
+            "x": 578,
+            "y": 207,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 632,
+            "y": 209,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 688,
+            "y": 212,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 764,
+            "y": 831,
+            "width": 210,
+            "height": 170
+        },
+        "_weather": {
+            "x": -230,
+            "y": 85,
+            "width": 644,
+            "height": 575,
+            "scale": 644,
+            "cropX": 90,
+            "cropY": 0
+        }
+    },
+    "room_09_glass_office": {
+        "window_weather": {
+            "x": 0,
+            "y": 15,
+            "width": 132,
+            "height": 569
+        },
+        "poster_wall": {
+            "x": 251,
+            "y": 213,
+            "width": 146,
+            "height": 293
+        },
+        "desk_center": {
+            "x": 82,
+            "y": 512,
+            "width": 366,
+            "height": 106
+        },
+        "safe_under_desk": {
+            "x": 90,
+            "y": 741,
+            "width": 119,
+            "height": 114
+        },
+        "character": {
+            "x": 430,
+            "y": 318,
+            "width": 300,
+            "height": 640
+        },
+        "shelf_trophy_1": {
+            "x": 449,
+            "y": 167,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 505,
+            "y": 165,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 559,
+            "y": 165,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 661,
+            "y": 843,
+            "width": 210,
+            "height": 170
+        },
+        "_weather": {
+            "x": -170,
+            "y": -118,
+            "width": 1200,
+            "height": 1200,
+            "scale": 1200,
+            "cropX": 0,
+            "cropY": 0
+        }
+    },
+    "room_10_social_product_office": {
+        "window_weather": {
+            "x": 12,
+            "y": 139,
+            "width": 134,
+            "height": 400
+        },
+        "poster_wall": {
+            "x": 266,
+            "y": 256,
+            "width": 134,
+            "height": 221
+        },
+        "desk_center": {
+            "x": 89,
+            "y": 500,
+            "width": 416,
+            "height": 108
+        },
+        "safe_under_desk": {
+            "x": 100,
+            "y": 729,
+            "width": 115,
+            "height": 108
+        },
+        "character": {
+            "x": 483,
+            "y": 262,
+            "width": 308,
+            "height": 665
+        },
+        "shelf_trophy_1": {
+            "x": 463,
+            "y": 137,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 511,
+            "y": 140,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 562,
+            "y": 142,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 776,
+            "y": 802,
+            "width": 215,
+            "height": 180
+        },
+        "_weather": {
+            "x": -263,
+            "y": 37,
+            "width": 820,
+            "height": 834,
+            "scale": 834,
+            "cropX": 0,
+            "cropY": 0
+        }
+    },
+    "room_11_search_ml_office": {
+        "window_weather": {
+            "x": 0,
+            "y": 64,
+            "width": 155,
+            "height": 495
+        },
+        "poster_wall": {
+            "x": 212,
+            "y": 235,
+            "width": 142,
+            "height": 248
+        },
+        "desk_center": {
+            "x": 61,
+            "y": 519,
+            "width": 419,
+            "height": 101
+        },
+        "safe_under_desk": {
+            "x": 79,
+            "y": 752,
+            "width": 132,
+            "height": 113
+        },
+        "character": {
+            "x": 494,
+            "y": 284,
+            "width": 317,
+            "height": 651
+        },
+        "shelf_trophy_1": {
+            "x": 378,
+            "y": 481,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 435,
+            "y": 482,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 485,
+            "y": 484,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 796,
+            "y": 783,
+            "width": 200,
+            "height": 165
+        },
+        "_weather": {
+            "x": 0,
+            "y": 64,
+            "width": 1200,
+            "height": 1200,
+            "scale": 1200,
+            "cropX": 0,
+            "cropY": 0
+        }
+    },
+    "room_12_rd_office": {
+        "window_weather": {
+            "x": 0,
+            "y": 22,
+            "width": 197,
+            "height": 563
+        },
+        "poster_wall": {
+            "x": 375,
+            "y": 252,
+            "width": 137,
+            "height": 231
+        },
+        "desk_center": {
+            "x": 154,
+            "y": 505,
+            "width": 430,
+            "height": 102
+        },
+        "safe_under_desk": {
+            "x": 155,
+            "y": 720,
+            "width": 122,
+            "height": 105
+        },
+        "character": {
+            "x": 532,
+            "y": 301,
+            "width": 300,
+            "height": 620
+        },
+        "shelf_trophy_1": {
+            "x": 550,
+            "y": 202,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 596,
+            "y": 202,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 648,
+            "y": 202,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 759,
+            "y": 817,
+            "width": 210,
+            "height": 170
+        },
+        "_weather": {
+            "x": -127,
+            "y": 11,
+            "width": 896,
+            "height": 873,
+            "scale": 896,
+            "cropX": 0,
+            "cropY": 0
+        }
+    },
+    "room_13_datacenter": {
+        "window_weather": {
+            "x": 9,
+            "y": 87,
+            "width": 128,
+            "height": 508
+        },
+        "poster_wall": {
+            "x": 303,
+            "y": 293,
+            "width": 134,
+            "height": 184
+        },
+        "desk_center": {
+            "x": 97,
+            "y": 542,
+            "width": 415,
+            "height": 105
+        },
+        "safe_under_desk": {
+            "x": 99,
+            "y": 771,
+            "width": 111,
+            "height": 106
+        },
+        "character": {
+            "x": 506,
+            "y": 305,
+            "width": 308,
+            "height": 659
+        },
+        "shelf_trophy_1": {
+            "x": 265,
+            "y": 160,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 313,
+            "y": 160,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 366,
+            "y": 161,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 828,
+            "y": 790,
+            "width": 167,
+            "height": 142
+        },
+        "_weather": {
+            "x": -327,
+            "y": 9,
+            "width": 920,
+            "height": 920,
+            "scale": 920,
+            "cropX": 80,
+            "cropY": 0
+        }
+    },
+    "room_14_command_center": {
+        "window_weather": {
+            "x": 10,
+            "y": 100,
+            "width": 360,
+            "height": 389
+        },
+        "poster_wall": {
+            "x": 432,
+            "y": 240,
+            "width": 111,
+            "height": 217
+        },
+        "desk_center": {
+            "x": 113,
+            "y": 484,
+            "width": 445,
+            "height": 100
+        },
+        "safe_under_desk": {
+            "x": 263,
+            "y": 685,
+            "width": 113,
+            "height": 118
+        },
+        "character": {
+            "x": 555,
+            "y": 300,
+            "width": 290,
+            "height": 620
+        },
+        "shelf_trophy_1": {
+            "x": 831,
+            "y": 438,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 863,
+            "y": 448,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 896,
+            "y": 457,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 779,
+            "y": 813,
+            "width": 210,
+            "height": 170
+        },
+        "_weather": {
+            "x": -285,
+            "y": -178,
+            "width": 1050,
+            "height": 1050,
+            "scale": 1050,
+            "cropX": 0,
+            "cropY": 0
+        }
+    },
+    "room_15_cto_director_office": {
+        "window_weather": {
+            "x": 182,
+            "y": 178,
+            "width": 399,
+            "height": 415
+        },
+        "poster_wall": {
+            "x": 750,
+            "y": 228,
+            "width": 175,
+            "height": 263
+        },
+        "desk_center": {
+            "x": 57,
+            "y": 517,
+            "width": 406,
+            "height": 107
+        },
+        "safe_under_desk": {
+            "x": 67,
+            "y": 744,
+            "width": 125,
+            "height": 122
+        },
+        "character": {
+            "x": 507,
+            "y": 320,
+            "width": 301,
+            "height": 644
+        },
+        "shelf_trophy_1": {
+            "x": 127,
+            "y": 395,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 11,
+            "y": 395,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 71,
+            "y": 396,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 790,
+            "y": 828,
+            "width": 205,
+            "height": 165
+        },
+        "_weather": {
+            "x": -330,
+            "y": 0,
+            "width": 1050,
+            "height": 1050,
+            "scale": 1050,
+            "cropX": 180,
+            "cropY": 0
+        }
+    },
+    "room_16_technopark_director": {
+        "window_weather": {
+            "x": 741,
+            "y": 136,
+            "width": 190,
+            "height": 485
+        },
+        "poster_wall": {
+            "x": 242,
+            "y": 279,
+            "width": 135,
+            "height": 217
+        },
+        "desk_center": {
+            "x": 16,
+            "y": 526,
+            "width": 521,
+            "height": 112
+        },
+        "safe_under_desk": {
+            "x": 76,
+            "y": 766,
+            "width": 126,
+            "height": 122
+        },
+        "character": {
+            "x": 504,
+            "y": 270,
+            "width": 318,
+            "height": 666
+        },
+        "shelf_trophy_1": {
+            "x": 409,
+            "y": 465,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 461,
+            "y": 466,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 505,
+            "y": 467,
+            "width": 48,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 779,
+            "y": 775,
+            "width": 194,
+            "height": 161
+        },
+        "_weather": {
+            "x": 212,
+            "y": 11,
+            "width": 900,
+            "height": 900,
+            "scale": 900,
+            "cropX": 420,
+            "cropY": 0
+        }
+    },
+    "room_17_president_office": {
+        "window_weather": {
+            "x": 150,
+            "y": 217,
+            "width": 521,
+            "height": 284
+        },
+        "poster_wall": {
+            "x": 781,
+            "y": 261,
+            "width": 180,
+            "height": 181
+        },
+        "desk_center": {
+            "x": 62,
+            "y": 523,
+            "width": 431,
+            "height": 113
+        },
+        "safe_under_desk": {
+            "x": 66,
+            "y": 770,
+            "width": 106,
+            "height": 114
+        },
+        "character": {
+            "x": 494,
+            "y": 305,
+            "width": 301,
+            "height": 664
+        },
+        "shelf_trophy_1": {
+            "x": 771,
+            "y": 477,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_2": {
+            "x": 824,
+            "y": 480,
+            "width": 48,
+            "height": 74
+        },
+        "shelf_trophy_3": {
+            "x": 878,
+            "y": 483,
+            "width": 42,
+            "height": 74
+        },
+        "pet_right": {
+            "x": 790,
+            "y": 837,
+            "width": 205,
+            "height": 165
+        },
+        "_weather": {
+            "x": 211,
+            "y": 98,
+            "width": 586,
+            "height": 586,
+            "scale": 586,
+            "cropX": 150,
+            "cropY": 0
+        }
+    }
+}

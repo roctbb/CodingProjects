@@ -62,6 +62,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/market', 'MarketController@index');
     Route::get('/market/orders', 'MarketController@orders');
+    Route::post('/market/digital/{itemKey}/buy', 'MarketController@buyDigital');
     Route::get('/market/create', 'MarketController@createView');
     Route::post('/market/create', 'MarketController@create');
     Route::get('/market/{id}/edit', 'MarketController@editView');
@@ -79,6 +80,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/pulse', 'CoursesController@pulse');
     Route::get('/reviews', 'CoursesController@reviews');
     Route::post('/reviews/reset-pending', 'CoursesController@resetPendingReviews');
+    Route::get('/room-debug', 'RoomDebugController@index')->middleware('admin');
+    Route::post('/room-debug/layout', 'RoomDebugController@saveLayout')->middleware('admin');
 
     Route::get('/courses/create', 'CoursesController@createView')->name('Create course');
     Route::post('/courses/create', 'CoursesController@create');
@@ -92,6 +95,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{id}/start', 'CoursesController@start');
     Route::get('/courses/{id}/stop', 'CoursesController@stop');
     Route::post('/courses/{id}/edit', 'CoursesController@edit');
+    Route::post('/courses/{id}/poster', 'CoursesController@generatePoster');
     Route::get('/courses/{id}/assessments', 'CoursesController@assessments');
     Route::get('/courses/{id}/export', 'CoursesController@export');
     Route::get('/courses/{id}/export-md', 'CoursesController@exportMarkdown');
@@ -172,6 +176,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/profile/{id}/telegram-unlink', 'ProfileController@telegramUnlink');
     Route::post('/profile/{id}/custom-title', 'ProfileController@buyCustomTitle');
     Route::post('/profile/{id}/avatar-frame', 'ProfileController@buyAvatarFrame');
+    Route::post('/profile/{id}/learning-avatar', 'ProfileController@updateLearningAvatar');
     Route::post('/profile/{id}/course', 'ProfileController@course');
     Route::post('/profile/{user_id}/achievement/{achievement_id}', 'ProfileController@updateAchievement');
     Route::post('/profile/{user_id}/achievement/{achievement_id}/delete', 'ProfileController@deleteAchievement');

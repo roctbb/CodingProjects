@@ -3,6 +3,8 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Achievement extends Model
 {
@@ -186,6 +188,33 @@ class Achievement extends Model
     public function displaySvg(): ?string
     {
         return $this->svgIcon() ?: static::svgForVisualKey($this->visualKey());
+    }
+
+    public function trophyImageUrl(): ?string
+    {
+        $payload = is_array($this->payload) ? $this->payload : [];
+        $path = $payload['trophy_image'] ?? null;
+
+        if (!is_string($path) || trim($path) === '') {
+            return null;
+        }
+
+        if (Str::startsWith($path, ['http://', 'https://', '/'])) {
+            return $path;
+        }
+
+        if (Storage::exists($path)) {
+            $version = Storage::lastModified($path);
+
+            return url('/media/' . $path) . ($version ? '?v=' . $version : '');
+        }
+
+        $publicPath = public_path($path);
+        if (file_exists($publicPath)) {
+            return url($path) . '?v=' . filemtime($publicPath);
+        }
+
+        return null;
     }
 
     public function visualKey()

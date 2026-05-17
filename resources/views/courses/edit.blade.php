@@ -10,6 +10,8 @@
         $selectedTeacherIds = collect(old('teachers', $course->teachers->pluck('id')->all()))->map(fn ($id) => (int) $id);
         $selectedStudentIds = collect(old('students', $course->students->pluck('id')->all()))->map(fn ($id) => (int) $id);
         $courseStartDate = $course->start_date ? $course->start_date->format('Y-m-d') : '';
+        $coursePosterUrl = $course->learningAvatarPosterUrl();
+        $programPosterGeneratedAt = optional($course->program)->learning_avatar_poster_generated_at;
     @endphp
 
     <div class="container-xl px-0">
@@ -78,6 +80,37 @@
                             @error('description')
                                 <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                             @enderror
+                        </div>
+
+                        <div class="col-12">
+                            <div class="border rounded-3 p-3 bg-body-tertiary">
+                                <div class="d-flex flex-column flex-lg-row gap-3 align-items-start">
+                                    <div class="flex-shrink-0">
+                                        <img
+                                            src="{{ $coursePosterUrl ?: url('/images/avatar-layers/room-system/posters/default.png') }}"
+                                            alt="Плакат курса"
+                                            class="rounded-3 border bg-white"
+                                            style="width: 120px; aspect-ratio: 3 / 4; object-fit: cover;"
+                                        >
+                                    </div>
+                                    <div class="flex-grow-1 min-width-0">
+                                        <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                                            <div>
+                                                <h6 class="mb-1">Плакат программы для комнаты ученика</h6>
+                                                <p class="mb-2 text-muted small">
+                                                    GPT-прокси соберет постер по названию и описанию программы. Он генерируется один раз и переиспользуется во всех курсах этой программы; иначе останется стандартный.
+                                                </p>
+                                                @if($programPosterGeneratedAt)
+                                                    <p class="mb-0 text-muted small">Обновлен: {{ $programPosterGeneratedAt->format('d.m.Y H:i') }}</p>
+                                                @endif
+                                            </div>
+                                            <button type="submit" form="course-poster-form" class="btn btn-outline-primary rounded-3 fw-semibold align-self-start">
+                                                {{ $programPosterGeneratedAt ? 'Обновить плакат' : 'Сгенерировать плакат' }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -194,6 +227,14 @@
                 <div class="gc-form-footer justify-content-end">
                     <button type="submit" class="btn btn-success rounded-3 fw-semibold px-4">Сохранить настройки</button>
                 </div>
+            </form>
+            <form id="course-poster-form"
+                  method="POST"
+                  action="{{ url('/insider/courses/'.$course->id.'/poster') }}"
+                  class="d-none"
+                  data-fullscreen-loading
+                  data-loading-message="Генерирую плакат программы">
+                {{ csrf_field() }}
             </form>
         </div>
     </div>

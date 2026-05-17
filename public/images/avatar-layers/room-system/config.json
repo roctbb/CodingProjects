@@ -1,0 +1,614 @@
+{
+  "canvas": {
+    "width": 1024,
+    "height": 1024
+  },
+  "assetBasePath": "images/avatar-layers/room-system",
+  "rooms": [
+    {
+      "key": "room_01_home_start",
+      "name": "Домашний старт",
+      "rankFrom": "Рядовой",
+      "rankTo": "Рядовой",
+      "xpFrom": 0,
+      "xpTo": 50,
+      "file": "rooms/room_01_home_start.png",
+      "visualProgression": {
+        "level": 1,
+        "summary": "Первый маленький домашний уголок: стол, окно, плакат и простой открытый сейф.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_02_home_practice",
+      "name": "Домашняя практика",
+      "rankFrom": "Ефрейтор",
+      "rankTo": "Ефрейтор",
+      "xpFrom": 50,
+      "xpTo": 100,
+      "file": "rooms/room_02_home_practice.png",
+      "visualProgression": {
+        "level": 2,
+        "summary": "Домашнее место стало организованнее: больше книг, заметок и регулярной практики.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_03_coding_club",
+      "name": "Кодинг-клуб",
+      "rankFrom": "Младший сержант",
+      "rankTo": "Младший сержант",
+      "xpFrom": 100,
+      "xpTo": 300,
+      "file": "rooms/room_03_coding_club.png",
+      "visualProgression": {
+        "level": 3,
+        "summary": "Первый выход из дома в клубную среду с инструментами и общим рабочим настроением.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_04_maker_workshop",
+      "name": "Учебная мастерская",
+      "rankFrom": "Сержант",
+      "rankTo": "Сержант",
+      "xpFrom": 300,
+      "xpTo": 700,
+      "file": "rooms/room_04_maker_workshop.png",
+      "visualProgression": {
+        "level": 4,
+        "summary": "Практическая мастерская с электроникой, деталями и проектными материалами.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_05_hackathon_zone",
+      "name": "Хакатон-зона",
+      "rankFrom": "Старший сержант",
+      "rankTo": "Старший сержант",
+      "xpFrom": 700,
+      "xpTo": 1500,
+      "file": "rooms/room_05_hackathon_zone.png",
+      "visualProgression": {
+        "level": 5,
+        "summary": "Командная хакатон-атмосфера: доски, идеи, длинные столы и более взрослая динамика.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_06_algorithm_gym",
+      "name": "Спортзал алгоритмов",
+      "rankFrom": "Старшина",
+      "rankTo": "Старшина",
+      "xpFrom": 1500,
+      "xpTo": 2500,
+      "file": "rooms/room_06_algorithm_gym.png",
+      "visualProgression": {
+        "level": 6,
+        "summary": "Игровая тренировочная зона для алгоритмов: задачи как спортивные упражнения.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_07_project_auditorium",
+      "name": "Проектная аудитория",
+      "rankFrom": "Прапорщик",
+      "rankTo": "Прапорщик",
+      "xpFrom": 2500,
+      "xpTo": 3500,
+      "file": "rooms/room_07_project_auditorium.png",
+      "visualProgression": {
+        "level": 7,
+        "summary": "Университетская проектная аудитория для презентаций, команд и учебных проектов.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_08_university_lab",
+      "name": "Университетская лаборатория",
+      "rankFrom": "Старший прапорщик",
+      "rankTo": "Старший прапорщик",
+      "xpFrom": 3500,
+      "xpTo": 4500,
+      "file": "rooms/room_08_university_lab.png",
+      "visualProgression": {
+        "level": 8,
+        "summary": "Чистая лаборатория с приборами, робототехникой и стеклянными шкафами.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_09_glass_office",
+      "name": "Первый IT-офис",
+      "rankFrom": "Младший лейтенант",
+      "rankTo": "Младший лейтенант",
+      "xpFrom": 4500,
+      "xpTo": 5500,
+      "file": "rooms/room_09_glass_office.png",
+      "visualProgression": {
+        "level": 9,
+        "summary": "Первое настоящее рабочее место в IT-команде: стеклянные стены и open-space.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_10_social_product_office",
+      "name": "Офис соцсети",
+      "rankFrom": "Лейтенант",
+      "rankTo": "Лейтенант",
+      "xpFrom": 5500,
+      "xpTo": 6500,
+      "file": "rooms/room_10_social_product_office.png",
+      "visualProgression": {
+        "level": 10,
+        "summary": "Яркий продуктовый офис в духе большой соцсети, без брендинга и логотипов.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_11_search_ml_office",
+      "name": "Офис поиска и ML",
+      "rankFrom": "Старший лейтенант",
+      "rankTo": "Старший лейтенант",
+      "xpFrom": 6500,
+      "xpTo": 7500,
+      "file": "rooms/room_11_search_ml_office.png",
+      "visualProgression": {
+        "level": 11,
+        "summary": "Более аналитический офис поисковой и ML-команды с данными и серверной зоной.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_12_rd_office",
+      "name": "Стеклянный R&D офис",
+      "rankFrom": "Капитан",
+      "rankTo": "Капитан",
+      "xpFrom": 7500,
+      "xpTo": 10500,
+      "file": "rooms/room_12_rd_office.png",
+      "visualProgression": {
+        "level": 12,
+        "summary": "Премиальный R&D-офис со стеклом, серверной и инженерной зоной за перегородками.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_13_datacenter",
+      "name": "Датацентр",
+      "rankFrom": "Майор",
+      "rankTo": "Майор",
+      "xpFrom": 10500,
+      "xpTo": 13500,
+      "file": "rooms/room_13_datacenter.png",
+      "visualProgression": {
+        "level": 13,
+        "summary": "Инфраструктурный уровень: серверные стойки, мониторинг и холодный технологичный свет.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_14_command_center",
+      "name": "Командный центр",
+      "rankFrom": "Подполковник",
+      "rankTo": "Подполковник",
+      "xpFrom": 13500,
+      "xpTo": 16500,
+      "file": "rooms/room_14_command_center.png",
+      "visualProgression": {
+        "level": 14,
+        "summary": "Операционный центр мониторинга: большие панели, системы и ответственность за работу сервисов.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_15_cto_director_office",
+      "name": "Кабинет CTO",
+      "rankFrom": "Полковник",
+      "rankTo": "Полковник",
+      "xpFrom": 16500,
+      "xpTo": 20500,
+      "file": "rooms/room_15_cto_director_office.png",
+      "visualProgression": {
+        "level": 15,
+        "summary": "Статусный кабинет технологического лидера с панорамным стеклом и архитектурной доской.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_16_technopark_director",
+      "name": "Кабинет директора технопарка",
+      "rankFrom": "Генерал-майор",
+      "rankTo": "Генерал-майор",
+      "xpFrom": 20500,
+      "xpTo": 25500,
+      "file": "rooms/room_16_technopark_director.png",
+      "visualProgression": {
+        "level": 16,
+        "summary": "Более широкий стратегический кабинет с моделью технопарка, встречами и большим обзором.",
+        "safeOpen": true
+      }
+    },
+    {
+      "key": "room_17_president_office",
+      "name": "Кабинет президента",
+      "rankFrom": "Адмирал",
+      "rankTo": "Адмирал флота",
+      "xpFrom": 25500,
+      "xpTo": 1000000,
+      "file": "rooms/room_17_president_office.png",
+      "visualProgression": {
+        "level": 17,
+        "summary": "Финальная представительская стадия: самый крупный кабинет, длинный стол и максимальный масштаб.",
+        "safeOpen": true
+      }
+    }
+  ],
+  "weather": [
+    {
+      "key": "season_spring_weather_clear",
+      "season": "season_spring",
+      "weather": "weather_clear",
+      "name": "Весна · Ясно",
+      "file": "weather/season_spring_weather_clear.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_spring_weather_cloudy",
+      "season": "season_spring",
+      "weather": "weather_cloudy",
+      "name": "Весна · Облачно",
+      "file": "weather/season_spring_weather_cloudy.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_spring_weather_rain",
+      "season": "season_spring",
+      "weather": "weather_rain",
+      "name": "Весна · Дождь",
+      "file": "weather/season_spring_weather_rain.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_spring_weather_snow",
+      "season": "season_spring",
+      "weather": "weather_snow",
+      "name": "Весна · Снег",
+      "file": "weather/season_spring_weather_snow.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_spring_weather_storm",
+      "season": "season_spring",
+      "weather": "weather_storm",
+      "name": "Весна · Гроза",
+      "file": "weather/season_spring_weather_storm.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_summer_weather_clear",
+      "season": "season_summer",
+      "weather": "weather_clear",
+      "name": "Лето · Ясно",
+      "file": "weather/season_summer_weather_clear.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_summer_weather_cloudy",
+      "season": "season_summer",
+      "weather": "weather_cloudy",
+      "name": "Лето · Облачно",
+      "file": "weather/season_summer_weather_cloudy.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_summer_weather_rain",
+      "season": "season_summer",
+      "weather": "weather_rain",
+      "name": "Лето · Дождь",
+      "file": "weather/season_summer_weather_rain.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_summer_weather_snow",
+      "season": "season_summer",
+      "weather": "weather_snow",
+      "name": "Лето · Снег",
+      "file": "weather/season_summer_weather_snow.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_summer_weather_storm",
+      "season": "season_summer",
+      "weather": "weather_storm",
+      "name": "Лето · Гроза",
+      "file": "weather/season_summer_weather_storm.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_autumn_weather_clear",
+      "season": "season_autumn",
+      "weather": "weather_clear",
+      "name": "Осень · Ясно",
+      "file": "weather/season_autumn_weather_clear.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_autumn_weather_cloudy",
+      "season": "season_autumn",
+      "weather": "weather_cloudy",
+      "name": "Осень · Облачно",
+      "file": "weather/season_autumn_weather_cloudy.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_autumn_weather_rain",
+      "season": "season_autumn",
+      "weather": "weather_rain",
+      "name": "Осень · Дождь",
+      "file": "weather/season_autumn_weather_rain.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_autumn_weather_snow",
+      "season": "season_autumn",
+      "weather": "weather_snow",
+      "name": "Осень · Снег",
+      "file": "weather/season_autumn_weather_snow.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_autumn_weather_storm",
+      "season": "season_autumn",
+      "weather": "weather_storm",
+      "name": "Осень · Гроза",
+      "file": "weather/season_autumn_weather_storm.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_winter_weather_clear",
+      "season": "season_winter",
+      "weather": "weather_clear",
+      "name": "Зима · Ясно",
+      "file": "weather/season_winter_weather_clear.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_winter_weather_cloudy",
+      "season": "season_winter",
+      "weather": "weather_cloudy",
+      "name": "Зима · Облачно",
+      "file": "weather/season_winter_weather_cloudy.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_winter_weather_rain",
+      "season": "season_winter",
+      "weather": "weather_rain",
+      "name": "Зима · Дождь",
+      "file": "weather/season_winter_weather_rain.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_winter_weather_snow",
+      "season": "season_winter",
+      "weather": "weather_snow",
+      "name": "Зима · Снег",
+      "file": "weather/season_winter_weather_snow.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    },
+    {
+      "key": "season_winter_weather_storm",
+      "season": "season_winter",
+      "weather": "weather_storm",
+      "name": "Зима · Гроза",
+      "file": "weather/season_winter_weather_storm.png",
+      "scale": 720,
+      "cropX": 80,
+      "cropY": 0
+    }
+  ],
+  "posters": [
+    {
+      "key": "default",
+      "name": "Базовый курс",
+      "file": "posters/default.png"
+    }
+  ],
+  "characters": {
+    "boy": {
+      "class_05": "characters/boy/class_05.png",
+      "class_06": "characters/boy/class_06.png",
+      "class_07": "characters/boy/class_07.png",
+      "class_08": "characters/boy/class_08.png",
+      "class_09": "characters/boy/class_09.png",
+      "class_10": "characters/boy/class_10.png",
+      "class_11": "characters/boy/class_11.png",
+      "student": "characters/boy/student.png",
+      "teacher": "characters/boy/teacher.png"
+    },
+    "girl": {
+      "class_05": "characters/girl/class_05.png",
+      "class_06": "characters/girl/class_06.png",
+      "class_07": "characters/girl/class_07.png",
+      "class_08": "characters/girl/class_08.png",
+      "class_09": "characters/girl/class_09.png",
+      "class_10": "characters/girl/class_10.png",
+      "class_11": "characters/girl/class_11.png",
+      "student": "characters/girl/student.png",
+      "teacher": "characters/girl/teacher.png"
+    }
+  },
+  "items": [
+    {
+      "key": "basic_laptop",
+      "name": "Ноутбук",
+      "slot": "desk_center",
+      "file": "items/basic_laptop.png"
+    },
+    {
+      "key": "premium_keyboard",
+      "name": "Механическая клавиатура",
+      "slot": "desk_center",
+      "file": "items/premium_keyboard.png"
+    },
+    {
+      "key": "code_mug",
+      "name": "Кружка с кодом",
+      "slot": "desk_center",
+      "file": "items/code_mug.png"
+    },
+    {
+      "key": "desk_plant",
+      "name": "Растение",
+      "slot": "desk_center",
+      "file": "items/desk_plant.png"
+    }
+  ],
+  "pets": [
+    {
+      "key": "learning_bot_pet",
+      "name": "Робопес",
+      "slot": "pet_right",
+      "file": "pets/learning_bot.png"
+    },
+    {
+      "key": "cheremsha_pet",
+      "name": "Черемша",
+      "slot": "pet_right",
+      "file": "pets/cheremsha.png"
+    },
+    {
+      "key": "brr_brr_patapim_pet",
+      "name": "Brr Brr Patapim",
+      "slot": "pet_right",
+      "file": "pets/brr_brr_patapim.png"
+    },
+    {
+      "key": "tralalelo_tralala_pet",
+      "name": "Тралалело Тралала",
+      "slot": "pet_right",
+      "file": "pets/tralalelo_tralala.png"
+    },
+    {
+      "key": "tung_tung_tung_sahur_pet",
+      "name": "Тунг Тунг Тунг Сахур",
+      "slot": "pet_right",
+      "file": "pets/tung_tung_tung_sahur.png"
+    }
+  ],
+  "safes": [
+    {
+      "key": "safe_empty",
+      "name": "Пустой сейф",
+      "file": "safes/safe_empty.png"
+    },
+    {
+      "key": "safe_few",
+      "name": "Пара монет",
+      "file": "safes/safe_few.png"
+    },
+    {
+      "key": "safe_stack",
+      "name": "Стопка монет",
+      "file": "safes/safe_stack.png"
+    },
+    {
+      "key": "safe_rich",
+      "name": "Полный сейф",
+      "file": "safes/safe_rich.png"
+    },
+    {
+      "key": "safe_treasure",
+      "name": "Гора монет",
+      "file": "safes/safe_treasure.png"
+    }
+  ],
+  "seasons": [
+    {
+      "key": "season_spring",
+      "name": "Весна",
+      "file": "weather/season_spring.png"
+    },
+    {
+      "key": "season_summer",
+      "name": "Лето",
+      "file": "weather/season_summer.png"
+    },
+    {
+      "key": "season_autumn",
+      "name": "Осень",
+      "file": "weather/season_autumn.png"
+    },
+    {
+      "key": "season_winter",
+      "name": "Зима",
+      "file": "weather/season_winter.png"
+    }
+  ],
+  "weatherStates": [
+    {
+      "key": "weather_clear",
+      "name": "Ясно",
+      "file": "weather/weather_clear.png"
+    },
+    {
+      "key": "weather_cloudy",
+      "name": "Облачно",
+      "file": "weather/weather_cloudy.png"
+    },
+    {
+      "key": "weather_rain",
+      "name": "Дождь",
+      "file": "weather/weather_rain.png"
+    },
+    {
+      "key": "weather_snow",
+      "name": "Снег",
+      "file": "weather/weather_snow.png"
+    },
+    {
+      "key": "weather_storm",
+      "name": "Гроза",
+      "file": "weather/weather_storm.png"
+    }
+  ]
+}

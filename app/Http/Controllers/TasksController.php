@@ -209,6 +209,7 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         $user = User::findOrFail(Auth::User()->id);
         $step_id = $task->step_id;
+        $autoXpBoosterDelta = 0;
 
         $responseData = [
             'mark' => 0,
@@ -247,7 +248,7 @@ class TasksController extends Controller
                     : "Правильно.";
 
                 if ($task->price > 0 && $solution->qualifiesForTaskPriceReward() && !$task->hasRewardableFullSolution($user->id)) {
-                    CoinTransaction::register($user->id, $task->price, "Task #" . $task->id);
+                    CoinTransaction::register($user->id, $user->taskCoinReward($task->price), "Task #" . $task->id);
                 }
 
             } else {
@@ -264,10 +265,20 @@ class TasksController extends Controller
                 $solution->teacher_id = 1;
             }
             $solution->checked = Carbon::now();
+            $autoXpBoosterDelta = $this->applyDailyPetXpBoosterIfPossible($solution, $user, $task);
         }
 
         $solution->save();
         CourseActivity::recordSolutionSubmitted($solution);
+        if ($autoXpBoosterDelta > 0) {
+            CourseActivity::recordXpBoosterUsed(
+                $solution,
+                0,
+                $autoXpBoosterDelta,
+                $user->activeLearningAvatarPetName(),
+                $user->activeLearningAvatarPetKey()
+            );
+        }
 
         if ($task->is_quiz) {
             // Recalculate cached points after auto-grading quiz
@@ -687,15 +698,25 @@ class TasksController extends Controller
         $solution->comment = $comment;
 
         if ($solution->task->price > 0 && $solution->qualifiesForTaskPriceReward() && !$solution->task->hasRewardableFullSolution($solution->user_id)) {
-            CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
+            CoinTransaction::register($solution->user_id, $solution->user->taskCoinReward($solution->task->price), "Task #" . $solution->task->id);
         }
 
+        $autoXpBoosterDelta = $this->applyDailyPetXpBoosterIfPossible($solution, $solution->user, $solution->task);
 
         $solution->teacher_id = Auth::User()->id;
         $solution->checked = Carbon::now();
         $solution->recheck_requested = false;
         $solution->save();
         CourseActivity::recordSolutionChecked($solution);
+        if ($autoXpBoosterDelta > 0) {
+            CourseActivity::recordXpBoosterUsed(
+                $solution,
+                0,
+                $autoXpBoosterDelta,
+                $solution->user->activeLearningAvatarPetName(),
+                $solution->user->activeLearningAvatarPetKey()
+            );
+        }
         $this->dispatchAiAchievementGeneration($solution);
 
         // Recalculate cached points for the student in this course
@@ -729,6 +750,60 @@ class TasksController extends Controller
                 'message' => $e->getMessage(),
             ]);
         }
+    }
+
+    private function applyDailyPetXpBoosterIfPossible(Solution $solution, ?User $student = null, ?Task $task = null): int
+    {
+        $student = $student ?: ($solution->relationLoaded('user') ? $solution->user : User::find($solution->user_id));
+        $task = $task ?: ($solution->relationLoaded('task') ? $solution->task : Task::find($solution->task_id));
+
+        if (!$student || !$task) {
+            return 0;
+        }
+
+        $solution->setRelation('user', $student);
+        $solution->setRelation('task', $task);
+
+        if (!$student->canUseDailyAutoXpBoosterToday()
+            || !$task->xp_booster_enabled
+            || $solution->hasXpBooster()
+            || $solution->mark === null
+            || (int) $solution->mark <= 0
+            || (int) $solution->mark >= (int) $task->max_mark) {
+            return 0;
+        }
+
+        $markBeforeBooster = (int) $solution->mark;
+        $previousBoosterUsedAt = $solution->xp_booster_used_at;
+        $previousBoosterAmount = (int) $solution->xp_booster_amount;
+
+        $solution->xp_booster_used_at = Carbon::now();
+        $solution->applyDeadlinePenalty(
+            $solution->raw_mark === null ? $markBeforeBooster : $solution->raw_mark,
+            $task->getDeadline($solution->course_id)
+        );
+
+        if ((int) $solution->mark <= $markBeforeBooster) {
+            $solution->mark = $markBeforeBooster;
+            $solution->xp_booster_used_at = $previousBoosterUsedAt;
+            $solution->xp_booster_amount = $previousBoosterAmount;
+
+            return 0;
+        }
+
+        if (!$student->consumeDailyAutoXpBoosterToday()) {
+            $solution->mark = $markBeforeBooster;
+            $solution->xp_booster_used_at = $previousBoosterUsedAt;
+            $solution->xp_booster_amount = $previousBoosterAmount;
+
+            return 0;
+        }
+
+        $delta = (int) $solution->mark - $markBeforeBooster;
+        $petName = $student->activeLearningAvatarPetName() ?: 'питомец';
+        $student->notify(new \App\Notifications\PetEvent('Ваш питомец ' . $petName . ' автоматически применил бесплатный XP-бустер: +' . $delta . ' XP.', 'success'));
+
+        return $delta;
     }
 
     public function aiTaskSummary($course_id, $id, Request $request, ChatGptService $chatGpt, GeekPasteClient $geekPaste)
@@ -922,7 +997,7 @@ class TasksController extends Controller
         $this->dispatchAiAchievementGeneration($solution);
 
         if ($shouldRewardTaskPrice) {
-            CoinTransaction::register($solution->user_id, $solution->task->price, "Task #" . $solution->task->id);
+            CoinTransaction::register($solution->user_id, $user->taskCoinReward($solution->task->price), "Task #" . $solution->task->id);
         }
 
         CourseStudentPoints::recalculate($course_id, $user->id);
@@ -963,9 +1038,9 @@ class TasksController extends Controller
             return redirect()->back();
         }
 
-        $cost = $solution->xpBoosterCost();
+        $cost = $solution->xpBoosterCost($user);
 
-        if ($user->balance() < $cost) {
+        if ($cost > 0 && $user->balance() < $cost) {
             $this->make_error_alert('Не хватает GC', 'Чтобы применить бустер, нужно ' . $cost . ' GC.');
             return redirect()->back();
         }
@@ -983,7 +1058,11 @@ class TasksController extends Controller
             return redirect()->back();
         }
 
-        CoinTransaction::register($user->id, -1 * $cost, 'XP booster Solution #' . $solution->id);
+        if ($cost > 0) {
+            CoinTransaction::register($user->id, -1 * $cost, 'XP booster Solution #' . $solution->id);
+        } else {
+            $user->consumeFreeXpBooster();
+        }
 
         $solution->save();
         CourseActivity::recordXpBoosterUsed($solution, $cost, $solution->mark - $markBeforeBooster);
@@ -994,7 +1073,7 @@ class TasksController extends Controller
         $user->rescore();
         $user->awardRankPromotionIfNeeded($old_rank);
 
-        $this->make_success_alert('Бустер применен', 'Решение получило +' . ($solution->mark - $markBeforeBooster) . ' XP, со счета списано ' . $cost . ' GC.');
+        $this->make_success_alert('Бустер применен', 'Решение получило +' . ($solution->mark - $markBeforeBooster) . ' XP.' . ($cost > 0 ? ' Со счета списано ' . $cost . ' GC.' : ' Использован бесплатный бустер от питомца.'));
 
         return redirect()->back();
     }
@@ -1019,8 +1098,8 @@ class TasksController extends Controller
             abort(403);
         }
 
-        $cost = GeekPasteClient::EXTRA_ATTEMPT_COST;
-        if ($user->balance() < $cost) {
+        $cost = $user->geekPasteExtraAttemptCost();
+        if ($cost > 0 && $user->balance() < $cost) {
             $this->make_error_alert('Не хватает GC', 'Дополнительная попытка стоит ' . $cost . ' GC.');
             return redirect()->back();
         }
@@ -1037,10 +1116,19 @@ class TasksController extends Controller
             return redirect()->back();
         }
 
-        CoinTransaction::register($user->id, -1 * $cost, 'GeekPaste extra attempt Task #' . $task->id);
-        CourseActivity::recordGeekPasteAttemptBought($task, $course, $user, $cost);
+        if ($cost > 0) {
+            CoinTransaction::register($user->id, -1 * $cost, 'GeekPaste extra attempt Task #' . $task->id);
+            $petName = null;
+            $petKey = null;
+        } else {
+            $petName = $user->activeLearningAvatarPetName();
+            $petKey = $user->activeLearningAvatarPetKey();
+            $user->consumeFreeGeekPasteResetToday();
+            $user->notify(new \App\Notifications\PetEvent('Ваш питомец бесплатно сбросил лимит GeekPaste-попыток для задачи «' . $task->name . '».', 'success'));
+        }
+        CourseActivity::recordGeekPasteAttemptBought($task, $course, $user, $cost, $petName, $petKey);
 
-        $this->make_success_alert('Попытка добавлена', 'Можно отправить еще одно решение в GeekPaste. Со счета списано ' . $cost . ' GC.');
+        $this->make_success_alert('Попытка добавлена', 'Можно отправить еще одно решение в GeekPaste.' . ($cost > 0 ? ' Со счета списано ' . $cost . ' GC.' : ' Питомец помог бесплатно.'));
 
         return redirect('/insider/courses/' . $course_id . '/steps/' . $task->step_id . '#task' . $task->id);
     }

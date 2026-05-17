@@ -4,7 +4,16 @@
 
 @section('content')
     @php
-        $goodsTabActive = $goods->count() > 0 || $auctions->count() == 0;
+        $goodsTabActive = $goods->count() > 0 || ($digitalGoods->count() == 0 && $auctions->count() == 0);
+        $digitalTabActive = !$goodsTabActive && $digitalGoods->count() > 0;
+        $auctionsTabActive = !$goodsTabActive && !$digitalTabActive;
+        $digitalCategoryDefinitions = [
+            'all' => ['label' => 'Все', 'icon' => 'fas fa-layer-group', 'count' => $digitalGoods->count()],
+            'pets' => ['label' => 'Питомцы', 'icon' => 'fas fa-paw', 'count' => $digitalGoods->filter(fn ($item) => ($item['slot'] ?? null) === 'pet_right')->count()],
+            'room_items' => ['label' => 'Предметы комнаты', 'icon' => 'fas fa-cube', 'count' => $digitalGoods->filter(fn ($item) => ($item['type'] ?? 'learning_avatar_item') === 'learning_avatar_item' && ($item['slot'] ?? null) !== 'pet_right')->count()],
+            'frames' => ['label' => 'Рамки', 'icon' => 'fas fa-user-circle', 'count' => $digitalGoods->filter(fn ($item) => in_array(($item['type'] ?? null), ['avatar_frame', 'custom_avatar_frame'], true))->count()],
+            'titles' => ['label' => 'Звания', 'icon' => 'fas fa-certificate', 'count' => $digitalGoods->filter(fn ($item) => ($item['type'] ?? null) === 'custom_title')->count()],
+        ];
     @endphp
 
     <div class="gc-card market-hero gc-page-header mb-3">
@@ -18,6 +27,7 @@
                 </span>
                 <a href="{{ url('/insider/profile#gc-history') }}" class="text-muted text-decoration-none">История GC</a>
                 <span><strong>{{ $goods->count() }}</strong> товаров</span>
+                <span><strong>{{ $digitalGoods->count() }}</strong> цифровых</span>
                 <span><strong>{{ $auctions->count() }}</strong> аукционов</span>
             </div>
         </div>
@@ -38,7 +48,12 @@
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if(!$goodsTabActive) active @endif" id="market-auctions-tab" data-bs-toggle="tab" data-bs-target="#market-auctions" type="button" role="tab">
+                <button class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if($digitalTabActive) active @endif" id="market-digital-tab" data-bs-toggle="tab" data-bs-target="#market-digital" type="button" role="tab">
+                    Цифровые <span class="badge rounded-pill bg-body gc-tab-count">{{ $digitalGoods->count() }}</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if($auctionsTabActive) active @endif" id="market-auctions-tab" data-bs-toggle="tab" data-bs-target="#market-auctions" type="button" role="tab">
                     Аукционы <span class="badge rounded-pill bg-body gc-tab-count">{{ $auctions->count() }}</span>
                 </button>
             </li>
@@ -76,7 +91,39 @@
             @include('market.partials.goods_grid', ['items' => $goods, 'isArchive' => false, 'gridId' => 'market-goods-grid'])
         </div>
 
-        <div class="tab-pane fade @if(!$goodsTabActive) show active @endif" id="market-auctions" role="tabpanel" aria-labelledby="market-auctions-tab">
+        <div class="tab-pane fade @if($digitalTabActive) show active @endif" id="market-digital" role="tabpanel" aria-labelledby="market-digital-tab">
+            @if($digitalGoods->count())
+                <div class="gc-card gc-toolbar-card market-goods-toolbar">
+                    <div>
+                        <h5 class="mb-1">Цифровые товары</h5>
+                        <p class="mb-0 text-muted small">Предметы и питомцы для комнаты профиля.</p>
+                    </div>
+                    <div class="input-group input-group-sm gc-search-box market-search">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="search" class="form-control" placeholder="Найти цифровой товар" aria-label="Найти цифровой товар" data-market-search data-market-grid="#market-digital-grid">
+                        <button class="btn d-none" type="button" data-market-clear aria-label="Очистить поиск"><i class="fas fa-times"></i></button>
+                        <span class="input-group-text gc-search-box__count" data-market-count>{{ $digitalGoods->count() }} из {{ $digitalGoods->count() }}</span>
+                    </div>
+                </div>
+                <div class="market-digital-categories" role="group" aria-label="Категории цифровых товаров">
+                    @foreach($digitalCategoryDefinitions as $categoryKey => $category)
+                        @if($category['count'] > 0 || $categoryKey === 'all')
+                            <button type="button"
+                                    class="market-digital-category @if($categoryKey === 'all') is-active @endif"
+                                    data-market-category-filter="{{ $categoryKey }}"
+                                    data-market-grid="#market-digital-grid">
+                                <i class="{{ $category['icon'] }}"></i>
+                                <span>{{ $category['label'] }}</span>
+                                <strong>{{ $category['count'] }}</strong>
+                            </button>
+                        @endif
+                    @endforeach
+                </div>
+            @endif
+            @include('market.partials.digital_goods_grid', ['items' => $digitalGoods, 'gridId' => 'market-digital-grid'])
+        </div>
+
+        <div class="tab-pane fade @if($auctionsTabActive) show active @endif" id="market-auctions" role="tabpanel" aria-labelledby="market-auctions-tab">
             @if($auctions->count())
                 <div class="gc-card gc-toolbar-card market-goods-toolbar">
                     <div>

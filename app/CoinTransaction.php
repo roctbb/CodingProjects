@@ -75,9 +75,16 @@ class CoinTransaction extends Authenticatable
 
         if (preg_match('/^Avatar frame ([a-z0-9_-]+) User #(\d+)$/', $comment, $matches)) {
             $frames = User::avatarFrames();
-            $frameName = $frames[$matches[1]]['name'] ?? null;
+            $frameName = $matches[1] === 'custom' ? 'Своя рамка' : ($frames[$matches[1]]['name'] ?? null);
 
             return $frameName ? 'Рамка аватарки "' . $frameName . '"' : 'Рамка аватарки';
+        }
+
+        if (preg_match('/^Learning avatar item ([a-z0-9_-]+) User #(\d+)$/', $comment, $matches)) {
+            $catalog = User::learningAvatarItemCatalog();
+            $itemName = $catalog[$matches[1]]['name'] ?? null;
+
+            return $itemName ? 'Предмет комнаты "' . $itemName . '"' : 'Предмет комнаты';
         }
 
         if (preg_match('/^Early access Lesson #(\d+) Course #(\d+)$/', $comment, $matches)) {
