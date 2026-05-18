@@ -101,40 +101,40 @@ class AchievementTrophyGenerator
             return $image;
         }
 
-        $source = @imagecreatefromstring($image['bytes']);
+        $source = @\imagecreatefromstring($image['bytes']);
         if (!$source) {
             Log::warning('Achievement trophy magenta background removal skipped: invalid image bytes');
 
             return $image;
         }
 
-        imagepalettetotruecolor($source);
-        imagealphablending($source, false);
-        imagesavealpha($source, true);
+        \imagepalettetotruecolor($source);
+        \imagealphablending($source, false);
+        \imagesavealpha($source, true);
 
-        $width = imagesx($source);
-        $height = imagesy($source);
-        $transparent = imagecolorallocatealpha($source, 255, 0, 255, 127);
+        $width = \imagesx($source);
+        $height = \imagesy($source);
+        $transparent = \imagecolorallocatealpha($source, 255, 0, 255, 127);
         $removed = 0;
 
         for ($y = 0; $y < $height; $y++) {
             for ($x = 0; $x < $width; $x++) {
-                $rgba = imagecolorat($source, $x, $y);
+                $rgba = \imagecolorat($source, $x, $y);
                 $red = ($rgba >> 16) & 0xFF;
                 $green = ($rgba >> 8) & 0xFF;
                 $blue = $rgba & 0xFF;
 
                 if ($this->isMagentaPixel($red, $green, $blue)) {
-                    imagesetpixel($source, $x, $y, $transparent);
+                    \imagesetpixel($source, $x, $y, $transparent);
                     $removed++;
                 }
             }
         }
 
         ob_start();
-        imagepng($source, null, 9);
+        \imagepng($source, null, 9);
         $png = ob_get_clean();
-        imagedestroy($source);
+        \imagedestroy($source);
 
         if (!is_string($png) || $png === '') {
             Log::warning('Achievement trophy magenta background removal skipped: PNG encoding failed');
