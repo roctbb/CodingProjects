@@ -59,8 +59,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libzip-dev \
     libxml2-dev \
     libpq-dev \
+    libpng-dev \
     zip \
-    && docker-php-ext-install -j"$(nproc)" curl zip pdo pdo_pgsql xml \
+    && docker-php-ext-install -j"$(nproc)" curl zip pdo pdo_pgsql xml gd \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
