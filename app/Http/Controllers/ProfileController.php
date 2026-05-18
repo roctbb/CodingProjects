@@ -518,7 +518,7 @@ class ProfileController extends Controller
             'gender' => ['nullable', 'string', Rule::in(array_keys(User::learningAvatarGenders()))],
             'hobbies' => 'required|string',
             'interests' => 'required|string',
-            'image' => 'image|max:4000'
+            'image' => 'image|max:10240'
         ]);
 
         $user->name = $request->name;

@@ -68,6 +68,8 @@ RUN { \
         echo 'max_execution_time=180'; \
         echo 'max_input_time=180'; \
         echo 'default_socket_timeout=180'; \
+        echo 'upload_max_filesize=10M'; \
+        echo 'post_max_size=12M'; \
     } > /usr/local/etc/php/conf.d/codingprojects-timeouts.ini
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer

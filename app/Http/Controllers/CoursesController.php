@@ -1220,7 +1220,7 @@ class CoursesController extends Controller
         $this->validate($request, [
             'name' => 'required|string',
             'description' => 'required|string',
-            'image' => 'image|max:1000',
+            'image' => 'image|max:10240',
         ]);
 
         $course = new Course();

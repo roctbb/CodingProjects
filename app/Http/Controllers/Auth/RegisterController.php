@@ -82,7 +82,7 @@ class RegisterController extends Controller
             'grade' => 'required|integer|between:1,12',
             'gender' => ['required', 'string', Rule::in(array_keys(User::learningAvatarGenders()))],
             'birthday' => 'required|date|date_format:Y-m-d',
-            'image' => 'image|max:1000',
+            'image' => 'image|max:10240',
             'g-recaptcha-response' => app('App\Services\Recaptcha')->getValidationString()
         ]);
     }
