@@ -46,7 +46,8 @@ class LessonsController extends Controller
 
     public function create($id, Request $request)
     {
-        $program = Course::findOrFail($id)->program;
+        $course = Course::findOrFail($id);
+        $program = $course->program;
         $this->validate($request, [
             'name' => 'required|string',
             'description' => 'required|string',
@@ -78,6 +79,7 @@ class LessonsController extends Controller
         $data = ['name' => 'Введение', 'theory' => '', 'notes' => ''];
 
         $step = ProgramStep::createStep($lesson, $data);
+        CourseActivity::recordLessonCreated($course, $lesson, Auth::user());
 
         return redirect('/insider/courses/' . $id . '/steps/' . $step->id);
     }

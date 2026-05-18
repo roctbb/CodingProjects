@@ -413,6 +413,42 @@ class LearningAvatarTest extends TestCase
         $this->assertStringContainsString('/media/course-posters/robotics-pro.png', $layers['course_poster']['src']);
     }
 
+    public function testRoomSystemSkipsActiveCoursesWithoutPoster()
+    {
+        $programWithPoster = new Program([
+            'name' => 'Python Start',
+            'learning_avatar_poster' => '/media/course-posters/python-start.png',
+        ]);
+        $programWithPoster->id = 7;
+        $courseWithPoster = new Course([
+            'name' => 'Python Start',
+            'state' => 'started',
+        ]);
+        $courseWithPoster->id = 42;
+        $courseWithPoster->setRelation('program', $programWithPoster);
+
+        $programWithoutPoster = new Program([
+            'name' => 'Empty Poster Program',
+        ]);
+        $programWithoutPoster->id = 8;
+        $courseWithoutPoster = new Course([
+            'name' => 'Empty Poster Course',
+            'state' => 'started',
+        ]);
+        $courseWithoutPoster->id = 43;
+        $courseWithoutPoster->setRelation('program', $programWithoutPoster);
+
+        $user = new User();
+        $user->setRelation('courses', collect([$courseWithPoster, $courseWithoutPoster]));
+
+        $data = $user->learningAvatarRenderData();
+        $layers = collect($data['layers'])->keyBy('equippedSlot');
+
+        $this->assertSame('program_7', $data['appearance']['coursePoster']);
+        $this->assertSame('Python Start', $data['appearance']['coursePosterName']);
+        $this->assertStringContainsString('/media/course-posters/python-start.png', $layers['course_poster']['src']);
+    }
+
     public function testPublishedAchievementsRenderUpToThreeTrophies()
     {
         $user = new User();
@@ -1010,5 +1046,205 @@ class LearningAvatarTest extends TestCase
         $this->assertSame('Python Start · +3 GC', $activity->subtitle());
         $this->assertSame('fas fa-paw', $activity->iconClass());
         $this->assertSame('is-boost', $activity->toneClass());
+    }
+
+    public function testPetActionCanBePresentedWithoutCourse()
+    {
+        $activity = new CourseActivity([
+            'type' => CourseActivity::TYPE_PET_ACTION,
+            'payload' => [
+                'pet_action' => 'daily_big_coin_gift',
+                'pet_name' => 'Черемша',
+                'amount' => 7,
+            ],
+        ]);
+
+        $this->assertSame('получил(а) 7 GC от питомца «Черемша»', $activity->actionText());
+        $this->assertSame('+7 GC', $activity->subtitle());
+        $this->assertSame('fas fa-paw', $activity->iconClass());
+        $this->assertSame('is-boost', $activity->toneClass());
+    }
+
+    public function testMarketPurchaseCanBePresentedWithoutCourse()
+    {
+        $activity = new CourseActivity([
+            'type' => CourseActivity::TYPE_MARKET_PURCHASE,
+            'payload' => [
+                'good_name' => 'Мышка',
+                'price' => 122,
+            ],
+        ]);
+
+        $this->assertSame('купил(а) «Мышка»', $activity->actionText());
+        $this->assertSame('-122 GC', $activity->subtitle());
+        $this->assertSame('fas fa-shopping-bag', $activity->iconClass());
+        $this->assertSame('is-boost', $activity->toneClass());
+    }
+
+    public function testRandomCoinDropHasPulsePresentation()
+    {
+        $activity = new CourseActivity([
+            'type' => CourseActivity::TYPE_RANDOM_COIN_DROP,
+            'payload' => [
+                'amount' => 3,
+                'source' => 'leprechaun',
+            ],
+        ]);
+
+        $this->assertSame('получил(а) 3 GC от лепрекона', $activity->actionText());
+        $this->assertSame('+3 GC', $activity->subtitle());
+        $this->assertSame('fas fa-rainbow', $activity->iconClass());
+        $this->assertSame('is-boost', $activity->toneClass());
+    }
+
+    public function testProgressMilestonesHavePulsePresentation()
+    {
+        $lessonActivity = new CourseActivity([
+            'type' => CourseActivity::TYPE_LESSON_COMPLETED,
+            'payload' => [
+                'course_name' => 'Python Start',
+                'lesson_name' => 'Переменные',
+            ],
+        ]);
+        $chapterActivity = new CourseActivity([
+            'type' => CourseActivity::TYPE_CHAPTER_COMPLETED,
+            'payload' => [
+                'course_name' => 'Python Start',
+                'chapter_name' => 'Введение',
+            ],
+        ]);
+
+        $this->assertSame('завершил(а) урок «Переменные»', $lessonActivity->actionText());
+        $this->assertSame('Python Start · Переменные', $lessonActivity->subtitle());
+        $this->assertSame('fas fa-check-circle', $lessonActivity->iconClass());
+        $this->assertSame('is-achievement', $lessonActivity->toneClass());
+
+        $this->assertSame('завершил(а) главу «Введение»', $chapterActivity->actionText());
+        $this->assertSame('Python Start', $chapterActivity->subtitle());
+        $this->assertSame('fas fa-flag-checkered', $chapterActivity->iconClass());
+        $this->assertSame('is-achievement', $chapterActivity->toneClass());
+    }
+
+    public function testCoursePulseInsightsHavePresentation()
+    {
+        $summary = new CourseActivity([
+            'type' => CourseActivity::TYPE_COURSE_DAILY_SUMMARY,
+            'payload' => [
+                'course_name' => 'Python Start',
+                'solutions_count' => 18,
+                'checked_count' => 12,
+                'xp_earned' => 140,
+            ],
+        ]);
+        $struggle = new CourseActivity([
+            'type' => CourseActivity::TYPE_TASK_STRUGGLE,
+            'payload' => [
+                'course_name' => 'Python Start',
+                'lesson_name' => 'Циклы',
+                'task_name' => 'Лесная крыша',
+                'count' => 4,
+            ],
+        ]);
+
+        $this->assertSame('Итоги дня: 18 решений, 12 проверок', $summary->actionText());
+        $this->assertSame('Python Start · +140 XP', $summary->subtitle());
+        $this->assertSame('fas fa-chart-line', $summary->iconClass());
+        $this->assertSame('is-summary', $summary->toneClass());
+        $this->assertFalse($summary->hasActor());
+
+        $this->assertSame('сложное место в задаче «Лесная крыша»', $struggle->actionText());
+        $this->assertSame('Python Start · Циклы · 4 попытки ниже максимума', $struggle->subtitle());
+        $this->assertSame('fas fa-exclamation-circle', $struggle->iconClass());
+        $this->assertSame('is-open', $struggle->toneClass());
+        $this->assertFalse($struggle->hasActor());
+    }
+
+    public function testLearningRhythmEventsHavePresentation()
+    {
+        $firstAction = new CourseActivity([
+            'type' => CourseActivity::TYPE_FIRST_DAILY_ACTION,
+            'payload' => [
+                'course_name' => 'Python Start',
+                'lesson_name' => 'Циклы',
+            ],
+        ]);
+        $streak = new CourseActivity([
+            'type' => CourseActivity::TYPE_LEARNING_STREAK,
+            'payload' => [
+                'course_name' => 'Python Start',
+                'days' => 5,
+            ],
+        ]);
+        $firstSolution = new CourseActivity([
+            'type' => CourseActivity::TYPE_FIRST_SOLUTION,
+            'payload' => [
+                'course_name' => 'Python Start',
+                'task_name' => 'Первая программа',
+            ],
+        ]);
+
+        $this->assertSame('начал(а) заниматься сегодня', $firstAction->actionText());
+        $this->assertSame('Python Start · Циклы', $firstAction->subtitle());
+        $this->assertSame('fas fa-sun', $firstAction->iconClass());
+
+        $this->assertSame('занимается 5 дня подряд', $streak->actionText());
+        $this->assertSame('fas fa-fire', $streak->iconClass());
+        $this->assertSame('is-achievement', $streak->toneClass());
+
+        $this->assertSame('сдал(а) первое решение', $firstSolution->actionText());
+        $this->assertSame('fas fa-seedling', $firstSolution->iconClass());
+    }
+
+    public function testMarketAndTeacherEventsHavePresentation()
+    {
+        $bid = new CourseActivity([
+            'type' => CourseActivity::TYPE_AUCTION_LEADING_BID,
+            'payload' => [
+                'good_name' => 'Мышка',
+                'amount' => 140,
+            ],
+        ]);
+        $finished = new CourseActivity([
+            'type' => CourseActivity::TYPE_AUCTION_FINISHED,
+            'payload' => [
+                'good_name' => 'Мышка',
+                'winner_count' => 2,
+            ],
+        ]);
+        $shipped = new CourseActivity([
+            'type' => CourseActivity::TYPE_MARKET_ORDER_SHIPPED,
+            'payload' => [
+                'good_name' => 'Мышка',
+            ],
+        ]);
+        $taskCreated = new CourseActivity([
+            'type' => CourseActivity::TYPE_TASK_CREATED,
+            'payload' => [
+                'task_name' => 'Сложный квест',
+            ],
+        ]);
+        $lessonCreated = new CourseActivity([
+            'type' => CourseActivity::TYPE_LESSON_CREATED,
+            'payload' => [
+                'lesson_name' => 'Новый урок',
+            ],
+        ]);
+
+        $this->assertSame('лидирует в аукционе «Мышка»', $bid->actionText());
+        $this->assertSame('140 GC', $bid->subtitle());
+        $this->assertSame('fas fa-gavel', $bid->iconClass());
+
+        $this->assertSame('Аукцион «Мышка» завершён', $finished->actionText());
+        $this->assertSame('2 победителей', $finished->subtitle());
+        $this->assertFalse($finished->hasActor());
+
+        $this->assertSame('получил(а) товар «Мышка»', $shipped->actionText());
+        $this->assertSame('fas fa-box-open', $shipped->iconClass());
+
+        $this->assertSame('добавил(а) задачу «Сложный квест»', $taskCreated->actionText());
+        $this->assertSame('fas fa-plus-circle', $taskCreated->iconClass());
+
+        $this->assertSame('добавил(а) урок «Новый урок»', $lessonCreated->actionText());
+        $this->assertSame('fas fa-book-medical', $lessonCreated->iconClass());
     }
 }

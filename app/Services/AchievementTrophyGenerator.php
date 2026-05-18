@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class AchievementTrophyGenerator
 {
-    private const SIZE = '512x512';
+    private const SIZE = '1024x1024';
     private const QUALITY = 'medium';
 
     private ChatGptService $chatGpt;

@@ -181,7 +181,7 @@
             @empty
                 <div class="pulse-feed__empty">
                     <span class="pulse-feed__icon is-muted"><i class="fas fa-seedling"></i></span>
-                    <span>Лента оживёт, когда появятся сдачи, проверки и покупки бустеров.</span>
+                    <span>Лента оживёт, когда появятся сдачи, проверки и покупки.</span>
                 </div>
             @endforelse
         </div>

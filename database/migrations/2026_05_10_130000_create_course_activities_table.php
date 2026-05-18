@@ -14,7 +14,7 @@ class CreateCourseActivitiesTable extends Migration
 
         Schema::create('course_activities', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('course_id')->unsigned()->index();
+            $table->integer('course_id')->unsigned()->nullable()->index();
             $table->integer('lesson_id')->unsigned()->nullable()->index();
             $table->integer('step_id')->unsigned()->nullable()->index();
             $table->integer('task_id')->unsigned()->nullable()->index();

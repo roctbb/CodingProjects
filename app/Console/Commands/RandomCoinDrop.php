@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\CoinTransaction;
+use App\CourseActivity;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -42,6 +43,7 @@ class RandomCoinDrop extends Command
             'success',
             'fas fa-rainbow'
         );
+        CourseActivity::recordRandomCoinDrop($user, 3);
 
         $this->info('Awarded 3 GC to ' . $user->name . '.');
         return 0;

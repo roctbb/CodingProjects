@@ -218,7 +218,18 @@ class CoursesController extends Controller
         })->pluck('id');
 
         $activities = CourseActivity::with(['user', 'course', 'lesson', 'task'])
-            ->whereIn('course_id', $activeCourseIds)
+            ->where(function ($query) use ($activeCourseIds) {
+                if ($activeCourseIds->isNotEmpty()) {
+                    $query->whereIn('course_id', $activeCourseIds)
+                        ->orWhere(function ($query) {
+                            $query->whereNull('course_id')
+                                ->whereIn('type', CourseActivity::globalPulseTypes());
+                        });
+                } else {
+                    $query->whereNull('course_id')
+                        ->whereIn('type', CourseActivity::globalPulseTypes());
+                }
+            })
             ->orderBy('created_at', 'desc')
             ->paginate(40);
         $pulse = CourseActivity::pulseForCourses($activeCourseIds);
@@ -1183,7 +1194,7 @@ class CoursesController extends Controller
         }
 
         try {
-            $posterGenerator->generate($course->program);
+            $posterGenerator->generateForCourse($course);
         } catch (\Throwable $e) {
             \Log::error('Course poster generation failed', [
                 'course_id' => $course->id,
@@ -1196,7 +1207,7 @@ class CoursesController extends Controller
             return redirect('/insider/courses/' . $course->id . '/edit');
         }
 
-        $this->make_success_alert('Плакат готов', 'Новый плакат программы будет показываться в комнате учеников всех курсов этой программы.');
+        $this->make_success_alert('Плакат готов', 'Новый плакат программы создан по описанию этого курса и будет показываться в комнате учеников.');
 
         return redirect('/insider/courses/' . $course->id . '/edit');
     }

@@ -1814,7 +1814,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     private function learningAvatarRoomSystemCoursePosterLayer($manifest)
     {
-        $course = $this->learningAvatarLatestActiveCourse();
+        $course = $this->learningAvatarLatestActiveCourseWithPoster();
         $posterUrl = $course ? $course->learningAvatarPosterUrl() : null;
         $program = $course
             ? ($course->relationLoaded('program') ? $course->program : ($course->exists && $course->program_id ? $course->program()->first() : null))
@@ -1832,7 +1832,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->learningAvatarRoomSystemEntry($manifest['posters'] ?? [], 'default');
     }
 
-    private function learningAvatarLatestActiveCourse()
+    private function learningAvatarLatestActiveCourseWithPoster()
     {
         if ($this->relationLoaded('courses')) {
             return $this->courses
@@ -1842,7 +1842,9 @@ class User extends Authenticatable implements MustVerifyEmail
                 ->sortByDesc(function ($course) {
                     return (int) ($course->id ?? 0);
                 })
-                ->first();
+                ->first(function ($course) {
+                    return (bool) $course->learningAvatarPosterUrl();
+                });
         }
 
         if (!$this->exists) {
@@ -1853,7 +1855,10 @@ class User extends Authenticatable implements MustVerifyEmail
             ->with('program')
             ->where('state', 'started')
             ->orderByDesc('courses.id')
-            ->first();
+            ->get()
+            ->first(function ($course) {
+                return (bool) $course->learningAvatarPosterUrl();
+            });
     }
 
     private function learningAvatarDynamicLayerName($entries, $key, $fallbackNames)

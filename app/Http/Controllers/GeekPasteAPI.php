@@ -84,8 +84,11 @@ class GeekPasteAPI extends Controller
             // Recalculate cached points after auto-grading code
             CourseStudentPoints::recalculate($course->id, $solution->user_id);
             LessonStudentStats::recalculateForStudent($course->id, $solution->user_id);
+            $solution->loadMissing('task.step.lesson', 'course', 'user');
+            CourseActivity::recordProgressMilestones($course, $solution->user, $solution->task && $solution->task->step ? $solution->task->step->lesson : null);
 
             $user->rescore();
+            CourseActivity::recordXpMilestones($user);
             $user->awardRankPromotionIfNeeded($old_rank);
 
             return response()->json(['state' => 'ok']);

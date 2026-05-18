@@ -17,6 +17,23 @@ class CourseActivity extends Model
     const TYPE_TASK_AI_SUMMARY = 'task_ai_summary';
     const TYPE_AI_ACHIEVEMENT_EARNED = 'ai_achievement_earned';
     const TYPE_PET_ACTION = 'pet_action';
+    const TYPE_MARKET_PURCHASE = 'market_purchase';
+    const TYPE_MARKET_AUCTION_WON = 'market_auction_won';
+    const TYPE_MARKET_DIGITAL_PURCHASE = 'market_digital_purchase';
+    const TYPE_RANDOM_COIN_DROP = 'random_coin_drop';
+    const TYPE_LESSON_COMPLETED = 'lesson_completed';
+    const TYPE_CHAPTER_COMPLETED = 'chapter_completed';
+    const TYPE_COURSE_DAILY_SUMMARY = 'course_daily_summary';
+    const TYPE_TASK_STRUGGLE = 'task_struggle';
+    const TYPE_FIRST_DAILY_ACTION = 'first_daily_action';
+    const TYPE_LEARNING_STREAK = 'learning_streak';
+    const TYPE_FIRST_SOLUTION = 'first_solution';
+    const TYPE_XP_MILESTONE = 'xp_milestone';
+    const TYPE_AUCTION_LEADING_BID = 'auction_leading_bid';
+    const TYPE_AUCTION_FINISHED = 'auction_finished';
+    const TYPE_MARKET_ORDER_SHIPPED = 'market_order_shipped';
+    const TYPE_TASK_CREATED = 'task_created';
+    const TYPE_LESSON_CREATED = 'lesson_created';
     const PULSE_WINDOW_HOURS = 24;
     const PULSE_SAMPLE_MINUTES = 8;
     const PULSE_SIGNAL_LOOKBACK_HOURS = 30;
@@ -75,7 +92,14 @@ class CourseActivity extends Model
 
     public static function recordSolutionSubmitted(Solution $solution)
     {
-        return static::recordForSolution(static::TYPE_SOLUTION_SUBMITTED, $solution);
+        $activity = static::recordForSolution(static::TYPE_SOLUTION_SUBMITTED, $solution);
+
+        if ($activity) {
+            static::recordFirstDailyAction($solution);
+            static::recordFirstSolution($solution);
+        }
+
+        return $activity;
     }
 
     public static function recordSolutionChecked(Solution $solution)
@@ -168,21 +192,302 @@ class CourseActivity extends Model
             return null;
         }
 
-        $course = $user->courses()
-            ->where('state', 'started')
-            ->orderByDesc('courses.id')
-            ->first(['courses.id', 'courses.name']);
+        $course = static::activePulseCourseForUser($user);
 
-        if (!$course) {
+        return static::recordActivity([
+            'course_id' => $course ? $course->id : null,
+            'user_id' => $user->id,
+            'type' => static::TYPE_PET_ACTION,
+            'payload' => static::basePayload($course) + $payload + [
+                'pet_action' => $action,
+            ],
+        ]);
+    }
+
+    public static function recordMarketPurchaseForActiveCourse(User $user, MarketGood $good, int $price, string $source = 'purchase', ?MarketDeal $deal = null)
+    {
+        $course = static::activePulseCourseForUser($user);
+
+        $isAuction = $source === 'auction';
+
+        return static::recordActivity([
+            'course_id' => $course ? $course->id : null,
+            'user_id' => $user->id,
+            'type' => $isAuction ? static::TYPE_MARKET_AUCTION_WON : static::TYPE_MARKET_PURCHASE,
+            'payload' => static::basePayload($course) + [
+                'good_id' => $good->id,
+                'good_name' => $good->name,
+                'price' => $price,
+                'source' => $source,
+                'deal_id' => $deal ? $deal->id : null,
+            ],
+        ]);
+    }
+
+    public static function recordDigitalPurchaseForActiveCourse(User $user, array $item)
+    {
+        $course = static::activePulseCourseForUser($user);
+
+        return static::recordActivity([
+            'course_id' => $course ? $course->id : null,
+            'user_id' => $user->id,
+            'type' => static::TYPE_MARKET_DIGITAL_PURCHASE,
+            'payload' => static::basePayload($course) + [
+                'item_key' => $item['key'] ?? null,
+                'item_name' => $item['name'] ?? 'цифровой товар',
+                'price' => (int) ($item['cost'] ?? 0),
+                'item_type' => $item['type'] ?? null,
+            ],
+        ]);
+    }
+
+    public static function recordRandomCoinDrop(User $user, int $amount, string $source = 'leprechaun')
+    {
+        return static::recordActivity([
+            'course_id' => null,
+            'user_id' => $user->id,
+            'type' => static::TYPE_RANDOM_COIN_DROP,
+            'payload' => [
+                'amount' => $amount,
+                'source' => $source,
+            ],
+        ]);
+    }
+
+    public static function recordLearningStreak(User $user, int $days, Carbon $date)
+    {
+        if ($days < 3) {
+            return null;
+        }
+
+        if (static::where('user_id', $user->id)
+            ->where('type', static::TYPE_LEARNING_STREAK)
+            ->whereDate('created_at', $date->toDateString())
+            ->exists()) {
+            return null;
+        }
+
+        $course = static::activePulseCourseForUser($user);
+
+        return static::recordActivity([
+            'course_id' => $course ? $course->id : null,
+            'user_id' => $user->id,
+            'type' => static::TYPE_LEARNING_STREAK,
+            'payload' => static::basePayload($course) + [
+                'days' => $days,
+                'date' => $date->toDateString(),
+            ],
+        ]);
+    }
+
+    public static function recordXpMilestones(User $user)
+    {
+        $score = (int) $user->score();
+        $milestones = [1000, 5000, 10000, 25000, 50000];
+        $course = static::activePulseCourseForUser($user);
+        $recorded = collect();
+
+        foreach ($milestones as $milestone) {
+            if ($score < $milestone) {
+                continue;
+            }
+
+            $exists = static::where('user_id', $user->id)
+                ->where('type', static::TYPE_XP_MILESTONE)
+                ->get(['payload'])
+                ->contains(function ($activity) use ($milestone) {
+                    return (int) ($activity->payload['milestone'] ?? 0) === $milestone;
+                });
+
+            if ($exists) {
+                continue;
+            }
+
+            $recorded->push(static::recordActivity([
+                'course_id' => $course ? $course->id : null,
+                'user_id' => $user->id,
+                'type' => static::TYPE_XP_MILESTONE,
+                'payload' => static::basePayload($course) + [
+                    'milestone' => $milestone,
+                    'score' => $score,
+                ],
+            ]));
+        }
+
+        return $recorded->filter();
+    }
+
+    public static function recordAuctionLeadingBidForActiveCourse(User $user, MarketGood $good, int $amount)
+    {
+        $course = static::activePulseCourseForUser($user);
+
+        return static::recordActivity([
+            'course_id' => $course ? $course->id : null,
+            'user_id' => $user->id,
+            'type' => static::TYPE_AUCTION_LEADING_BID,
+            'payload' => static::basePayload($course) + [
+                'good_id' => $good->id,
+                'good_name' => $good->name,
+                'amount' => $amount,
+            ],
+        ]);
+    }
+
+    public static function recordAuctionFinished(MarketGood $good, int $winnerCount)
+    {
+        return static::recordActivity([
+            'course_id' => null,
+            'type' => static::TYPE_AUCTION_FINISHED,
+            'payload' => [
+                'good_id' => $good->id,
+                'good_name' => $good->name,
+                'winner_count' => $winnerCount,
+            ],
+        ]);
+    }
+
+    public static function recordMarketOrderShipped(MarketDeal $deal, ?User $shipper = null)
+    {
+        $deal->loadMissing('user', 'good');
+        $course = $deal->user ? static::activePulseCourseForUser($deal->user) : null;
+
+        return static::recordActivity([
+            'course_id' => $course ? $course->id : null,
+            'user_id' => $deal->user_id,
+            'type' => static::TYPE_MARKET_ORDER_SHIPPED,
+            'payload' => static::basePayload($course) + [
+                'deal_id' => $deal->id,
+                'good_id' => $deal->good_id,
+                'good_name' => $deal->good ? $deal->good->name : 'товар',
+                'price' => $deal->displayPrice(),
+                'shipper_id' => $shipper ? $shipper->id : null,
+            ],
+        ]);
+    }
+
+    public static function recordTaskCreated(Course $course, Task $task, User $teacher)
+    {
+        if ($task->is_hidden) {
+            return null;
+        }
+
+        $task->loadMissing('step.lesson');
+        $step = $task->step;
+        $lesson = $step ? $step->lesson : null;
+
+        return static::recordActivity([
+            'course_id' => $course->id,
+            'lesson_id' => $lesson ? $lesson->id : null,
+            'step_id' => $step ? $step->id : null,
+            'task_id' => $task->id,
+            'user_id' => $teacher->id,
+            'type' => static::TYPE_TASK_CREATED,
+            'payload' => static::basePayload($course, $lesson, $task),
+        ]);
+    }
+
+    public static function recordLessonCreated(Course $course, Lesson $lesson, User $teacher)
+    {
+        return static::recordActivity([
+            'course_id' => $course->id,
+            'lesson_id' => $lesson->id,
+            'user_id' => $teacher->id,
+            'type' => static::TYPE_LESSON_CREATED,
+            'payload' => static::basePayload($course, $lesson),
+        ]);
+    }
+
+    public static function recordProgressMilestones(Course $course, User $student, ?Lesson $lesson)
+    {
+        if (!$lesson || !$lesson->exists) {
+            return collect();
+        }
+
+        $recorded = collect();
+        $lesson->loadMissing('chapter');
+        $lessonStats = LessonStudentStats::where('course_id', $course->id)
+            ->where('lesson_id', $lesson->id)
+            ->where('student_id', $student->id)
+            ->first(['percent']);
+
+        if ($lessonStats && (float) $lessonStats->percent >= 100 && !static::hasMilestone($course->id, $student->id, static::TYPE_LESSON_COMPLETED, $lesson->id)) {
+            $recorded->push(static::recordActivity([
+                'course_id' => $course->id,
+                'lesson_id' => $lesson->id,
+                'user_id' => $student->id,
+                'type' => static::TYPE_LESSON_COMPLETED,
+                'payload' => static::basePayload($course, $lesson),
+            ]));
+        }
+
+        $chapter = $lesson->chapter;
+        if ($chapter && static::chapterCompletedByStudent($course, $chapter, $student) && !static::hasChapterMilestone($course->id, $student->id, $chapter->id)) {
+            $recorded->push(static::recordActivity([
+                'course_id' => $course->id,
+                'user_id' => $student->id,
+                'type' => static::TYPE_CHAPTER_COMPLETED,
+                'payload' => static::basePayload($course) + [
+                    'chapter_id' => $chapter->id,
+                    'chapter_name' => $chapter->name,
+                ],
+            ]));
+        }
+
+        return $recorded->filter();
+    }
+
+    public static function recordCourseDailySummary(Course $course, Carbon $date, int $solutionsCount, int $checkedCount, int $xpEarned)
+    {
+        if ($solutionsCount <= 0 && $checkedCount <= 0 && $xpEarned <= 0) {
+            return null;
+        }
+
+        if (static::where('course_id', $course->id)
+            ->where('type', static::TYPE_COURSE_DAILY_SUMMARY)
+            ->whereDate('created_at', Carbon::now()->toDateString())
+            ->exists()) {
             return null;
         }
 
         return static::recordActivity([
             'course_id' => $course->id,
-            'user_id' => $user->id,
-            'type' => static::TYPE_PET_ACTION,
-            'payload' => static::basePayload($course) + $payload + [
-                'pet_action' => $action,
+            'type' => static::TYPE_COURSE_DAILY_SUMMARY,
+            'payload' => static::basePayload($course) + [
+                'date' => $date->toDateString(),
+                'solutions_count' => $solutionsCount,
+                'checked_count' => $checkedCount,
+                'xp_earned' => $xpEarned,
+            ],
+        ]);
+    }
+
+    public static function recordTaskStruggle(Course $course, Task $task, int $count, string $kind = 'low_marks')
+    {
+        if ($count <= 0) {
+            return null;
+        }
+
+        $task->loadMissing('step.lesson');
+        $step = $task->step;
+        $lesson = $step ? $step->lesson : null;
+
+        if (static::where('course_id', $course->id)
+            ->where('task_id', $task->id)
+            ->where('type', static::TYPE_TASK_STRUGGLE)
+            ->where('created_at', '>=', Carbon::now()->subHours(18))
+            ->exists()) {
+            return null;
+        }
+
+        return static::recordActivity([
+            'course_id' => $course->id,
+            'lesson_id' => $lesson ? $lesson->id : null,
+            'step_id' => $step ? $step->id : null,
+            'task_id' => $task->id,
+            'type' => static::TYPE_TASK_STRUGGLE,
+            'payload' => static::basePayload($course, $lesson, $task) + [
+                'count' => $count,
+                'kind' => $kind,
             ],
         ]);
     }
@@ -259,13 +564,20 @@ class CourseActivity extends Model
         $courseIds = collect($courseIds)->filter()->values();
         $now = $now ?: Carbon::now();
 
-        if ($courseIds->isEmpty()) {
-            return static::emptyPulse($now);
-        }
-
         $activities = static::query()
             ->select(['type', 'created_at'])
-            ->whereIn('course_id', $courseIds)
+            ->where(function ($query) use ($courseIds) {
+                if ($courseIds->isNotEmpty()) {
+                    $query->whereIn('course_id', $courseIds)
+                        ->orWhere(function ($query) {
+                            $query->whereNull('course_id')
+                                ->whereIn('type', static::globalPulseTypes());
+                        });
+                } else {
+                    $query->whereNull('course_id')
+                        ->whereIn('type', static::globalPulseTypes());
+                }
+            })
             ->where('created_at', '>=', $now->copy()->subHours(static::PULSE_SIGNAL_LOOKBACK_HOURS))
             ->orderBy('created_at')
             ->get();
@@ -324,6 +636,16 @@ class CourseActivity extends Model
             $longTail *= 1.35;
         }
 
+        if (in_array($type, [static::TYPE_MARKET_AUCTION_WON, static::TYPE_MARKET_DIGITAL_PURCHASE, static::TYPE_AUCTION_LEADING_BID, static::TYPE_AUCTION_FINISHED], true)) {
+            $secondaryWave *= 1.2;
+            $longTail *= 1.2;
+        }
+
+        if (in_array($type, [static::TYPE_LESSON_COMPLETED, static::TYPE_CHAPTER_COMPLETED, static::TYPE_COURSE_DAILY_SUMMARY, static::TYPE_LEARNING_STREAK, static::TYPE_XP_MILESTONE], true)) {
+            $secondaryWave *= 1.3;
+            $longTail *= 1.25;
+        }
+
         return $sharpPeak + $shoulder + $secondaryWave + $longTail;
     }
 
@@ -340,8 +662,34 @@ class CourseActivity extends Model
                 return 2.5;
             case static::TYPE_AI_ACHIEVEMENT_EARNED:
                 return 3.0;
+            case static::TYPE_CHAPTER_COMPLETED:
+                return 3.2;
+            case static::TYPE_LESSON_COMPLETED:
+                return 2.7;
+            case static::TYPE_LEARNING_STREAK:
+            case static::TYPE_XP_MILESTONE:
+                return 2.6;
             case static::TYPE_PET_ACTION:
                 return 2.2;
+            case static::TYPE_COURSE_DAILY_SUMMARY:
+                return 2.5;
+            case static::TYPE_TASK_STRUGGLE:
+                return 2.4;
+            case static::TYPE_MARKET_AUCTION_WON:
+                return 2.4;
+            case static::TYPE_AUCTION_FINISHED:
+                return 2.3;
+            case static::TYPE_AUCTION_LEADING_BID:
+            case static::TYPE_MARKET_ORDER_SHIPPED:
+            case static::TYPE_TASK_CREATED:
+            case static::TYPE_LESSON_CREATED:
+            case static::TYPE_FIRST_DAILY_ACTION:
+            case static::TYPE_FIRST_SOLUTION:
+                return 2.1;
+            case static::TYPE_MARKET_PURCHASE:
+            case static::TYPE_MARKET_DIGITAL_PURCHASE:
+            case static::TYPE_RANDOM_COIN_DROP:
+                return 2.0;
             case static::TYPE_DEADLINE_PENALTY_PAID:
             case static::TYPE_EARLY_ACCESS_BOUGHT:
             case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
@@ -430,7 +778,12 @@ class CourseActivity extends Model
 
     public function hasActor()
     {
-        return $this->type !== static::TYPE_LESSON_OPENED;
+        return !in_array($this->type, [
+            static::TYPE_LESSON_OPENED,
+            static::TYPE_COURSE_DAILY_SUMMARY,
+            static::TYPE_TASK_STRUGGLE,
+            static::TYPE_AUCTION_FINISHED,
+        ], true);
     }
 
     public function actorName()
@@ -477,6 +830,40 @@ class CourseActivity extends Model
                 return 'получил(а) достижение «' . ($payload['achievement_title'] ?? 'Сильное решение') . '»';
             case static::TYPE_PET_ACTION:
                 return static::petActionText($payload);
+            case static::TYPE_MARKET_PURCHASE:
+                return 'купил(а) «' . ($payload['good_name'] ?? 'товар') . '»';
+            case static::TYPE_MARKET_AUCTION_WON:
+                return 'выиграл(а) аукцион «' . ($payload['good_name'] ?? 'товар') . '»';
+            case static::TYPE_MARKET_DIGITAL_PURCHASE:
+                return 'купил(а) цифровой товар «' . ($payload['item_name'] ?? 'товар') . '»';
+            case static::TYPE_RANDOM_COIN_DROP:
+                return 'получил(а) ' . max(1, (int) ($payload['amount'] ?? 3)) . ' GC от лепрекона';
+            case static::TYPE_LESSON_COMPLETED:
+                return 'завершил(а) урок «' . $lessonName . '»';
+            case static::TYPE_CHAPTER_COMPLETED:
+                return 'завершил(а) главу «' . ($payload['chapter_name'] ?? 'глава') . '»';
+            case static::TYPE_COURSE_DAILY_SUMMARY:
+                return 'Итоги дня: ' . (int) ($payload['solutions_count'] ?? 0) . ' решений, ' . (int) ($payload['checked_count'] ?? 0) . ' проверок';
+            case static::TYPE_TASK_STRUGGLE:
+                return 'сложное место в задаче «' . $taskName . '»';
+            case static::TYPE_FIRST_DAILY_ACTION:
+                return 'начал(а) заниматься сегодня';
+            case static::TYPE_LEARNING_STREAK:
+                return 'занимается ' . max(3, (int) ($payload['days'] ?? 3)) . ' дня подряд';
+            case static::TYPE_FIRST_SOLUTION:
+                return 'сдал(а) первое решение';
+            case static::TYPE_XP_MILESTONE:
+                return 'добрал(а)ся до ' . (int) ($payload['milestone'] ?? 0) . ' XP';
+            case static::TYPE_AUCTION_LEADING_BID:
+                return 'лидирует в аукционе «' . ($payload['good_name'] ?? 'товар') . '»';
+            case static::TYPE_AUCTION_FINISHED:
+                return 'Аукцион «' . ($payload['good_name'] ?? 'товар') . '» завершён';
+            case static::TYPE_MARKET_ORDER_SHIPPED:
+                return 'получил(а) товар «' . ($payload['good_name'] ?? 'товар') . '»';
+            case static::TYPE_TASK_CREATED:
+                return 'добавил(а) задачу «' . $taskName . '»';
+            case static::TYPE_LESSON_CREATED:
+                return 'добавил(а) урок «' . $lessonName . '»';
             default:
                 return 'Новое событие в курсе';
         }
@@ -501,6 +888,34 @@ class CourseActivity extends Model
 
         if ($this->type === static::TYPE_PET_ACTION && !empty($payload['amount'])) {
             $parts[] = '+' . (int) $payload['amount'] . ' GC';
+        }
+
+        if (in_array($this->type, [static::TYPE_MARKET_PURCHASE, static::TYPE_MARKET_AUCTION_WON, static::TYPE_MARKET_DIGITAL_PURCHASE], true) && !empty($payload['price'])) {
+            $parts[] = '-' . (int) $payload['price'] . ' GC';
+        }
+
+        if ($this->type === static::TYPE_RANDOM_COIN_DROP && !empty($payload['amount'])) {
+            $parts[] = '+' . (int) $payload['amount'] . ' GC';
+        }
+
+        if ($this->type === static::TYPE_COURSE_DAILY_SUMMARY && !empty($payload['xp_earned'])) {
+            $parts[] = '+' . (int) $payload['xp_earned'] . ' XP';
+        }
+
+        if ($this->type === static::TYPE_TASK_STRUGGLE && !empty($payload['count'])) {
+            $parts[] = (int) $payload['count'] . ' попытки ниже максимума';
+        }
+
+        if (in_array($this->type, [static::TYPE_AUCTION_LEADING_BID, static::TYPE_AUCTION_FINISHED], true) && !empty($payload['amount'])) {
+            $parts[] = (int) $payload['amount'] . ' GC';
+        }
+
+        if ($this->type === static::TYPE_AUCTION_FINISHED && !empty($payload['winner_count'])) {
+            $parts[] = (int) $payload['winner_count'] . ' победителей';
+        }
+
+        if ($this->type === static::TYPE_XP_MILESTONE && !empty($payload['score'])) {
+            $parts[] = (int) $payload['score'] . ' XP всего';
         }
 
         return implode(' · ', $parts);
@@ -530,6 +945,40 @@ class CourseActivity extends Model
                 return 'fas fa-newspaper';
             case static::TYPE_AI_ACHIEVEMENT_EARNED:
                 return Achievement::iconOptions()[$payload['icon_key'] ?? 'sparkles'] ?? 'fas fa-magic';
+            case static::TYPE_MARKET_PURCHASE:
+                return 'fas fa-shopping-bag';
+            case static::TYPE_MARKET_AUCTION_WON:
+                return 'fas fa-gavel';
+            case static::TYPE_MARKET_DIGITAL_PURCHASE:
+                return 'fas fa-store';
+            case static::TYPE_RANDOM_COIN_DROP:
+                return 'fas fa-rainbow';
+            case static::TYPE_LESSON_COMPLETED:
+                return 'fas fa-check-circle';
+            case static::TYPE_CHAPTER_COMPLETED:
+                return 'fas fa-flag-checkered';
+            case static::TYPE_COURSE_DAILY_SUMMARY:
+                return 'fas fa-chart-line';
+            case static::TYPE_TASK_STRUGGLE:
+                return 'fas fa-exclamation-circle';
+            case static::TYPE_FIRST_DAILY_ACTION:
+                return 'fas fa-sun';
+            case static::TYPE_LEARNING_STREAK:
+                return 'fas fa-fire';
+            case static::TYPE_FIRST_SOLUTION:
+                return 'fas fa-seedling';
+            case static::TYPE_XP_MILESTONE:
+                return 'fas fa-mountain';
+            case static::TYPE_AUCTION_LEADING_BID:
+                return 'fas fa-gavel';
+            case static::TYPE_AUCTION_FINISHED:
+                return 'fas fa-trophy';
+            case static::TYPE_MARKET_ORDER_SHIPPED:
+                return 'fas fa-box-open';
+            case static::TYPE_TASK_CREATED:
+                return 'fas fa-plus-circle';
+            case static::TYPE_LESSON_CREATED:
+                return 'fas fa-book-medical';
             default:
                 return 'fas fa-magic';
         }
@@ -562,7 +1011,27 @@ class CourseActivity extends Model
             case static::TYPE_TASK_AI_SUMMARY:
                 return 'is-summary';
             case static::TYPE_AI_ACHIEVEMENT_EARNED:
+            case static::TYPE_LESSON_COMPLETED:
+            case static::TYPE_CHAPTER_COMPLETED:
+            case static::TYPE_LEARNING_STREAK:
+            case static::TYPE_FIRST_SOLUTION:
+            case static::TYPE_XP_MILESTONE:
                 return 'is-achievement';
+            case static::TYPE_COURSE_DAILY_SUMMARY:
+            case static::TYPE_TASK_CREATED:
+            case static::TYPE_LESSON_CREATED:
+                return 'is-summary';
+            case static::TYPE_TASK_STRUGGLE:
+            case static::TYPE_AUCTION_FINISHED:
+                return 'is-open';
+            case static::TYPE_MARKET_PURCHASE:
+            case static::TYPE_MARKET_AUCTION_WON:
+            case static::TYPE_MARKET_DIGITAL_PURCHASE:
+            case static::TYPE_RANDOM_COIN_DROP:
+            case static::TYPE_AUCTION_LEADING_BID:
+            case static::TYPE_MARKET_ORDER_SHIPPED:
+            case static::TYPE_FIRST_DAILY_ACTION:
+                return 'is-boost';
             default:
                 return 'is-submit';
         }
@@ -570,6 +1039,18 @@ class CourseActivity extends Model
 
     public function url()
     {
+        if (in_array($this->type, [static::TYPE_MARKET_PURCHASE, static::TYPE_MARKET_AUCTION_WON, static::TYPE_MARKET_DIGITAL_PURCHASE, static::TYPE_AUCTION_LEADING_BID, static::TYPE_AUCTION_FINISHED, static::TYPE_MARKET_ORDER_SHIPPED], true)) {
+            return url('/insider/market');
+        }
+
+        if ($this->type === static::TYPE_PET_ACTION && !$this->course_id && $this->user_id) {
+            return url('/insider/profile/' . $this->user_id . '#learning-avatar');
+        }
+
+        if ($this->type === static::TYPE_RANDOM_COIN_DROP && $this->user_id) {
+            return url('/insider/profile/' . $this->user_id . '#gc-history');
+        }
+
         if ($this->step_id && $this->task_id) {
             if ($this->type === static::TYPE_AI_ACHIEVEMENT_EARNED && $this->user_id) {
                 return url('/insider/profile/' . $this->user_id . '#achievements');
@@ -630,12 +1111,155 @@ class CourseActivity extends Model
         ]);
     }
 
-    private static function basePayload(Course $course, ?Lesson $lesson = null, ?Task $task = null)
+    private static function recordFirstDailyAction(Solution $solution)
+    {
+        $solution->loadMissing('task.step.lesson', 'course');
+        $submittedAt = $solution->submittedAt();
+
+        if (static::where('user_id', $solution->user_id)
+            ->where('type', static::TYPE_FIRST_DAILY_ACTION)
+            ->whereDate('created_at', $submittedAt->toDateString())
+            ->exists()) {
+            return null;
+        }
+
+        $task = $solution->task;
+        $step = $task ? $task->step : null;
+        $lesson = $step ? $step->lesson : null;
+        $course = $solution->course;
+
+        if (!$course) {
+            return null;
+        }
+
+        return static::recordActivity([
+            'course_id' => $course->id,
+            'lesson_id' => $lesson ? $lesson->id : null,
+            'step_id' => $step ? $step->id : null,
+            'task_id' => $task ? $task->id : null,
+            'solution_id' => $solution->id,
+            'user_id' => $solution->user_id,
+            'type' => static::TYPE_FIRST_DAILY_ACTION,
+            'payload' => static::basePayload($course, $lesson, $task),
+        ]);
+    }
+
+    private static function recordFirstSolution(Solution $solution)
+    {
+        $submittedCount = Solution::where('user_id', $solution->user_id)
+            ->whereNotNull('submitted')
+            ->count();
+
+        if ($submittedCount !== 1) {
+            return null;
+        }
+
+        return static::recordForSolution(static::TYPE_FIRST_SOLUTION, $solution);
+    }
+
+    private static function hasMilestone(int $courseId, int $studentId, string $type, ?int $lessonId = null): bool
+    {
+        return static::where('course_id', $courseId)
+            ->where('user_id', $studentId)
+            ->where('type', $type)
+            ->when($lessonId !== null, function ($query) use ($lessonId) {
+                $query->where('lesson_id', $lessonId);
+            })
+            ->exists();
+    }
+
+    private static function hasChapterMilestone(int $courseId, int $studentId, int $chapterId): bool
+    {
+        return static::where('course_id', $courseId)
+            ->where('user_id', $studentId)
+            ->where('type', static::TYPE_CHAPTER_COMPLETED)
+            ->get(['payload'])
+            ->contains(function ($activity) use ($chapterId) {
+                return (int) ($activity->payload['chapter_id'] ?? 0) === $chapterId;
+            });
+    }
+
+    private static function chapterCompletedByStudent(Course $course, ProgramChapter $chapter, User $student): bool
+    {
+        $lessonIds = Lesson::where('chapter_id', $chapter->id)
+            ->with('info')
+            ->get()
+            ->filter(function ($lesson) use ($course) {
+                return $lesson->isStarted($course);
+            })
+            ->pluck('id')
+            ->values();
+
+        if ($lessonIds->isEmpty()) {
+            return false;
+        }
+
+        $stats = LessonStudentStats::where('course_id', $course->id)
+            ->where('student_id', $student->id)
+            ->whereIn('lesson_id', $lessonIds)
+            ->get(['lesson_id', 'percent'])
+            ->keyBy('lesson_id');
+
+        if ($stats->count() < $lessonIds->count()) {
+            return false;
+        }
+
+        return $stats->min('percent') >= 100;
+    }
+
+    private static function basePayload(?Course $course, ?Lesson $lesson = null, ?Task $task = null)
     {
         return [
-            'course_name' => $course->name,
+            'course_name' => $course ? $course->name : null,
             'lesson_name' => $lesson ? $lesson->name : null,
             'task_name' => $task ? $task->name : null,
+        ];
+    }
+
+    private static function activePulseCourseForUser(User $user)
+    {
+        $course = $user->courses()
+            ->where('state', 'started')
+            ->orderByDesc('courses.id')
+            ->first(['courses.id', 'courses.name']);
+
+        if ($course) {
+            return $course;
+        }
+
+        if ($user->role === 'teacher' || $user->role === 'admin') {
+            $course = $user->managed_courses()
+                ->where('state', 'started')
+                ->orderByDesc('courses.id')
+                ->first(['courses.id', 'courses.name']);
+        }
+
+        if ($course) {
+            return $course;
+        }
+
+        if ($user->role === 'admin') {
+            return Course::where('state', 'started')
+                ->orderByDesc('id')
+                ->first(['id', 'name']);
+        }
+
+        return null;
+    }
+
+    public static function globalPulseTypes(): array
+    {
+        return [
+            static::TYPE_PET_ACTION,
+            static::TYPE_LEARNING_STREAK,
+            static::TYPE_XP_MILESTONE,
+            static::TYPE_MARKET_PURCHASE,
+            static::TYPE_MARKET_AUCTION_WON,
+            static::TYPE_MARKET_DIGITAL_PURCHASE,
+            static::TYPE_RANDOM_COIN_DROP,
+            static::TYPE_AUCTION_LEADING_BID,
+            static::TYPE_AUCTION_FINISHED,
+            static::TYPE_MARKET_ORDER_SHIPPED,
         ];
     }
 }

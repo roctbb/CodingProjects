@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Course;
+use App\Lesson;
 use App\Program;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -20,9 +21,9 @@ class CoursePosterGenerator
         $this->chatGpt = $chatGpt;
     }
 
-    public function generate(Program $program): string
+    public function generate(Program $program, ?Course $course = null): string
     {
-        $prompt = $this->buildPrompt($program);
+        $prompt = $this->buildPrompt($program, $course);
         $image = $this->chatGpt->generateImage([
             ['role' => 'system', 'content' => $this->systemPrompt()],
             ['role' => 'user', 'content' => $prompt],
@@ -56,7 +57,9 @@ class CoursePosterGenerator
             throw new \RuntimeException('Course does not have a program for poster generation');
         }
 
-        return $this->generate($program);
+        $course->setRelation('program', $program);
+
+        return $this->generate($program, $course);
     }
 
     private function systemPrompt(): string
@@ -68,16 +71,50 @@ class CoursePosterGenerator
             . 'Не используй мелкий читаемый текст, логотипы, бренды, водяные знаки и реалистичные фотографии.';
     }
 
-    private function buildPrompt(Program $program): string
+    private function buildPrompt(Program $program, ?Course $course = null): string
     {
-        $description = trim(strip_tags(html_entity_decode((string) $program->description)));
+        $programDescription = $this->plainText($program->description ?? '');
+        $courseDescription = $course ? $this->plainText($course->description ?? '') : '';
+        $lessonNames = $this->lessonNames($program);
+        $courseLine = $course
+            ? 'Курс, по которому запускается генерация: ' . Str::limit((string) $course->name, 160, '') . "\n"
+            : '';
 
         return "Сгенерируй постер программы для комнаты ученика.\n"
             . 'Название программы: ' . Str::limit((string) $program->name, 160, '') . "\n"
-            . 'Описание программы: ' . Str::limit($description, 1800, '') . "\n\n"
+            . $courseLine
+            . 'Описание курса: ' . Str::limit($courseDescription ?: 'не указано', 1400, '') . "\n"
+            . 'Описание программы: ' . Str::limit($programDescription ?: 'не указано', 900, '') . "\n"
+            . 'Темы уроков: ' . Str::limit($lessonNames ?: 'не указаны', 900, '') . "\n\n"
             . 'Сделай образ по смыслу программы: предметы программирования, схемы, интерфейсы, алгоритмические формы, персонаж-маскот или абстрактная сцена. '
+            . 'Если описание курса заполнено, опирайся прежде всего на него, чтобы плакаты разных курсов одной программы отличались по образам и деталям. '
             . 'Композиция должна хорошо читаться в узком настенном постере, без рамки, без прозрачных областей, без текста и без водяных знаков. '
             . 'Финальный результат должен быть вертикальным растровым PNG ' . self::WIDTH . 'x' . self::HEIGHT . '.';
+    }
+
+    private function plainText($value): string
+    {
+        return trim(preg_replace('/\s+/', ' ', strip_tags(html_entity_decode((string) $value))));
+    }
+
+    private function lessonNames(Program $program): string
+    {
+        $lessons = $program->relationLoaded('lessons')
+            ? $program->lessons
+            : ($program->exists
+                ? Lesson::query()
+                    ->where('program_id', $program->id)
+                    ->orderBy('sort_index')
+                    ->orderBy('id')
+                    ->limit(12)
+                    ->get(['name'])
+                : collect());
+
+        return $lessons
+            ->pluck('name')
+            ->filter()
+            ->take(12)
+            ->implode(', ');
     }
 
     private function storeImage(Program $program, array $image): string

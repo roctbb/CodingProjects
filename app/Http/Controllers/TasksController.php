@@ -86,6 +86,8 @@ class TasksController extends Controller
             $task->is_code = true;
         }
         $task->save();
+        $course = Course::findOrFail($course_id);
+        CourseActivity::recordTaskCreated($course, $task, Auth::user());
 
         // Recalculate points for all students after adding new task
         RecalculateCoursePoints::dispatch($course_id);
@@ -284,8 +286,11 @@ class TasksController extends Controller
             // Recalculate cached points after auto-grading quiz
             CourseStudentPoints::recalculate($course_id, $user->id);
             LessonStudentStats::recalculateForStudent($course_id, $user->id);
+            $task->loadMissing('step.lesson');
+            CourseActivity::recordProgressMilestones($course, $user, $task->step ? $task->step->lesson : null);
 
             $user->rescore();
+            CourseActivity::recordXpMilestones($user);
             $user->awardRankPromotionIfNeeded($old_rank);
         }
 
@@ -724,8 +729,11 @@ class TasksController extends Controller
 
         // Recalculate lesson stats for all lessons this student is enrolled in
         LessonStudentStats::recalculateForStudent($course_id, $solution->user_id);
+        $solution->loadMissing('task.step.lesson', 'course', 'user');
+        CourseActivity::recordProgressMilestones($solution->course, $solution->user, $solution->task && $solution->task->step ? $solution->task->step->lesson : null);
 
         $solution->user->rescore();
+        CourseActivity::recordXpMilestones($solution->user);
 
         $when = \Carbon\Carbon::now()->addSeconds(1);
         Notification::send($solution->user, (new \App\Notifications\NewMark($solution))->delay($when));
@@ -1004,6 +1012,7 @@ class TasksController extends Controller
         LessonStudentStats::recalculateForStudent($course_id, $user->id);
 
         $user->rescore();
+        CourseActivity::recordXpMilestones($user);
         $user->awardRankPromotionIfNeeded($old_rank);
 
         $this->make_success_alert('Штраф снят', 'XP за решение пересчитан, со счета списано ' . $cost . ' GC.');
@@ -1071,6 +1080,7 @@ class TasksController extends Controller
         LessonStudentStats::recalculateForStudent($course_id, $user->id);
 
         $user->rescore();
+        CourseActivity::recordXpMilestones($user);
         $user->awardRankPromotionIfNeeded($old_rank);
 
         $this->make_success_alert('Бустер применен', 'Решение получило +' . ($solution->mark - $markBeforeBooster) . ' XP.' . ($cost > 0 ? ' Со счета списано ' . $cost . ' GC.' : ' Использован бесплатный бустер от питомца.'));

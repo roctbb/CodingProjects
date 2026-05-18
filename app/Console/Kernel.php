@@ -20,6 +20,7 @@ class Kernel extends ConsoleKernel
         Commands\RecalculateCoursePoints::class,
         Commands\PollTelegramBot::class,
         Commands\RandomCoinDrop::class,
+        Commands\GeneratePulseInsights::class,
         Commands\RunPetDailyActions::class,
         Commands\SyncGeekPasteIntegrity::class
     ];
@@ -35,6 +36,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('birthdays')->daily();
         $schedule->command('coins:random-drop')->daily();
         $schedule->command('pets:daily-actions')->daily();
+        $schedule->command('pulse:insights --daily-summary')->dailyAt('00:10');
+        $schedule->command('pulse:insights --difficult-spots')->hourly();
+        $schedule->command('pulse:insights --streaks')->dailyAt('20:30');
         $schedule->command('telegram:poll --once')->everyMinute()->withoutOverlapping();
         //          ->hourly();
     }

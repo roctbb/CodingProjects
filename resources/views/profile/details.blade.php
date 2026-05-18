@@ -426,7 +426,10 @@
                                                 </div>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                                             </div>
-                                            <form method="POST" action="{{ url('/insider/profile/'.$user->id.'/achievement/'.$achievement->id) }}">
+                                            <form method="POST"
+                                                  action="{{ url('/insider/profile/'.$user->id.'/achievement/'.$achievement->id) }}"
+                                                  data-fullscreen-loading
+                                                  data-loading-message="Сохраняю достижение и обновляю кубок">
                                                 @csrf
                                                 <div class="modal-body p-3 p-md-4">
                                                     <div class="mb-3">

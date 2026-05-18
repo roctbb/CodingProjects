@@ -153,6 +153,9 @@ class MarketGood extends Authenticatable
 
             $winnerUserIds = $good->topAuctionBids((int) $good->number)->pluck('user_id')->all();
             $isWinning = in_array($user->id, $winnerUserIds);
+            if ($isWinning) {
+                CourseActivity::recordAuctionLeadingBidForActiveCourse($user, $good, $amount);
+            }
             DB::afterCommit(function () use ($good, $amount, $isWinning, $user) {
                 $user->notify(new AuctionEvent(
                     '🔨 Ваша ставка на <strong>"' . e($good->name) . '"</strong> принята: <strong>' . $amount . ' GC</strong>.' .
@@ -219,6 +222,7 @@ class MarketGood extends Authenticatable
                 $deal->price = $bid->amount;
                 $deal->save();
                 $deals->push($deal);
+                CourseActivity::recordMarketPurchaseForActiveCourse($bid->user, $good, (int) $bid->amount, 'auction', $deal);
 
                 DB::afterCommit(function () use ($bid, $good) {
                     $bid->user->notify(new AuctionEvent(
@@ -246,6 +250,7 @@ class MarketGood extends Authenticatable
             $good->in_stock = false;
             $good->auction_finished_at = now();
             $good->save();
+            CourseActivity::recordAuctionFinished($good, $deals->count());
 
             return $deals;
         });
@@ -290,6 +295,7 @@ class MarketGood extends Authenticatable
         $deal->save();
 
         CoinTransaction::register($user->id, -1 * $this->price, "Good #".$this->id);
+        CourseActivity::recordMarketPurchaseForActiveCourse($user, $this, (int) $this->price, 'purchase', $deal);
 
         return $deal;
     }

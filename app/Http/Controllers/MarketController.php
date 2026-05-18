@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\CoinTransaction;
+use App\CourseActivity;
 use App\MarketDeal;
 use App\MarketGood;
 use App\Notifications\NewOrder;
@@ -241,6 +242,7 @@ class MarketController extends Controller
         }
 
         $this->make_success_alert('Цифровой товар куплен', '«' . $item['name'] . '» теперь доступен в настройках комнаты профиля.', $destination = 'head');
+        CourseActivity::recordDigitalPurchaseForActiveCourse($user, $item);
 
         return redirect('/insider/profile/' . $user->id . '#learning-avatar');
     }
@@ -300,6 +302,7 @@ class MarketController extends Controller
         $order->shipped = true;
         $order->shipped_by = Auth::User()->id;
         $order->save();
+        CourseActivity::recordMarketOrderShipped($order, $user);
 
         $returnUrl = $request->input('return_url');
         $returnPath = $returnUrl ? parse_url($returnUrl, PHP_URL_PATH) : null;
