@@ -22,7 +22,8 @@ class Kernel extends ConsoleKernel
         Commands\RandomCoinDrop::class,
         Commands\GeneratePulseInsights::class,
         Commands\RunPetDailyActions::class,
-        Commands\SyncGeekPasteIntegrity::class
+        Commands\SyncGeekPasteIntegrity::class,
+        Commands\DispatchMissingAchievementTrophies::class,
     ];
 
     /**

@@ -135,7 +135,7 @@ services:
       target: app
     container_name: codingprojects-queue
     restart: unless-stopped
-    command: php artisan queue:work --sleep=3 --tries=3 --timeout=90
+    command: php artisan queue:work --sleep=3 --tries=3 --timeout=300
     env_file:
       - .env
     environment:

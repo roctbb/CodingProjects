@@ -8859,6 +8859,33 @@ a:hover {
   width: 2.25rem;
 }
 
+.profile-achievement:has(.profile-achievement__trophy-button) {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--gc-warning) 8%, var(--gc-surface-variant)), var(--gc-surface-variant) 42%);
+}
+
+.profile-achievement__trophy-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: inherit;
+  color: inherit;
+  cursor: zoom-in;
+  display: inline-flex;
+  height: 100%;
+  justify-content: center;
+  padding: 0;
+  transition: transform var(--gc-transition), filter var(--gc-transition);
+  width: 100%;
+}
+
+.profile-achievement__trophy-button:hover,
+.profile-achievement__trophy-button:focus-visible {
+  filter: drop-shadow(0 0.35rem 0.55rem rgba(245, 158, 11, 0.32));
+  outline: 0;
+  transform: translateY(-1px) scale(1.06);
+}
+
 .profile-achievement__body {
   display: grid;
   gap: 0.35rem;
@@ -8891,6 +8918,95 @@ a:hover {
 .profile-achievement__meta span + span::before {
   content: "·";
   margin-right: 0.42rem;
+}
+
+.achievement-trophy-viewer .modal-content {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(250, 204, 21, 0.16), transparent 36%),
+    var(--gc-surface);
+}
+
+.achievement-trophy-viewer .modal-dialog {
+  max-width: min(92vw, 42rem);
+}
+
+.achievement-trophy-viewer__figure {
+  align-items: center;
+  background:
+    radial-gradient(circle at 50% 54%, rgba(245, 158, 11, 0.22), transparent 0 34%, rgba(245, 158, 11, 0.08) 35%, transparent 56%),
+    linear-gradient(180deg, color-mix(in srgb, var(--gc-warning) 10%, var(--gc-surface)), var(--gc-surface));
+  border: 1px solid color-mix(in srgb, var(--gc-warning) 26%, var(--gc-border));
+  border-radius: var(--gc-radius-md);
+  display: flex;
+  justify-content: center;
+  min-height: min(70vh, 26rem);
+  overflow: hidden;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  position: relative;
+}
+
+.achievement-trophy-viewer__shine {
+  animation: achievement-trophy-glow 2.2s ease-in-out infinite;
+  background:
+    conic-gradient(from 0deg, transparent, rgba(250, 204, 21, 0.42), transparent 28%),
+    radial-gradient(circle, rgba(250, 204, 21, 0.18), transparent 62%);
+  border-radius: 50%;
+  height: min(52vw, 20rem);
+  inset: 50% auto auto 50%;
+  pointer-events: none;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: min(52vw, 20rem);
+}
+
+.achievement-trophy-viewer__image {
+  animation: achievement-trophy-pop 360ms cubic-bezier(0.2, 0.9, 0.2, 1.2);
+  display: block;
+  filter: drop-shadow(0 1rem 1.4rem rgba(15, 23, 42, 0.18));
+  max-height: min(58vh, 22rem);
+  max-width: min(78vw, 24rem);
+  object-fit: contain;
+  position: relative;
+  width: auto;
+}
+
+.achievement-confetti-canvas {
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: 1080;
+}
+
+@keyframes achievement-trophy-pop {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem) scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes achievement-trophy-glow {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.96);
+  }
+
+  50% {
+    opacity: 0.88;
+    transform: translate(-50%, -50%) rotate(18deg) scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .achievement-trophy-viewer__image,
+  .achievement-trophy-viewer__shine {
+    animation: none;
+  }
 }
 
 .profile-course-card {

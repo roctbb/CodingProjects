@@ -384,7 +384,15 @@
                                 @endif
                                 <span class="profile-achievement__icon">
                                     @if($achievementTrophyUrl)
-                                        <img src="{{ $achievementTrophyUrl }}" alt="">
+                                        <button type="button"
+                                                class="profile-achievement__trophy-button"
+                                                data-achievement-trophy-viewer
+                                                data-trophy-src="{{ $achievementTrophyUrl }}"
+                                                data-trophy-title="{{ $achievement->title }}"
+                                                data-trophy-description="{{ $achievement->description }}"
+                                                aria-label="Увеличить кубок «{{ $achievement->title }}»">
+                                            <img src="{{ $achievementTrophyUrl }}" alt="">
+                                        </button>
                                     @elseif($achievementVisualSvg)
                                         {!! $achievementVisualSvg !!}
                                     @else

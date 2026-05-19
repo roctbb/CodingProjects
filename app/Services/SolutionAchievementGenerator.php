@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Achievement;
 use App\CoinTransaction;
 use App\CourseActivity;
+use App\Jobs\GenerateAchievementTrophy;
 use App\Solution;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -128,20 +129,46 @@ class SolutionAchievementGenerator
             return null;
         }
 
+        $this->awardManualAchievementCoins($achievement, $coinReward);
+        if ($manual) {
+            $this->dispatchTrophyGeneration($achievement, true);
+            $achievement->refresh();
+            CourseActivity::recordAchievementEarned($achievement);
+        } else {
+            CourseActivity::recordAchievementEarned($achievement);
+            $this->dispatchTrophyGeneration($achievement, false);
+        }
+
+        return $achievement;
+    }
+
+    protected function dispatchTrophyGeneration(Achievement $achievement, bool $manual): void
+    {
+        if ($manual) {
+            try {
+                $this->trophyGenerator->generateForAchievement($achievement);
+            } catch (\Throwable $e) {
+                Log::warning('Manual achievement trophy generation failed', [
+                    'achievement_id' => $achievement->id,
+                    'solution_id' => $achievement->solution_id,
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                ]);
+            }
+
+            return;
+        }
+
         try {
-            $this->trophyGenerator->generateForAchievement($achievement);
+            GenerateAchievementTrophy::dispatch($achievement->id);
         } catch (\Throwable $e) {
-            Log::warning('AI achievement trophy generation failed', [
+            Log::warning('AI achievement trophy job dispatch failed', [
                 'achievement_id' => $achievement->id,
-                'solution_id' => $solution->id,
+                'solution_id' => $achievement->solution_id,
+                'exception' => get_class($e),
                 'message' => $e->getMessage(),
             ]);
         }
-
-        CourseActivity::recordAchievementEarned($achievement);
-        $this->awardManualAchievementCoins($achievement, $coinReward);
-
-        return $achievement;
     }
 
     protected function awardManualAchievementCoins(Achievement $achievement, int $coinReward): void
