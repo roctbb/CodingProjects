@@ -18,7 +18,7 @@
     @php
         $isManager = $course->teachers->contains($user) || $user->role == 'admin';
         $isLearner = $user->role == 'student' || ($user->role == 'teacher' && !$course->teachers->contains($user));
-        $studentsCount = $course->students->count();
+        $studentsCount = $students->count();
         $userBalance = $isLearner ? $user->balance() : 0;
         $displayPercent = fn ($percent) => min(100, max(0, (float) $percent));
     @endphp
@@ -29,7 +29,7 @@
                 <h2 class="mb-1">{{$course->name}}</h2>
                 <p class="course-description mb-0">{{$course->description}}</p>
                 <ul class="avatars course-header-avatars">
-                    @foreach($course->students as $student)
+                    @foreach($students as $student)
                         @if ($loop->iteration > 12)
                             @continue
                         @endif
@@ -337,6 +337,7 @@
 	                                                            <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#lesson-deadline-modal-{{$lesson->id}}"><i class="icon ion-ios-calendar"></i> Дедлайн задач</button>
 	                                                        @endif
 	                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export')}}" class="dropdown-item"><i class="icon ion-ios-cloud-download"></i> Экспорт</a>
+	                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export-points')}}" class="dropdown-item"><i class="icon ion-stats-bars"></i> Экспорт баллов</a>
                                                         <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export-md')}}" class="dropdown-item"><i class="icon ion-document-text"></i> Экспорт в MD</a>
                                                         <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/lower?chapter='.$chapter->id)}}" class="dropdown-item"><i class="icon ion-arrow-up-c"></i> Выше</a>
                                                         <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/upper?chapter='.$chapter->id)}}" class="dropdown-item"><i class="icon ion-arrow-down-c"></i> Ниже</a>
@@ -525,7 +526,7 @@
 
                         <p class="gc-eyebrow mb-2">Преподаватели</p>
 	                        <ul class="list-unstyled d-flex flex-column gap-2 mb-3">
-	                            @foreach($course->teachers as $teacher)
+	                            @foreach($statsTeachers as $teacher)
 	                                <li class="d-flex align-items-center gap-2 min-width-0">
 	                                    <x-gc-avatar :user="$teacher" size="sm" alt="" />
 	                                    <a class="text-decoration-none min-width-0 d-inline-flex align-items-center gap-1" href="{{url('/insider/profile/'.$teacher->id)}}">

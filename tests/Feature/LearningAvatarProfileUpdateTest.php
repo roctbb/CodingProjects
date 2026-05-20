@@ -71,6 +71,8 @@ class LearningAvatarProfileUpdateTest extends TestCase
         Schema::create('course_students', function ($table) {
             $table->integer('user_id')->unsigned();
             $table->integer('course_id')->unsigned();
+            $table->boolean('is_remote')->default(false);
+            $table->boolean('hidden_from_stats')->default(false);
         });
 
         Schema::create('course_activities', function ($table) {

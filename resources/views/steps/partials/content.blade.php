@@ -295,6 +295,9 @@
 
                 @if (!$task->is_quiz)
                     @if ($course->teachers->contains($user) || $user->role == 'admin')
+                        @php
+                            $stepProgressStudents = $course->relationLoaded('statsStudents') ? $course->statsStudents : $course->students;
+                        @endphp
                         <div class="row my-3">
                             <div class="col">
                                 <div class="gc-card step-progress-card overflow-hidden">
@@ -311,12 +314,12 @@
                                                    aria-label="Найти ученика"
                                                    data-step-progress-search
                                                    data-step-progress-grid="#step-progress-grid-{{ $task->id }}">
-                                            <span class="input-group-text gc-search-box__count" data-step-progress-count>{{ $course->students->count() }} из {{ $course->students->count() }}</span>
+                                            <span class="input-group-text gc-search-box__count" data-step-progress-count>{{ $stepProgressStudents->count() }} из {{ $stepProgressStudents->count() }}</span>
                                         </div>
                                     </div>
                                     <div class="step-progress-grid-wrap">
                                         <div class="step-progress-grid" id="step-progress-grid-{{ $task->id }}">
-                                        @foreach($course->students as $student)
+                                        @foreach($stepProgressStudents as $student)
                                             @php
                                                 $filtered = $task->solutions->filter(function ($value) use ($student) {
                                                 return $value->user_id == $student->id;

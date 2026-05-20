@@ -9,6 +9,8 @@
         $selectedCategoryIds = collect(old('categories', $course->categories->pluck('id')->all()))->map(fn ($id) => (int) $id);
         $selectedTeacherIds = collect(old('teachers', $course->teachers->pluck('id')->all()))->map(fn ($id) => (int) $id);
         $selectedStudentIds = collect(old('students', $course->students->pluck('id')->all()))->map(fn ($id) => (int) $id);
+        $hiddenTeacherIds = collect(old('hidden_teachers', $course->teachers->filter(fn ($teacher) => $teacher->pivot && $teacher->pivot->hidden_from_stats)->pluck('id')->all()))->map(fn ($id) => (int) $id);
+        $hiddenStudentIds = collect(old('hidden_students', $course->students->filter(fn ($student) => $student->pivot && $student->pivot->hidden_from_stats)->pluck('id')->all()))->map(fn ($id) => (int) $id);
         $courseStartDate = $course->start_date ? $course->start_date->format('Y-m-d') : '';
         $coursePosterUrl = $course->learningAvatarPosterUrl();
         $programPosterGeneratedAt = optional($course->program)->learning_avatar_poster_generated_at;
@@ -165,6 +167,19 @@
                                     @endforeach
                                 </select>
                             </div>
+
+                            <div class="col-12">
+                                <label for="hidden_teachers" class="form-label d-flex align-items-center justify-content-between gap-2">
+                                    <span>Скрыть преподавателей из статистики</span>
+                                    <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="hidden-teachers-selected-count">{{ $hiddenTeacherIds->count() }} выбрано</span>
+                                </label>
+                                <select class="form-select rounded-3" id="hidden_teachers" name="hidden_teachers[]" multiple data-selected-count="#hidden-teachers-selected-count" data-enhanced-multiselect data-placeholder="Выберите преподавателей" data-search-placeholder="Найти преподавателя">
+                                    @foreach ($teachers as $teacher)
+                                        <option value="{{ $teacher->id }}" @selected($hiddenTeacherIds->contains($teacher->id))>{{ $teacher->name }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="text-muted small mb-0 mt-1">Они сохранят доступ к курсу и проверке, но не будут отображаться в статистических блоках.</p>
+                            </div>
                         </div>
                     </div>
                 @endif
@@ -186,6 +201,19 @@
                                     <option value="{{ $student->id }}" @selected($selectedStudentIds->contains($student->id))>{{ $student->name }}</option>
                                 @endforeach
                             </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="hidden_students" class="form-label d-flex align-items-center justify-content-between gap-2">
+                                <span>Скрыть учеников из статистики</span>
+                                <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="hidden-students-selected-count">{{ $hiddenStudentIds->count() }} выбрано</span>
+                            </label>
+                            <select class="form-select rounded-3" id="hidden_students" name="hidden_students[]" multiple data-selected-count="#hidden-students-selected-count" data-enhanced-multiselect data-placeholder="Выберите учеников" data-search-placeholder="Найти ученика">
+                                @foreach ($students as $student)
+                                    <option value="{{ $student->id }}" @selected($hiddenStudentIds->contains($student->id))>{{ $student->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="text-muted small mb-0 mt-1">Скрытые ученики сохранят доступ к материалам, но не попадут в отчет, журнал опыта, лидерборд и экспорт баллов.</p>
                         </div>
 
                         @if ($course->state == 'draft')

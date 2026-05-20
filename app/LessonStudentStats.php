@@ -221,4 +221,55 @@ class LessonStudentStats extends Model
 
         return collect($rows);
     }
+
+    public static function recalculateForLesson($courseId, $lessonId, $studentIds = null)
+    {
+        $course = Course::with('teachers:id', 'students:id')->findOrFail($courseId);
+        $lesson = Lesson::with('info', 'steps.tasks')->findOrFail($lessonId);
+
+        $studentIds = collect($studentIds === null ? $course->students->pluck('id') : $studentIds)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($studentIds->isEmpty()) {
+            return collect();
+        }
+
+        $students = User::with([
+            'submissions' => function ($query) use ($courseId) {
+                $query->where('course_id', $courseId)
+                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark');
+            },
+        ])->whereIn('id', $studentIds)->get();
+
+        $rows = [];
+        $now = now();
+
+        foreach ($students as $student) {
+            $stats = self::calculateLessonStats($course, $lesson, $student);
+            $rows[] = [
+                'course_id' => $course->id,
+                'lesson_id' => $lesson->id,
+                'student_id' => $student->id,
+                'points' => $stats['points'],
+                'max_points' => $stats['max_points'],
+                'percent' => $stats['percent'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        self::upsert(
+            $rows,
+            ['course_id', 'lesson_id', 'student_id'],
+            ['points', 'max_points', 'percent', 'updated_at']
+        );
+
+        return self::where('course_id', $course->id)
+            ->where('lesson_id', $lesson->id)
+            ->whereIn('student_id', $studentIds)
+            ->get()
+            ->keyBy('student_id');
+    }
 }

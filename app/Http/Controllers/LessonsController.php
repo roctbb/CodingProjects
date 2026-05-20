@@ -15,6 +15,11 @@ use App\LessonStudentStats;
 use App\TaskDeadline;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 
 class LessonsController extends Controller
@@ -28,7 +33,7 @@ class LessonsController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'edit', 'makeLower', 'makeUpper', 'makeDeadline', 'export', 'exportMarkdown']);
+        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'edit', 'makeLower', 'makeUpper', 'makeDeadline', 'export', 'exportMarkdown', 'exportPoints']);
 
     }
 
@@ -289,6 +294,78 @@ class LessonsController extends Controller
 
         return $response;
 
+    }
+
+    public function exportPoints($course_id, $id)
+    {
+        $course = Course::with('statsStudents')->findOrFail($course_id);
+        $lesson = Lesson::findOrFail($id);
+
+        if ($lesson->program_id !== $course->program_id) {
+            abort(404);
+        }
+
+        $students = $course->statsStudents;
+        $studentIds = $students->pluck('id');
+        $statsByStudent = LessonStudentStats::recalculateForLesson($course->id, $lesson->id, $studentIds);
+
+        $spreadsheet = new Spreadsheet();
+        $spreadsheet->getProperties()
+            ->setCreator(config('app.name'))
+            ->setTitle('Lesson points export');
+
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Баллы');
+        $sheet->fromArray(['Имя ученика', 'Балл', 'Максимальный балл'], null, 'A1');
+
+        $row = 2;
+        foreach ($students as $student) {
+            $stats = $statsByStudent->get($student->id);
+
+            $sheet->setCellValue('A' . $row, $student->name);
+            $sheet->setCellValue('B' . $row, $stats ? (int) $stats->points : 0);
+            $sheet->setCellValue('C' . $row, $stats ? (int) $stats->max_points : 0);
+            $row++;
+        }
+
+        $lastRow = max(1, $row - 1);
+        $sheet->getStyle('A1:C1')->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'EAF2F8'],
+            ],
+            'borders' => [
+                'bottom' => ['borderStyle' => Border::BORDER_THIN],
+            ],
+        ]);
+        $sheet->getStyle('A1:C' . $lastRow)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        if ($lastRow >= 2) {
+            $sheet->getStyle('B2:C' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        }
+
+        foreach (range('A', 'C') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        $tempBasePath = tempnam(sys_get_temp_dir(), 'lesson-points-');
+        if ($tempBasePath === false) {
+            abort(500);
+        }
+
+        $tempPath = $tempBasePath . '.xlsx';
+        unlink($tempBasePath);
+        (new Xlsx($spreadsheet))->save($tempPath);
+        $spreadsheet->disconnectWorksheets();
+
+        $safeLessonName = $this->sanitizeFileName($lesson->name);
+        $fileName = 'lesson-' . $lesson->id . '-points' . ($safeLessonName ? '-' . $safeLessonName : '') . '.xlsx';
+
+        return response()
+            ->download($tempPath, $fileName, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])
+            ->deleteFileAfterSend(true);
     }
 
     public function exportMarkdown($course_id, $id)

@@ -307,10 +307,11 @@ class CoursesController extends Controller
                 $query->where('course_id', $id);
             },
             'students',
+            'statsStudents',
             'students.submissions',
             'teachers',
         ])->findOrFail($id);
-        $students = $course->students;
+        $students = $course->statsStudents;
 
             [$lessons, $reportChapterGroups] = $this->buildReportLessonGroups($course);
 
@@ -751,13 +752,20 @@ class CoursesController extends Controller
             'students' => function($query) {
                 $query->select('users.id', 'users.name', 'users.image', 'users.custom_title', 'users.custom_title_expires_at', 'users.avatar_frame', 'users.avatar_frame_expires_at');
             },
+            'statsStudents' => function($query) {
+                $query->select('users.id', 'users.name', 'users.image', 'users.custom_title', 'users.custom_title_expires_at', 'users.avatar_frame', 'users.avatar_frame_expires_at');
+            },
+            'statsTeachers',
             'teachers'
         ])->findOrFail($id);
 
-        // Use the already loaded students
-        $students = $course->students;
-
-
+        $allStudents = $course->students;
+        $students = $course->statsStudents;
+        $statsStudentIds = $students->pluck('id');
+        if ($allStudents->contains('id', $user->id)) {
+            $statsStudentIds = $statsStudentIds->push($user->id)->unique()->values();
+        }
+        $statsTeachers = $course->statsTeachers;
 
         // Cache marks for this course
             $marks = Cache::remember("course:{$id}:marks", 5, function () use ($id) {
@@ -816,7 +824,7 @@ class CoursesController extends Controller
 
             // Get cached points from database
             $cachedPoints = CourseStudentPoints::where('course_id', $id)
-                ->whereIn('student_id', $students->pluck('id'))
+                ->whereIn('student_id', $statsStudentIds)
                 ->get()
                 ->keyBy('student_id');
 
@@ -836,23 +844,32 @@ class CoursesController extends Controller
                 }
             }
 
-            if ($studentsNeedingRecalculate->isNotEmpty()) {
-                RecalculateCoursePoints::dispatch($id, $studentsNeedingRecalculate->unique()->values()->all());
-            }
-
-
-            if ($course->students->contains($user)) {
+            if ($allStudents->contains('id', $user->id)) {
                 // Keep the order
                 $lessons = $course->program->lessons->where('chapter_id', $chapter->id)->sortBy('sort_index')->values();
 
                 $steps = $temp_steps;
-                $cstudent = $students->filter(function ($value, $key) use ($user) {
-                    return $value->id == $user->id;
-                })->first();
+                $cstudent = $allStudents->where('id', $user->id)->first();
+                if ($cstudent) {
+                    if (isset($cachedPoints[$cstudent->id])) {
+                        $cstudent->percent = $cachedPoints[$cstudent->id]->percent;
+                        $cstudent->points = $cachedPoints[$cstudent->id]->points;
+                        $cstudent->max_points = $cachedPoints[$cstudent->id]->max_points;
+                    } else {
+                        $studentsNeedingRecalculate->push($cstudent->id);
+                        $cstudent->percent = 0;
+                        $cstudent->points = 0;
+                        $cstudent->max_points = 0;
+                    }
+                }
             } else {
                 $steps = $temp_steps;
                 // For teachers, show all lessons in this chapter
                 $lessons = $course->program->lessons->where('chapter_id', $chapter->id)->sortBy('sort_index')->values();
+            }
+
+            if ($studentsNeedingRecalculate->isNotEmpty()) {
+                RecalculateCoursePoints::dispatch($id, $studentsNeedingRecalculate->unique()->values()->all());
             }
 
             $isManager = $user->role == 'admin' || $course->teachers->contains($user);
@@ -891,7 +908,7 @@ class CoursesController extends Controller
             // Preload lesson statistics for all students and lessons in this chapter
             $lessonStats = LessonStudentStats::where('course_id', $id)
                 ->whereIn('lesson_id', $lessons->pluck('id'))
-                ->whereIn('student_id', $students->pluck('id'))
+                ->whereIn('student_id', $statsStudentIds)
                 ->get()
                 ->groupBy('lesson_id')
                 ->map(function ($stats) {
@@ -900,7 +917,7 @@ class CoursesController extends Controller
 
             $allLessonStats = LessonStudentStats::where('course_id', $id)
                 ->whereIn('lesson_id', $course->program->lessons->pluck('id'))
-                ->whereIn('student_id', $students->pluck('id'))
+                ->whereIn('student_id', $statsStudentIds)
                 ->get()
                 ->groupBy('lesson_id')
                 ->map(function ($stats) {
@@ -955,7 +972,7 @@ class CoursesController extends Controller
             }
 
             // Render view without caching for now (caching causes stale data issues)
-        return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'cstudent', 'lessons', 'marks', 'lessonStats', 'courseDeadlines', 'chapterProgress'));
+        return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'statsTeachers', 'cstudent', 'lessons', 'marks', 'lessonStats', 'courseDeadlines', 'chapterProgress'));
 
 
     }
@@ -964,8 +981,9 @@ class CoursesController extends Controller
     {
         $course = Course::with([
             'program.lessons.steps.tasks',
-            'students.submissions',
+            'statsStudents.submissions',
         ])->findOrFail($id);
+        $course->setRelation('students', $course->statsStudents);
 
         $blockedTaskMap = BlockedTask::where('course_id', $course->id)
             ->get(['user_id', 'task_id'])
@@ -1118,43 +1136,46 @@ class CoursesController extends Controller
         $course->start_date = $request->start_date;
         $course->weekdays = $request->weekdays ? $request->weekdays : "";
         if (\Auth::user()->role == 'admin') {
-            foreach ($course->teachers as $teacher) {
-                $course->teachers()->detach($teacher->id);
-            }
-            if ($request->teachers != null) {
-                foreach ($request->teachers as $teacher_id) {
-                    $course->teachers()->attach($teacher_id);
-                }
-            }
+            $teacherIds = collect($request->input('teachers', []))->map(fn($id) => (int) $id)->filter()->unique()->values();
+            $hiddenTeacherIds = collect($request->input('hidden_teachers', []))
+                ->map(fn($id) => (int) $id)
+                ->intersect($teacherIds)
+                ->values();
+            $course->teachers()->sync($teacherIds->mapWithKeys(function ($teacherId) use ($hiddenTeacherIds) {
+                return [$teacherId => ['hidden_from_stats' => $hiddenTeacherIds->contains($teacherId)]];
+            })->all());
 
-            foreach ($course->categories as $category) {
-                $course->categories()->detach($category->id);
-            }
-            if ($request->categories != null) {
-                foreach ($request->categories as $category_id) {
-                    $course->categories()->attach($category_id);
-                }
-            }
+            $categoryIds = collect($request->input('categories', []))->map(fn($id) => (int) $id)->filter()->unique()->values();
+            $course->categories()->sync($categoryIds->all());
             if ($request->mode != null)
                 $course->mode = $request->mode;
         }
 
-        foreach ($course->students as $teacher) {
-            $course->students()->detach($teacher->id);
-        }
-        if ($request->students != null)
-            foreach ($request->students as $student_id) {
-                $course->students()->attach($student_id);
+        $studentIds = collect($request->input('students', []))->map(fn($id) => (int) $id)->filter()->unique()->values();
+        $hiddenStudentIds = collect($request->input('hidden_students', []))
+            ->map(fn($id) => (int) $id)
+            ->intersect($studentIds)
+            ->values();
+        $remoteByStudent = $course->students->mapWithKeys(function ($student) {
+            return [$student->id => (bool) ($student->pivot->is_remote ?? false)];
+        });
 
-                if (!$course->is_open) {
-                    $user = User::findOrFail($student_id);
-                    if ($user->role == 'novice') {
-                        $user->role = 'student';
-                        $user->save();
-                    }
+        $course->students()->sync($studentIds->mapWithKeys(function ($studentId) use ($hiddenStudentIds, $remoteByStudent) {
+            return [$studentId => [
+                'hidden_from_stats' => $hiddenStudentIds->contains($studentId),
+                'is_remote' => $remoteByStudent->get($studentId, false),
+            ]];
+        })->all());
+
+        foreach ($studentIds as $student_id) {
+            if (!$course->is_open) {
+                $user = User::findOrFail($student_id);
+                if ($user->role == 'novice') {
+                    $user->role = 'student';
+                    $user->save();
                 }
             }
-
+        }
 
         if ($course->invite != $request->invite) {
             $this->validate($request, [

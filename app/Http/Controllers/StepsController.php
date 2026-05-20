@@ -43,7 +43,7 @@ class StepsController extends Controller
     public function details($course_id, $id)
     {
         $user = User::with('submissions')->findOrFail(Auth::User()->id);
-        $course = Course::with('teachers', 'students')->findOrFail($course_id);
+        $course = Course::with('teachers', 'students', 'statsStudents')->findOrFail($course_id);
         $step = ProgramStep::with([
             'lesson.steps',
             'tasks.solutions' => function ($query) use ($course_id) {

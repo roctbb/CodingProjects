@@ -31,7 +31,17 @@ class Course extends Model
 
     public function students()
     {
-        return $this->belongsToMany('App\User', 'course_students', 'course_id', 'user_id')->withPivot(['is_remote'])->orderBy('name');
+        return $this->belongsToMany('App\User', 'course_students', 'course_id', 'user_id')
+            ->withPivot(['is_remote', 'hidden_from_stats'])
+            ->orderBy('name');
+    }
+
+    public function statsStudents()
+    {
+        return $this->belongsToMany('App\User', 'course_students', 'course_id', 'user_id')
+            ->withPivot(['is_remote', 'hidden_from_stats'])
+            ->wherePivot('hidden_from_stats', false)
+            ->orderBy('name');
     }
 
     public function program()
@@ -46,7 +56,15 @@ class Course extends Model
 
     public function teachers()
     {
-        return $this->belongsToMany('App\User', 'course_teachers', 'course_id', 'user_id');
+        return $this->belongsToMany('App\User', 'course_teachers', 'course_id', 'user_id')
+            ->withPivot(['hidden_from_stats']);
+    }
+
+    public function statsTeachers()
+    {
+        return $this->belongsToMany('App\User', 'course_teachers', 'course_id', 'user_id')
+            ->withPivot(['hidden_from_stats'])
+            ->wherePivot('hidden_from_stats', false);
     }
 
     public function imageUrl(): string
