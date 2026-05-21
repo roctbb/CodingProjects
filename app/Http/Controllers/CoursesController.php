@@ -307,8 +307,10 @@ class CoursesController extends Controller
                 $query->where('course_id', $id);
             },
             'students',
-            'statsStudents',
-            'students.submissions',
+            'statsStudents.submissions' => function ($query) use ($id) {
+                $query->where('course_id', $id)
+                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark', 'submitted', 'review_skipped', 'recheck_requested');
+            },
             'teachers',
         ])->findOrFail($id);
         $students = $course->statsStudents;
