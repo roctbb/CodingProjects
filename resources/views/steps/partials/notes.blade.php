@@ -2,7 +2,8 @@
     @php
         $hasTheoryContent = filled($step->video_url) || trim((string) $step->theory) !== '';
         $hasStepTasks = isset($tasks) ? $tasks->count() > 0 : $step->tasks->count() > 0;
-        $isManager = $course->teachers->contains($user) || $user->role == 'admin';
+        $isInsider = \Request::is('insider/*');
+        $isManager = $isInsider && isset($course) && $course && $user && ($course->teachers->contains($user) || $user->role == 'admin');
     @endphp
 
     <div class="tab-pane fade show active markdown step-reading-card" id="theory" role="tabpanel" aria-labelledby="v-theory-tab">
@@ -22,7 +23,7 @@
         @else
             @parsedown($step->theory)
         @endif
-        @if (!$step->lesson->is_open && ($course->teachers->contains($user) || $user->role=='admin') && $step->notes!='')
+        @if (!$step->lesson->is_open && $isManager && $step->notes!='')
             <div class="step-teacher-note mt-4">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <span class="text-muted"><i class="fas fa-user-shield"></i></span>
