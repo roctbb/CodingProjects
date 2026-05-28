@@ -4104,6 +4104,54 @@ body {
   width: 100%;
 }
 
+.lesson-early-access-grants {
+  border: 1px solid var(--gc-border);
+  border-radius: var(--gc-radius-md);
+  display: grid;
+  max-height: 18rem;
+  overflow: auto;
+}
+
+.lesson-early-access-grant {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.62rem 0.72rem;
+}
+
+.lesson-early-access-grant + .lesson-early-access-grant {
+  border-top: 1px solid var(--gc-border);
+}
+
+.lesson-early-access-grant:hover {
+  background: var(--gc-surface-variant);
+}
+
+.lesson-early-access-grant .form-check-input {
+  flex: 0 0 auto;
+  margin-left: 0;
+  margin-top: 0;
+}
+
+.lesson-early-access-grant .form-check-label {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.18rem 0.45rem;
+  min-width: 0;
+}
+
+.lesson-early-access-grant__name {
+  color: var(--gc-on-surface);
+  font-weight: 650;
+}
+
+.lesson-early-access-grant small {
+  color: var(--gc-on-surface-muted);
+  font-size: 0.76rem;
+}
+
 @media (max-width: 767px) {
   .lesson-access-grid { grid-template-columns: 1fr; }
 }

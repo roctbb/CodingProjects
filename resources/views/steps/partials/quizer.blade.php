@@ -50,7 +50,8 @@
                            title="Редактировать задачу"><i class="icon ion-android-create"></i></a>
                         <a class="btn btn-outline-secondary btn-sm rounded-3"
                            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"
-                           title="Фантомное решение"><i class="icon ion-ios-color-wand"></i></a>
+                           title="Фантомное решение"
+                           data-confirm="Добавить пустое фантомное решение для всех студентов?"><i class="icon ion-ios-color-wand"></i></a>
                         <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть вправо"
                            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i class="icon ion-arrow-right-c"></i></a>
                         <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть влево"

@@ -117,7 +117,8 @@
                                    class="btn btn-outline-secondary btn-sm rounded-3"><i class="icon ion-ios-calendar"></i></button>
                                 <a title="Фантомное решение (добавить пустое решение для всех студентов)"
                                    class="btn btn-outline-secondary btn-sm rounded-3"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"><i class="icon ion-ios-color-wand"></i></a>
+                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"
+                                   data-confirm="Добавить пустое фантомное решение для всех студентов?"><i class="icon ion-ios-color-wand"></i></a>
                                 <button type="button"
                                         title="Пересказ решений"
                                         data-bs-toggle="modal"

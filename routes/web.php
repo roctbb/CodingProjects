@@ -114,6 +114,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/courses/{course_id}/lessons/{id}/edit', 'LessonsController@editView');
     Route::post('/courses/{course_id}/lessons/{id}/edit', 'LessonsController@edit');
+    Route::post('/courses/{course_id}/lessons/{id}/early-access/grant', 'LessonsController@grantEarlyAccess');
     Route::post('/courses/{course_id}/lessons/{id}/deadline', 'LessonsController@makeDeadline');
     Route::post('/courses/{course_id}/lessons/{id}/early-access', 'LessonsController@buyEarlyAccess');
     Route::get('/courses/{course_id}/lessons/{id}/export', 'LessonsController@export');

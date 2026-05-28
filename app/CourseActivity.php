@@ -163,7 +163,7 @@ class CourseActivity extends Model
         ]);
     }
 
-    public static function recordEarlyAccessBought(Course $course, Lesson $lesson, User $user, int $cost, ?string $petName = null, ?string $petKey = null)
+    public static function recordEarlyAccessBought(Course $course, Lesson $lesson, User $user, int $cost, ?string $petName = null, ?string $petKey = null, ?User $grantedBy = null)
     {
         $payload = static::basePayload($course, $lesson) + [
             'cost' => $cost,
@@ -175,6 +175,12 @@ class CourseActivity extends Model
 
         if ($petKey) {
             $payload['pet_key'] = $petKey;
+        }
+
+        if ($grantedBy) {
+            $payload['source'] = 'teacher';
+            $payload['granted_by_id'] = $grantedBy->id;
+            $payload['granted_by_name'] = $grantedBy->name;
         }
 
         return static::recordActivity([
@@ -811,6 +817,10 @@ class CourseActivity extends Model
             case static::TYPE_DEADLINE_PENALTY_PAID:
                 return 'снял(а) штраф за дедлайн';
             case static::TYPE_EARLY_ACCESS_BOUGHT:
+                if (($payload['source'] ?? null) === 'teacher') {
+                    return 'получил(а) ранний доступ к уроку «' . $lessonName . '» от преподавателя';
+                }
+
                 if (!empty($payload['pet_name']) && (int) ($payload['cost'] ?? 0) <= 0) {
                     return 'открыл(а) урок «' . $lessonName . '» раньше с помощью питомца «' . $payload['pet_name'] . '»';
                 }

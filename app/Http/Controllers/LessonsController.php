@@ -33,7 +33,7 @@ class LessonsController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'edit', 'makeLower', 'makeUpper', 'makeDeadline', 'export', 'exportMarkdown', 'exportPoints']);
+        $this->middleware('teacher')->only(['createView', 'create', 'editView', 'edit', 'grantEarlyAccess', 'makeLower', 'makeUpper', 'makeDeadline', 'export', 'exportMarkdown', 'exportPoints']);
 
     }
 
@@ -91,8 +91,12 @@ class LessonsController extends Controller
 
     public function editView($course_id, $id)
     {
-        $course = Course::findOrFail($course_id);
-        $lesson = Lesson::findOrFail($id);
+        $course = Course::with(['students', 'teachers'])->findOrFail($course_id);
+        $lesson = Lesson::with(['program.chapters', 'info', 'earlyAccesses.user', 'earlyAccesses.grantedBy'])->findOrFail($id);
+        if ($lesson->program_id !== $course->program_id) {
+            abort(404);
+        }
+
         return view('lessons.edit', compact('lesson', 'course'));
     }
 
@@ -186,6 +190,8 @@ class LessonsController extends Controller
             'course_id' => $course->id,
             'lesson_id' => $lesson->id,
             'user_id' => $user->id,
+        ], [
+            'source' => $cost <= 0 ? LessonEarlyAccess::SOURCE_PET : LessonEarlyAccess::SOURCE_PURCHASE,
         ]);
 
         if ($access->wasRecentlyCreated) {
@@ -213,6 +219,89 @@ class LessonsController extends Controller
         );
 
         return redirect('/insider/courses/' . $course->id . '/steps/' . $lesson->steps->first()->id);
+    }
+
+    public function grantEarlyAccess($course_id, $id, Request $request)
+    {
+        $course = Course::with(['students', 'teachers'])->findOrFail($course_id);
+        $lesson = Lesson::with(['info', 'earlyAccesses'])->findOrFail($id);
+        $manager = Auth::user();
+
+        if ($lesson->program_id !== $course->program_id) {
+            abort(404);
+        }
+
+        if (!($manager->role == 'admin' || $course->teachers->contains('id', $manager->id))) {
+            abort(403);
+        }
+
+        if ($lesson->isStarted($course)) {
+            $this->make_info_alert('Урок уже открыт', 'Ручной ранний доступ не нужен: урок уже доступен по дате начала.');
+            return redirect()->back();
+        }
+
+        $this->validate($request, [
+            'student_ids' => 'nullable|array',
+            'student_ids.*' => 'integer',
+        ]);
+
+        $courseStudentIds = $course->students->pluck('id');
+        $selectedStudentIds = collect($request->input('student_ids', []))
+            ->map(fn($id) => (int) $id)
+            ->intersect($courseStudentIds)
+            ->unique()
+            ->values();
+
+        $teacherAccesses = LessonEarlyAccess::where('course_id', $course->id)
+            ->where('lesson_id', $lesson->id)
+            ->where('source', LessonEarlyAccess::SOURCE_TEACHER)
+            ->get();
+        $existingAccesses = LessonEarlyAccess::where('course_id', $course->id)
+            ->where('lesson_id', $lesson->id)
+            ->get()
+            ->keyBy('user_id');
+
+        $changedStudentIds = collect();
+
+        foreach ($teacherAccesses as $access) {
+            if (!$selectedStudentIds->contains((int) $access->user_id)) {
+                $changedStudentIds->push((int) $access->user_id);
+                $access->delete();
+            }
+        }
+
+        foreach ($selectedStudentIds as $studentId) {
+            if ($existingAccesses->has($studentId)) {
+                continue;
+            }
+
+            $access = LessonEarlyAccess::create([
+                'course_id' => $course->id,
+                'lesson_id' => $lesson->id,
+                'user_id' => $studentId,
+                'source' => LessonEarlyAccess::SOURCE_TEACHER,
+                'granted_by' => $manager->id,
+            ]);
+
+            $student = $course->students->firstWhere('id', $studentId);
+            if ($access && $student) {
+                CourseActivity::recordEarlyAccessBought($course, $lesson, $student, 0, null, null, $manager);
+            }
+
+            $changedStudentIds->push($studentId);
+        }
+
+        $changedStudentIds->unique()->each(function ($studentId) use ($course, $lesson) {
+            CourseStudentPoints::recalculate($course->id, $studentId);
+            LessonStudentStats::recalculate($course->id, $lesson->id, $studentId);
+        });
+
+        $this->make_success_alert(
+            'Ранний доступ обновлен',
+            'Выбранные ученики смогут открыть урок без оплаты монетками.'
+        );
+
+        return redirect()->back();
     }
 
     public function makeLower($course_id, $id, Request $request)
