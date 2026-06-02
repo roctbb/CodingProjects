@@ -21,7 +21,7 @@ class RunPetDailyActions extends Command
         $processed = 0;
         $triggered = 0;
 
-        User::whereIn('role', ['student', 'novice'])->chunkById(100, function ($users) use ($date, &$processed, &$triggered) {
+        User::whereIn('role', ['student', 'novice', 'teacher', 'admin'])->chunkById(100, function ($users) use ($date, &$processed, &$triggered) {
             foreach ($users as $user) {
                 $petKey = $user->activeLearningAvatarPetKey();
                 if (!$petKey || $user->hasLearningAvatarPetDailyRoll($date, $petKey)) {
