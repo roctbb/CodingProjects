@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\ActionLog;
-use App\CompletedCourse;
 use App\Course;
 use App\CourseActivity;
 use App\CourseCategory;
@@ -769,11 +768,6 @@ class CoursesController extends Controller
         }
         $statsTeachers = $course->statsTeachers;
 
-        // Cache marks for this course
-            $marks = Cache::remember("course:{$id}:marks", 5, function () use ($id) {
-                return CompletedCourse::where('course_id', $id)->get();
-            });
-
             //Made this due to some issues on my local server
             $cstudent = [];
             if ($request->has('chapter')) {
@@ -974,7 +968,7 @@ class CoursesController extends Controller
             }
 
             // Render view without caching for now (caching causes stale data issues)
-        return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'statsTeachers', 'cstudent', 'lessons', 'marks', 'lessonStats', 'courseDeadlines', 'chapterProgress'));
+        return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'statsTeachers', 'cstudent', 'lessons', 'lessonStats', 'courseDeadlines', 'chapterProgress'));
 
 
     }

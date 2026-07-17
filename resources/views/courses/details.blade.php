@@ -69,35 +69,6 @@
 
         <div class="row align-items-start course-layout-row">
             <main class="col-xl-9 col-lg-8">
-                @if ($course->state == "ended" && $isManager)
-                    <section class="gc-card mb-3 course-support-card">
-                        <div class="p-3">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                                <a data-bs-toggle="collapse" href="#certs" role="button" aria-expanded="false" aria-controls="certs"><strong>Сертификаты</strong></a>
-                                <a href="{{url('insider/courses/'.$course->id.'/stop')}}" class="btn btn-outline-secondary btn-sm rounded-3 ms-2">Перевыпуск</a>
-                            </div>
-
-                            <div class="collapse mt-3" id="certs">
-                                <ul class="mb-0 ps-3">
-                                    @foreach($marks as $mark)
-                                        @if ($mark->cert_link != null)
-                                            <li>
-                                                <a target="_blank" rel="noopener" href="{{ safe_url($mark->cert_link) }}" class="course-row-between">
-                                                    <span class="d-inline-flex align-items-center gap-1 min-width-0">
-                                                        <span class="text-truncate">{{$mark->user->name}}</span>
-                                                        @include('profile.partials.custom_title_badge', ['profileUser' => $mark->user, 'compact' => true])
-                                                    </span>
-                                                    <span class="badge rounded-pill bg-body-tertiary">{{$mark->mark}}</span>
-                                                </a>
-                                            </li>
-                                        @endif
-                                    @endforeach
-                                </ul>
-                            </div>
-                        </div>
-                    </section>
-                @endif
-
                 <div class="course-lessons-toolbar mb-2">
                     <div class="course-lessons-toolbar__title">
                         <div class="course-section-label">Уроки</div>

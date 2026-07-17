@@ -202,40 +202,11 @@ class Course extends Model
 
         CompletedCourse::where('course_id', $this->id)->delete();
 
-        $cert_request = ['courses' => []];
-
-        array_push($cert_request['courses'], [
-            'name' => $this->name,
-            'date' => Carbon::now()->format('d.m.Y'),
-            'teachers' => [
-                ['name' => $this->teachers[0]->name]
-            ],
-            'students' => []
-
-        ]);
-
-        foreach ($this->students as $student) {
-            array_push($cert_request['courses'][0]['students'], [
-                'id' => $student->id,
-                'name' => $student->name,
-                'mark' => Mark::getMark($this->points($student), $this->max_points($student))
-            ]);
-        }
-
-        /*$client = new \GuzzleHttp\Client();
-        $res = $client->post('https://cert.geekclass.ru', [
-            'body' => json_encode($cert_request)
-        ]);
-        $cert_result = json_decode($res->getBody()->getContents());
-        */
-
         foreach ($this->students as $student) {
             $completed_course = new CompletedCourse();
             $completed_course->name = $this->name;
             $completed_course->user_id = $student->id;
             $completed_course->course_id = $this->id;
-            /*$id = $student->id;
-            $completed_course->cert_link = $cert_result->$id->link; */
             $completed_course->mark = Mark::getMark($this->points($student), $this->max_points($student));
             $completed_course->save();
         }
