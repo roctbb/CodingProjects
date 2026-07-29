@@ -703,6 +703,15 @@ body {
   padding: 0.35rem;
 }
 
+.step-media-link--svg {
+  display: block;
+  width: 100%;
+}
+
+.step-media-link--svg img {
+  width: 100%;
+}
+
 .step-media-figure img {
   border-radius: calc(var(--gc-radius-lg) - 0.2rem);
   display: block;

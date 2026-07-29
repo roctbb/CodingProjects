@@ -471,9 +471,18 @@ document.addEventListener('DOMContentLoaded', function () {
             if (image.closest('.step-media-figure')) return;
 
             image.dataset.stepMediaReady = '1';
-            image.loading = 'lazy';
             image.decoding = 'async';
 
+            const imageSource = image.currentSrc || image.src;
+            const isSvg = function () {
+                if (!imageSource) return false;
+
+                try {
+                    return new URL(imageSource, document.baseURI).pathname.toLowerCase().endsWith('.svg');
+                } catch (error) {
+                    return false;
+                }
+            }();
             const imageLink = image.closest('a');
             const singleImageLink = imageLink && imageLink.children.length === 1 ? imageLink : null;
             const mediaNode = singleImageLink || image;
@@ -484,13 +493,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (singleImageLink) {
                 singleImageLink.classList.add('step-media-link');
+                if (isSvg) singleImageLink.classList.add('step-media-link--svg');
                 singleImageLink.target = '_blank';
                 singleImageLink.rel = 'noopener';
                 figure.appendChild(singleImageLink);
-            } else if (!imageLink && (image.currentSrc || image.src)) {
+            } else if (!imageLink && imageSource) {
                 const link = document.createElement('a');
                 link.className = 'step-media-link';
-                link.href = image.currentSrc || image.src;
+                if (isSvg) link.classList.add('step-media-link--svg');
+                link.href = imageSource;
                 link.target = '_blank';
                 link.rel = 'noopener';
                 figure.appendChild(link);
