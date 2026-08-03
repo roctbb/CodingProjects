@@ -29,6 +29,34 @@ class ParsedownSecurityTest extends TestCase
         $this->assertStringNotContainsString('javascript:', $html);
     }
 
+    public function testParsedownMathAllowsExplicitLineBreaksInsideTables()
+    {
+        $markdown = "| Ввод | Вывод |\n"
+            . "|---|---|\n"
+            . "| `6`<br>`нет` | `Проход разрешён` |";
+
+        $html = parsedown_math($markdown);
+
+        $this->assertStringContainsString('<table>', $html);
+        $this->assertMatchesRegularExpression('/<code>6<\/code>\s*<br\s*\/?>\s*<code>нет<\/code>/', $html);
+    }
+
+    public function testParsedownMathDoesNotInterpretBreakTagInsideCode()
+    {
+        $html = parsedown_math('Используйте тег `<br>` для переноса.');
+
+        $this->assertStringContainsString('<code>&lt;br&gt;</code>', $html);
+        $this->assertDoesNotMatchRegularExpression('/<code>\s*<br\s*\/?>\s*<\/code>/', $html);
+    }
+
+    public function testParsedownMathEscapesBreakTagWithAttributes()
+    {
+        $html = parsedown_math('До<br onclick="alert(1)">после');
+
+        $this->assertStringNotContainsString('<br onclick=', $html);
+        $this->assertStringContainsString('&lt;br onclick=', $html);
+    }
+
     public function testSafeUrlRejectsJavascriptUrls()
     {
         $this->assertSame('#', safe_url('javascript:alert(1)'));

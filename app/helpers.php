@@ -10,7 +10,7 @@ if (!function_exists('parsedown_math')) {
      */
     function parsedown_math($text)
     {
-        $parser = new Parsedown();
+        $parser = new \App\Support\SafeMarkdown();
         $parser->setMarkupEscaped(true);
         $parser->setSafeMode(true);
 
