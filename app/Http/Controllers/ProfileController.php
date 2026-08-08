@@ -511,7 +511,7 @@ class ProfileController extends Controller
         $guest = User::findOrFail(Auth::User()->id);
         $user = User::findOrFail($id);
 
-        $this->validate($request, [
+        $rules = [
             'name' => 'required|string',
             'school' => 'required|string',
             'grade' => 'integer|min:1|max:12|required',
@@ -519,7 +519,11 @@ class ProfileController extends Controller
             'hobbies' => 'required|string',
             'interests' => 'required|string',
             'image' => 'image|max:10240'
-        ]);
+        ];
+        if ($guest->role == 'admin') {
+            $rules['role'] = ['required', 'string', Rule::in(array_keys(User::roleLabels()))];
+        }
+        $this->validate($request, $rules);
 
         $user->name = $request->name;
         $user->git = $request->git;
@@ -529,6 +533,9 @@ class ProfileController extends Controller
         $user->school = $request->school;
         if ($guest->role == 'admin' && $request->filled('gender')) {
             $user->gender = $request->gender;
+        }
+        if ($guest->role == 'admin') {
+            $user->role = $request->role;
         }
         if (Auth::User()->role == 'teacher' || Auth::User()->role == 'admin') {
             $user->birthday = Carbon::createFromFormat('Y-m-d', $request->birthday);

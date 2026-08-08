@@ -45,6 +45,25 @@
                                 @enderror
                             </div>
 
+                            @if ($guest->role == 'admin')
+                                <div class="col-12 col-md-6">
+                                    <label for="role" class="form-label">Роль</label>
+                                    <select id="role" class="form-select rounded-3" name="role" required>
+                                        @foreach (\App\User::roleLabels() as $roleCode => $roleLabel)
+                                            <option value="{{ $roleCode }}" @selected(old('role', $user->role) === $roleCode)>
+                                                {{ $roleLabel }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('role')
+                                        <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                                    @enderror
+                                    @if ($user->oidc_subject)
+                                        <div class="form-text">При следующем входе через ЛК роль синхронизируется; роль admin из ЛК станет teacher.</div>
+                                    @endif
+                                </div>
+                            @endif
+
                             @if ($canEditBirthday)
                                 <div class="col-12 col-md-6">
                                     <label for="birthday" class="form-label">Дата рождения</label>
@@ -183,6 +202,14 @@
 
                         <div class="border-top pt-3">
                             <div class="gc-eyebrow mb-2">Доступ</div>
+
+                            @if (session('oidc_error'))
+                                <div class="alert alert-danger rounded-3 small" role="alert">{{ session('oidc_error') }}</div>
+                            @endif
+                            @if (session('status'))
+                                <div class="alert alert-success rounded-3 small" role="status">{{ session('status') }}</div>
+                            @endif
+
                             <div class="d-flex flex-column gap-3">
                                 <div>
                                     <label for="password" class="form-label">Новый пароль</label>
@@ -196,6 +223,24 @@
                                     <label for="password-confirm" class="form-label">Повторите пароль</label>
                                     <input id="password-confirm" type="password" class="form-control rounded-3" name="password_confirmation" autocomplete="new-password">
                                 </div>
+
+                                @if (config('services.silaeder_oidc.enabled') && $guest->id === $user->id && in_array($user->role, ['student', 'teacher'], true))
+                                    <div class="border-top pt-3">
+                                        <div class="fw-semibold mb-1">ЛК Силаэдра</div>
+                                        @if ($user->oidc_subject)
+                                            <p class="small text-muted mb-0">
+                                                <i class="fas fa-check text-success me-1"></i> Аккаунт привязан
+                                            </p>
+                                        @else
+                                            <p class="small text-muted mb-2">
+                                                Привяжите ЛК, чтобы в дальнейшем входить без локального пароля.
+                                            </p>
+                                            <a class="btn btn-outline-primary rounded-3 fw-semibold w-100" href="{{ route('silaeder.link') }}">
+                                                Привязать ЛК Силаэдра
+                                            </a>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>

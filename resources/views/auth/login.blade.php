@@ -22,6 +22,24 @@
             </div>
         </div>
 
+        @if (session('oidc_error'))
+            <div class="alert alert-danger rounded-3 small" role="alert">{{ session('oidc_error') }}</div>
+        @endif
+        @if (session('oidc_status'))
+            <div class="alert alert-success rounded-3 small" role="status">{{ session('oidc_status') }}</div>
+        @endif
+
+        @if (config('services.silaeder_oidc.enabled'))
+            <a class="btn btn-primary rounded-3 fw-semibold w-100 py-2 mb-3" href="{{ route('silaeder.login') }}">
+                <i class="fas fa-id-card me-1"></i> Войти через ЛК Силаэдра
+            </a>
+            <div class="d-flex align-items-center gap-2 text-muted small mb-3" aria-hidden="true">
+                <span class="border-top flex-grow-1"></span>
+                <span>или по паролю</span>
+                <span class="border-top flex-grow-1"></span>
+            </div>
+        @endif
+
         <div class="form-floating mb-3">
             <input type="email" name="email" id="inputEmail" class="form-control rounded-3"
                    placeholder="you@example.com" value="{{ old('email') }}" autocomplete="email" required autofocus>

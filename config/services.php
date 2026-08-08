@@ -64,4 +64,19 @@ return [
         'timeout' => env('TELEGRAM_TIMEOUT', 10),
     ],
 
+    'silaeder_oidc' => [
+        'enabled' => env('CRM_OIDC_ENABLED', false),
+        'issuer' => rtrim(env('CRM_OIDC_ISSUER', 'https://lk.silaeder.ru'), '/'),
+        'client_id' => env('CRM_OIDC_CLIENT_ID'),
+        'client_secret' => env('CRM_OIDC_CLIENT_SECRET'),
+        'redirect_uri' => env(
+            'CRM_OIDC_REDIRECT_URI',
+            rtrim(env('APP_URL', 'http://localhost'), '/') . '/auth/silaeder/callback'
+        ),
+        'post_logout_redirect_uri' => env(
+            'CRM_OIDC_POST_LOGOUT_REDIRECT_URI',
+            rtrim(env('APP_URL', 'http://localhost'), '/') . '/auth/silaeder/logout/callback'
+        ),
+    ],
+
 ];

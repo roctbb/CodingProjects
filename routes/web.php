@@ -40,6 +40,22 @@ Route::get('/', function () {
 
 });
 
+Route::get('/auth/silaeder', 'Auth\SilaederOidcController@redirectToProvider')
+    ->middleware(['guest', 'throttle:30,1'])
+    ->name('silaeder.login');
+Route::get('/auth/silaeder/link', 'Auth\SilaederOidcController@link')
+    ->middleware(['auth', 'throttle:30,1'])
+    ->name('silaeder.link');
+Route::get('/auth/silaeder/link/confirm/{token}', 'Auth\SilaederOidcController@confirmLink')
+    ->middleware(['signed', 'throttle:20,1'])
+    ->name('silaeder.link.confirm');
+Route::get('/auth/silaeder/callback', 'Auth\SilaederOidcController@callback')
+    ->middleware('throttle:60,1')
+    ->name('silaeder.callback');
+Route::get('/auth/silaeder/logout/callback', 'Auth\SilaederOidcController@logoutCallback')
+    ->middleware('throttle:60,1')
+    ->name('silaeder.logout.callback');
+
 Auth::routes(['verify' => true]);
 
 Route::prefix('open')->group(function () {

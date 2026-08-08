@@ -56,8 +56,18 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password', 'remember_token', 'oidc_issuer', 'oidc_subject',
     ];
+
+    public static function roleLabels(): array
+    {
+        return [
+            'student' => 'Ученик',
+            'novice' => 'Новичок',
+            'teacher' => 'Учитель',
+            'admin' => 'Администратор',
+        ];
+    }
 
     public function managed_courses()
     {

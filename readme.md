@@ -25,6 +25,10 @@ start-dev-windows.bat
 
 Также понадобится создать хотя бы один ранг в таблице `ranks`
 
+### Вход через ЛК Силаэдра
+
+Настройка OpenID Connect, redirect URI и переменных окружения описана в [docs/silaeder-oidc.md](docs/silaeder-oidc.md).
+
 ## Telegram уведомления в Docker
 Для уведомлений аукционов через Telegram заполните переменные в `.env`:
 
