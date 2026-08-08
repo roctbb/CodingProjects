@@ -1080,6 +1080,40 @@ body {
   min-height: 3.35rem;
 }
 
+.silaeder-login-button {
+  background: linear-gradient(135deg, #c54a05 0%, #bd3f00 100%);
+  border-color: #aa3900;
+  box-shadow: 0 8px 18px rgba(189, 63, 0, 0.24);
+  color: #fff;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.silaeder-login-button:hover,
+.silaeder-login-button:focus-visible {
+  background: linear-gradient(135deg, #b9380a 0%, #9a3412 100%);
+  border-color: #8d2f0f;
+  box-shadow: 0 10px 22px rgba(154, 52, 18, 0.3);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.silaeder-login-button:active {
+  background: #9a3412;
+  border-color: #7c2d12;
+  color: #fff;
+  transform: translateY(0);
+}
+
+.silaeder-login-button__logo {
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(124, 45, 18, 0.2);
+  flex: 0 0 auto;
+  height: 1.75rem;
+  object-fit: cover;
+  width: 1.75rem;
+}
+
 .auth-brand {
   text-shadow: 0 1px 14px rgba(15, 23, 42, 0.35);
 }
