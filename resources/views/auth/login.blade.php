@@ -30,7 +30,7 @@
         @endif
 
         @if (config('services.silaeder_oidc.enabled'))
-            <a class="btn btn-primary rounded-3 fw-semibold w-100 py-2 mb-3" href="{{ route('silaeder.login') }}">
+            <a class="btn btn-primary text-white rounded-3 fw-semibold w-100 py-2 mb-3" href="{{ route('silaeder.login') }}">
                 <i class="fas fa-id-card me-1"></i> Войти через ЛК Силаэдра
             </a>
             <div class="d-flex align-items-center gap-2 text-muted small mb-3" aria-hidden="true">
