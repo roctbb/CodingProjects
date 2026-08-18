@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         Commands\TestEmails::class,
         Commands\FixTyposCommand::class,
         Commands\RecalculateCoursePoints::class,
+        Commands\RecalculateOpenedLessonPoints::class,
         Commands\PollTelegramBot::class,
         Commands\RandomCoinDrop::class,
         Commands\GeneratePulseInsights::class,
@@ -37,6 +38,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('birthdays')->daily();
         $schedule->command('coins:random-drop')->daily();
         $schedule->command('pets:daily-actions')->daily();
+        $schedule->command('course:recalculate-opened-lessons')->dailyAt('00:01')->withoutOverlapping();
         $schedule->command('pulse:insights --daily-summary')->dailyAt('00:10');
         $schedule->command('pulse:insights --difficult-spots')->hourly();
         $schedule->command('pulse:insights --streaks')->dailyAt('20:30');

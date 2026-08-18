@@ -111,13 +111,22 @@ body {
   width: 28px;
 }
 
+.gc-sidebar__scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+}
+
 .gc-sidebar__nav {
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
   list-style: none;
   margin: 0;
-  overflow-y: auto;
   padding: 0.45rem 0.6rem;
 }
 
@@ -235,6 +244,17 @@ body {
   height: 32px;
   object-fit: cover;
   width: 32px;
+}
+
+.gc-sidebar__user .gc-avatar-frame {
+  flex: 0 0 auto;
+}
+
+.gc-sidebar__user-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Main content area */
@@ -7777,8 +7797,8 @@ a:hover {
 }
 
 .gc-profile-card .profile-avatar {
-  height: clamp(7.5rem, 10vw, 9rem);
-  width: clamp(7.5rem, 10vw, 9rem);
+  height: clamp(9rem, 13vw, 11rem);
+  width: clamp(9rem, 13vw, 11rem);
 }
 
 .gc-learning-avatar {

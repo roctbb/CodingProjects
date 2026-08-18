@@ -44,7 +44,9 @@ class User extends Authenticatable implements MustVerifyEmail
     public function imageUrl(): string
     {
         if ($this->image && Storage::exists($this->image)) {
-            return url('/media/' . $this->image);
+            $version = Storage::lastModified($this->image);
+
+            return url('/media/' . $this->image) . ($version ? '?v=' . $version : '');
         }
 
         return url('images/user.jpg');

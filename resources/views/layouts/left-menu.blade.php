@@ -20,7 +20,8 @@
             <span>GeekClass</span>
         </a>
 
-        <ul class="gc-sidebar__nav">
+        <div class="gc-sidebar__scroll">
+            <ul class="gc-sidebar__nav">
             @if (Auth::check())
                 <li>
                     <a class="gc-sidebar__link {{ Request::is('insider/courses*') ? 'active' : '' }}" href="{{ url('/insider/courses') }}">
@@ -39,7 +40,6 @@
                         </a>
                     </li>
                 @endif
-                @include('layouts.partials.sidebar-course-links')
                 <li>
                     <a class="gc-sidebar__link {{ Request::is('insider/market*') ? 'active' : '' }}" href="{{ url('insider/market') }}">
                         <i class="fas fa-store"></i> Магазин
@@ -50,6 +50,7 @@
                         <i class="fas fa-users"></i> Сообщество
                     </a>
                 </li>
+                @include('layouts.partials.sidebar-course-links')
             @else
                 <li>
                     <a class="gc-sidebar__link {{ Request::is('login') ? 'active' : '' }}" href="{{ url('login') }}">
@@ -57,51 +58,20 @@
                     </a>
                 </li>
             @endif
-        </ul>
-
-        <div class="gc-sidebar__section-label mt-auto">Ресурсы</div>
-        <ul class="gc-sidebar__nav">
-            <li>
-                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://storage.geekclass.ru">
-                    <i class="fas fa-cloud"></i> Storage
-                </a>
-            </li>
-            <li>
-                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://paste.geekclass.ru">
-                    <i class="fas fa-clipboard"></i> Paste
-                </a>
-            </li>
-            <li>
-                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://exam.geekclass.ru">
-                    <i class="fas fa-file-alt"></i> Exam
-                </a>
-            </li>
-            <li>
-                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://arena.geekclass.ru">
-                    <i class="fas fa-trophy"></i> Arena
-                </a>
-            </li>
-            <li>
-                <a class="gc-sidebar__link" target="_blank" rel="noopener" href="https://battle.geekclass.ru">
-                    <i class="fas fa-code"></i> CodeBattle
-                </a>
-            </li>
-            <li>
-                <button class="gc-sidebar__link" id="gcThemeToggle">
-                    <i class="fas fa-moon"></i> <span>Тема</span>
-                </button>
-            </li>
-        </ul>
+            </ul>
+        </div>
 
         @if (Auth::check())
             <div class="gc-sidebar__user">
                 <div class="dropdown">
                     <button class="gc-sidebar__user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <x-gc-avatar :user="Auth::user()" img-class="gc-sidebar__avatar" alt="" />
-                        <span>{{ Auth::user()->name }}</span>
+                        <span class="gc-sidebar__user-name">{{ Auth::user()->name }}</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{{ url('insider/profile') }}"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        @include('layouts.partials.sidebar-user-resources')
                         <li>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
