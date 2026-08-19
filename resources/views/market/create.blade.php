@@ -8,7 +8,7 @@
     <div class="container-xl px-0">
         <div class="gc-card gc-page-header mb-3">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/market') }}"><i class="icon ion-chevron-left"></i> В магазин</a>
+                <a class="assessment-back-link" href="{{ url('/insider/market') }}"><i class="fas fa-chevron-left"></i> В магазин</a>
                 <h2 class="mb-1">Создание товара</h2>
                 <p class="mb-0 text-muted">Новый товар для магазина и быстрый предпросмотр карточки.</p>
             </div>
@@ -86,14 +86,14 @@
 
                         <div class="gc-form-footer flex-column-reverse flex-sm-row justify-content-end gap-2">
                             <a class="btn btn-outline-secondary rounded-3" href="{{ url('/insider/market') }}">Отмена</a>
-                            <button type="submit" class="btn btn-success rounded-3 px-3 fw-semibold">Создать товар</button>
+                            <button type="submit" class="btn btn-success rounded-3 px-3 fw-medium">Создать товар</button>
                         </div>
                     </form>
                 </div>
             </div>
 
             <aside class="col-12 col-lg-4 sticky-lg-top pt-lg-1">
-                <div class="text-muted fw-semibold small mb-2">Предпросмотр</div>
+                <div class="text-muted fw-medium small mb-2">Предпросмотр</div>
                 <article class="gc-card overflow-hidden d-flex flex-column">
                     <div class="ratio ratio-4x3 gc-media-frame">
                         <img class="w-100 h-100 object-fit-cover @if (!old('image')) d-none @endif" src="{{ old('image') }}" alt="{{ old('name', 'Новый товар') }}" data-market-preview-image>
@@ -105,12 +105,12 @@
                             @if (old('number', 1) > 0)
                                 <span class="badge rounded-pill bg-body-tertiary" data-market-preview-stock>В наличии: {{ old('number', 1) }}</span>
                             @else
-                                <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold" data-market-preview-stock>Закончился</span>
+                                <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium" data-market-preview-stock>Закончился</span>
                             @endif
                             <span class="badge rounded-pill bg-info-subtle text-info-emphasis border border-info-subtle" data-market-preview-sale-type>{{ old('sale_type') == 'auction' ? 'Аукцион' : 'Покупка' }}</span>
                         </div>
 
-                        <h6 class="fw-bold lh-sm mb-2" data-market-preview-name>{{ old('name', 'Новый товар') }}</h6>
+                        <h6 class="fw-medium lh-sm mb-2" data-market-preview-name>{{ old('name', 'Новый товар') }}</h6>
                         <p class="text-muted small lh-sm mb-3" data-market-preview-description>{{ old('description', 'Описание товара появится здесь.') }}</p>
 
                         <button class="btn btn-success gc-action-button gc-action-button--block mt-auto pe-none" type="button" tabindex="-1" aria-disabled="true">

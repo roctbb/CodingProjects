@@ -8,7 +8,7 @@
     <div class="container-xl px-0">
         <div class="gc-card gc-page-header mb-3">
             <div>
-                <a class="assessment-back-link" href="{{ url('/insider/courses') }}"><i class="icon ion-chevron-left"></i> К курсам</a>
+                <a class="assessment-back-link" href="{{ url('/insider/courses') }}"><i class="fas fa-chevron-left"></i> К курсам</a>
                 <h2 class="mb-1">Создание курса</h2>
                 <p class="mb-0 text-muted">Задайте основу курса. Программу, учеников и материалы можно настроить после создания.</p>
             </div>
@@ -59,7 +59,7 @@
                         </div>
 
                         <div class="gc-form-footer justify-content-end gap-2">
-                            <button type="submit" class="btn btn-success rounded-3 fw-semibold px-4">Создать курс</button>
+                            <button type="submit" class="btn btn-success rounded-3 fw-medium px-4">Создать курс</button>
                         </div>
                     </form>
                 </div>

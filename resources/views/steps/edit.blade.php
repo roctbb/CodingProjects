@@ -8,8 +8,8 @@
     <div class="container-xl px-0">
         <div class="gc-card gc-page-header mb-3">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id.'/steps/'.$step->id) }}"><i class="icon ion-chevron-left"></i> К этапу</a>
-                <h2 class="fw-bold lh-sm mb-1">Изменение темы</h2>
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id.'/steps/'.$step->id) }}"><i class="fas fa-chevron-left"></i> К этапу</a>
+                <h2 class="fw-medium lh-sm mb-1">Изменение темы</h2>
                 <p class="mb-0 text-muted text-truncate">{{$step->lesson->name}}</p>
             </div>
         </div>
@@ -41,13 +41,13 @@
                             <label for="theory" class="form-label mb-0">Теоретический материал</label>
                             <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Улучшение теории">
                                 <button type="button" class="btn btn-outline-primary rounded-start-3" data-improve-text="fix_typos" data-field-id="theory">
-                                    <i class="icon ion-android-checkbox-outline"></i> Опечатки
+                                    <i class="fas fa-spell-check"></i> Опечатки
                                 </button>
                                 <button type="button" class="btn btn-outline-info" data-improve-text="improve_style" data-field-id="theory">
-                                    <i class="icon ion-android-create"></i> Стиль
+                                    <i class="fas fa-pen"></i> Стиль
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary rounded-end-3" data-improve-text="both" data-field-id="theory">
-                                    <i class="icon ion-android-star"></i> Всё
+                                    <i class="fas fa-star"></i> Всё
                                 </button>
                             </div>
                         </div>
@@ -66,13 +66,13 @@
                             <label for="notes" class="form-label mb-0">Комментарий для преподавателя</label>
                             <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Улучшение комментария">
                                 <button type="button" class="btn btn-outline-primary rounded-start-3" data-improve-text="fix_typos" data-field-id="notes">
-                                    <i class="icon ion-android-checkbox-outline"></i> Опечатки
+                                    <i class="fas fa-spell-check"></i> Опечатки
                                 </button>
                                 <button type="button" class="btn btn-outline-info" data-improve-text="improve_style" data-field-id="notes">
-                                    <i class="icon ion-android-create"></i> Стиль
+                                    <i class="fas fa-pen"></i> Стиль
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary rounded-end-3" data-improve-text="both" data-field-id="notes">
-                                    <i class="icon ion-android-star"></i> Всё
+                                    <i class="fas fa-star"></i> Всё
                                 </button>
                             </div>
                         </div>
@@ -134,7 +134,7 @@
                             <div class="gc-info-tile"><span>Задачи</span><strong>{{ $step->tasks->count() }}</strong></div>
                             <div class="gc-info-tile"><span>Режим</span><strong>{{ $step->is_notebook ? 'Тетрадка' : 'Обычный материал' }}</strong></div>
                         </div>
-                        <button type="submit" form="step-edit-form" class="btn btn-success rounded-3 fw-semibold w-100">Сохранить</button>
+                        <button type="submit" form="step-edit-form" class="btn btn-success rounded-3 fw-medium w-100">Сохранить</button>
                     </aside>
                 </div>
             </div>

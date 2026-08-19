@@ -50,7 +50,7 @@
                     <div class="step-page-nav__slot">
                         @if ($prevUrl)
                             <a href="{{ $prevUrl }}" class="step-nav-btn step-nav-btn--prev">
-                                <i class="icon ion-arrow-left-c"></i>
+                                <i class="fas fa-arrow-left"></i>
                                 <span class="step-nav-btn__text">
                                     <small>Назад</small>
                                     <strong>{{ $prevStep->name }}</strong>
@@ -65,7 +65,7 @@
                                     <small>Далее</small>
                                     <strong>{{ $nextStep->name }}</strong>
                                 </span>
-                                <i class="icon ion-arrow-right-c"></i>
+                                <i class="fas fa-arrow-right"></i>
                             </a>
                         @endif
                     </div>

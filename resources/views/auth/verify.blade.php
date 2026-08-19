@@ -15,7 +15,7 @@
                         </span>
                         <div class="min-width-0">
                             <span class="gc-eyebrow">аккаунт</span>
-                            <h2 class="fw-bold lh-sm mb-1">{{ __('Подтвердите E-mail адрес') }}</h2>
+                            <h2 class="fw-medium lh-sm mb-1">{{ __('Подтвердите E-mail адрес') }}</h2>
                             <p class="text-muted mb-0">{{ __('Для продолжения работы с ' . config('app.name', 'Laravel') . ' нужно подтвердить почту.') }}</p>
                         </div>
                     </div>
@@ -34,13 +34,13 @@
                     <div class="d-flex flex-column flex-sm-row gap-2 border-top pt-3">
                         <form method="POST" action="{{ route('verification.resend') }}" class="m-0">
                             @csrf
-                            <button type="submit" class="btn btn-success rounded-3 fw-semibold w-100">
+                            <button type="submit" class="btn btn-success rounded-3 fw-medium w-100">
                                 {{ __('Получить ссылку на почту') }}
                             </button>
                         </form>
                         <form method="POST" action="{{ route('logout') }}" class="m-0">
                             @csrf
-                            <button type="submit" class="btn btn-outline-secondary rounded-3 fw-semibold w-100">
+                            <button type="submit" class="btn btn-outline-secondary rounded-3 fw-medium w-100">
                                 {{ __('Выйти') }}
                             </button>
                         </form>

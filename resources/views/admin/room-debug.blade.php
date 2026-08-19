@@ -22,7 +22,7 @@
         .room-tool__title h1 {
             margin: 0;
             font-size: 28px;
-            font-weight: 800;
+            font-weight: 500;
         }
 
         .room-tool__title p {
@@ -53,7 +53,7 @@
             margin-bottom: 4px;
             color: #64748b;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 500;
         }
 
         .room-field select,
@@ -84,17 +84,12 @@
             padding: 8px;
             background: #f8fafc;
             text-align: left;
-            transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+            transition: border-color var(--gc-transition), box-shadow var(--gc-transition);
         }
 
-        .room-stage-card:hover,
         .room-stage-card.is-active {
             border-color: #7c3aed;
             box-shadow: 0 0 0 2px rgba(124, 58, 237, .14), 0 8px 20px rgba(15, 23, 42, .08);
-        }
-
-        .room-stage-card:hover {
-            transform: translateY(-1px);
         }
 
         .room-stage-card img {
@@ -130,7 +125,7 @@
             color: #334155 !important;
             display: inline-flex !important;
             font-size: 10px !important;
-            font-weight: 800;
+            font-weight: 500;
             line-height: 1 !important;
             padding: 4px 6px;
         }
@@ -161,7 +156,7 @@
             display: block;
             color: #64748b;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 500;
             line-height: 1.25;
         }
 
@@ -260,7 +255,7 @@
             overflow: hidden;
             color: #334155;
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 500;
             line-height: 1.25;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -310,7 +305,7 @@
             border-radius: 999px;
             padding: 5px 9px;
             font-size: 12px;
-            font-weight: 800;
+            font-weight: 500;
             color: #166534;
             background: #dcfce7;
         }
@@ -352,7 +347,7 @@
         .room-alpha-report__metric {
             color: #0f172a;
             font-variant-numeric: tabular-nums;
-            font-weight: 800;
+            font-weight: 500;
         }
 
         .room-alpha-report__row--warn {
@@ -446,7 +441,7 @@
             color: #fff;
             font-size: 11px;
             line-height: 1.2;
-            font-weight: 800;
+            font-weight: 500;
             white-space: nowrap;
         }
 
@@ -470,7 +465,7 @@
         .room-inspector h2 {
             margin: 0 0 10px;
             font-size: 18px;
-            font-weight: 800;
+            font-weight: 500;
         }
 
         .room-inspector__grid {
@@ -504,12 +499,11 @@
             color: #334155;
             cursor: pointer;
             font-size: 11px;
-            font-weight: 800;
+            font-weight: 500;
             line-height: 1;
             padding: 7px 9px;
         }
 
-        .room-layer-preset:hover,
         .room-layer-preset.is-active {
             border-color: #7c3aed;
             background: #ede9fe;
@@ -528,7 +522,7 @@
             color: #334155;
             cursor: pointer;
             font-size: 12px;
-            font-weight: 800;
+            font-weight: 500;
             line-height: 1.1;
         }
 
@@ -579,11 +573,11 @@
 
         .room-current-card dt {
             color: #64748b;
-            font-weight: 800;
+            font-weight: 500;
         }
 
         .room-current-card dd {
-            font-weight: 800;
+            font-weight: 500;
             overflow: hidden;
             text-align: right;
             text-overflow: ellipsis;
@@ -637,7 +631,7 @@
             padding: 8px 12px;
             background: #fff;
             color: #0f172a;
-            font-weight: 700;
+            font-weight: 500;
         }
 
         .room-action--primary {

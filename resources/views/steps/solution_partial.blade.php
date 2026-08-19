@@ -8,7 +8,7 @@
             <div class="gc-section-header gc-section-header--responsive">
                 <div class="min-width-0">
                     <span class="gc-eyebrow">Решение</span>
-                    <span class="text-muted small"><i class="icon ion-ios-clock-outline me-1 opacity-75"></i>{{ $solution->submitted->format('d.m.Y H:i')}}</span>
+                    <span class="text-muted small"><i class="fas fa-clock me-1 opacity-75"></i>{{ $solution->submitted->format('d.m.Y H:i')}}</span>
                 </div>
                 <div class="flex-shrink-0">
                     @if ($solution->mark!=null)
@@ -18,7 +18,7 @@
                             <span class="badge rounded-pill {{ $solutionScoreBadgeClass }}">{{$solution->mark}} XP</span>
                         @endif
                     @else
-                        <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold">Не проверено</span>
+                        <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium">Не проверено</span>
                     @endif
                 </div>
             </div>
@@ -72,7 +72,7 @@
                                     <span class="text-danger small d-block mt-1"><strong>{{ $errors->first('recheck_comment') }}</strong></span>
                                 @endif
                                 <div class="solution-recheck-form__actions">
-                                    <button type="submit" class="btn btn-outline-secondary btn-sm rounded-3 fw-semibold">Попросить перепроверить</button>
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm rounded-3 fw-medium">Попросить перепроверить</button>
                                 </div>
                             </form>
                         @endif

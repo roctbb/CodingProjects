@@ -9,11 +9,8 @@
     <ul class="nav nav-pills flex-column step-sidebar__brand-list">
         <li class="nav-item">
             <a class="nav-link step-sidebar__brand" href="{{ $courseBackUrl ?: url('/') }}">
-                @if ($isInsider)
-                    <i class="icon ion-chevron-left step-sidebar__brand-back"></i>
-                @endif
-                <img src="{{ url('images/icons/icons8-idea-64.png') }}" height="32" alt=""/>
-                <span>GeekClass</span>
+                <x-brand-logo width="32" height="32" alt="" />
+                <span>{{ config('app.name', 'Laravel') }}</span>
             </a>
         </li>
     </ul>
@@ -30,7 +27,7 @@
                    href="{{ url($stepBaseUrl . $lesson_step->id) }}">
                     <span class="step-sidebar__link-label">{{ $lesson_step->name }}</span>
                     @if ($isInsider && $visibleSidebarTasks->count() != 0)
-                        <i class="ion ion-trophy"></i>
+                        <i class="fas fa-trophy" aria-hidden="true"></i>
                     @endif
                 </a>
             </li>
@@ -40,7 +37,7 @@
     @if ($isManager)
         <p class="mt-3 mb-0">
             <a href="{{ url('/insider/courses/' . $course->id . '/lessons/' . $step->lesson->id . '/create') }}"
-               class="btn btn-success btn-sm rounded-3 fw-semibold w-100 step-sidebar__add">Новый этап</a>
+               class="btn btn-success btn-sm rounded-3 fw-medium w-100 step-sidebar__add">Новый этап</a>
         </p>
     @endif
 </nav>

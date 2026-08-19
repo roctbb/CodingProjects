@@ -12,7 +12,7 @@
                    href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id.'#solution-'.$solution->id) }}"
                    title="К проверке"
                    aria-label="К проверке">
-                    <i class="icon ion-chevron-left"></i>
+                    <i class="fas fa-chevron-left"></i>
                 </a>
                 <div class="solution-review-header__copy min-width-0">
                     <h2 class="solution-review-header__title">Выдача достижения</h2>
@@ -29,7 +29,7 @@
                   data-fullscreen-loading
                   data-loading-message="Генерирую новые варианты достижения">
                 {{ csrf_field() }}
-                <button type="submit" class="btn btn-sm gc-action-button rounded-3 fw-semibold">
+                <button type="submit" class="btn btn-sm gc-action-button rounded-3 fw-medium">
                     <i class="fas fa-sync-alt me-1"></i>Еще варианты
                 </button>
             </form>
@@ -140,7 +140,7 @@
                             @endif
                         </div>
                         <div class="solution-achievement-variant__actions">
-                            <button type="submit" class="btn btn-success btn-sm rounded-3 fw-semibold">Выдать</button>
+                            <button type="submit" class="btn btn-success btn-sm rounded-3 fw-medium">Выдать</button>
                         </div>
                     </form>
                 @endforeach

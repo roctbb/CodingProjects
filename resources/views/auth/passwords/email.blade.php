@@ -9,8 +9,8 @@
 @section('content')
     <div class="text-center text-white mb-3">
         <a href="{{ url('/') }}" class="auth-brand d-inline-flex align-items-center gap-2 text-decoration-none text-white">
-            <img src="{{ url('images/icons/icons8-idea-64.png') }}" width="28" height="28" alt="">
-            <span class="fs-5 fw-semibold">{{ config('app.name', 'Laravel') }}</span>
+            <x-brand-logo width="28" height="28" alt="" />
+            <span class="fs-5 fw-medium">{{ config('app.name', 'Laravel') }}</span>
         </a>
     </div>
 
@@ -30,7 +30,7 @@
             <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-key"></i></span>
             <div class="min-width-0">
                 <span class="gc-eyebrow">доступ</span>
-                <h1 class="h4 fw-bold mb-0">Восстановление пароля</h1>
+                <h1 class="h4 fw-medium mb-0">Восстановление пароля</h1>
             </div>
         </div>
 
@@ -45,12 +45,12 @@
             @endif
         </div>
 
-        <button type="submit" class="btn btn-success rounded-3 fw-semibold w-100 py-2">
+        <button type="submit" class="btn btn-success rounded-3 fw-medium w-100 py-2">
             Восстановить пароль
         </button>
 
         <div class="border-top pt-3 mt-3 text-center small">
-            <a href="{{ url('/login') }}" class="text-decoration-none fw-semibold">Вернуться ко входу</a>
+            <a href="{{ url('/login') }}" class="text-decoration-none fw-medium">Вернуться ко входу</a>
         </div>
     </form>
 @endsection

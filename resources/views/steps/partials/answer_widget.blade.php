@@ -24,10 +24,10 @@
               method="POST"
               class="step-quiz-answer-form" data-check-task data-task-id="{{$task->id}}">
                 {{ csrf_field() }}
-                <label for="text{{$task->id}}" class="form-label fw-semibold mb-0">Ответ</label>
+                <label for="text{{$task->id}}" class="form-label fw-medium mb-0">Ответ</label>
                 <input type="text" name="text" class="form-control form-control-sm rounded-3"
                 id="text{{$task->id}}"/>
-                <button type="submit" class="btn btn-success btn-sm rounded-3 fw-semibold">Отправить</button>
+                <button type="submit" class="btn btn-success btn-sm rounded-3 fw-medium">Отправить</button>
 
             </form>
             @if ($errors->has('text'))
@@ -38,7 +38,7 @@
     <div class="step-task-status-row @if (!$blocked && !($task->is_quiz && $hasUserSolution)) d-none @endif"
          data-task-status-row>
         @if ($blocked)
-            <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-semibold" id="TSK_{{$task->id}}">0 XP</span>
+            <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-medium" id="TSK_{{$task->id}}">0 XP</span>
             <span class="small text-muted" id="TSK_COM_{{$task->id}}">Задача заблокирована</span>
         @elseif ($task->is_quiz && $hasUserSolution)
             <span class="badge rounded-pill {{ $taskScoreBadgeClass }} step-task-score" id="TSK_{{$task->id}}">{{$latestUserSolution->mark}} XP</span>

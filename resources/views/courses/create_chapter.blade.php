@@ -8,7 +8,7 @@
     <div class="container-xl px-0">
         <div class="gc-card gc-page-header mb-3">
             <div>
-                <a class="assessment-back-link" href="{{ url()->previous() }}"><i class="icon ion-chevron-left"></i> Назад</a>
+                <a class="assessment-back-link" href="{{ url()->previous() }}"><i class="fas fa-chevron-left"></i> Назад</a>
                 <h2 class="mb-1">Добавление главы</h2>
                 <p class="mb-0 text-muted">Глава помогает сгруппировать уроки в понятные этапы курса.</p>
             </div>
@@ -37,7 +37,7 @@
                     </div>
 
                     <div class="gc-form-footer justify-content-end gap-2">
-                        <button type="submit" class="btn btn-success rounded-3 fw-semibold px-4">Добавить главу</button>
+                        <button type="submit" class="btn btn-success rounded-3 fw-medium px-4">Добавить главу</button>
                     </div>
                 </form>
             </div>

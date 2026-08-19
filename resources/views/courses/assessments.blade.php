@@ -18,7 +18,7 @@
     <div class="container-fluid px-0">
         <div class="gc-card gc-page-header mb-3">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="fas fa-chevron-left"></i> К курсу</a>
                 <h2 class="mb-1">Журнал опыта</h2>
                 <p class="mb-0 text-muted text-truncate">{{ $course->name }}</p>
             </div>
@@ -84,8 +84,8 @@
 
                                 <th class="assessment-task-head">{{$task->name}} <span>({{$task->max_mark}})</span>
                                     @if($task->is_star) <sup>*</sup> @endif
-                                    @if($task->only_class) <sup><i class="icon ion-android-contacts"></i></sup> @endif
-                                    @if($task->only_remote) <sup><i class="icon ion-at"></i></sup> @endif</th>
+                                    @if($task->only_class) <sup><i class="fas fa-users"></i></sup> @endif
+                                    @if($task->only_remote) <sup><i class="fas fa-at"></i></sup> @endif</th>
                                 @php
                                     $sum += $task->max_mark;
                                 @endphp
@@ -130,19 +130,19 @@
                                             }
                                         }
                                         $sum += $mark;
-                                        $class = $blocked ? 'bg-danger-subtle text-danger border border-danger-subtle fw-semibold' : ($bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary fw-semibold') : 'bg-body-tertiary fw-semibold');
+                                        $class = $blocked ? 'bg-danger-subtle text-danger border border-danger-subtle fw-medium' : ($bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary fw-medium') : 'bg-body-tertiary fw-medium');
                                         if (!$blocked) {
                                             if ($mark >= $task->max_mark * 0.5)
                                             {
-                                                $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary fw-semibold') : 'bg-body-tertiary fw-semibold';
+                                                $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary fw-medium') : 'bg-body-tertiary fw-medium';
                                             }
                                             if ($mark >= $task->max_mark * 0.7)
                                             {
-                                                $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary fw-semibold') : 'bg-body-tertiary fw-semibold';
+                                                $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary fw-medium') : 'bg-body-tertiary fw-medium';
                                             }
                                             if ($need_check)
                                             {
-                                                $class = 'bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold';
+                                                $class = 'bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium';
                                             }
                                         }
 

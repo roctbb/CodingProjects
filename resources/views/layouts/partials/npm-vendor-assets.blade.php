@@ -11,3 +11,4 @@
     $appStylesVersion = file_exists($appStylesPath) ? filemtime($appStylesPath) : null;
 @endphp
 <link rel="stylesheet" href="{{ asset('build/css/app.css') }}@if($appStylesVersion)?v={{ $appStylesVersion }}@endif">
+@include('layouts.partials.brand-theme')

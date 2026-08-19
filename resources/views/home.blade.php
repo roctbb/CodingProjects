@@ -8,7 +8,8 @@
         $activeCourses = $activeCourses ?? $my_courses->where('state', 'started');
         $draftCourses = $draftCourses ?? collect();
         $archiveCourses = $archiveCourses ?? collect();
-        $availableCourses = $availableCourses ?? $open_courses->merge($private_courses);
+        $availableCourses = $availableCourses ?? $open_courses;
+        $completedCourses = $completedCourses ?? collect();
         $birthdayUsers = $birthdayUsers ?? collect();
         $activeProgressPercents = $activeCourses->map(fn($course) => optional($courseProgress->get($course->id))->percent)->filter(fn($percent) => $percent !== null);
         $averageProgress = $activeProgressPercents->count() ? round($activeProgressPercents->avg()) : 0;
@@ -22,9 +23,9 @@
     @if($user->isBirthday())
         <div class="gc-card border p-3 mb-3 alert-dismissible fade show position-relative" role="alert">
             <h5 class="mb-0 pe-4">
-                <img src="{{ url('images/icons/icons8-confetti-48.png') }}" height="24" alt="">
+                <i class="fas fa-wand-magic-sparkles text-warning" aria-hidden="true"></i>
                 С днем рождения!!!
-                <img src="{{ url('images/icons/icons8-confetti-48.png') }}" height="24" alt="">
+                <i class="fas fa-wand-magic-sparkles text-warning" aria-hidden="true"></i>
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
         </div>
@@ -32,25 +33,23 @@
 
     <div class="gc-title-row gc-title-row--center">
         <div class="min-width-0">
-            <span class="text-muted text-uppercase fw-bold font-monospace small d-block mb-1">workspace</span>
             <h2 class="mb-1">Мои курсы</h2>
             @unless($isTeacher)
                 <div class="d-flex flex-wrap gap-2 text-muted small">
                     <span><strong>{{ $activeCourses->count() }}</strong> активных</span>
                     <span><strong>{{ $open_courses->count() }}</strong> открытых</span>
-                    <span><strong>{{ $private_courses->count() }}</strong> по инвайту</span>
                 </div>
             @endunless
         </div>
 
         @if ($isTeacher)
-            <a class="btn btn-success rounded-3 fw-semibold px-3 py-2" href="{{ url('/insider/courses/create/') }}"><i class="fas fa-plus me-1"></i>Создать курс</a>
+            <a class="btn btn-success rounded-3 fw-medium px-3 py-2" href="{{ url('/insider/courses/create/') }}"><i class="fas fa-plus me-1"></i>Создать курс</a>
         @else
             <form autocomplete="off" class="gc-card gc-invite-form" method="get" action="{{ url('insider/invite') }}">
                 @csrf
                 <i class="fas fa-ticket-alt text-muted d-none d-sm-inline"></i>
                 <input type="text" class="form-control rounded-3" name="invite" placeholder="Введите инвайт на курс...">
-                <button type="submit" class="btn btn-success rounded-3 fw-semibold text-nowrap">Добавить</button>
+                <button type="submit" class="btn btn-success rounded-3 fw-medium text-nowrap">Добавить</button>
             </form>
         @endif
     </div>
@@ -100,17 +99,17 @@
         <div class="d-flex align-items-center justify-content-between mb-3">
             <ul class="nav nav-pills gc-segmented-tabs" id="coursesTabs" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab">
+                    <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab">
                         Активные <span class="badge rounded-pill bg-body gc-tab-count">{{ $activeCourses->count() }}</span>
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small" id="draft-tab" data-bs-toggle="tab" data-bs-target="#draft" type="button" role="tab">
+                    <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small" id="draft-tab" data-bs-toggle="tab" data-bs-target="#draft" type="button" role="tab">
                         Черновики <span class="badge rounded-pill bg-body gc-tab-count">{{ $draftCourses->count() }}</span>
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small" id="archive-tab" data-bs-toggle="tab" data-bs-target="#archive" type="button" role="tab">
+                    <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small" id="archive-tab" data-bs-toggle="tab" data-bs-target="#archive" type="button" role="tab">
                         Архив <span class="badge rounded-pill bg-body gc-tab-count">{{ $archiveCourses->count() }}</span>
                     </button>
                 </li>
@@ -230,6 +229,20 @@
                             <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-3 g-3">
                                 @foreach($availableCourses as $course)
                                     @include('courses.partials.home_course_card', ['variant' => 'available', 'isLinked' => false])
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!$isTeacher && $completedCourses->count())
+                        <div class="mt-5">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h5 class="mb-0">Пройденные курсы</h5>
+                                <span class="text-muted small">{{ $completedCourses->count() }} всего</span>
+                            </div>
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-3 g-3">
+                                @foreach($completedCourses as $completedCourse)
+                                    @include('courses.partials.home_completed_course_card')
                                 @endforeach
                             </div>
                         </div>

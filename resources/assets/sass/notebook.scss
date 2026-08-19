@@ -22,7 +22,7 @@
 
 [data-bs-theme="dark"] .notebook-container pre {
   background: #020617 !important;
-  border-color: rgba(148, 163, 184, 0.22) !important;
+  border-color: rgba(148, 163, 184, 0.154) !important;
   color: #e2e8f0;
 }
 
@@ -42,7 +42,7 @@
 [data-bs-theme="dark"] .notebook-container table.dataframe,
 [data-bs-theme="dark"] .notebook-container table.dataframe td,
 [data-bs-theme="dark"] .notebook-container table.dataframe th {
-  border-color: rgba(148, 163, 184, 0.22) !important;
+  border-color: rgba(148, 163, 184, 0.154) !important;
 }
 
 [data-bs-theme="dark"] .notebook-container table.dataframe thead th {
@@ -99,16 +99,20 @@ pre[class*="language-"] {
   margin-bottom: 2rem;
 }
 
-blockquote {
+.notebook-container blockquote {
   background-color: #eaedf2;
   border: 0;
-  border-color: #eaedf2;
+  border-color: rgba(234, 237, 242, 0.7);
   border-radius: 0.5rem;
   color: #506690;
   margin-bottom: 1.5rem !important;
-  padding: 1.5rem 1.5rem 0.5rem !important;
+  padding: 1rem 1.25rem !important;
 }
 
-blockquote p {
+.notebook-container blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.notebook-container blockquote p {
   font-size: 1rem !important;
 }

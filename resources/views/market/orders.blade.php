@@ -8,8 +8,8 @@
     <div class="container-fluid px-0">
         <div class="gc-card gc-page-header mb-4">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/market') }}"><i class="icon ion-chevron-left"></i> В магазин</a>
-                <h2 class="fw-bold lh-sm mb-1">Заказы магазина</h2>
+                <a class="assessment-back-link" href="{{ url('/insider/market') }}"><i class="fas fa-chevron-left"></i> В магазин</a>
+                <h2 class="fw-medium lh-sm mb-1">Заказы магазина</h2>
                 <p class="mb-0 text-muted">Доставка и история покупок за GC.</p>
             </div>
             <div class="row g-2 flex-nowrap flex-shrink-0">

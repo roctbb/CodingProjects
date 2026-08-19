@@ -13,7 +13,7 @@
                 <a href="{{ url('/insider/courses/'.$course->id.'/steps/'.$step->id) }}" class="assessment-back-link">
                     <i class="fas fa-arrow-left me-1"></i>{{ $course->name }}
                 </a>
-                <h3 class="fw-bold lh-sm text-truncate mb-1">{{ $step->lesson->name }}</h3>
+                <h3 class="fw-medium lh-sm text-truncate mb-1">{{ $step->lesson->name }}</h3>
                 <p class="text-muted mb-0 small text-truncate">{{ $step->name }}</p>
             </div>
         </div>
@@ -22,12 +22,12 @@
             <ul class="nav nav-pills gc-segmented-tabs mb-4" role="tablist">
                 @if (!$zero_theory)
                     <li class="nav-item">
-                        <a class="nav-link active fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small" data-bs-toggle="pill" href="#theory" role="tab">Теория</a>
+                        <a class="nav-link active fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small" data-bs-toggle="pill" href="#theory" role="tab">Теория</a>
                     </li>
                 @endif
                 @foreach ($tasks as $key => $task)
                     <li class="nav-item">
-                        <a class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small" data-bs-toggle="pill" href="#task{{ $task->id }}" role="tab">
+                        <a class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small" data-bs-toggle="pill" href="#task{{ $task->id }}" role="tab">
                             {{ $key + 1 }}. {{ $task->name }}
                             @if($task->is_star)<sup>*</sup>@endif
                         </a>
@@ -41,7 +41,7 @@
                 <div class="tab-pane fade show active" id="theory" role="tabpanel">
                     <div class="gc-card overflow-hidden">
                         <div class="gc-section-header">
-                            <h4 class="fw-bold mb-0">{{ $step->name }}</h4>
+                            <h4 class="fw-medium mb-0">{{ $step->name }}</h4>
                         </div>
                         <div class="markdown perform p-3 p-md-4">
                             @parsedown($step->theory)
@@ -63,7 +63,7 @@
                     @endif
                     <div class="gc-card overflow-hidden">
                         <div class="gc-section-header gc-section-header--between">
-                            <h4 class="fw-bold mb-0">{{ $task->name }}</h4>
+                            <h4 class="fw-medium mb-0">{{ $task->name }}</h4>
                             <span class="badge rounded-pill bg-body-tertiary flex-shrink-0">{{ $task->max_mark }} XP</span>
                         </div>
                         <div class="markdown perform p-3 p-md-4">

@@ -73,7 +73,7 @@
                                     <span class="step-task-type step-task-type--{{$taskType}}">
                                         <i class="{{$taskTypeIcon}}"></i>{{$taskTypeLabel}}
                                     </span>
-                                    <h4 class="step-task-card__title fw-bold mb-0">{{$task->name}}</h4>
+                                    <h4 class="step-task-card__title fw-medium mb-0">{{$task->name}}</h4>
                                     <span class="badge rounded-pill bg-body-tertiary">{{$task->max_mark}} XP</span>
                                     @if($earnedAchievementId)
                                         <a class="badge rounded-pill step-task-achievement-badge"
@@ -107,18 +107,18 @@
                                 <a class="btn btn-outline-danger btn-sm rounded-3"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"
                                    title="Удалить задачу"
-                                   data-confirm="Вы уверены?"><i class="icon ion-android-close"></i></a>
+                                   data-confirm="Вы уверены?"><i class="fas fa-xmark"></i></a>
                                 <a class="btn btn-outline-secondary btn-sm rounded-3"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}"
-                                   title="Редактировать задачу"><i class="icon ion-android-create"></i></a>
+                                   title="Редактировать задачу"><i class="fas fa-pen"></i></a>
                                 @include('steps/partials/deadline_modal')
                                 <button type="button" title="Установить дедлайн" data-bs-toggle="modal"
                                    data-bs-target="#deadline-modal-{{$task->id}}"
-                                   class="btn btn-outline-secondary btn-sm rounded-3"><i class="icon ion-ios-calendar"></i></button>
+                                   class="btn btn-outline-secondary btn-sm rounded-3"><i class="fas fa-calendar-days"></i></button>
                                 <a title="Фантомное решение (добавить пустое решение для всех студентов)"
                                    class="btn btn-outline-secondary btn-sm rounded-3"
                                    href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"
-                                   data-confirm="Добавить пустое фантомное решение для всех студентов?"><i class="icon ion-ios-color-wand"></i></a>
+                                   data-confirm="Добавить пустое фантомное решение для всех студентов?"><i class="fas fa-wand-magic-sparkles"></i></a>
                                 <button type="button"
                                         title="Пересказ решений"
                                         data-bs-toggle="modal"
@@ -130,19 +130,19 @@
                                     <a title="Перепроверить все решения (обнулить баллы и отправить последнее решение каждого студента на перепроверку)"
                                         class="btn btn-outline-secondary btn-sm rounded-3"
                                         href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/recheck-all')}}"
-                                        data-confirm="Вы уверены? Это обнулит все баллы и отправит последние решения на перепроверку."><i class="icon ion-refresh"></i></a>
+                                        data-confirm="Вы уверены? Это обнулит все баллы и отправит последние решения на перепроверку."><i class="fas fa-rotate"></i></a>
                                 @endif
                                 <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть вправо"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i class="icon ion-arrow-right-c"></i></a>
+                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i class="fas fa-arrow-right"></i></a>
                                 <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть влево"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i class="icon ion-arrow-left-c"></i></a>
+                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i class="fas fa-arrow-left"></i></a>
                                 @if ($step->previousStep() != null)
                                     <a class="btn btn-outline-secondary btn-sm rounded-3" title="Перенести выше"
-                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i class="icon ion-arrow-up-c"></i></a>
+                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i class="fas fa-arrow-up"></i></a>
                                 @endif
                                 @if ($step->nextStep() != null)
                                     <a class="btn btn-outline-secondary btn-sm rounded-3" title="Перенести ниже"
-                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i class="icon ion-arrow-down-c"></i></a>
+                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i class="fas fa-arrow-down"></i></a>
                                 @endif
                                 </div>
                             @endif
@@ -164,7 +164,7 @@
                                     @if (!$blocked)
                                         <div class="step-code-submit mb-3 d-flex flex-wrap align-items-center gap-2">
                                             <a href="{{ config('services.geekpaste_url').'/?task_id=' . $task->id . '&course_id=' . $course->id }}"
-                                               class="btn btn-success rounded-3 fw-semibold" target="_blank" rel="noopener">
+                                               class="btn btn-success rounded-3 fw-medium" target="_blank" rel="noopener">
                                                 <i class="fas fa-code me-1"></i>Сдать решение
                                             </a>
                                             @if ($canBuyGeekPasteExtraAttempt)
@@ -212,7 +212,7 @@
                                               class="step-quiz-answer-form"
                                               data-check-task data-task-id="{{$task->id}}">
                                             {{ csrf_field() }}
-                                            <label for="text{{$task->id}}" class="form-label fw-semibold mb-0">Ответ</label>
+                                            <label for="text{{$task->id}}" class="form-label fw-medium mb-0">Ответ</label>
                                             <input type="text" name="text" class="form-control form-control-sm rounded-3"
                                                    id="text{{$task->id}}"/>
                                             <button type="submit" class="btn btn-success btn-sm rounded-3">Отправить
@@ -226,7 +226,7 @@
                                 <div class="step-task-status-row {{ $blocked ? 'is-blocked' : $taskStatusClass }} @if (!$blocked && !($task->is_quiz && $hasUserSolution)) d-none @endif"
                                      data-task-status-row>
                                     @if ($blocked)
-                                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-semibold" id="TSK_{{$task->id}}">0 XP</span>
+                                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-medium" id="TSK_{{$task->id}}">0 XP</span>
                                         <span class="small text-muted" id="TSK_COM_{{$task->id}}">Задача заблокирована</span>
                                     @elseif ($task->is_quiz && $hasUserSolution)
                                         <span class="badge rounded-pill {{ $taskScoreBadgeClass }} step-task-score"
@@ -331,7 +331,7 @@
                                                 if ($blocked) {
                                                     $mark = 0;
                                                     $need_check = false;
-                                                    $class = 'bg-danger-subtle text-danger border border-danger-subtle fw-semibold';
+                                                    $class = 'bg-danger-subtle text-danger border border-danger-subtle fw-medium';
                                                     $stateClass = 'is-blocked';
                                                     $stateLabel = 'Заблокировано';
                                                 } else {
@@ -342,20 +342,20 @@
                                                     {
                                                     $need_check = true;
                                                     }
-                                                    $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary text-muted fw-semibold') : 'bg-body-tertiary text-muted fw-semibold';
+                                                    $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary text-muted fw-medium') : 'bg-body-tertiary text-muted fw-medium';
                                                     $stateClass = ($need_check || $recheckRequested) ? 'is-pending' : ($bestSolution ? 'is-checked' : 'is-empty');
                                                     $stateLabel = $recheckRequested ? 'На перепроверку' : ($need_check ? 'На проверке' : ($bestSolution ? 'Проверено' : 'Нет решений'));
                                                     if ($mark >= $task->max_mark * 0.5)
                                                     {
-                                                    $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary text-muted fw-semibold') : 'bg-body-tertiary text-muted fw-semibold';
+                                                    $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary text-muted fw-medium') : 'bg-body-tertiary text-muted fw-medium';
                                                     }
                                                     if ($mark >= $task->max_mark * 0.7)
                                                     {
-                                                    $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary text-muted fw-semibold') : 'bg-body-tertiary text-muted fw-semibold';
+                                                    $class = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary text-muted fw-medium') : 'bg-body-tertiary text-muted fw-medium';
                                                     }
                                                     if ($need_check)
                                                     {
-                                                    $class = 'bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold';
+                                                    $class = 'bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium';
                                                     }
                                                 }
                                                 $maxMark = max(1, (int) $task->max_mark);

@@ -25,7 +25,7 @@
                         <div class="gc-info-tile h-100">
                             <span class="text-muted small d-block mb-1">Монеты</span>
                             <div class="d-flex align-items-center gap-1">
-                                <img src="{{ url('images/icons/icons8-coins-48.png') }}" width="18" height="18" alt="">
+                                <i class="fas fa-coins" aria-hidden="true"></i>
                                 <strong class="lh-1">{{ $balance }}</strong>
                                 <span class="text-muted small">GC</span>
                             </div>
@@ -92,11 +92,11 @@
                                 {{ $buser->birthday->format('d.m') }}
                             </span>
                             <span class="d-flex align-items-center justify-content-between gap-2 min-width-0 flex-grow-1">
-                                <a class="text-decoration-none {{ $isBirthdayToday ? 'fw-bold' : 'text-body' }} d-inline-flex align-items-center gap-1 min-width-0" href="{{ url('insider/profile/'.$buser->id) }}">
+                                <a class="text-decoration-none {{ $isBirthdayToday ? 'fw-medium' : 'text-body' }} d-inline-flex align-items-center gap-1 min-width-0" href="{{ url('insider/profile/'.$buser->id) }}">
                                     <span class="text-truncate">{{ $buser->name }}</span>
                                     @include('profile.partials.custom_title_badge', ['profileUser' => $buser, 'compact' => true])
                                 </a>
-                                <small class="{{ $isBirthdayToday ? 'text-warning-emphasis fw-bold' : 'text-muted' }} flex-shrink-0">{{ $birthdayLabel }}</small>
+                                <small class="{{ $isBirthdayToday ? 'text-warning-emphasis fw-medium' : 'text-muted' }} flex-shrink-0">{{ $birthdayLabel }}</small>
                             </span>
                         </li>
                     @empty

@@ -12,7 +12,7 @@
 
     <div class="community-hero gc-card gc-page-header mb-4 overflow-hidden">
         <div>
-            <span class="gc-eyebrow mb-2">GeekClass</span>
+            <span class="gc-eyebrow mb-2">{{ config('app.name', 'Laravel') }}</span>
             <h2 class="mb-2">Сообщество</h2>
             <p class="mb-0 text-muted col-lg-8">Участники клуба, их роли, ранги и прогресс в обучении.</p>
         </div>

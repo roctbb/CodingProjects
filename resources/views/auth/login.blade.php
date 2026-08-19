@@ -7,8 +7,8 @@
 @section('content')
     <div class="text-center text-white mb-3">
         <a href="{{ url('/') }}" class="auth-brand d-inline-flex align-items-center gap-2 text-decoration-none text-white">
-            <img src="{{ url('images/icons/icons8-idea-64.png') }}" width="28" height="28" alt="">
-            <span class="fs-5 fw-semibold">{{ config('app.name', 'Laravel') }}</span>
+            <x-brand-logo width="28" height="28" alt="" />
+            <span class="fs-5 fw-medium">{{ config('app.name', 'Laravel') }}</span>
         </a>
     </div>
 
@@ -17,8 +17,7 @@
         <div class="d-flex align-items-center gap-3 mb-4">
             <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-terminal"></i></span>
             <div class="min-width-0">
-                <span class="gc-eyebrow">workspace</span>
-                <h1 class="h4 fw-bold mb-0">Вход</h1>
+                <h1 class="h4 fw-medium mb-0">Вход</h1>
             </div>
         </div>
 
@@ -55,7 +54,7 @@
             <a href="{{ url('/password/reset') }}" class="small text-decoration-none">Забыли пароль?</a>
         </div>
 
-        <button class="btn btn-success rounded-3 fw-semibold w-100 py-2 mb-3" type="submit">Войти</button>
+        <button class="btn btn-success rounded-3 fw-medium w-100 py-2 mb-3" type="submit">Войти</button>
 
         @if (config('services.silaeder_oidc.enabled'))
             <div class="d-flex align-items-center gap-2 text-muted small mb-3" aria-hidden="true">
@@ -63,7 +62,7 @@
                 <span>или</span>
                 <span class="border-top flex-grow-1"></span>
             </div>
-            <a class="btn silaeder-login-button rounded-3 fw-semibold w-100 py-2 mb-3 d-flex align-items-center justify-content-center gap-2"
+            <a class="btn silaeder-login-button rounded-3 fw-medium w-100 py-2 mb-3 d-flex align-items-center justify-content-center gap-2"
                href="{{ route('silaeder.login') }}">
                 <img class="silaeder-login-button__logo" src="{{ asset('images/silaeder-logo.png') }}" alt="">
                 <span>Войти через ЛК Силаэдра</span>
@@ -72,7 +71,7 @@
 
         <div class="border-top pt-3 text-center small text-muted">
             Нет аккаунта?
-            <a href="{{ url('/register') }}" class="text-decoration-none fw-semibold">Зарегистрироваться</a>
+            <a href="{{ url('/register') }}" class="text-decoration-none fw-medium">Зарегистрироваться</a>
         </div>
     </form>
 @endsection

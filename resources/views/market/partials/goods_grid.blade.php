@@ -30,19 +30,19 @@
                             <div class="market-good-card__identity min-width-0">
                                 <div class="market-good-card__meta">
                                     @if ($isArchive)
-                                        <span class="badge rounded-pill market-good-status bg-secondary-subtle text-secondary border border-secondary-subtle fw-semibold">
+                                        <span class="badge rounded-pill market-good-status bg-secondary-subtle text-secondary border border-secondary-subtle fw-medium">
                                             {{ $isAuction && $good->auction_finished_at ? 'Аукцион завершён' : 'Снят с продажи' }}
                                         </span>
                                     @elseif ($isAuction)
-                                        <span class="badge rounded-pill market-good-status bg-info-subtle text-info-emphasis border border-info-subtle fw-semibold">Аукцион · мест: {{ $good->number }}</span>
+                                        <span class="badge rounded-pill market-good-status bg-info-subtle text-info-emphasis border border-info-subtle fw-medium">Аукцион · мест: {{ $good->number }}</span>
                                     @elseif ($good->number > 0)
                                         <span class="badge rounded-pill market-good-status bg-body-tertiary">В наличии: {{ $good->number }}</span>
                                     @else
-                                        <span class="badge rounded-pill market-good-status bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold">Закончился</span>
+                                        <span class="badge rounded-pill market-good-status bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium">Закончился</span>
                                     @endif
                                 </div>
 
-                                <h6 class="market-good-title fw-bold lh-sm mb-0">{{ $good->name }}</h6>
+                                <h6 class="market-good-title fw-medium lh-sm mb-0">{{ $good->name }}</h6>
                                 <p class="market-good-description text-muted small lh-sm mb-0">{{ \Illuminate\Support\Str::limit($good->description, 150) }}</p>
                             </div>
 
@@ -154,7 +154,7 @@
                                             {{ csrf_field() }}
                                             <div class="input-group input-group-sm">
                                                 <input type="number" min="{{ $minBid }}" name="amount" value="{{ $minBid }}" class="form-control rounded-start-3" aria-label="Ставка" @if($availableForBid < $minBid) disabled @endif>
-                                                <button class="btn btn-success fw-semibold" type="submit" @if($availableForBid < $minBid) disabled @endif>
+                                                <button class="btn btn-success fw-medium" type="submit" @if($availableForBid < $minBid) disabled @endif>
                                                     <i class="fas fa-gavel"></i> Ставка
                                                 </button>
                                             </div>

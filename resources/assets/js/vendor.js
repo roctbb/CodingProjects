@@ -894,7 +894,7 @@ document.addEventListener('DOMContentLoaded', function () {
             text.textContent = option.textContent.trim();
 
             var check = document.createElement('span');
-            check.className = 'gc-multiselect__check icon ion-checkmark';
+            check.className = 'gc-multiselect__check fas fa-check';
             check.setAttribute('aria-hidden', 'true');
 
             item.appendChild(checkbox);

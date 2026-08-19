@@ -22,7 +22,7 @@
                         <span class="step-task-type step-task-type--{{$taskType}}">
                             <i class="{{$taskTypeIcon}}"></i>{{$taskTypeLabel}}
                         </span>
-                        <h4 class="step-task-card__title fw-bold mb-0">{{$task->name}}</h4>
+                        <h4 class="step-task-card__title fw-medium mb-0">{{$task->name}}</h4>
                         <span class="badge rounded-pill bg-body-tertiary">{{$task->max_mark}} XP</span>
                         @if($earnedAchievementId)
                             <a class="badge rounded-pill step-task-achievement-badge"
@@ -44,25 +44,25 @@
                         <a class="btn btn-outline-danger btn-sm rounded-3"
                            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"
                            title="Удалить задачу"
-                           data-confirm="Вы уверены?"><i class="icon ion-android-close"></i></a>
+                           data-confirm="Вы уверены?"><i class="fas fa-xmark"></i></a>
                         <a class="btn btn-outline-secondary btn-sm rounded-3"
                            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}"
-                           title="Редактировать задачу"><i class="icon ion-android-create"></i></a>
+                           title="Редактировать задачу"><i class="fas fa-pen"></i></a>
                         <a class="btn btn-outline-secondary btn-sm rounded-3"
                            href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"
                            title="Фантомное решение"
-                           data-confirm="Добавить пустое фантомное решение для всех студентов?"><i class="icon ion-ios-color-wand"></i></a>
+                           data-confirm="Добавить пустое фантомное решение для всех студентов?"><i class="fas fa-wand-magic-sparkles"></i></a>
                         <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть вправо"
-                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i class="icon ion-arrow-right-c"></i></a>
+                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i class="fas fa-arrow-right"></i></a>
                         <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть влево"
-                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i class="icon ion-arrow-left-c"></i></a>
+                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i class="fas fa-arrow-left"></i></a>
                         @if ($step->previousStep() != null)
                             <a class="btn btn-outline-secondary btn-sm rounded-3" title="Перенести выше"
-                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i class="icon ion-arrow-up-c"></i></a>
+                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i class="fas fa-arrow-up"></i></a>
                         @endif
                         @if ($step->nextStep() != null)
                             <a class="btn btn-outline-secondary btn-sm rounded-3" title="Перенести ниже"
-                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i class="icon ion-arrow-down-c"></i></a>
+                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i class="fas fa-arrow-down"></i></a>
                         @endif
                     </div>
                 @endif
@@ -76,9 +76,9 @@
                           class="step-quiz-answer-form"
                           data-check-task data-task-id="{{$task->id}}">
                         {{ csrf_field() }}
-                        <label for="text{{$task->id}}" class="form-label fw-semibold mb-0">Ответ</label>
+                        <label for="text{{$task->id}}" class="form-label fw-medium mb-0">Ответ</label>
                         <input type="text" name="text" class="form-control form-control-sm rounded-3" id="text{{$task->id}}" />
-                        <button type="submit" class="btn btn-success btn-sm rounded-3 fw-semibold">Отправить</button>
+                        <button type="submit" class="btn btn-success btn-sm rounded-3 fw-medium">Отправить</button>
                     </form>
                     @if ($errors->has('text'))
                         <span class="text-danger small d-block mb-3"><strong>{{ $errors->first('text') }}</strong></span>

@@ -15,11 +15,11 @@
 
         <div class="gc-card gc-page-header mb-4">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/profile/'.$user->id) }}"><i class="icon ion-chevron-left"></i> К профилю</a>
-                <h2 class="fw-bold lh-sm mb-1">Редактирование профиля</h2>
+                <a class="assessment-back-link" href="{{ url('/insider/profile/'.$user->id) }}"><i class="fas fa-chevron-left"></i> К профилю</a>
+                <h2 class="fw-medium lh-sm mb-1">Редактирование профиля</h2>
                 <p class="text-muted mb-0">{{ $user->name }}</p>
             </div>
-            <button type="submit" class="btn btn-success rounded-3 fw-semibold px-4 py-2 flex-shrink-0">
+            <button type="submit" class="btn btn-success rounded-3 fw-medium px-4 py-2 flex-shrink-0">
                 <i class="fas fa-check me-1"></i>Сохранить
             </button>
         </div>
@@ -79,7 +79,7 @@
                                 <div class="form-check">
                                     <input id="birthday_hidden" type="checkbox" class="form-check-input" name="birthday_hidden" value="1"
                                            @checked((bool) old('birthday_hidden', $user->birthday_hidden))>
-                                    <label for="birthday_hidden" class="form-check-label fw-semibold">Скрыть дату рождения</label>
+                                    <label for="birthday_hidden" class="form-check-label fw-medium">Скрыть дату рождения</label>
                                     <div class="form-text">Дата не будет видна в профиле и списке ближайших дней рождения.</div>
                                     @error('birthday_hidden')
                                         <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
@@ -176,7 +176,7 @@
                 <div class="gc-card overflow-hidden sticky-lg-top">
                     <div class="p-3 p-md-4 text-center border-bottom">
                         <x-gc-avatar :user="$user" size="xl" img-class="profile-avatar" class="mb-3 mx-auto" alt="" />
-                        <h6 class="fw-bold mb-1">{{ $user->name }}</h6>
+                        <h6 class="fw-medium mb-1">{{ $user->name }}</h6>
                         <div class="mb-1">
                             @include('profile.partials.custom_title_badge', ['profileUser' => $user, 'compact' => true])
                         </div>
@@ -239,7 +239,7 @@
 
                                 @if (config('services.silaeder_oidc.enabled') && $guest->id === $user->id && in_array($user->role, ['student', 'teacher'], true))
                                     <div class="border-top pt-3">
-                                        <div class="fw-semibold mb-1">ЛК Силаэдра</div>
+                                        <div class="fw-medium mb-1">ЛК Силаэдра</div>
                                         @if ($user->oidc_subject)
                                             <p class="small text-muted mb-0">
                                                 <i class="fas fa-check text-success me-1"></i> Аккаунт привязан
@@ -248,7 +248,7 @@
                                             <p class="small text-muted mb-2">
                                                 Привяжите ЛК, чтобы в дальнейшем входить без локального пароля.
                                             </p>
-                                            <a class="btn btn-outline-primary rounded-3 fw-semibold w-100" href="{{ route('silaeder.link') }}">
+                                            <a class="btn btn-outline-primary rounded-3 fw-medium w-100" href="{{ route('silaeder.link') }}">
                                                 Привязать ЛК Силаэдра
                                             </a>
                                         @endif

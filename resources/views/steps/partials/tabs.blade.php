@@ -12,7 +12,7 @@
                     'kind' => 'link',
                     'title' => 'Редактировать этап',
                     'class' => 'btn btn-outline-secondary btn-sm rounded-3 gc-icon-button',
-                    'icon' => 'icon ion-android-create',
+                    'icon' => 'fas fa-pen',
                     'href' => url('/insider/courses/' . $course->id . '/steps/' . $step->id . '/edit'),
                     'leading' => true,
                 ],
@@ -20,7 +20,7 @@
                     'kind' => 'button',
                     'title' => 'Добавить задачу',
                     'class' => 'btn btn-outline-secondary btn-sm rounded-3 gc-icon-button',
-                    'icon' => 'icon ion-android-add-circle',
+                    'icon' => 'fas fa-circle-plus',
                     'attributes' => [
                         'data-bs-toggle' => 'modal',
                         'data-bs-target' => '#exampleModal',
@@ -30,28 +30,28 @@
                     'kind' => 'link',
                     'title' => 'Режим занятия',
                     'class' => 'btn btn-outline-secondary btn-sm rounded-3 gc-icon-button',
-                    'icon' => 'icon ion-android-desktop',
+                    'icon' => 'fas fa-desktop',
                     'href' => url('/insider/courses/' . $course->id . '/perform/' . $step->id),
                 ],
                 [
                     'kind' => 'link',
                     'title' => 'Поднять этап',
                     'class' => 'btn btn-outline-secondary btn-sm rounded-3 gc-icon-button',
-                    'icon' => 'ion-arrow-up-c',
+                    'icon' => 'fas fa-arrow-up',
                     'href' => url('/insider/courses/' . $course->id . '/steps/' . $step->id . '/lower'),
                 ],
                 [
                     'kind' => 'link',
                     'title' => 'Опустить этап',
                     'class' => 'btn btn-outline-secondary btn-sm rounded-3 gc-icon-button',
-                    'icon' => 'ion-arrow-down-c',
+                    'icon' => 'fas fa-arrow-down',
                     'href' => url('/insider/courses/' . $course->id . '/steps/' . $step->id . '/upper'),
                 ],
                 [
                     'kind' => 'link',
                     'title' => 'Удалить этап',
                     'class' => 'btn btn-outline-danger btn-sm rounded-3 gc-icon-button',
-                    'icon' => 'ion-close-round',
+                    'icon' => 'fas fa-xmark',
                     'href' => url('/insider/courses/' . $course->id . '/steps/' . $step->id . '/delete'),
                     'attributes' => [
                         'data-confirm' => 'Вы уверены?',
@@ -99,16 +99,16 @@
                         if ($isInsider) {
                             if ($task->isSubmitted($user->id)) {
                                 if ($task->isFailed($user->id)) {
-                                    $taskStatusIcon = url('images/icons/icons8-cancel-48.png');
+                                    $taskStatusIcon = 'fas fa-circle-xmark text-danger';
                                     $taskStatusTitle = 'Не выполнено';
                                 } elseif ($task->isOnCheck($user->id)) {
-                                    $taskStatusIcon = url('images/icons/icons8-historical-48.png');
+                                    $taskStatusIcon = 'fas fa-hourglass-half text-warning';
                                     $taskStatusTitle = 'Ожидает проверки';
                                 } elseif ($task->isFullDone($user->id)) {
-                                    $taskStatusIcon = url('images/icons/icons8-checkmark-48.png');
+                                    $taskStatusIcon = 'fas fa-circle-check text-success';
                                     $taskStatusTitle = 'Выполнено';
                                 } else {
-                                    $taskStatusIcon = url('images/icons/icons8-error-48.png');
+                                    $taskStatusIcon = 'fas fa-circle-exclamation text-warning';
                                     $taskStatusTitle = 'Требует доработки';
                                 }
                             } else {
@@ -118,13 +118,12 @@
                             if (!$taskStatusIcon && isset($taskDeadline) && $taskDeadline) {
                                 $deadline = $taskDeadline->expiration;
                                 if (\Carbon\Carbon::now()->gt($deadline)) {
-                                    $taskStatusIcon = url('images/icons/deadline.png');
+                                    $taskStatusIcon = 'fas fa-clock text-danger';
                                     $taskStatusTitle = 'Дедлайн';
-                                    $taskStatusClass = 'border border-danger rounded';
+
 	                                } elseif (\Carbon\Carbon::now()->addDays(3)->gt($deadline)) {
-	                                    $taskStatusIcon = url('images/icons/deadline.png');
+	                                    $taskStatusIcon = 'fas fa-clock text-warning';
 	                                    $taskStatusTitle = 'Дедлайн';
-	                                    $taskStatusClass = 'border border-warning rounded';
 	                                }
 	                            }
 	                        }
@@ -134,11 +133,10 @@
                            href="#task{{$task->id}}"
                            aria-controls="tasks{{$task->id}}" aria-expanded="true" title="{{$task->name}}"><span class="step-top-tab-link__label">{{$key+1}}
                             . {{$task->name}}</span>
-                            @if($task->is_star) <sup>*</sup> @endif
-                            @if($task->is_hidden) <sup title="Скрытая задача">🔒</sup> @endif
+                            @if($task->is_star) <sup title="Избранная задача"><i class="fas fa-star" aria-hidden="true"></i></sup> @endif
+                            @if($task->is_hidden) <sup title="Скрытая задача"><i class="fas fa-lock" aria-hidden="true"></i></sup> @endif
                             @if ($taskStatusIcon)
-                                <sup><img class="{{ $taskStatusClass }}" title="{{ $taskStatusTitle }}"
-                                          src="{{ $taskStatusIcon }}" height="20"/></sup>
+                                <sup><i class="{{ $taskStatusIcon }} {{ $taskStatusClass }}" title="{{ $taskStatusTitle }}" aria-hidden="true"></i></sup>
                             @endif
                         </a>
                     </li>

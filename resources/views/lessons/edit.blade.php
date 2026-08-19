@@ -8,8 +8,8 @@
     <div class="container-xl px-0">
         <div class="gc-card gc-page-header mb-3">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
-                <h2 class="fw-bold lh-sm mb-1">Изменение урока</h2>
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="fas fa-chevron-left"></i> К курсу</a>
+                <h2 class="fw-medium lh-sm mb-1">Изменение урока</h2>
                 <p class="mb-0 text-muted text-truncate">{{$lesson->name}}</p>
             </div>
         </div>
@@ -124,7 +124,7 @@
                         <div class="gc-info-tile"><span>Доступ</span><strong>{{ $lesson->is_open ? 'Открытый урок' : 'Только в курсе' }}</strong></div>
                         <div class="gc-info-tile"><span>Ранний доступ</span><strong>{{ $lesson->early_access_enabled ? 'Разрешен' : 'Выключен' }}</strong></div>
                     </div>
-                    <button type="submit" form="lesson-edit-form" class="btn btn-success rounded-3 fw-semibold w-100">Сохранить</button>
+                    <button type="submit" form="lesson-edit-form" class="btn btn-success rounded-3 fw-medium w-100">Сохранить</button>
 
                     <hr class="my-4">
 
@@ -176,7 +176,7 @@
                                     </label>
                                 @endforeach
                             </div>
-                            <button type="submit" class="btn btn-outline-primary rounded-3 fw-semibold w-100 mt-3">
+                            <button type="submit" class="btn btn-outline-primary rounded-3 fw-medium w-100 mt-3">
                                 Сохранить доступы
                             </button>
                         </form>

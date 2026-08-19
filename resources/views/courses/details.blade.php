@@ -21,6 +21,45 @@
         $studentsCount = $students->count();
         $userBalance = $isLearner ? $user->balance() : 0;
         $displayPercent = fn ($percent) => min(100, max(0, (float) $percent));
+        $pathLessons = $lessons->filter(fn($lesson) => $lesson->steps->count() > 0)->values();
+        $courseStateLabels = [
+            'draft' => 'Черновик',
+            'started' => 'Начат',
+            'ended' => 'Завершён',
+        ];
+        $studentsCountLastTwoDigits = $studentsCount % 100;
+        $studentsCountLastDigit = $studentsCount % 10;
+        $studentsCountLabel = $studentsCountLastDigit === 1 && $studentsCountLastTwoDigits !== 11
+            ? 'ученик'
+            : (in_array($studentsCountLastDigit, [2, 3, 4], true) && !in_array($studentsCountLastTwoDigits, [12, 13, 14], true)
+                ? 'ученика'
+                : 'учеников');
+        $sortedStudents = $students->sortByDesc(function ($student) {
+            return isset($student->points) ? $student->points : 0;
+        })->values();
+        $leaderboardPreviewStudents = $sortedStudents->take(3);
+        $currentStudentRank = null;
+        $learnerLeaderboardStudents = collect();
+        $learnerLeaderboardOffset = 0;
+
+        if ($isLearner && $course->students->contains($user)) {
+            $currentStudentIndex = $sortedStudents->search(fn ($student) => $student->id == $user->id);
+            if ($currentStudentIndex !== false) {
+                $currentStudentRank = $currentStudentIndex + 1;
+
+                $learnerLeaderboardLimit = 6;
+                $learnerLeaderboardOffset = max(0, $currentStudentIndex - 2);
+                if ($learnerLeaderboardOffset + $learnerLeaderboardLimit > $sortedStudents->count()) {
+                    $learnerLeaderboardOffset = max(0, $sortedStudents->count() - $learnerLeaderboardLimit);
+                }
+
+                $learnerLeaderboardStudents = $sortedStudents
+                    ->slice($learnerLeaderboardOffset, $learnerLeaderboardLimit)
+                    ->values();
+            }
+        }
+
+        $leaderboardExtraStudents = $sortedStudents->slice(3)->values();
     @endphp
 
     <div class="course-page">
@@ -28,51 +67,66 @@
             <div class="d-flex flex-column align-items-start gap-2 min-width-0">
                 <h2 class="mb-1">{{$course->name}}</h2>
                 <p class="course-description mb-0">{{$course->description}}</p>
-                <ul class="avatars course-header-avatars">
-                    @foreach($students as $student)
-                        @if ($loop->iteration > 12)
-                            @continue
-                        @endif
-                        <li>
-                            <a href="{{ url('insider/profile/'.$student->id) }}" data-bs-toggle="tooltip" title="{{ $student->name }}@if($student->activeCustomTitle()) · {{ $student->activeCustomTitle() }}@endif">
-                                <x-gc-avatar :user="$student" size="sm" class="course-header-avatar" alt="" />
-                            </a>
-                        </li>
-                    @endforeach
-
-                    @if ($studentsCount > 12)
-                        <li><span class="course-avatar-more">+{{ $studentsCount - 12 }}</span></li>
+                <div class="course-participants">
+                    <ul class="avatars course-header-avatars">
+                        @foreach($students->take(5) as $student)
+                            <li>
+                                <a href="{{ url('insider/profile/'.$student->id) }}" data-bs-toggle="tooltip" title="{{ $student->name }}@if($student->activeCustomTitle()) · {{ $student->activeCustomTitle() }}@endif">
+                                    <x-gc-avatar :user="$student" size="sm" class="course-header-avatar" alt="" />
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <span class="course-participant-count">{{$studentsCount}} {{$studentsCountLabel}}</span>
+                    @if ($currentStudentRank)
+                        <a class="course-rank-summary" href="#course-leaderboard">
+                            <i class="fas fa-trophy" aria-hidden="true"></i>
+                            <span>Ваше место: <strong>{{$currentStudentRank}}</strong></span>
+                        </a>
                     @endif
-                </ul>
+                </div>
             </div>
 
             @if ($isManager)
-                <div class="dropdown course-actions ms-md-3">
-                    <button class="btn btn-outline-success btn-sm course-actions__toggle" data-bs-toggle="dropdown" data-bs-target="#project-add-modal" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-plus me-1"></i> Действия
-                    </button>
+                <div class="course-heading-actions ms-md-3">
+                    <a class="btn btn-success btn-sm course-primary-action" href="{{url('/insider/courses/'.$course->id.'/create?chapter='.$chapter->id)}}">
+                        <i class="fas fa-plus"></i> Добавить урок
+                    </a>
+                    <div class="dropdown course-actions">
+                        <button class="btn btn-outline-secondary btn-sm course-actions__toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Другие действия с курсом">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
 
-                    <div class="dropdown-menu dropdown-menu-end">
-                        <a href="{{url('/insider/courses/'.$course->id.'/create?chapter='.$chapter->id)}}" class="dropdown-item"><i class="icon ion-compose"></i> Добавить урок</a>
-                        <a href="{{url('/insider/courses/'.$course->id.'/chapter')}}" class="dropdown-item"><i class="icon ion-plus"></i> Добавить главу</a>
-                        <a href="{{url('/insider/courses/'.$course->id.'/edit')}}" class="dropdown-item"><i class="icon ion-android-create"></i> Изменить курс</a>
-                        <a href="{{url('/insider/courses/'.$course->id.'/export-md')}}" class="dropdown-item"><i class="icon ion-document-text"></i> Экспорт в MD</a>
-                        @if ($course->state == "draft")
-                            <a href="{{url('/insider/courses/'.$course->id.'/start')}}" class="dropdown-item"><i class="icon ion-power"></i> Запустить курс</a>
-                        @elseif ($course->state == "started")
-                            <a href="{{url('/insider/courses/'.$course->id.'/stop')}}" class="dropdown-item"><i class="icon ion-stop"></i> Завершить курс</a>
-                        @endif
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a href="{{url('/insider/courses/'.$course->id.'/chapter')}}" class="dropdown-item"><i class="fas fa-layer-group"></i> Добавить главу</a>
+                            <a href="{{url('/insider/courses/'.$course->id.'/edit')}}" class="dropdown-item"><i class="fas fa-pen"></i> Изменить курс</a>
+                            <a href="{{url('/insider/courses/'.$course->id.'/export-md')}}" class="dropdown-item"><i class="fas fa-file-export"></i> Экспорт в MD</a>
+                            @if ($course->state == "draft")
+                                <a href="{{url('/insider/courses/'.$course->id.'/start')}}" class="dropdown-item"><i class="fas fa-play"></i> Запустить курс</a>
+                            @elseif ($course->state == "started")
+                                <a href="{{url('/insider/courses/'.$course->id.'/stop')}}" class="dropdown-item"><i class="fas fa-stop"></i> Завершить курс</a>
+                            @endif
+                            @if (count($students) < 40)
+                                <div class="dropdown-divider"></div>
+                                <button type="button" class="dropdown-item" data-bs-toggle="collapse" data-bs-target="#course-histogram" aria-expanded="false" aria-controls="course-histogram">
+                                    <i class="fas fa-chart-bar"></i> Распределение
+                                </button>
+                                <a href="{{url('insider/courses/'.$course->id.'/assessments')}}" class="dropdown-item"><i class="fas fa-star"></i> Очки опыта</a>
+                                <a href="{{url('insider/courses/'.$course->id.'/report')}}" class="dropdown-item"><i class="fas fa-file-lines"></i> Отчёт</a>
+                                <a href="{{url('insider/courses/'.$course->id.'/blocked')}}" class="dropdown-item"><i class="fas fa-ban"></i> Заблокированные</a>
+                            @endif
+                        </div>
                     </div>
                 </div>
             @endif
         </div>
 
         <div class="row align-items-start course-layout-row">
-            <main class="col-xl-9 col-lg-8">
+            <main class="col-xl-9">
                 <div class="course-lessons-toolbar mb-2">
                     <div class="course-lessons-toolbar__title">
                         <div class="course-section-label">Уроки</div>
-                        <small class="text-muted">{{ $lessons->count() }}</small>
+                        <span class="course-lessons-toolbar__count">· {{ $pathLessons->count() }}</span>
                     </div>
 
                     @if ($course->program->chapters->count() > 1)
@@ -117,7 +171,7 @@
                                                     <span class="course-chapter-switcher__item-percent">{{$chapterPercent}} %</span>
                                                 @endif
                                                 @if (!$isManager && ($chapterProgress[$current_chapter->id] ?? 0) >= 100)
-                                                    <i class="icon ion-checkmark-circled course-chapter-switcher__done"></i>
+                                                    <i class="fas fa-circle-check course-chapter-switcher__done"></i>
                                                 @endif
                                             </a>
                                         @endif
@@ -140,9 +194,9 @@
                                                 <button type="submit" class="dropdown-item"><i class="fas fa-bullseye"></i> Открывать по умолчанию</button>
                                             </form>
                                         @endif
-                                        <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$chapter->id.'/edit')}}" class="dropdown-item"><i class="icon ion-android-create"></i> Изменить главу</a>
-                                        <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$chapter->id.'/lower')}}" class="dropdown-item"><i class="icon ion-arrow-up-c"></i> Выше</a>
-                                        <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$chapter->id.'/upper')}}" class="dropdown-item"><i class="icon ion-arrow-down-c"></i> Ниже</a>
+                                        <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$chapter->id.'/edit')}}" class="dropdown-item"><i class="fas fa-pen"></i> Изменить главу</a>
+                                        <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$chapter->id.'/lower')}}" class="dropdown-item"><i class="fas fa-arrow-up"></i> Выше</a>
+                                        <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$chapter->id.'/upper')}}" class="dropdown-item"><i class="fas fa-arrow-down"></i> Ниже</a>
                                     </div>
                                 </div>
                             @endif
@@ -151,9 +205,7 @@
                 </div>
 
                 @php
-                    $pathLessons = $lessons->filter(fn($lesson) => $lesson->steps->count() > 0)->values();
                     $currentPathLessonId = null;
-                    $spotlightPathLesson = null;
 
                     if ($isLearner) {
                         foreach ($pathLessons as $pathLesson) {
@@ -169,20 +221,6 @@
                                 break;
                             }
                         }
-
-                        foreach ($pathLessons as $pathLesson) {
-                            if (!$pathLesson->isAvailable($course)) {
-                                continue;
-                            }
-
-                            $spotlightPathLesson = $pathLesson;
-
-                            if ($currentPathLessonId == $pathLesson->id) {
-                                break;
-                            }
-                        }
-	                    } else {
-	                        $spotlightPathLesson = $pathLessons->first();
 	                    }
 	                @endphp
 
@@ -195,49 +233,6 @@
 	                        'actionText' => $isManager ? 'Добавить урок' : null,
 	                    ])
 	                @else
-	                @if ($spotlightPathLesson)
-	                    @php
-	                        $spotlightIndex = $pathLessons->search(fn($pathLesson) => $pathLesson->id == $spotlightPathLesson->id);
-                        $spotlightStats = $isLearner ? ($lessonStats[$spotlightPathLesson->id][$cstudent->id] ?? null) : null;
-                        $spotlightPercent = $spotlightStats ? $spotlightStats->percent : 0;
-                        $spotlightDisplayPercent = $displayPercent($spotlightPercent);
-                        $spotlightProgressWidth = (int) round($spotlightDisplayPercent);
-                        $spotlightPoints = $spotlightStats ? $spotlightStats->points : 0;
-                        $spotlightMaxPoints = $spotlightStats ? $spotlightStats->max_points : 0;
-                        $spotlightStartDate = $spotlightPathLesson->getStartDate($course);
-                    @endphp
-
-                    <section class="course-path-spotlight p-3 p-md-4 mb-3 rounded-3 border bg-body">
-                        <div class="course-path-spotlight__content">
-                            <span class="text-muted text-uppercase fw-semibold small d-block mb-2">{{ $isLearner ? 'Следующий урок' : 'Первый урок главы' }}</span>
-                            <h3>{{$spotlightPathLesson->name}}</h3>
-                            <div class="course-path-spotlight__meta d-flex flex-wrap gap-2 mt-2 text-muted small">
-                                <span class="badge rounded-pill bg-body-tertiary">Урок {{$spotlightIndex + 1}}</span>
-                                @if ($spotlightStartDate != null)
-                                    <span class="badge rounded-pill bg-body-tertiary"><i class="ion ion-clock me-1"></i>{{$spotlightStartDate->format('Y-m-d')}}</span>
-                                @endif
-                                @if ($isLearner && $spotlightMaxPoints != 0)
-                                    <span class="badge rounded-pill bg-body-tertiary">{{$spotlightPoints}} / {{$spotlightMaxPoints}} XP</span>
-                                @endif
-                            </div>
-                        </div>
-
-                        @if ($isLearner && $spotlightMaxPoints != 0)
-                            <div class="course-path-spotlight__progress">
-                                <strong>{{round($spotlightDisplayPercent)}}%</strong>
-                                <div class="progress">
-                                    <div class="progress-bar progress-width-{{$spotlightProgressWidth}}" role="progressbar" data-progress-width="{{$spotlightDisplayPercent}}%" aria-valuenow="{{$spotlightProgressWidth}}" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        @endif
-
-                        <a class="btn btn-success course-path-spotlight__button" href="{{url('/insider/courses/'.$course->id.'/steps/'.$spotlightPathLesson->steps->first()->id)}}">
-                            {{ $isLearner ? 'Продолжить' : 'Открыть урок' }}
-                            <i class="fas fa-arrow-right"></i>
-                        </a>
-                    </section>
-                @endif
-
                 <div class="course-learning-path">
                     @foreach($pathLessons as $pathIndex => $lesson)
                         @php
@@ -260,6 +255,18 @@
 	                            $lessonTaskCount = $lesson->steps->sum(function ($step) {
 	                                return $step->tasks->count();
 	                            });
+	                            $lessonStateLabel = null;
+	                            if ($isCurrent) {
+	                                $lessonStateLabel = 'Текущий шаг';
+	                            } elseif ($isDone) {
+	                                $lessonStateLabel = 'Завершено';
+	                            } elseif ($hasEarlyAccess) {
+	                                $lessonStateLabel = 'Ранний доступ';
+	                            } elseif ($canBuyEarlyAccess) {
+	                                $lessonStateLabel = 'Можно открыть раньше';
+	                            } elseif (!$isAvailable) {
+	                                $lessonStateLabel = 'Закрыто';
+	                            }
 	                        @endphp
 
                         <article class="course-path-item @if ($isDone) is-done @endif @if ($isCurrent) is-current @endif @if (!$isAvailable) is-locked @endif @if (!$isDone && ($hasEarlyAccess || $canBuyEarlyAccess)) is-early-access @endif">
@@ -277,46 +284,33 @@
                                 $showLessonSticker = $isLearner && $cpercent > 90;
                             @endphp
 
-                            <div class="course-path-card rounded-3 border bg-body">
-                                <div class="course-path-card__main p-3">
-                                    <div class="course-path-card__topline d-flex justify-content-between gap-3 mb-2">
-                                        <div class="course-path-kicker">
-                                            Урок {{$pathIndex + 1}}
-                                            @if ($isCurrent)
-                                                <span>Текущий шаг</span>
-                                            @elseif ($isDone)
-                                                <span>Завершено</span>
-                                            @elseif ($hasEarlyAccess)
-                                                <span>Ранний доступ</span>
-                                            @elseif ($canBuyEarlyAccess)
-                                                <span>Можно открыть раньше</span>
-                                            @elseif (!$isAvailable)
-                                                <span>Закрыто</span>
-                                            @endif
-                                        </div>
+                            <div class="course-path-card border bg-body">
+                                <div class="course-path-card__main p-3 @if($isManager) has-actions @endif">
+                                    @if ($lessonStateLabel)
+                                        <div class="course-path-status">{{$lessonStateLabel}}</div>
+                                    @endif
 
-                                        @if ($isManager)
-                                            <div class="course-lesson-actions course-path-actions">
-                                                <div class="dropdown">
-                                                    <button class="btn btn-outline-secondary btn-sm rounded-3 gc-icon-button" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <i class="fas fa-ellipsis-v"></i>
-                                                    </button>
+                                    @if ($isManager)
+                                        <div class="course-lesson-actions course-path-actions">
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-options" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Действия с уроком">
+                                                    <i class="fas fa-ellipsis-h"></i>
+                                                </button>
 
-                                                    <div class="dropdown-menu dropdown-menu-end">
-	                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/edit')}}" class="dropdown-item"><i class="icon ion-android-create"></i> Изменить</a>
+                                                <div class="dropdown-menu dropdown-menu-end">
+	                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/edit')}}" class="dropdown-item"><i class="fas fa-pen"></i> Изменить</a>
 	                                                        @if ($lessonTaskCount > 0)
-	                                                            <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#lesson-deadline-modal-{{$lesson->id}}"><i class="icon ion-ios-calendar"></i> Дедлайн задач</button>
+	                                                            <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#lesson-deadline-modal-{{$lesson->id}}"><i class="fas fa-calendar-days"></i> Дедлайн задач</button>
 	                                                        @endif
-	                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export')}}" class="dropdown-item"><i class="icon ion-ios-cloud-download"></i> Экспорт</a>
-	                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export-points')}}" class="dropdown-item"><i class="icon ion-stats-bars"></i> Экспорт баллов</a>
-                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export-md')}}" class="dropdown-item"><i class="icon ion-document-text"></i> Экспорт в MD</a>
-                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/lower?chapter='.$chapter->id)}}" class="dropdown-item"><i class="icon ion-arrow-up-c"></i> Выше</a>
-                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/upper?chapter='.$chapter->id)}}" class="dropdown-item"><i class="icon ion-arrow-down-c"></i> Ниже</a>
-                                                    </div>
+	                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export')}}" class="dropdown-item"><i class="fas fa-download"></i> Экспорт</a>
+	                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export-points')}}" class="dropdown-item"><i class="fas fa-chart-column"></i> Экспорт баллов</a>
+                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export-md')}}" class="dropdown-item"><i class="fas fa-file-export"></i> Экспорт в MD</a>
+                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/lower?chapter='.$chapter->id)}}" class="dropdown-item"><i class="fas fa-arrow-up"></i> Выше</a>
+                                                        <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/upper?chapter='.$chapter->id)}}" class="dropdown-item"><i class="fas fa-arrow-down"></i> Ниже</a>
                                                 </div>
                                             </div>
-                                        @endif
-                                    </div>
+                                        </div>
+                                    @endif
 
                                     <div class="course-path-card__content @if($showLessonSticker) has-sticker @endif">
                                         <div class="min-width-0">
@@ -405,11 +399,11 @@
                                 <div class="course-path-card__footer px-3 py-2">
                                     <div class="course-path-meta">
                                         @if ($startDate != null)
-                                            <small class="course-lesson-date"><i class="ion ion-clock"></i> Доступно с {{$startDate->format('Y-m-d')}}</small>
+                                            <small class="course-lesson-date"><i class="fas fa-clock"></i> Доступно с {{$startDate->translatedFormat('j F Y')}}</small>
                                         @endif
 
                                         @if ($lesson->is_open && $isManager)
-                                            <a class="btn btn-outline-secondary btn-sm rounded-3 course-secondary-action course-open-url-action" href="{{ url('/open/steps/'.$lesson->steps->first()->id) }}" target="_blank" rel="noopener"><i class="ion ion-android-contacts"></i> Открытый URL</a>
+                                            <a class="btn btn-outline-secondary btn-sm rounded-3 course-secondary-action course-open-url-action" href="{{ url('/open/steps/'.$lesson->steps->first()->id) }}" target="_blank" rel="noopener"><i class="fas fa-users"></i> Открытый URL</a>
                                         @endif
 
                                         @if ($canBuyEarlyAccess)
@@ -447,17 +441,13 @@
                                         @endif
 
                                         @if ($isManager && count($students) < 70)
-                                            <div class="course-lesson-stat-badges" data-course-stats-summary="#marks{{$lesson->id}}">
-                                                @foreach($students as $student)
-                                                    @php
-                                                        $stats = $lessonStats[$lesson->id][$student->id] ?? null;
-                                                        $percent = $stats ? $stats->percent : 0;
-                                                        $badgeClass = $percent < 40 ? 'is-low' : ($percent < 60 ? 'is-mid' : 'is-high');
-                                                    @endphp
-                                                    <span class="course-lesson-stat-badge {{$badgeClass}}" title="{{$student->name}}@if($student->activeCustomTitle()) · {{ $student->activeCustomTitle() }}@endif: {{round($percent)}}%" aria-label="{{$student->name}}@if($student->activeCustomTitle()) · {{ $student->activeCustomTitle() }}@endif: {{round($percent)}}%"></span>
-                                                @endforeach
+                                            <div class="course-lesson-progress-summary" data-course-stats-summary="#marks{{$lesson->id}}" title="Средний прогресс: {{$lessonAveragePercent}}%">
+                                                <span>{{$lessonCompletedCount}} из {{$students->count()}} завершили</span>
+                                                <span class="course-lesson-progress-summary__track" aria-hidden="true">
+                                                    <span data-progress-width="{{$lessonAveragePercent}}%"></span>
+                                                </span>
                                             </div>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm course-secondary-action course-stats-toggle course-lesson-stat-action" data-course-stats-toggle data-course-stats-target="#marks{{$lesson->id}}" aria-expanded="false" aria-controls="marks{{$lesson->id}}"><i class="ion ion-stats-bars"></i> <span data-course-stats-label>Статистика</span></button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm course-secondary-action course-stats-toggle course-lesson-stat-action" data-course-stats-toggle data-course-stats-target="#marks{{$lesson->id}}" aria-expanded="false" aria-controls="marks{{$lesson->id}}"><i class="fas fa-chart-bar"></i> <span data-course-stats-label>Статистика</span></button>
                                         @endif
                                     </div>
                                 </div>
@@ -471,32 +461,35 @@
 	                @endif
 	            </main>
 
-            <aside class="col-xl-3 col-lg-4 sticky-lg-top">
-                <section class="gc-card overflow-hidden mb-3">
-                    <div class="p-3">
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-circle-info"></i></span>
-                            <div>
-                                <h4 class="h5 mb-0">Информация</h4>
-                                <small class="text-muted">Участники и ссылки</small>
-                            </div>
+            <aside class="col-xl-3 sticky-xl-top">
+                <section class="course-info-panel mb-3">
+                    <div class="course-info-panel__inner">
+                        <div class="course-side-header">
+                            <h4 class="h5 mb-0">О курсе</h4>
                         </div>
 
-                        <div class="d-flex flex-column gap-2 mb-3">
+                        <div class="course-info-list">
                             @if ($isManager)
-                                <div class="gc-info-tile min-width-0"><span>Статус</span><strong>{{$course->state}}</strong></div>
-                                <div class="gc-info-tile min-width-0"><span>Инвайт</span><strong>{{$course->invite}}</strong></div>
+                                <div class="course-info-row min-width-0">
+                                    <span>Статус</span>
+                                    <strong>{{ $courseStateLabels[$course->state] ?? $course->state }}</strong>
+                                </div>
+                                <div class="course-info-row min-width-0">
+                                    <span>Код приглашения</span>
+                                    <strong class="course-invite-code">{{$course->invite}}</strong>
+                                </div>
                             @endif
                             @if ($course->git != null)
-                                <div class="gc-info-tile min-width-0"><span>Git</span><a class="text-truncate d-block" href="{{ safe_url($course->git) }}">{{$course->git}}</a></div>
+                                <div class="course-info-row min-width-0"><span>Git</span><a class="text-truncate d-block" href="{{ safe_url($course->git) }}">{{$course->git}}</a></div>
                             @endif
                             @if ($course->telegram != null)
-                                <div class="gc-info-tile min-width-0"><span>Telegram</span><a class="text-truncate d-block" href="{{ safe_url($course->telegram) }}">{{$course->telegram}}</a></div>
+                                <div class="course-info-row min-width-0"><span>Telegram</span><a class="text-truncate d-block" href="{{ safe_url($course->telegram) }}">{{$course->telegram}}</a></div>
                             @endif
                         </div>
 
-                        <p class="gc-eyebrow mb-2">Преподаватели</p>
-	                        <ul class="list-unstyled d-flex flex-column gap-2 mb-3">
+	                        <div class="course-side-section">
+	                            <h5 class="course-side-title">Преподаватели</h5>
+	                            <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
 	                            @foreach($statsTeachers as $teacher)
 	                                <li class="d-flex align-items-center gap-2 min-width-0">
 	                                    <x-gc-avatar :user="$teacher" size="sm" alt="" />
@@ -506,7 +499,8 @@
                                         </a>
 	                                </li>
 	                            @endforeach
-	                        </ul>
+	                            </ul>
+	                        </div>
 
 	                        @php
 	                            $deadlineItems = isset($courseDeadlines) ? $courseDeadlines : collect();
@@ -517,10 +511,7 @@
 	                        @if ($deadlineItems->count() || $isLearner || $isManager)
 	                            <div class="course-deadlines">
 	                                <div class="course-deadlines__header">
-	                                    <div>
-	                                        <p class="gc-eyebrow">Дедлайны</p>
-	                                        <h5 class="mb-0">Ближайшие сроки</h5>
-	                                    </div>
+	                                    <h5 class="course-side-title mb-0">Ближайшие дедлайны</h5>
 	                                    @if ($overdueDeadlines->count())
 	                                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle">{{$overdueDeadlines->count()}}</span>
 	                                    @elseif ($upcomingDeadlineCount)
@@ -566,89 +557,53 @@
 	                            </div>
 	                        @endif
 
-	                        <div class="course-leaderboard-header">
-	                            <div>
-                                <p class="gc-eyebrow">Лидерборд</p>
-                                <h5 class="mb-0">Прогресс учеников</h5>
-                            </div>
+	                        <div class="course-leaderboard-header" id="course-leaderboard">
+                            <h5 class="course-side-title mb-0">Рейтинг учеников</h5>
                             <span class="badge rounded-pill bg-body-tertiary">{{ $students->count() }}</span>
                         </div>
-                        @php
-                            $sortedStudents = $students->sortByDesc(function($student) {
-                                return isset($student->points) ? $student->points : 0;
-                            })->values();
-                            $leaderboardStudents = $sortedStudents;
-                            $leaderboardOffset = 0;
+                        @if ($currentStudentRank)
+                            <span class="course-leaderboard-context">Рядом с вами</span>
+                            <ul class="course-leaderboard-list mb-2">
+                                @foreach($learnerLeaderboardStudents as $student)
+                                    @include('courses.partials.leaderboard_item', [
+                                        'studentRank' => $learnerLeaderboardOffset + $loop->iteration,
+                                    ])
+                                @endforeach
+                            </ul>
+                        @else
+                            <ul class="course-leaderboard-list mb-2">
+                                @foreach($leaderboardPreviewStudents as $student)
+                                    @include('courses.partials.leaderboard_item', ['studentRank' => $loop->iteration])
+                                @endforeach
+                            </ul>
 
-                            if (!$isManager && $course->students->contains($user)) {
-                                $currentStudentIndex = $sortedStudents->search(function ($student) use ($user) {
-                                    return $student->id == $user->id;
-                                });
-
-                                if ($currentStudentIndex !== false) {
-                                    $leaderboardLimit = 6;
-                                    $leaderboardOffset = max(0, $currentStudentIndex - 2);
-
-                                    if ($leaderboardOffset + $leaderboardLimit > $sortedStudents->count()) {
-                                        $leaderboardOffset = max(0, $sortedStudents->count() - $leaderboardLimit);
-                                    }
-
-                                    $leaderboardStudents = $sortedStudents->slice($leaderboardOffset, $leaderboardLimit)->values();
-                                }
-                            }
-                        @endphp
-
-                        <ul class="course-leaderboard-list mb-2">
-                            @foreach($leaderboardStudents as $student)
-                                @php
-                                    $studentRank = $leaderboardOffset + $loop->iteration;
-                                    $studentPoints = isset($student->points) ? $student->points : 0;
-                                    $studentPercent = isset($student->percent) ? $student->percent : 0;
-                                    $studentDisplayPercent = $displayPercent($studentPercent);
-                                    $studentProgressWidth = (int) round($studentDisplayPercent);
-                                @endphp
-                                <li>
-                                    <a class="course-leaderboard-item @if ($studentRank <= 3) is-top-{{$studentRank}} @endif @if ($student->id == $user->id) is-current-user @endif" href="{{url('/insider/profile/'.$student->id)}}">
-                                        <span class="course-student-rank">{{$studentRank}}</span>
-                                        <x-gc-avatar :user="$student" size="sm" alt="" />
-                                        <span class="course-leaderboard-person min-width-0">
-                                            <strong class="text-truncate">{{$student->name}}</strong>
-                                            <span class="course-leaderboard-meta-row">
-                                                @include('profile.partials.custom_title_badge', ['profileUser' => $student, 'compact' => true])
-                                                <small class="text-muted text-truncate">{{$studentPoints}} XP</small>
-                                            </span>
-                                        </span>
-                                        <span class="course-student-progress" title="Прогресс: {{ round($studentDisplayPercent) }}%">
-                                            <span class="course-student-progress__bar" data-progress-width="{{ $studentProgressWidth }}%"></span>
-                                            <span class="course-student-progress__value">{{ round($studentDisplayPercent) }}%</span>
-                                        </span>
-                                    </a>
-                                </li>
-                            @endforeach
-                        </ul>
+                            @if ($leaderboardExtraStudents->count())
+                                <div class="collapse" id="course-leaderboard-all">
+                                    <ul class="course-leaderboard-list mb-2">
+                                        @foreach($leaderboardExtraStudents as $student)
+                                            @include('courses.partials.leaderboard_item', ['studentRank' => $loop->iteration + 3])
+                                        @endforeach
+                                    </ul>
+                                </div>
+                                <button type="button" class="btn course-leaderboard-more" data-bs-toggle="collapse" data-bs-target="#course-leaderboard-all" aria-expanded="false" aria-controls="course-leaderboard-all">
+                                    <span class="course-leaderboard-more__show">Показать всех · {{$students->count()}}</span>
+                                    <span class="course-leaderboard-more__hide">Свернуть</span>
+                                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                </button>
+                            @endif
+                        @endif
 
                         @if ($isManager && count($students) < 40)
-                            <hr>
-                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-3 fw-semibold mb-2 d-inline-flex align-items-center gap-2" data-bs-toggle="collapse" data-bs-target="#course-histogram" aria-expanded="false" aria-controls="course-histogram">
-                                <i class="fas fa-chart-bar"></i>
-                                Распределение
-                            </button>
                             <div class="collapse course-histogram-plot" id="course-histogram">
                                 <div id="histogram" data-plotly-histogram='@json($students->pluck('percent')->values())'></div>
-                            </div>
-
-                            <div class="course-actions-row mt-2">
-                                <a href="{{url('insider/courses/'.$course->id.'/assessments')}}" class="btn btn-outline-secondary btn-sm rounded-3">Очки опыта</a>
-                                <a href="{{url('insider/courses/'.$course->id.'/report')}}" class="btn btn-outline-secondary btn-sm rounded-3">Отчет</a>
-                                <a href="{{url('insider/courses/'.$course->id.'/blocked')}}" class="btn btn-outline-secondary btn-sm rounded-3">Заблокированные</a>
                             </div>
                         @endif
                     </div>
                 </section>
 
                 @if ($isLearner)
-                    <section class="gc-card mb-3 course-support-card">
-                        <div class="p-3">
+                    <section class="mb-3 course-support-card">
+                        <div>
                             @php
                                 $max_points = 0;
                                 $points = 0;
@@ -717,16 +672,16 @@
                                                         $deadline = \Carbon\Carbon::parse($task->getDeadline($course->id)->expiration);
                                                     @endphp
                                                     @if ($deadline->addDay()->lt(\Carbon\Carbon::now()))
-                                                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-semibold">Просрочено {{$deadline->format('Y.m.d')}}</span>
+                                                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-medium">Просрочено {{$deadline->format('Y.m.d')}}</span>
                                                     @elseif (\Carbon\Carbon::now()->addDays(1)->gt($deadline))
-                                                        <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold">Срок {{$deadline->format('Y.m.d')}}</span>
+                                                        <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium">Срок {{$deadline->format('Y.m.d')}}</span>
                                                     @elseif (\Carbon\Carbon::now()->addDays(1)->lt($deadline))
                                                         <span class="badge rounded-pill bg-body-tertiary">Срок {{$deadline->format('Y.m.d')}}</span>
                                                     @endif
                                                 @endif
                                             </td>
                                             @if ($should_check)
-                                                <td><span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold">{{$mark}} / {{$task->max_mark}}</span></td>
+                                                <td><span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium">{{$mark}} / {{$task->max_mark}}</span></td>
                                             @elseif ($mark == 0)
                                                 <td><span class="badge rounded-pill bg-body-tertiary">{{$mark}} / {{$task->max_mark}}</span></td>
                                             @elseif ($mark == $task->max_mark)

@@ -1,7 +1,6 @@
-@if (Auth::check())
+@if (Auth::check() && in_array(Auth::user()->role, ['teacher', 'admin']))
     @php
         $sidebarUser = Auth::user();
-        $sidebarIsLearner = !in_array($sidebarUser->role, ['teacher', 'admin']);
 
         $sidebarUser->loadMissing([
             'courses' => function ($query) {
@@ -9,9 +8,6 @@
             },
             'managed_courses' => function ($query) {
                 $query->select('courses.id', 'courses.name', 'courses.state');
-            },
-            'completedCourses' => function ($query) {
-                $query->select('id', 'name', 'mark', 'course_id', 'user_id')->orderByDesc('id');
             },
         ]);
 
@@ -28,14 +24,6 @@
                 ->values();
         }
 
-        $sidebarAttachedCourseIds = $sidebarUser->courses
-            ->merge($sidebarUser->managed_courses)
-            ->pluck('id')
-            ->unique();
-
-        $sidebarCompletedCourses = $sidebarIsLearner
-            ? $sidebarUser->completedCourses->take(5)
-            : collect();
     @endphp
 
     @if ($sidebarCurrentCourses->count() > 0 && $sidebarCurrentCourses->count() <= 5)
@@ -50,41 +38,4 @@
         @endforeach
     @endif
 
-    @if ($sidebarCompletedCourses->count())
-        <li class="gc-sidebar__section-label gc-sidebar__section-label--compact">Пройденные</li>
-        @foreach ($sidebarCompletedCourses as $sidebarCompletedCourse)
-            @php
-                $sidebarCompletedCourseUrl = $sidebarCompletedCourse->course_id && $sidebarAttachedCourseIds->contains($sidebarCompletedCourse->course_id)
-                    ? url('/insider/courses/'.$sidebarCompletedCourse->course_id)
-                    : null;
-            @endphp
-            <li>
-                @if ($sidebarCompletedCourseUrl)
-                    <a class="gc-sidebar__link gc-sidebar__course-link" href="{{ $sidebarCompletedCourseUrl }}">
-                        <i class="fas fa-check"></i>
-                        <span>{{ $sidebarCompletedCourse->name }}</span>
-                        @if ($sidebarCompletedCourse->mark)
-                            <small>{{ $sidebarCompletedCourse->mark }}</small>
-                        @endif
-                    </a>
-                @else
-                    <span class="gc-sidebar__link gc-sidebar__course-link gc-sidebar__course-link--static">
-                        <i class="fas fa-check"></i>
-                        <span>{{ $sidebarCompletedCourse->name }}</span>
-                        @if ($sidebarCompletedCourse->mark)
-                            <small>{{ $sidebarCompletedCourse->mark }}</small>
-                        @endif
-                    </span>
-                @endif
-            </li>
-        @endforeach
-        @if ($sidebarUser->completedCourses->count() > $sidebarCompletedCourses->count())
-            <li>
-                <a class="gc-sidebar__link gc-sidebar__course-link gc-sidebar__course-link--muted" href="{{ url('/insider/profile') }}">
-                    <i class="fas fa-ellipsis-h"></i>
-                    <span>Все пройденные</span>
-                </a>
-            </li>
-        @endif
-    @endif
 @endif

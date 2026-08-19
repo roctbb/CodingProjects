@@ -8,7 +8,7 @@
     <div class="container-xl px-0">
         <div class="gc-card gc-page-header mb-3">
             <div>
-                <a class="assessment-back-link" href="{{ url()->previous() }}"><i class="icon ion-chevron-left"></i> Назад</a>
+                <a class="assessment-back-link" href="{{ url()->previous() }}"><i class="fas fa-chevron-left"></i> Назад</a>
                 <h2 class="mb-1">Изменение главы</h2>
                 <p class="mb-0 text-muted">Обновите название и описание раздела программы.</p>
             </div>
@@ -38,7 +38,7 @@
                     </div>
 
                     <div class="gc-form-footer justify-content-end gap-2">
-                        <button type="submit" class="btn btn-success rounded-3 fw-semibold px-4">Сохранить главу</button>
+                        <button type="submit" class="btn btn-success rounded-3 fw-medium px-4">Сохранить главу</button>
                     </div>
                 </form>
             </div>

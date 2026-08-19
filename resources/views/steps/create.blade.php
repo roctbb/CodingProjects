@@ -8,8 +8,8 @@
     <div class="container-xl px-0">
         <div class="gc-card gc-page-header mb-3">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id.'?chapter='.optional($lesson->chapter)->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
-                <h2 class="fw-bold lh-sm mb-1">Создание этапа</h2>
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id.'?chapter='.optional($lesson->chapter)->id) }}"><i class="fas fa-chevron-left"></i> К курсу</a>
+                <h2 class="fw-medium lh-sm mb-1">Создание этапа</h2>
                 <p class="mb-0 text-muted text-truncate">{{ $lesson->name }}</p>
             </div>
         </div>
@@ -153,7 +153,7 @@
                             <div class="gc-info-tile"><span>Глава</span><strong>{{ optional($lesson->chapter)->name }}</strong></div>
                             <div class="gc-info-tile"><span>Материал</span><strong>Теория и заметки</strong></div>
                         </div>
-                        <button type="submit" form="step-create-form" class="btn btn-success rounded-3 fw-semibold w-100">Создать этап</button>
+                        <button type="submit" form="step-create-form" class="btn btn-success rounded-3 fw-medium w-100">Создать этап</button>
                     </aside>
                 </div>
             </div>

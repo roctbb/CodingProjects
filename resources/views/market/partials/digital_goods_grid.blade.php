@@ -45,7 +45,7 @@
                                     <i class="{{ $item['icon'] }}"></i>
                                 </span>
                             @endif
-                            <span class="badge rounded-pill {{ $categoryClass }} fw-semibold market-digital-preview__badge">
+                            <span class="badge rounded-pill {{ $categoryClass }} fw-medium market-digital-preview__badge">
                                 {{ $categoryLabel }}
                             </span>
                         </div>
@@ -56,9 +56,9 @@
                             <div class="market-good-card__identity min-width-0">
                                 <div class="market-good-card__meta">
                                     @if ($item['active'] ?? false)
-                                        <span class="badge rounded-pill market-good-status bg-primary-subtle text-primary-emphasis border border-primary-subtle fw-semibold">Активно</span>
+                                        <span class="badge rounded-pill market-good-status bg-primary-subtle text-primary-emphasis border border-primary-subtle fw-medium">Активно</span>
                                     @elseif ($isLearningAvatarItem && $item['owned'])
-                                        <span class="badge rounded-pill market-good-status bg-success-subtle text-success-emphasis border border-success-subtle fw-semibold">Уже куплено</span>
+                                        <span class="badge rounded-pill market-good-status bg-success-subtle text-success-emphasis border border-success-subtle fw-medium">Уже куплено</span>
                                     @else
                                         <span class="badge rounded-pill market-good-status bg-body-tertiary">
                                             @if ($type === 'custom_avatar_frame')
@@ -70,7 +70,7 @@
                                     @endif
                                 </div>
 
-                                <h6 class="market-good-title fw-bold lh-sm mb-0">{{ $item['name'] }}</h6>
+                                <h6 class="market-good-title fw-medium lh-sm mb-0">{{ $item['name'] }}</h6>
                                 <p class="market-good-description text-muted small lh-sm mb-0">{{ $item['description'] }}</p>
                                 @if(!empty($item['active_until']))
                                     <p class="text-muted small lh-sm mb-0">Активно до {{ $item['active_until']->format('d.m.Y') }}</p>

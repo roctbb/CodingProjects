@@ -8,8 +8,8 @@
     <div class="container-xl px-0">
         <div class="gc-card gc-page-header mb-3">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id.'/steps/'.$task->step->id.'#task'.$task->id) }}"><i class="icon ion-chevron-left"></i> К задаче</a>
-                <h2 class="fw-bold lh-sm mb-1">Изменение задачи</h2>
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id.'/steps/'.$task->step->id.'#task'.$task->id) }}"><i class="fas fa-chevron-left"></i> К задаче</a>
+                <h2 class="fw-medium lh-sm mb-1">Изменение задачи</h2>
                 <p class="mb-0 text-muted text-truncate">{{$task->step->name}}</p>
             </div>
         </div>
@@ -126,13 +126,13 @@
                         <label for="text" class="form-label mb-0">Текст</label>
                         <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Улучшение текста задачи">
                             <button type="button" class="btn btn-outline-primary rounded-start-3" data-improve-text="fix_typos" data-field-id="text">
-                                <i class="icon ion-android-checkbox-outline"></i> Опечатки
+                                <i class="fas fa-spell-check"></i> Опечатки
                             </button>
                             <button type="button" class="btn btn-outline-info" data-improve-text="improve_style" data-field-id="text">
-                                <i class="icon ion-android-create"></i> Стиль
+                                <i class="fas fa-pen"></i> Стиль
                             </button>
                             <button type="button" class="btn btn-outline-secondary rounded-end-3" data-improve-text="both" data-field-id="text">
-                                <i class="icon ion-android-star"></i> Всё
+                                <i class="fas fa-star"></i> Всё
                             </button>
                         </div>
                     </div>
@@ -157,13 +157,13 @@
                             <label for="solution" class="form-label mb-0">Решение</label>
                             <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Улучшение решения">
                                 <button type="button" class="btn btn-outline-primary rounded-start-3" data-improve-text="fix_typos" data-field-id="solution">
-                                    <i class="icon ion-android-checkbox-outline"></i> Опечатки
+                                    <i class="fas fa-spell-check"></i> Опечатки
                                 </button>
                                 <button type="button" class="btn btn-outline-info" data-improve-text="improve_style" data-field-id="solution">
-                                    <i class="icon ion-android-create"></i> Стиль
+                                    <i class="fas fa-pen"></i> Стиль
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary rounded-end-3" data-improve-text="both" data-field-id="solution">
-                                    <i class="icon ion-android-star"></i> Всё
+                                    <i class="fas fa-star"></i> Всё
                                 </button>
                             </div>
                         </div>
@@ -222,7 +222,7 @@
                                 </div>
                             @endif
                         </div>
-                        <button type="submit" form="task-edit-form" class="btn btn-success rounded-3 fw-semibold w-100">Сохранить</button>
+                        <button type="submit" form="task-edit-form" class="btn btn-success rounded-3 fw-medium w-100">Сохранить</button>
                     </aside>
                 </div>
             </div>

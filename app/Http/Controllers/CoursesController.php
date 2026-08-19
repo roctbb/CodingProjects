@@ -74,8 +74,8 @@ class CoursesController extends Controller
         }
 
         $open_courses = collect();
-        $private_courses = collect();
         $availableCourses = collect();
+        $completedCourses = collect();
 
         if (!$isTeacher) {
             $availableCoursesQuery = (clone $startedCoursesQuery)
@@ -87,12 +87,15 @@ class CoursesController extends Controller
                 });
 
             $open_courses = (clone $availableCoursesQuery)->where('mode', 'open')->get();
-            $private_courses = (clone $availableCoursesQuery)
-                ->where(function ($query) {
-                    $query->where('mode', '!=', 'open')->orWhereNull('mode');
-                })
-                ->get();
-            $availableCourses = $open_courses->merge($private_courses);
+            $availableCourses = $open_courses;
+            $completedCourses = $user->completedCourses()
+                ->with('course:id,name')
+                ->orderByDesc('id')
+                ->get(['id', 'name', 'mark', 'course_id', 'user_id']);
+            $linkedCourseIds = $user->courses()->pluck('courses.id');
+            $completedCourses->each(function ($completedCourse) use ($linkedCourseIds) {
+                $completedCourse->setAttribute('is_linked', $linkedCourseIds->contains($completedCourse->course_id));
+            });
         }
 
         $draftCourses = collect();
@@ -122,7 +125,6 @@ class CoursesController extends Controller
 
         $courses = $my_courses
             ->merge($open_courses)
-            ->merge($private_courses)
             ->merge($draftCourses)
             ->merge($archiveCourses)
             ->unique('id')
@@ -201,7 +203,7 @@ class CoursesController extends Controller
                 })->sortBy('birthday_distance_days')->values();
         });
 
-        return response()->view('home', compact('courses', 'user', 'my_courses', 'open_courses', 'private_courses', 'availableCourses', 'activeCourses', 'draftCourses', 'archiveCourses', 'birthdayUsers', 'notifications', 'courseProgress', 'upcomingDeadlines', 'pendingSolutionsTotal', 'pulse', 'isTeacher'));
+        return response()->view('home', compact('courses', 'user', 'my_courses', 'open_courses', 'availableCourses', 'completedCourses', 'activeCourses', 'draftCourses', 'archiveCourses', 'birthdayUsers', 'notifications', 'courseProgress', 'upcomingDeadlines', 'pendingSolutionsTotal', 'pulse', 'isTeacher'));
     }
 
     public function pulse()

@@ -15,8 +15,8 @@
 <div class="gc-layout">
     <aside id="gcSidebar" class="gc-sidebar">
         <a class="gc-sidebar__brand" href="{{ url('/') }}">
-            <img src="{{ url('images/icons/icons8-idea-64.png') }}" alt="">
-            <span>GeekClass</span>
+            <x-brand-logo alt="" />
+            <span>{{ config('app.name', 'Laravel') }}</span>
         </a>
 
         <div class="gc-sidebar__scroll">
@@ -84,7 +84,7 @@
             <button id="gcSidebarToggle" class="gc-topbar__toggle" aria-label="Меню">
                 <i class="fas fa-bars"></i>
             </button>
-            <span class="fw-medium">GeekClass</span>
+            <span class="fw-medium">{{ config('app.name', 'Laravel') }}</span>
 
             @if (Auth::check())
                 <div class="dropdown ms-auto">

@@ -21,7 +21,7 @@
                    href="{{ url('/insider/courses/'.$course->id.'/steps/'.$task->step->id.'#task'.$task->id) }}"
                    title="К задаче"
                    aria-label="К задаче">
-                    <i class="icon ion-chevron-left"></i>
+                    <i class="fas fa-chevron-left"></i>
                 </a>
                 <div class="solution-review-header__copy min-width-0">
                     <h2 class="solution-review-header__title">Проверка решения</h2>
@@ -174,9 +174,9 @@
                                 <span class="badge rounded-pill {{ $solutionScoreBadgeClass }}">{{ $solution->mark }} / {{ $task->max_mark }} XP</span>
                             @endif
                         @elseif($solution->review_skipped)
-                            <span class="badge rounded-pill bg-body-tertiary text-muted border fw-semibold">Пропущено</span>
+                            <span class="badge rounded-pill bg-body-tertiary text-muted border fw-medium">Пропущено</span>
                         @else
-                            <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold">На проверке</span>
+                            <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium">На проверке</span>
                         @endif
                     </div>
                 </div>
@@ -320,7 +320,7 @@
                                         @endif
                                     </div>
                                     <div class="solution-grade-actions">
-                                        <button type="submit" class="btn btn-success btn-sm rounded-3 fw-semibold solution-grade-form__submit">
+                                        <button type="submit" class="btn btn-success btn-sm rounded-3 fw-medium solution-grade-form__submit">
                                             {{ $solutionChecked ? 'Обновить оценку' : 'Оценить' }}
                                         </button>
                                     </div>

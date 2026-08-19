@@ -9,8 +9,8 @@
 @section('content')
     <div class="text-center text-white mb-3">
         <a href="{{ url('/') }}" class="auth-brand d-inline-flex align-items-center gap-2 text-decoration-none text-white">
-            <img src="{{ url('images/icons/icons8-idea-64.png') }}" width="28" height="28" alt="">
-            <span class="fs-5 fw-semibold">{{ config('app.name', 'Laravel') }}</span>
+            <x-brand-logo width="28" height="28" alt="" />
+            <span class="fs-5 fw-medium">{{ config('app.name', 'Laravel') }}</span>
         </a>
     </div>
 
@@ -31,7 +31,7 @@
             <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-lock"></i></span>
             <div class="min-width-0">
                 <span class="gc-eyebrow">доступ</span>
-                <h1 class="h4 fw-bold mb-0">Новый пароль</h1>
+                <h1 class="h4 fw-medium mb-0">Новый пароль</h1>
             </div>
         </div>
 
@@ -59,6 +59,6 @@
             @endif
         </div>
 
-        <button type="submit" class="btn btn-success rounded-3 fw-semibold w-100 py-2">Установить новый пароль</button>
+        <button type="submit" class="btn btn-success rounded-3 fw-medium w-100 py-2">Установить новый пароль</button>
     </form>
 @endsection

@@ -6,7 +6,7 @@
                 <div class="modal-content border-0 rounded-3 shadow-sm overflow-hidden">
                     <div class="modal-header border-bottom p-3">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="icon ion-android-add-circle"></i></span>
+                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-circle-plus"></i></span>
                             <h5 class="modal-title" id="exampleModalLabel">Добавление задачи</h5>
                         </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>

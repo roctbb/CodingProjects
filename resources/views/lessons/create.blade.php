@@ -8,8 +8,8 @@
     <div class="container-xl px-0">
         <div class="gc-card gc-page-header mb-3">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
-                <h2 class="fw-bold lh-sm mb-1">Создание урока</h2>
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="fas fa-chevron-left"></i> К курсу</a>
+                <h2 class="fw-medium lh-sm mb-1">Создание урока</h2>
                 <p class="mb-0 text-muted text-truncate">{{ $course->name }}</p>
             </div>
         </div>
@@ -81,7 +81,7 @@
                         <div class="gc-info-tile"><span>Статус</span><strong>Черновик</strong></div>
                         <div class="gc-info-tile"><span>Первый этап</span><strong>Введение</strong></div>
                     </div>
-                    <button type="submit" form="lesson-create-form" class="btn btn-success rounded-3 fw-semibold w-100">Создать урок</button>
+                    <button type="submit" form="lesson-create-form" class="btn btn-success rounded-3 fw-medium w-100">Создать урок</button>
                 </aside>
             </div>
         </div>

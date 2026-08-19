@@ -5,11 +5,10 @@
 @section('content')
     <div class="gc-title-row gc-title-row--center">
         <div class="min-width-0">
-            <span class="text-muted text-uppercase fw-bold font-monospace small d-block mb-1">workspace</span>
             <h2 class="mb-1">Проверка</h2>
         </div>
 
-        <a class="btn btn-outline-secondary rounded-3 fw-semibold px-3 py-2" href="{{ url('/insider/courses') }}">
+        <a class="btn btn-outline-secondary rounded-3 fw-medium px-3 py-2" href="{{ url('/insider/courses') }}">
             <i class="fas fa-graduation-cap me-1"></i>Мои курсы
         </a>
     </div>

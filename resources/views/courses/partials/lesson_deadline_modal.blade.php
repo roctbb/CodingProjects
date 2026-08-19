@@ -21,7 +21,7 @@
             <div class="modal-content border-0 rounded-3 shadow-sm overflow-hidden">
                 <div class="modal-header border-bottom p-3">
                     <div class="d-flex align-items-center gap-2 min-width-0">
-                        <span class="gc-icon-tile flex-shrink-0"><i class="icon ion-ios-calendar"></i></span>
+                        <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-calendar-days"></i></span>
                         <div class="min-width-0">
                             <h5 class="modal-title text-truncate" id="lesson-deadline-modal-{{$lesson->id}}Label">Дедлайн для урока</h5>
                             <small class="text-muted text-truncate d-block">{{$lesson->name}}</small>

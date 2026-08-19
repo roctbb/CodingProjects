@@ -14,8 +14,8 @@
 
 <header class="gc-public-header d-flex align-items-center gap-3 px-3 px-md-4 py-3 bg-body border-bottom">
     <a href="{{ url('/') }}" class="gc-public-brand d-flex align-items-center gap-2 text-decoration-none text-body me-auto">
-        <img src="{{ url('images/icons/icons8-idea-64.png') }}" width="32" height="32" alt="">
-        <span class="fw-semibold fs-5">{{ config('app.name', 'Laravel') }}</span>
+        <x-brand-logo width="32" height="32" alt="" />
+        <span class="fw-medium fs-5">{{ config('app.name', 'Laravel') }}</span>
     </a>
 
     <nav class="d-none d-md-flex align-items-center gap-1 me-1">
@@ -32,7 +32,7 @@
 
     @if (Auth::check())
         <div class="dropdown">
-            <button class="btn btn-outline-secondary rounded-3 fw-semibold dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <button class="btn btn-outline-secondary rounded-3 fw-medium dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 {{ Auth::user()->name }}
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -46,7 +46,7 @@
             </ul>
         </div>
     @else
-        <a class="btn btn-success rounded-3 fw-semibold px-3" href="/login">Вход</a>
+        <a class="btn btn-success rounded-3 fw-medium px-3" href="/login">Вход</a>
     @endif
 </header>
 
@@ -58,7 +58,7 @@
     <footer class="gc-public-footer border-top pt-4 mt-5">
         <div class="row g-4">
             <div class="col-12 col-md-3 col-lg-2">
-                <img src="{{ url('/images/logo.png') }}" width="120" alt="CodingProjects" class="mb-2">
+                <x-brand-logo width="40" height="40" alt="" class="mb-2" />
                 <small class="d-block text-muted">&copy; 2016–{{ now()->year }}</small>
             </div>
             <div class="col-12 col-md-9 col-lg-10">

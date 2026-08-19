@@ -19,7 +19,7 @@
     <div class="container-xl px-0">
         <div class="gc-card gc-page-header mb-3">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="fas fa-chevron-left"></i> К курсу</a>
                 <h2 class="mb-1 text-truncate">Настройки курса</h2>
                 <p class="mb-0 text-muted text-truncate">{{ $course->name }}</p>
             </div>
@@ -106,7 +106,7 @@
                                                     <p class="mb-0 text-muted small">Обновлен: {{ $programPosterGeneratedAt->format('d.m.Y H:i') }}</p>
                                                 @endif
                                             </div>
-                                            <button type="submit" form="course-poster-form" class="btn btn-outline-primary rounded-3 fw-semibold align-self-start">
+                                            <button type="submit" form="course-poster-form" class="btn btn-outline-primary rounded-3 fw-medium align-self-start">
                                                 {{ $programPosterGeneratedAt ? 'Обновить плакат' : 'Сгенерировать плакат' }}
                                             </button>
                                         </div>
@@ -253,7 +253,7 @@
                 </div>
 
                 <div class="gc-form-footer justify-content-end">
-                    <button type="submit" class="btn btn-success rounded-3 fw-semibold px-4">Сохранить настройки</button>
+                    <button type="submit" class="btn btn-success rounded-3 fw-medium px-4">Сохранить настройки</button>
                 </div>
             </form>
             <form id="course-poster-form"

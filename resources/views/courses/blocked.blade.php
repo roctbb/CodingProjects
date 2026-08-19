@@ -16,7 +16,7 @@
     <div class="container-fluid px-0">
         <div class="gc-card gc-page-header mb-3">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="fas fa-chevron-left"></i> К курсу</a>
                 <h2 class="mb-1">Заблокированные задачи</h2>
                 <p class="mb-0 text-muted text-truncate">{{ $course->name }}</p>
             </div>
@@ -67,7 +67,7 @@
                             @foreach ($tasks as $bt)
                                 <tr data-blocked-row data-blocked-search-text="{{ $student->name }} {{ $student->activeCustomTitle() }} {{ optional($bt->task)->name ?? ('Задача #'.$bt->task_id) }} {{ $bt->reason ?? 'заблокировано' }}">
                                     <td data-label="Студент">
-                                        <a class="fw-semibold text-decoration-none d-inline-flex align-items-center gap-1 min-width-0" href="{{ url('/insider/profile/'.$student->id) }}" target="_blank">
+                                        <a class="fw-medium text-decoration-none d-inline-flex align-items-center gap-1 min-width-0" href="{{ url('/insider/profile/'.$student->id) }}" target="_blank">
                                             <span class="text-truncate">{{ $student->name }}</span>
                                             @include('profile.partials.custom_title_badge', ['profileUser' => $student, 'compact' => true])
                                         </a>
@@ -78,7 +78,7 @@
                                             {{ optional($bt->task)->name ?? ('Задача #'.$bt->task_id) }}
                                         </a>
                                     </td>
-                                    <td data-label="Причина"><span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-semibold">{{ $bt->reason ?? 'заблокировано' }}</span></td>
+                                    <td data-label="Причина"><span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-medium">{{ $bt->reason ?? 'заблокировано' }}</span></td>
                                     <td data-label="Дата">
                                         @if($bt->blocked_at)
                                             {{ $bt->blocked_at->format('d.m.Y H:i') }}

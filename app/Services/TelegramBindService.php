@@ -46,7 +46,7 @@ class TelegramBindService
 
         $user->save();
 
-        $telegram->sendMessage($chatId, 'Готово! Telegram подключён к профилю GeekClass. Теперь уведомления аукционов будут приходить сюда.');
+        $telegram->sendMessage($chatId, 'Готово! Telegram подключён к профилю '.config('app.name').'. Теперь уведомления аукционов будут приходить сюда.');
 
         return $user;
     }

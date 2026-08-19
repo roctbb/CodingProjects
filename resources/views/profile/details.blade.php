@@ -41,7 +41,7 @@
             <div class="gc-card gc-profile-card overflow-hidden">
                 <div class="p-3 p-md-4 text-center border-bottom">
                     <x-gc-avatar :user="$user" size="xl" img-class="profile-avatar" class="mb-3 mx-auto" alt="" />
-                    <h2 class="h5 fw-bold lh-sm mb-2">{{ $user->name }}</h2>
+                    <h2 class="h5 fw-medium lh-sm mb-2">{{ $user->name }}</h2>
                     @if ($activeCustomTitle)
                         <div class="mb-2">
                             @include('profile.partials.custom_title_badge', ['profileUser' => $user])
@@ -60,7 +60,7 @@
                         @endif
                     </div>
                     <div class="gc-balance-pill">
-                        <img src="{{ url('images/icons/icons8-coins-48.png') }}" width="18" height="18" alt="">
+                        <i class="fas fa-coins" aria-hidden="true"></i>
                         <strong class="text-body">{{ $coinBalance }}</strong>
                         <span>GC</span>
                     </div>
@@ -78,20 +78,20 @@
                     <div class="d-flex flex-column gap-2 small border-top pt-3">
                         <div class="d-flex justify-content-between gap-3">
                             <span class="text-muted">Дата рождения</span>
-                            <strong class="text-end fw-semibold">@if($user->hasVisibleBirthday()){{ $user->birthday->format('d.m.Y') }}@else - @endif</strong>
+                            <strong class="text-end fw-medium">@if($user->hasVisibleBirthday()){{ $user->birthday->format('d.m.Y') }}@else - @endif</strong>
                         </div>
                         <div class="d-flex justify-content-between gap-3">
                             <span class="text-muted">Учеба</span>
-                            <strong class="text-end fw-semibold">{{ $user->school ?: '-' }}</strong>
+                            <strong class="text-end fw-medium">{{ $user->school ?: '-' }}</strong>
                         </div>
                         <div class="d-flex justify-content-between gap-3">
                             <span class="text-muted">Класс</span>
-                            <strong class="text-end fw-semibold">{{ $user->gradeLabel() }}</strong>
+                            <strong class="text-end fw-medium">{{ $user->gradeLabel() }}</strong>
                         </div>
                         @if ($guest->id == $user->id || $guest->role == 'teacher' || $guest->role == 'admin')
                             <div class="d-flex justify-content-between gap-3">
                                 <span class="text-muted">Почта</span>
-                                <a class="text-end fw-semibold text-decoration-none text-break" href="mailto:{{ $user->email }}">{{ $user->email }}</a>
+                                <a class="text-end fw-medium text-decoration-none text-break" href="mailto:{{ $user->email }}">{{ $user->email }}</a>
                             </div>
                         @endif
                     </div>
@@ -129,12 +129,12 @@
             @if ($guest->role == 'admin' || $guest->id == $user->id || $canManageMoney)
                 <div class="gc-card p-2 d-flex gap-2 mt-3 profile-actions-card">
                     @if ($guest->role == 'admin' || $guest->id == $user->id)
-                        <a href="{{ url('insider/profile/'.$user->id.'/edit') }}" class="btn btn-outline-primary rounded-3 btn-sm flex-fill fw-semibold">
+                        <a href="{{ url('insider/profile/'.$user->id.'/edit') }}" class="btn btn-outline-primary rounded-3 btn-sm flex-fill fw-medium">
                             <i class="fas fa-edit me-1"></i>Редактировать
                         </a>
                     @endif
                     @if ($canManageMoney)
-                        <button type="button" class="btn btn-outline-secondary rounded-3 btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addMoney">
+                        <button type="button" class="btn btn-outline-secondary rounded-3 btn-sm fw-medium" data-bs-toggle="modal" data-bs-target="#addMoney">
                             <i class="fas fa-coins me-1"></i>Операция GC
                         </button>
                     @endif
@@ -164,18 +164,18 @@
 
                         @if($telegramBotConfigured)
                             <div class="d-grid gap-2">
-                                <a class="btn btn-outline-primary rounded-3 fw-semibold" href="{{ url('/insider/profile/'.$user->id.'/telegram-link') }}">
+                                <a class="btn btn-outline-primary rounded-3 fw-medium" href="{{ url('/insider/profile/'.$user->id.'/telegram-link') }}">
                                     <i class="fab fa-telegram me-1"></i>{{ $user->telegram_chat_id ? 'Переподключить Telegram' : 'Подключить Telegram' }}
                                 </a>
                                 @if($user->telegram_chat_id)
-                                    <button type="submit" form="telegram-unlink-form" class="btn btn-outline-danger rounded-3 fw-semibold" data-confirm="Отключить Telegram-уведомления?">
+                                    <button type="submit" form="telegram-unlink-form" class="btn btn-outline-danger rounded-3 fw-medium" data-confirm="Отключить Telegram-уведомления?">
                                         <i class="fas fa-link-slash me-1"></i>Отключить
                                     </button>
                                 @endif
                             </div>
                             <small class="text-muted d-block mt-2">Откроется бот с одноразовой ссылкой. Нажмите Start, и уведомления привяжутся автоматически.</small>
                         @elseif($user->telegram_chat_id)
-                            <button type="submit" form="telegram-unlink-form" class="btn btn-outline-danger rounded-3 fw-semibold w-100" data-confirm="Отключить Telegram-уведомления?">
+                            <button type="submit" form="telegram-unlink-form" class="btn btn-outline-danger rounded-3 fw-medium w-100" data-confirm="Отключить Telegram-уведомления?">
                                 <i class="fas fa-link-slash me-1"></i>Отключить
                             </button>
                             <small class="text-muted d-block mt-2">Бот сейчас не настроен администратором, но уже сохраненную привязку можно отключить.</small>
@@ -198,7 +198,7 @@
                                 <h6 class="mb-0 text-truncate">Звания и рамки</h6>
                             </div>
                         </div>
-                        <a href="{{ url('/insider/market#market-digital') }}" class="btn btn-outline-primary rounded-3 fw-semibold">
+                        <a href="{{ url('/insider/market#market-digital') }}" class="btn btn-outline-primary rounded-3 fw-medium">
                             Открыть магазин
                         </a>
                     </div>
@@ -259,7 +259,7 @@
                         <div class="d-flex align-items-start gap-2 mb-3">
                             <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-layer-group"></i></span>
                             <div class="min-width-0">
-                                <div class="fw-semibold">Настройки комнаты</div>
+                                <div class="fw-medium">Настройки комнаты</div>
                                 <div class="text-muted small">Выберите купленные предметы для комнаты.</div>
                             </div>
                         </div>
@@ -535,7 +535,7 @@
                                         {{ $formattedAmount }} GC
                                     </div>
                                     <div class="profile-coin-transaction__body min-width-0">
-                                        <div class="fw-semibold text-truncate">{{ $transaction->displayComment() }}</div>
+                                        <div class="fw-medium text-truncate">{{ $transaction->displayComment() }}</div>
                                         <div class="text-muted small">
                                             @if($transaction->created_at)
                                                 {{ $transaction->created_at->format('d.m.Y H:i') }}
@@ -603,12 +603,12 @@
             </div>
 
             @if($managedCourses->count())
-                <h6 class="text-muted text-uppercase small fw-bold mb-2">Преподаёт</h6>
+                <h6 class="text-muted text-uppercase small fw-medium mb-2">Преподаёт</h6>
                 <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
                     @foreach($managedCourses as $course)
                         <div class="col">
                             <div class="gc-card h-100 p-3 position-relative profile-course-card">
-                                <h6 class="fw-bold lh-sm mb-0">{{ $course->name }}</h6>
+                                <h6 class="fw-medium lh-sm mb-0">{{ $course->name }}</h6>
                                 @if ($guest->role == 'admin' || $course->students->contains($guest) || $course->teachers->contains($guest))
                                     <a href="{{ url('insider/courses/'.$course->id) }}" class="stretched-link" aria-label="Открыть курс {{ $course->name }}"></a>
                                 @endif
@@ -619,12 +619,12 @@
             @endif
 
             @if($startedCourses->count())
-                <h6 class="text-muted text-uppercase small fw-bold mb-2">Текущие курсы</h6>
+                <h6 class="text-muted text-uppercase small fw-medium mb-2">Текущие курсы</h6>
                 <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
                     @foreach($startedCourses as $course)
                         <div class="col">
                             <div class="gc-card h-100 p-3 profile-course-card">
-                                <h6 class="fw-bold lh-sm mb-2">{{ $course->name }}</h6>
+                                <h6 class="fw-medium lh-sm mb-2">{{ $course->name }}</h6>
                                 <div class="d-flex flex-wrap align-items-center gap-2">
                                     @if ($guest->role == 'admin' || $course->students->contains($guest) || $course->teachers->contains($guest))
                                         <a href="{{ url('insider/courses/'.$course->id) }}" class="small text-decoration-none">Страница курса</a>
@@ -641,7 +641,7 @@
 
             @if($completedCourses->count() || $guest->role == 'admin')
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="text-muted text-uppercase small fw-bold mb-0">Завершённые курсы</h6>
+                    <h6 class="text-muted text-uppercase small fw-medium mb-0">Завершённые курсы</h6>
                     @if ($guest->role == 'admin')
                         <button class="btn btn-outline-success rounded-3 btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal">
                             <i class="fas fa-plus"></i>
@@ -662,7 +662,7 @@
                         <div class="col">
                             <div class="gc-card h-100 p-3 profile-course-card">
                                 <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                                    <h6 class="fw-bold lh-sm mb-0">{{ $completedCourse->name }}</h6>
+                                    <h6 class="fw-medium lh-sm mb-0">{{ $completedCourse->name }}</h6>
                                     @if ($guest->role == 'admin')
                                         <a href="{{ url('/insider/profile/delete-course/'.$completedCourse->id) }}" class="text-danger" data-confirm="Вы уверены?"><i class="fas fa-times"></i></a>
                                     @endif
@@ -680,16 +680,16 @@
             @endif
 
             @if ($orders->count())
-                <h6 class="text-muted text-uppercase small fw-bold mb-2">Покупки</h6>
+                <h6 class="text-muted text-uppercase small fw-medium mb-2">Покупки</h6>
                 <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
                     @foreach($orders as $deal)
                         <div class="col">
                             <div class="gc-card h-100 p-3 profile-course-card">
-                                <h6 class="fw-bold lh-sm mb-2">{{ $deal->good->name }}</h6>
+                                <h6 class="fw-medium lh-sm mb-2">{{ $deal->good->name }}</h6>
                                 @if ($deal->shipped)
                                     <span class="gc-soft-badge">Доставлено</span>
                                 @else
-                                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold">Доставляется...</span>
+                                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium">Доставляется...</span>
                                 @endif
                             </div>
                         </div>

@@ -54,7 +54,7 @@
     <div class="container-fluid px-0">
         <div class="gc-card gc-page-header report-page-header mb-3">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="icon ion-chevron-left"></i> К курсу</a>
+                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="fas fa-chevron-left"></i> К курсу</a>
                 <h2 class="mb-1">Отчет по курсу</h2>
                 <p class="mb-0 text-muted text-truncate">{{ $course->name }}</p>
             </div>
@@ -104,7 +104,7 @@
                                         <x-gc-avatar :user="$student" size="md" class="flex-shrink-0" alt="" />
                                         <div class="min-width-0">
                                             <div class="d-flex flex-wrap align-items-center gap-1 mb-1 min-width-0">
-                                                <h4 class="fw-bold mb-0 text-truncate">{{ $student->name }}</h4>
+                                                <h4 class="fw-medium mb-0 text-truncate">{{ $student->name }}</h4>
                                                 @include('profile.partials.custom_title_badge', ['profileUser' => $student, 'compact' => true])
                                             </div>
                                             <small class="text-muted">{{ $student->points }} / {{ $student->max_points }} XP</small>
@@ -154,7 +154,7 @@
                                         $overallRiskLabel = $riskLabels[$overallIntegrity['risk_level']] ?? $overallIntegrity['risk_level'];
                                     @endphp
                                     <div class="report-integrity-strip mb-3">
-                                        <span class="text-muted small fw-semibold">Академическая честность</span>
+                                        <span class="text-muted small fw-medium">Академическая честность</span>
                                         <span class="report-integrity-icon {{ $overallRiskTone }}" title="Риск: {{ $overallRiskLabel }}">
                                             <i class="fas fa-shield-alt"></i>
                                         </span>
@@ -233,7 +233,7 @@
                                                 $chapterName = optional($chapterLookup->get($chapterId))->name ?: 'Без главы';
                                             @endphp
                                             <div class="report-chapter-risk-row">
-                                                <span class="fw-semibold text-truncate">{{ $chapterName }}</span>
+                                                <span class="fw-medium text-truncate">{{ $chapterName }}</span>
                                                 <span class="report-integrity-icons">
                                                     <span class="report-integrity-icon {{ $chapterRiskTone }}" title="Риск: {{ $chapterRiskLabel }}">
                                                         <i class="fas fa-shield-alt"></i>

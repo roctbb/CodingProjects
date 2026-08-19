@@ -18,7 +18,6 @@
 
     <div class="gc-card market-hero gc-page-header mb-3">
         <div class="min-width-0">
-            <span class="gc-eyebrow">Workspace</span>
             <h2 class="mb-1">Магазин</h2>
             <div class="d-flex flex-wrap gap-2 text-muted small">
                 <span>
@@ -34,7 +33,7 @@
         @if ($canManageMarket)
             <div class="d-flex gap-2 flex-wrap justify-content-end">
                 @if ($user->role == 'admin')
-                    <a class="btn btn-success rounded-3 fw-semibold px-3 py-2" href="{{ url('/insider/market/create/') }}"><i class="fas fa-plus me-1"></i>Добавить</a>
+                    <a class="btn btn-success rounded-3 fw-medium px-3 py-2" href="{{ url('/insider/market/create/') }}"><i class="fas fa-plus me-1"></i>Добавить</a>
                 @endif
             </div>
         @endif
@@ -43,28 +42,28 @@
     <div class="d-flex align-items-center justify-content-between mb-3">
         <ul class="nav nav-pills gc-segmented-tabs" id="marketTabs" role="tablist">
             <li class="nav-item">
-                <button class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if($goodsTabActive) active @endif" id="market-goods-tab" data-bs-toggle="tab" data-bs-target="#market-goods" type="button" role="tab">
+                <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if($goodsTabActive) active @endif" id="market-goods-tab" data-bs-toggle="tab" data-bs-target="#market-goods" type="button" role="tab">
                     Товары <span class="badge rounded-pill bg-body gc-tab-count">{{ $goods->count() }}</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if($digitalTabActive) active @endif" id="market-digital-tab" data-bs-toggle="tab" data-bs-target="#market-digital" type="button" role="tab">
+                <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if($digitalTabActive) active @endif" id="market-digital-tab" data-bs-toggle="tab" data-bs-target="#market-digital" type="button" role="tab">
                     Цифровые <span class="badge rounded-pill bg-body gc-tab-count">{{ $digitalGoods->count() }}</span>
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if($auctionsTabActive) active @endif" id="market-auctions-tab" data-bs-toggle="tab" data-bs-target="#market-auctions" type="button" role="tab">
+                <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if($auctionsTabActive) active @endif" id="market-auctions-tab" data-bs-toggle="tab" data-bs-target="#market-auctions" type="button" role="tab">
                     Аукционы <span class="badge rounded-pill bg-body gc-tab-count">{{ $auctions->count() }}</span>
                 </button>
             </li>
             @if ($canManageMarket)
                 <li class="nav-item">
-                    <button class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small" id="market-archive-tab" data-bs-toggle="tab" data-bs-target="#market-archive" type="button" role="tab">
+                    <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small" id="market-archive-tab" data-bs-toggle="tab" data-bs-target="#market-archive" type="button" role="tab">
                         Архив <span class="badge rounded-pill bg-body gc-tab-count">{{ $archive->count() }}</span>
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link fw-semibold text-nowrap rounded-3 px-2 px-sm-3 py-2 small" id="market-orders-tab" data-bs-toggle="tab" data-bs-target="#market-orders" type="button" role="tab">
+                    <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small" id="market-orders-tab" data-bs-toggle="tab" data-bs-target="#market-orders" type="button" role="tab">
                         Заказы <span class="badge rounded-pill bg-body gc-tab-count">{{ $active_orders->count() }}</span>
                     </button>
                 </li>

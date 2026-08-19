@@ -13,7 +13,7 @@
 </head>
 <body class="bg-body min-vh-100">
 
-<main class="container-fluid">
+<main class="container-fluid px-0">
     @include('layouts.partials.session-alert')
     @yield('content')
 </main>

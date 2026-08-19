@@ -7,8 +7,8 @@
 @section('content')
     <div class="text-center text-white mb-3">
         <a href="{{ url('/') }}" class="auth-brand d-inline-flex align-items-center gap-2 text-decoration-none text-white">
-            <img src="{{ url('images/icons/icons8-idea-64.png') }}" width="28" height="28" alt="">
-            <span class="fs-5 fw-semibold">{{ config('app.name', 'Laravel') }}</span>
+            <x-brand-logo width="28" height="28" alt="" />
+            <span class="fs-5 fw-medium">{{ config('app.name', 'Laravel') }}</span>
         </a>
     </div>
 
@@ -20,10 +20,10 @@
                 <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-user-plus"></i></span>
                 <div class="min-width-0">
                     <span class="gc-eyebrow">аккаунт</span>
-                    <h1 class="h4 fw-bold mb-0">Регистрация</h1>
+                    <h1 class="h4 fw-medium mb-0">Регистрация</h1>
                 </div>
             </div>
-            <a href="{{ url('/login') }}" class="btn btn-outline-secondary rounded-3 fw-semibold flex-shrink-0">Уже есть аккаунт</a>
+            <a href="{{ url('/login') }}" class="btn btn-outline-secondary rounded-3 fw-medium flex-shrink-0">Уже есть аккаунт</a>
         </div>
 
         <div class="p-3 p-md-4">
@@ -138,7 +138,7 @@
         </div>
 
         <div class="bg-body-tertiary border-top p-3 p-md-4">
-            <button type="submit" class="btn btn-success rounded-3 fw-semibold w-100 py-2">Зарегистрироваться</button>
+            <button type="submit" class="btn btn-success rounded-3 fw-medium w-100 py-2">Зарегистрироваться</button>
         </div>
     </form>
 @endsection

@@ -26,7 +26,7 @@
                     <span class="badge rounded-pill bg-info-subtle text-info-emphasis border border-info-subtle ms-1">Аукцион</span>
                 @endif
             </td>
-            <td data-label="Покупатель"><a class="text-decoration-none fw-semibold" href="{{url('/insider/profile/'.$order->user->id)}}">{{$order->user->name}}</a></td>
+            <td data-label="Покупатель"><a class="text-decoration-none fw-medium" href="{{url('/insider/profile/'.$order->user->id)}}">{{$order->user->name}}</a></td>
             <td data-label="Цена"><strong>{{$order->displayPrice()}}</strong> <i class="fas fa-coins text-warning"></i></td>
             @if($showActions)
                 <td data-label="Действия" class="market-orders-actions">

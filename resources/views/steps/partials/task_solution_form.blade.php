@@ -24,7 +24,7 @@
                             @endif
                         </div>
                         <div class="step-submit-actions">
-                            <button type="submit" class="btn btn-success rounded-3 fw-semibold" id="sbtn">Отправить</button>
+                            <button type="submit" class="btn btn-success rounded-3 fw-medium" id="sbtn">Отправить</button>
                         </div>
                     </form>
                 @else
