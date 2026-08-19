@@ -163,6 +163,14 @@ class ProfileRoleUpdateTest extends TestCase
         );
     }
 
+    public function testBirthdayIsVisibleByDefault(): void
+    {
+        $user = $this->createUser();
+
+        $this->assertFalse($user->birthday_hidden);
+        $this->assertTrue($user->hasVisibleBirthday());
+    }
+
     private function profileData(array $overrides = []): array
     {
         return array_merge([

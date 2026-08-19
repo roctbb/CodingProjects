@@ -17,16 +17,16 @@ class SelfAccess
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if (Auth::User()->role=='admin') {
+        $user = Auth::user();
+
+        if ($user && $user->role === 'admin') {
             return $next($request);
         }
 
-        if (Auth::User()->id == $request->id)
-        {
+        if ($user && (int) $user->id === (int) $request->route('id')) {
             return $next($request);
         }
 
-        return abort(403);
-
+        abort(403);
     }
 }

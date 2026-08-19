@@ -7,7 +7,7 @@
 @section('content')
     @php
         $visibleUsers = $users->reject->is_hidden->sortByDesc(function ($user) { return $user->score(); });
-        $topUsers = $visibleUsers->take(3);
+        $topUsers = $visibleUsers->filter->isExperienceLeaderboardEligible()->take(3);
     @endphp
 
     <div class="community-hero gc-card gc-page-header mb-4 overflow-hidden">

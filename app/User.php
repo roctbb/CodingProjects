@@ -23,6 +23,10 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $rank = null;
     protected $cached_data = [];
 
+    protected $attributes = [
+        'birthday_hidden' => false,
+    ];
+
     protected $fillable = [
         'name', 'gender', 'email', 'password', 'role', 'school', 'grade_year', 'birthday', 'birthday_hidden',
         'hobbies', 'interests', 'git', 'telegram', 'telegram_chat_id', 'telegram_link_token', 'telegram_link_token_expires_at', 'custom_title', 'custom_title_expires_at', 'avatar_frame', 'avatar_frame_config', 'avatar_frame_expires_at', 'comments', 'letter', 'email_verified_at', 'last_login_at',
@@ -50,6 +54,13 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasVisibleBirthday(): bool
     {
         return $this->birthday !== null && !$this->birthday_hidden;
+    }
+
+    public function isExperienceLeaderboardEligible(): bool
+    {
+        return !$this->is_hidden
+            && !$this->is_teacher
+            && !in_array($this->role, ['teacher', 'admin'], true);
     }
 
     public static function nearbyBirthdaysCacheKey(?Carbon $date = null): string
