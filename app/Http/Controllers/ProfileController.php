@@ -14,6 +14,7 @@ use App\Solution;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -510,6 +511,7 @@ class ProfileController extends Controller
     {
         $guest = User::findOrFail(Auth::User()->id);
         $user = User::findOrFail($id);
+        $canEditBirthday = $guest->role == 'teacher' || $guest->role == 'admin';
 
         $rules = [
             'name' => 'required|string',
@@ -518,8 +520,12 @@ class ProfileController extends Controller
             'gender' => ['nullable', 'string', Rule::in(array_keys(User::learningAvatarGenders()))],
             'hobbies' => 'required|string',
             'interests' => 'required|string',
+            'birthday_hidden' => 'nullable|boolean',
             'image' => 'image|max:10240'
         ];
+        if ($canEditBirthday) {
+            $rules['birthday'] = 'required|date|date_format:Y-m-d';
+        }
         if ($guest->role == 'admin') {
             $rules['role'] = ['required', 'string', Rule::in(array_keys(User::roleLabels()))];
         }
@@ -537,9 +543,10 @@ class ProfileController extends Controller
         if ($guest->role == 'admin') {
             $user->role = $request->role;
         }
-        if (Auth::User()->role == 'teacher' || Auth::User()->role == 'admin') {
+        if ($canEditBirthday) {
             $user->birthday = Carbon::createFromFormat('Y-m-d', $request->birthday);
         }
+        $user->birthday_hidden = $request->boolean('birthday_hidden');
         $user->setGrade($request->grade);
 
         if ($request->password != "") {
@@ -556,6 +563,7 @@ class ProfileController extends Controller
         if ($guest->role == 'teacher')
             $user->comments = $request->comments;
         $user->save();
+        Cache::forget(User::nearbyBirthdaysCacheKey());
 
         return redirect('/insider/profile/' . $id);
     }

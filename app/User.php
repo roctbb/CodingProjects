@@ -24,12 +24,13 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $cached_data = [];
 
     protected $fillable = [
-        'name', 'gender', 'email', 'password', 'role', 'school', 'grade_year', 'birthday',
+        'name', 'gender', 'email', 'password', 'role', 'school', 'grade_year', 'birthday', 'birthday_hidden',
         'hobbies', 'interests', 'git', 'telegram', 'telegram_chat_id', 'telegram_link_token', 'telegram_link_token_expires_at', 'custom_title', 'custom_title_expires_at', 'avatar_frame', 'avatar_frame_config', 'avatar_frame_expires_at', 'comments', 'letter', 'email_verified_at', 'last_login_at',
         'learning_avatar_config', 'last_login_ip'
     ];
     protected $casts = [
         'birthday' => 'datetime',
+        'birthday_hidden' => 'boolean',
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
         'telegram_link_token_expires_at' => 'datetime',
@@ -40,6 +41,21 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     protected $prerequisite_cache = [];
+
+    public function scopeWithVisibleBirthday($query)
+    {
+        return $query->where('birthday_hidden', false)->whereNotNull('birthday');
+    }
+
+    public function hasVisibleBirthday(): bool
+    {
+        return $this->birthday !== null && !$this->birthday_hidden;
+    }
+
+    public static function nearbyBirthdaysCacheKey(?Carbon $date = null): string
+    {
+        return 'users:nearby_birthdays:' . ($date ?: Carbon::now())->format('Y-m-d');
+    }
 
     public function imageUrl(): string
     {

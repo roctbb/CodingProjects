@@ -181,9 +181,9 @@ class CoursesController extends Controller
         }
 
         $today = Carbon::now()->startOfDay();
-        $birthdayUsers = Cache::remember('users:nearby_birthdays:' . $today->format('Y-m-d'), 3600, function () use ($today) {
+        $birthdayUsers = Cache::remember(User::nearbyBirthdaysCacheKey($today), 3600, function () use ($today) {
             return User::where('is_hidden', false)
-                ->whereNotNull('birthday')
+                ->withVisibleBirthday()
                 ->get(['id', 'name', 'birthday', 'custom_title', 'custom_title_expires_at'])
                 ->map(function ($birthdayUser) use ($today) {
                     $nextBirthday = $birthdayUser->birthday->copy()->year($today->year)->startOfDay();

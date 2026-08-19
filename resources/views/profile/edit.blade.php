@@ -74,6 +74,19 @@
                                 </div>
                             @endif
 
+                            <div class="col-12">
+                                <input type="hidden" name="birthday_hidden" value="0">
+                                <div class="form-check">
+                                    <input id="birthday_hidden" type="checkbox" class="form-check-input" name="birthday_hidden" value="1"
+                                           @checked((bool) old('birthday_hidden', $user->birthday_hidden))>
+                                    <label for="birthday_hidden" class="form-check-label fw-semibold">Скрыть дату рождения</label>
+                                    <div class="form-text">Дата не будет видна в профиле и списке ближайших дней рождения.</div>
+                                    @error('birthday_hidden')
+                                        <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
+                                    @enderror
+                                </div>
+                            </div>
+
                             @if ($guest->role == 'admin')
                                 <div class="col-12 col-md-6">
                                     <label for="gender" class="form-label">Пол персонажа</label>

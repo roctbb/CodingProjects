@@ -78,7 +78,7 @@
                     <div class="d-flex flex-column gap-2 small border-top pt-3">
                         <div class="d-flex justify-content-between gap-3">
                             <span class="text-muted">Дата рождения</span>
-                            <strong class="text-end fw-semibold">@if($user->birthday){{ $user->birthday->format('d.m.Y') }}@else - @endif</strong>
+                            <strong class="text-end fw-semibold">@if($user->hasVisibleBirthday()){{ $user->birthday->format('d.m.Y') }}@else - @endif</strong>
                         </div>
                         <div class="d-flex justify-content-between gap-3">
                             <span class="text-muted">Учеба</span>

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\User;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -39,6 +40,7 @@ class ProfileRoleUpdateTest extends TestCase
             $table->string('school')->nullable();
             $table->integer('grade_year')->nullable();
             $table->date('birthday')->nullable();
+            $table->boolean('birthday_hidden')->default(false);
             $table->string('gender')->nullable();
             $table->text('hobbies')->nullable();
             $table->text('interests')->nullable();
@@ -107,6 +109,58 @@ class ProfileRoleUpdateTest extends TestCase
 
         $response->assertRedirect('/insider/profile/' . $user->id);
         $this->assertSame('student', $user->fresh()->role);
+    }
+
+    public function testBirthdayIsRequiredWhenItCanBeEdited(): void
+    {
+        $admin = $this->createUser(['role' => 'admin']);
+        $user = $this->createUser(['role' => 'student']);
+        $this->be($admin);
+
+        $response = $this->from('/insider/profile/' . $user->id . '/edit')
+            ->post('/insider/profile/' . $user->id . '/edit', $this->profileData([
+                'role' => 'student',
+                'birthday' => null,
+            ]));
+
+        $response->assertRedirect('/insider/profile/' . $user->id . '/edit');
+        $response->assertSessionHasErrors('birthday');
+        $this->assertSame('2012-01-01', $user->fresh()->birthday->format('Y-m-d'));
+    }
+
+    public function testUserCanHideAndShowTheirBirthday(): void
+    {
+        $user = $this->createUser();
+        $this->be($user);
+        Cache::put(User::nearbyBirthdaysCacheKey(), ['stale'], 3600);
+
+        $this->post('/insider/profile/' . $user->id . '/edit', $this->profileData([
+            'birthday_hidden' => '1',
+        ]))->assertRedirect('/insider/profile/' . $user->id);
+
+        $this->assertTrue($user->fresh()->birthday_hidden);
+        $this->assertFalse(Cache::has(User::nearbyBirthdaysCacheKey()));
+
+        $this->post('/insider/profile/' . $user->id . '/edit', $this->profileData([
+            'birthday_hidden' => '0',
+        ]))->assertRedirect('/insider/profile/' . $user->id);
+
+        $this->assertFalse($user->fresh()->birthday_hidden);
+    }
+
+    public function testHiddenBirthdayIsNotPublicOrIncludedInBirthdayQueries(): void
+    {
+        $visibleUser = $this->createUser();
+        $hiddenUser = $this->createUser(['birthday_hidden' => true]);
+        $userWithoutBirthday = $this->createUser(['birthday' => null]);
+
+        $this->assertTrue($visibleUser->hasVisibleBirthday());
+        $this->assertFalse($hiddenUser->hasVisibleBirthday());
+        $this->assertFalse($userWithoutBirthday->hasVisibleBirthday());
+        $this->assertSame(
+            [$visibleUser->id],
+            User::withVisibleBirthday()->orderBy('id')->pluck('id')->all()
+        );
     }
 
     private function profileData(array $overrides = []): array
