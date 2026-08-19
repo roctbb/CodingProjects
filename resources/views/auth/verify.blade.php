@@ -32,9 +32,12 @@
                     @endif
 
                     <div class="d-flex flex-column flex-sm-row gap-2 border-top pt-3">
-                        <a class="btn btn-success rounded-3 fw-semibold" href="{{ route('verification.resend') }}">
-                            {{ __('Получить ссылку на почту') }}
-                        </a>
+                        <form method="POST" action="{{ route('verification.resend') }}" class="m-0">
+                            @csrf
+                            <button type="submit" class="btn btn-success rounded-3 fw-semibold w-100">
+                                {{ __('Получить ссылку на почту') }}
+                            </button>
+                        </form>
                         <form method="POST" action="{{ route('logout') }}" class="m-0">
                             @csrf
                             <button type="submit" class="btn btn-outline-secondary rounded-3 fw-semibold w-100">
