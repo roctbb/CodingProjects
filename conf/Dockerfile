@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     zip \
     && docker-php-ext-install -j"$(nproc)" curl zip pdo pdo_pgsql xml gd mbstring \
-    && pecl install redis \
+    && pecl install https://pecl.php.net/get/redis-6.3.0.tgz \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
 
@@ -64,7 +64,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     zip \
     && docker-php-ext-install -j"$(nproc)" curl zip pdo pdo_pgsql xml gd mbstring \
-    && pecl install redis \
+    && pecl install https://pecl.php.net/get/redis-6.3.0.tgz \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
 
