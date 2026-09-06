@@ -89,9 +89,9 @@ class MarketController extends Controller
     public function edit($id, Request $request)
     {
         $this->validate($request, [
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'required|string',
+            'image' => 'required|string|max:255',
             'number' => 'required|numeric|min:0',
             'price' => 'required|numeric|min:0',
             'sale_type' => 'nullable|in:regular,auction',
@@ -133,9 +133,9 @@ class MarketController extends Controller
     public function create(Request $request)
     {
         $this->validate($request, [
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'required|string',
+            'image' => 'required|string|max:255',
             'number' => 'required|numeric|min:0',
             'price' => 'required|numeric|min:0',
             'sale_type' => 'nullable|in:regular,auction',

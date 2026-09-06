@@ -27,7 +27,7 @@
                         <div class="col-md-7">
                             <label for="name" class="form-label">Название урока</label>
                             <input id="name" type="text" class="form-control rounded-3" value="{{old('name')}}"
-                                   name="name" required>
+                                   name="name" maxlength="255" required>
                             @if ($errors->has('name'))
                                 <span class="text-danger small d-block mt-1"><strong>{{ $errors->first('name') }}</strong></span>
                             @endif

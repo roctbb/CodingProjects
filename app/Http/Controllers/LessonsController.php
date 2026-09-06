@@ -54,7 +54,7 @@ class LessonsController extends Controller
         $course = Course::findOrFail($id);
         $program = $course->program;
         $this->validate($request, [
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
             'description' => 'required|string',
             'chapter' => 'nullable|exists:program_chapters,id',
         ]);
@@ -105,7 +105,7 @@ class LessonsController extends Controller
         $lesson = Lesson::findOrFail($id);
         $course = Course::findOrFail($course_id);
         $this->validate($request, [
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
             'description' => 'required',
             'start_date' => 'date|nullable',
             'chapter' => 'required|exists:program_chapters,id'

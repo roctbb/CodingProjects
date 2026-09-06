@@ -28,7 +28,7 @@
                     <div class="mb-3">
                         <label for="name" class="form-label">Название</label>
                         <input id="name" type="text" class="form-control rounded-3" value="{{old('name', $step->name)}}"
-                               name="name" required>
+                               name="name" maxlength="255" required>
                         @if ($errors->has('name'))
                             <span class="text-danger small d-block mt-1">
                                 <strong>{{ $errors->first('name') }}</strong>
@@ -98,7 +98,7 @@
                         <div class="col-md-8">
                             <label for="video_url" class="form-label">Видео</label>
                             <input id="video_url" type="text" class="form-control rounded-3" value="{{old('video_url', $step->video_url)}}"
-                                   name="video_url">
+                                   name="video_url" maxlength="512">
 
                             @if ($errors->has('video_url'))
                                 <span class="text-danger small d-block mt-1">

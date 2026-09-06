@@ -54,7 +54,8 @@ class TasksController extends Controller
         $step = ProgramStep::findOrFail($id);
         $this->validate($request, [
             'text' => 'required|string',
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
+            'answer' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0',
             'max_mark' => 'required|integer|min:0|max:1000',
             'ai_achievement_instruction' => 'nullable|string|max:1000'
@@ -119,7 +120,8 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         $this->validate($request, [
             'text' => 'required|string',
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
+            'answer' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0',
             'max_mark' => 'required|integer|min:0|max:1000',
             'ai_achievement_instruction' => 'nullable|string|max:1000'

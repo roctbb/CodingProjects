@@ -17,7 +17,7 @@
                             <div class="row g-3 mb-3">
                                 <div class="col-md-8">
                                     <label for="task-name" class="form-label">Название</label>
-                                    <input type="text" name="name" class="form-control rounded-3" id="task-name"/>
+                                    <input type="text" name="name" class="form-control rounded-3" id="task-name" maxlength="255"/>
                                     @error('name')
                                         <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                     @enderror
@@ -91,7 +91,7 @@
 
                             <div class="mb-0">
                                 <label for="task-answer" class="form-label">Ответ</label>
-                                <input type="text" name="answer" class="form-control rounded-3" id="task-answer"/>
+                                <input type="text" name="answer" class="form-control rounded-3" id="task-answer" maxlength="255"/>
                                 @error('answer')
                                     <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                 @enderror

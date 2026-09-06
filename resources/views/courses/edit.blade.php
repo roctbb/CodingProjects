@@ -46,7 +46,7 @@
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
                             <label for="name" class="form-label">Название</label>
-                            <input id="name" type="text" class="form-control rounded-3" name="name" value="{{ old('name', $course->name) }}" required>
+                            <input id="name" type="text" class="form-control rounded-3" name="name" value="{{ old('name', $course->name) }}" maxlength="255" required>
                             @error('name')
                                 <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                             @enderror
@@ -54,7 +54,7 @@
 
                         <div class="col-12 col-md-6">
                             <label for="site" class="form-label">Ссылка на описание курса</label>
-                            <input id="site" type="text" class="form-control rounded-3" name="site" value="{{ old('site', $course->site) }}">
+                            <input id="site" type="text" class="form-control rounded-3" name="site" value="{{ old('site', $course->site) }}" maxlength="255">
                             @error('site')
                                 <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                             @enderror
@@ -62,7 +62,7 @@
 
                         <div class="col-12 col-md-6">
                             <label for="image" class="form-label">Ссылка на обложку</label>
-                            <input id="image" type="text" class="form-control rounded-3" name="image" value="{{ old('image', $course->image) }}">
+                            <input id="image" type="text" class="form-control rounded-3" name="image" value="{{ old('image', $course->image) }}" maxlength="255">
                             @error('image')
                                 <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                             @enderror
@@ -70,7 +70,7 @@
 
                         <div class="col-12 col-md-6">
                             <label for="git" class="form-label">Git репозиторий</label>
-                            <input id="git" type="text" class="form-control rounded-3" name="git" value="{{ old('git', $course->git) }}">
+                            <input id="git" type="text" class="form-control rounded-3" name="git" value="{{ old('git', $course->git) }}" maxlength="255">
                             @error('git')
                                 <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                             @enderror
@@ -78,7 +78,7 @@
 
                         <div class="col-12">
                             <label for="description" class="form-label">Описание</label>
-                            <textarea id="description" class="form-control rounded-3" name="description" rows="5" required>{{ old('description', $course->description) }}</textarea>
+                            <textarea id="description" class="form-control rounded-3" name="description" rows="5" maxlength="1024" required>{{ old('description', $course->description) }}</textarea>
                             @error('description')
                                 <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                             @enderror
@@ -138,7 +138,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label for="invite" class="form-label">Инвайт</label>
-                                <input id="invite" type="text" class="form-control rounded-3" name="invite" value="{{ old('invite', $course->invite) }}">
+                                <input id="invite" type="text" class="form-control rounded-3" name="invite" value="{{ old('invite', $course->invite) }}" maxlength="253">
                                 @error('invite')
                                     <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                 @enderror
@@ -228,7 +228,7 @@
 
                         <div class="col-12 col-md-6">
                             <label for="weekdays" class="form-label">Дни недели</label>
-                            <input id="weekdays" type="text" class="form-control rounded-3" name="weekdays" value="{{ old('weekdays', $course->weekdays) }}" placeholder="1;4">
+                            <input id="weekdays" type="text" class="form-control rounded-3" name="weekdays" value="{{ old('weekdays', $course->weekdays) }}" maxlength="255" placeholder="1;4">
                             @error('weekdays')
                                 <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                             @enderror
@@ -236,7 +236,7 @@
 
                         <div class="col-12 col-md-6">
                             <label for="telegram" class="form-label">Telegram чат</label>
-                            <input id="telegram" type="text" class="form-control rounded-3" name="telegram" value="{{ old('telegram', $course->telegram) }}">
+                            <input id="telegram" type="text" class="form-control rounded-3" name="telegram" value="{{ old('telegram', $course->telegram) }}" maxlength="255">
                             @error('telegram')
                                 <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                             @enderror

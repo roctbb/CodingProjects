@@ -1043,7 +1043,7 @@ class CoursesController extends Controller
 
 
         $this->validate($request, [
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
 
         ]);
 
@@ -1080,7 +1080,7 @@ class CoursesController extends Controller
 
 
         $this->validate($request, [
-            'name' => 'required|string'
+            'name' => 'required|string|max:255'
         ]);
 
         $course = Course::findOrFail($course_id);
@@ -1120,8 +1120,13 @@ class CoursesController extends Controller
     public function edit($id, Request $request)
     {
         $this->validate($request, [
-            'name' => 'required|string',
-            'description' => 'required|string',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string|max:1024',
+            'git' => 'nullable|string|max:255',
+            'site' => 'nullable|string|max:255',
+            'image' => 'nullable|string|max:255',
+            'telegram' => 'nullable|string|max:255',
+            'weekdays' => 'nullable|string|max:255',
         ]);
 
         $course = Course::findOrFail($id);
@@ -1177,7 +1182,7 @@ class CoursesController extends Controller
 
         if ($course->invite != $request->invite) {
             $this->validate($request, [
-                'invite' => 'required|string|unique:courses,invite|unique:providers,invite',
+                'invite' => 'required|string|max:253|unique:courses,invite|unique:providers,invite',
             ]);
             $course->invite = $request->invite;
             $course->remote_invite = $request->invite . '-R';
@@ -1237,8 +1242,8 @@ class CoursesController extends Controller
 
 
         $this->validate($request, [
-            'name' => 'required|string',
-            'description' => 'required|string',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string|max:1024',
             'image' => 'image|max:10240',
         ]);
 
@@ -1293,6 +1298,10 @@ class CoursesController extends Controller
 
     public function invite(Request $request)
     {
+        $this->validate($request, [
+            'invite' => 'required|string|max:255',
+        ]);
+
         if ($request->invite == null || $request->invite == "") {
             $this->make_error_alert('Ошибка!', 'Курс с таким приглашением не найден.');
             return $this->backException();

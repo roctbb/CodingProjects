@@ -715,7 +715,7 @@
                     <div class="modal-body p-3 p-md-4">
                         <div class="mb-3">
                             <label for="completed-course-name" class="form-label">Название</label>
-                            <input type="text" name="name" class="form-control rounded-3" id="completed-course-name">
+                            <input type="text" name="name" class="form-control rounded-3" id="completed-course-name" maxlength="255">
                         </div>
                         <div class="mb-3">
                             <label for="completed-course-mark" class="form-label">Очков опыта</label>
@@ -751,7 +751,7 @@
                         <div class="modal-body p-3 p-md-4">
                             <div class="mb-3">
                                 <label for="money-description" class="form-label">Причина</label>
-                                <input type="text" name="description" class="form-control rounded-3" id="money-description" placeholder="Например: возврат, награда, списание за заказ">
+                                <input type="text" name="description" class="form-control rounded-3" id="money-description" maxlength="255" placeholder="Например: возврат, награда, списание за заказ">
                             </div>
                             <div>
                                 <label for="money-amount" class="form-label">Изменение баланса</label>

@@ -39,7 +39,7 @@
                         <div class="row g-3">
                             <div class="col-12">
                                 <label for="name" class="form-label">Имя</label>
-                                <input id="name" type="text" class="form-control rounded-3" name="name" value="{{ old('name', $user->name) }}" required>
+                                <input id="name" type="text" class="form-control rounded-3" name="name" value="{{ old('name', $user->name) }}" maxlength="255" required>
                                 @error('name')
                                     <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                 @enderror
@@ -109,7 +109,7 @@
 
                             <div class="col-12 col-md-{{ $canEditBirthday ? '6' : '8' }}">
                                 <label for="school" class="form-label">Место учебы</label>
-                                <input id="school" type="text" class="form-control rounded-3" name="school" value="{{ old('school', $user->school) }}" required>
+                                <input id="school" type="text" class="form-control rounded-3" name="school" value="{{ old('school', $user->school) }}" maxlength="255" required>
                                 @error('school')
                                     <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                 @enderror
@@ -144,7 +144,7 @@
                         <div class="row g-3">
                             <div class="col-12">
                                 <label for="interests" class="form-label">Технические интересы</label>
-                                <textarea id="interests" class="form-control rounded-3" name="interests" rows="4" required>{{ old('interests', $user->interests) }}</textarea>
+                                <textarea id="interests" class="form-control rounded-3" name="interests" rows="4" maxlength="10000" required>{{ old('interests', $user->interests) }}</textarea>
                                 @error('interests')
                                     <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                 @enderror
@@ -152,7 +152,7 @@
 
                             <div class="col-12">
                                 <label for="hobbies" class="form-label">Увлечения</label>
-                                <textarea id="hobbies" class="form-control rounded-3" name="hobbies" rows="4" required>{{ old('hobbies', $user->hobbies) }}</textarea>
+                                <textarea id="hobbies" class="form-control rounded-3" name="hobbies" rows="4" maxlength="10000" required>{{ old('hobbies', $user->hobbies) }}</textarea>
                                 @error('hobbies')
                                     <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                 @enderror
@@ -161,7 +161,7 @@
                             @if ($guest->role == 'teacher' || $guest->role == 'admin')
                                 <div class="col-12">
                                     <label for="comments" class="form-label">Комментарий</label>
-                                    <textarea id="comments" class="form-control rounded-3" name="comments" rows="3">{{ old('comments', $user->comments) }}</textarea>
+                                    <textarea id="comments" class="form-control rounded-3" name="comments" rows="3" maxlength="10000">{{ old('comments', $user->comments) }}</textarea>
                                     @error('comments')
                                         <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                     @enderror
@@ -197,7 +197,7 @@
                             <div class="d-flex flex-column gap-3">
                                 <div>
                                     <label for="telegram" class="form-label">Telegram</label>
-                                    <input id="telegram" type="text" class="form-control rounded-3" name="telegram" value="{{ old('telegram', $user->telegram) }}">
+                                    <input id="telegram" type="text" class="form-control rounded-3" name="telegram" value="{{ old('telegram', $user->telegram) }}" maxlength="255">
                                     @error('telegram')
                                         <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                     @enderror
@@ -205,7 +205,7 @@
 
                                 <div>
                                     <label for="git" class="form-label">Git</label>
-                                    <input id="git" type="text" class="form-control rounded-3" name="git" value="{{ old('git', $user->git) }}">
+                                    <input id="git" type="text" class="form-control rounded-3" name="git" value="{{ old('git', $user->git) }}" maxlength="255">
                                     @error('git')
                                         <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                     @enderror
@@ -226,7 +226,7 @@
                             <div class="d-flex flex-column gap-3">
                                 <div>
                                     <label for="password" class="form-label">Новый пароль</label>
-                                    <input id="password" type="password" class="form-control rounded-3" name="password" autocomplete="new-password">
+                                    <input id="password" type="password" class="form-control rounded-3" name="password" maxlength="72" autocomplete="new-password">
                                     @error('password')
                                         <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                     @enderror
@@ -234,7 +234,7 @@
 
                                 <div>
                                     <label for="password-confirm" class="form-label">Повторите пароль</label>
-                                    <input id="password-confirm" type="password" class="form-control rounded-3" name="password_confirmation" autocomplete="new-password">
+                                    <input id="password-confirm" type="password" class="form-control rounded-3" name="password_confirmation" maxlength="72" autocomplete="new-password">
                                 </div>
 
                                 @if (config('services.silaeder_oidc.enabled') && $guest->id === $user->id && in_array($user->role, ['student', 'teacher'], true))

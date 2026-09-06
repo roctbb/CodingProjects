@@ -171,6 +171,25 @@ class ProfileRoleUpdateTest extends TestCase
         $this->assertTrue($user->hasVisibleBirthday());
     }
 
+    public function testProfileRejectsValuesThatExceedDatabaseColumnLimits(): void
+    {
+        $user = $this->createUser();
+        $this->be($user);
+
+        $response = $this->from('/insider/profile/' . $user->id . '/edit')
+            ->post('/insider/profile/' . $user->id . '/edit', $this->profileData([
+                'name' => str_repeat('n', 256),
+                'school' => str_repeat('s', 256),
+                'git' => str_repeat('g', 256),
+                'telegram' => str_repeat('t', 256),
+            ]));
+
+        $response->assertRedirect('/insider/profile/' . $user->id . '/edit');
+        $response->assertSessionHasErrors(['name', 'school', 'git', 'telegram']);
+        $this->assertSame('User', $user->fresh()->name);
+        $this->assertSame('Силаэдр', $user->fresh()->school);
+    }
+
     private function profileData(array $overrides = []): array
     {
         return array_merge([

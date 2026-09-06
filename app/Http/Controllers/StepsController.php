@@ -148,7 +148,8 @@ class StepsController extends Controller
     {
         $lesson = Lesson::findOrFail($id);
         $this->validate($request, [
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
+            'video_url' => 'nullable|string|max:512',
         ]);
         $step = ProgramStep::createStep($lesson, $request);
         $step->video_url = $request->video_url;
@@ -170,7 +171,8 @@ class StepsController extends Controller
     {
         $step = ProgramStep::findOrFail($id);
         $this->validate($request, [
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
+            'video_url' => 'nullable|string|max:512',
             'start_date' => 'date'
         ]);
         ProgramStep::editStep($step, $request);

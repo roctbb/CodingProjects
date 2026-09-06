@@ -332,8 +332,8 @@ class ProfileController extends Controller
         $user = User::findOrFail($id);
         $oldRank = $user->rank();
         $this->validate($request, [
-            'name' => 'required|string',
-            'mark' => 'required|string',
+            'name' => 'required|string|max:255',
+            'mark' => 'required|string|max:255',
         ]);
         $course = new CompletedCourse();
         $course->name = $request->name;
@@ -356,7 +356,7 @@ class ProfileController extends Controller
         }
 
         $this->validate($request, [
-            'description' => 'required|string',
+            'description' => 'required|string|max:255',
             'amount' => 'integer|not_in:0|min:-10000|max:10000|required'
         ]);
 
@@ -514,12 +514,15 @@ class ProfileController extends Controller
         $canEditBirthday = $guest->role == 'teacher' || $guest->role == 'admin';
 
         $rules = [
-            'name' => 'required|string',
-            'school' => 'required|string',
+            'name' => 'required|string|max:255',
+            'school' => 'required|string|max:255',
             'grade' => 'integer|min:1|max:12|required',
             'gender' => ['nullable', 'string', Rule::in(array_keys(User::learningAvatarGenders()))],
-            'hobbies' => 'required|string',
-            'interests' => 'required|string',
+            'git' => 'nullable|string|max:255',
+            'telegram' => 'nullable|string|max:255',
+            'hobbies' => 'required|string|max:10000',
+            'interests' => 'required|string|max:10000',
+            'comments' => 'nullable|string|max:10000',
             'birthday_hidden' => 'nullable|boolean',
             'image' => 'image|max:10240'
         ];
@@ -550,7 +553,7 @@ class ProfileController extends Controller
         $user->setGrade($request->grade);
 
         if ($request->password != "") {
-            $this->validate($request, ['password' => 'required|string|min:6|confirmed']);
+            $this->validate($request, ['password' => 'required|string|min:6|max:72|confirmed']);
             $user->password = bcrypt($request->password);
         }
 

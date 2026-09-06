@@ -48,7 +48,7 @@
             <form autocomplete="off" class="gc-card gc-invite-form" method="get" action="{{ url('insider/invite') }}">
                 @csrf
                 <i class="fas fa-ticket-alt text-muted d-none d-sm-inline"></i>
-                <input type="text" class="form-control rounded-3" name="invite" placeholder="Введите инвайт на курс...">
+                <input type="text" class="form-control rounded-3" name="invite" maxlength="255" placeholder="Введите инвайт на курс...">
                 <button type="submit" class="btn btn-success rounded-3 fw-medium text-nowrap">Добавить</button>
             </form>
         @endif

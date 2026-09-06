@@ -28,7 +28,7 @@
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label for="name" class="form-label">Название</label>
-                                    <input id="name" type="text" class="form-control rounded-3" name="name" value="{{old('name')}}" required>
+                                    <input id="name" type="text" class="form-control rounded-3" name="name" value="{{old('name')}}" maxlength="255" required>
                                     @error('name')
                                         <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                     @enderror
@@ -50,7 +50,7 @@
 
                                 <div class="col-12">
                                     <label for="description" class="form-label">Описание</label>
-                                    <textarea id="description" class="form-control rounded-3" name="description" rows="5" required>{{old('description')}}</textarea>
+                                    <textarea id="description" class="form-control rounded-3" name="description" rows="5" maxlength="1024" required>{{old('description')}}</textarea>
                                     @error('description')
                                         <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                     @enderror

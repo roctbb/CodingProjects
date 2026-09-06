@@ -29,7 +29,7 @@
                         <div class="col-lg-8">
                             <label for="name" class="form-label">Название</label>
                             <input id="name" type="text" class="form-control rounded-3" name="name" value="{{old('name', $task->name)}}"
-                                   required>
+                                   maxlength="255" required>
                             @if ($errors->has('name'))
                                 <span class="text-danger small d-block mt-1">
                                     <strong>{{ $errors->first('name') }}</strong>
@@ -179,7 +179,7 @@
                     <div class="mb-0">
                             <label for="answer" class="form-label">Ответ</label>
                         <input type="text" name="answer" class="form-control rounded-3" id="answer"
-                               value="{{old('answer', $task->answer)}}"/>
+                               value="{{old('answer', $task->answer)}}" maxlength="255"/>
 
                             @if ($errors->has('answer'))
                             <span class="text-danger small d-block mt-1">

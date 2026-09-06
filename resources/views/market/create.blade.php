@@ -23,7 +23,7 @@
                         <div class="p-3 p-md-4">
                             <div class="mb-3">
                                 <label for="name" class="form-label">Название</label>
-                                <input id="name" type="text" class="form-control rounded-3" name="name" value="{{ old('name') }}" data-market-preview-field="name" required>
+                                <input id="name" type="text" class="form-control rounded-3" name="name" value="{{ old('name') }}" maxlength="255" data-market-preview-field="name" required>
                                 @error('name')
                                     <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                 @enderror
@@ -69,7 +69,7 @@
 
                             <div class="mb-3">
                                 <label for="image" class="form-label">Фото</label>
-                                <input id="image" type="url" class="form-control rounded-3" name="image" value="{{ old('image') }}" data-market-preview-field="image" required>
+                                <input id="image" type="url" class="form-control rounded-3" name="image" value="{{ old('image') }}" maxlength="255" data-market-preview-field="image" required>
                                 @error('image')
                                     <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
                                 @enderror

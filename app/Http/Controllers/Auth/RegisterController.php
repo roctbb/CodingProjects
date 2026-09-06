@@ -76,12 +76,16 @@ class RegisterController extends Controller
                     }
                 },
             ],
-            'password' => 'required|string|min:6|confirmed',
-            'name' => 'required|string',
-            'school' => 'required|string',
+            'password' => 'required|string|min:6|max:72|confirmed',
+            'name' => 'required|string|max:255',
+            'school' => 'required|string|max:255',
             'grade' => 'required|integer|between:1,12',
             'gender' => ['required', 'string', Rule::in(array_keys(User::learningAvatarGenders()))],
             'birthday' => 'required|date|date_format:Y-m-d',
+            'git' => 'nullable|string|max:255',
+            'telegram' => 'nullable|string|max:255',
+            'hobbies' => 'nullable|string|max:10000',
+            'interests' => 'nullable|string|max:10000',
             'image' => 'image|max:10240',
             'g-recaptcha-response' => app('App\Services\Recaptcha')->getValidationString()
         ]);
@@ -122,6 +126,10 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
+        $this->validate($request, [
+            'invite' => 'nullable|string|max:255',
+        ]);
+
         $is_teacher = false;
         $is_novice = false;
         $course = null;

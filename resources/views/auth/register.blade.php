@@ -31,7 +31,7 @@
                 <h5 class="auth-section-title">Инвайт</h5>
                 <div class="mb-3">
                     <label for="invite" class="form-label">Инвайт</label>
-                    <input id="invite" type="text" class="form-control rounded-3" name="invite" value="{{ old('invite') }}">
+                    <input id="invite" type="text" class="form-control rounded-3" name="invite" value="{{ old('invite') }}" maxlength="255">
                     <div class="form-text">Если вы получили инвайт преподавателя, укажите его.</div>
                     @error('invite') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
@@ -41,18 +41,18 @@
             <div class="row g-3 mb-3">
                 <div class="col-12">
                     <label for="email" class="form-label">E-Mail</label>
-                    <input id="email" type="email" class="form-control rounded-3" name="email" value="{{ old('email') }}" required>
+                    <input id="email" type="email" class="form-control rounded-3" name="email" value="{{ old('email') }}" maxlength="255" required>
                     <div class="form-text">Ваш действующий Email — он будет логином.</div>
                     @error('email') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-12 col-sm-6">
                     <label for="password" class="form-label">Пароль</label>
-                    <input id="password" type="password" class="form-control rounded-3" name="password" required>
+                    <input id="password" type="password" class="form-control rounded-3" name="password" maxlength="72" required>
                     @error('password') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-12 col-sm-6">
                     <label for="password-confirm" class="form-label">Повторите пароль</label>
-                    <input id="password-confirm" type="password" class="form-control rounded-3" name="password_confirmation" required>
+                    <input id="password-confirm" type="password" class="form-control rounded-3" name="password_confirmation" maxlength="72" required>
                 </div>
             </div>
 
@@ -60,7 +60,7 @@
             <div class="row g-3 mb-3">
                 <div class="col-12">
                     <label for="name" class="form-label">Имя и фамилия</label>
-                    <input id="name" type="text" class="form-control rounded-3" name="name" value="{{ old('name') }}" required>
+                    <input id="name" type="text" class="form-control rounded-3" name="name" value="{{ old('name') }}" maxlength="255" required>
                     @error('name') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-12 col-sm-6">
@@ -81,7 +81,7 @@
                 </div>
                 <div class="col-12 col-sm-6">
                     <label for="school" class="form-label">Место учебы</label>
-                    <input id="school" type="text" class="form-control rounded-3" name="school" value="{{ old('school') }}" required>
+                    <input id="school" type="text" class="form-control rounded-3" name="school" value="{{ old('school') }}" maxlength="255" required>
                     <div class="form-text">Например, «Гимназия 1576»</div>
                     @error('school') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
@@ -102,12 +102,12 @@
             <div class="row g-3 mb-3">
                 <div class="col-12">
                     <label for="interests" class="form-label">Технические интересы</label>
-                    <textarea id="interests" class="form-control rounded-3" name="interests" rows="2">{{ old('interests') }}</textarea>
+                    <textarea id="interests" class="form-control rounded-3" name="interests" rows="2" maxlength="10000">{{ old('interests') }}</textarea>
                     @error('interests') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-12">
                     <label for="hobbies" class="form-label">Увлечения</label>
-                    <textarea id="hobbies" class="form-control rounded-3" name="hobbies" rows="2">{{ old('hobbies') }}</textarea>
+                    <textarea id="hobbies" class="form-control rounded-3" name="hobbies" rows="2" maxlength="10000">{{ old('hobbies') }}</textarea>
                     @error('hobbies') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-12">
@@ -122,12 +122,12 @@
             <div class="row g-3">
                 <div class="col-12 col-sm-6">
                     <label for="telegram" class="form-label">Telegram</label>
-                    <input id="telegram" type="text" class="form-control rounded-3" name="telegram" value="{{ old('telegram') }}">
+                    <input id="telegram" type="text" class="form-control rounded-3" name="telegram" value="{{ old('telegram') }}" maxlength="255">
                     @error('telegram') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-12 col-sm-6">
                     <label for="git" class="form-label">Git</label>
-                    <input id="git" type="text" class="form-control rounded-3" name="git" value="{{ old('git') }}">
+                    <input id="git" type="text" class="form-control rounded-3" name="git" value="{{ old('git') }}" maxlength="255">
                     @error('git') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
             </div>
