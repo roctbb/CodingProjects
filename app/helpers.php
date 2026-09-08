@@ -3,7 +3,7 @@
 if (!function_exists('parsedown_math')) {
     /**
      * Parse markdown text with mathematical formulas support
-     * This function processes markdown and then unescapes mathematical formulas
+     * Preserve TeX syntax during Markdown parsing, then sanitize the HTML.
      *
      * @param string $text
      * @return string
