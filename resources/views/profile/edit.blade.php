@@ -237,7 +237,7 @@
                                     <input id="password-confirm" type="password" class="form-control rounded-3" name="password_confirmation" maxlength="72" autocomplete="new-password">
                                 </div>
 
-                                @if (config('services.silaeder_oidc.enabled') && $guest->id === $user->id && in_array($user->role, ['student', 'teacher'], true))
+                                @if (config('services.silaeder_oidc.enabled') && $guest->id === $user->id && in_array($user->role, ['student', 'teacher', 'admin'], true))
                                     <div class="border-top pt-3">
                                         <div class="fw-medium mb-1">ЛК Силаэдра</div>
                                         @if ($user->oidc_subject)

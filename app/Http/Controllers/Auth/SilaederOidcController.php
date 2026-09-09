@@ -37,7 +37,7 @@ class SilaederOidcController extends Controller
     public function link(Request $request, SilaederOidcClient $oidc)
     {
         $user = $request->user();
-        if (!$user || !in_array($user->role, ['student', 'teacher'], true)) {
+        if (!$user || !in_array($user->role, ['student', 'teacher', 'admin'], true)) {
             abort(403);
         }
 
@@ -160,7 +160,8 @@ class SilaederOidcController extends Controller
                     'oidc_issuer' => $linkRequest->oidc_issuer,
                     'oidc_subject' => $linkRequest->oidc_subject,
                     'name' => $linkRequest->name,
-                    'role' => $linkRequest->role,
+                    // Local admin rights are managed here, not by the identity provider.
+                    'role' => $user->role === 'admin' ? 'admin' : $linkRequest->role,
                     'email_verified_at' => Carbon::now(),
                     'last_login_at' => Carbon::now(),
                     'last_login_ip' => request()->ip(),
@@ -296,7 +297,8 @@ class SilaederOidcController extends Controller
             'oidc_issuer' => $identity['issuer'],
             'oidc_subject' => $identity['subject'],
             'name' => $name,
-            'role' => $role,
+            // Preserve explicitly assigned local admin rights on every OIDC login/link.
+            'role' => $user->role === 'admin' ? 'admin' : $role,
         ]);
         if (!$emailOwner) {
             $user->email = $email;

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class SilaederOidcAuthenticationTest extends TestCase
@@ -59,6 +60,7 @@ class SilaederOidcAuthenticationTest extends TestCase
             $table->string('role')->default('student');
             $table->string('email')->unique();
             $table->string('password');
+            $table->boolean('birthday_hidden')->default(false);
             $table->timestamp('email_verified_at')->nullable();
             $table->dateTime('last_login_at')->nullable();
             $table->string('last_login_ip')->nullable();
@@ -210,12 +212,27 @@ class SilaederOidcAuthenticationTest extends TestCase
         Http::assertNotSent(fn (HttpRequest $request) => $request->url() === self::ISSUER . '/api/oauth/userinfo');
     }
 
-    public function testExistingEmailIsLinkedOnlyAfterEmailConfirmation(): void
+    public static function emailLinkRoles(): array
+    {
+        return [
+            'ordinary account' => ['student', 'student', 'teacher'],
+            'local admin' => ['admin', 'admin', 'admin'],
+            'promoted before confirmation' => ['student', 'admin', 'admin'],
+            'demoted before confirmation' => ['admin', 'student', 'teacher'],
+        ];
+    }
+
+    #[DataProvider('emailLinkRoles')]
+    public function testExistingEmailIsLinkedOnlyAfterEmailConfirmation(
+        string $initialRole,
+        string $roleAtConfirmation,
+        string $expectedRole
+    ): void
     {
         Notification::fake();
         $existingUser = User::create([
             'name' => 'Существующий пользователь',
-            'role' => 'student',
+            'role' => $initialRole,
             'email' => 'student@example.test',
             'password' => bcrypt('password'),
         ]);
@@ -257,6 +274,7 @@ class SilaederOidcAuthenticationTest extends TestCase
         );
         $this->assertNotNull($confirmationUrl);
 
+        $existingUser->update(['role' => $roleAtConfirmation]);
         $confirmation = $this->get($confirmationUrl);
 
         $confirmation->assertRedirect('/insider/courses');
@@ -266,15 +284,21 @@ class SilaederOidcAuthenticationTest extends TestCase
         $existingUser->refresh();
         $this->assertSame('different-subject', $existingUser->oidc_subject);
         $this->assertSame(self::ISSUER, $existingUser->oidc_issuer);
-        $this->assertSame('teacher', $existingUser->role);
+        $this->assertSame($expectedRole, $existingUser->role);
         $this->assertNotNull($existingUser->email_verified_at);
     }
 
-    public function testExistingUserCanLinkMatchingSilaederAccount(): void
+    public static function profileLinkRoles(): array
+    {
+        return [['teacher'], ['admin']];
+    }
+
+    #[DataProvider('profileLinkRoles')]
+    public function testExistingUserCanLinkMatchingSilaederAccount(string $localRole): void
     {
         $user = User::create([
             'name' => 'Старое имя',
-            'role' => 'teacher',
+            'role' => $localRole,
             'email' => 'teacher@example.test',
             'password' => bcrypt('password'),
         ]);
@@ -300,7 +324,54 @@ class SilaederOidcAuthenticationTest extends TestCase
         $response->assertSessionHas('status', 'Аккаунт ЛК Силаэдра привязан.');
         $this->assertSame('teacher-subject', $user->fresh()->oidc_subject);
         $this->assertSame('Учитель Силаэдра', $user->fresh()->name);
+        $this->assertSame($localRole, $user->fresh()->role);
         $this->assertDatabaseCount('users', 1);
+    }
+
+    public static function linkedLoginRoles(): array
+    {
+        return [
+            'local admin and external admin' => ['admin', 'admin', 'admin'],
+            'local admin and external teacher' => ['admin', 'teacher', 'admin'],
+            'local admin and external student' => ['admin', 'student', 'admin'],
+            'external admin does not grant local admin' => ['teacher', 'admin', 'teacher'],
+            'ordinary roles still sync' => ['student', 'teacher', 'teacher'],
+        ];
+    }
+
+    #[DataProvider('linkedLoginRoles')]
+    public function testLinkedLoginPreservesOnlyLocallyAssignedAdminRole(
+        string $localRole,
+        string $externalRole,
+        string $expectedRole
+    ): void
+    {
+        $user = User::create([
+            'name' => 'Local user',
+            'role' => $localRole,
+            'email' => 'linked@example.test',
+            'password' => bcrypt('password'),
+        ]);
+        $user->forceFill(['oidc_issuer' => self::ISSUER, 'oidc_subject' => 'linked-subject'])->save();
+        [$query, $flow] = $this->startLogin();
+        $this->idToken = $this->makeIdToken('linked-subject', $flow['nonce']);
+        $this->userinfo = [
+            'sub' => 'linked-subject',
+            'name' => 'Updated name',
+            'email' => 'linked@example.test',
+            'email_verified' => true,
+            'role' => $externalRole,
+            'roles' => [$externalRole],
+        ];
+
+        $this->get('/auth/silaeder/callback?' . http_build_query([
+            'code' => 'authorization-code',
+            'state' => $query['state'],
+        ]))->assertRedirect('/insider/courses');
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame($expectedRole, $user->fresh()->role);
+        $this->assertSame('Updated name', $user->fresh()->name);
     }
 
     public function testOidcLoginUsesProviderLogoutAndValidatesReturnedState(): void
@@ -319,7 +390,8 @@ class SilaederOidcAuthenticationTest extends TestCase
 
         $response = $this->withSession([
             SilaederOidcController::AUTHENTICATED_SESSION_KEY => true,
-        ])->post('/logout');
+            '_token' => 'oidc-logout-test-token',
+        ])->post('/logout', ['_token' => 'oidc-logout-test-token']);
 
         $location = $response->headers->get('Location');
         $this->assertNotNull($location);
