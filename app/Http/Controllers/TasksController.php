@@ -256,8 +256,8 @@ class TasksController extends Controller
                 }
 
             } else {
-                $solution->mark = 0;
-                $solution->raw_mark = 0;
+                $solution->mark = $solution->normalizeSubmittedMark(0);
+                $solution->raw_mark = $solution->mark;
                 $solution->deadline_penalty_amount = 0;
                 $solution->deadline_penalty_days = 0;
                 $solution->comment = "Неверный ответ.";

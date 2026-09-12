@@ -23,6 +23,9 @@ class GeekPasteAPI extends Controller
             $requestData = $request->json()->all();
 
             $points = $requestData['points'];
+            if (!is_numeric($points)) {
+                throw new \InvalidArgumentException('GeekPaste points must be a number');
+            }
             $comments = $requestData['comments'];
             $text = $requestData['solution'];
             $course_id = $requestData['course_id'];
@@ -63,7 +66,9 @@ class GeekPasteAPI extends Controller
                 $solution->teacher_id = $course->teachers->first()->id;
             }
 
-            $solution->applyDeadlinePenalty(min($points, $task->max_mark), $task->getDeadline($course->id));
+            // Normalise independently of GeekPaste: legacy/retried callbacks may contain zero.
+            $points = $solution->normalizeSubmittedMark(min($points, $task->max_mark));
+            $solution->applyDeadlinePenalty($points, $task->getDeadline($course->id));
             $solution->comment = $solution->hasActiveDeadlinePenalty()
                 ? trim("Сдано с опозданием. Штраф: -{$solution->deadline_penalty_amount} XP.\n\n" . $comments)
                 : $comments;

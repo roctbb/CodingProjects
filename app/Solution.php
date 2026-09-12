@@ -144,8 +144,14 @@ class Solution extends Model
 
     public function applyDeadlinePenalty($rawMark, $deadline = null)
     {
-        $rawMark = max(0, (int) $rawMark);
+        $rawMark = $this->normalizeSubmittedMark($rawMark);
         $this->raw_mark = $rawMark;
+        if ($rawMark === null) {
+            $this->mark = null;
+            $this->deadline_penalty_amount = 0;
+            $this->deadline_penalty_days = 0;
+            return;
+        }
 
         $deadline = $deadline ?: $this->deadline();
 
@@ -173,10 +179,25 @@ class Solution extends Model
         }
 
         $boostedRawMark = $this->applyXpBoosterToRawMark($rawMark);
-        $penalizedMark = (int) ceil($boostedRawMark * $deadline->penalty);
+        $penalizedMark = $this->normalizeSubmittedMark((int) ceil($boostedRawMark * $deadline->penalty));
         $this->mark = $penalizedMark;
         $this->deadline_penalty_amount = max(0, $boostedRawMark - $penalizedMark);
         $this->deadline_penalty_days = $this->calculateDeadlinePenaltyDays($deadline);
+    }
+
+    public function normalizeSubmittedMark($mark)
+    {
+        if ($mark === null || $mark === '') {
+            return null;
+        }
+        $mark = max(0, (int) $mark);
+
+        // Visibility placeholders and missing submissions must remain zero.
+        if ($mark === 0 && $this->submitted !== null && trim((string) $this->text) !== '') {
+            return 1;
+        }
+
+        return $mark;
     }
 
     public function markWithoutXpBooster()
