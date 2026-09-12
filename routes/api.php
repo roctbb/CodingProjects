@@ -20,3 +20,5 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::post('/geekpaste', 'GeekPasteAPI@submitSolution');
 Route::post('/geekpaste/integrity', 'GeekPasteAPI@syncIntegrity');
+Route::post('/geekpaste/recheck/status', 'GeekPasteAPI@recheckStatus');
+Route::post('/geekpaste/recheck', 'GeekPasteAPI@requestRecheck');

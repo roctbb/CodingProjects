@@ -319,6 +319,7 @@ class TasksController extends Controller
     }
 
     public function askForRecheck(Request $request, $course_id, $id, $solution_id) {
+        $request->merge(['recheck_comment' => is_string($request->input('recheck_comment')) ? trim($request->input('recheck_comment')) : $request->input('recheck_comment')]);
         $request->validate([
             'recheck_comment' => ['required', 'string', 'min:10', 'max:1000'],
             'recheck_solution_id' => ['nullable', 'integer'],
@@ -334,14 +335,7 @@ class TasksController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        if (!$solution->recheck_requested and $solution->task->is_code) {
-            $solution->recheck_requested = true;
-            $solution->recheck_comment = trim($request->input('recheck_comment'));
-            $solution->save();
-
-            $when = \Carbon\Carbon::now()->addSeconds(1);
-            \Notification::send($solution->course->teachers, (new \App\Notifications\NewSolution($solution))->delay($when));
-        }
+        app(\App\Services\SolutionRecheck::class)->request($solution, trim($request->input('recheck_comment')));
 
         return redirect()->back();
     }

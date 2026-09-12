@@ -17,6 +17,38 @@ use Firebase\JWT\Key;
 
 class GeekPasteAPI extends Controller
 {
+    private function recheckSolution(Request $request): Solution
+    {
+        try {
+            $claims = \Firebase\JWT\JWT::decode((string) $request->input('token'), new Key(config('auth.jwt_secret'), 'HS256'));
+            if (($claims->purpose ?? null) !== 'solution-recheck' || ($claims->aud ?? null) !== 'codingprojects'
+                || empty($claims->exp) || empty($claims->user_id) || empty($claims->task_id)
+                || empty($claims->course_id) || empty($claims->solution)) {
+                abort(401);
+            }
+        } catch (\Exception $e) {
+            abort(401, 'Invalid recheck token');
+        }
+
+        // All lookup fields are signed by GeekPaste, never supplied by the browser.
+        return Solution::where('task_id', $claims->task_id)->where('course_id', $claims->course_id)
+            ->where('user_id', $claims->user_id)->where('text', $claims->solution)->firstOrFail();
+    }
+
+    public function recheckStatus(Request $request)
+    {
+        return response()->json(app(\App\Services\SolutionRecheck::class)->status($this->recheckSolution($request)));
+    }
+
+    public function requestRecheck(Request $request)
+    {
+        $solution = $this->recheckSolution($request);
+        $request->merge(['comment' => is_string($request->input('comment')) ? trim($request->input('comment')) : $request->input('comment')]);
+        $request->validate(['comment' => ['required', 'string', 'min:10', 'max:1000']]);
+        $status = app(\App\Services\SolutionRecheck::class)->request($solution, $request->input('comment'));
+        return response()->json($status, $status['requested'] ? 200 : 409);
+    }
+
     public function submitSolution(Request $request)
     {
         try {
