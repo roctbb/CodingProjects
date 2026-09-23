@@ -29,12 +29,12 @@ class CourseStudentPoints extends Model
 
     private static function isCommonProgressTask(Task $task)
     {
-        return !$task->is_star && !$task->is_hidden;
+        return !$task->is_hidden;
     }
 
     private static function calculateStats(Course $course, User $student)
     {
-        // XP includes all visible course tasks; percent uses only the currently opened required path.
+        // Progress counts earned bonus points in opened lessons against the required-task maximum.
         $points = 0;
         $max_points = 0;
         $progressPoints = 0;
@@ -58,8 +58,10 @@ class CourseStudentPoints extends Model
                     }
 
                     if ($isProgressLesson && self::isCommonProgressTask($task)) {
-                        $progressMaxPoints += $task->max_mark;
                         $progressPoints += $bestMark;
+                        if (!$task->is_star) {
+                            $progressMaxPoints += $task->max_mark;
+                        }
                     }
                 }
             }

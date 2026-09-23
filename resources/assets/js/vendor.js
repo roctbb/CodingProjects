@@ -422,8 +422,12 @@ document.addEventListener('DOMContentLoaded', function () {
             form.hidden = false;
             form.classList.remove('is-hidden');
 
-            const markInput = form.querySelector('[name="mark"]');
-            if (markInput) markInput.focus();
+            const commentInput = form.querySelector('textarea[name="comment"]');
+            if (commentInput) {
+                autosize.update(commentInput);
+                commentInput.focus();
+                commentInput.setSelectionRange(commentInput.value.length, commentInput.value.length);
+            }
         });
     });
 
@@ -436,6 +440,7 @@ document.addEventListener('DOMContentLoaded', function () {
             form.hidden = true;
             form.classList.add('is-hidden');
             feedback.hidden = false;
+            feedback.querySelector('[data-solution-recheck-toggle]')?.focus();
         });
     });
 

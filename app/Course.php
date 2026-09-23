@@ -166,7 +166,7 @@ class Course extends Model
 
             foreach ($lesson->steps as $step) {
                 foreach ($step->tasks as $task) {
-                    if ($task->is_star || $task->is_hidden) {
+                    if ($task->is_hidden) {
                         continue;
                     }
                     $sum += (int) $student->submissions->where('task_id', $task->id)->max('mark');

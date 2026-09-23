@@ -282,7 +282,7 @@
                                         </button>
                                     </div>
                                     @if(trim((string) $solution->comment) !== '')
-                                        <div class="small" data-linkify>{!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->comment)), false))!!}</div>
+                                        <div class="markdown solution-feedback__content" data-linkify>{!! parsedown_math($solution->comment) !!}</div>
                                     @else
                                         <div class="small text-muted fst-italic">Комментарий не оставлен</div>
                                     @endif
@@ -310,7 +310,7 @@
                                 <div class="solution-grade-grid">
                                     <div class="solution-grade-field solution-grade-field--comment">
                                         <label for="comment-{{ $solution->id }}" class="form-label">Комментарий</label>
-                                        <textarea class="form-control rounded-3" id="comment-{{ $solution->id }}" name="comment" rows="2" placeholder="Что поправить">{{ old('comment', $solution->comment) }}</textarea>
+                                        <textarea class="form-control rounded-3" id="comment-{{ $solution->id }}" name="comment" rows="2" placeholder="Что поправить">{{ old('comment', $solutionChecked ? '' : $solution->comment) }}</textarea>
                                     </div>
                                     <div class="solution-grade-field solution-grade-field--mark">
                                         <label for="mark-{{ $solution->id }}" class="form-label">XP <span class="text-muted fw-normal">из {{ $task->max_mark }}</span></label>

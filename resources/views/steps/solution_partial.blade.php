@@ -33,10 +33,10 @@
                 @if ($solution->mark!=null)
                     <div class="solution-block mt-3">
                         <div class="solution-block__label">Проверка</div>
-                        <div class="solution-feedback" data-linkify>
+                        <div class="solution-feedback">
                             <div class="small text-muted mb-1">Проверено: {{$solution->checked}}, {{$solution->teacher->name}}</div>
                             @if(trim((string) $solution->comment) !== '')
-                                {!!  nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->comment)), false)) !!}
+                                <div class="markdown solution-feedback__content" data-linkify>{!! parsedown_math($solution->comment) !!}</div>
                             @else
                                 <span class="text-muted fst-italic">Комментарий не оставлен</span>
                             @endif

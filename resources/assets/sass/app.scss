@@ -2153,6 +2153,13 @@ body {
   justify-content: space-between;
   margin-bottom: 0.55rem;
 }
+.solution-feedback__content {
+  font-size: inherit;
+  overflow-x: auto;
+}
+.solution-feedback__content > :last-child {
+  margin-bottom: 0;
+}
 .solution-feedback__recheck {
   align-items: center;
   display: inline-flex;
