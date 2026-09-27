@@ -72,7 +72,7 @@ class CourseProgressCalculationTest extends TestCase
         $stats = $this->invokeStats(LessonStudentStats::class, 'calculateLessonStats', [$course, $lesson, $student]);
 
         $this->assertSame(25, $stats['points']);
-        $this->assertSame(30, $stats['max_points']);
+        $this->assertSame(10, $stats['max_points']);
         $this->assertEquals(250, $stats['percent']);
     }
 
@@ -96,6 +96,7 @@ class CourseProgressCalculationTest extends TestCase
 
         $this->assertEquals($expectedPercent, $courseStats['percent']);
         $this->assertEquals($expectedPercent, $lessonStats['percent']);
+        $this->assertSame(100, $lessonStats['max_points']);
         $this->assertEquals($expectedPercent, $course->points($student));
         $this->assertEquals(100, $course->max_points($student));
         $this->assertEquals(min(100, $expectedPercent), $course->getPercent($student));
@@ -105,6 +106,7 @@ class CourseProgressCalculationTest extends TestCase
     {
         return [
             'unsolved bonus does not lower progress' => [[1 => 50], 50],
+            'all required tasks earn maximum without bonus' => [[1 => 100], 100],
             'full bonus increases progress' => [[1 => 50, 2 => 20], 70],
             'partial bonus increases progress' => [[1 => 50, 2 => 10], 60],
             'bonus alone earns progress' => [[2 => 20], 20],

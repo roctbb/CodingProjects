@@ -96,7 +96,9 @@ class LessonStudentStats extends Model
                 $bestMark = $bestMarksByTask->get($task->id, 0);
 
                 if ($task->isVisible($student, $course)) {
-                    $max_points += $task->max_mark;
+                    if (!$task->is_star) {
+                        $max_points += $task->max_mark;
+                    }
                     $points += $bestMark;
                 }
 
