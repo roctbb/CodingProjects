@@ -21,6 +21,13 @@ use App\BlockedTask;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Auth;
 
 class CoursesController extends Controller
@@ -35,6 +42,7 @@ class CoursesController extends Controller
         $this->middleware('auth')->except('details', 'open_index');
         $this->middleware('course')->only(['details', 'editView', 'start', 'stop', 'edit', 'generatePoster', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
         $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'generatePoster', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'reviews', 'resetPendingReviews', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
+        $this->middleware(['course', 'teacher'])->only('exportChapterPoints');
     }
 
     /**
@@ -1371,6 +1379,102 @@ class CoursesController extends Controller
 
         return $response;
 
+    }
+
+    public function exportChapterPoints($course_id, $chapter_id)
+    {
+        $course = Course::with('statsStudents')->findOrFail($course_id);
+        $chapter = ProgramChapter::where('program_id', $course->program_id)->findOrFail($chapter_id);
+        $lessons = $chapter->lessons()->where('program_id', $course->program_id)->get();
+        $students = $course->statsStudents;
+        $studentIds = $students->pluck('id');
+
+        $statsByLesson = $lessons->mapWithKeys(function ($lesson) use ($course, $studentIds) {
+            return [$lesson->id => LessonStudentStats::recalculateForLesson($course->id, $lesson->id, $studentIds)];
+        });
+
+        $spreadsheet = new Spreadsheet();
+        $spreadsheet->getProperties()
+            ->setCreator(config('app.name'))
+            ->setTitle('Chapter points export');
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Баллы');
+
+        $headers = ['Имя ученика'];
+        foreach ($lessons as $lesson) {
+            $headers[] = $lesson->name . ' — Балл';
+            $headers[] = $lesson->name . ' — Максимальный балл';
+        }
+        $headers[] = 'Итого баллов';
+        $headers[] = 'Итого максимальный балл';
+        foreach ($headers as $index => $header) {
+            $sheet->setCellValueExplicit([$index + 1, 1], $header, DataType::TYPE_STRING);
+        }
+
+        $row = 2;
+        foreach ($students as $student) {
+            $sheet->setCellValueExplicit([1, $row], $student->name, DataType::TYPE_STRING);
+            $column = 2;
+            $totalPoints = 0;
+            $totalMaxPoints = 0;
+            foreach ($lessons as $lesson) {
+                $stats = $statsByLesson->get($lesson->id)->get($student->id);
+                $points = $stats ? (int) $stats->points : 0;
+                $maxPoints = $stats ? (int) $stats->max_points : 0;
+                $sheet->setCellValue([$column++, $row], $points);
+                $sheet->setCellValue([$column++, $row], $maxPoints);
+                $totalPoints += $points;
+                $totalMaxPoints += $maxPoints;
+            }
+            $sheet->setCellValue([$column++, $row], $totalPoints);
+            $sheet->setCellValue([$column, $row], $totalMaxPoints);
+            $row++;
+        }
+
+        $lastRow = max(1, $row - 1);
+        $lastColumn = Coordinate::stringFromColumnIndex(count($headers));
+        $totalColumn = Coordinate::stringFromColumnIndex(count($headers) - 1);
+        $sheet->getStyle('A1:' . $lastColumn . '1')->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'EAF2F8'],
+            ],
+            'borders' => [
+                'bottom' => ['borderStyle' => Border::BORDER_THIN],
+            ],
+        ]);
+        $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle($totalColumn . '1:' . $lastColumn . $lastRow)->getFont()->setBold(true);
+        if ($lastRow >= 2) {
+            $sheet->getStyle('B2:' . $lastColumn . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        }
+        for ($column = 1; $column <= count($headers); $column++) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($column))->setAutoSize(true);
+        }
+        $sheet->freezePane('B2');
+        $sheet->setAutoFilter('A1:' . $lastColumn . $lastRow);
+
+        $tempPath = tempnam(sys_get_temp_dir(), 'chapter-points-');
+        if ($tempPath === false) {
+            $spreadsheet->disconnectWorksheets();
+            abort(500);
+        }
+        try {
+            (new Xlsx($spreadsheet))->save($tempPath);
+        } catch (\Throwable $exception) {
+            unlink($tempPath);
+            throw $exception;
+        } finally {
+            $spreadsheet->disconnectWorksheets();
+        }
+
+        $safeChapterName = $this->sanitizeFileName($chapter->name);
+        $fileName = 'chapter-' . $chapter->id . '-points' . ($safeChapterName ? '-' . $safeChapterName : '') . '.xlsx';
+
+        return response()->download($tempPath, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     public function exportMarkdown($id)

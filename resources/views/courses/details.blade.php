@@ -195,6 +195,7 @@
                                             </form>
                                         @endif
                                         <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$chapter->id.'/edit')}}" class="dropdown-item"><i class="fas fa-pen"></i> Изменить главу</a>
+                                        <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$chapter->id.'/export-points')}}" class="dropdown-item"><i class="fas fa-file-excel"></i> Экспорт баллов в Excel</a>
                                         <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$chapter->id.'/lower')}}" class="dropdown-item"><i class="fas fa-arrow-up"></i> Выше</a>
                                         <a href="{{url('insider/courses/'.$course->id.'/chapters/'.$chapter->id.'/upper')}}" class="dropdown-item"><i class="fas fa-arrow-down"></i> Ниже</a>
                                     </div>

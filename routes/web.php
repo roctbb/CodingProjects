@@ -118,6 +118,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{id}/chapter', 'CoursesController@createChapterView');
     Route::post('/courses/{id}/chapter', 'CoursesController@createChapter');
     Route::get('/courses/{course_id}/chapters/{chapter_id}/edit', 'CoursesController@editChapterView');
+    Route::get('/courses/{course_id}/chapters/{chapter_id}/export-points', 'CoursesController@exportChapterPoints');
     Route::get('/courses/{course_id}/chapters/{chapter_id}/upper', 'CoursesController@makeChapterUpper');
     Route::get('/courses/{course_id}/chapters/{chapter_id}/lower', 'CoursesController@makeChapterLower');
     Route::post('/courses/{course_id}/chapters/{chapter_id}/default', 'CoursesController@setDefaultChapter');
