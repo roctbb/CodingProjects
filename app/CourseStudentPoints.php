@@ -52,7 +52,7 @@ class CourseStudentPoints extends Model
                 foreach ($step->tasks as $task) {
                     $bestMark = $bestMarksByTask->get($task->id, 0);
 
-                    if ($task->isVisible($student, $course)) {
+                    if (self::isCommonProgressTask($task)) {
                         $max_points += $task->max_mark;
                         $points += $bestMark;
                     }

@@ -102,6 +102,52 @@ class CourseProgressCalculationTest extends TestCase
         $this->assertEquals(min(100, $expectedPercent), $course->getPercent($student));
     }
 
+    #[DataProvider('hiddenTaskCases')]
+    public function testHiddenTasksNeverCountEvenWhenVisibleToTheUser(array $hiddenMarks, string $role): void
+    {
+        Carbon::setTestNow('2026-08-18 12:00:00');
+
+        $hiddenRequired = $this->task(2, 15);
+        $hiddenRequired->is_hidden = true;
+        $hiddenBonus = $this->task(3, 5, true);
+        $hiddenBonus->is_hidden = true;
+        $lesson = $this->lesson(1, '2026-08-18', [
+            $this->task(1, 15), $hiddenRequired, $hiddenBonus, $this->task(4, 10, true),
+        ]);
+        $course = $this->courseWithLessons([$lesson]);
+        $student = $this->studentWithMarks([1 => 15, 4 => 10] + $hiddenMarks);
+        $student->role = $role;
+        if ($role === 'teacher') {
+            $course->setRelation('teachers', new Collection([$student]));
+        }
+
+        $lessonStats = $this->invokeStats(LessonStudentStats::class, 'calculateLessonStats', [$course, $lesson, $student]);
+        $courseStats = $this->invokeStats(CourseStudentPoints::class, 'calculateStats', [$course, $student]);
+
+        $this->assertSame(25, $lessonStats['points']);
+        $this->assertSame(15, $lessonStats['max_points']);
+        $this->assertEqualsWithDelta(25 * 100 / 15, $lessonStats['percent'], 0.001);
+        $this->assertSame(25, $courseStats['points']);
+        $this->assertSame(25, $courseStats['max_points']);
+        $this->assertSame(25, $course->points($student));
+        $this->assertSame(15, $course->max_points($student));
+        $this->assertSame(25, $lesson->points($student, $course));
+        $this->assertSame(15, $lesson->max_points($student, $course));
+        $this->assertSame(25, $lesson->points($student));
+        $this->assertSame(15, $lesson->max_points($student));
+    }
+
+    public static function hiddenTaskCases(): array
+    {
+        return [
+            'no submissions' => [[], 'student'],
+            'zero-score submissions' => [[2 => 0, 3 => 0], 'student'],
+            'solved hidden tasks' => [[2 => 15, 3 => 5], 'student'],
+            'teacher can see hidden tasks' => [[2 => 15, 3 => 5], 'teacher'],
+            'admin can see hidden tasks' => [[2 => 15, 3 => 5], 'admin'],
+        ];
+    }
+
     public static function bonusProgressCases(): array
     {
         return [

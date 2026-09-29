@@ -134,6 +134,32 @@ class ChapterPointsExportTest extends TestCase
         $this->assertSame('B2', $sheet->getFreezePane());
     }
 
+    public function testHiddenSubmissionsAreExcludedFromLessonAndChapterExports(): void
+    {
+        $this->addLesson(1, 'Lesson', 1, 1, 15);
+        DB::table('users')->where('id', 2)->update(['name' => 'Student']);
+        DB::table('tasks')->insert([
+            ['id' => 2, 'step_id' => 1, 'max_mark' => 15, 'is_hidden' => true, 'is_star' => false],
+            ['id' => 3, 'step_id' => 1, 'max_mark' => 5, 'is_hidden' => true, 'is_star' => true],
+            ['id' => 4, 'step_id' => 1, 'max_mark' => 10, 'is_hidden' => false, 'is_star' => true],
+        ]);
+        foreach ([1 => 15, 2 => 15, 3 => 5, 4 => 10] as $taskId => $mark) {
+            DB::table('solutions')->insert(['task_id' => $taskId, 'course_id' => 1, 'user_id' => 2, 'mark' => $mark]);
+        }
+        DB::table('solutions')->insert(['task_id' => 1, 'course_id' => 1, 'user_id' => 3, 'mark' => 15]);
+
+        $this->assertSame([
+            ['Имя ученика', 'Lesson — Балл', 'Lesson — Максимальный балл', 'Итого баллов', 'Итого максимальный балл'],
+            ['Student', 25, 15, 25, 15],
+            ['Zero', 15, 15, 15, 15],
+        ], $this->exportSheet()->toArray(null, false, false));
+        $this->assertSame([
+            ['Имя ученика', 'Балл', 'Максимальный балл'],
+            ['Student', 25, 15],
+            ['Zero', 15, 15],
+        ], $this->exportSheet(true)->toArray(null, false, false));
+    }
+
     public function testEmptyChapterExportsStudentsWithZeroTotals(): void
     {
         $this->assertSame([
@@ -183,11 +209,11 @@ class ChapterPointsExportTest extends TestCase
         DB::table('tasks')->insert(['id' => $id, 'step_id' => $id, 'max_mark' => $max]);
     }
 
-    private function exportSheet()
+    private function exportSheet(bool $lesson = false)
     {
-        $response = $this->get('/insider/courses/1/chapters/1/export-points');
+        $response = $this->get($lesson ? '/insider/courses/1/lessons/1/export-points' : '/insider/courses/1/chapters/1/export-points');
         $response->assertOk();
-        $response->assertDownload('chapter-1-points-Vvedenie.xlsx');
+        $response->assertDownload($lesson ? 'lesson-1-points-Lesson.xlsx' : 'chapter-1-points-Vvedenie.xlsx');
         $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         $path = $response->baseResponse->getFile()->getPathname();
         try {

@@ -95,7 +95,7 @@ class LessonStudentStats extends Model
             foreach ($step->tasks as $task) {
                 $bestMark = $bestMarksByTask->get($task->id, 0);
 
-                if ($task->isVisible($student, $course)) {
+                if (self::isCommonProgressTask($task)) {
                     if (!$task->is_star) {
                         $max_points += $task->max_mark;
                     }
