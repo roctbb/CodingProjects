@@ -114,6 +114,15 @@ class StepsController extends Controller
         return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'geekpasteAttemptResetStatuses', 'latestTaskAiSummaries', 'earnedTaskAchievements'));
     }
 
+    public function downloadNotebook($course_id, $id)
+    {
+        $course = Course::findOrFail($course_id);
+        $step = ProgramStep::findOrFail($id);
+        abort_unless($step->program_id === $course->program_id, 404);
+
+        return $step->downloadNotebook();
+    }
+
     public function perform($course_id, $id)
     {
         $user = User::with('submissions')->findOrFail(Auth::User()->id);

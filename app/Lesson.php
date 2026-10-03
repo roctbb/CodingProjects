@@ -75,6 +75,21 @@ class Lesson extends Model
         return $this->hasMany('App\LessonInfo', "lesson_id");
     }
 
+    public function sharedDeadline($courseId)
+    {
+        $tasks = $this->tasks()->where('is_star', false);
+        $deadlines = $tasks->map(fn ($task) => $task->getDeadline($courseId))->filter();
+        $first = $deadlines->first();
+
+        if (!$first || !$first->expiration || $deadlines->count() !== $tasks->count()) {
+            return null;
+        }
+
+        return $deadlines->every(fn ($deadline) => $deadline->expiration
+            && $deadline->expiration->isSameDay($first->expiration)
+            && (float) $deadline->penalty === (float) $first->penalty) ? $first : null;
+    }
+
     public function earlyAccesses()
     {
         return $this->hasMany('App\LessonEarlyAccess', 'lesson_id', 'id');

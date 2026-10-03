@@ -256,6 +256,7 @@
 	                            $lessonTaskCount = $lesson->steps->sum(function ($step) {
 	                                return $step->tasks->count();
 	                            });
+	                            $lessonDeadline = $lesson->sharedDeadline($course->id);
 	                            $lessonStateLabel = null;
 	                            if ($isCurrent) {
 	                                $lessonStateLabel = 'Текущий шаг';
@@ -335,7 +336,7 @@
                                         @endif
                                     </div>
 
-                                    @if ($isManager && count($students) < 70)
+                                    @if ($isManager && $lessonTaskCount > 0 && count($students) < 70)
                                         @php
                                             $lessonStatRows = $students->map(function ($student) use ($lessonStats, $lesson, $displayPercent) {
                                                 $stats = $lessonStats[$lesson->id][$student->id] ?? null;
@@ -399,6 +400,10 @@
 
                                 <div class="course-path-card__footer px-3 py-2">
                                     <div class="course-path-meta">
+                                        @if ($lessonDeadline)
+                                            <small class="course-lesson-date"><i class="fas fa-calendar-days"></i> Дедлайн: {{$lessonDeadline->expiration->format('d.m.Y')}}</small>
+                                        @endif
+
                                         @if ($startDate != null)
                                             <small class="course-lesson-date"><i class="fas fa-clock"></i> Доступно с {{$startDate->translatedFormat('j F Y')}}</small>
                                         @endif
@@ -428,7 +433,7 @@
                                     </div>
 
                                     <div class="course-path-progress">
-                                        @if ($isLearner && $lesson->isAvailable($course) && $cmaxPoints != 0)
+                                        @if ($isLearner && $lessonTaskCount > 0 && $lesson->isAvailable($course) && $cmaxPoints != 0)
                                             <span class="course-path-progress__label">{{$cpoints}} / {{$cmaxPoints}} XP</span>
                                             <div class="progress">
                                                 @if ($cpercent < 40)
@@ -441,7 +446,7 @@
                                             </div>
                                         @endif
 
-                                        @if ($isManager && count($students) < 70)
+                                        @if ($isManager && $lessonTaskCount > 0 && count($students) < 70)
                                             <div class="course-lesson-progress-summary" data-course-stats-summary="#marks{{$lesson->id}}" title="Средний прогресс: {{$lessonAveragePercent}}%">
                                                 <span>{{$lessonCompletedCount}} из {{$students->count()}} завершили</span>
                                                 <span class="course-lesson-progress-summary__track" aria-hidden="true">

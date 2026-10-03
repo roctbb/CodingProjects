@@ -334,11 +334,7 @@ class LessonsController extends Controller
             'penalty' => 'nullable|numeric|min:0|max:1',
         ]);
 
-        $taskIds = $lesson->steps
-            ->flatMap(function ($step) {
-                return $step->tasks->pluck('id');
-            })
-            ->values();
+        $taskIds = $lesson->tasks()->where('is_star', false)->pluck('id');
 
         if ($taskIds->isEmpty()) {
             return back();

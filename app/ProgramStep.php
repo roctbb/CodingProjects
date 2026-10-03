@@ -145,6 +145,15 @@ class ProgramStep extends Model
         return $results;
     }
 
+    public function downloadNotebook()
+    {
+        abort_unless($this->is_notebook && filled($this->theory), 404);
+
+        return response()->streamDownload(function () {
+            echo $this->theory;
+        }, 'step-'.$this->id.'.ipynb', ['Content-Type' => 'application/x-ipynb+json']);
+    }
+
     public function percent(User $student, $course = null)
     {
         return ($this->stats($student, $course))['percent'];

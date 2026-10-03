@@ -60,6 +60,7 @@ Auth::routes(['verify' => true]);
 
 Route::prefix('open')->group(function () {
     Route::get('/steps/{id}', 'OpenStepsController@details');
+    Route::get('/steps/{id}/notebook', 'OpenStepsController@downloadNotebook');
 });
 
 
@@ -145,6 +146,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/lessons/{id}/create', 'StepsController@createView');
     Route::post('/courses/{course_id}/lessons/{id}/create', 'StepsController@create');
     Route::get('/courses/{course_id}/steps/{id}', 'StepsController@details');
+    Route::get('/courses/{course_id}/steps/{id}/notebook', 'StepsController@downloadNotebook');
     Route::get('/courses/{course_id}/perform/{id}', 'StepsController@perform');
     Route::get('/courses/{course_id}/steps/{id}/edit', 'StepsController@editView');
     Route::get('/courses/{course_id}/steps/{id}/lower', 'StepsController@makeLower');

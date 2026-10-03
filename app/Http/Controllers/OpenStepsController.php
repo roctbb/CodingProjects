@@ -33,6 +33,14 @@ class OpenStepsController extends Controller
      * @return \Illuminate\Http\Response
      */
 
+    public function downloadNotebook($id)
+    {
+        $step = ProgramStep::findOrFail($id);
+        abort_unless($step->lesson->is_open, 403);
+
+        return $step->downloadNotebook();
+    }
+
     public function details($id)
     {
         $step = ProgramStep::with('tasks')->findOrFail($id);

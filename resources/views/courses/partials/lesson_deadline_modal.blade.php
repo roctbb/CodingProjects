@@ -1,18 +1,8 @@
 @if (\Request::is('insider/*'))
     @php
-        $lessonTasks = $lesson->steps->flatMap(function ($step) {
-            return $step->tasks;
-        })->values();
-        $lessonDeadlines = $lessonTasks->map(function ($task) use ($course) {
-            return $task->getDeadline($course->id);
-        })->filter()->values();
-        $firstLessonDeadline = $lessonDeadlines->first();
-        $hasSharedDeadline = $firstLessonDeadline
-            && $lessonDeadlines->count() === $lessonTasks->count()
-            && $lessonDeadlines->every(function ($deadline) use ($firstLessonDeadline) {
-                return $deadline->expiration->format('Y-m-d') === $firstLessonDeadline->expiration->format('Y-m-d')
-                    && (float) $deadline->penalty === (float) $firstLessonDeadline->penalty;
-            });
+        $lessonTasks = $lesson->tasks()->where('is_star', false);
+        $firstLessonDeadline = $lesson->sharedDeadline($course->id);
+        $hasSharedDeadline = $firstLessonDeadline !== null;
     @endphp
 
     <div class="modal fade" id="lesson-deadline-modal-{{$lesson->id}}" tabindex="-1" role="dialog"
@@ -52,9 +42,9 @@
 	                            </div>
 	                        </div>
 	                        <div class="gc-help-note mt-3" id="lesson-penalty-help-{{$lesson->id}}">
-	                            Применится ко всем задачам урока: {{$lessonTasks->count()}}. Коэффициент работает только для поздних сдач:
+	                            Применится к задачам урока без звёздочки: {{$lessonTasks->count()}}. Коэффициент работает только для поздних сдач:
 	                            1 — без снижения, 0.5 — половина баллов, 0 — поздняя сдача даёт 0 XP.
-	                            Пустая дата снимет дедлайн со всех задач урока.
+	                            Задачи со звёздочкой не затрагиваются. Пустая дата снимет дедлайн с задач без звёздочки.
 	                        </div>
                     </div>
                     <div class="modal-footer gc-form-footer step-modal-footer">
