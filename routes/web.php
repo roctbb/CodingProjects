@@ -180,6 +180,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/achievement-preview', 'TasksController@previewSolutionAchievement');
     Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/achievement', 'TasksController@awardSolutionAchievement');
     Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/deadline-penalty', 'TasksController@payDeadlinePenalty');
+    Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/waive-deadline-penalty', 'TasksController@waiveDeadlinePenalty');
     Route::post('/courses/{course_id}/tasks/{id}/solution/{solution_id}/xp-booster', 'TasksController@useXpBooster');
     Route::post('/courses/{course_id}/tasks/{id}/geekpaste-extra-attempt', 'TasksController@buyGeekPasteExtraAttempt');
     Route::get('/courses/{course_id}/tasks/{id}/phantom', 'TasksController@phantomSolution');

@@ -26,6 +26,7 @@ class Solution extends Model
         'submitted' => 'datetime',
         'checked' => 'datetime',
         'deadline_penalty_paid_at' => 'datetime',
+        'deadline_penalty_waived_at' => 'datetime',
         'xp_booster_used_at' => 'datetime',
         'recheck_requested' => 'boolean',
         'review_skipped' => 'boolean',
@@ -155,7 +156,7 @@ class Solution extends Model
 
         $deadline = $deadline ?: $this->deadline();
 
-        if ($this->deadline_penalty_paid_at) {
+        if ($this->isDeadlinePenaltyRemoved()) {
             $boostedRawMark = $this->applyXpBoosterToRawMark($rawMark);
             $this->mark = $boostedRawMark;
 
@@ -208,7 +209,7 @@ class Solution extends Model
 
         $deadline = $this->deadline();
 
-        if (!$deadline || $this->deadline_penalty_paid_at || !$this->isSubmittedAfterDeadline($deadline)) {
+        if (!$deadline || $this->isDeadlinePenaltyRemoved() || !$this->isSubmittedAfterDeadline($deadline)) {
             return (int) $this->raw_mark;
         }
 
@@ -252,7 +253,7 @@ class Solution extends Model
 
     public function hasScoreModifier()
     {
-        return $this->deadline_penalty_paid_at || $this->hasXpBooster();
+        return $this->isDeadlinePenaltyRemoved() || $this->hasXpBooster();
     }
 
     public function scoreBadgeClass($default = 'bg-body-tertiary')
@@ -401,7 +402,12 @@ class Solution extends Model
 
     public function hasActiveDeadlinePenalty()
     {
-        return $this->hasDeadlinePenalty() && !$this->deadline_penalty_paid_at;
+        return $this->hasDeadlinePenalty() && !$this->isDeadlinePenaltyRemoved();
+    }
+
+    public function isDeadlinePenaltyRemoved()
+    {
+        return $this->deadline_penalty_paid_at !== null || $this->deadline_penalty_waived_at !== null;
     }
 
     public function deadlinePenaltyCost()

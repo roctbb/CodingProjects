@@ -289,6 +289,8 @@
                                 </div>
                             @endif
 
+                            @include('steps.partials.waive_deadline_penalty', ['solution' => $solution, 'course' => $course])
+
                             <form id="{{ $solutionGradeFormId }}"
                                   class="solution-grade-form @if($solutionChecked) solution-grade-form--recheck is-hidden @endif"
                                   method="post"

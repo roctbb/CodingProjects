@@ -24,6 +24,7 @@ use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Auth;
 use Notification;
 use GuzzleHttp\Exception\GuzzleException;
@@ -40,6 +41,7 @@ class TasksController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('task');
+        $this->middleware('teacher')->only('waiveDeadlinePenalty');
         $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent', 'skipSolutionReview', 'skipStudentReviews', 'showSolutionAchievementPreview', 'previewSolutionAchievement', 'awardSolutionAchievement', 'aiTaskSummary']);
     }
 
@@ -641,6 +643,8 @@ class TasksController extends Controller
             $solution->deadline_penalty_amount = 0;
             $solution->deadline_penalty_days = 0;
             $solution->deadline_penalty_paid_at = null;
+            $solution->deadline_penalty_waived_at = null;
+            $solution->deadline_penalty_waived_by = null;
             $solution->xp_booster_amount = 0;
             $solution->xp_booster_used_at = null;
             $solution->comment = 'Решение заблокировано (плагиат).';
@@ -962,6 +966,58 @@ class TasksController extends Controller
         })->implode("\n\n");
     }
 
+    public function waiveDeadlinePenalty($course_id, $id, $solution_id)
+    {
+        $teacher = Auth::user();
+        $course = Course::findOrFail($course_id);
+        abort_unless($teacher->role === 'admin'
+            || ($teacher->role === 'teacher' && $course->teachers()->where('users.id', $teacher->id)->exists()), 403);
+
+        $result = DB::transaction(function () use ($course_id, $id, $solution_id, $teacher) {
+            $solution = Solution::where('course_id', $course_id)
+                ->where('task_id', $id)
+                ->lockForUpdate()->findOrFail($solution_id);
+
+            if (!$solution->hasActiveDeadlinePenalty() || $solution->mark === null) {
+                return [$solution, false];
+            }
+
+            $student = $solution->user;
+            $oldRank = $student->rank();
+            $rawMark = $solution->raw_mark ?? max(0, $solution->mark + $solution->deadline_penalty_amount - $solution->xp_booster_amount);
+            $solution->deadline_penalty_waived_at = Carbon::now();
+            $solution->deadline_penalty_waived_by = $teacher->id;
+            $solution->applyDeadlinePenalty($rawMark);
+            $shouldReward = $solution->task->price > 0
+                && $solution->qualifiesForTaskPriceReward()
+                && !$solution->task->hasRewardableFullSolution($student->id);
+            $solution->save();
+
+            CourseStudentPoints::recalculate($course_id, $student->id);
+            LessonStudentStats::recalculateForStudent($course_id, $student->id);
+            CourseActivity::recordDeadlinePenaltyWaived($solution, $teacher);
+
+            if ($shouldReward) {
+                CoinTransaction::registerOnce($student->id, $student->taskCoinReward($solution->task->price), 'Task #' . $solution->task_id);
+            }
+
+            return [$solution, true, $oldRank];
+        });
+
+        [$solution, $changed] = $result;
+        if ($changed) {
+            $solution->user->rescore();
+            CourseActivity::recordXpMilestones($solution->user);
+            $solution->user->awardRankPromotionIfNeeded($result[2]);
+            $this->dispatchAiAchievementGeneration($solution);
+            $this->make_success_alert('Штраф снят', 'XP за решение восстановлен без списания GC у ученика.');
+        } else {
+            $this->make_info_alert('Без изменений', 'У этого решения нет активного штрафа за дедлайн.');
+        }
+
+        return redirect('/insider/courses/' . $course_id . '/tasks/' . $id . '/student/' . $solution->user_id . '#solution-' . $solution->id);
+    }
+
     public function payDeadlinePenalty($course_id, $id, $solution_id)
     {
         $solution = Solution::where('id', $solution_id)
@@ -1237,6 +1293,8 @@ class TasksController extends Controller
                     'deadline_penalty_amount' => 0,
                     'deadline_penalty_days' => 0,
                     'deadline_penalty_paid_at' => null,
+                    'deadline_penalty_waived_at' => null,
+                    'deadline_penalty_waived_by' => null,
                     'xp_booster_amount' => 0,
                     'xp_booster_used_at' => null,
                     'comment' => null,

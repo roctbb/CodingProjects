@@ -11,6 +11,7 @@ class CourseActivity extends Model
     const TYPE_SOLUTION_CHECKED = 'solution_checked';
     const TYPE_XP_BOOSTER_USED = 'xp_booster_used';
     const TYPE_DEADLINE_PENALTY_PAID = 'deadline_penalty_paid';
+    const TYPE_DEADLINE_PENALTY_WAIVED = 'deadline_penalty_waived';
     const TYPE_EARLY_ACCESS_BOUGHT = 'early_access_bought';
     const TYPE_LESSON_OPENED = 'lesson_opened';
     const TYPE_GEEKPASTE_ATTEMPT_BOUGHT = 'geekpaste_attempt_bought';
@@ -132,6 +133,15 @@ class CourseActivity extends Model
     {
         return static::recordForSolution(static::TYPE_DEADLINE_PENALTY_PAID, $solution, [
             'cost' => $cost,
+        ]);
+    }
+
+    public static function recordDeadlinePenaltyWaived(Solution $solution, User $teacher)
+    {
+        return static::recordForSolution(static::TYPE_DEADLINE_PENALTY_WAIVED, $solution, [
+            'teacher_id' => $teacher->id,
+            'teacher_name' => $teacher->name,
+            'mark' => (int) $solution->mark,
         ]);
     }
 
@@ -697,6 +707,7 @@ class CourseActivity extends Model
             case static::TYPE_RANDOM_COIN_DROP:
                 return 2.0;
             case static::TYPE_DEADLINE_PENALTY_PAID:
+            case static::TYPE_DEADLINE_PENALTY_WAIVED:
             case static::TYPE_EARLY_ACCESS_BOUGHT:
             case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
                 return 2.0;
@@ -816,6 +827,8 @@ class CourseActivity extends Model
                 return 'усилил(а) решение бустером';
             case static::TYPE_DEADLINE_PENALTY_PAID:
                 return 'снял(а) штраф за дедлайн';
+            case static::TYPE_DEADLINE_PENALTY_WAIVED:
+                return 'получил(а) снятие штрафа за дедлайн от преподавателя';
             case static::TYPE_EARLY_ACCESS_BOUGHT:
                 if (($payload['source'] ?? null) === 'teacher') {
                     return 'получил(а) ранний доступ к уроку «' . $lessonName . '» от преподавателя';
@@ -943,6 +956,7 @@ class CourseActivity extends Model
             case static::TYPE_XP_BOOSTER_USED:
                 return 'fas fa-bolt';
             case static::TYPE_DEADLINE_PENALTY_PAID:
+            case static::TYPE_DEADLINE_PENALTY_WAIVED:
                 return 'fas fa-shield-alt';
             case static::TYPE_EARLY_ACCESS_BOUGHT:
             case static::TYPE_LESSON_OPENED:
