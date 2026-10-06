@@ -24,7 +24,7 @@ class MarketController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('admin')->only(['createView', 'editView', 'edit', 'create', 'archive', 'restore', 'finishAuction']);
+        $this->middleware('admin')->only(['createView', 'editView', 'edit', 'create', 'archive', 'restore', 'finishAuction', 'creditView', 'credit']);
         $this->middleware('teacher')->only(['ship', 'cancel', 'orders']);
     }
 
@@ -59,6 +59,51 @@ class MarketController extends Controller
             : collect();
 
         return view('market.index', compact('goods', 'auctions', 'digitalGoods', 'user', 'archive', 'active_orders', 'shipped_orders', 'canManageMarket'));
+    }
+
+    public function creditView()
+    {
+        $recipients = User::orderBy('name')->get(['id', 'name', 'email']);
+
+        return view('market.credit', compact('recipients'));
+    }
+
+    public function credit(Request $request)
+    {
+        $data = $request->validate([
+            'amount' => 'required|integer|min:1|max:10000',
+            'recipients' => 'required|array|min:1',
+            'recipients.*' => 'required|integer|distinct|exists:users,id',
+            'comment' => 'required|string|max:255',
+        ]);
+
+        $amount = (int) $data['amount'];
+        $comment = clean($data['comment']);
+
+        $transactions = DB::transaction(function () use ($data, $amount, $comment) {
+            $transactions = [];
+
+            foreach ($data['recipients'] as $recipientId) {
+                $transaction = new CoinTransaction();
+                $transaction->user_id = $recipientId;
+                $transaction->price = $amount;
+                $transaction->comment = $comment;
+                $transaction->save();
+                $transactions[] = $transaction;
+            }
+
+            return $transactions;
+        });
+
+        // Notify only after the entire batch is saved. A delivery failure must
+        // not turn a completed credit into an error that invites resubmission.
+        foreach ($transactions as $transaction) {
+            rescue(fn () => $transaction->withNotification(null, 'success', 'fas fa-coins')->notifyUser());
+        }
+
+        $this->make_success_alert('Начисление выполнено', 'Начислено по ' . $amount . ' GC. Получателей: ' . count($transactions) . '.');
+
+        return redirect('/insider/market');
     }
 
     public function orders()

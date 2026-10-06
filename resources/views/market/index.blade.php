@@ -33,6 +33,7 @@
         @if ($canManageMarket)
             <div class="d-flex gap-2 flex-wrap justify-content-end">
                 @if ($user->role == 'admin')
+                    <a class="btn btn-outline-success rounded-3 fw-medium px-3 py-2" href="{{ url('/insider/market/credit') }}"><i class="fas fa-coins me-1"></i>Начислить</a>
                     <a class="btn btn-success rounded-3 fw-medium px-3 py-2" href="{{ url('/insider/market/create/') }}"><i class="fas fa-plus me-1"></i>Добавить</a>
                 @endif
             </div>

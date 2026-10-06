@@ -78,6 +78,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/yandexgpt/improve-text', 'YandexGPTController@improveText');
 
     Route::get('/market', 'MarketController@index');
+    Route::get('/market/credit', 'MarketController@creditView');
+    Route::post('/market/credit', 'MarketController@credit');
     Route::get('/market/orders', 'MarketController@orders');
     Route::post('/market/digital/{itemKey}/buy', 'MarketController@buyDigital');
     Route::get('/market/create', 'MarketController@createView');
