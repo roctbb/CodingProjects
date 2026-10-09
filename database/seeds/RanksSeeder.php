@@ -17,29 +17,46 @@ class RanksSeeder extends Seeder
         $ranks = [
             ['name' => 'Рядовой', 'from' => 0, 'to' => 50],
             ['name' => 'Ефрейтор', 'from' => 50, 'to' => 150],
-            ['name' => 'Младший сержант', 'from' => 100, 'to' => 300],
+            ['name' => 'Младший сержант', 'from' => 150, 'to' => 300],
             ['name' => 'Сержант', 'from' => 300, 'to' => 700],
-            ['name' => 'Старший сержант', 'from' => 700, 'to' => 1500],
-            ['name' => 'Старшина', 'from' => 1500, 'to' => 2500],
-            ['name' => 'Прапорщик', 'from' => 2500, 'to' => 3500],
-            ['name' => 'Старший прапорщик', 'from' => 3500, 'to' => 4500],
-            ['name' => 'Младший лейтенант', 'from' => 4500, 'to' => 5500],
-            ['name' => 'Лейтенант', 'from' => 5500, 'to' => 6500],
-            ['name' => 'Старший лейтенант', 'from' => 6500, 'to' => 7500],
-            ['name' => 'Капитан', 'from' => 7500, 'to' => 10500],
-            ['name' => 'Майор', 'from' => 10500, 'to' => 13500],
-            ['name' => 'Подполковник', 'from' => 13500, 'to' => 16500],
-            ['name' => 'Полковник', 'from' => 16500, 'to' => 20500],
-            ['name' => 'Генерал-майор', 'from' => 20500, 'to' => 25500],
-            ['name' => 'Адмирал', 'from' => 25500, 'to' => 30500],
-            ['name' => 'Адмирал флота', 'from' => 30500, 'to' => 1000000],
+            ['name' => 'Старший сержант', 'from' => 700, 'to' => 1100],
+            ['name' => 'Старшина', 'from' => 1100, 'to' => 1500],
+            ['name' => 'Прапорщик', 'from' => 1500, 'to' => 1900],
+            ['name' => 'Старший прапорщик', 'from' => 1900, 'to' => 2300],
+            ['name' => 'Младший лейтенант', 'from' => 2300, 'to' => 2700],
+            ['name' => 'Лейтенант', 'from' => 2700, 'to' => 3100],
+            ['name' => 'Старший лейтенант', 'from' => 3100, 'to' => 3600],
+            ['name' => 'Капитан', 'from' => 3600, 'to' => 4200],
+            ['name' => 'Майор', 'from' => 4200, 'to' => 4800],
+            ['name' => 'Подполковник', 'from' => 4800, 'to' => 5400],
+            ['name' => 'Полковник', 'from' => 5400, 'to' => 6000],
+            ['name' => 'Генерал-майор', 'from' => 6000, 'to' => 8000],
+            ['name' => 'Адмирал', 'from' => 8000, 'to' => 11000],
+            ['name' => 'Адмирал флота', 'from' => 11000, 'to' => 1000000],
         ];
 
-        foreach ($ranks as $rank) {
-            DB::table('ranks')->updateOrInsert(
-                ['name' => $rank['name']],
-                ['from' => $rank['from'], 'to' => $rank['to']]
-            );
-        }
+        // Older installations use abbreviated names. Keep their IDs (including
+        // manual rank references) and update all existing aliases consistently.
+        $aliases = [
+            'Младший сержант' => ['Мл. сержант'],
+            'Старший сержант' => ['Ст. сержант'],
+            'Старший прапорщик' => ['Ст. прапорщик'],
+            'Младший лейтенант' => ['Мл. лейтенант'],
+            'Старший лейтенант' => ['Ст. лейтенант'],
+        ];
+
+        DB::transaction(function () use ($ranks, $aliases) {
+            foreach ($ranks as $rank) {
+                $existing = DB::table('ranks')->whereIn('name', [
+                    $rank['name'], ...($aliases[$rank['name']] ?? []),
+                ]);
+
+                if ($existing->exists()) {
+                    $existing->update(['from' => $rank['from'], 'to' => $rank['to']]);
+                } else {
+                    DB::table('ranks')->insert($rank);
+                }
+            }
+        });
     }
 }
