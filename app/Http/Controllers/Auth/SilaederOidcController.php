@@ -8,11 +8,13 @@ use App\Notifications\ConfirmSilaederOidcLink;
 use App\OidcLinkRequest;
 use App\Services\EmailVerify;
 use App\Services\SilaederOidcClient;
+use App\Services\SilaederOidcProfile;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
@@ -98,6 +100,9 @@ class SilaederOidcController extends Controller
 
         $user = $result['user'];
 
+        if ($user->wasChanged('birthday')) {
+            Cache::forget(User::nearbyBirthdaysCacheKey());
+        }
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->put(self::AUTHENTICATED_SESSION_KEY, true);
@@ -156,6 +161,7 @@ class SilaederOidcController extends Controller
                     throw new OidcAuthenticationException('К локальному аккаунту уже привязан другой аккаунт ЛК.');
                 }
 
+                $user->forceFill($linkRequest->profile ?? []);
                 $user->forceFill([
                     'oidc_issuer' => $linkRequest->oidc_issuer,
                     'oidc_subject' => $linkRequest->oidc_subject,
@@ -177,6 +183,9 @@ class SilaederOidcController extends Controller
             return $this->loginFailure('Не удалось связать аккаунты. Начните вход заново.');
         }
 
+        if ($user->wasChanged('birthday')) {
+            Cache::forget(User::nearbyBirthdaysCacheKey());
+        }
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->put(self::AUTHENTICATED_SESSION_KEY, true);
@@ -215,6 +224,7 @@ class SilaederOidcController extends Controller
     private function resolveUser(array $identity, array $flow): array
     {
         $userinfo = $identity['userinfo'];
+        $profile = SilaederOidcProfile::attributes($userinfo);
         $externalRole = $userinfo['role'] ?? null;
         if (!is_string($externalRole) || !in_array($externalRole, self::ALLOWED_EXTERNAL_ROLES, true)) {
             throw new OidcAuthenticationException('Роль пользователя из ЛК Силаэдра не поддерживается.');
@@ -277,6 +287,7 @@ class SilaederOidcController extends Controller
                     'name' => $name,
                     'email' => $email,
                     'role' => $role,
+                    'profile' => $profile,
                     'expires_at' => Carbon::now()->addMinutes(self::LINK_CONFIRMATION_LIFETIME_MINUTES),
                 ]);
 
@@ -293,6 +304,7 @@ class SilaederOidcController extends Controller
 
         $emailOwner = $user->exists
             && User::whereRaw('LOWER(email) = ?', [$email])->whereKeyNot($user->getKey())->exists();
+        $user->forceFill($profile);
         $user->forceFill([
             'oidc_issuer' => $identity['issuer'],
             'oidc_subject' => $identity['subject'],

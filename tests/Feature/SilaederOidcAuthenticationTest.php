@@ -61,6 +61,9 @@ class SilaederOidcAuthenticationTest extends TestCase
             $table->string('email')->unique();
             $table->string('password');
             $table->boolean('birthday_hidden')->default(false);
+            $table->date('birthday')->nullable();
+            $table->string('gender')->nullable();
+            $table->integer('grade_year')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->dateTime('last_login_at')->nullable();
             $table->string('last_login_ip')->nullable();
@@ -81,6 +84,7 @@ class SilaederOidcAuthenticationTest extends TestCase
             $table->string('email');
             $table->string('role');
             $table->timestamp('expires_at');
+            $table->json('profile')->nullable();
             $table->timestamps();
         });
 
@@ -115,6 +119,9 @@ class SilaederOidcAuthenticationTest extends TestCase
             'email_verified' => false,
             'role' => 'student',
             'roles' => ['student'],
+            'gender' => 'female',
+            'birthdate' => '2012-02-29',
+            'grade' => 8,
         ];
 
         $response = $this->get('/auth/silaeder/callback?' . http_build_query([
@@ -131,6 +138,9 @@ class SilaederOidcAuthenticationTest extends TestCase
             'oidc_issuer' => self::ISSUER,
             'oidc_subject' => 'student-subject',
         ]);
+        $this->assertSame('girl', User::first()->gender);
+        $this->assertSame('2012-02-29', User::first()->birthday->format('Y-m-d'));
+        $this->assertSame(8, User::first()->grade());
         $this->assertNotNull(User::first()->email_verified_at);
         $this->assertTrue((bool) session(SilaederOidcController::AUTHENTICATED_SESSION_KEY));
 
@@ -159,6 +169,8 @@ class SilaederOidcAuthenticationTest extends TestCase
             'email_verified' => true,
             'role' => 'admin',
             'roles' => ['admin'],
+            'gender' => 'male',
+            'birthdate' => '1980-01-02',
         ];
 
         $response = $this->get('/auth/silaeder/callback?' . http_build_query([
@@ -246,6 +258,8 @@ class SilaederOidcAuthenticationTest extends TestCase
             'email_verified' => true,
             'role' => 'admin',
             'roles' => ['admin'],
+            'gender' => 'male',
+            'birthdate' => '1980-01-02',
         ];
 
         $response = $this->get('/auth/silaeder/callback?' . http_build_query([
@@ -261,6 +275,8 @@ class SilaederOidcAuthenticationTest extends TestCase
         $this->assertGuest();
         $this->assertDatabaseCount('users', 1);
         $this->assertNull(User::first()->oidc_subject);
+        $this->assertNull(User::first()->birthday);
+        $this->assertNull(User::first()->gender);
         $this->assertDatabaseCount('oidc_link_requests', 1);
 
         $confirmationUrl = null;
@@ -286,6 +302,8 @@ class SilaederOidcAuthenticationTest extends TestCase
         $this->assertSame(self::ISSUER, $existingUser->oidc_issuer);
         $this->assertSame($expectedRole, $existingUser->role);
         $this->assertNotNull($existingUser->email_verified_at);
+        $this->assertSame('boy', $existingUser->gender);
+        $this->assertSame('1980-01-02', $existingUser->birthday->format('Y-m-d'));
     }
 
     public static function profileLinkRoles(): array
@@ -372,6 +390,47 @@ class SilaederOidcAuthenticationTest extends TestCase
         $this->assertAuthenticatedAs($user);
         $this->assertSame($expectedRole, $user->fresh()->role);
         $this->assertSame('Updated name', $user->fresh()->name);
+    }
+
+    public static function profileUpdates(): array
+    {
+        return [
+            'valid data' => [['gender' => 'female', 'birthdate' => '2012-02-29', 'grade' => 8], 'girl', '2012-02-29', 8],
+            'missing data' => [[], 'boy', '2010-01-01', 7],
+            'invalid data' => [['gender' => [], 'birthdate' => '2012-02-30', 'grade' => true], 'boy', '2010-01-01', 7],
+        ];
+    }
+
+    #[DataProvider('profileUpdates')]
+    public function testLinkedLoginUpdatesOnlyValidProfileFields(array $profile, string $gender, string $birthday, int $grade): void
+    {
+        $user = User::create([
+            'name' => 'Local user', 'role' => 'student', 'email' => 'linked@example.test',
+            'password' => bcrypt('password'), 'gender' => 'boy', 'birthday' => '2010-01-01',
+            'birthday_hidden' => true,
+        ]);
+        $user->setGrade(7);
+        $user->forceFill(['oidc_issuer' => self::ISSUER, 'oidc_subject' => 'linked-subject'])->save();
+        Cache::put(User::nearbyBirthdaysCacheKey(), ['stale'], 3600);
+        [$query, $flow] = $this->startLogin();
+        $this->idToken = $this->makeIdToken('linked-subject', $flow['nonce']);
+        $this->userinfo = array_merge([
+            'sub' => 'linked-subject', 'name' => 'Updated name', 'email' => 'linked@example.test',
+            'role' => 'student', 'roles' => ['student'],
+        ], $profile);
+
+        $this->get('/auth/silaeder/callback?' . http_build_query([
+            'code' => 'authorization-code', 'state' => $query['state'],
+        ]))->assertRedirect('/insider/courses');
+
+        $user->refresh();
+        $this->assertSame($gender, $user->gender);
+        $this->assertSame($birthday, $user->birthday->format('Y-m-d'));
+        $this->assertSame($grade, $user->grade());
+        $this->assertTrue($user->birthday_hidden);
+        if ($birthday !== '2010-01-01') {
+            $this->assertFalse(Cache::has(User::nearbyBirthdaysCacheKey()));
+        }
     }
 
     public function testOidcLoginUsesProviderLogoutAndValidatesReturnedState(): void

@@ -13,6 +13,7 @@ class OidcLinkRequest extends Model
     ];
 
     protected $casts = [
+        'profile' => 'array',
         'expires_at' => 'datetime',
     ];
 
