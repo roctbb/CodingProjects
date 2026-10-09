@@ -58,40 +58,17 @@ class ProfileController extends Controller
             ->groupBy('user_id')
             ->pluck('score', 'user_id');
 
-        $completedCourseScores = CompletedCourse::query()
-            ->select('user_id')
-            ->selectRaw("
-                SUM(CASE mark
-                    WHEN 'S' THEN 2000
-                    WHEN 'A+' THEN 1500
-                    WHEN 'A' THEN 1200
-                    WHEN 'A-' THEN 1000
-                    WHEN 'B+' THEN 800
-                    WHEN 'B' THEN 600
-                    WHEN 'B-' THEN 400
-                    WHEN 'C+' THEN 300
-                    WHEN 'C' THEN 200
-                    WHEN 'C-' THEN 100
-                    WHEN 'D+' THEN 50
-                    WHEN 'D' THEN 50
-                    WHEN 'D-' THEN 50
-                    ELSE 600
-                END) as score
-            ")
-            ->groupBy('user_id')
-            ->pluck('score', 'user_id');
-
         $ranks = Rank::orderBy('from')->get();
         $fallbackRank = $ranks->first();
 
-        $users->each(function ($user) use ($solutionScores, $completedCourseScores, $ranks, $fallbackRank) {
+        $users->each(function ($user) use ($solutionScores, $ranks, $fallbackRank) {
             if ($user->rank_id && $user->manual_rank) {
                 $user->setComputedScore($user->manual_rank->to - 1);
                 $user->setComputedRank($user->manual_rank);
                 return;
             }
 
-            $score = (int) ($solutionScores[$user->id] ?? 0) + (int) ($completedCourseScores[$user->id] ?? 0);
+            $score = (int) ($solutionScores[$user->id] ?? 0);
             $rank = $ranks->first(function ($rank) use ($score) {
                 return $rank->from <= $score && $rank->to > $score;
             });
@@ -330,7 +307,6 @@ class ProfileController extends Controller
     public function course($id, Request $request)
     {
         $user = User::findOrFail($id);
-        $oldRank = $user->rank();
         $this->validate($request, [
             'name' => 'required|string|max:255',
             'mark' => 'required|string|max:255',
@@ -342,7 +318,6 @@ class ProfileController extends Controller
         $course->save();
 
         $user->rescore();
-        $user->awardRankPromotionIfNeeded($oldRank);
 
         return redirect()->back();
     }

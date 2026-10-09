@@ -19,6 +19,7 @@ class Kernel extends ConsoleKernel
         Commands\FixTyposCommand::class,
         Commands\RecalculateCoursePoints::class,
         Commands\RecalculateOpenedLessonPoints::class,
+        Commands\RecalculateUserExperience::class,
         Commands\PollTelegramBot::class,
         Commands\RandomCoinDrop::class,
         Commands\GeneratePulseInsights::class,

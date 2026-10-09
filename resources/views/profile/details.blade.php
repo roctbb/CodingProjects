@@ -718,8 +718,9 @@
                             <input type="text" name="name" class="form-control rounded-3" id="completed-course-name" maxlength="255">
                         </div>
                         <div class="mb-3">
-                            <label for="completed-course-mark" class="form-label">Очков опыта</label>
-                            <input type="number" min="0" name="mark" class="form-control rounded-3" id="completed-course-mark">
+                            <label for="completed-course-mark" class="form-label">Оценка за курс</label>
+                            <input type="text" name="mark" maxlength="255" class="form-control rounded-3" id="completed-course-mark">
+                            <div class="form-text">Завершение курса не добавляет очки опыта.</div>
                         </div>
                     </div>
                     <div class="modal-footer gc-form-footer">

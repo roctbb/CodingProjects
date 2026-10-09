@@ -185,29 +185,13 @@ class User extends Authenticatable implements MustVerifyEmail
             return $this->score;
         }
 
+        // Completed courses remain in the profile, but do not award extra XP.
         $this->score = (int) Solution::where('user_id', $this->id)
             ->whereNotNull('mark')
             ->selectRaw('MAX(mark) as best_mark')
             ->groupBy('task_id')
             ->pluck('best_mark')
             ->sum();
-
-        // Calculate scores from completed courses
-        $markScores = [
-            'S' => 2000, 'A+' => 1500, 'A' => 1200, 'A-' => 1000,
-            'B+' => 800, 'B' => 600, 'B-' => 400,
-            'C+' => 300, 'C' => 200, 'C-' => 100,
-            'D+' => 50, 'D' => 50, 'D-' => 50
-        ];
-
-        $completedCourseMarks = $this->completedCourses()
-            ->selectRaw('mark, COUNT(*) as courses_count')
-            ->groupBy('mark')
-            ->pluck('courses_count', 'mark');
-
-        foreach ($completedCourseMarks as $mark => $coursesCount) {
-            $this->score += ($markScores[$mark] ?? 600) * $coursesCount;
-        }
 
         Cache::put($cacheKey, $this->score, 3600);
         return $this->score;
