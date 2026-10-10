@@ -47,7 +47,7 @@ class OpenStepsController extends Controller
 
         if (!$step->lesson->is_open) abort(503);
 
-        $zero_theory = $step->theory == null || $step->theory == "";
+        $zero_theory = blank($step->theory) && blank($step->video_url);
         $tasks = $step->tasks->where('is_hidden', false);
         $one_tasker = $tasks->count() == 1;
         $empty = $zero_theory && $tasks->count() == 0;

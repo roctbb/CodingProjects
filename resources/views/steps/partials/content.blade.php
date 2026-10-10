@@ -1,6 +1,6 @@
 @if (!$quizer)
     @foreach ($tasks as $key => $task)
-        <div class="tab-pane fade @if (!$empty && $zero_theory && $one_tasker) show active @endif"
+        <div class="tab-pane fade @if ($zero_theory && $loop->first) show active @endif"
              id="task{{$task->id}}"
              role="tabpanel" aria-labelledby="tasks-tab{{$task->id}}">
             @php

@@ -27,7 +27,7 @@
                 @endif
                 @foreach ($tasks as $key => $task)
                     <li class="nav-item">
-                        <a class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small" data-bs-toggle="pill" href="#task{{ $task->id }}" role="tab">
+                        <a class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if ($zero_theory && $loop->first) active @endif" data-bs-toggle="pill" href="#task{{ $task->id }}" role="tab">
                             {{ $key + 1 }}. {{ $task->name }}
                             @if($task->is_star)<sup>*</sup>@endif
                         </a>
@@ -44,6 +44,13 @@
                             <h4 class="fw-medium mb-0">{{ $step->name }}</h4>
                         </div>
                         <div class="markdown perform p-3 p-md-4">
+                            @if (filled($step->video_url))
+                                <div class="ratio ratio-16x9 mb-3">
+                                    <iframe src="{{ video_embed_url($step->video_url) }}"
+                                            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                                            allowfullscreen></iframe>
+                                </div>
+                            @endif
                             @parsedown($step->theory)
                         </div>
                     </div>
@@ -51,7 +58,7 @@
             @endif
 
             @foreach ($tasks as $key => $task)
-                <div class="tab-pane fade" id="task{{ $task->id }}" role="tabpanel">
+                <div class="tab-pane fade @if ($zero_theory && $loop->first) show active @endif" id="task{{ $task->id }}" role="tabpanel">
                     @if ($task->is_star)
                         <div class="step-task-note step-task-note--optional" role="note">
                             <span class="text-warning-emphasis flex-shrink-0"><i class="fas fa-star"></i></span>

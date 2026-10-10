@@ -39,23 +39,11 @@
         })->values();
         $leaderboardPreviewStudents = $sortedStudents->take(3);
         $currentStudentRank = null;
-        $learnerLeaderboardStudents = collect();
-        $learnerLeaderboardOffset = 0;
 
         if ($isLearner && $course->students->contains($user)) {
             $currentStudentIndex = $sortedStudents->search(fn ($student) => $student->id == $user->id);
             if ($currentStudentIndex !== false) {
                 $currentStudentRank = $currentStudentIndex + 1;
-
-                $learnerLeaderboardLimit = 6;
-                $learnerLeaderboardOffset = max(0, $currentStudentIndex - 2);
-                if ($learnerLeaderboardOffset + $learnerLeaderboardLimit > $sortedStudents->count()) {
-                    $learnerLeaderboardOffset = max(0, $sortedStudents->count() - $learnerLeaderboardLimit);
-                }
-
-                $learnerLeaderboardStudents = $sortedStudents
-                    ->slice($learnerLeaderboardOffset, $learnerLeaderboardLimit)
-                    ->values();
             }
         }
 
@@ -567,13 +555,10 @@
                             <h5 class="course-side-title mb-0">Рейтинг учеников</h5>
                             <span class="badge rounded-pill bg-body-tertiary">{{ $students->count() }}</span>
                         </div>
-                        @if ($currentStudentRank)
-                            <span class="course-leaderboard-context">Рядом с вами</span>
+                        @if ($isLearner)
                             <ul class="course-leaderboard-list mb-2">
-                                @foreach($learnerLeaderboardStudents as $student)
-                                    @include('courses.partials.leaderboard_item', [
-                                        'studentRank' => $learnerLeaderboardOffset + $loop->iteration,
-                                    ])
+                                @foreach($sortedStudents as $student)
+                                    @include('courses.partials.leaderboard_item', ['studentRank' => $loop->iteration])
                                 @endforeach
                             </ul>
                         @else

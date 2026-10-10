@@ -85,7 +85,7 @@ class StepsController extends Controller
                 ->pluck('id', 'task_id');
         }
 
-        $zero_theory = $step->theory == null || $step->theory == "";
+        $zero_theory = blank($step->theory) && blank($step->video_url);
         $one_tasker = $tasks->count() == 1 && $zero_theory;
         $empty = $zero_theory && $tasks->count() == 0;
 
@@ -139,7 +139,7 @@ class StepsController extends Controller
         $tasks = $step->tasks->filter(function($task) use ($user, $course) {
             return $task->isVisible($user, $course);
         });
-        $zero_theory = $step->theory == null || $step->theory == "";
+        $zero_theory = blank($step->theory) && blank($step->video_url);
         $one_tasker = $tasks->count() == 1;
         $empty = $zero_theory && $tasks->count() == 0;
         return view('perform.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'course'));

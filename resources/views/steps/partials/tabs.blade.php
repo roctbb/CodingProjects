@@ -129,7 +129,7 @@
 	                        }
 	                    @endphp
                     <li class="nav-item">
-                        <a class="nav-link task-pill step-top-tab-link" data-bs-toggle="pill" id="tasks-tab{{$task->id}}"
+                        <a class="nav-link task-pill step-top-tab-link @if ($zero_theory && $loop->first) active @endif" data-bs-toggle="pill" id="tasks-tab{{$task->id}}"
                            href="#task{{$task->id}}"
                            aria-controls="tasks{{$task->id}}" aria-expanded="true" title="{{$task->name}}"><span class="step-top-tab-link__label">{{$key+1}}
                             . {{$task->name}}</span>
