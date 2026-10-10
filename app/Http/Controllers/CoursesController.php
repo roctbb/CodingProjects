@@ -40,7 +40,7 @@ class CoursesController extends Controller
     public function __construct()
     {
         $this->middleware('auth')->except('details', 'open_index');
-        $this->middleware('course')->only(['details', 'editView', 'start', 'stop', 'edit', 'generatePoster', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
+        $this->middleware('course')->only(['details', 'deadlines', 'editView', 'start', 'stop', 'edit', 'generatePoster', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
         $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'generatePoster', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'reviews', 'resetPendingReviews', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
         $this->middleware(['course', 'teacher'])->only('exportChapterPoints');
     }
@@ -743,6 +743,45 @@ class CoursesController extends Controller
             ->groupBy('user_id');
 
         return view('courses.blocked', compact('course', 'user', 'blocked'));
+    }
+
+    public function deadlines($id)
+    {
+        $user = Auth::user();
+        $course = Course::with('teachers', 'students')->findOrFail($id);
+        $isManager = $user->role == 'admin' || $course->teachers->contains($user);
+        $now = Carbon::now();
+
+        $deadlines = TaskDeadline::with([
+            'task.step.lesson.info' => fn ($query) => $query->where('course_id', $id),
+            'task.step.lesson.earlyAccesses' => fn ($query) => $query->where('course_id', $id)->where('user_id', $user->id),
+            'task.solutions' => fn ($query) => $query->where('course_id', $id)->where('user_id', $user->id),
+        ])
+            ->where('course_id', $id)
+            ->whereNotNull('expiration')
+            ->whereHas('task.step.lesson', fn ($query) => $query->where('program_id', $course->program_id))
+            ->orderBy('expiration')
+            ->orderBy('task_id')
+            ->get()
+            ->filter(function ($deadline) use ($course, $user, $isManager) {
+                return $isManager || ($deadline->task->step->lesson->isAvailableForUser($course, $user)
+                    && $deadline->task->isVisible($user, $course));
+            })
+            ->map(function ($deadline) use ($user, $isManager, $now) {
+                $deadline->is_done = !$isManager && $deadline->task->isDone($user->id);
+                $deadline->is_overdue = !$deadline->is_done && $deadline->expiration->copy()->addDay()->lte($now);
+                $deadline->is_today = !$deadline->is_done && $deadline->expiration->isSameDay($now);
+                $deadline->is_soon = !$deadline->is_done && !$deadline->is_overdue
+                    && $deadline->expiration->lt($now->copy()->addDays(3));
+
+                return $deadline;
+            })
+            ->values();
+
+        $deadlineMonths = $deadlines->groupBy(fn ($deadline) => $deadline->expiration->format('Y-m'))
+            ->map(fn ($month) => $month->groupBy(fn ($deadline) => $deadline->expiration->format('Y-m-d')));
+
+        return view('courses.deadlines', compact('course', 'user', 'isManager', 'deadlines', 'deadlineMonths'));
     }
 
     public function details($id, Request $request)

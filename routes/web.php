@@ -106,6 +106,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/courses/create', 'CoursesController@create');
 
     Route::get('/courses/{id}/', 'CoursesController@details');
+    Route::get('/courses/{id}/deadlines', 'CoursesController@deadlines')->name('courses.deadlines');
     Route::get('/courses/{id}/enroll', 'CoursesController@enroll');
     Route::get('/courses/{id}/report', 'CoursesController@report');
     Route::post('/courses/{id}/report/students/{student_id}/geekpaste-warning/reset', 'CoursesController@resetStudentGeekPasteWarning');

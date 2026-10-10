@@ -548,6 +548,9 @@
 	                                        {{ $isLearner ? 'Нет срочных задач по этой главе.' : 'В этой главе дедлайны не настроены.' }}
 	                                    </div>
 	                                @endif
+                                    <a class="btn btn-outline-secondary btn-sm rounded-3 w-100 mt-3" href="{{ route('courses.deadlines', $course->id) }}">
+                                        Все дедлайны курса <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i>
+                                    </a>
 	                            </div>
 	                        @endif
 
