@@ -135,6 +135,9 @@ services:
       dockerfile: conf/Dockerfile
       target: app
     container_name: codingprojects-queue
+    init: true
+    stop_signal: SIGTERM
+    stop_grace_period: 330s
     restart: unless-stopped
     command: php artisan queue:work --sleep=3 --tries=3 --timeout=300
     env_file:
@@ -166,6 +169,8 @@ services:
       dockerfile: conf/Dockerfile
       target: app
     container_name: codingprojects-scheduler
+    init: true
+    stop_signal: SIGTERM
     restart: unless-stopped
     command: php artisan schedule:work
     env_file:

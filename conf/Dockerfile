@@ -80,6 +80,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
 
+# Queue workers need process signals for job timeouts and graceful shutdown.
+RUN docker-php-ext-install -j"$(nproc)" pcntl
+
 RUN { \
         echo 'max_execution_time=180'; \
         echo 'max_input_time=180'; \
