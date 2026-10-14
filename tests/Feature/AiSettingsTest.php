@@ -164,6 +164,34 @@ class AiSettingsTest extends TestCase
         $this->assertSame('http://env-proxy.example:8080', app(AiSettings::class)->all()['providers']['openai']['proxy']);
     }
 
+    public function testSavedImagesSettingsApplyToAnAlreadyCreatedClient(): void
+    {
+        $this->login();
+        $client = app(ChatGptService::class);
+        $payload = $this->payload();
+        $payload['settings']['provider'] = 'openai';
+        $payload['settings']['providers']['openai']['image_api'] = 'images';
+        $payload['settings']['providers']['openai']['images_url'] = 'https://images.example/v1/images';
+        $payload['settings']['commands']['room_character']['model'] = 'gpt-image-2';
+        $this->put(self::URL, $payload)->assertSessionHasNoErrors();
+        $png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
+        Http::fake(['https://images.example/v1/images/generations' => Http::response(['data' => [['b64_json' => $png]]])]);
+        $client->generateImage([['role' => 'user', 'content' => 'Draw a character.']], ['command' => 'room_character']);
+        Http::assertSent(fn (Request $request) => $request['model'] === 'gpt-image-2'
+            && $request->hasHeader('Authorization', 'Bearer env-openai-key'));
+        Http::assertSentCount(1);
+        $this->get(self::URL)->assertOk()->assertSee('https://images.example/v1/images')->assertDontSee('env-openai-key');
+    }
+
+    public function testImagesProtocolRequiresAnExplicitImagesUrl(): void
+    {
+        $this->login();
+        $payload = $this->payload();
+        $payload['settings']['providers']['openai']['image_api'] = 'images';
+        $this->put(self::URL, $payload)->assertSessionHasErrors('settings.providers.openai.images_url');
+        $this->assertSame(0, AiSetting::count());
+    }
+
     public function testValidationDoesNotSaveOrFlashSecrets(): void
     {
         $this->login();
@@ -190,6 +218,10 @@ class AiSettingsTest extends TestCase
             ['settings.commands.achievement_image.timeout', 241],
             ['settings.commands.achievement_image.type', 'text'],
             ['settings.providers.openai.key', 'unvalidated-key'],
+            ['settings.providers.openai.image_api', 'guess'],
+            ['settings.providers.openai.images_url', 'https://example.com/v1/responses'],
+            ['settings.providers.openai.images_url', 'https://example.com/images?key=secret'],
+            ['settings.providers.openai.images_url', 'https://user:password@example.com/images'],
             ['secrets.openai.proxy.action', 'unknown'],
         ];
     }

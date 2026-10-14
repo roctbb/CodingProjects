@@ -145,6 +145,34 @@ class RoomCharacterGenerationTest extends TestCase
         Http::fake(fn () => Http::response($provider === 'gateway' ? ['result' => $body] : $body));
     }
 
+    public function testImagesApiInstallsCharacterUsingAvatarAndStaticReferenceWithOneCharge(): void
+    {
+        config(['ai.provider' => 'openai', 'ai.providers.openai.image_api' => 'images',
+            'ai.providers.openai.images_url' => 'https://openai.example/v1/images',
+            'ai.commands.room_character.model' => 'gpt-image-2']);
+        $user = $this->user();
+        $generation = $this->purchase($user);
+        $sourcePath = $generation->source_path;
+        $avatar = Storage::disk('room_character_sources')->get($sourcePath);
+        $reference = file_get_contents(public_path($generation->reference_path));
+        Http::fake(function (Request $request) use ($avatar, $reference) {
+            $this->assertSame('https://openai.example/v1/images/edits', $request->url());
+            $this->assertTrue($request->hasFile('image[]', $avatar, 'reference-1.png'));
+            $this->assertTrue($request->hasFile('image[]', $reference, 'reference-2.png'));
+            return Http::response(['data' => [['b64_json' => base64_encode($this->png())]]]);
+        });
+        app(RoomCharacterGenerator::class)->generate($generation->id);
+        app(RoomCharacterGenerator::class)->generate($generation->id);
+        $generation->refresh();
+        $this->assertSame('succeeded', $generation->status);
+        $this->assertSame($generation->id, $user->fresh()->room_character_generation_id);
+        $this->assertSame(100, (int) $user->balance());
+        $this->assertNull($generation->refund_transaction_id);
+        Storage::assertExists($generation->result_path);
+        Storage::disk('room_character_sources')->assertMissing($sourcePath);
+        Http::assertSentCount(1);
+    }
+
     public function testPurchaseCharges100AndQueuesOnceWithoutCallingAi(): void
     {
         $user = $this->user();

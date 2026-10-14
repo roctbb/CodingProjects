@@ -3,7 +3,7 @@
 return [
     'provider' => env('AI_PROVIDER', 'gateway'),
 
-    // Endpoints are complete Responses URLs, including /v1/responses.
+    // Text uses complete Responses URLs. Images can use a separate Images API.
     'providers' => [
         'gateway' => [
             'key' => env('GPT_KEY'),
@@ -14,6 +14,8 @@ return [
             'key' => env('OPENAI_API_KEY'),
             'endpoint' => env('OPENAI_RESPONSES_URL', 'https://api.openai.com/v1/responses'),
             'proxy' => env('OPENAI_PROXY'),
+            'image_api' => env('OPENAI_IMAGE_API', 'responses'),
+            'images_url' => env('OPENAI_IMAGES_URL'),
         ],
     ],
 
@@ -28,8 +30,8 @@ return [
         ],
     ],
 
-    // An empty command provider inherits AI_PROVIDER. Models are Responses models,
-    // including for image commands (which use the image_generation tool).
+    // An empty command provider inherits AI_PROVIDER. Image models must match
+    // the selected image_api: a Responses model or a dedicated Images model.
     'commands' => [
         'text_improvement' => [
             'type' => 'text',

@@ -61,11 +61,25 @@
                 <div class="col-12 col-xl-6">
                     <section class="gc-card p-3 p-md-4 h-100" aria-labelledby="ai-heading-{{ $provider }}">
                         <h4 id="ai-heading-{{ $provider }}" class="mb-2">{{ $label }}</h4>
-                        <p class="text-muted small">{{ $provider === 'gateway' ? 'Запросы через ваш шлюз.' : 'Прямые запросы в OpenAI или совместимый Responses API.' }}</p>
-                        <label for="ai-endpoint-{{ $provider }}" class="form-label">Эндпоинт</label>
+                        <p class="text-muted small">{{ $provider === 'gateway' ? 'Запросы через ваш шлюз.' : 'Прямые запросы в OpenAI или совместимый сервис, включая NeuroAPI.' }}</p>
+                        <label for="ai-endpoint-{{ $provider }}" class="form-label">Эндпоинт Responses API</label>
                         <input id="ai-endpoint-{{ $provider }}" name="settings[providers][{{ $provider }}][endpoint]" type="url" class="form-control"
                                value="{{ old('settings.providers.'.$provider.'.endpoint', $settings['providers'][$provider]['endpoint']) }}" maxlength="2048" required>
                         <div class="form-text mb-3">Полный URL, включая <code>/v1/responses</code>.</div>
+
+                        @if ($provider === 'openai')
+                            <label for="ai-image-api" class="form-label">Формат генерации изображений</label>
+                            <select id="ai-image-api" name="settings[providers][openai][image_api]" class="form-select">
+                                <option value="responses" @selected(old('settings.providers.openai.image_api', $settings['providers']['openai']['image_api'] ?? 'responses') === 'responses')>Responses — инструмент image_generation</option>
+                                <option value="images" @selected(old('settings.providers.openai.image_api', $settings['providers']['openai']['image_api'] ?? 'responses') === 'images')>Images — генерация и редактирование</option>
+                            </select>
+                            <div class="form-text mb-3">Для NeuroAPI выберите Images. Ключ и прокси общие для текста и изображений.</div>
+                            <label for="ai-images-url" class="form-label">Адрес Images API</label>
+                            <input id="ai-images-url" name="settings[providers][openai][images_url]" type="url" class="form-control" maxlength="2048"
+                                   placeholder="https://neuroapi.host/v1/images"
+                                   value="{{ old('settings.providers.openai.images_url', $settings['providers']['openai']['images_url'] ?? '') }}">
+                            <div class="form-text mb-3">URL до <code>/images</code>. Для прямого OpenAI: <code>https://api.openai.com/v1/images</code>. Приложение выбирает генерацию или редактирование по наличию референсов.</div>
+                        @endif
 
                         @foreach (['key' => 'API-ключ', 'proxy' => 'Сетевой прокси'] as $field => $fieldLabel)
                             <div class="border-top pt-3 mt-3">
@@ -94,7 +108,7 @@
 
         <section class="gc-card p-3 p-md-4 mb-4" aria-labelledby="ai-commands-heading">
             <h4 id="ai-commands-heading" class="mb-2">Настройки операций</h4>
-            <p class="text-muted small mb-3">Пустые поля наследуют общие значения. Для изображений укажите модель Responses, которая поддерживает генерацию картинок.</p>
+            <p class="text-muted small mb-3">Пустые поля наследуют общие значения. Модель изображения должна соответствовать формату подключения: для Images — например, <code>gpt-image-2</code>; для Responses — например, <code>gpt-5.5</code> с доступом к инструменту генерации. При смене формата проверьте все три операции с изображениями и общую модель изображений.</p>
             @foreach ($commands as $command => $label)
                 <fieldset class="{{ !$loop->first ? 'border-top pt-3 mt-3' : '' }}">
                     <legend class="fs-6 fw-medium mb-2">{{ $label }}</legend>
@@ -140,6 +154,14 @@
     </details>
 </div>
 <script>
+var imageApi = document.getElementById('ai-image-api');
+if (imageApi) {
+    function syncImageApi() {
+        document.getElementById('ai-images-url').required = imageApi.value === 'images';
+    }
+    imageApi.addEventListener('change', syncImageApi);
+    syncImageApi();
+}
 document.querySelectorAll('[data-secret-action]').forEach(function (select) {
     function sync() {
         var input = document.getElementById(select.dataset.secretAction);

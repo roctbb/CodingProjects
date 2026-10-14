@@ -2,7 +2,8 @@
 
 namespace App\Services;
 
-use App\Services\Ai\ResponsesClient;
+use App\Services\Ai\ApiClient;
+use App\Services\Ai\ImagesClient;
 use App\Services\Ai\AiSettings;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -15,14 +16,14 @@ class ChatGptService
         'image/webp' => 'webp',
     ];
 
-    public function __construct(private ResponsesClient $responses, private AiSettings $aiSettings)
+    public function __construct(private ApiClient $api, private AiSettings $aiSettings, private ImagesClient $images)
     {
     }
 
     public function generate(array $messages, array $options = []): string
     {
         $settings = $this->settings('text', $options);
-        $data = $this->responses->create([
+        $data = $this->api->create([
             'model' => $settings['model'],
             'input' => $this->normalizeMessages($messages),
         ], $settings['provider'], $settings['connection'], $settings['timeout'], $options['command'] ?? null);
@@ -50,18 +51,15 @@ class ChatGptService
     {
         $settings = $this->settings('image', $options);
         $startedAt = hrtime(true);
-        $imageTool = ['type' => 'image_generation'];
-        foreach (['size', 'quality', 'output_format', 'background'] as $optionKey) {
-            if (!empty($options[$optionKey])) {
-                $imageTool[$optionKey] = $options[$optionKey];
-            }
+        $imageApi = $settings['connection']['image_api'] ?? 'responses';
+        if ($settings['provider'] === 'openai' && $imageApi === 'images') {
+            $data = $this->images->create($messages, $settings['model'], $options, $settings['connection'],
+                $settings['timeout'], $options['command'] ?? null);
+        } elseif ($imageApi === 'responses') {
+            $data = $this->generateImageWithResponses($messages, $options, $settings);
+        } else {
+            throw new \RuntimeException('Unknown or unsupported AI image API');
         }
-        $data = $this->responses->create([
-            'model' => $settings['model'],
-            'input' => $this->normalizeMessages($messages),
-            'tools' => [$imageTool],
-            'tool_choice' => ['type' => 'image_generation'],
-        ], $settings['provider'], $settings['connection'], $settings['timeout'], $options['command'] ?? null);
 
         $image = self::imageFromResponsePayload($data);
         if (!empty($image['url']) && empty($image['bytes'])) {
@@ -88,6 +86,22 @@ class ChatGptService
             'extension' => self::IMAGE_MIME_EXTENSIONS[$mime],
             'model' => $settings['model'],
         ];
+    }
+
+    private function generateImageWithResponses(array $messages, array $options, array $settings): array
+    {
+        $imageTool = ['type' => 'image_generation'];
+        foreach (['size', 'quality', 'output_format', 'background'] as $optionKey) {
+            if (!empty($options[$optionKey])) {
+                $imageTool[$optionKey] = $options[$optionKey];
+            }
+        }
+        return $this->api->create([
+            'model' => $settings['model'],
+            'input' => $this->normalizeMessages($messages),
+            'tools' => [$imageTool],
+            'tool_choice' => ['type' => 'image_generation'],
+        ], $settings['provider'], $settings['connection'], $settings['timeout'], $options['command'] ?? null);
     }
 
     private function settings(string $type, array $options): array

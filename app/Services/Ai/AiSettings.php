@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 
 class AiSettings
 {
-    public const PROVIDERS = ['gateway' => 'Собственный шлюз', 'openai' => 'OpenAI'];
+    public const PROVIDERS = ['gateway' => 'Собственный шлюз', 'openai' => 'OpenAI / совместимый API'];
     public const COMMANDS = [
         'text_improvement' => 'Исправление опечаток и стиля',
         'task_summary' => 'Пересказ решений',

@@ -51,11 +51,25 @@ class AiConfigurationTest extends TestCase
             'AI_ACHIEVEMENT_IMAGE_PROVIDER' => '',
         ]);
         $this->assertSame('openai', $config['provider']);
-        $this->assertSame(['key' => 'direct-key', 'endpoint' => 'https://direct.example/v1/responses', 'proxy' => 'socks5h://proxy.example:1080'], $config['providers']['openai']);
+        $this->assertSame(['key' => 'direct-key', 'endpoint' => 'https://direct.example/v1/responses', 'proxy' => 'socks5h://proxy.example:1080',
+            'image_api' => 'responses', 'images_url' => null], $config['providers']['openai']);
         $this->assertSame('gateway-key', $config['providers']['gateway']['key']);
         $this->assertSame('default-model', $config['defaults']['image']['model']);
         $this->assertSame('gateway', $config['commands']['text_improvement']['provider']);
         $this->assertSame('editor-model', $config['commands']['text_improvement']['model']);
         $this->assertSame('', $config['commands']['achievement_image']['provider']);
+    }
+
+    public function testImagesProtocolCanBeConfiguredWithoutChangingTextProtocol(): void
+    {
+        $config = $this->loadConfig([
+            'OPENAI_RESPONSES_URL' => 'https://provider.example/v1/responses',
+            'OPENAI_IMAGE_API' => 'images', 'OPENAI_IMAGES_URL' => 'https://provider.example/v1/images',
+            'GPT_ROOM_CHARACTER_MODEL' => 'gpt-image-2',
+        ]);
+        $this->assertSame('images', $config['providers']['openai']['image_api']);
+        $this->assertSame('https://provider.example/v1/images', $config['providers']['openai']['images_url']);
+        $this->assertSame('https://provider.example/v1/responses', $config['providers']['openai']['endpoint']);
+        $this->assertSame('gpt-image-2', $config['commands']['room_character']['model']);
     }
 }

@@ -250,6 +250,27 @@ class ChatGptServiceTransportTest extends TestCase
         $this->assertSame(1, $calls);
     }
 
+    public function testStructuredErrorFieldsDoNotLeakKeysOrUnstructuredText(): void
+    {
+        config(['ai.provider' => 'openai']);
+        Http::fake(fn () => Http::response(['error' => [
+            'code' => 'openai-secret', 'type' => 'private prompt', 'param' => str_repeat('x', 129),
+        ]], 400, ['x-request-id' => 'openai-secret']));
+        try {
+            app(ChatGptService::class)->generate(self::MESSAGES);
+            $this->fail('Expected rejection');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('HTTP 400', $e->getMessage());
+        }
+        Log::shouldHaveReceived('error')->once()->withArgs(function ($message, $context) {
+            $this->assertArrayNotHasKey('error_code', $context);
+            $this->assertArrayNotHasKey('error_type', $context);
+            $this->assertArrayNotHasKey('error_param', $context);
+            $this->assertSame('', $context['request_id']);
+            return true;
+        });
+    }
+
     public function testImageDownloadDoesNotReceiveApiCredentials(): void
     {
         config(['ai.providers.gateway.proxy' => 'socks5h://user:secret@proxy.example:1080']);

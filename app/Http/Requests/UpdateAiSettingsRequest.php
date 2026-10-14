@@ -26,7 +26,7 @@ class UpdateAiSettingsRequest extends FormRequest
             'secrets' => ['required', 'array:' . implode(',', $providers)],
         ];
         foreach ($providers as $provider) {
-            $rules['settings.providers.' . $provider] = ['required', 'array:endpoint'];
+            $rules['settings.providers.' . $provider] = ['required', $provider === 'openai' ? 'array:endpoint,image_api,images_url' : 'array:endpoint'];
             $rules['settings.providers.' . $provider . '.endpoint'] = [
                 'bail', 'required', 'string', 'max:2048', 'url:http,https',
                 function ($attribute, $value, $fail) {
@@ -57,6 +57,17 @@ class UpdateAiSettingsRequest extends FormRequest
                 }
             }
         }
+        $rules['settings.providers.openai.image_api'] = ['sometimes', 'required', Rule::in(['responses', 'images'])];
+        $rules['settings.providers.openai.images_url'] = [
+            'bail', 'nullable', 'required_if:settings.providers.openai.image_api,images', 'string', 'max:2048', 'url:http,https',
+            function ($attribute, $value, $fail) {
+                if (parse_url($value, PHP_URL_USER) !== null || parse_url($value, PHP_URL_PASS) !== null
+                    || parse_url($value, PHP_URL_QUERY) !== null || parse_url($value, PHP_URL_FRAGMENT) !== null
+                    || !str_ends_with(rtrim(parse_url($value, PHP_URL_PATH) ?? '', '/'), '/images')) {
+                    $fail('Адрес Images API должен заканчиваться на /images, без логина, пароля, query-параметров и фрагмента.');
+                }
+            },
+        ];
         foreach (['text', 'image'] as $type) {
             $rules['settings.defaults.' . $type] = ['required', 'array:model,timeout'];
             $rules['settings.defaults.' . $type . '.model'] = ['required', ...$model];
@@ -76,6 +87,8 @@ class UpdateAiSettingsRequest extends FormRequest
     public function attributes(): array
     {
         $attributes = ['settings.provider' => 'провайдер по умолчанию'];
+        $attributes['settings.providers.openai.image_api'] = 'формат генерации изображений';
+        $attributes['settings.providers.openai.images_url'] = 'адрес Images API';
         foreach (AiSettings::PROVIDERS as $provider => $label) {
             $attributes['settings.providers.' . $provider . '.endpoint'] = 'эндпоинт «' . $label . '»';
             $attributes['secrets.' . $provider . '.key.value'] = 'новый ключ «' . $label . '»';
