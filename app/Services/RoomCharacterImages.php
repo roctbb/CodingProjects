@@ -18,9 +18,11 @@ class RoomCharacterImages
             throw ValidationException::withMessages(['room_character' => 'Загрузите аватарку PNG, JPEG или WebP размером до 10 МБ в настройках профиля.']);
         }
         try {
-            $source = $this->decode(Storage::get($user->image));
+            // Profile photos can exceed the generated-image limit. Decode a bounded
+            // original, then send only the resized PNG snapshot to the AI provider.
+            $source = $this->decode(Storage::get($user->image), maxPixels: 32_000_000);
         } catch (\RuntimeException $e) {
-            throw ValidationException::withMessages(['room_character' => 'Не удалось прочитать аватарку. Загрузите PNG, JPEG или WebP размером до 10 МБ и до 16 мегапикселей.']);
+            throw ValidationException::withMessages(['room_character' => 'Не удалось прочитать аватарку. Загрузите PNG, JPEG или WebP размером до 10 МБ и до 32 мегапикселей.']);
         }
         try {
             $scale = min(1, 1024 / max(imagesx($source), imagesy($source)));
@@ -57,10 +59,10 @@ class RoomCharacterImages
         }
     }
 
-    private function decode(string $bytes, bool $pngOnly = false): \GdImage
+    private function decode(string $bytes, bool $pngOnly = false, int $maxPixels = 16_000_000): \GdImage
     {
         $info = @getimagesizefromstring($bytes);
-        if (strlen($bytes) > 10 * 1024 * 1024 || !$info || $info[0] * $info[1] > 16_000_000
+        if (strlen($bytes) > 10 * 1024 * 1024 || !$info || $info[0] * $info[1] > $maxPixels
             || !in_array($info[2], $pngOnly ? [IMAGETYPE_PNG] : [IMAGETYPE_PNG, IMAGETYPE_JPEG, IMAGETYPE_WEBP], true)) {
             throw new \RuntimeException('Invalid room character image');
         }

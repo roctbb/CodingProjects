@@ -109,6 +109,29 @@ class RoomCharacterGenerationTest extends TestCase
         return app(RoomCharacterGenerator::class)->purchase($user->id, $key ?: (string) Str::uuid());
     }
 
+    public function testLargeProfilePhotoIsResizedBeforePurchaseWithoutChangingTheOriginal(): void
+    {
+        $user = $this->user();
+        $image = imagecreatetruecolor(3693, 5540);
+        imagefill($image, 0, 0, imagecolorallocate($image, 80, 120, 160));
+        ob_start();
+        imagejpeg($image, null, 85);
+        $original = ob_get_clean();
+        unset($image);
+        Storage::put($user->image, $original);
+
+        $this->actingAs($user)->postJson($this->url($user), ['request_id' => (string) Str::uuid()])
+            ->assertStatus(202)->assertJsonPath('balance', 100);
+
+        $generation = RoomCharacterGeneration::firstOrFail();
+        $snapshot = Storage::disk('room_character_sources')->get($generation->source_path);
+        $info = getimagesizefromstring($snapshot);
+        $this->assertSame([683, 1024, IMAGETYPE_PNG], array_slice($info, 0, 3));
+        $this->assertSame($original, Storage::get($user->image));
+        Bus::assertDispatchedTimes(GenerateRoomCharacter::class, 1);
+        Http::assertNothingSent();
+    }
+
     private function url(User $user): string
     {
         return '/insider/profile/' . $user->id . '/room-character';
