@@ -28,7 +28,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zip \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" curl zip pdo pdo_pgsql xml gd mbstring \
-    && pecl install https://pecl.php.net/get/redis-6.3.0.tgz \
+    && curl -fSL --retry 3 --retry-delay 3 --connect-timeout 15 --max-time 120 \
+        https://pecl.php.net/get/redis-6.3.0.tgz -o /tmp/redis.tgz \
+    && pecl install /tmp/redis.tgz \
+    && rm /tmp/redis.tgz \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
 
@@ -70,7 +73,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zip \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" curl zip pdo pdo_pgsql xml gd mbstring \
-    && pecl install https://pecl.php.net/get/redis-6.3.0.tgz \
+    && curl -fSL --retry 3 --retry-delay 3 --connect-timeout 15 --max-time 120 \
+        https://pecl.php.net/get/redis-6.3.0.tgz -o /tmp/redis.tgz \
+    && pecl install /tmp/redis.tgz \
+    && rm /tmp/redis.tgz \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
 
