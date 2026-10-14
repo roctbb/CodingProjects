@@ -38,23 +38,6 @@ return [
     'geekpaste_url' => env('GEEKPASTE_URL', 'https://paste.geekclass.ru/'),
     'geekpaste_api_key' => env('GEEKPASTE_API_KEY'),
 
-    'yandexgpt' => [
-        'api_key' => env('YANDEX_GPT_API_KEY'),
-        'folder_id' => env('YANDEX_GPT_FOLDER_ID'),
-        'model' => env('YANDEX_GPT_MODEL', 'yandexgpt-lite'),
-        'url' => env('YANDEX_GPT_URL', 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'),
-    ],
-
-    'chatgpt' => [
-        'key' => env('GPT_KEY'),
-        'model' => env('GPT_MODEL', 'gpt-5-mini'),
-        'image_model' => env('GPT_IMAGE_MODEL', env('GPT_MODEL', 'gpt-5-mini')),
-        'poster_model' => env('GPT_POSTER_MODEL', env('GPT_IMAGE_MODEL', env('GPT_MODEL', 'gpt-5-mini'))),
-        'achievement_model' => env('GPT_ACHIEVEMENT_MODEL', 'gpt-5.5'),
-        'achievement_image_model' => env('GPT_ACHIEVEMENT_IMAGE_MODEL', 'gpt-5.5'),
-        'gateway' => env('GPT_GATEWAY', 'https://gpt-gateway.ai.medsenger.ru:4443/v1/responses'),
-    ],
-
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),

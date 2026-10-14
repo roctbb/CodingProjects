@@ -226,7 +226,7 @@ class CoursesController extends Controller
                     || $course->teachers->contains('id', $user->id));
         })->pluck('id');
 
-        $activities = CourseActivity::with(['user', 'course', 'lesson', 'task'])
+        $activities = CourseActivity::with(['user', 'course', 'lesson', 'task', 'achievement'])
             ->where(function ($query) use ($activeCourseIds) {
                 if ($activeCourseIds->isNotEmpty()) {
                     $query->whereIn('course_id', $activeCourseIds)
@@ -1273,7 +1273,7 @@ class CoursesController extends Controller
                 'message' => $e->getMessage(),
             ]);
 
-            $this->make_error_alert('Плакат не получился', 'Не удалось сгенерировать плакат программы через GPT-прокси. Попробуйте позже.');
+            $this->make_error_alert('Плакат не получился', 'Не удалось сгенерировать плакат программы. Попробуйте позже.');
 
             return redirect('/insider/courses/' . $course->id . '/edit');
         }

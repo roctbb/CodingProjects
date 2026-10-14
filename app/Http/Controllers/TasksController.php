@@ -409,15 +409,7 @@ class TasksController extends Controller
 
     public function previewSolutionAchievement($course_id, $id, $solution_id, SolutionAchievementGenerator $generator)
     {
-        $solution = Solution::with('task.step.lesson', 'course.teachers', 'user')
-            ->where('course_id', $course_id)
-            ->where('task_id', $id)
-            ->findOrFail($solution_id);
-        $user = Auth::user();
-
-        if ($user->role != 'admin' && (!$solution->course || !$solution->course->teachers->contains('id', $user->id))) {
-            abort(403);
-        }
+        $solution = $this->achievementSolution($course_id, $id, $solution_id);
 
         $existingAchievement = Achievement::where('course_id', $course_id)
             ->where('task_id', $id)
@@ -455,54 +447,14 @@ class TasksController extends Controller
             return redirect()->back();
         }
 
-        $previewVariants = collect($preview['variants'] ?? [$preview])->map(function ($variant) use ($preview) {
-            $iconKey = $variant['icon_key'] ?? 'sparkles';
-            $visualKey = $variant['visual_key'] ?? null;
-            $svgIcon = Achievement::sanitizeSvgIcon($variant['svg_icon'] ?? null);
+        session()->put('achievement_previews.' . $solution->id, $preview);
 
-            return [
-                'title' => $variant['title'] ?? 'Сильное решение',
-                'description' => $variant['description'] ?? 'За сильное решение задачи.',
-                'icon_key' => $iconKey,
-                'icon_class' => Achievement::iconOptions()[$iconKey] ?? Achievement::iconOptions()['sparkles'],
-                'visual_key' => $visualKey,
-                'svg_icon' => $svgIcon,
-                'visual_svg' => $svgIcon ?: Achievement::svgForVisualKey($visualKey),
-                'tone' => $variant['tone'] ?? null,
-                'solution_source' => $variant['solution_source'] ?? ($preview['solution_source'] ?? null),
-                'language' => $variant['language'] ?? ($preview['language'] ?? null),
-                'model' => $variant['model'] ?? ($preview['model'] ?? null),
-            ];
-        })->values()->all();
-
-        return redirect('/insider/courses/' . $course_id . '/tasks/' . $id . '/solution/' . $solution->id . '/achievement-preview')
-            ->with('achievement_preview', [
-                'solution_id' => $solution->id,
-                'variants' => $previewVariants,
-                'title' => $previewVariants[0]['title'] ?? 'Сильное решение',
-                'description' => $previewVariants[0]['description'] ?? 'За сильное решение задачи.',
-                'icon_key' => $previewVariants[0]['icon_key'] ?? 'sparkles',
-                'icon_class' => $previewVariants[0]['icon_class'] ?? Achievement::iconOptions()['sparkles'],
-                'visual_key' => $previewVariants[0]['visual_key'] ?? null,
-                'visual_svg' => $previewVariants[0]['visual_svg'] ?? null,
-                'tone' => $previewVariants[0]['tone'] ?? null,
-                'solution_source' => $previewVariants[0]['solution_source'] ?? null,
-                'language' => $previewVariants[0]['language'] ?? null,
-                'model' => $previewVariants[0]['model'] ?? null,
-            ]);
+        return redirect('/insider/courses/' . $course_id . '/tasks/' . $id . '/solution/' . $solution->id . '/achievement-preview');
     }
 
     public function showSolutionAchievementPreview($course_id, $id, $solution_id)
     {
-        $solution = Solution::with('task.step.lesson', 'course.teachers', 'user')
-            ->where('course_id', $course_id)
-            ->where('task_id', $id)
-            ->findOrFail($solution_id);
-        $user = Auth::user();
-
-        if ($user->role != 'admin' && (!$solution->course || !$solution->course->teachers->contains('id', $user->id))) {
-            abort(403);
-        }
+        $solution = $this->achievementSolution($course_id, $id, $solution_id);
 
         $existingAchievement = Achievement::where('course_id', $course_id)
             ->where('task_id', $id)
@@ -515,45 +467,30 @@ class TasksController extends Controller
             return redirect('/insider/profile/' . $solution->user_id . '#achievement-' . $existingAchievement->id);
         }
 
-        $achievementPreview = session('achievement_preview');
-        if (!$achievementPreview || (int) ($achievementPreview['solution_id'] ?? 0) !== (int) $solution->id) {
+        $achievementPreview = session('achievement_previews.' . $solution->id);
+        if (!$achievementPreview) {
             $this->make_info_alert('Предпросмотр не найден', 'Сначала запустите генерацию достижения у нужного решения.');
 
             return redirect('/insider/courses/' . $course_id . '/tasks/' . $id . '/student/' . $solution->user_id . '#solution-' . $solution->id);
         }
 
-        session()->reflash();
-
         $course = $solution->course;
         $task = $solution->task;
         $student = $solution->user;
-        $achievementPreviewVariants = collect($achievementPreview['variants'] ?? [$achievementPreview]);
-        $achievementIconOptions = Achievement::iconOptions();
-        $achievementVisualOptions = Achievement::visualOptions();
+        $achievementPreviewVariants = $achievementPreview['variants'];
 
         return view('steps.achievement_preview', compact(
             'course',
             'task',
             'student',
             'solution',
-            'achievementPreview',
-            'achievementPreviewVariants',
-            'achievementIconOptions',
-            'achievementVisualOptions'
+            'achievementPreviewVariants'
         ));
     }
 
     public function awardSolutionAchievement($course_id, $id, $solution_id, Request $request, SolutionAchievementGenerator $generator)
     {
-        $solution = Solution::with('task.step.lesson', 'course.teachers', 'user')
-            ->where('course_id', $course_id)
-            ->where('task_id', $id)
-            ->findOrFail($solution_id);
-        $user = Auth::user();
-
-        if ($user->role != 'admin' && (!$solution->course || !$solution->course->teachers->contains('id', $user->id))) {
-            abort(403);
-        }
+        $solution = $this->achievementSolution($course_id, $id, $solution_id);
 
         $existingAchievement = Achievement::where('course_id', $course_id)
             ->where('task_id', $id)
@@ -566,27 +503,18 @@ class TasksController extends Controller
             return redirect('/insider/profile/' . $solution->user_id . '#achievement-' . $existingAchievement->id);
         }
 
-        try {
-            if ($request->has(['title', 'description', 'icon_key'])) {
-                $iconKeys = implode(',', array_keys(Achievement::iconOptions()));
-                $this->validate($request, [
-                    'title' => 'required|string|max:120',
-                    'description' => 'required|string|max:1000',
-                    'icon_key' => 'required|string|in:' . $iconKeys,
-                    'visual_key' => 'nullable|string|in:' . implode(',', array_keys(Achievement::visualOptions())),
-                    'svg_icon' => 'nullable|string|max:6000',
-                    'coin_reward' => 'nullable|integer|min:0|max:1000',
-                    'tone' => 'nullable|string|max:40',
-                    'solution_source' => 'nullable|string|max:80',
-                    'language' => 'nullable|string|max:80',
-                    'model' => 'nullable|string|max:80',
-                ]);
+        $request->merge([
+            'title' => is_string($request->title) ? trim(strip_tags($request->title)) : $request->title,
+            'description' => is_string($request->description) ? trim(strip_tags($request->description)) : $request->description,
+        ]);
+        $data = $request->validate([
+            'title' => 'required|string|max:120',
+            'description' => 'required|string|max:1000',
+            'coin_reward' => 'nullable|integer|min:0|max:1000',
+        ]);
 
-                $requestPreview = $request->only(['title', 'description', 'icon_key', 'visual_key', 'svg_icon', 'coin_reward', 'tone', 'solution_source', 'language', 'model']);
-                $achievement = $generator->createForSolution($solution, $requestPreview, true);
-            } else {
-                $achievement = $generator->generateForSolution($solution, true);
-            }
+        try {
+            $achievement = $generator->createForSolution($solution, $data, true);
         } catch (\Throwable $e) {
             \Log::error('Manual achievement generation failed', [
                 'solution_id' => $solution->id,
@@ -604,13 +532,28 @@ class TasksController extends Controller
             return redirect()->back();
         }
 
+        session()->forget('achievement_previews.' . $solution->id);
         $coinReward = (int) ($achievement->payload['coin_reward'] ?? 0);
         $this->make_success_alert(
             'Достижение выдано',
-            'Оно появилось в профиле ученика и в пульсе.' . ($coinReward > 0 ? ' Начислено ' . $coinReward . ' GC.' : '')
+            'Оно появилось в профиле ученика и в пульсе. Кубок появится после генерации.' . ($coinReward > 0 ? ' Начислено ' . $coinReward . ' GC.' : '')
         );
 
         return redirect('/insider/profile/' . $solution->user_id . '#achievement-' . $achievement->id);
+    }
+
+    private function achievementSolution($courseId, $taskId, $solutionId): Solution
+    {
+        $solution = Solution::with('task.step.lesson', 'course.teachers', 'user')
+            ->where('course_id', $courseId)
+            ->where('task_id', $taskId)
+            ->findOrFail($solutionId);
+        $user = Auth::user();
+        if ($user->role != 'admin' && (!$solution->course || !$solution->course->teachers->contains('id', $user->id))) {
+            abort(403);
+        }
+
+        return $solution;
     }
 
     public function blockStudent($course_id, $id, $student_id)
@@ -751,7 +694,7 @@ class TasksController extends Controller
         }
 
         try {
-            GenerateSolutionAchievement::dispatch($solution->id)->afterResponse();
+            GenerateSolutionAchievement::dispatch($solution->id)->afterCommit();
         } catch (\Throwable $e) {
             \Log::warning('AI achievement dispatch failed', [
                 'solution_id' => $solution->id,
@@ -862,7 +805,7 @@ class TasksController extends Controller
             $summary = $chatGpt->generate([
                 ['role' => 'system', 'content' => $prompt],
                 ['role' => 'user', 'content' => "Курс: {$course->name}\nЗадача: {$task->name}\n{$instructionBlock}Условие задачи:\n" . Str::limit(strip_tags((string) $task->text), 3000) . "\n\nРешения учеников:\n" . $answers],
-            ], ['timeout' => 90]);
+            ], ['command' => 'task_summary']);
         } catch (\Throwable $e) {
             \Log::error('Task AI summary failed', [
                 'course_id' => $course->id,

@@ -22,6 +22,7 @@ class GenerateSolutionAchievement implements ShouldQueue
     public function __construct($solutionId)
     {
         $this->solutionId = $solutionId;
+        $this->onConnection(config('queue.default') === 'sync' ? 'database' : config('queue.default'));
     }
 
     public function handle(SolutionAchievementGenerator $generator)

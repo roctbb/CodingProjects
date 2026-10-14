@@ -252,7 +252,7 @@
 
                 <div class="profile-learning-avatar-layout p-3 p-md-4">
                     <div class="profile-learning-avatar-stage">
-                        <x-gc-learning-avatar :user="$user" :data="$learningAvatarData" id="learning-avatar-preview-{{ $user->id }}" data-learning-avatar-preview />
+                        <x-gc-learning-avatar :user="$user" :data="$learningAvatarData" id="learning-avatar-preview-{{ $user->id }}" data-learning-avatar-preview data-custom-character-url="{{ $user->roomCharacterImageUrl() }}" />
                     </div>
 
                     <div class="profile-learning-avatar-panel">
@@ -314,6 +314,9 @@
                                     Открыть цифровой магазин
                                 </a>
                             </form>
+                            @if($roomCharacterAvailable ?? false)
+                                @include('profile.partials.room-character')
+                            @endif
                         @else
                             <div class="profile-learning-avatar-equipped">
                                 @foreach($learningAvatarSlotLabels as $slotKey => $slotLabel)
@@ -349,8 +352,6 @@
                                 $canEditAchievement = $guest->role == 'admin'
                                     || ($achievement->course && $achievement->course->teachers->contains('id', $guest->id));
                                 $canDeleteAchievement = $guest->role == 'admin';
-                                $achievementVisualKey = $achievement->visualKey();
-                                $achievementVisualSvg = $achievement->displaySvg();
                                 $achievementTrophyUrl = $achievement->trophyImageUrl();
                             @endphp
                             <article class="profile-achievement" id="achievement-{{ $achievement->id }}">
@@ -393,10 +394,8 @@
                                                 aria-label="Увеличить кубок «{{ $achievement->title }}»">
                                             <img src="{{ $achievementTrophyUrl }}" alt="">
                                         </button>
-                                    @elseif($achievementVisualSvg)
-                                        {!! $achievementVisualSvg !!}
                                     @else
-                                        <i class="{{ $achievement->iconClass() }}"></i>
+                                        <i class="fas fa-trophy"></i>
                                     @endif
                                 </span>
                                 <div class="profile-achievement__body min-width-0">
@@ -424,10 +423,8 @@
                                                     <span class="gc-icon-tile flex-shrink-0">
                                                         @if($achievementTrophyUrl)
                                                             <img src="{{ $achievementTrophyUrl }}" alt="">
-                                                        @elseif($achievementVisualSvg)
-                                                            {!! $achievementVisualSvg !!}
                                                         @else
-                                                            <i class="{{ $achievement->iconClass() }}"></i>
+                                                            <i class="fas fa-trophy"></i>
                                                         @endif
                                                     </span>
                                                     <h5 class="modal-title text-truncate">Редактировать достижение</h5>
@@ -437,7 +434,7 @@
                                             <form method="POST"
                                                   action="{{ url('/insider/profile/'.$user->id.'/achievement/'.$achievement->id) }}"
                                                   data-fullscreen-loading
-                                                  data-loading-message="Сохраняю достижение и обновляю кубок">
+                                                  data-loading-message="Сохраняю достижение">
                                                 @csrf
                                                 <div class="modal-body p-3 p-md-4">
                                                     <div class="mb-3">
@@ -458,32 +455,6 @@
                                                                   rows="4"
                                                                   required>{{ old('description', $achievement->description) }}</textarea>
                                                     </div>
-                                                    <div class="mb-3">
-                                                        <label for="achievement-icon-{{ $achievement->id }}" class="form-label">Иконка</label>
-                                                        <select id="achievement-icon-{{ $achievement->id }}" name="icon_key" class="form-select rounded-3">
-                                                            @foreach($achievementIconOptions as $iconKey => $iconClass)
-                                                                <option value="{{ $iconKey }}" @if(old('icon_key', $achievement->icon_key) === $iconKey) selected @endif>
-                                                                    {{ $iconKey }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                    <div class="mb-0">
-                                                        <label for="achievement-visual-{{ $achievement->id }}" class="form-label">SVG-символ</label>
-                                                        <select id="achievement-visual-{{ $achievement->id }}" name="visual_key" class="form-select rounded-3">
-                                                            @foreach($achievementVisualOptions as $visualKey => $visualLabel)
-                                                                <option value="{{ $visualKey }}" @if(old('visual_key', $achievementVisualKey ?? '') === $visualKey) selected @endif>
-                                                                    {{ $visualLabel }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                    @if($achievement->svgIcon())
-                                                        <label class="form-check d-flex align-items-start gap-2 mt-3 mb-0">
-                                                            <input type="checkbox" class="form-check-input mt-1" name="clear_svg_icon" value="1">
-                                                            <span class="form-check-label">Заменить уникальную SVG выбранным символом</span>
-                                                        </label>
-                                                    @endif
                                                 </div>
                                                 <div class="modal-footer gc-form-footer">
                                                     <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Отмена</button>

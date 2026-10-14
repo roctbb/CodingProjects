@@ -45,6 +45,7 @@
                     </li>
                 @endif
                 @include('layouts.partials.sidebar-course-links')
+                @include('layouts.partials.sidebar-settings-link')
             @else
                 <li>
                     <a class="gc-sidebar__link {{ Request::is('login') ? 'active' : '' }}" href="{{ url('/login') }}">

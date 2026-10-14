@@ -172,7 +172,7 @@ class GeekPasteAPI extends Controller
         }
 
         try {
-            GenerateSolutionAchievement::dispatch($solution->id)->afterResponse();
+            GenerateSolutionAchievement::dispatch($solution->id)->afterCommit();
         } catch (\Throwable $e) {
             \Log::warning('AI achievement dispatch failed', [
                 'solution_id' => $solution->id,

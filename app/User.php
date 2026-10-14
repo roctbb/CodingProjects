@@ -79,6 +79,30 @@ class User extends Authenticatable implements MustVerifyEmail
         return url('images/user.jpg');
     }
 
+    public function roomCharacterGeneration()
+    {
+        return $this->belongsTo(RoomCharacterGeneration::class, 'room_character_generation_id');
+    }
+
+    public function roomCharacterImageUrl(): ?string
+    {
+        if (!$this->room_character_generation_id) {
+            return null;
+        }
+        $generation = $this->roomCharacterGeneration;
+        return $generation && (int) $generation->user_id === (int) $this->id ? $generation->imageUrl() : null;
+    }
+
+    public function roomCharacterReferencePath(): string
+    {
+        $manifest = self::learningAvatarManifest('room-system');
+        $config = self::sanitizeLearningAvatarConfig($this->learning_avatar_config ?: self::defaultLearningAvatarConfig());
+        $grade = $this->learningAvatarRoomSystemGrade($config);
+        $key = $this->learningAvatarRoomSystemCharacterKey($grade);
+        $file = $manifest['characters'][$this->learningAvatarGenderKey()][$key] ?? $manifest['characters']['boy']['class_07'];
+        return trim($manifest['assetBasePath'] . '/' . $file, '/');
+    }
+
     /**
      * The attributes that should be hidden for arrays.
      *
@@ -1508,6 +1532,9 @@ class User extends Authenticatable implements MustVerifyEmail
                 'role' => 'character',
                 '_inner_style' => self::learningAvatarRoomSystemCharacterScaleStyle($grade),
             ];
+            if ($customCharacter = $this->roomCharacterImageUrl()) {
+                $character['url'] = $customCharacter;
+            }
             $layers[] = $this->learningAvatarRoomSystemLayer($character, 'character', 'character', $slotManifest, $assetBasePath, $renderOrder['character']);
         }
 
@@ -1680,6 +1707,7 @@ class User extends Authenticatable implements MustVerifyEmail
     private function learningAvatarRoomSystemCharacterPreviewByGender($manifest, $slotManifest, $assetBasePath, $grade)
     {
         $previews = [];
+        $customUrl = $this->roomCharacterImageUrl();
 
         foreach (array_keys(self::learningAvatarGenders()) as $gender) {
             $classKey = $this->learningAvatarRoomSystemCharacterKey($grade);
@@ -1690,6 +1718,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
             $previews[$gender] = $this->learningAvatarRoomSystemLayer([
                 'file' => $file,
+                'url' => $customUrl,
                 'slot' => 'character',
                 'fit' => 'cover',
                 'gravity' => 'south',
@@ -1703,6 +1732,7 @@ class User extends Authenticatable implements MustVerifyEmail
     private function learningAvatarRoomSystemCharacterPreviewByGradeAndGender($manifest, $slotManifest, $assetBasePath)
     {
         $previews = [];
+        $customUrl = $this->roomCharacterImageUrl();
 
         for ($grade = 5; $grade <= 12; $grade++) {
             $classKey = $this->learningAvatarRoomSystemCharacterKey($grade);
@@ -1715,6 +1745,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
                 $previews[$grade][$gender] = $this->learningAvatarRoomSystemLayer([
                     'file' => $file,
+                    'url' => $customUrl,
                     'slot' => 'character',
                     'fit' => 'cover',
                     'gravity' => 'south',

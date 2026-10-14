@@ -34,6 +34,7 @@ class LearningAvatarProfileUpdateTest extends TestCase
         Schema::create('users', function ($table) {
             $table->increments('id');
             $table->string('name');
+            $table->boolean('birthday_hidden')->default(false);
             $table->string('role')->default('student');
             $table->string('email')->unique();
             $table->string('password');

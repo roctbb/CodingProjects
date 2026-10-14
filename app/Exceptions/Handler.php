@@ -8,6 +8,8 @@ use Throwable;
 
 class Handler extends ExceptionHandler
 {
+    protected $dontFlash = ['current_password', 'password', 'password_confirmation', 'secrets'];
+
     /**
      * A list of the exception types that should not be reported.
      *

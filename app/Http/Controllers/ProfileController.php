@@ -9,13 +9,16 @@ use App\CourseActivity;
 use App\Achievement;
 use App\Http\Controllers\Controller;
 use App\Rank;
-use App\Services\AchievementTrophyGenerator;
+use App\RoomCharacterGeneration;
+use App\Services\CoinWallet;
+use App\Jobs\GenerateAchievementTrophy;
 use App\Solution;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Auth;
@@ -125,21 +128,22 @@ class ProfileController extends Controller
         $customAvatarFrameCost = $user->customAvatarFrameCost();
         $customAvatarFrameDefaults = User::sanitizeCustomAvatarFrameConfig(old('avatar_frame_config', $user->avatar_frame_config ?: User::customAvatarFrameDefaults()));
         $learningAvatarData = $user->learningAvatarRenderData();
+        $roomCharacterAvailable = $guest->id == $user->id && Schema::hasTable('room_character_generations');
+        $roomCharacterGeneration = $roomCharacterAvailable
+            ? RoomCharacterGeneration::where('user_id', $user->id)->latest('id')->first() : null;
         $achievements = $user->achievements
             ->where('status', \App\Achievement::STATUS_PUBLISHED)
             ->sortByDesc('published_at')
             ->values();
-        $achievementIconOptions = Achievement::iconOptions();
-        $achievementVisualOptions = Achievement::visualOptions();
 
         // Use cached sticker retrieval and descriptions
         $stickers = $user->getStickers();
         $sticker_description = $user->getStickerDescriptions();
 
-        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'canManageMoney', 'avatarFrames', 'activeAvatarFrame', 'customAvatarFrameCost', 'customAvatarFrameDefaults', 'learningAvatarData', 'achievements', 'achievementIconOptions', 'achievementVisualOptions'));
+        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'canManageMoney', 'avatarFrames', 'activeAvatarFrame', 'customAvatarFrameCost', 'customAvatarFrameDefaults', 'learningAvatarData', 'achievements', 'roomCharacterAvailable', 'roomCharacterGeneration'));
     }
 
-    public function updateAchievement($user_id, $achievement_id, Request $request, AchievementTrophyGenerator $trophyGenerator)
+    public function updateAchievement($user_id, $achievement_id, Request $request)
     {
         $achievement = Achievement::with('course.teachers')
             ->where('user_id', $user_id)
@@ -154,74 +158,32 @@ class ProfileController extends Controller
             abort(403);
         }
 
-        $iconKeys = implode(',', array_keys(Achievement::iconOptions()));
-        $this->validate($request, [
+        $request->merge([
+            'title' => is_string($request->title) ? trim(strip_tags($request->title)) : $request->title,
+            'description' => is_string($request->description) ? trim(strip_tags($request->description)) : $request->description,
+        ]);
+        $data = $request->validate([
             'title' => 'required|string|max:120',
             'description' => 'required|string|max:1000',
-            'icon_key' => 'required|string|in:' . $iconKeys,
-            'visual_key' => 'nullable|string|in:' . implode(',', array_keys(Achievement::visualOptions())),
-            'clear_svg_icon' => 'nullable|boolean',
             'regenerate_trophy' => 'nullable|boolean',
         ]);
 
-        $achievement->title = trim(strip_tags((string) $request->title));
-        $achievement->description = trim(strip_tags((string) $request->description));
-        $achievement->icon_key = $request->icon_key;
-        $payload = $achievement->payload ?: [];
-        $payload['visual_key'] = $request->visual_key ?: null;
-        if ($request->has('clear_svg_icon')) {
-            unset($payload['svg_icon']);
-        }
-        $achievement->payload = $payload;
-        $achievement->save();
-
-        if ($request->has('regenerate_trophy')) {
-            try {
-                $trophyGenerator->generateForAchievement($achievement);
-            } catch (\Throwable $e) {
-                \Log::error('Achievement trophy regeneration failed', [
-                    'achievement_id' => $achievement->id,
-                    'exception' => get_class($e),
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                ]);
-
-                $this->syncAchievementActivityPayload($achievement);
-                $this->make_error_alert('Кубок не обновился', 'Текст достижения сохранен, но картинку кубка не удалось перегенерировать.');
-
-                return redirect('/insider/profile/' . $achievement->user_id . '#achievement-' . $achievement->id);
+        DB::transaction(function () use ($achievement, $data) {
+            $achievement->title = $data['title'];
+            $achievement->description = $data['description'];
+            $achievement->save();
+            CourseActivity::recordAchievementEarned($achievement);
+            if (!empty($data['regenerate_trophy'])) {
+                GenerateAchievementTrophy::dispatch($achievement->id, true)->afterCommit();
             }
-        }
+        });
 
-        $this->syncAchievementActivityPayload($achievement);
-
-        $message = $request->has('regenerate_trophy')
-            ? 'Изменения сохранены, картинка кубка обновлена.'
+        $message = $request->boolean('regenerate_trophy')
+            ? 'Изменения сохранены. Новый кубок появится после генерации.'
             : 'Изменения сохранены в профиле и пульсе.';
         $this->make_success_alert('Достижение обновлено', $message);
 
         return redirect('/insider/profile/' . $achievement->user_id . '#achievement-' . $achievement->id);
-    }
-
-    private function syncAchievementActivityPayload(Achievement $achievement): void
-    {
-        CourseActivity::where('type', CourseActivity::TYPE_AI_ACHIEVEMENT_EARNED)
-            ->where('solution_id', $achievement->solution_id)
-            ->where('task_id', $achievement->task_id)
-            ->where('user_id', $achievement->user_id)
-            ->get()
-            ->each(function ($activity) use ($achievement) {
-                $payload = $activity->payload ?: [];
-                $payload['achievement_title'] = $achievement->title;
-                $payload['achievement_description'] = $achievement->description;
-                $payload['icon_key'] = $achievement->icon_key;
-                $payload['visual_key'] = $achievement->payload['visual_key'] ?? null;
-                $payload['svg_icon'] = $achievement->payload['svg_icon'] ?? null;
-                $payload['trophy_image'] = $achievement->payload['trophy_image'] ?? null;
-                $activity->payload = $payload;
-                $activity->save();
-            });
     }
 
     public function deleteAchievement($user_id, $achievement_id)
@@ -376,20 +338,21 @@ class ProfileController extends Controller
         }
 
         $cost = $user->customTitleCost();
-        if ($user->balance() < $cost) {
+        $user = app(CoinWallet::class)->transaction($user->id, function (User $lockedUser) use ($cost, $title) {
+            if ($lockedUser->balance() < $cost) {
+                return null;
+            }
+            $startsAt = $lockedUser->hasActiveCustomTitle() ? $lockedUser->custom_title_expires_at : Carbon::now();
+            $lockedUser->custom_title = $title;
+            $lockedUser->custom_title_expires_at = $startsAt->copy()->addDays($lockedUser->customTitleDurationDays());
+            $lockedUser->save();
+            CoinTransaction::register($lockedUser->id, -$cost, 'Custom title User #' . $lockedUser->id);
+            return $lockedUser;
+        });
+        if (!$user) {
             $this->make_error_alert('Не хватает GC', 'Кастомное звание стоит ' . $cost . ' GC.');
             return redirect()->back()->withInput();
         }
-
-        $startsAt = $user->hasActiveCustomTitle()
-            ? $user->custom_title_expires_at
-            : Carbon::now();
-
-        $user->custom_title = $title;
-        $user->custom_title_expires_at = $startsAt->copy()->addDays($user->customTitleDurationDays());
-        $user->save();
-
-        CoinTransaction::register($user->id, -1 * $cost, 'Custom title User #' . $user->id);
 
         $this->make_success_alert('Звание активно', 'Звание будет показываться в профиле до ' . $user->custom_title_expires_at->format('d.m.Y') . '.');
 
@@ -428,21 +391,23 @@ class ProfileController extends Controller
             : $frames[$frameKey];
         $cost = (int) $frame['cost'];
 
-        if ($user->balance() < $cost) {
+        $user = app(CoinWallet::class)->transaction($user->id, function (User $lockedUser) use ($cost, $frameKey, $customFrameConfig) {
+            if ($lockedUser->balance() < $cost) {
+                return null;
+            }
+            $startsAt = $lockedUser->hasActiveAvatarFrame() && $lockedUser->avatar_frame === $frameKey
+                ? $lockedUser->avatar_frame_expires_at : Carbon::now();
+            $lockedUser->avatar_frame = $frameKey;
+            $lockedUser->avatar_frame_config = $customFrameConfig;
+            $lockedUser->avatar_frame_expires_at = $startsAt->copy()->addDays($lockedUser->avatarFrameDurationDays($frameKey));
+            $lockedUser->save();
+            CoinTransaction::register($lockedUser->id, -$cost, 'Avatar frame ' . $frameKey . ' User #' . $lockedUser->id);
+            return $lockedUser;
+        });
+        if (!$user) {
             $this->make_error_alert('Не хватает GC', 'Рамка "' . $frame['name'] . '" стоит ' . $cost . ' GC.');
             return redirect()->back();
         }
-
-        $startsAt = $user->hasActiveAvatarFrame() && $user->avatar_frame === $frameKey
-            ? $user->avatar_frame_expires_at
-            : Carbon::now();
-
-        $user->avatar_frame = $frameKey;
-        $user->avatar_frame_config = $customFrameConfig;
-        $user->avatar_frame_expires_at = $startsAt->copy()->addDays($user->avatarFrameDurationDays($frameKey));
-        $user->save();
-
-        CoinTransaction::register($user->id, -1 * $cost, 'Avatar frame ' . $frameKey . ' User #' . $user->id);
 
         $this->make_success_alert(
             'Рамка активна',

@@ -2,9 +2,10 @@
 
 namespace App\Services;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
-use Illuminate\Support\Facades\Log;
+use App\Services\Ai\ResponsesClient;
+use App\Services\Ai\AiSettings;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
 
 class ChatGptService
 {
@@ -14,144 +15,150 @@ class ChatGptService
         'image/webp' => 'webp',
     ];
 
-    public function generate(array $messages, array $options = [])
+    public function __construct(private ResponsesClient $responses, private AiSettings $aiSettings)
     {
-        $token = config('services.chatgpt.key');
-        $gateway = config('services.chatgpt.gateway');
-        $model = $options['model'] ?? config('services.chatgpt.model');
-        $timeout = $options['timeout'] ?? 90;
+    }
 
-        if (!$token || !$gateway || !$model) {
-            throw new \RuntimeException('ChatGPT gateway credentials are not configured');
+    public function generate(array $messages, array $options = []): string
+    {
+        $settings = $this->settings('text', $options);
+        $data = $this->responses->create([
+            'model' => $settings['model'],
+            'input' => $this->normalizeMessages($messages),
+        ], $settings['provider'], $settings['connection'], $settings['timeout'], $options['command'] ?? null);
+
+        $parts = [];
+        foreach ($data['output'] ?? [] as $item) {
+            if (($item['type'] ?? null) !== 'message') {
+                continue;
+            }
+            foreach (is_array($item['content'] ?? null) ? $item['content'] : [] as $content) {
+                if (($content['type'] ?? null) === 'output_text' && is_string($content['text'] ?? null)) {
+                    $parts[] = $content['text'];
+                }
+            }
+        }
+        $text = trim(implode("\n", $parts));
+        if ($text === '') {
+            throw new \RuntimeException('AI returned no text');
         }
 
-        try {
-            $response = (new Client())->post($gateway, [
-                'json' => [
-                    'token' => $token,
-                    'model' => $model,
-                    'input' => $this->normalizeMessages($messages),
-                ],
-                'timeout' => $timeout,
-            ]);
-        } catch (RequestException $e) {
-            Log::error('ChatGPT gateway request failed', [
-                'status_code' => $e->hasResponse() ? $e->getResponse()->getStatusCode() : null,
-                'response_body' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : null,
-                'message' => $e->getMessage(),
-            ]);
-
-            throw new \RuntimeException('ChatGPT gateway request failed: ' . $e->getMessage(), 0, $e);
-        }
-
-        $data = json_decode($response->getBody()->getContents(), true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException('Invalid JSON response from ChatGPT gateway: ' . json_last_error_msg());
-        }
-
-        if (!empty($data['error'])) {
-            throw new \RuntimeException('ChatGPT gateway error: ' . $data['error']);
-        }
-
-        $message = collect($data['result']['output'] ?? [])
-            ->first(function ($item) {
-                return ($item['type'] ?? null) === 'message';
-            });
-
-        $text = $message['content'][0]['text'] ?? null;
-
-        if (!is_string($text) || trim($text) === '') {
-            Log::error('ChatGPT gateway invalid response format', ['response_data' => $data]);
-            throw new \RuntimeException('ChatGPT gateway returned no text');
-        }
-
-        return trim($text);
+        return $text;
     }
 
     public function generateImage(array $messages, array $options = []): array
     {
-        $token = config('services.chatgpt.key');
-        $gateway = config('services.chatgpt.gateway');
-        $model = $options['model'] ?? config('services.chatgpt.image_model') ?? config('services.chatgpt.model');
-        $timeout = $options['timeout'] ?? 180;
-
-        if (!$token || !$gateway || !$model) {
-            throw new \RuntimeException('ChatGPT gateway credentials are not configured');
-        }
-
+        $settings = $this->settings('image', $options);
+        $startedAt = hrtime(true);
         $imageTool = ['type' => 'image_generation'];
         foreach (['size', 'quality', 'output_format', 'background'] as $optionKey) {
             if (!empty($options[$optionKey])) {
                 $imageTool[$optionKey] = $options[$optionKey];
             }
         }
-
-        $requestPayload = [
-            'token' => $token,
-            'model' => $model,
+        $data = $this->responses->create([
+            'model' => $settings['model'],
             'input' => $this->normalizeMessages($messages),
-            'params' => [
-                'tools' => [$imageTool],
-            ],
-        ];
-
-        if (!empty($options['tool_choice'])) {
-            $requestPayload['params']['tool_choice'] = $options['tool_choice'];
-        }
-
-        try {
-            $client = new Client();
-            $response = $client->post($gateway, [
-                'json' => $requestPayload,
-                'timeout' => $timeout,
-            ]);
-        } catch (RequestException $e) {
-            Log::error('ChatGPT gateway image request failed', [
-                'status_code' => $e->hasResponse() ? $e->getResponse()->getStatusCode() : null,
-                'response_body' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : null,
-                'message' => $e->getMessage(),
-            ]);
-
-            throw new \RuntimeException('ChatGPT gateway image request failed: ' . $e->getMessage(), 0, $e);
-        }
-
-        $data = json_decode($response->getBody()->getContents(), true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException('Invalid JSON response from ChatGPT gateway: ' . json_last_error_msg());
-        }
-
-        if (!empty($data['error'])) {
-            throw new \RuntimeException('ChatGPT gateway error: ' . $data['error']);
-        }
+            'tools' => [$imageTool],
+            'tool_choice' => ['type' => 'image_generation'],
+        ], $settings['provider'], $settings['connection'], $settings['timeout'], $options['command'] ?? null);
 
         $image = self::imageFromResponsePayload($data);
         if (!empty($image['url']) && empty($image['bytes'])) {
-            $image = $this->downloadImage($image['url'], $timeout);
+            $remaining = $settings['timeout'] - (hrtime(true) - $startedAt) / 1e9;
+            if ($remaining <= 0) {
+                throw new \RuntimeException('AI image request timed out before download');
+            }
+            $image = $this->downloadImage($image['url'], $remaining, $settings['connection']['proxy'] ?? null);
         }
-
         if (empty($image['bytes']) || !is_string($image['bytes'])) {
-            Log::error('ChatGPT gateway invalid image response format', ['response_data' => $data]);
-            throw new \RuntimeException('ChatGPT gateway returned no image bytes');
+            throw new \RuntimeException('AI returned no image bytes');
         }
 
-        $mime = $this->detectImageMime($image['bytes'], $image['mime'] ?? null);
+        // Validate the actual bytes, not a provider's MIME label or data URL.
+        $info = @getimagesizefromstring($image['bytes']);
+        $mime = $info['mime'] ?? null;
         if (!isset(self::IMAGE_MIME_EXTENSIONS[$mime])) {
-            throw new \RuntimeException('ChatGPT gateway returned unsupported image type: ' . $mime);
+            throw new \RuntimeException('AI returned an invalid or unsupported image');
         }
 
         return [
             'bytes' => $image['bytes'],
             'mime' => $mime,
             'extension' => self::IMAGE_MIME_EXTENSIONS[$mime],
-            'model' => $model,
+            'model' => $settings['model'],
         ];
+    }
+
+    private function settings(string $type, array $options): array
+    {
+        $command = $options['command'] ?? null;
+        $configuration = $this->aiSettings->all();
+        $commands = $configuration['commands'];
+        if ($command !== null && (!is_string($command) || !isset($commands[$command]))) {
+            throw new \InvalidArgumentException('Unknown AI command');
+        }
+        $settings = $command === null ? [] : $commands[$command];
+        if (isset($settings['type']) && $settings['type'] !== $type) {
+            throw new \InvalidArgumentException('AI command does not support ' . $type . ' generation');
+        }
+        $settings = [
+            'provider' => ($settings['provider'] ?? null) ?: $configuration['provider'],
+            'model' => $options['model'] ?? (($settings['model'] ?? null) ?: $configuration['defaults'][$type]['model']),
+            'timeout' => $options['timeout'] ?? $settings['timeout'] ?? $configuration['defaults'][$type]['timeout'],
+        ];
+        if (!is_string($settings['model']) || trim($settings['model']) === '') {
+            throw new \RuntimeException('AI model is not configured');
+        }
+        if (!is_string($settings['provider']) || trim($settings['provider']) === '') {
+            throw new \RuntimeException('AI provider is not configured');
+        }
+        if (!is_int($settings['timeout']) || $settings['timeout'] <= 0) {
+            throw new \InvalidArgumentException('AI timeout must be a positive integer');
+        }
+
+        $settings['connection'] = $configuration['providers'][$settings['provider']] ?? [];
+
+        return $settings;
     }
 
     public static function imageFromResponsePayload(array $data): array
     {
-        $found = self::findImagePayload($data);
+        $data = is_array($data['result'] ?? null) ? $data['result'] : $data;
+        $output = is_array($data['output'] ?? null) ? $data['output'] : [];
+        $found = null;
+        foreach ($output as $item) {
+            if (($item['type'] ?? null) === 'image_generation_call') {
+                $found = self::findImagePayload($item);
+                if ($found) {
+                    break;
+                }
+            }
+        }
+        // Some gateways return Images-style data or a data URL in output_text.
+        if (!$found && is_array($data['data'] ?? null)) {
+            $found = self::findImagePayload($data['data']);
+        }
+        if (!$found) {
+            foreach ($output as $item) {
+                if (($item['type'] ?? null) !== 'message') {
+                    continue;
+                }
+                foreach (is_array($item['content'] ?? null) ? $item['content'] : [] as $content) {
+                    if (($content['type'] ?? null) === 'output_text') {
+                        $found = self::findImagePayload($content['text'] ?? null);
+                        if ($found) {
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+        if (!$found) {
+            $found = self::findImagePayload(array_intersect_key($data, array_flip([
+                'b64_json', 'base64', 'image_base64', 'url', 'image_url', 'mime', 'mime_type',
+            ])));
+        }
         if (!$found) {
             return [];
         }
@@ -235,53 +242,19 @@ class ChatGptService
         return null;
     }
 
-    private function downloadImage(string $url, int $timeout): array
+    private function downloadImage(string $url, float $timeout, ?string $proxy): array
     {
         try {
-            $response = (new Client())->get($url, [
-                'timeout' => $timeout,
-                'http_errors' => false,
-            ]);
-        } catch (RequestException $e) {
-            throw new \RuntimeException('ChatGPT gateway image download failed: ' . $e->getMessage(), 0, $e);
+            // A fresh request deliberately carries no provider credentials.
+            $response = Http::timeout($timeout)->connectTimeout(min(10, $timeout))
+                ->withOptions(['proxy' => $proxy ?? ''])->get($url);
+        } catch (ConnectionException $e) {
+            throw new \RuntimeException('AI image download failed');
+        }
+        if (!$response->successful()) {
+            throw new \RuntimeException('AI image download failed with HTTP ' . $response->status());
         }
 
-        if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
-            throw new \RuntimeException('ChatGPT gateway image download failed with status ' . $response->getStatusCode());
-        }
-
-        return [
-            'bytes' => (string) $response->getBody(),
-            'mime' => $response->getHeaderLine('Content-Type') ?: null,
-        ];
-    }
-
-    private function detectImageMime(string $bytes, ?string $preferredMime = null): string
-    {
-        $preferredMime = $preferredMime ? strtolower(trim(explode(';', $preferredMime)[0])) : null;
-        if ($preferredMime && isset(self::IMAGE_MIME_EXTENSIONS[$preferredMime])) {
-            return $preferredMime;
-        }
-
-        $detected = function_exists('finfo_buffer')
-            ? (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes)
-            : null;
-        if (is_string($detected) && isset(self::IMAGE_MIME_EXTENSIONS[$detected])) {
-            return $detected;
-        }
-
-        if (strncmp($bytes, "\x89PNG\r\n\x1a\n", 8) === 0) {
-            return 'image/png';
-        }
-
-        if (strncmp($bytes, "\xff\xd8\xff", 3) === 0) {
-            return 'image/jpeg';
-        }
-
-        if (strncmp($bytes, 'RIFF', 4) === 0 && substr($bytes, 8, 4) === 'WEBP') {
-            return 'image/webp';
-        }
-
-        return $detected ?: 'application/octet-stream';
+        return ['bytes' => $response->body()];
     }
 }

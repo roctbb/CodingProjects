@@ -23,7 +23,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libonig-dev \
     libpq-dev \
     libpng-dev \
+    libjpeg62-turbo-dev \
+    libwebp-dev \
     zip \
+    && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" curl zip pdo pdo_pgsql xml gd mbstring \
     && pecl install https://pecl.php.net/get/redis-6.3.0.tgz \
     && docker-php-ext-enable redis \
@@ -62,7 +65,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libonig-dev \
     libpq-dev \
     libpng-dev \
+    libjpeg62-turbo-dev \
+    libwebp-dev \
     zip \
+    && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" curl zip pdo pdo_pgsql xml gd mbstring \
     && pecl install https://pecl.php.net/get/redis-6.3.0.tgz \
     && docker-php-ext-enable redis \
@@ -85,7 +91,8 @@ WORKDIR /var/www/html
 COPY --from=builder /app /var/www/html
 COPY --from=assets /app/public/build /var/www/html/public/build
 
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
+RUN mkdir -p /var/www/html/storage/app-private/room-character-sources \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 ENV APP_ENV=production \
     APP_DEBUG=false \

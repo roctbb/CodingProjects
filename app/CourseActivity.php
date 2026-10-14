@@ -82,6 +82,37 @@ class CourseActivity extends Model
         return $this->belongsTo('App\User', 'user_id', 'id');
     }
 
+    public function getAchievementIdAttribute(): ?int
+    {
+        if ($this->type !== self::TYPE_AI_ACHIEVEMENT_EARNED) {
+            return null;
+        }
+        return filter_var($this->payload['achievement_id'] ?? null, FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1]]) ?: null;
+    }
+
+    public function achievement()
+    {
+        // The ID is already stored in the event payload; no duplicate image path is needed.
+        return $this->belongsTo(Achievement::class, 'achievement_id')
+            ->where('status', Achievement::STATUS_PUBLISHED);
+    }
+
+    public function achievementImageUrl(): ?string
+    {
+        if (!$this->achievement_id) {
+            return null;
+        }
+        $achievement = $this->achievement;
+        if (!$achievement || $achievement->status !== Achievement::STATUS_PUBLISHED
+            || (int) $achievement->user_id !== (int) $this->user_id
+            || (int) $achievement->course_id !== (int) $this->course_id
+            || (int) $achievement->task_id !== (int) $this->task_id) {
+            return null;
+        }
+        return $achievement->trophyImageUrl();
+    }
+
     public static function recordActivity(array $attributes)
     {
         try {
@@ -555,22 +586,19 @@ class CourseActivity extends Model
             return null;
         }
 
-        return static::recordActivity([
+        return static::updateOrCreate([
+            'type' => static::TYPE_AI_ACHIEVEMENT_EARNED,
+            'task_id' => $task->id,
+            'user_id' => $achievement->user_id,
+        ], [
             'course_id' => $course->id,
             'lesson_id' => $lesson ? $lesson->id : null,
             'step_id' => $step ? $step->id : null,
-            'task_id' => $task->id,
             'solution_id' => $achievement->solution_id,
-            'user_id' => $achievement->user_id,
-            'type' => static::TYPE_AI_ACHIEVEMENT_EARNED,
             'payload' => static::basePayload($course, $lesson, $task) + [
                 'achievement_id' => $achievement->id,
                 'achievement_title' => $achievement->title,
                 'achievement_description' => $achievement->description,
-                'icon_key' => $achievement->icon_key,
-                'visual_key' => $achievement->payload['visual_key'] ?? null,
-                'svg_icon' => $achievement->payload['svg_icon'] ?? null,
-                'trophy_image' => $achievement->payload['trophy_image'] ?? null,
             ],
         ]);
     }
@@ -968,7 +996,7 @@ class CourseActivity extends Model
             case static::TYPE_TASK_AI_SUMMARY:
                 return 'fas fa-newspaper';
             case static::TYPE_AI_ACHIEVEMENT_EARNED:
-                return Achievement::iconOptions()[$payload['icon_key'] ?? 'sparkles'] ?? 'fas fa-magic';
+                return 'fas fa-trophy';
             case static::TYPE_MARKET_PURCHASE:
                 return 'fas fa-shopping-bag';
             case static::TYPE_MARKET_AUCTION_WON:
@@ -1006,18 +1034,6 @@ class CourseActivity extends Model
             default:
                 return 'fas fa-magic';
         }
-    }
-
-    public function svgIcon(): ?string
-    {
-        $payload = $this->payload ?: [];
-
-        if ($this->type !== static::TYPE_AI_ACHIEVEMENT_EARNED) {
-            return null;
-        }
-
-        return Achievement::sanitizeSvgIcon($payload['svg_icon'] ?? null)
-            ?: Achievement::svgForVisualKey($payload['visual_key'] ?? null);
     }
 
     public function toneClass()

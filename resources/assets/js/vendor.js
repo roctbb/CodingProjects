@@ -1,4 +1,5 @@
 import axios from 'axios';
+import initRoomCharacters from './room-character';
 import autosize from 'autosize';
 import flatpickr from 'flatpickr';
 import { Russian } from 'flatpickr/dist/l10n/ru.js';
@@ -42,6 +43,7 @@ if (token) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    initRoomCharacters();
     // Auto-init toasts
     document.querySelectorAll('.toast[data-bs-autohide]').forEach(function (el) {
         new bootstrap.Toast(el).show();
@@ -267,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!layer || !layer.src) return null;
 
             return {
-                src: layer.src,
+                src: preview.dataset.customCharacterUrl || layer.src,
                 order: layer.order || '99',
                 fullCanvas: layer.fullCanvas ? '1' : '0',
                 slot: layer.slot || 'character',
@@ -293,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!selectedOption || !selectedOption.dataset.characterSrc) return null;
 
             return {
-                src: selectedOption.dataset.characterSrc,
+                src: preview.dataset.customCharacterUrl || selectedOption.dataset.characterSrc,
                 order: selectedOption.dataset.characterOrder || '99',
                 fullCanvas: selectedOption.dataset.characterFullCanvas || '0',
                 slot: selectedOption.dataset.characterSlot || 'character',

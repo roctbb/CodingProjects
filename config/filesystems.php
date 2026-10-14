@@ -43,6 +43,13 @@ return [
 
     'disks' => [
 
+        // Avatar snapshots must stay outside the root exposed by /media/{dir}/{name}.
+        'room_character_sources' => [
+            'driver' => 'local',
+            'root' => storage_path('app-private/room-character-sources'),
+            'visibility' => 'private',
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app'),

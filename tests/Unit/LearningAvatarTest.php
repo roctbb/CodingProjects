@@ -473,14 +473,12 @@ class LearningAvatarTest extends TestCase
         $this->assertSame('custom', $layers[0]['trophyTemplate']);
     }
 
-    public function testPublishedAchievementCustomTrophyImageOverridesTemplate()
+    public function testPublishedAchievementRendersItsPngTrophy()
     {
         $achievement = new Achievement([
             'status' => Achievement::STATUS_PUBLISHED,
             'title' => 'Квантовый сантехник',
-            'icon_key' => 'code',
             'payload' => [
-                'visual_key' => 'pipes',
                 'trophy_image' => '/media/achievement-trophies/quantum-plumber.png',
             ],
         ]);

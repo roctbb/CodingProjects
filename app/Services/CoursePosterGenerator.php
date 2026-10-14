@@ -10,8 +10,8 @@ use Illuminate\Support\Str;
 
 class CoursePosterGenerator
 {
-    private const WIDTH = 768;
-    private const HEIGHT = 1152;
+    private const WIDTH = 1024;
+    private const HEIGHT = 1536;
     private const QUALITY = 'medium';
 
     private ChatGptService $chatGpt;
@@ -28,11 +28,10 @@ class CoursePosterGenerator
             ['role' => 'system', 'content' => $this->systemPrompt()],
             ['role' => 'user', 'content' => $prompt],
         ], [
-            'model' => $this->posterModel(),
+            'command' => 'course_poster',
             'size' => self::WIDTH . 'x' . self::HEIGHT,
             'quality' => self::QUALITY,
             'output_format' => 'png',
-            'timeout' => 180,
         ]);
 
         $relativePath = $this->storeImage($program, $image);
@@ -128,12 +127,5 @@ class CoursePosterGenerator
         }
 
         return $relativePath;
-    }
-
-    private function posterModel(): string
-    {
-        return config('services.chatgpt.poster_model')
-            ?: config('services.chatgpt.image_model')
-            ?: config('services.chatgpt.model');
     }
 }

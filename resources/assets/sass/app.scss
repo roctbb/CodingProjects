@@ -2374,7 +2374,7 @@ body {
 .solution-achievement-context {
   display: grid;
   gap: 0.68rem;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   padding: 0.95rem 1rem !important;
 }
 
@@ -2429,11 +2429,7 @@ body {
   width: 2.25rem;
 }
 
-.solution-achievement-preview__icon svg,
-.solution-achievement-variant__icon svg,
-.profile-achievement__icon svg,
-.gc-icon-tile svg,
-.pulse-feed__icon svg {
+.gc-icon-tile svg {
   display: block;
   height: 1.35rem;
   width: 1.35rem;
@@ -2509,11 +2505,12 @@ body {
   margin: 0;
 }
 
-.solution-achievement-variant__selects {
+.solution-achievement-variant__reward {
   align-items: end;
   display: grid;
   gap: 0.42rem;
-  grid-template-columns: auto minmax(7rem, 1fr) auto minmax(8rem, 1fr) auto minmax(5rem, 6rem);
+  grid-template-columns: auto minmax(5rem, 6rem);
+  justify-content: start;
 }
 
 .solution-achievement-variant__actions {
@@ -2555,7 +2552,7 @@ body {
     grid-column: 1 / -1;
   }
 
-  .solution-achievement-variant__selects {
+  .solution-achievement-variant__reward {
     grid-template-columns: 1fr;
   }
 }
@@ -7227,6 +7224,18 @@ a:hover {
 
 .pulse-feed__icon i {
   font-size: 0.88rem;
+}
+
+.pulse-feed__icon--image {
+  height: 3rem;
+  padding: 0.125rem;
+  width: 3rem;
+}
+
+.pulse-feed__icon img {
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
 }
 
 .pulse-feed__item.is-score .pulse-feed__icon {

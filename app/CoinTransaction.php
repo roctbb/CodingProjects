@@ -4,6 +4,7 @@ namespace App;
 
 use App\Notifications\NewCoinTransaction;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -73,6 +74,14 @@ class CoinTransaction extends Authenticatable
             return 'Кастомное звание в профиле';
         }
 
+        if (preg_match('/^Room character #(\d+)$/', $comment)) {
+            return 'Создание персонажа комнаты по аватарке';
+        }
+
+        if (preg_match('/^Room character refund #(\d+)$/', $comment)) {
+            return 'Возврат за неудачную генерацию персонажа';
+        }
+
         if (preg_match('/^Avatar frame ([a-z0-9_-]+) User #(\d+)$/', $comment, $matches)) {
             $frames = User::avatarFrames();
             $frameName = $matches[1] === 'custom' ? 'Своя рамка' : ($frames[$matches[1]]['name'] ?? null);
@@ -135,7 +144,7 @@ class CoinTransaction extends Authenticatable
         $transaction->comment = $comment;
         $transaction->save();
         $transaction->withNotification($notificationText, $notificationType, $notificationIcon);
-        $transaction->notifyUser();
+        DB::afterCommit(fn () => $transaction->notifyUser());
 
         return $transaction;
     }

@@ -73,9 +73,18 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/jwt', 'RemoteAuthController@remoteAuth');
 
-    // ChatGPT text improvement API
-    Route::post('/chatgpt/improve-text', 'YandexGPTController@improveText');
-    Route::post('/yandexgpt/improve-text', 'YandexGPTController@improveText');
+    // Keep both existing URLs compatible with older editors.
+    Route::post('/chatgpt/improve-text', 'TextImprovementController@improveText');
+    Route::post('/yandexgpt/improve-text', 'TextImprovementController@improveText');
+
+    Route::get('/settings/ai', 'AiSettingsController@edit')->name('settings.ai.edit');
+    Route::put('/settings/ai', 'AiSettingsController@update')->name('settings.ai.update');
+    Route::delete('/settings/ai', 'AiSettingsController@reset')->name('settings.ai.reset');
+
+    Route::post('/profile/{user_id}/room-character', 'RoomCharacterController@store')
+        ->whereNumber('user_id')->middleware('throttle:10,1')->name('room-character.store');
+    Route::get('/profile/{user_id}/room-character/{generation_id}', 'RoomCharacterController@show')
+        ->whereNumber(['user_id', 'generation_id'])->name('room-character.show');
 
     Route::get('/market', 'MarketController@index');
     Route::get('/market/credit', 'MarketController@creditView');

@@ -250,8 +250,7 @@ class MarketController extends Controller
         $user = User::findOrFail(Auth::User()->id);
 
         try {
-            $item = DB::transaction(function () use ($user, $itemKey) {
-                $lockedUser = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $item = app(\App\Services\CoinWallet::class)->transaction($user->id, function (User $lockedUser) use ($itemKey) {
                 $catalog = User::learningAvatarItemCatalog();
                 $itemCost = (int) ($catalog[$itemKey]['cost'] ?? 0);
 

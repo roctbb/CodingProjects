@@ -6,6 +6,7 @@
 /public/storage
 /public/build/
 /storage/*.key
+/storage/app-private/
 /storage/framework/views/*.php
 /vendor
 .phpunit.result.cache

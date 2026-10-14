@@ -29,6 +29,10 @@ start-dev-windows.bat
 
 Настройка OpenID Connect, redirect URI и переменных окружения описана в [docs/silaeder-oidc.md](docs/silaeder-oidc.md).
 
+### Запросы к ИИ
+
+Выбор собственного шлюза или прямого OpenAI API, ключей, эндпоинтов и моделей описан в [docs/ai.md](docs/ai.md).
+
 ## Telegram уведомления в Docker
 Для уведомлений аукционов через Telegram заполните переменные в `.env`:
 

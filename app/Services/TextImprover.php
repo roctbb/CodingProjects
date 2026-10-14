@@ -1,64 +1,22 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services;
 
-use App\Services\ChatGptService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-
-class YandexGPTController extends Controller
+class TextImprover
 {
-    private $chatGpt;
-
-    public function __construct(?ChatGptService $chatGpt = null)
+    public function __construct(private ChatGptService $chatGpt)
     {
-        $this->chatGpt = $chatGpt ?: app(ChatGptService::class);
     }
 
-    public function improveText(Request $request)
+    public function improve(string $text, string $action): string
     {
-        $request->validate([
-            'text' => 'required|string|max:10000',
-            'action' => 'required|string|in:fix_typos,improve_style,both'
-        ]);
-
-        $text = $request->input('text');
-        $action = $request->input('action');
-
-        try {
-            $improvedText = $this->callChatGpt($text, $action);
-
-            return response()->json([
-                'success' => true,
-                'original_text' => $text,
-                'improved_text' => $improvedText
-            ]);
-        } catch (\Exception $e) {
-            Log::error('ChatGPT text improvement error: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'error' => 'Произошла ошибка при обработке текста. Попробуйте позже.'
-            ], 500);
-        }
-    }
-
-    private function callChatGpt($text, $action)
-    {
-        $prompt = $this->getPromptForAction($action);
-
         return $this->chatGpt->generate([
-            ['role' => 'system', 'content' => $prompt],
+            ['role' => 'system', 'content' => $this->getPromptForAction($action)],
             ['role' => 'user', 'content' => $text],
-        ], ['timeout' => 60]);
+        ], ['command' => 'text_improvement']);
     }
 
-    private function callYandexGPT($text, $action)
-    {
-        return $this->callChatGpt($text, $action);
-    }
-
-    private function getPromptForAction($action)
+    private function getPromptForAction(string $action): string
     {
         switch ($action) {
             case 'fix_typos':

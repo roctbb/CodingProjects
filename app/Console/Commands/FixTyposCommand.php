@@ -7,7 +7,7 @@ use App\Lesson;
 use App\ProgramStep;
 use App\Task;
 use App\TextBackup;
-use App\Http\Controllers\YandexGPTController;
+use App\Services\TextImprover;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -26,24 +26,11 @@ class FixTyposCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Fix typos in course content using YandexGPT with backup functionality';
+    protected $description = 'Fix typos in course content using AI with backup functionality';
 
-    /**
-     * YandexGPT Controller instance
-     *
-     * @var YandexGPTController
-     */
-    protected $yandexGPT;
-
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function __construct(private TextImprover $textImprover)
     {
         parent::__construct();
-        $this->yandexGPT = new YandexGPTController();
     }
 
     /**
@@ -246,12 +233,7 @@ class FixTyposCommand extends Command
         }
 
         try {
-            // Use reflection to call the private method
-            $reflection = new \ReflectionClass($this->yandexGPT);
-            $method = $reflection->getMethod('callYandexGPT');
-            $method->setAccessible(true);
-
-            $correctedText = $method->invoke($this->yandexGPT, $originalText, 'fix_typos');
+            $correctedText = $this->textImprover->improve($originalText, 'fix_typos');
 
             if ($correctedText && $correctedText !== $originalText) {
                 $model->$field = $correctedText;

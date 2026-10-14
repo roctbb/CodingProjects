@@ -48,22 +48,12 @@
                 <span>Решение</span>
                 <strong>#{{ $solution->id }} · {{ optional($solution->submitted)->format('d.m.Y H:i') }}</strong>
             </div>
-            @if(!empty($achievementPreview['model']))
-                <div class="solution-achievement-context__item">
-                    <span>Модель</span>
-                    <strong>{{ $achievementPreview['model'] }}</strong>
-                </div>
-            @endif
         </div>
 
         <div class="solution-achievement-preview solution-achievement-preview--page">
             <div class="solution-achievement-preview__head">
                 <span class="solution-achievement-preview__icon">
-                    @if(!empty($achievementPreview['visual_svg']))
-                        {!! $achievementPreview['visual_svg'] !!}
-                    @else
-                        <i class="{{ $achievementPreview['icon_class'] }}"></i>
-                    @endif
+                    <i class="fas fa-trophy"></i>
                 </span>
                 <div class="min-width-0">
                     <div class="solution-achievement-preview__eyebrow">Варианты достижения</div>
@@ -73,22 +63,12 @@
 
             <div class="solution-achievement-preview__variants">
                 @foreach($achievementPreviewVariants as $variantIndex => $variant)
-                    @php
-                        $variantIconKey = $variant['icon_key'] ?? 'sparkles';
-                        $variantVisualKey = $variant['visual_key'] ?? '';
-                        $variantSvgIcon = \App\Achievement::sanitizeSvgIcon($variant['svg_icon'] ?? null);
-                        $variantSvg = $variantSvgIcon ?: \App\Achievement::svgForVisualKey($variantVisualKey);
-                    @endphp
                     <form method="post"
                           action="{{ url('insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/achievement') }}"
                           class="solution-achievement-variant">
                         {{ csrf_field() }}
                         <span class="solution-achievement-variant__icon">
-                            @if($variantSvg)
-                                {!! $variantSvg !!}
-                            @else
-                                <i class="{{ $achievementIconOptions[$variantIconKey] ?? $achievementIconOptions['sparkles'] }}"></i>
-                            @endif
+                            <i class="fas fa-trophy"></i>
                         </span>
                         <div class="solution-achievement-variant__fields min-width-0">
                             <label class="form-label" for="achievement-title-{{ $solution->id }}-{{ $variantIndex }}">Название</label>
@@ -97,31 +77,16 @@
                                    name="title"
                                    class="form-control rounded-3"
                                    maxlength="120"
-                                   value="{{ old('title', $variant['title'] ?? 'Сильное решение') }}"
+                                   value="{{ old('title', $variant['title']) }}"
                                    required>
                             <label class="form-label" for="achievement-description-{{ $solution->id }}-{{ $variantIndex }}">Описание</label>
                             <textarea id="achievement-description-{{ $solution->id }}-{{ $variantIndex }}"
                                       name="description"
                                       class="form-control rounded-3"
                                       rows="3"
-                                      required>{{ old('description', $variant['description'] ?? 'За сильное решение задачи.') }}</textarea>
-                            <div class="solution-achievement-variant__selects">
-                                <label class="form-label" for="achievement-icon-{{ $solution->id }}-{{ $variantIndex }}">Иконка</label>
-                                <select id="achievement-icon-{{ $solution->id }}-{{ $variantIndex }}"
-                                        name="icon_key"
-                                        class="form-select rounded-3">
-                                    @foreach($achievementIconOptions as $iconKey => $iconClass)
-                                        <option value="{{ $iconKey }}" @if(old('icon_key', $variantIconKey) === $iconKey) selected @endif>{{ $iconKey }}</option>
-                                    @endforeach
-                                </select>
-                                <label class="form-label" for="achievement-visual-{{ $solution->id }}-{{ $variantIndex }}">SVG</label>
-                                <select id="achievement-visual-{{ $solution->id }}-{{ $variantIndex }}"
-                                        name="visual_key"
-                                        class="form-select rounded-3">
-                                    @foreach($achievementVisualOptions as $visualKey => $visualLabel)
-                                        <option value="{{ $visualKey }}" @if(old('visual_key', $variantVisualKey) === $visualKey) selected @endif>{{ $visualLabel }}</option>
-                                    @endforeach
-                                </select>
+                                      maxlength="1000"
+                                      required>{{ old('description', $variant['description']) }}</textarea>
+                            <div class="solution-achievement-variant__reward">
                                 <label class="form-label" for="achievement-coins-{{ $solution->id }}-{{ $variantIndex }}">GC</label>
                                 <input id="achievement-coins-{{ $solution->id }}-{{ $variantIndex }}"
                                        type="number"
@@ -131,13 +96,6 @@
                                        max="1000"
                                        value="{{ old('coin_reward', 15) }}">
                             </div>
-                            <input type="hidden" name="tone" value="{{ $variant['tone'] ?? '' }}">
-                            <input type="hidden" name="solution_source" value="{{ $variant['solution_source'] ?? '' }}">
-                            <input type="hidden" name="language" value="{{ $variant['language'] ?? '' }}">
-                            <input type="hidden" name="model" value="{{ $variant['model'] ?? '' }}">
-                            @if($variantSvgIcon)
-                                <input type="hidden" name="svg_icon" value="{{ $variantSvgIcon }}">
-                            @endif
                         </div>
                         <div class="solution-achievement-variant__actions">
                             <button type="submit" class="btn btn-success btn-sm rounded-3 fw-medium">Выдать</button>
