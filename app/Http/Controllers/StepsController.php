@@ -16,6 +16,7 @@ use App\Task;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Auth;
 
 class StepsController extends Controller
@@ -191,17 +192,41 @@ class StepsController extends Controller
     public function makeLower($course_id, $id, Request $request)
     {
         $step = ProgramStep::findOrFail($id);
-        $step->sort_index -= 1;
-        $step->save();
+        $this->moveStep($step, -1);
         return redirect('/insider/courses/' . $course_id . '/steps/' . $step->id);
     }
 
     public function makeUpper($course_id, $id, Request $request)
     {
         $step = ProgramStep::findOrFail($id);
-        $step->sort_index += 1;
-        $step->save();
+        $this->moveStep($step, 1);
         return redirect('/insider/courses/' . $course_id . '/steps/' . $step->id);
+    }
+
+    private function moveStep(ProgramStep $step, int $offset): void
+    {
+        DB::transaction(function () use ($step, $offset) {
+            // Serialize moves within a lesson before reading its current order.
+            Lesson::whereKey($step->lesson_id)->lockForUpdate()->firstOrFail();
+            $steps = ProgramStep::where('lesson_id', $step->lesson_id)
+                ->orderBy('sort_index')->orderBy('id')->lockForUpdate()->get();
+            $position = $steps->pluck('id')->search($step->id);
+            $target = $position + $offset;
+
+            if ($position === false || !$steps->has($target)) {
+                return;
+            }
+
+            [$steps[$position], $steps[$target]] = [$steps[$target], $steps[$position]];
+
+            // Unique indices also make adjacent moves work for legacy duplicates.
+            foreach ($steps as $index => $orderedStep) {
+                $orderedStep->sort_index = $index + 1;
+                if ($orderedStep->isDirty('sort_index')) {
+                    $orderedStep->save();
+                }
+            }
+        });
     }
 
     public function delete($course_id, $id)
