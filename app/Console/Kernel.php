@@ -27,6 +27,7 @@ class Kernel extends ConsoleKernel
         Commands\SyncGeekPasteIntegrity::class,
         Commands\DispatchMissingAchievementTrophies::class,
         Commands\RecoverRoomCharacters::class,
+        Commands\RepairGeneratedImagePermissions::class,
     ];
 
     /**

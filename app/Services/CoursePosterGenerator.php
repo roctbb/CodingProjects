@@ -122,7 +122,7 @@ class CoursePosterGenerator
         $extension = $image['extension'] ?? 'png';
         $relativePath = 'course-posters/' . $basename . '.' . $extension;
 
-        if (empty($image['bytes']) || !Storage::put($relativePath, $image['bytes'])) {
+        if (empty($image['bytes']) || !Storage::put($relativePath, $image['bytes'], ['visibility' => 'public', 'directory_visibility' => 'public'])) {
             throw new \RuntimeException('Could not store generated course poster image');
         }
 

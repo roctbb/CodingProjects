@@ -110,7 +110,7 @@ class RoomCharacterGenerator
             ]], ['command' => 'room_character', 'size' => '1024x1536', 'quality' => 'medium',
                 'output_format' => 'png', 'background' => 'transparent']);
             $bytes = $this->images->normalize($image['bytes'], $generation->reference_path);
-            if (!Storage::put($path, $bytes)) {
+            if (!Storage::put($path, $bytes, ['visibility' => 'public', 'directory_visibility' => 'public'])) {
                 throw new \RuntimeException('Could not save room character');
             }
             [$installed, $oldPath] = $this->wallet->transaction($generation->user_id, function (User $user) use ($generationId, $path) {

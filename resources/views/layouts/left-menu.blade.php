@@ -51,7 +51,6 @@
                     </a>
                 </li>
                 @include('layouts.partials.sidebar-course-links')
-                @include('layouts.partials.sidebar-settings-link')
             @else
                 <li>
                     <a class="gc-sidebar__link {{ Request::is('login') ? 'active' : '' }}" href="{{ url('login') }}">
@@ -71,6 +70,7 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{{ url('insider/profile') }}"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                        @include('layouts.partials.sidebar-settings-link')
                         <li><hr class="dropdown-divider"></li>
                         @include('layouts.partials.sidebar-user-resources')
                         <li>
@@ -99,6 +99,7 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{{ url('insider/profile') }}">Профиль</a></li>
+                        @include('layouts.partials.sidebar-settings-link')
                         <li>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf

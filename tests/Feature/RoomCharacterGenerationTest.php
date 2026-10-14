@@ -169,7 +169,31 @@ class RoomCharacterGenerationTest extends TestCase
         $this->assertSame(100, (int) $user->balance());
         $this->assertNull($generation->refund_transaction_id);
         Storage::assertExists($generation->result_path);
+        $this->assertSame('public', Storage::getVisibility($generation->result_path));
+        $this->assertSame(0755, fileperms(Storage::path('room-characters')) & 0777);
         Storage::disk('room_character_sources')->assertMissing($sourcePath);
+        Http::assertSentCount(1);
+    }
+
+    public function testSucceededGenerationReportsUnavailableImageWithoutAnotherCharge(): void
+    {
+        $user = $this->user();
+        $generation = $this->purchase($user);
+        $this->fakeImage();
+        app(RoomCharacterGenerator::class)->generate($generation->id);
+        $generation->refresh();
+        $url = route('room-character.show', [$user->id, $generation->id]);
+        $this->actingAs($user)->getJson($url)->assertOk()
+            ->assertJsonPath('message', 'Персонаж готов и установлен в комнате.');
+        $bytes = Storage::get($generation->result_path);
+        Storage::delete($generation->result_path);
+        $this->getJson($url)->assertOk()->assertJsonPath('status', 'succeeded')
+            ->assertJsonPath('image_url', null)
+            ->assertJsonPath('message', 'Персонаж создан, но изображение недоступно. Обратитесь к администратору; повторная генерация не нужна.');
+        Storage::put($generation->result_path, $bytes, ['visibility' => 'public', 'directory_visibility' => 'public']);
+        $this->getJson($url)->assertOk()->assertJsonPath('image_url', $generation->imageUrl());
+        $this->assertSame(100, (int) $user->balance());
+        $this->assertNull($generation->fresh()->refund_transaction_id);
         Http::assertSentCount(1);
     }
 

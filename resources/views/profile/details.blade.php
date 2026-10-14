@@ -33,7 +33,7 @@
             'desk_center' => 'Стол',
             'pet_right' => 'Питомец',
         ];
-        $telegramBotConfigured = trim((string) config('services.telegram.bot_username')) !== '';
+        $telegramBotConfigured = app(\App\Services\TelegramSettings::class)->botUsername() !== '';
     @endphp
 
     <div class="row g-4">

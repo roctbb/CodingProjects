@@ -80,6 +80,9 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/settings/ai', 'AiSettingsController@edit')->name('settings.ai.edit');
     Route::put('/settings/ai', 'AiSettingsController@update')->name('settings.ai.update');
     Route::delete('/settings/ai', 'AiSettingsController@reset')->name('settings.ai.reset');
+    Route::get('/settings/telegram', 'TelegramSettingsController@edit')->name('settings.telegram.edit');
+    Route::put('/settings/telegram', 'TelegramSettingsController@update')->name('settings.telegram.update');
+    Route::delete('/settings/telegram', 'TelegramSettingsController@reset')->name('settings.telegram.reset');
 
     Route::post('/profile/{user_id}/room-character', 'RoomCharacterController@store')
         ->whereNumber('user_id')->middleware('throttle:10,1')->name('room-character.store');

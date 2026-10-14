@@ -514,10 +514,10 @@ class ProfileController extends Controller
     public function telegramLink($id)
     {
         $user = User::findOrFail($id);
-        $botUsername = trim((string) config('services.telegram.bot_username'));
+        $botUsername = app(\App\Services\TelegramSettings::class)->botUsername();
 
         if (!$botUsername) {
-            $this->make_error_alert('Telegram не настроен', 'Администратор ещё не указал TELEGRAM_BOT_USERNAME.', $destination = 'head');
+            $this->make_error_alert('Telegram не настроен', 'Администратор ещё не указал имя бота в настройках Telegram.', $destination = 'head');
             return redirect()->back();
         }
 

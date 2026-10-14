@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\TelegramBindService;
+use App\Services\TelegramSettings;
 use Illuminate\Http\Request;
 
 class TelegramBotController extends Controller
@@ -20,7 +21,7 @@ class TelegramBotController extends Controller
 
     private function isAllowed(Request $request)
     {
-        $secret = config('services.telegram.webhook_secret');
+        $secret = app(TelegramSettings::class)->all()['webhook_secret'] ?? null;
 
         if (!$secret) {
             return true;

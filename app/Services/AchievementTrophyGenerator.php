@@ -42,7 +42,7 @@ class AchievementTrophyGenerator
         }
 
         $path = 'achievement-trophies/achievement-' . $achievement->id . '-' . Str::uuid() . '.png';
-        if (!Storage::put($path, $bytes)) {
+        if (!Storage::put($path, $bytes, ['visibility' => 'public', 'directory_visibility' => 'public'])) {
             throw new \RuntimeException('Could not store generated achievement trophy image');
         }
 

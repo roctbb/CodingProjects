@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="container-xl px-0">
+    @include('settings.partials.tabs')
     <div class="gc-card gc-page-header mb-4">
         <div>
             <span class="gc-eyebrow">Администрирование</span>
