@@ -39,6 +39,7 @@ class CourseActivity extends Model
     const PULSE_SAMPLE_MINUTES = 8;
     const PULSE_SIGNAL_LOOKBACK_HOURS = 30;
     const PULSE_RESPONSE_SCALE = 18;
+    const PULSE_MAX_VALUE = 210;
 
     protected $table = 'course_activities';
 
@@ -664,7 +665,7 @@ class CourseActivity extends Model
             return $score + static::pulseWeight($activity->type) * static::pulseImpulse($ageMinutes, $activity->type);
         }, 0);
 
-        return min(100, (int) round(100 * (1 - exp(-$rawPulse / static::PULSE_RESPONSE_SCALE))));
+        return min(static::PULSE_MAX_VALUE, (int) round(static::PULSE_MAX_VALUE * (1 - exp(-$rawPulse / static::PULSE_RESPONSE_SCALE))));
     }
 
     private static function pulseImpulse($ageMinutes, $type)

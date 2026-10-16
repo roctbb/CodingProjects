@@ -47,7 +47,7 @@
         return $path;
     };
     $maxPulseValue = max(0, (int) $pulseSeries->max('value'));
-    $visualPulseMax = $maxPulseValue > 0 ? min(100, max(8, $maxPulseValue * 1.18)) : 100;
+    $visualPulseMax = $maxPulseValue > 0 ? min(\App\CourseActivity::PULSE_MAX_VALUE, max(8, $maxPulseValue * 1.18)) : \App\CourseActivity::PULSE_MAX_VALUE;
     $pulsePoints = $pulseSeries->values()->map(function ($point, $index) use ($chartPadding, $chartInnerWidth, $chartInnerHeight, $chartHeight, $seriesCount, $visualPulseMax) {
         $x = $seriesCount === 1 ? $chartPadding : $chartPadding + ($chartInnerWidth * $index / ($seriesCount - 1));
         $visualValue = min(1, max(0, (int) $point['value'] / $visualPulseMax));
