@@ -39,6 +39,7 @@ class CourseActivity extends Model
     const PULSE_SAMPLE_MINUTES = 8;
     const PULSE_SIGNAL_LOOKBACK_HOURS = 30;
     const PULSE_RESPONSE_SCALE = 18;
+    const PULSE_BASE_MAX_VALUE = 100;
     const PULSE_MAX_VALUE = 210;
 
     protected $table = 'course_activities';
@@ -665,7 +666,18 @@ class CourseActivity extends Model
             return $score + static::pulseWeight($activity->type) * static::pulseImpulse($ageMinutes, $activity->type);
         }, 0);
 
-        return min(static::PULSE_MAX_VALUE, (int) round(static::PULSE_MAX_VALUE * (1 - exp(-$rawPulse / static::PULSE_RESPONSE_SCALE))));
+        // Keep the original curve until it rounds to 100, then continue along its tangent.
+        // This preserves the old values and growth rate while allowing a higher ceiling.
+        $roundingMargin = 0.5;
+        $saturationScore = static::PULSE_RESPONSE_SCALE * log(static::PULSE_BASE_MAX_VALUE / $roundingMargin);
+        if ($rawPulse <= $saturationScore) {
+            $value = static::PULSE_BASE_MAX_VALUE * (1 - exp(-$rawPulse / static::PULSE_RESPONSE_SCALE));
+        } else {
+            $value = static::PULSE_BASE_MAX_VALUE - $roundingMargin
+                + ($rawPulse - $saturationScore) * $roundingMargin / static::PULSE_RESPONSE_SCALE;
+        }
+
+        return min(static::PULSE_MAX_VALUE, (int) round($value));
     }
 
     private static function pulseImpulse($ageMinutes, $type)
