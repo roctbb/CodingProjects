@@ -268,7 +268,8 @@ class User extends Authenticatable implements MustVerifyEmail
             return 0;
         }
 
-        return (int) Rank::where('from', '<=', $rank->from)->count();
+        // Legacy abbreviated names can share a level with their full-name aliases.
+        return (int) Rank::where('from', '<=', $rank->from)->distinct()->count('from');
     }
 
     public function awardRankPromotionIfNeeded($oldRank)
@@ -285,7 +286,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return true;
         }
 
-        $coins = 5 * $this->rankPosition($newRank);
+        $coins = 2 * $this->rankPosition($newRank);
         CoinTransaction::registerOnce(
             $this->id,
             $coins,
