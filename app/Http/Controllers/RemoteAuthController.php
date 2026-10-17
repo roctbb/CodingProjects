@@ -28,14 +28,13 @@ class RemoteAuthController extends Controller
         }
 
 
-        $userId = Auth::user()->id;
-        $role = Auth::user()->role;
-        $name = Auth::user()->name;
+        $user = Auth::user();
 
         $token = \Firebase\JWT\JWT::encode([
-            'id' => $userId,
-            'role' => $role,
-            'name' => $name,
+            'id' => $user->id,
+            'role' => $user->role,
+            'name' => $user->name,
+            'avatar_url' => $user->imageUrl(),
             'iat' => time(),
         ], config('auth.jwt_secret'), 'HS256');
 
