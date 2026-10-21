@@ -12,7 +12,7 @@ COPY . .
 RUN npm run build
 
 # Builder stage: install PHP deps with Composer
-FROM php:8.4-cli AS builder
+FROM php:8.4.27-cli AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
@@ -59,7 +59,7 @@ RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framewor
     && composer dump-autoload --optimize --classmap-authoritative --no-dev --no-interaction --no-scripts
 
 # Final production image: PHP-FPM
-FROM php:8.4-fpm AS app
+FROM php:8.4.27-fpm AS app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libcurl4-openssl-dev \
