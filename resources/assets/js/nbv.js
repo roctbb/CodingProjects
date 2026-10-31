@@ -1,4 +1,5 @@
 import { marked } from 'marked';
+import renderNotebookMarkdown from './notebook-markdown.js';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-python';
 
@@ -361,7 +362,8 @@ var nbv = (function() {
 
     function handle_mdown(cell) {
         var el = d.createElement('div');
-        el.innerHTML = sanitizeHtml(marked(cell.source.join('')));
+        var source = typeof cell.source === 'string' ? cell.source : cell.source.join('');
+        el.innerHTML = sanitizeHtml(renderNotebookMarkdown(source));
 
         return el;
     }
