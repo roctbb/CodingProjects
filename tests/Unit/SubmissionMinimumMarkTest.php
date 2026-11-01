@@ -47,6 +47,19 @@ class SubmissionMinimumMarkTest extends TestCase
         $this->assertNull($solution->raw_mark);
     }
 
+    public function testContestTasksKeepTheStandardMinimumAndPartialMarks(): void
+    {
+        foreach ([2871, 2889, 2914] as $taskId) {
+            foreach ([0 => 1, 1 => 1, 4 => 4, 5 => 5] as $received => $expected) {
+                $solution = $this->submittedSolution();
+                $solution->task_id = $taskId;
+                $solution->applyDeadlinePenalty($received, null);
+                $this->assertSame($expected, $solution->raw_mark);
+                $this->assertSame($expected, $solution->mark);
+            }
+        }
+    }
+
     public function testDeadlinePenaltyCannotEraseAttemptPoint(): void
     {
         $solution = $this->submittedSolution();
