@@ -17,6 +17,30 @@ use Firebase\JWT\Key;
 
 class GeekPasteAPI extends Controller
 {
+    public function userProfile(Request $request, $id)
+    {
+        try {
+            $claims = \Firebase\JWT\JWT::decode((string) $request->bearerToken(), new Key(config('auth.jwt_secret'), 'HS256'));
+            if (($claims->purpose ?? null) !== 'user-profile' || ($claims->aud ?? null) !== 'codingprojects'
+                || ($claims->user_id ?? null) !== (int) $id
+                || !isset($claims->iat, $claims->exp) || !is_int($claims->iat) || !is_int($claims->exp)
+                || $claims->exp <= $claims->iat || $claims->exp - $claims->iat > 60) {
+                abort(401);
+            }
+        } catch (\Exception $e) {
+            abort(401, 'Invalid user profile token');
+        }
+
+        $user = User::find($id, ['id', 'name']);
+        if (!$user) {
+            return response()->json(['state' => 'not_found'], 404);
+        }
+
+        return response()->json(['state' => 'ok', 'user' => [
+            'id' => $user->id, 'name' => $user->name,
+        ]]);
+    }
+
     private function recheckSolution(Request $request): Solution
     {
         try {
