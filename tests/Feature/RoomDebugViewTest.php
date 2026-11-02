@@ -11,9 +11,19 @@ class RoomDebugViewTest extends TestCase
 {
     use WithoutMiddleware;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
+        \Illuminate\Support\Facades\DB::purge('sqlite');
+        \Illuminate\Support\Facades\DB::unprepared('CREATE TABLE courses (id INTEGER PRIMARY KEY, name TEXT, state TEXT)');
+    }
+
     public function testRoomDebugRendersCharacterAsSlottedLayer()
     {
         $admin = new User(['name' => 'Admin', 'role' => 'admin']);
+        $admin->setRelation('courses', collect());
+        $admin->setRelation('managed_courses', collect());
         $this->be($admin);
 
         $html = view('admin.room-debug', [
@@ -245,12 +255,15 @@ class RoomDebugViewTest extends TestCase
 
     public function testRoomDebugRouteRendersRoomSystemWithoutLegacyAiRoomPayload()
     {
-        $this->be(new User([
+        $admin = new User([
             'name' => 'Admin',
             'email' => 'admin@example.test',
             'role' => 'admin',
             'email_verified_at' => now(),
-        ]));
+        ]);
+        $admin->setRelation('courses', collect());
+        $admin->setRelation('managed_courses', collect());
+        $this->be($admin);
 
         $this->get('/insider/room-debug')
             ->assertOk()

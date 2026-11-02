@@ -19,12 +19,12 @@ class RoomCharacterGenerator
     {
     }
 
-    public function purchase(int $userId, string $requestKey): RoomCharacterGeneration
+    public function purchase(int $userId, string $requestKey, ?int $expectedCost = null): RoomCharacterGeneration
     {
         $requestKey = strtolower($requestKey);
         $sourcePath = null;
         try {
-            [$generation, $created] = $this->wallet->transaction($userId, function (User $user) use ($requestKey, &$sourcePath) {
+            [$generation, $created] = $this->wallet->transaction($userId, function (User $user) use ($requestKey, $expectedCost, &$sourcePath) {
                 $existing = RoomCharacterGeneration::where('user_id', $user->id)
                     ->where(fn ($query) => $query->where('request_key', $requestKey)->orWhereJsonContains('request_aliases', $requestKey))->first();
                 if ($existing) {
@@ -39,8 +39,12 @@ class RoomCharacterGenerator
                     $active->save();
                     return [$active, false];
                 }
-                if ($user->balance() < RoomCharacterGeneration::COST) {
-                    throw ValidationException::withMessages(['room_character' => 'Для генерации нужно 100 GC. На балансе недостаточно монет.']);
+                $cost = RoomCharacterGeneration::currentCost();
+                if ($expectedCost !== null && $expectedCost !== $cost) {
+                    throw ValidationException::withMessages(['room_character' => 'Цена изменилась. Обновите страницу перед генерацией. Монеты не списаны.']);
+                }
+                if ($user->balance() < $cost) {
+                    throw ValidationException::withMessages(['room_character' => 'Для генерации нужно '.$cost.' GC. На балансе недостаточно монет.']);
                 }
                 $bytes = $this->images->snapshot($user);
                 $reference = $user->roomCharacterReferencePath();
@@ -52,7 +56,7 @@ class RoomCharacterGenerator
                     throw new \RuntimeException('Could not save avatar snapshot');
                 }
                 $generation = RoomCharacterGeneration::create([
-                    'user_id' => $user->id, 'request_key' => $requestKey, 'cost' => RoomCharacterGeneration::COST,
+                    'user_id' => $user->id, 'request_key' => $requestKey, 'cost' => $cost,
                     'status' => 'pending', 'source_path' => $sourcePath, 'reference_path' => $reference,
                 ]);
                 $charge = CoinTransaction::register($user->id, -$generation->cost, 'Room character #' . $generation->id);

@@ -37,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->app->scoped(\App\Services\SystemStoreSettings::class, fn () => new \App\Services\SystemStoreSettings());
         //Recaptcha service
         app()->singleton('App\Services\Recaptcha', function () {
             return new \App\Services\Recaptcha();

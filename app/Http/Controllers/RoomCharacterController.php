@@ -20,8 +20,8 @@ class RoomCharacterController extends Controller
     {
         abort_unless((int) $request->user()->id === $user_id, 403);
         abort_unless(Schema::hasTable('room_character_generations'), 503, 'Генерация пока недоступна.');
-        $data = $request->validate(['request_id' => ['required', 'uuid']]);
-        $generation = $generator->purchase($user_id, $data['request_id']);
+        $data = $request->validate(['request_id' => ['required', 'uuid'], 'expected_cost' => ['sometimes', 'integer', 'min:1']]);
+        $generation = $generator->purchase($user_id, $data['request_id'], isset($data['expected_cost']) ? (int) $data['expected_cost'] : null);
         if (!$request->expectsJson()) {
             return redirect('/insider/profile/' . $user_id . '#learning-avatar');
         }
@@ -42,6 +42,7 @@ class RoomCharacterController extends Controller
         return [
             'id' => $generation->id, 'status' => $generation->status, 'message' => $generation->statusMessage(),
             'balance' => (int) $user->balance(), 'cost' => $generation->cost,
+            'current_cost' => RoomCharacterGeneration::currentCost(),
             'image_url' => $user->roomCharacterImageUrl(),
             'status_url' => route('room-character.show', [$user->id, $generation->id]),
             'next_request_id' => $generation->isActive() ? null : (string) Str::uuid(),

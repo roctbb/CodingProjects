@@ -97,7 +97,7 @@ class Lesson extends Model
 
     public function earlyAccessCost()
     {
-        return 10;
+        return app(\App\Services\SystemStoreSettings::class)->price('early_lesson_access');
     }
 
     public function hasEarlyAccess($course, $user)

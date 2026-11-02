@@ -283,7 +283,7 @@ class Solution extends Model
             return 0;
         }
 
-        return 10;
+        return app(\App\Services\SystemStoreSettings::class)->price('xp_booster');
     }
 
     public function canUseXpBooster($user)

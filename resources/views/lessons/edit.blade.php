@@ -89,6 +89,8 @@
                             @endif
                         </div>
 
+                        @include('lessons.partials.sticker', ['sticker' => $lesson->sticker])
+
                         <div class="col-12">
                             <label for="import" class="form-label">Импорт</label>
                             <input id="import" type="file" class="form-control rounded-3"

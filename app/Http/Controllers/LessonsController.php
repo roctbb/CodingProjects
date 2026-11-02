@@ -15,6 +15,8 @@ use App\LessonStudentStats;
 use App\TaskDeadline;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\Rule;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
@@ -37,6 +39,14 @@ class LessonsController extends Controller
 
     }
 
+    private function stickerRules(): array
+    {
+        return ['nullable', 'string', 'max:255', Rule::anyOf([
+            ['url:http,https'],
+            ['regex:~^/stickers/[1-9][0-9]*\.png$~'],
+        ])];
+    }
+
     /**
      * Show the application dashboard.
      *
@@ -57,6 +67,7 @@ class LessonsController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'chapter' => 'nullable|exists:program_chapters,id',
+            'sticker' => $this->stickerRules(),
         ]);
 
         if ($request->has('chapter')) {
@@ -75,7 +86,9 @@ class LessonsController extends Controller
         $lesson->program_id = $program->id;
         $lesson->sort_index = $order;
         $lesson->description = clean($request->description);
-        $lesson->sticker = "/stickers/" . random_int(1, 40) . ".png";
+        $lesson->sticker = $request->has('sticker')
+            ? $request->input('sticker')
+            : "/stickers/" . random_int(1, 40) . ".png";
         $lesson->chapter_id = $chapter->id;
         $lesson->early_access_enabled = $request->early_access_enabled == 'on';
 
@@ -104,11 +117,15 @@ class LessonsController extends Controller
     {
         $lesson = Lesson::findOrFail($id);
         $course = Course::findOrFail($course_id);
+        if ($lesson->program_id !== $course->program_id) {
+            abort(404);
+        }
         $this->validate($request, [
             'name' => 'required|string|max:255',
             'description' => 'required',
             'start_date' => 'date|nullable',
-            'chapter' => 'required|exists:program_chapters,id'
+            'chapter' => 'required|exists:program_chapters,id',
+            'sticker' => $this->stickerRules(),
         ]);
         $lesson->name = $request->name;
         $wasStarted = $lesson->isStarted($course);
@@ -117,6 +134,9 @@ class LessonsController extends Controller
         $lesson->description = clean($request->description);
         $lesson->chapter_id = $request->chapter;
         $lesson->early_access_enabled = $request->early_access_enabled == 'on';
+        if ($request->has('sticker')) {
+            $lesson->sticker = $request->input('sticker');
+        }
 
         // Recalculate points if start date changed (lesson became started or stopped)
         if ($oldStartDate != $request->start_date) {
@@ -128,6 +148,13 @@ class LessonsController extends Controller
             $lesson->is_open = false;
 
         $lesson->save();
+        if ($lesson->wasChanged(['sticker', 'name'])) {
+            $studentIds = LessonStudentStats::where('lesson_id', $lesson->id)->distinct()->pluck('student_id');
+            foreach ($studentIds as $studentId) {
+                Cache::forget("user:{$studentId}:stickers");
+                Cache::forget("user:{$studentId}:sticker_descriptions");
+            }
+        }
         if (!$wasStarted && $lesson->isStarted($course)) {
             CourseActivity::recordLessonOpened($course, $lesson, Auth::user());
         }

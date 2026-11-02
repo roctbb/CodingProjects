@@ -20,6 +20,8 @@
         $rankProgress = min(100, max(0, round(100 * ($score - $rank->from) / max(1, $rank->to - $rank->from))));
     @endphp
 
+    @include('courses.partials.pumpkin_promo')
+
     @if($user->isBirthday())
         <div class="gc-card border p-3 mb-3 alert-dismissible fade show position-relative" role="alert">
             <h5 class="mb-0 pe-4">

@@ -5,7 +5,7 @@ export default function initRoomCharacters() {
         const status = form.querySelector('[data-room-character-status]');
         const balanceLabel = form.querySelector('[data-room-character-balance]');
         const token = form.querySelector('input[name="request_id"]');
-        const cost = Number(form.dataset.cost);
+        let cost = Number(form.dataset.cost);
         let balance = Number(form.dataset.balance);
         let busy = form.dataset.busy === '1';
         let hasCharacter = form.dataset.hasCharacter === '1';
@@ -24,6 +24,12 @@ export default function initRoomCharacters() {
         }
 
         function applyState(data) {
+            if (Number.isFinite(data.current_cost)) {
+                cost = data.current_cost;
+                form.dataset.cost = cost;
+                form.querySelector('input[name="expected_cost"]').value = cost;
+                form.querySelectorAll('[data-room-character-cost]').forEach(el => { el.textContent = cost; });
+            }
             busy = data.status === 'pending' || data.status === 'processing';
             balance = data.balance;
             balanceLabel.textContent = balance;

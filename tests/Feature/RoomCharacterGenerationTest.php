@@ -74,6 +74,39 @@ class RoomCharacterGenerationTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_promotion_charge_and_refund_use_the_original_paid_price(): void
+    {
+        $user = $this->user(200);
+        (require database_path('migrations/2026_11_02_120000_create_system_store_settings_table.php'))->up();
+        $settings = app(\App\Services\SystemStoreSettings::class);
+        $data = $settings->all();
+        $data['pumpkin_promo'] = ['enabled' => true, 'ends_at' => null];
+        $settings->save($data, 1);
+        $generation = $this->purchase($user);
+        $this->assertSame(50, $generation->cost);
+        $this->assertSame(-50, CoinTransaction::find($generation->charge_transaction_id)->price);
+        $data['pumpkin_promo']['enabled'] = false;
+        $settings->save($data, 1);
+        app(RoomCharacterGenerator::class)->fail($generation->id, 'test_failure');
+        $this->assertSame(200, (int) $user->balance());
+        $this->assertSame(50, CoinTransaction::find($generation->fresh()->refund_transaction_id)->price);
+    }
+
+    public function test_stale_discount_quote_cannot_charge_more_or_break_idempotency(): void
+    {
+        $user = $this->user(200);
+        $key = (string) Str::uuid();
+        $this->actingAs($user)->postJson($this->url($user), ['request_id' => $key, 'expected_cost' => 50])
+            ->assertUnprocessable()->assertJsonValidationErrors('room_character');
+        $this->assertSame(200, (int) $user->balance());
+        $this->assertSame(0, RoomCharacterGeneration::count());
+        $generation = $this->purchase($user, $key);
+        $this->actingAs($user)->postJson($this->url($user), ['request_id' => $key, 'expected_cost' => 50])->assertSuccessful();
+        $this->assertSame(1, RoomCharacterGeneration::count());
+        $this->assertSame($generation->id, RoomCharacterGeneration::first()->id);
+        $this->assertSame(100, (int) $user->balance());
+    }
+
     private function user(int $balance = 200, bool $avatar = true): User
     {
         $user = new User();

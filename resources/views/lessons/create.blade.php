@@ -56,6 +56,8 @@
                             @endif
                         </div>
 
+                        @include('lessons.partials.sticker', ['sticker' => null])
+
                         <div class="col-12">
                             <label class="gc-switch-card form-check form-switch">
                                 <input type="checkbox" class="form-check-input ms-0 me-2" id="early_access_enabled" name="early_access_enabled" value="on"

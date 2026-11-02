@@ -311,7 +311,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function customTitleCost()
     {
-        return 30;
+        return app(\App\Services\SystemStoreSettings::class)->price('custom_title');
     }
 
     public function customTitleDurationDays()
@@ -337,35 +337,35 @@ class User extends Authenticatable implements MustVerifyEmail
             'neon' => [
                 'name' => 'Неон',
                 'description' => 'Холодное сияние для ночного кодинга.',
-                'cost' => 30,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('avatar_frame_neon'),
                 'days' => 30,
                 'icon' => 'fas fa-bolt',
             ],
             'pixel' => [
                 'name' => 'Пиксель',
                 'description' => 'Ретро-рамка в духе 8-битных игр.',
-                'cost' => 35,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('avatar_frame_pixel'),
                 'days' => 30,
                 'icon' => 'fas fa-th-large',
             ],
             'terminal' => [
                 'name' => 'Терминал',
                 'description' => 'Темная рамка с зеленым контуром.',
-                'cost' => 45,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('avatar_frame_terminal'),
                 'days' => 30,
                 'icon' => 'fas fa-terminal',
             ],
             'gold' => [
                 'name' => 'Золото',
                 'description' => 'Спокойный премиальный контур.',
-                'cost' => 90,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('avatar_frame_gold'),
                 'days' => 30,
                 'icon' => 'fas fa-crown',
             ],
             'rainbow' => [
                 'name' => 'Радуга',
                 'description' => 'Анимированная рамка с мягким движением.',
-                'cost' => 120,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('avatar_frame_rainbow'),
                 'days' => 30,
                 'icon' => 'fas fa-rainbow',
             ],
@@ -374,7 +374,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function customAvatarFrameCost($animated = true)
     {
-        return $animated ? 150 : 100;
+        return app(\App\Services\SystemStoreSettings::class)->price($animated ? 'avatar_frame_custom_animated' : 'avatar_frame_custom_static');
     }
 
     public function customAvatarFrameDurationDays()
@@ -600,49 +600,49 @@ class User extends Authenticatable implements MustVerifyEmail
                 'name' => 'Механическая клавиатура',
                 'description' => 'Премиальный аксессуар для быстрых решений.',
                 'icon' => 'fas fa-keyboard',
-                'cost' => 45,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('premium_keyboard'),
             ],
             'code_mug' => [
                 'name' => 'Кружка с кодом',
                 'description' => 'Небольшой уютный предмет на рабочий стол.',
                 'icon' => 'fas fa-mug-hot',
-                'cost' => 25,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('code_mug'),
             ],
             'desk_plant' => [
                 'name' => 'Растение',
                 'description' => 'Добавляет в комнату немного живого спокойствия.',
                 'icon' => 'fas fa-seedling',
-                'cost' => 35,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('desk_plant'),
             ],
             'learning_bot_pet' => [
                 'name' => 'Робопес',
                 'description' => 'Маленький робот-собака. Раз в день может бесплатно сбросить лимит GeekPaste-попыток, если выбран в комнате.',
                 'icon' => 'fas fa-dog',
-                'cost' => 90,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('learning_bot_pet'),
             ],
             'cheremsha_pet' => [
                 'name' => 'Черемша',
                 'description' => 'Пушистый ушастый компаньон. С шансом 30% раз в день приносит немного GC.',
                 'icon' => 'fas fa-cat',
-                'cost' => 120,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('cheremsha_pet'),
             ],
             'brr_brr_patapim_pet' => [
                 'name' => 'Брр Брр Потапим',
                 'description' => 'Лесной мем-компаньон с корнями и большим настроением. Позволяет бесплатно открывать раньше срока любые уроки, где включен ранний доступ.',
                 'icon' => 'fas fa-tree',
-                'cost' => 260,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('brr_brr_patapim_pet'),
             ],
             'tralalelo_tralala_pet' => [
                 'name' => 'Тралалело Тралала',
                 'description' => 'Акула в кроссовках для быстрых рывков по курсу. Увеличивает награду GC за задачи на 10%, пока выбрана в комнате.',
                 'icon' => 'fas fa-fish',
-                'cost' => 300,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('tralalelo_tralala_pet'),
             ],
             'tung_tung_tung_sahur_pet' => [
                 'name' => 'Тунг Тунг Тунг Сахур',
                 'description' => 'Деревянный ночной страж с битой. Раз в день автоматически бесплатно применяет XP-бустер к подходящему решению.',
                 'icon' => 'fas fa-drum',
-                'cost' => 240,
+                'cost' => app(\App\Services\SystemStoreSettings::class)->price('tung_tung_tung_sahur_pet'),
             ],
         ];
     }
@@ -1368,7 +1368,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function geekPasteExtraAttemptCost(): int
     {
-        return $this->canUseFreeGeekPasteResetToday() ? 0 : \App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST;
+        return $this->canUseFreeGeekPasteResetToday() ? 0 : app(\App\Services\SystemStoreSettings::class)->price('geekpaste_extra_attempt');
     }
 
     public function canUseFreeGeekPasteResetToday(): bool
@@ -2094,12 +2094,13 @@ class User extends Authenticatable implements MustVerifyEmail
             }
 
             return Lesson::whereIn('id', $lessonIds)
+                ->whereHas('steps.tasks')
                 ->whereNotNull('sticker')
                 ->pluck('sticker')
                 ->filter()
                 ->unique()
                 ->values();
-        });
+        })->filter(fn ($sticker) => is_string($sticker) && trim($sticker) !== '')->values();
     }
 
     /**
@@ -2120,6 +2121,7 @@ class User extends Authenticatable implements MustVerifyEmail
             }
 
             return Lesson::whereIn('id', $lessonIds)
+                ->whereHas('steps.tasks')
                 ->whereNotNull('sticker')
                 ->get(['name', 'sticker'])
                 ->filter(function ($lesson) {

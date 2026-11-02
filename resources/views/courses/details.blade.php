@@ -271,7 +271,7 @@
                             </div>
 
                             @php
-                                $showLessonSticker = $isLearner && $cpercent > 90;
+                                $showLessonSticker = $isLearner && $lessonTaskCount > 0 && $cpercent > 90 && filled($lesson->sticker);
                             @endphp
 
                             <div class="course-path-card border bg-body">

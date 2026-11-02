@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Storage;
 class RoomCharacterGeneration extends Model
 {
     public const COST = 100;
+    public static function currentCost(): int
+    {
+        return app(\App\Services\SystemStoreSettings::class)->roomCharacterPrice();
+    }
     public const ACTIVE_STATUSES = ['pending', 'processing'];
 
     protected $guarded = ['id'];

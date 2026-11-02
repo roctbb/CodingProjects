@@ -1,7 +1,7 @@
 @php
     $characterBusy = $roomCharacterGeneration?->isActive() ?? false;
     $characterHasAvatar = $user->image && \Illuminate\Support\Facades\Storage::exists($user->image);
-    $characterCost = \App\RoomCharacterGeneration::COST;
+    $characterCost = \App\RoomCharacterGeneration::currentCost();
     $characterIsCustom = (bool) $user->roomCharacterImageUrl();
 @endphp
 <form method="POST" action="{{ route('room-character.store', $user->id) }}"
@@ -13,13 +13,14 @@
       data-busy="{{ $characterBusy ? '1' : '0' }}"
       data-status-url="{{ $characterBusy ? route('room-character.show', [$user->id, $roomCharacterGeneration->id]) : '' }}">
     @csrf
+    <input type="hidden" name="expected_cost" value="{{ $characterCost }}">
     <input type="hidden" name="request_id" value="{{ \Illuminate\Support\Str::uuid() }}">
     <div class="fw-medium mb-2">Свой персонаж</div>
     <div class="d-flex align-items-center gap-3 mb-3">
         <img src="{{ $user->imageUrl() }}" alt="Аватарка для создания персонажа" width="64" height="64"
              class="rounded-3 flex-shrink-0 object-fit-cover">
         <div class="text-muted small">Создадим персонажа в стиле комнаты по вашей текущей аватарке.
-            Каждая генерация стоит {{ $characterCost }} GC. При ошибке монеты вернутся.</div>
+            Каждая генерация стоит <span data-room-character-cost>{{ $characterCost }}</span> GC. При ошибке монеты вернутся.</div>
     </div>
     @if(!$characterHasAvatar)
         <a href="{{ url('/insider/profile/'.$user->id.'/edit') }}" class="small d-block mb-2">Сначала загрузите аватарку в профиле</a>

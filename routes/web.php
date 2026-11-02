@@ -78,6 +78,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/yandexgpt/improve-text', 'TextImprovementController@improveText');
 
     Route::get('/settings/ai', 'AiSettingsController@edit')->name('settings.ai.edit');
+    Route::get('/settings/system-store', 'SystemStoreSettingsController@edit')->name('settings.system-store.edit');
+    Route::put('/settings/system-store', 'SystemStoreSettingsController@update')->name('settings.system-store.update');
     Route::put('/settings/ai', 'AiSettingsController@update')->name('settings.ai.update');
     Route::delete('/settings/ai', 'AiSettingsController@reset')->name('settings.ai.reset');
     Route::get('/settings/telegram', 'TelegramSettingsController@edit')->name('settings.telegram.edit');
