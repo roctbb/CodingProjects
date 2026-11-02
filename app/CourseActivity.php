@@ -628,6 +628,7 @@ class CourseActivity extends Model
             ->orderBy('created_at')
             ->get();
 
+        $activities = static::preparePulseActivities($activities);
         $sampleCount = (int) ((static::PULSE_WINDOW_HOURS * 60) / static::PULSE_SAMPLE_MINUTES);
         $series = collect(range($sampleCount, 0))->map(function ($stepAgo) use ($activities, $now) {
             $pointAt = $now->copy()->subMinutes($stepAgo * static::PULSE_SAMPLE_MINUTES);
@@ -653,18 +654,33 @@ class CourseActivity extends Model
         ];
     }
 
-    private static function pulseValueAt($activities, Carbon $pointAt)
+    private static function preparePulseActivities($activities): array
     {
-        $windowStart = $pointAt->copy()->subHours(static::PULSE_SIGNAL_LOOKBACK_HOURS);
-        $rawPulse = $activities->reduce(function ($score, $activity) use ($pointAt, $windowStart) {
-            if (!$activity->created_at || $activity->created_at->gt($pointAt) || $activity->created_at->lt($windowStart)) {
-                return $score;
+        $prepared = [];
+        foreach ($activities as $activity) {
+            // Eloquent date casts can parse a timestamp on every attribute access.
+            // Read each date and weight once for the entire graph.
+            $createdAt = $activity->created_at;
+            if ($createdAt) {
+                $prepared[] = [(float) $createdAt->format('U.u'), static::pulseWeight($activity->type), $activity->type];
             }
+        }
 
-            $ageMinutes = max(0, $activity->created_at->diffInMinutes($pointAt));
+        return $prepared;
+    }
 
-            return $score + static::pulseWeight($activity->type) * static::pulseImpulse($ageMinutes, $activity->type);
-        }, 0);
+    private static function pulseValueAt(array $activities, Carbon $pointAt)
+    {
+        $timestamp = (float) $pointAt->format('U.u');
+        $windowStart = $timestamp - static::PULSE_SIGNAL_LOOKBACK_HOURS * 3600;
+        $rawPulse = 0.0;
+        foreach ($activities as [$createdAt, $weight, $type]) {
+            if ($createdAt > $timestamp || $createdAt < $windowStart) {
+                continue;
+            }
+            $ageMinutes = max(0, ($timestamp - $createdAt) / 60);
+            $rawPulse += $weight * static::pulseImpulse($ageMinutes, $type);
+        }
 
         // Keep the original curve until it rounds to 100, then continue along its tangent.
         // This preserves the old values and growth rate while allowing a higher ceiling.

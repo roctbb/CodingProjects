@@ -147,7 +147,7 @@ class CoursesController extends Controller
 
         $upcomingDeadlines = collect([]);
         $pendingSolutionsTotal = 0;
-        $pulse = CourseActivity::pulseForCourses($activeCourseIds);
+        $pulse = app(\App\Services\CoursePulse::class)->forCourses($activeCourseIds);
 
         if (!($user->role == 'teacher' || $user->role == 'admin')) {
             $submittedTaskIds = Solution::where('user_id', $user->id)
@@ -241,7 +241,7 @@ class CoursesController extends Controller
             })
             ->orderBy('created_at', 'desc')
             ->paginate(40);
-        $pulse = CourseActivity::pulseForCourses($activeCourseIds);
+        $pulse = app(\App\Services\CoursePulse::class)->forCourses($activeCourseIds);
 
         return view('courses.pulse', compact('user', 'activities', 'pulse'));
     }

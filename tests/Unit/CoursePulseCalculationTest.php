@@ -63,6 +63,7 @@ class CoursePulseCalculationTest extends TestCase
             ]);
         }
 
-        return (new ReflectionMethod(CourseActivity::class, 'pulseValueAt'))->invoke(null, $activities, $now);
+        $prepared = (new ReflectionMethod(CourseActivity::class, 'preparePulseActivities'))->invoke(null, $activities);
+        return (new ReflectionMethod(CourseActivity::class, 'pulseValueAt'))->invoke(null, $prepared, $now);
     }
 }
