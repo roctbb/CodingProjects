@@ -13,5 +13,6 @@
             @endif
         </div>
         <a class="btn btn-dark rounded-3 px-4" href="{{ url('/insider/profile/'.Auth::id().'#learning-avatar') }}">Создать персонажа</a>
+        @include('courses.partials.recent_room_characters', ['characters' => $recentRoomCharacters ?? collect()])
     </section>
 @endif

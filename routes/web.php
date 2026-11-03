@@ -232,4 +232,6 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 });
 
 
+Route::get('media/room-character-previews/{generation_id}', 'MediaController@roomCharacterPreview')
+    ->whereNumber('generation_id')->name('room-character.preview');
 Route::get('media/{dir}/{name}', 'MediaController@index');

@@ -211,7 +211,12 @@ class CoursesController extends Controller
                 })->sortBy('birthday_distance_days')->values();
         });
 
-        return response()->view('home', compact('courses', 'user', 'my_courses', 'open_courses', 'availableCourses', 'completedCourses', 'activeCourses', 'draftCourses', 'archiveCourses', 'birthdayUsers', 'notifications', 'courseProgress', 'upcomingDeadlines', 'pendingSolutionsTotal', 'pulse', 'isTeacher'));
+        $recentRoomCharacters = collect();
+        if (app(\App\Services\SystemStoreSettings::class)->promotionActive() && Schema::hasTable('room_character_generations')) {
+            $recentRoomCharacters = \App\RoomCharacterGeneration::recentForShowcase();
+        }
+
+        return response()->view('home', compact('courses', 'user', 'my_courses', 'open_courses', 'availableCourses', 'completedCourses', 'activeCourses', 'draftCourses', 'archiveCourses', 'birthdayUsers', 'notifications', 'courseProgress', 'upcomingDeadlines', 'pendingSolutionsTotal', 'pulse', 'isTeacher', 'recentRoomCharacters'));
     }
 
     public function pulse()

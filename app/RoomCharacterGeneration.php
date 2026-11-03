@@ -20,6 +20,33 @@ class RoomCharacterGeneration extends Model
         'request_aliases' => 'array',
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function scopeVisibleForShowcase($query)
+    {
+        // Previous generations can reference files removed after a replacement.
+        return $query->where('status', 'succeeded')->whereNotNull('result_path')
+            ->whereHas('user', function ($users) {
+                $users->where('is_hidden', false)
+                    ->whereColumn('users.room_character_generation_id', 'room_character_generations.id');
+            });
+    }
+
+    public function previewPath(): string
+    {
+        return 'room-character-previews/v1-' . hash('sha256', $this->result_path) . '.png';
+    }
+
+    public static function recentForShowcase()
+    {
+        return static::visibleForShowcase()->with('user:id,name')
+            ->orderByDesc('finished_at')->orderByDesc('id')->limit(10)->get()
+            ->filter(fn ($generation) => $generation->imageUrl() !== null);
+    }
+
     public function isActive(): bool
     {
         return in_array($this->status, self::ACTIVE_STATUSES, true);

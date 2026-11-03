@@ -59,6 +59,23 @@ class RoomCharacterImages
         }
     }
 
+    public function preview(string $bytes): string
+    {
+        $source = $this->decode($bytes, true);
+        try {
+            $bounds = $this->bounds($source);
+            $scale = min(120 / $bounds['width'], 184 / $bounds['height'], 1);
+            $width = max(1, (int) round($bounds['width'] * $scale));
+            $height = max(1, (int) round($bounds['height'] * $scale));
+            $canvas = $this->canvas(128, 192);
+            imagecopyresampled($canvas, $source, (int) round((128 - $width) / 2), 188 - $height,
+                $bounds['x'], $bounds['y'], $width, $height, $bounds['width'], $bounds['height']);
+            return $this->png($canvas);
+        } finally {
+            imagedestroy($source);
+        }
+    }
+
     private function decode(string $bytes, bool $pngOnly = false, int $maxPixels = 16_000_000): \GdImage
     {
         $info = @getimagesizefromstring($bytes);

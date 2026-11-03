@@ -848,7 +848,7 @@ body {
   margin-top: 1.65rem;
 }
 
-.gc-card img:not(.avatar):not(.gc-sticker):not(.object-fit-cover):not(.gc-learning-avatar__layer) {
+.gc-card img:not(.avatar):not(.gc-sticker):not(.object-fit-cover):not(.gc-learning-avatar__layer):not(.home-characters__image) {
   height: auto;
   max-width: 100%;
 }
@@ -6139,6 +6139,57 @@ a:hover {
 .gc-session-alert--danger .gc-session-alert__icon {
   background: rgba(220, 53, 69, 0.12);
   color: #b02a37;
+}
+
+.home-characters {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+.home-characters__scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.home-characters__list {
+  align-items: flex-end;
+  display: flex;
+  isolation: isolate;
+  padding: 0.6rem 22px 0.35rem;
+  width: max-content;
+}
+
+.home-characters__link {
+  border-radius: 0.75rem;
+  display: block;
+  flex: 0 0 28px;
+  height: 108px;
+  position: relative;
+  width: 28px;
+}
+
+.home-characters__link img {
+  display: block;
+  filter: drop-shadow(0 2px 2px rgba(35, 25, 15, 0.18));
+  height: 108px;
+  left: -22px;
+  max-width: none;
+  object-fit: contain;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: 72px;
+}
+
+.home-characters__link:hover,
+.home-characters__link:focus-visible {
+  transform: translateY(-4px);
+  z-index: 1;
+}
+
+.home-characters__link:focus-visible {
+  outline: 2px solid var(--gc-primary);
+  outline-offset: 2px;
 }
 
 .home-notification__icon {
