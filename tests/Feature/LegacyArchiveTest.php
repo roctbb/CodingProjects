@@ -76,6 +76,25 @@ class LegacyArchiveTest extends TestCase
         catch(HttpException $e){$this->assertSame(422,$e->getStatusCode());}
     }
 
+    public function test_teacher_cannot_download_shared_suite_but_can_download_own_test_fixture():void
+    {
+        DB::statement('CREATE TABLE code_task_checkers (task_id INTEGER PRIMARY KEY,config TEXT)');
+        DB::statement('CREATE TABLE code_legacy_tasks (legacy_id TEXT,task_id INTEGER,definition TEXT)');
+        DB::statement('CREATE TABLE code_legacy_task_versions (legacy_id TEXT,definition TEXT)');
+        DB::statement('CREATE TABLE code_fixture_uploads (task_id INTEGER,artifact_id TEXT)');
+        DB::statement("INSERT INTO users VALUES (3,'teacher','2026-01-01')");
+        $access=\Mockery::mock(\App\Services\CodeChecking\Access::class);
+        $access->shouldReceive('task')->withArgs(fn($user,$course,$task,$private)=>$course===7&&$task===12&&$private===true)->andReturn(new \App\Task);
+        $this->app->instance(\App\Services\CodeChecking\Access::class,$access);
+        $artifacts=app(Artifacts::class);
+        $bundle=$artifacts->put('{"format":1,"version":"'.str_repeat('a',64).'","archive_base64":"secret"}');
+        $fixture=$artifacts->put('Own hidden input');
+        DB::table('code_task_checkers')->insert(['task_id'=>12,'config'=>json_encode(['test_mode'=>'suite','bundle'=>$bundle,'input'=>$fixture])]);
+        $this->actingAs(\App\User::find(3))->get('/insider/courses/7/tasks/12/checker/fixtures/'.$bundle['blob_id'])->assertForbidden();
+        $this->get('/insider/courses/7/tasks/12/checker/fixtures/'.$fixture['blob_id'])->assertOk();
+        $this->actingAs(\App\User::find(1))->get('/insider/courses/7/tasks/12/checker/fixtures/'.$bundle['blob_id'])->assertOk();
+    }
+
     public function test_old_notice_is_normalized_without_changing_saved_report():void
     {
         $report=['legacy'=>true,'notice'=>'Old ambiguous notice','tests'=>[]];
