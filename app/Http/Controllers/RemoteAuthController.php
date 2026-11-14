@@ -18,8 +18,18 @@ class RemoteAuthController extends Controller
         $url = $request->validate(['redirect_url' => 'required|string|max:2048|url:http,https'])['redirect_url'];
         $parts = parse_url($url);
         abort_if(isset($parts['user']) || isset($parts['pass']) || isset($parts['fragment']), 422, 'Некорректная ссылка для перехода.');
-        $origin = strtolower($parts['scheme'].'://'.$parts['host']).(isset($parts['port']) ? ':'.$parts['port'] : '');
-        abort_unless(in_array($origin, config('auth.sso_return_origins', []), true), 403, 'Сервис не подключён к единому входу.');
+        $origin = $this->origin($parts);
+        $registered = array_map(fn ($value) => $this->origin(parse_url($value)), config('auth.sso_return_origins', []));
+        // Older services behind TLS proxies build an http callback URL. Always send
+        // the token to their explicitly registered HTTPS origin instead.
+        if (strtolower($parts['scheme']) === 'http') {
+            $secure = $parts;
+            $secure['scheme'] = 'https';
+            if (($secure['port'] ?? 80) === 80) unset($secure['port']);
+            $secureOrigin = $this->origin($secure);
+            if (in_array($secureOrigin, $registered, true)) $origin = $secureOrigin;
+        }
+        abort_unless(in_array($origin, $registered, true), 403, 'Сервис не подключён к единому входу.');
 
         $user = Auth::user();
 
@@ -41,7 +51,15 @@ class RemoteAuthController extends Controller
         $query['token'] = $token;
         $finalUrl = $origin.($parts['path'] ?? '/').'?'.http_build_query($query, '', '&', PHP_QUERY_RFC3986);
 
-        return redirect()->to($finalUrl, 302, [], true);
+        return redirect()->to($finalUrl, 302, ['Cache-Control'=>'private, no-store', 'Pragma'=>'no-cache', 'Referrer-Policy'=>'no-referrer'], true);
+    }
+
+    private function origin(array|false $parts): string
+    {
+        if (!$parts || !isset($parts['scheme'], $parts['host'])) return '';
+        $scheme = strtolower($parts['scheme']);
+        $port = $parts['port'] ?? ($scheme === 'https' ? 443 : 80);
+        return $scheme.'://'.strtolower($parts['host']).(($scheme === 'https' && $port === 443) || ($scheme === 'http' && $port === 80) ? '' : ':'.$port);
     }
 
 }

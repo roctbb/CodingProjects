@@ -74,12 +74,39 @@ class RemoteAuthTest extends TestCase
     {
         $user = (new User())->forceFill(['id'=>42,'name'=>'Student','role'=>'student','email_verified_at'=>now()]);
         $this->actingAs($user);
-        foreach (['https://evil.test/auth', 'https://exam.example.test.evil.test/auth', 'http://exam.example.test/auth',
-            'https://exam.example.test:444/auth'] as $url) {
+        foreach (['https://evil.test/auth', 'https://exam.example.test.evil.test/auth', 'http://evil.test/auth',
+            'https://exam.example.test:444/auth', 'http://exam.example.test:444/auth'] as $url) {
             $this->get('/insider/jwt?'.http_build_query(['redirect_url'=>$url]))->assertForbidden();
         }
         foreach (['https://name:secret@exam.example.test/auth', 'https://exam.example.test/auth#token=old'] as $url) {
             $this->get('/insider/jwt?'.http_build_query(['redirect_url'=>$url]))->assertStatus(422);
         }
+    }
+
+    public function test_proxy_generated_http_callbacks_upgrade_only_to_registered_https_origins(): void
+    {
+        $user=(new User())->forceFill(['id'=>42,'name'=>'Student','role'=>'student','email_verified_at'=>now()]);
+        foreach (['http://exam.example.test/auth/callback?next=%2Fjoin','http://exam.example.test:80/auth/callback?next=%2Fjoin','https://EXAM.example.test:443/auth/callback?next=%2Fjoin'] as $url) {
+            $response=$this->actingAs($user)->get('/insider/jwt?'.http_build_query(['redirect_url'=>$url]));
+            $response->assertStatus(302)->assertHeader('Referrer-Policy','no-referrer');
+            $target=$response->headers->get('Location');
+            $this->assertSame('https',parse_url($target,PHP_URL_SCHEME));
+            $this->assertSame('exam.example.test',parse_url($target,PHP_URL_HOST));
+            $this->assertNull(parse_url($target,PHP_URL_PORT));
+            parse_str(parse_url($target,PHP_URL_QUERY),$query);
+            $this->assertSame('/join',$query['next']);
+            $claims=JWT::decode($query['token'],new Key(config('auth.jwt_secret'),'HS256'));
+            $this->assertSame('https://exam.example.test',$claims->service_origin);
+            $this->assertStringContainsString('no-store',$response->headers->get('Cache-Control'));
+        }
+    }
+
+    public function test_explicit_local_development_origin_remains_supported(): void
+    {
+        config(['auth.sso_return_origins'=>['http://localhost:5173']]);
+        $user=(new User())->forceFill(['id'=>42,'name'=>'Student','role'=>'student','email_verified_at'=>now()]);
+        $response=$this->actingAs($user)->get('/insider/jwt?'.http_build_query(['redirect_url'=>'http://localhost:5173/auth/callback']));
+        $response->assertStatus(302);
+        $this->assertStringStartsWith('http://localhost:5173/auth/callback?',$response->headers->get('Location'));
     }
 }
