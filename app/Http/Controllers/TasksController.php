@@ -262,6 +262,12 @@ class TasksController extends Controller
 
     public function postSolution($course_id, $id, Request $request)
     {
+        return app(\App\Services\CoinWallet::class)->transaction(Auth::id(),
+            fn () => $this->submitSolution($course_id, $id, $request));
+    }
+
+    private function submitSolution($course_id, $id, Request $request)
+    {
         $task = Task::findOrFail($id);
         abort_if($this->nativeChecker($task->id), 409, 'Для этой задачи используется API сдач Coding Projects.');
         $user = User::findOrFail(Auth::User()->id);
@@ -309,6 +315,7 @@ class TasksController extends Controller
                 }
 
             } else {
+                $solution->setEvaluatedMark(0);
                 $solution->mark = $solution->normalizeSubmittedMark(0);
                 $solution->raw_mark = $solution->mark;
                 $solution->deadline_penalty_amount = 0;
@@ -601,9 +608,15 @@ class TasksController extends Controller
 
     public function blockStudent($course_id, $id, $student_id)
     {
+        return DB::transaction(fn () => $this->blockTaskStudent($course_id, $id, $student_id));
+    }
+
+    private function blockTaskStudent($course_id, $id, $student_id)
+    {
         $task = Task::findOrFail($id);
         $course = Course::findOrFail($course_id);
         $student = User::findOrFail($student_id);
+        abort_unless($course->students()->where('users.id', $student_id)->exists(), 404);
 
         // Create block record if not exists
         if (!\App\BlockedTask::where('task_id', $id)
@@ -616,6 +629,7 @@ class TasksController extends Controller
                 'blocked_at' => Carbon::now(),
                 'reason' => 'plagiarism'
             ]);
+            $this->recordBlockEvent($course_id, $id, $student_id, 'blocked');
         }
 
         // Zero out all existing marks for this task/user/course
@@ -625,6 +639,7 @@ class TasksController extends Controller
             ->get();
         foreach ($solutions as $solution) {
             $solution->mark = 0;
+            $solution->setEvaluatedMark(0);
             $solution->raw_mark = 0;
             $solution->deadline_penalty_amount = 0;
             $solution->deadline_penalty_days = 0;
@@ -655,11 +670,17 @@ class TasksController extends Controller
 
     public function unblockStudent($course_id, $id, $student_id)
     {
+        return DB::transaction(fn () => $this->unblockTaskStudent($course_id, $id, $student_id));
+    }
+
+    private function unblockTaskStudent($course_id, $id, $student_id)
+    {
         // Remove block records for this task/user/course
-        \App\BlockedTask::where('task_id', $id)
+        $removed = \App\BlockedTask::where('task_id', $id)
             ->where('user_id', $student_id)
             ->where('course_id', $course_id)
             ->delete();
+        if ($removed) $this->recordBlockEvent($course_id, $id, $student_id, 'unblocked');
 
         // Recalculate cached points for the student in this course
         CourseStudentPoints::recalculate($course_id, $student_id);
@@ -671,7 +692,22 @@ class TasksController extends Controller
         return redirect()->back();
     }
 
+    private function recordBlockEvent(int $course, int $task, int $student, string $action): void
+    {
+        if (\Illuminate\Support\Facades\Schema::hasTable('task_block_events')) DB::table('task_block_events')->insert([
+            'course_id'=>$course,'task_id'=>$task,'student_id'=>$student,'actor_id'=>Auth::id(),
+            'action'=>$action,'reason'=>$action === 'blocked' ? 'plagiarism' : null,'created_at'=>now(),'updated_at'=>now(),
+        ]);
+    }
+
     public function estimateSolution($course_id, $id, Request $request)
+    {
+        $solution = Solution::where('course_id', $course_id)->findOrFail($id);
+        return app(\App\Services\CoinWallet::class)->transaction($solution->user_id,
+            fn () => $this->gradeSolution($course_id, $id, $request));
+    }
+
+    private function gradeSolution($course_id, $id, Request $request)
     {
         $solution = Solution::findOrFail($id);
         $this->validate($request, [
@@ -681,6 +717,7 @@ class TasksController extends Controller
         $old_rank = $solution->user->rank();
         $deadline = $solution->task->getDeadline($course_id);
 
+        $solution->setEvaluatedMark($request->mark);
         $solution->applyDeadlinePenalty($request->mark, $deadline);
         $comment = $request->comment;
         if ($solution->hasActiveDeadlinePenalty()) {

@@ -191,7 +191,7 @@ class Course extends Model
                     if ($task->is_hidden) {
                         continue;
                     }
-                    $sum += (int) $student->submissions->where('task_id', $task->id)->max('mark');
+                    $sum += (int) $student->submissions->where('course_id', $this->id)->where('task_id', $task->id)->max('mark');
                 }
             }
         }
@@ -219,21 +219,26 @@ class Course extends Model
 
     public function end()
     {
-        $this->state = 'ended';
-        $this->end_date = Carbon::now();
+        return \Illuminate\Support\Facades\DB::transaction(function () {
+        $locked = self::whereKey($this->id)->lockForUpdate()->firstOrFail();
+        if ($locked->state === 'ended') { $this->refresh(); return; }
+        $locked->state = 'ended';
+        $locked->end_date = Carbon::now();
 
         CompletedCourse::where('course_id', $this->id)->delete();
 
-        foreach ($this->students as $student) {
+        foreach ($locked->students as $student) {
             $completed_course = new CompletedCourse();
-            $completed_course->name = $this->name;
+            $completed_course->name = $locked->name;
             $completed_course->user_id = $student->id;
             $completed_course->course_id = $this->id;
-            $completed_course->mark = Mark::getMark($this->points($student), $this->max_points($student));
+            $completed_course->mark = Mark::getMark($locked->points($student), $locked->max_points($student));
             $completed_course->save();
         }
 
-        $this->save();
+        $locked->save();
+        $this->refresh();
+        });
     }
 
     public function getPercent(User $user)

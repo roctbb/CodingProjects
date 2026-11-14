@@ -132,13 +132,14 @@ class RegisterController extends Controller
         ]);
 
         $is_teacher = false;
-        $is_novice = false;
+        $invitation = null;
         $course = null;
         $provider = Provider::where('invite', $request->invite)->first();
         if ($provider != null) {
             $is_teacher = true;
         } else {
-            $course = Course::where('invite', $request->invite)->first();
+            $invitation = app(\App\Services\CourseEnrollment::class)->invitation($request->invite);
+            $course = $invitation['course'] ?? null;
             if ($course == null) {
                 throw ValidationException::withMessages(['invite' => 'Курс с таким кодом приглашения не найден. Проверьте код у преподавателя.']);
             }
@@ -147,31 +148,30 @@ class RegisterController extends Controller
 
         $this->validator($request->all())->validate();
 
-        event(new Registered($user = $this->create($request)));
+        $user = \Illuminate\Support\Facades\DB::transaction(function () use ($request, $is_teacher, $provider, $course, $invitation) {
+        $user = $this->create($request);
         if ($is_teacher) {
             $user->role = 'teacher';
             $user->provider_id = $provider->id;
             $user->save();
         } else {
-            if ($is_novice) {
-                $user->role = 'novice';
-                $user->save();
-            } else {
-                $course->students()->attach($user->id);
-            }
+            app(\App\Services\CourseEnrollment::class)->enroll($course, $user, $invitation['remote'] ?? false);
 
         }
-        $this->guard()->login($user);
 
         if ($request->has('course_id')) {
             $course = Course::where('id', $request->course_id)->first();
             if ($course == null or $course->mode != 'open') {
                 $this->make_error_alert('Ошибка!', 'Вы не можете записаться на приватный курс.');
             } else {
-                $course->students()->attach([$user->id => ['is_remote' => false]]);
+                app(\App\Services\CourseEnrollment::class)->enroll($course, $user);
             }
         }
 
+        return $user;
+        });
+        event(new Registered($user));
+        $this->guard()->login($user);
         return $this->registered($request, $user)
             ?: redirect($this->redirectPath());
     }

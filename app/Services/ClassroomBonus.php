@@ -17,7 +17,7 @@ class ClassroomBonus
         if (!Schema::hasTable('classroom_bonus_awards') || !DB::table('course_students')->where('course_id', $courseId)->where('user_id', $userId)->exists()) return [];
         if (DB::table('classroom_bonus_awards')->where('course_id', $courseId)->where('user_id', $userId)->where('task_id', $task->id)->exists()) return [];
         if (Solution::where('course_id', $courseId)->where('user_id', $userId)->where('task_id', $task->id)->where('submitted', '<', $submitted)
-            ->where(fn ($q) => $q->where('raw_mark', '>=', $task->max_mark)->orWhere('mark', '>=', $task->max_mark))->exists()) return [];
+            ->whereNotNull('mark')->get()->contains(fn ($s) => $s->evaluatedMark() >= $task->max_mark)) return [];
         $step = $task->step;
         $entries = DB::table('planner_session_resources as e')->join('planner_sessions as s', 's.id', '=', 'e.session_id')
             ->join('planner_courses as p', 'p.id', '=', 's.planner_course_id')->join('planner_calendar_slots as c', 'c.id', '=', 's.calendar_slot_id')
@@ -48,22 +48,37 @@ class ClassroomBonus
 
     public function award(Solution $solution): void
     {
-        $bonus = $solution->class_bonus_snapshot;
-        if (empty($bonus['amount']) || $solution->mark === null || !$solution->task || $solution->task->max_mark <= 0 ||
-            (int) ($bonus['graded_raw'] ?? $solution->raw_mark ?? $solution->mark) < (int) $solution->task->max_mark) return;
-        DB::transaction(function () use ($solution, $bonus) {
-            User::whereKey($solution->user_id)->lockForUpdate()->firstOrFail();
-            $earlier = Solution::where('course_id', $solution->course_id)->where('user_id', $solution->user_id)->where('task_id', $solution->task_id)
-                ->where('id', '!=', $solution->id)->where('submitted', '<', $solution->submitted)
-                ->where(fn ($q) => $q->where('raw_mark', '>=', $solution->task->max_mark)->orWhere('mark', '>=', $solution->task->max_mark))->exists();
-            if ($earlier) return;
-            $created = DB::table('classroom_bonus_awards')->insertOrIgnore(['course_id' => $solution->course_id, 'user_id' => $solution->user_id,
-                'task_id' => $solution->task_id, 'solution_id' => $solution->id, 'session_id' => $bonus['session_id'],
-                'amount' => $bonus['amount'], 'created_at' => now(), 'updated_at' => now()]);
+        if (!$solution->course_id || !$solution->task_id || !$solution->user_id) return;
+        $this->reconcile($solution->course_id, $solution->task_id, $solution->user_id);
+    }
+
+    public function reconcile(int $courseId, int $taskId, int $userId): void
+    {
+        if (!Schema::hasTable('classroom_bonus_awards')) return;
+        DB::transaction(function () use ($courseId, $taskId, $userId) {
+            User::whereKey($userId)->lockForUpdate()->firstOrFail();
+            if (DB::table('classroom_bonus_awards')->where('course_id', $courseId)->where('task_id', $taskId)->where('user_id', $userId)->exists()) return;
+            $task = Task::find($taskId);
+            if (!$task || $task->max_mark <= 0 || $task->isBlocked($userId, $courseId)) return;
+            $solutions = Solution::where('course_id', $courseId)->where('task_id', $taskId)->where('user_id', $userId)
+                ->whereNotNull('submitted')->orderBy('submitted')->orderBy('id')->get();
+            $first = $solutions->first(fn ($s) => $s->mark !== null && $s->evaluatedMark() >= $task->max_mark);
+            $bonus = $first?->class_bonus_snapshot;
+            if (!$first || empty($bonus['amount'])) return;
+            // Do not guess whether an earlier unreviewed answer was correct. Its later review releases or rejects this reward.
+            if ($solutions->contains(fn ($s) => $s->mark === null && ($s->submitted->lt($first->submitted)
+                || ($s->submitted->eq($first->submitted) && $s->id < $first->id)))) return;
+            if (Schema::hasTable('code_submissions') && \App\CodeSubmission::where('course_id', $courseId)->where('task_id', $taskId)
+                ->where('user_id', $userId)->where('created_at', '<', $first->submitted)->whereNull('solution_id')
+                ->whereHas('currentRun', fn ($q) => $q->whereNull('finished_at'))->exists()) return;
+            $created = DB::table('classroom_bonus_awards')->insertOrIgnore(['course_id'=>$courseId,'user_id'=>$userId,
+                'task_id'=>$taskId,'solution_id'=>$first->id,'session_id'=>$bonus['session_id'],
+                'amount'=>$bonus['amount'],'created_at'=>now(),'updated_at'=>now()]);
             if (!$created) return;
-            $coin = CoinTransaction::register($solution->user_id, $bonus['amount'], 'Classroom task #'.$solution->task_id.' / course #'.$solution->course_id,
+            $coin = CoinTransaction::register($userId, $bonus['amount'], 'Classroom task #'.$taskId.' / course #'.$courseId,
                 'Задача решена на занятии! +'.$bonus['amount'].' GC', 'success', 'fas fa-coins');
-            DB::table('classroom_bonus_awards')->where('course_id', $solution->course_id)->where('user_id', $solution->user_id)->where('task_id', $solution->task_id)->update(['coin_transaction_id' => $coin->id]);
+            DB::table('classroom_bonus_awards')->where('course_id', $courseId)->where('user_id', $userId)->where('task_id', $taskId)
+                ->update(['coin_transaction_id'=>$coin->id]);
         });
     }
 }

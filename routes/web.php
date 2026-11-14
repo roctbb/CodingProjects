@@ -101,13 +101,13 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/market/create', 'MarketController@create');
     Route::get('/market/{id}/edit', 'MarketController@editView');
     Route::post('/market/{id}/edit', 'MarketController@edit');
-    Route::get('/market/{id}/archive', 'MarketController@archive');
-    Route::get('/market/{id}/restore', 'MarketController@restore');
-    Route::get('/market/{id}/buy', 'MarketController@buy');
+    Route::post('/market/{id}/archive', 'MarketController@archive');
+    Route::post('/market/{id}/restore', 'MarketController@restore');
+    Route::post('/market/{id}/buy', 'MarketController@buy');
     Route::post('/market/{id}/bid', 'MarketController@bid');
-    Route::get('/market/{id}/finish-auction', 'MarketController@finishAuction');
-    Route::get('/market/ship/{id}', 'MarketController@ship');
-    Route::get('/market/cancel/{id}', 'MarketController@cancel');
+    Route::post('/market/{id}/finish-auction', 'MarketController@finishAuction');
+    Route::post('/market/ship/{id}', 'MarketController@ship');
+    Route::post('/market/cancel/{id}', 'MarketController@cancel');
 
 
     Route::get('/courses', 'CoursesController@index')->name('Courses');
@@ -215,8 +215,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/courses/{course_id}/tasks/{id}/geekpaste-extra-attempt', 'TasksController@buyGeekPasteExtraAttempt');
     Route::get('/courses/{course_id}/tasks/{id}/phantom', 'TasksController@phantomSolution');
     Route::get('/courses/{course_id}/tasks/{id}/student/{student_id}', 'TasksController@reviewSolutions');
-    Route::get('/courses/{course_id}/tasks/{id}/block/{student_id}', 'TasksController@blockStudent');
-    Route::get('/courses/{course_id}/tasks/{id}/unblock/{student_id}', 'TasksController@unblockStudent');
+    Route::post('/courses/{course_id}/tasks/{id}/block/{student_id}', 'TasksController@blockStudent');
+    Route::post('/courses/{course_id}/tasks/{id}/unblock/{student_id}', 'TasksController@unblockStudent');
     Route::post('/courses/{course_id}/solution/{id}', 'TasksController@estimateSolution');
     Route::get('/invite', 'CoursesController@invite');
 

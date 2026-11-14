@@ -14,6 +14,7 @@ class RemoteAuthTest extends TestCase
     {
         parent::setUp();
         config(['auth.jwt_secret' => str_repeat('test', 16), 'filesystems.default' => 'local']);
+        config(['auth.sso_return_origins' => ['https://exam.example.test']]);
         Storage::fake('local');
     }
 
@@ -50,6 +51,9 @@ class RemoteAuthTest extends TestCase
         $this->assertSame('student', $claims->role);
         $this->assertSame(url('/media/user_avatars/42.jpg') . '?v=' . $version, $claims->avatar_url);
         $this->assertGreaterThanOrEqual(time() - 5, $claims->iat);
+        $this->assertSame(120, $claims->exp - $claims->iat);
+        $this->assertSame('https://exam.example.test', $claims->service_origin);
+        $this->assertObjectNotHasProperty('aud', $claims);
     }
 
     public function testMissingPhotoUsesTheSameDefaultAvatarAsTheProfile(): void
@@ -64,5 +68,18 @@ class RemoteAuthTest extends TestCase
         $this->get('/insider/jwt?' . http_build_query([
             'redirect_url' => 'https://exam.example.test/auth/callback',
         ]))->assertRedirect('/login');
+    }
+
+    public function test_untrusted_origins_credentials_ports_and_fragments_cannot_receive_a_token(): void
+    {
+        $user = (new User())->forceFill(['id'=>42,'name'=>'Student','role'=>'student','email_verified_at'=>now()]);
+        $this->actingAs($user);
+        foreach (['https://evil.test/auth', 'https://exam.example.test.evil.test/auth', 'http://exam.example.test/auth',
+            'https://exam.example.test:444/auth'] as $url) {
+            $this->get('/insider/jwt?'.http_build_query(['redirect_url'=>$url]))->assertForbidden();
+        }
+        foreach (['https://name:secret@exam.example.test/auth', 'https://exam.example.test/auth#token=old'] as $url) {
+            $this->get('/insider/jwt?'.http_build_query(['redirect_url'=>$url]))->assertStatus(422);
+        }
     }
 }

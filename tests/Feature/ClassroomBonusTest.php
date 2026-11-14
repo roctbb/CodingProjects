@@ -39,7 +39,7 @@ class ClassroomBonusTest extends DeadlineFeatureCase
     }
     public function test_bonus_and_deadline_are_frozen_before_late_manual_review(): void
     {
-        $entry=$this->attach(7); $this->policy(stages:[['cutoff_at'=>'2026-11-14T14:15','retained_percent'=>70]]);
+        $entry=$this->attach(7); $this->policy(stages:[['deadline_date'=>'2026-11-13','retained_percent'=>70]]);
         $pending=$this->solution('2026-11-14 14:30:00');
         DB::table('planner_session_resources')->where('id',$entry)->update(['class_bonus_gc'=>100]);
         Carbon::setTestNow(now()->addDays(3));

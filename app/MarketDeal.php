@@ -12,6 +12,7 @@ class MarketDeal extends Authenticatable
     protected $table = 'market_deals';
     protected $casts = [
         'price' => 'integer',
+        'cancelled_at' => 'datetime',
     ];
 
     /**

@@ -118,6 +118,7 @@ class MarketGood extends Authenticatable
     {
         return DB::transaction(function () use ($user, $amount) {
             $good = self::where('id', $this->id)->lockForUpdate()->firstOrFail();
+            $user = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
             $amount = (int) $amount;
 
             if (!$good->isAuctionActive()) {
@@ -156,7 +157,7 @@ class MarketGood extends Authenticatable
             if ($isWinning) {
                 CourseActivity::recordAuctionLeadingBidForActiveCourse($user, $good, $amount);
             }
-            DB::afterCommit(function () use ($good, $amount, $isWinning, $user) {
+            DB::afterCommit(fn () => rescue(function () use ($good, $amount, $isWinning, $user) {
                 $user->notify(new AuctionEvent(
                     '🔨 Ваша ставка на <strong>"' . e($good->name) . '"</strong> принята: <strong>' . $amount . ' GC</strong>.' .
                     ($isWinning ? ' Сейчас она входит в число победителей.' : ' Сейчас она не входит в число победителей.'),
@@ -169,11 +170,11 @@ class MarketGood extends Authenticatable
                         'info'
                     ));
                 });
-            });
+            }));
 
             $displacedUserIds = array_diff($previousWinnerUserIds, $winnerUserIds, [$user->id]);
             if (count($displacedUserIds) > 0) {
-                DB::afterCommit(function () use ($displacedUserIds, $good, $amount, $user) {
+                DB::afterCommit(fn () => rescue(function () use ($displacedUserIds, $good, $amount, $user) {
                     User::whereIn('id', $displacedUserIds)->get()->each(function ($displacedUser) use ($good, $amount, $user) {
                         $displacedUser->notify(new AuctionEvent(
                             '⚠️ Ваша ставка на <strong>"' . e($good->name) . '"</strong> больше не входит в число победителей. ' .
@@ -181,11 +182,11 @@ class MarketGood extends Authenticatable
                             'warning'
                         ));
                     });
-                });
+                }));
             }
 
             return $previousBid;
-        });
+        }, 5);
     }
 
     public function finishAuction()
@@ -224,12 +225,12 @@ class MarketGood extends Authenticatable
                 $deals->push($deal);
                 CourseActivity::recordMarketPurchaseForActiveCourse($bid->user, $good, (int) $bid->amount, 'auction', $deal);
 
-                DB::afterCommit(function () use ($bid, $good) {
+                DB::afterCommit(fn () => rescue(function () use ($bid, $good) {
                     $bid->user->notify(new AuctionEvent(
                         '🏆 Вы выиграли аукцион <strong>"' . e($good->name) . '"</strong> со ставкой <strong>' . $bid->amount . ' GC</strong>. Заказ ожидает доставки.',
                         'success'
                     ));
-                });
+                }));
             }
 
             MarketBid::where('good_id', $good->id)
@@ -238,12 +239,12 @@ class MarketGood extends Authenticatable
                 ->get()
                 ->each(function ($bid) use ($good) {
                     CoinTransaction::register($bid->user_id, $bid->amount, 'Auction refund Good #' . $good->id);
-                    DB::afterCommit(function () use ($bid, $good) {
+                    DB::afterCommit(fn () => rescue(function () use ($bid, $good) {
                         $bid->user->notify(new AuctionEvent(
                             '↩️ Аукцион <strong>"' . e($good->name) . '"</strong> завершён. Ваша ставка <strong>' . $bid->amount . ' GC</strong> не вошла в число победителей и возвращена.',
                             'info'
                         ));
-                    });
+                    }));
                 });
 
             $good->number = 0;
@@ -253,23 +254,21 @@ class MarketGood extends Authenticatable
             CourseActivity::recordAuctionFinished($good, $deals->count());
 
             return $deals;
-        });
+        }, 5);
     }
 
     public function cancelActiveAuctionBids()
     {
-        if (!$this->isAuction() || $this->auction_finished_at !== null) {
-            return;
-        }
-
-        $this->auctionBids()->get()->each(function ($bid) {
-            CoinTransaction::register($bid->user_id, $bid->amount, 'Auction refund Good #' . $this->id);
-            $bid->user->notify(new AuctionEvent(
-                '↩️ Аукцион <strong>"' . e($this->name) . '"</strong> отменён. Ваша ставка <strong>' . $bid->amount . ' GC</strong> возвращена.',
-                'warning'
-            ));
-            $bid->delete();
-        });
+        return DB::transaction(function () {
+            $good = self::whereKey($this->id)->lockForUpdate()->firstOrFail();
+            if (!$good->isAuction() || $good->auction_finished_at !== null) return;
+            foreach ($good->auctionBids()->get() as $bid) {
+                CoinTransaction::register($bid->user_id, $bid->amount, 'Auction refund Good #'.$good->id);
+                $bid->delete();
+                DB::afterCommit(fn () => rescue(fn () => $bid->user?->notify(new AuctionEvent(
+                    '↩️ Аукцион <strong>"'.e($good->name).'"</strong> отменён. Ваша ставка <strong>'.$bid->amount.' GC</strong> возвращена.', 'warning'))));
+            }
+        }, 5);
     }
 
     public function purchasePrice(): int
@@ -277,9 +276,16 @@ class MarketGood extends Authenticatable
         return app(\App\Services\SystemStoreSettings::class)->quoteGood($this)['price'];
     }
 
-    public function buy($user, ?int $expectedPrice = null)
+    public function buy($user, ?int $expectedPrice = null, ?string $purchaseKey = null)
     {
-        return app(\App\Services\CoinWallet::class)->transaction($user->id, function ($lockedUser) use ($expectedPrice) {
+        return app(\App\Services\CoinWallet::class)->transaction($user->id, function ($lockedUser) use ($expectedPrice, $purchaseKey) {
+            if ($purchaseKey) {
+                $existing = MarketDeal::where('user_id', $lockedUser->id)->where('purchase_key', $purchaseKey)->first();
+                if ($existing) {
+                    abort_unless((int) $existing->good_id === (int) $this->id && ($expectedPrice === null || $expectedPrice === (int) $existing->price), 409, 'Ключ покупки уже использован.');
+                    return $existing;
+                }
+            }
             $good = self::whereKey($this->id)->lockForUpdate()->firstOrFail();
             if ($good->isAuction() || !$good->in_stock || $good->number < 1) return null;
             $price = $good->purchasePrice();
@@ -292,6 +298,7 @@ class MarketGood extends Authenticatable
             $deal->good_id = $good->id;
             $deal->price = $price;
             $deal->source = 'purchase';
+            if ($purchaseKey) $deal->purchase_key = $purchaseKey;
             $deal->shipped = false;
             $deal->save();
             CoinTransaction::register($lockedUser->id, -$price, 'Good #'.$good->id);

@@ -149,6 +149,7 @@ class CoinTransaction extends Authenticatable
     public static function register($user_id, $amount, $comment, $notificationText = null, $notificationType = 'success', $notificationIcon = null)
     {
         return DB::transaction(function () use ($user_id, $amount, $comment, $notificationText, $notificationType, $notificationIcon) {
+        User::whereKey($user_id)->lockForUpdate()->firstOrFail();
         $transaction = new CoinTransaction();
         $transaction->user_id = $user_id;
         $transaction->price = $amount;
@@ -156,7 +157,7 @@ class CoinTransaction extends Authenticatable
         $transaction->save();
         $transaction->withNotification($notificationText, $notificationType, $notificationIcon);
         app(\App\Services\RewardNotices::class)->coins($transaction);
-        DB::afterCommit(fn () => $transaction->notifyUser());
+        DB::afterCommit(fn () => rescue(fn () => $transaction->notifyUser()));
 
         return $transaction;
         });
@@ -164,6 +165,8 @@ class CoinTransaction extends Authenticatable
 
     public static function registerOnce($user_id, $amount, $comment, $notificationText = null, $notificationType = 'success', $notificationIcon = null)
     {
+        return DB::transaction(function () use ($user_id, $amount, $comment, $notificationText, $notificationType, $notificationIcon) {
+        User::whereKey($user_id)->lockForUpdate()->firstOrFail();
         $transaction = CoinTransaction::where('user_id', $user_id)
             ->where('comment', $comment)
             ->first();
@@ -173,6 +176,7 @@ class CoinTransaction extends Authenticatable
         }
 
         return static::register($user_id, $amount, $comment, $notificationText, $notificationType, $notificationIcon);
+        });
     }
 
     public static function existsWithComment($comment)

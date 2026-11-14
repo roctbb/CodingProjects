@@ -38,7 +38,7 @@ final class StudentCourseTasksController extends Controller
             'steps:id,lesson_id,name,sort_index',
             'steps.tasks' => fn ($query) => $query->select(['id', 'step_id', 'name', 'max_mark', 'is_hidden', 'is_star', 'sort_index']),
             'steps.tasks.solutions' => fn ($query) => $query->where('course_id', $id)->where('user_id', $user->id)
-                ->select(['id', 'task_id', 'course_id', 'user_id', 'mark', 'submitted', 'recheck_requested', 'review_skipped', 'updated_at']),
+                ->select(['id', 'task_id', 'course_id', 'user_id', 'mark', 'submitted', 'recheck_requested', 'review_skipped', 'updated_at'])->withEvaluation(),
             'steps.tasks.blockedTasks' => fn ($query) => $query->where('course_id', $id)->where('user_id', $user->id),
             'steps.tasks.deadlines' => fn ($query) => $query->where('course_id', $id),
         ]);

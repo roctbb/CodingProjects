@@ -1,42 +1,25 @@
 <?php
-
 namespace App\Http\Middleware;
 
 use App\Course;
-use App\ProgramStep;
-use App\User;
+use App\Services\CourseAccess;
 use Closure;
-use Illuminate\Support\Facades\Auth;
 
 class HasAccessToStep
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @param  string|null  $guard
-     * @return mixed
-     */
     public function handle($request, Closure $next, $guard = null)
     {
-        if (Auth::User()->role=='admin') {
-            return $next($request);
+        $course = Course::findOrFail($request->route('course_id'));
+        $access = app(CourseAccess::class);
+        $action = $request->route()->getActionMethod();
+        if (in_array($action, ['createView', 'create'], true)) {
+            $access->manage($request->user(), $course);
+            $access->lesson($course, (int) $request->route('id'));
+        } else {
+            $step = $access->step($course, (int) $request->route('id'));
+            if (in_array($action, ['details', 'downloadNotebook'], true)) $access->study($request->user(), $course, $step->lesson);
+            else $access->manage($request->user(), $course);
         }
-
-        $user = User::findOrFail(Auth::User()->id);
-        $step = ProgramStep::findOrFail($request->id);
-        $course = Course::findOrFail($request->course_id);
-        if ($course->teachers->contains($user))
-        {
-            return $next($request);
-        }
-        if ($course->students->contains($user) and $course->state != 'draft' and $course->steps->contains($step) and $step->lesson->isAvailableForUser($course, $user))
-        {
-            return $next($request);
-        }
-
-        return abort(403);
-
+        return $next($request);
     }
 }

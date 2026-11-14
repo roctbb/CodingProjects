@@ -73,6 +73,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'step' => HasAccessToStep::class,
         'course' => HasAccessToCourse::class,
+        'course.manage' => \App\Http\Middleware\ManageCourse::class,
         'task' => HasAccessToTask::class,
         'self' => SelfAccess::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,

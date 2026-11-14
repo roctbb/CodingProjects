@@ -55,9 +55,14 @@ class Task extends Model
     {
         $minMark = $this->max_mark > 1 ? round($this->max_mark * 3 / 4) : 1;
 
-        return $this->solutionsForUser($user_id)
-                ->where('mark', '>=', $minMark)
-                ->count() != 0;
+        return $this->scoredSolutionsForUser($user_id)->where('mark', '>=', $minMark)->isNotEmpty();
+    }
+
+    private function scoredSolutionsForUser($user_id)
+    {
+        $solutions = $this->solutionsForUser($user_id);
+        if (!$solutions instanceof \Illuminate\Support\Collection) $solutions = $solutions->get();
+        return $solutions->filter(fn ($s) => $s->evaluatedMark() > 0);
     }
 
     public function isOnCheck($user_id)
@@ -97,12 +102,12 @@ class Task extends Model
 
     public function isFullDone($user_id)
     {
-        return $this->solutionsForUser($user_id)->where('mark', '=', $this->max_mark)->count() !=0;
+        return $this->scoredSolutionsForUser($user_id)->where('mark', '=', $this->max_mark)->isNotEmpty();
     }
 
     public function hasRewardableFullSolution($user_id)
     {
-        return $this->solutionsForUser($user_id)
+        return $this->scoredSolutionsForUser($user_id)
                 ->where('mark', '=', $this->max_mark)
                 ->where('xp_booster_used_at', null)
                 ->count() != 0;

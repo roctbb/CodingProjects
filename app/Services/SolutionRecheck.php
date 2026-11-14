@@ -19,7 +19,7 @@ class SolutionRecheck
             $reason = 'Задача заблокирована преподавателем.';
         } elseif (Solution::where('task_id', $solution->task_id)
             ->where('course_id', $solution->course_id)->where('user_id', $solution->user_id)
-            ->whereNotNull('submitted')->where('mark', '>=', $solution->task->max_mark)->exists()) {
+            ->whereNotNull('submitted')->positiveEvaluation()->where('mark', '>=', $solution->task->max_mark)->exists()) {
             $reason = 'Задача уже зачтена на полный балл.';
         }
 

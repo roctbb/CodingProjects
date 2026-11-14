@@ -13,6 +13,7 @@ use App\Lesson;
 use App\LessonEarlyAccess;
 use App\LessonStudentStats;
 use App\TaskDeadline;
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -35,6 +36,7 @@ class LessonsController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
+        $this->middleware('course.manage:lesson')->except('buyEarlyAccess');
         $this->middleware('teacher')->only(['createView', 'create', 'editView', 'edit', 'grantEarlyAccess', 'makeLower', 'makeUpper', 'makeDeadline', 'export', 'exportMarkdown', 'exportPoints']);
 
     }
@@ -179,9 +181,16 @@ class LessonsController extends Controller
 
     public function buyEarlyAccess($course_id, $id)
     {
+        return app(\App\Services\CoinWallet::class)->transaction(Auth::id(),
+            fn (User $user) => $this->purchaseEarlyAccess($course_id, $id, $user));
+    }
+
+    private function purchaseEarlyAccess($course_id, $id, User $user)
+    {
         $course = Course::with('students', 'teachers')->findOrFail($course_id);
         $lesson = Lesson::with('info', 'steps')->findOrFail($id);
-        $user = Auth::user();
+        abort_if($course->state === 'draft', 403);
+        abort_unless($lesson->steps->isNotEmpty(), 409, 'В уроке пока нет ступеней.');
 
         if ($lesson->program_id !== $course->program_id) {
             abort(404);
@@ -367,8 +376,8 @@ class LessonsController extends Controller
             $editor = $deadlines->editor($course, 'lesson', $lesson->id);
             $deadlines->savePolicy($course, 'lesson', $lesson->id, ['mode' => $request->deadline ? 'custom' : 'none',
                 'revision' => $editor['revision'], 'timezone' => $editor['timezone'], 'apply_to_tasks' => true,
-                'stages' => $request->deadline ? [['cutoff_at' => \Carbon\Carbon::parse($request->deadline, $editor['timezone'])->addDay()->format('Y-m-d\TH:i'),
-                    'retained_percent' => (int) round(($request->penalty ?? 0) * 100)]] : []], $request->user()->id, true);
+                'stages' => $request->deadline ? [['deadline_date' => $request->deadline,
+                    'retained_percent' => (int) round(($request->penalty ?? 0) * 100)]] : []], $request->user()->id);
             return back();
         }
 

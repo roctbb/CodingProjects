@@ -135,6 +135,40 @@ export default async function interactions(page, config) {
                 await p.keyboard.press('Escape');
                 assert(await opener.evaluate(el => el === document.activeElement), 'Frame dialog did not restore focus');
             });
+            await test('purchase-confirmation-and-order-refund', async () => {
+                await go('/insider/market', 'student');
+                const purchase = p.locator('form[action$="/market/1/buy"]');
+                const key = await purchase.locator('[name="purchase_key"]').inputValue();
+                assert(key.length === 36 && await purchase.getAttribute('method') === 'POST', 'Purchase lacks POST or retry key');
+                p.once('dialog', dialog => dialog.dismiss());
+                await purchase.getByRole('button').click();
+                assert(await purchase.isVisible(), 'Cancelled confirmation submitted a purchase');
+                p.once('dialog', dialog => dialog.accept());
+                const [response] = await Promise.all([
+                    p.waitForResponse(r => r.url().endsWith('/market/1/buy') && r.request().method() === 'POST'),
+                    purchase.getByRole('button').click(),
+                ]);
+                assert(response.status() === 302, `Purchase: HTTP ${response.status()}`);
+                await p.waitForLoadState('networkidle');
+                const alert = await p.locator('body').innerText();
+                const order = alert.match(/Заказ №(\d+) доступен/);
+                assert(order, 'Purchase did not return the created order');
+                await go('/insider/market#market-orders', 'teacher');
+                const cancel = p.locator(`form[action$="/market/cancel/${order[1]}"]`);
+                assert(await cancel.count() === 1, 'New order is missing from the delivery queue');
+                await p.screenshot({ path: `${config.output}/order-actions-${width}.png`, fullPage: true });
+                p.once('dialog', dialog => dialog.accept());
+                const [refund] = await Promise.all([
+                    p.waitForResponse(r => r.url().endsWith(`/market/cancel/${order[1]}`) && r.request().method() === 'POST'),
+                    cancel.getByRole('button').click(),
+                ]);
+                assert(refund.status() === 302, `Refund: HTTP ${refund.status()}`);
+                await p.waitForLoadState('networkidle');
+                assert(await p.locator(`form[action$="/market/cancel/${order[1]}"]`).count() === 0, 'Cancelled order remains in delivery queue');
+                await go('/insider/market#market-purchases', 'student');
+                const history = p.locator('.gc-purchase-row').filter({ hasText: `№${order[1]}` });
+                assert((await history.innerText()).includes('Отменён · GC возвращены'), 'Refund erased order history');
+            });
         } catch (error) {
             errors.push({ width, error: error.message });
             await p.screenshot({ path: `${config.output}/interaction-failure-${width}.png` });

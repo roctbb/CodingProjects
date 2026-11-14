@@ -53,7 +53,7 @@ class LessonStudentStats extends Model
         $student = User::with([
             'submissions' => function ($query) use ($courseId) {
                 $query->where('course_id', $courseId)
-                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark');
+                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark')->withEvaluation();
             },
         ])->findOrFail($studentId);
         $course = Course::with('students:id', 'teachers:id')->findOrFail($courseId);
@@ -88,6 +88,8 @@ class LessonStudentStats extends Model
             ->map(function ($submissions) {
                 return (int) $submissions->max('mark');
             });
+        $earnedMarksByTask = $student->submissions->filter(fn ($s) => $s->evaluatedMark() > 0)
+            ->groupBy('task_id')->map(fn ($submissions) => (int) $submissions->max('mark'));
 
         if (!self::isCommonProgressLesson($lesson, $course)) {
             return [
@@ -109,7 +111,7 @@ class LessonStudentStats extends Model
                 }
 
                 if (self::isCommonProgressTask($task)) {
-                    $progressPoints += $bestMark;
+                    $progressPoints += $earnedMarksByTask->get($task->id, 0);
                     if (!$task->is_star) {
                         $progressMaxPoints += $task->max_mark;
                     }
@@ -144,7 +146,7 @@ class LessonStudentStats extends Model
         $student = User::with([
             'submissions' => function ($query) use ($courseId) {
                 $query->where('course_id', $courseId)
-                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark');
+                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark')->withEvaluation();
             },
         ])->findOrFail($studentId);
 
@@ -201,7 +203,7 @@ class LessonStudentStats extends Model
         $students = User::with([
             'submissions' => function ($query) use ($courseId) {
                 $query->where('course_id', $courseId)
-                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark');
+                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark')->withEvaluation();
             },
         ])->whereIn('id', $studentIds)->get();
 
@@ -255,7 +257,7 @@ class LessonStudentStats extends Model
         $students = User::with([
             'submissions' => function ($query) use ($courseId) {
                 $query->where('course_id', $courseId)
-                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark');
+                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark')->withEvaluation();
             },
         ])->whereIn('id', $studentIds)->get();
 

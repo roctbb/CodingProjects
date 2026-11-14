@@ -23,7 +23,7 @@ class AccountEntryTest extends TestCase
                 hobbies TEXT, interests TEXT, image TEXT, email_verified_at TEXT, remember_token TEXT, created_at TEXT, updated_at TEXT);
             CREATE TABLE providers (id INTEGER PRIMARY KEY, invite TEXT);
             CREATE TABLE courses (id INTEGER PRIMARY KEY, name TEXT, invite TEXT, mode TEXT);
-            CREATE TABLE course_students (course_id INTEGER, user_id INTEGER);
+            CREATE TABLE course_students (course_id INTEGER, user_id INTEGER, is_remote INTEGER DEFAULT 0);
             INSERT INTO providers VALUES (1,'TEACHER'), (2,NULL);
             INSERT INTO courses VALUES (1,'Python','STUDENT','open');
             SQL);

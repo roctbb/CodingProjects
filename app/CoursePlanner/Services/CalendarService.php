@@ -179,6 +179,9 @@ class CalendarService
     {
         $data = Validator::make($input, ['date' => 'required|date_format:Y-m-d', 'start_time' => 'nullable|date_format:H:i',
             'duration_minutes' => 'required|integer|min:5|max:480', 'title' => 'nullable|string|max:255'])->validate();
+        if ($exception = $this->exceptionFor($planner, $data['date'], null)) {
+            throw ValidationException::withMessages(['date' => 'Дата исключена из расписания: '.$exception->reason.'. Сначала измените исключение.']);
+        }
         $start = $data['start_time'] ?? null;
         if ($start) {
             $minutes = $this->minutes($start);

@@ -13,11 +13,13 @@
             $attempts = $student->submissions->groupBy('task_id');
             $cells = $tasks->mapWithKeys(function ($task) use ($student, $attempts, $blockedTaskMap, $pendingReviewPairs) {
                 $best = \App\Solution::bestScoredIn($attempts->get($task->id, collect()));
+                $earned = \App\Solution::bestScoredIn($attempts->get($task->id, collect())->filter(fn ($s) => $s->evaluatedMark() > 0));
                 $blocked = isset($blockedTaskMap[$student->id.':'.$task->id]);
                 $mark = $blocked ? 0 : ($best?->mark ?? 0);
+                $earnedMark = $blocked ? 0 : ($earned?->mark ?? 0);
                 $review = !$blocked && isset($pendingReviewPairs[$student->id.':'.$task->id]);
-                $state = $blocked ? 'blocked' : ($review ? 'review' : ($task->max_mark > 0 && $mark >= $task->max_mark ? 'complete' : ($mark > 0 ? 'partial' : 'empty')));
-                return [$task->id => compact('mark', 'state')];
+                $state = $blocked ? 'blocked' : ($review ? 'review' : ($task->max_mark > 0 && $earnedMark >= $task->max_mark ? 'complete' : ($mark > 0 ? 'partial' : 'empty')));
+                return [$task->id => compact('mark', 'earnedMark', 'state')];
             });
             return compact('student', 'cells');
         });
@@ -87,9 +89,10 @@
                                                 $lessonTasks = $lesson->steps->flatMap->tasks;
                                                 $lessonCells = $cells->only($lessonTasks->pluck('id')->all());
                                                 $lessonMark = $lessonCells->sum('mark');
+                                                $lessonEarnedMark = $lessonCells->sum('earnedMark');
                                                 $lessonMax = $lessonTasks->sum('max_mark');
                                                 $lessonStates = $lessonCells->pluck('state');
-                                                $lessonState = $lessonStates->contains('review') ? 'review' : ($lessonStates->every(fn ($state) => $state === 'blocked') ? 'blocked' : ($lessonMax > 0 && $lessonMark >= $lessonMax ? 'complete' : ($lessonMark > 0 ? 'partial' : 'empty')));
+                                                $lessonState = $lessonStates->contains('review') ? 'review' : ($lessonStates->every(fn ($state) => $state === 'blocked') ? 'blocked' : ($lessonMax > 0 && $lessonEarnedMark >= $lessonMax ? 'complete' : ($lessonMark > 0 ? 'partial' : 'empty')));
                                             @endphp
                                             <td data-assessment-column="{{ $lesson->id }}"><button type="button" class="gc-text-action gc-assessment-cell-action" data-assessment-lesson-select="{{ $lesson->id }}" aria-pressed="{{ $loop->first ? 'true' : 'false' }}" aria-controls="assessment-detail-content" aria-label="{{ $student->name }} · {{ $lesson->name }}: {{ $lessonMark }} из {{ $lessonMax }}, {{ $assessmentStates[$lessonState][0] }}. Показать задачи ниже"><x-gc-assessment-score :mark="$lessonMark" :maximum="$lessonMax" :state="$lessonState" :label="$assessmentStates[$lessonState][0]" /></button></td>
                                         @endforeach

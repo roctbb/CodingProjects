@@ -44,6 +44,9 @@ class CoursesController extends Controller
         $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'generatePoster', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'reviews', 'resetPendingReviews', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
         $this->middleware(['course', 'teacher'])->only('exportChapterPoints');
         $this->middleware('course')->only(['setCurrentLesson', 'lessonStatistics']);
+        $this->middleware('course.manage')->only(['editView', 'start', 'stop', 'edit', 'generatePoster', 'assessments', 'report',
+            'resetStudentGeekPasteWarning', 'createChapter', 'createChapterView', 'export', 'exportMarkdown', 'exportChapterPoints']);
+        $this->middleware('course.manage:chapter')->only(['editChapter', 'editChapterView', 'setDefaultChapter', 'makeChapterLower', 'makeChapterUpper']);
     }
 
     /**
@@ -323,7 +326,7 @@ class CoursesController extends Controller
             'students',
             'statsStudents.submissions' => function ($query) use ($id) {
                 $query->where('course_id', $id)
-                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark', 'submitted', 'review_skipped', 'recheck_requested');
+                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark', 'submitted', 'review_skipped', 'recheck_requested')->withEvaluation();
             },
             'teachers',
         ])->findOrFail($id);
@@ -1284,19 +1287,16 @@ class CoursesController extends Controller
             return $this->backException();
         }
         $user = User::findOrFail(Auth::User()->id);
-        $course = Course::where('invite', $request->invite)->first();
-        $remote = false;
-        if ($course == null) {
-            $course = Course::where('remote_invite', $request->invite)->first();
-            $remote = true;
-        }
+        $invitation = app(\App\Services\CourseEnrollment::class)->invitation($request->invite);
+        $course = $invitation['course'] ?? null;
+        $remote = $invitation['remote'] ?? false;
 
         if ($course == null) {
             $this->make_error_alert('Ошибка!', 'Курс с таким приглашением не найден.');
             return $this->backException();
         }
 
-        if ($course->students->contains($user)) {
+        if (!app(\App\Services\CourseEnrollment::class)->enroll($course, $user, $remote)) {
             $this->make_error_alert('Ошибка!', 'Вы уже зачислены на курс "' . $course->name . '".');
             return $this->backException();
         }
@@ -1306,7 +1306,6 @@ class CoursesController extends Controller
         }
 
         $this->make_success_alert('Успех!', 'Вы присоединились к курсу "' . $course->name . '".');
-        $course->students()->attach([$user->id => ['is_remote' => $remote]]);
 
 
         return redirect()->back();
@@ -1329,7 +1328,7 @@ class CoursesController extends Controller
             return $this->backException();
         }
         $this->make_success_alert('Успех!', 'Вы присоединились к курсу "' . $course->name . '".');
-        $course->students()->attach([$user->id => ['is_remote' => false]]);
+        app(\App\Services\CourseEnrollment::class)->enroll($course, $user);
 
 
         return redirect('/insider/courses/' . $course->id);

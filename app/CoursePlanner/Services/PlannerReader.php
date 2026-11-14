@@ -164,7 +164,7 @@ class PlannerReader
             'key' => 'codingprojects:'.$d->task_id.':'.$d->id, 'resource_key' => 'codingprojects:task:'.$d->task_id,
             'provider_key' => 'codingprojects', 'external_id' => (string) $d->task_id, 'title' => $d->task->name,
             'due_on' => $d->expiration->format('Y-m-d'), 'due_at' => $d->cutoffAt()->toIso8601String(),
-            'time' => $d->legacyBoundary ? null : $d->cutoffAt()->setTimezone($d->ruleTimezone)->format('H:i'),
+            'time' => $d->deadlineAt()->format('H:i'),
             'penalty' => (float) $d->penalty, 'lesson_id' => (int) $d->task->step->lesson_id,
             'points' => ['value' => (int) $d->task->max_mark, 'unit' => 'codingprojects.xp'],
             'open_url' => url('/insider/courses/'.$course->id.'/steps/'.$d->task->step_id.'#task'.$d->task_id),

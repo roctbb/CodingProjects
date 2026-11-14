@@ -87,7 +87,7 @@
                                                 @endphp
                                                 <li data-deadline-row data-deadline-state="{{ $state }}" data-deadline-search-text="{{ $deadline->task->name.' '.$deadline->task->step->name.' '.$deadline->task->step->lesson->name }}">
                                                     <a class="gc-deadline-task" href="{{ url('/insider/courses/'.$course->id.'/steps/'.$deadline->task->step->id.'#task'.$deadline->task_id) }}">
-                                                        <span class="gc-deadline-task__body"><strong>{{ $deadline->task->name }}</strong><small>{{ $deadline->task->step->name }} · @if($deadline instanceof \App\Support\DeadlineRule && !$deadline->legacyBoundary){{ $deadline->cutoffAt()->setTimezone($deadline->ruleTimezone)->format('H:i') }} · @endif{{ (int) round($deadline->penalty * 100) }}% баллов после срока</small></span>
+                                                        <span class="gc-deadline-task__body"><strong>{{ $deadline->task->name }}</strong><small>{{ $deadline->task->step->name }} · @if($deadline instanceof \App\Support\DeadlineRule)до {{ $deadline->deadlineAt()->format('H:i') }} · @endif{{ (int) round($deadline->penalty * 100) }}% баллов после срока</small></span>
                                                         <span class="gc-deadline-task__state gc-deadline-task__state--{{ $state }}"><i class="fas {{ $stateIcon }}" aria-hidden="true"></i>{{ $stateLabel }}</span>
                                                     </a>
                                                 </li>

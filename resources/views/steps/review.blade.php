@@ -56,9 +56,9 @@
                             </form>
                         @endif
                         @if($isBlocked)
-                            <a class="dropdown-item" href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/unblock/'.$student->id) }}" data-confirm="Разблокировать задачу для этого ученика?">Разблокировать задачу</a>
+                            <form method="POST" action="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/unblock/'.$student->id) }}" data-confirm="Разблокировать задачу для этого ученика?">@csrf<button class="dropdown-item" type="submit">Разблокировать задачу</button></form>
                         @else
-                            <a class="dropdown-item text-danger" href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/block/'.$student->id) }}" data-confirm="Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены.">Заблокировать задачу</a>
+                            <form method="POST" action="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/block/'.$student->id) }}" data-confirm="Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены.">@csrf<button class="dropdown-item text-danger" type="submit">Заблокировать задачу</button></form>
                         @endif
                     @endif
                 </div>

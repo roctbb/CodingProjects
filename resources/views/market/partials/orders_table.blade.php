@@ -35,13 +35,13 @@
                 <td class="market-orders-actions">
                     @if($order->user && $orderPrice !== null)
                     @if($order->good)
-                    <a href="{{url('/insider/market/ship/'.$order->id)}}?return_url={{ urlencode($returnUrl ?? request()->fullUrl()) }}" class="btn btn-primary btn-sm rounded-3 market-order-action market-order-action--ship">
+                    <form method="POST" action="{{ url('/insider/market/ship/'.$order->id) }}" class="d-inline">@csrf<input type="hidden" name="return_url" value="{{ $returnUrl ?? request()->fullUrl() }}"><button type="submit" class="btn btn-primary btn-sm rounded-3 market-order-action market-order-action--ship">
                         <i class="fas fa-check" aria-hidden="true"></i> Выдать
-                    </a>
+                    </button></form>
                     @endif
-                    <a href="{{url('/insider/market/cancel/'.$order->id)}}?return_url={{ urlencode($returnUrl ?? request()->fullUrl()) }}" class="btn btn-outline-danger btn-sm rounded-3 market-order-action" data-confirm="Отменить заказ №{{ $order->id }} и вернуть {{ $orderPrice ?? '—' }} GC покупателю?">
+                    <form method="POST" action="{{ url('/insider/market/cancel/'.$order->id) }}" class="d-inline">@csrf<input type="hidden" name="return_url" value="{{ $returnUrl ?? request()->fullUrl() }}"><button type="submit" class="btn btn-outline-danger btn-sm rounded-3 market-order-action" data-confirm="Отменить заказ №{{ $order->id }} и вернуть {{ $orderPrice ?? '—' }} GC покупателю?">
                         <i class="fas fa-times" aria-hidden="true"></i> Отменить
-                    </a>
+                    </button></form>
                     @else
                         <span class="gc-help-text">{{ !$order->user ? 'Покупатель удалён' : 'Цена не сохранена' }}</span>
                     @endif

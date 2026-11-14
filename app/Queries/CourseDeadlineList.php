@@ -52,7 +52,8 @@ class CourseDeadlineList
                 $isManager = $viewer->role === 'admin' || $course->teachers->contains('id', $viewer->id);
                 $minimumMark = $deadline->task->max_mark > 1 ? round($deadline->task->max_mark * 3 / 4) : 1;
                 $deadline->is_done = !$isManager && $deadline->task->solutions
-                    ->where('course_id', $course->id)->where('mark', '>=', $minimumMark)->isNotEmpty();
+                    ->where('course_id', $course->id)->where('mark', '>=', $minimumMark)
+                    ->contains(fn ($s) => $s->evaluatedMark() > 0);
                 $cutoff = $deadline instanceof \App\Support\DeadlineRule ? $deadline->cutoffAt() : $deadline->expiration->copy()->addDay();
                 $deadline->is_overdue = !$deadline->is_done && $cutoff->lte($now);
                 $deadline->is_today = !$deadline->is_done && $deadline->expiration->isSameDay($now);

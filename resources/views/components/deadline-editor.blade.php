@@ -12,12 +12,12 @@
         <option value="none" @selected($editor['mode'] === 'none')>Без дедлайна</option>
     </select>
     <div data-deadline-stages @if($editor['mode'] !== 'custom') hidden @endif>
-        <p class="gc-help-text mb-3">До первого срока — 100% баллов. Каждый следующий срок меняет процент для новых сдач. Время: {{ $editor['timezone'] }}.</p>
+        <p class="gc-help-text mb-3">Каждая дата — до 23:59 включительно. С начала следующего дня для новых сдач действует указанный процент. До первого срока — 100%. Часовой пояс: {{ $editor['timezone'] }}.</p>
         <div class="d-grid gap-3" data-deadline-rows>
             @foreach($editor['stages'] as $i => $stage)
                 <div class="row g-2 align-items-end" data-deadline-row>
-                    <div class="col-12 col-sm-7"><label class="form-label w-100 mb-0">Начиная с даты и времени<input class="form-control" type="datetime-local" name="stages[{{ $i }}][cutoff_at]" value="{{ $stage['cutoff_at'] }}" required></label></div>
-                    <div class="col-9 col-sm-4"><label class="form-label w-100 mb-0">Остаётся баллов<span class="input-group"><input class="form-control" type="number" min="0" max="100" step="any" name="stages[{{ $i }}][retained_percent]" value="{{ $stage['retained_percent'] }}" required><span class="input-group-text">%</span></span></label></div>
+                    <div class="col-12 col-sm-7"><label class="form-label w-100 mb-0">Срок сдачи · до 23:59<input class="form-control" type="date" name="stages[{{ $i }}][deadline_date]" value="{{ $stage['deadline_date'] }}" required></label></div>
+                    <div class="col-9 col-sm-4"><label class="form-label w-100 mb-0">После срока<span class="input-group"><input class="form-control" type="number" min="0" max="100" step="any" name="stages[{{ $i }}][retained_percent]" value="{{ $stage['retained_percent'] }}" required><span class="input-group-text">%</span></span></label></div>
                     <div class="col-3 col-sm-1 pb-1"><button class="btn btn-outline-secondary gc-icon-button" type="button" data-deadline-remove aria-label="Убрать срок"><i class="fas fa-xmark" aria-hidden="true"></i></button></div>
                 </div>
             @endforeach

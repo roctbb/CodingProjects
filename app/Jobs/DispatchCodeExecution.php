@@ -46,7 +46,7 @@ class DispatchCodeExecution implements ShouldQueue
                 } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $exception) {
                     if (!in_array($exception->getStatusCode(), [400, 404, 422], true)) throw $exception;
                     $submission->update(['preparation_state' => 'failed']);
-                    $run->update(['state' => 'error', 'comment' => $exception->getMessage(), 'finished_at' => now()]);
+                    $this->finishWithError($run, $exception->getMessage());
                     return;
                 }
             }
@@ -66,7 +66,16 @@ class DispatchCodeExecution implements ShouldQueue
     {
         $run = CodeExecutionRun::find($this->executionId);
         if ($run && !$run->finished_at && !$run->dispatched_at
-            && (!$run->dispatch_lease_until || $run->dispatch_lease_until->isPast())) $run->update(['state' => 'error',
-            'comment' => 'Не удалось подготовить или отправить решение. Преподаватель может повторить проверку.', 'finished_at' => now()]);
+            && (!$run->dispatch_lease_until || $run->dispatch_lease_until->isPast())) $this->finishWithError($run,
+            'Не удалось подготовить или отправить решение. Преподаватель может повторить проверку.');
+    }
+
+    private function finishWithError(CodeExecutionRun $run, string $comment): void
+    {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($run, $comment) {
+            $run->update(['state' => 'error', 'comment' => $comment, 'finished_at' => now()]);
+            $submission = $run->submission;
+            app(\App\Services\ClassroomBonus::class)->reconcile($submission->course_id, $submission->task_id, $submission->user_id);
+        });
     }
 }

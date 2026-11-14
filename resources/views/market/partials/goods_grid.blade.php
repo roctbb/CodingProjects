@@ -60,18 +60,18 @@
                                                 <i class="fas fa-pen text-muted" aria-hidden="true"></i> Редактировать
                                             </a>
                                             @if ($isArchive)
-                                                <a href="{{ url('/insider/market/'.$good->id.'/restore') }}" class="dropdown-item rounded-2 d-flex align-items-center gap-2" data-confirm="Вернуть товар в магазин?">
+                                                <form method="POST" action="{{ url('/insider/market/'.$good->id.'/restore') }}">@csrf<button type="submit" class="dropdown-item rounded-2 d-flex align-items-center gap-2" data-confirm="Вернуть товар в магазин?">
                                                     <i class="fas fa-undo" aria-hidden="true"></i> Вернуть в магазин
-                                                </a>
+                                                </button></form>
                                             @else
                                                 @if ($auctionActive)
-                                                    <a href="{{ url('/insider/market/'.$good->id.'/finish-auction') }}" class="dropdown-item rounded-2 d-flex align-items-center gap-2" data-confirm="Завершить аукцион и создать заказы для победителей?">
+                                                    <form method="POST" action="{{ url('/insider/market/'.$good->id.'/finish-auction') }}">@csrf<button type="submit" class="dropdown-item rounded-2 d-flex align-items-center gap-2" data-confirm="Завершить аукцион и создать заказы для победителей?">
                                                         <i class="fas fa-gavel" aria-hidden="true"></i> Завершить аукцион
-                                                    </a>
+                                                    </button></form>
                                                 @endif
-                                                <a href="{{ url('/insider/market/'.$good->id.'/archive') }}" class="dropdown-item rounded-2 d-flex align-items-center gap-2 text-danger" data-confirm="Снять товар с продажи и перенести в архив?">
+                                                <form method="POST" action="{{ url('/insider/market/'.$good->id.'/archive') }}">@csrf<button type="submit" class="dropdown-item rounded-2 d-flex align-items-center gap-2 text-danger" data-confirm="Снять товар с продажи и перенести в архив?">
                                                     <i class="fas fa-archive" aria-hidden="true"></i> Снять с продажи
-                                                </a>
+                                                </button></form>
                                             @endif
                                         </div>
                                     </div>
@@ -175,7 +175,7 @@
                             @else
                                 <x-gc-purchase-footer :price="$marketPrice" :original-price="$priceQuote['base_price']">
                                     @if ($good->number > 0 && $marketPrice <= $user->balance())
-                                        <a href="{{ url('/insider/market/'.$good->id.'/buy?expected_price='.$marketPrice) }}" class="btn btn-primary btn-sm" data-confirm="Купить «{{ $good->name }}» за {{ $marketPrice }} GC? Заказ появится в разделе «Мои покупки»." aria-label="Купить {{ $good->name }} за {{ $marketPrice }} GC">Купить</a>
+                                        <form method="POST" action="{{ url('/insider/market/'.$good->id.'/buy') }}" class="d-inline" data-confirm="Купить «{{ $good->name }}» за {{ $marketPrice }} GC? Заказ появится в разделе «Мои покупки».">@csrf<input type="hidden" name="purchase_key" value="{{ (string) \Illuminate\Support\Str::uuid() }}"><input type="hidden" name="expected_price" value="{{ $marketPrice }}"><button type="submit" class="btn btn-primary btn-sm" aria-label="Купить {{ $good->name }} за {{ $marketPrice }} GC">Купить</button></form>
                                     @else
                                         <button class="btn btn-outline-secondary btn-sm" disabled>{{ $good->number > 0 ? 'Нужно ещё '.($marketPrice - $user->balance()).' GC' : 'Нет в наличии' }}</button>
                                     @endif

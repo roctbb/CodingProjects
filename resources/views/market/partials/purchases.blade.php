@@ -5,7 +5,7 @@
             @forelse($myPurchases as $deal)
                 <div class="gc-row gc-purchase-row">
                     <div class="gc-summary-line"><strong class="fw-medium">{{ $deal->good?->name ?? 'Товар удалён' }}</strong><span class="gc-amount">{{ $deal->price ?? $deal->good?->price ?? '—' }} GC</span></div>
-                    <div class="gc-inline-meta"><span class="gc-soft-badge">{{ $deal->shipped ? 'Доставлено' : 'Ожидает доставки' }}</span><span>№{{ $deal->id }}</span></div>
+                    <div class="gc-inline-meta"><span class="gc-soft-badge">{{ $deal->cancelled_at ? 'Отменён · GC возвращены' : ($deal->shipped ? 'Доставлено' : 'Ожидает доставки') }}</span><span>№{{ $deal->id }}</span></div>
                     <div class="gc-inline-meta"><time datetime="{{ $deal->created_at?->toIso8601String() }}">Заказан {{ $deal->created_at?->format('d.m.Y') }}</time>@if($deal->shipped)<span>Выдан {{ $deal->updated_at?->format('d.m.Y') }}</span>@endif</div>
                 </div>
             @empty

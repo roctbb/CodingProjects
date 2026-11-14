@@ -1205,9 +1205,9 @@
 
 Маршруты:
 
-- `GET|HEAD /insider/market/cancel/{id}` — action
+- `POST /insider/market/cancel/{id}` — action
 - `GET|HEAD /insider/market/orders` — screen
-- `GET|HEAD /insider/market/ship/{id}` — action
+- `POST /insider/market/ship/{id}` — action
 
 Переходы:
 
@@ -1675,11 +1675,11 @@
 Маршруты:
 
 - `POST /insider/courses/{course_id}/solution/{id}` — action
-- `GET|HEAD /insider/courses/{course_id}/tasks/{id}/block/{student_id}` — action
+- `POST /insider/courses/{course_id}/tasks/{id}/block/{student_id}` — action
 - `POST /insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/skip-review` — action
 - `POST /insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/waive-deadline-penalty` — action
 - `POST /insider/courses/{course_id}/tasks/{id}/student/{student_id}/skip-review` — action
-- `GET|HEAD /insider/courses/{course_id}/tasks/{id}/unblock/{student_id}` — action
+- `POST /insider/courses/{course_id}/tasks/{id}/unblock/{student_id}` — action
 
 Исходники:
 
@@ -2136,7 +2136,7 @@
 
 Маршруты:
 
-- `GET|HEAD /insider/market/{id}/buy` — action
+- `POST /insider/market/{id}/buy` — action
 
 Исходники:
 
@@ -2179,7 +2179,7 @@
 Маршруты:
 
 - `POST /insider/market/{id}/bid` — action
-- `GET|HEAD /insider/market/{id}/finish-auction` — action
+- `POST /insider/market/{id}/finish-auction` — action
 
 Исходники:
 
@@ -2197,8 +2197,8 @@
 
 Маршруты:
 
-- `GET|HEAD /insider/market/{id}/archive` — action
-- `GET|HEAD /insider/market/{id}/restore` — action
+- `POST /insider/market/{id}/archive` — action
+- `POST /insider/market/{id}/restore` — action
 
 Исходники:
 

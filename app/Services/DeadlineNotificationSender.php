@@ -3,7 +3,6 @@ namespace App\Services;
 
 use App\Course;
 use App\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DeadlineNotificationSender
@@ -39,10 +38,14 @@ class DeadlineNotificationSender
         $stage = DB::table('deadline_stages')->find($event->stage_id);
         if (!$stage) { $this->finish($id, 'cancelled'); return; }
         $zone = DB::table('deadline_policies')->where('id', $event->policy_id)->value('timezone');
-        $date = Carbon::parse($stage->cutoff_at, 'UTC')->setTimezone($zone)->format('d.m.Y H:i');
-        $text = ($event->kind === 'reminder' ? '⏳ Срок сдачи через сутки' : '🏁 Наступил срок сдачи')."\n".
+        $rule = \App\Support\DeadlineRule::fromSnapshot(['timezone' => $zone,
+            'stages' => [['at' => $stage->cutoff_at, 'percent' => $stage->retained_percent]]]);
+        $date = $rule->deadlineAt()->format('d.m.Y H:i');
+        $minutes = max(1, (int) ceil(now()->diffInSeconds($rule->cutoffAt(), false) / 60));
+        $remaining = $minutes >= 60 ? intdiv($minutes, 60).' ч '.($minutes % 60).' мин' : $minutes.' мин';
+        $text = ($event->kind === 'reminder' ? '⏳ До срока сдачи: '.$remaining : '🏁 Наступил срок сдачи')."\n".
             mb_substr($course->name, 0, 200)."\n".mb_substr($tasks->first()->step->lesson->name, 0, 200)."\n".
-            $date.' ('.$zone.') → '.($stage->retained_percent + 0)."% баллов\n";
+            'До '.$date.' ('.$zone.'); после срока — '.($stage->retained_percent + 0)."% баллов\n";
         foreach ($tasks->take(5) as $task) $text .= '• '.mb_substr($task->name, 0, 150)."\n";
         if ($tasks->count() > 5) $text .= 'И ещё '.($tasks->count() - 5)." задач\n";
         $text .= "Сдача остаётся открытой. Уже заработанные баллы сохраняются.\n".url('/insider/courses/'.$course->id.'/deadlines');

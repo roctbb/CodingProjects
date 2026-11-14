@@ -11,16 +11,17 @@ class Access
 {
     public function teacher(User $user, int $courseId): bool
     {
-        return $user->role === 'admin' || DB::table('course_teachers')->where('course_id', $courseId)->where('user_id', $user->id)->exists();
+        return app(\App\Services\CourseAccess::class)->manages($user, Course::findOrFail($courseId));
     }
 
     public function task(User $user, int $courseId, int $taskId, bool $teacherOnly = false): Task
     {
         $course = Course::findOrFail($courseId);
-        $task = Task::with('step')->findOrFail($taskId);
-        abort_unless($task->step && (int) $task->step->program_id === (int) $course->program_id, 404);
+        $access = app(\App\Services\CourseAccess::class);
+        $task = $access->task($course, $taskId);
         if (!$this->teacher($user, $courseId)) {
             abort_if($teacherOnly, 403);
+            $access->study($user, $course, $task->step->lesson);
             abort_unless(DB::table('course_students')->where('course_id', $courseId)->where('user_id', $user->id)->exists()
                 && $task->isVisible($user, $course), 403);
         }

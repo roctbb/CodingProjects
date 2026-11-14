@@ -566,7 +566,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage:chapter"
     ],
     "node": "course",
     "kind": "action"
@@ -581,7 +582,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage:chapter"
     ],
     "node": "chapter-edit",
     "kind": "screen"
@@ -596,7 +598,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage:chapter"
     ],
     "node": "chapter-edit",
     "kind": "action"
@@ -611,7 +614,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "course",
     "kind": "download"
@@ -624,7 +628,8 @@
     "middleware": [
       "web",
       "verified",
-      "auth"
+      "auth",
+      "course.manage:chapter"
     ],
     "node": "course",
     "kind": "action"
@@ -637,7 +642,8 @@
     "middleware": [
       "web",
       "verified",
-      "auth"
+      "auth",
+      "course.manage:chapter"
     ],
     "node": "course",
     "kind": "action"
@@ -688,7 +694,8 @@
     "middleware": [
       "web",
       "verified",
-      "auth"
+      "auth",
+      "step"
     ],
     "node": "step-create",
     "kind": "screen"
@@ -701,7 +708,8 @@
     "middleware": [
       "web",
       "verified",
-      "auth"
+      "auth",
+      "step"
     ],
     "node": "step-create",
     "kind": "action"
@@ -715,6 +723,7 @@
       "web",
       "verified",
       "auth",
+      "course.manage:lesson",
       "teacher"
     ],
     "node": "lesson-deadline",
@@ -728,7 +737,8 @@
     "middleware": [
       "web",
       "verified",
-      "auth"
+      "auth",
+      "course.manage:lesson"
     ],
     "node": "course",
     "kind": "action"
@@ -755,6 +765,7 @@
       "web",
       "verified",
       "auth",
+      "course.manage:lesson",
       "teacher"
     ],
     "node": "early-access",
@@ -769,6 +780,7 @@
       "web",
       "verified",
       "auth",
+      "course.manage:lesson",
       "teacher"
     ],
     "node": "lesson-edit",
@@ -783,6 +795,7 @@
       "web",
       "verified",
       "auth",
+      "course.manage:lesson",
       "teacher"
     ],
     "node": "lesson-edit",
@@ -797,6 +810,7 @@
       "web",
       "verified",
       "auth",
+      "course.manage:lesson",
       "teacher"
     ],
     "node": "course",
@@ -811,6 +825,7 @@
       "web",
       "verified",
       "auth",
+      "course.manage:lesson",
       "teacher"
     ],
     "node": "course",
@@ -825,6 +840,7 @@
       "web",
       "verified",
       "auth",
+      "course.manage:lesson",
       "teacher"
     ],
     "node": "course",
@@ -839,6 +855,7 @@
       "web",
       "verified",
       "auth",
+      "course.manage:lesson",
       "teacher"
     ],
     "node": "course",
@@ -853,6 +870,7 @@
       "web",
       "verified",
       "auth",
+      "course.manage:lesson",
       "teacher"
     ],
     "node": "course",
@@ -1170,7 +1188,7 @@
     "kind": "action"
   },
   {
-    "method": "GET|HEAD",
+    "method": "POST",
     "uri": "insider/courses/{course_id}/tasks/{id}/block/{student_id}",
     "name": null,
     "action": "TasksController@blockStudent",
@@ -1490,7 +1508,7 @@
     "kind": "action"
   },
   {
-    "method": "GET|HEAD",
+    "method": "POST",
     "uri": "insider/courses/{course_id}/tasks/{id}/unblock/{student_id}",
     "name": null,
     "action": "TasksController@unblockStudent",
@@ -1709,7 +1727,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "assessments",
     "kind": "screen"
@@ -1737,7 +1756,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "chapter-create",
     "kind": "screen"
@@ -1752,7 +1772,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "chapter-create",
     "kind": "action"
@@ -1780,6 +1801,7 @@
       "web",
       "verified",
       "auth",
+      "course.manage:lesson",
       "teacher"
     ],
     "node": "lesson-create",
@@ -1794,6 +1816,7 @@
       "web",
       "verified",
       "auth",
+      "course.manage:lesson",
       "teacher"
     ],
     "node": "lesson-create",
@@ -1823,7 +1846,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "course-edit",
     "kind": "screen"
@@ -1838,7 +1862,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "course-edit",
     "kind": "action"
@@ -1864,7 +1889,8 @@
     "middleware": [
       "web",
       "verified",
-      "auth"
+      "auth",
+      "course.manage"
     ],
     "node": "course",
     "kind": "download"
@@ -1879,7 +1905,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "course",
     "kind": "download"
@@ -1966,7 +1993,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "course-edit",
     "kind": "action"
@@ -1981,7 +2009,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "report",
     "kind": "screen"
@@ -1996,7 +2025,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "report",
     "kind": "action"
@@ -2011,7 +2041,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "course",
     "kind": "action"
@@ -2026,7 +2057,8 @@
       "verified",
       "auth",
       "course",
-      "teacher"
+      "teacher",
+      "course.manage"
     ],
     "node": "course",
     "kind": "action"
@@ -2071,7 +2103,7 @@
     "kind": "screen"
   },
   {
-    "method": "GET|HEAD",
+    "method": "POST",
     "uri": "insider/market/cancel/{id}",
     "name": null,
     "action": "MarketController@cancel",
@@ -2168,7 +2200,7 @@
     "kind": "screen"
   },
   {
-    "method": "GET|HEAD",
+    "method": "POST",
     "uri": "insider/market/ship/{id}",
     "name": null,
     "action": "MarketController@ship",
@@ -2182,7 +2214,7 @@
     "kind": "action"
   },
   {
-    "method": "GET|HEAD",
+    "method": "POST",
     "uri": "insider/market/{id}/archive",
     "name": null,
     "action": "MarketController@archive",
@@ -2209,7 +2241,7 @@
     "kind": "action"
   },
   {
-    "method": "GET|HEAD",
+    "method": "POST",
     "uri": "insider/market/{id}/buy",
     "name": null,
     "action": "MarketController@buy",
@@ -2250,7 +2282,7 @@
     "kind": "action"
   },
   {
-    "method": "GET|HEAD",
+    "method": "POST",
     "uri": "insider/market/{id}/finish-auction",
     "name": null,
     "action": "MarketController@finishAuction",
@@ -2264,7 +2296,7 @@
     "kind": "action"
   },
   {
-    "method": "GET|HEAD",
+    "method": "POST",
     "uri": "insider/market/{id}/restore",
     "name": null,
     "action": "MarketController@restore",

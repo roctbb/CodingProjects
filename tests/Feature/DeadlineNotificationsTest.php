@@ -15,6 +15,12 @@ use Tests\Support\DeadlineFeatureCase;
 
 class DeadlineNotificationsTest extends DeadlineFeatureCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Carbon::setTestNow(Carbon::parse('2026-11-15 00:00:00', 'Europe/Moscow'));
+    }
+
     private function teacher(): User
     {
         $user=User::find(2); $user->forceFill(['telegram_chat_id'=>'202','telegram_user_id'=>'202'])->save(); return $user;
@@ -77,7 +83,8 @@ class DeadlineNotificationsTest extends DeadlineFeatureCase
         $this->deliverAll(); $this->deliverAll();
         $this->assertEquals(3,DB::table('deadline_notification_deliveries')->where('status','sent')->count());
         Http::assertSentCount(3);
-        Http::assertSent(fn($r)=>$r['chat_id']==='-1009' && $r['message_thread_id']===17 && str_contains($r['text'],'70%'));
+        Http::assertSent(fn($r)=>$r['chat_id']==='-1009' && $r['message_thread_id']===17 && str_contains($r['text'],'70%')
+            && str_contains($r['text'],'До 15.11.2026 23:59 (Europe/Moscow)'));
         foreach(DB::table('deadline_notification_deliveries')->get() as $delivery) $this->assertSame('123',$delivery->message_id);
     }
     public function test_shared_lesson_and_legacy_task_policies_aggregate_in_one_group_message(): void
@@ -112,7 +119,7 @@ class DeadlineNotificationsTest extends DeadlineFeatureCase
     public function test_reached_event_is_due_at_boundary_and_stale_reminders_are_not_sent_after_outage(): void
     {
         $this->teacher(); $this->policy(); app(DeadlineNotifications::class)->reconcile();
-        Carbon::setTestNow(Carbon::parse('2026-11-15 10:00:00','Europe/Moscow'));
+        Carbon::setTestNow(Carbon::parse('2026-11-16 00:00:00','Europe/Moscow'));
         $this->assertSame(1,app(DeadlineNotifications::class)->dispatchDue());
         $delivery=DB::table('deadline_notification_deliveries')->first();
         $event=DB::table('deadline_notification_events')->find(json_decode($delivery->event_ids,true)[0]);
@@ -176,5 +183,26 @@ class DeadlineNotificationsTest extends DeadlineFeatureCase
         $this->assertDatabaseHas('deadline_notification_deliveries',['id'=>$delivery->id,'status'=>'sent']);
         app(TelegramBindService::class)->handleUpdate(['my_chat_member'=>['chat'=>['id'=>-10012345],'new_chat_member'=>['status'=>'left']]]);
         $this->assertDatabaseHas('course_telegram_chats',['id'=>$chat,'status'=>'disabled']);
+    }
+
+    public function test_superseded_and_skipped_pending_solutions_do_not_hide_personal_reminders(): void
+    {
+        $this->policy();User::find(1)->forceFill(['telegram_chat_id'=>'101'])->save();
+        DB::table('course_notification_preferences')->insert(['course_id'=>1,'user_id'=>1,'enabled'=>true]);
+        $old=$this->solution('2026-11-14 08:00:00');$old->review_skipped=true;$old->save();
+        $this->solution('2026-11-14 09:00:00',3);
+        $this->assertEquals(0,\App\Solution::pendingReview()->count());
+        app(DeadlineNotifications::class)->dispatchDue();
+        $this->assertEquals(1,DB::table('deadline_notification_deliveries')->where('recipient_type','student')->count());
+        Http::fake(['*'=>Http::response(['ok'=>true,'result'=>['message_id'=>1]])]);$this->deliverAll();Http::assertSentCount(1);
+    }
+
+    public function test_late_reminder_reports_actual_time_remaining_instead_of_twenty_four_hours(): void
+    {
+        $this->teacher();$this->policy();app(DeadlineNotifications::class)->reconcile();
+        Carbon::setTestNow(Carbon::parse('2026-11-15 23:50:00','Europe/Moscow'));
+        Http::fake(['*'=>Http::response(['ok'=>true,'result'=>['message_id'=>1]])]);
+        app(DeadlineNotifications::class)->dispatchDue();$this->deliverAll();
+        Http::assertSent(fn ($r)=>str_contains($r['text'],'До срока сдачи: 10 мин') && !str_contains($r['text'],'через сутки'));
     }
 }

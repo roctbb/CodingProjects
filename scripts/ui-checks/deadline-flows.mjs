@@ -18,7 +18,7 @@ export default async function deadlineFlows(page, config) {
             assert(await modal.locator('[data-deadline-row]').count()===2,'lesson chain missing');
             await modal.locator('[data-deadline-add]').click();
             const added=modal.locator('[data-deadline-row]').last();
-            await added.locator('input[type="datetime-local"]').fill('2026-11-29T18:00');
+            await added.locator('input[type="date"]').fill('2026-11-29');
             await added.locator('input[type="number"]').fill('25');
             for(const theme of ['light','dark']) {
                 await target.evaluate(theme=>document.documentElement.setAttribute('data-bs-theme',theme),theme);

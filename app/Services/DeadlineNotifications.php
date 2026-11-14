@@ -114,7 +114,8 @@ class DeadlineNotifications
             if (!$student) return true;
             if (!$task->isVisible($student, $course) || !$task->step->lesson->isAvailableForUser($course, $student)) return false;
             // Do not nag about completed work or a submission awaiting review.
-            return !$task->solutions->contains(fn ($s) => $s->submitted && ($s->mark === null || (int) $s->mark >= (int) $task->max_mark));
+            return !$task->isFullDone($student->id) && !\App\Solution::where('course_id', $course->id)
+                ->where('user_id', $student->id)->where('task_id', $task->id)->pendingReview()->exists();
         })->values();
     }
 }

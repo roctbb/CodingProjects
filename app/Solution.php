@@ -23,6 +23,7 @@ class Solution extends Model
     protected $appends = ['mark'];
 
     protected $casts = [
+        'evaluated_mark' => 'integer',
         'deadline_rule_snapshot' => 'array',
         'class_bonus_snapshot' => 'array',
         'submitted' => 'datetime',
@@ -45,6 +46,37 @@ class Solution extends Model
         static::saving(fn (self $solution) => $solution->freezeDeadline());
         static::saving(fn (self $solution) => app(\App\Services\ClassroomBonus::class)->freeze($solution));
         static::saved(fn (self $solution) => app(\App\Services\ClassroomBonus::class)->award($solution));
+    }
+
+    public function save(array $options = [])
+    {
+        // Observers may issue a classroom reward. Its failure must also roll back the grade.
+        return $this->getConnection()->transaction(fn () => parent::save($options));
+    }
+
+    public function evaluatedMark(): int
+    {
+        return (int) ($this->evaluated_mark ?? $this->raw_mark ?? $this->mark ?? 0);
+    }
+
+    public function setEvaluatedMark($mark): void
+    {
+        if (\Illuminate\Support\Facades\Schema::hasColumn('solutions', 'evaluated_mark')) {
+            $this->evaluated_mark = $mark === null ? null : max(0, (int) $mark);
+        }
+    }
+
+    public function scopeWithEvaluation($query)
+    {
+        if (\Illuminate\Support\Facades\Schema::hasColumn('solutions', 'evaluated_mark')) $query->addSelect('evaluated_mark');
+        return $query;
+    }
+
+    public function scopePositiveEvaluation($query)
+    {
+        return \Illuminate\Support\Facades\Schema::hasColumn('solutions', 'evaluated_mark')
+            ? $query->whereRaw('COALESCE(solutions.evaluated_mark, solutions.raw_mark, solutions.mark) > 0')
+            : $query->where('solutions.mark', '>', 0);
     }
 
     public function freezeDeadline($deadline = null): void
@@ -89,6 +121,35 @@ class Solution extends Model
 
     public function scopePendingReview($query)
     {
+        return $query->where(function ($q) {
+            $q->where(fn ($ordinary) => $this->ordinaryPendingReview($ordinary));
+            if (\Illuminate\Support\Facades\Schema::hasColumn('solutions', 'evaluated_mark')
+                && \Illuminate\Support\Facades\Schema::hasColumn('solutions', 'class_bonus_snapshot')) {
+                $q->orWhere(fn ($needed) => $this->bonusPendingReview($needed));
+            }
+        });
+    }
+
+    private function bonusPendingReview($query)
+    {
+        return $query->whereNull('solutions.mark')->whereNotNull('solutions.submitted')
+            ->whereExists(function ($later) {
+                $later->selectRaw('1')->from('solutions as bonus_solutions')->join('tasks as bonus_tasks', 'bonus_tasks.id', '=', 'bonus_solutions.task_id')
+                    ->whereColumn('bonus_solutions.course_id', 'solutions.course_id')->whereColumn('bonus_solutions.user_id', 'solutions.user_id')
+                    ->whereColumn('bonus_solutions.task_id', 'solutions.task_id')->whereNotNull('bonus_solutions.mark')->where('bonus_tasks.max_mark', '>', 0)
+                    ->where('bonus_solutions.class_bonus_snapshot->amount', '>', 0)
+                    ->whereRaw('COALESCE(bonus_solutions.evaluated_mark, bonus_solutions.raw_mark, bonus_solutions.mark) >= bonus_tasks.max_mark')
+                    ->where(function ($newer) {
+                        $newer->whereColumn('bonus_solutions.submitted', '>', 'solutions.submitted')
+                            ->orWhere(fn ($same) => $same->whereColumn('bonus_solutions.submitted', 'solutions.submitted')->whereColumn('bonus_solutions.id', '>', 'solutions.id'));
+                    });
+            })->whereNotExists(fn ($awards) => $awards->selectRaw('1')->from('classroom_bonus_awards')
+                ->whereColumn('classroom_bonus_awards.course_id', 'solutions.course_id')->whereColumn('classroom_bonus_awards.task_id', 'solutions.task_id')
+                ->whereColumn('classroom_bonus_awards.user_id', 'solutions.user_id'));
+    }
+
+    private function ordinaryPendingReview($query)
+    {
         return $query
             ->whereNotNull('submitted')
             ->where(function ($query) {
@@ -110,6 +171,9 @@ class Solution extends Model
                     ->whereNotNull('max_mark_solutions.mark')
                     ->where('max_mark_tasks.max_mark', '>', 0)
                     ->whereColumn('max_mark_solutions.mark', '>=', 'max_mark_tasks.max_mark');
+                if (\Illuminate\Support\Facades\Schema::hasColumn('solutions', 'evaluated_mark')) {
+                    $query->whereRaw('COALESCE(max_mark_solutions.evaluated_mark, max_mark_solutions.raw_mark, max_mark_solutions.mark) > 0');
+                }
             })
             ->whereNotExists(function ($query) {
                 $query->select(DB::raw(1))
@@ -131,6 +195,11 @@ class Solution extends Model
 
     public function skipPendingReview()
     {
+        if (\Illuminate\Support\Facades\Schema::hasColumn('solutions', 'evaluated_mark')
+            && \Illuminate\Support\Facades\Schema::hasColumn('solutions', 'class_bonus_snapshot')) {
+            abort_if($this->bonusPendingReview(self::whereKey($this->id))->exists(), 409,
+                'Сначала оцените раннюю сдачу: от неё зависит бонус за занятие.');
+        }
         if (!$this->isPendingReview()) {
             return false;
         }
@@ -144,9 +213,14 @@ class Solution extends Model
 
     public function isPendingReview()
     {
-        return $this->submitted !== null
+        $ordinary = $this->submitted !== null
             && !$this->review_skipped
             && ($this->mark === null || $this->recheck_requested);
+        if ($ordinary) return true;
+        return $this->mark === null && $this->submitted !== null && $this->exists
+            && \Illuminate\Support\Facades\Schema::hasColumn('solutions', 'class_bonus_snapshot')
+            && \Illuminate\Support\Facades\Schema::hasColumn('solutions', 'evaluated_mark')
+            && $this->bonusPendingReview(self::whereKey($this->id))->exists();
     }
 
     public function isSubmittedAfterDeadline($deadline = null)
@@ -175,6 +249,7 @@ class Solution extends Model
 
     public function applyDeadlinePenalty($rawMark, $deadline = null)
     {
+        if (!$this->hasScoreModifier()) $this->setEvaluatedMark($rawMark);
         $this->freezeDeadline($deadline);
         app(\App\Services\ClassroomBonus::class)->freeze($this);
         if (($bonus = $this->class_bonus_snapshot) && !$this->hasScoreModifier()) {
@@ -340,6 +415,7 @@ class Solution extends Model
     public function qualifiesForTaskPriceReward()
     {
         return $this->task
+            && $this->evaluatedMark() > 0
             && !$this->hasXpBooster()
             && $this->mark == $this->task->max_mark;
     }
@@ -354,7 +430,7 @@ class Solution extends Model
             return false;
         }
 
-        return (int) $this->mark >= (int) $this->task->max_mark
+        return $this->evaluatedMark() > 0 && (int) $this->mark >= (int) $this->task->max_mark
             && $this->markWithoutXpBooster() >= (int) $this->task->max_mark;
     }
 

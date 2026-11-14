@@ -10,6 +10,6 @@ class CoinWallet
     // Every purchase must check the balance and save its effects under the same user lock.
     public function transaction(int $userId, callable $purchase): mixed
     {
-        return DB::transaction(fn () => $purchase(User::lockForUpdate()->findOrFail($userId)));
+        return DB::transaction(fn () => $purchase(User::lockForUpdate()->findOrFail($userId)), 5);
     }
 }

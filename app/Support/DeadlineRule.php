@@ -42,8 +42,7 @@ class DeadlineRule extends TaskDeadline
         $display = collect($rule->series)->first(fn ($s) => Carbon::parse($s['at'], 'UTC')->gt(now())) ?? end($rule->series);
         if ($display) {
             $rule->cutoff = Carbon::parse($display['at'], 'UTC');
-            $rule->expiration = $rule->cutoff->copy()->setTimezone($rule->ruleTimezone);
-            if ($rule->legacyBoundary) $rule->expiration = $rule->expiration->copy()->subDay();
+            $rule->expiration = $rule->deadlineAt();
             $rule->penalty = $display['percent'] / 100;
         }
         return $rule;
@@ -57,12 +56,19 @@ class DeadlineRule extends TaskDeadline
 
     public function cutoffAt(): ?Carbon { return $this->cutoff?->copy(); }
 
+    /** Display an inclusive day-end deadline; retain arbitrary times in existing frozen rules. */
+    public function deadlineAt(?array $stage = null): ?Carbon
+    {
+        $at = $stage ? Carbon::parse($stage['at'], 'UTC') : $this->cutoff?->copy();
+        $at?->setTimezone($this->ruleTimezone);
+        return $at?->isStartOfDay() ? $at->subMinute() : $at;
+    }
+
     public function displayStage(array $stage): self
     {
         $rule = clone $this;
         $rule->cutoff = Carbon::parse($stage['at'], 'UTC');
-        $rule->expiration = $rule->cutoff->copy()->setTimezone($this->ruleTimezone);
-        if ($this->legacyBoundary) $rule->expiration = $rule->expiration->copy()->subDay();
+        $rule->expiration = $rule->deadlineAt();
         $rule->penalty = $stage['percent'] / 100;
         $rule->retained_percent = $stage['percent'];
         $rule->id = $stage['id'] ?? null;

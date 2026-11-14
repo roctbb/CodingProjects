@@ -86,10 +86,17 @@ class CourseDeadlineService
     {
         $policy = $this->available() ? $this->policies($course->id)->get($type.':'.$id) : null;
         $timezone = $policy?->timezone ?: $this->timezone($course->id);
-        $stages = $policy?->stages->map(fn ($s) => ['cutoff_at' => Carbon::parse($s->cutoff_at, 'UTC')->setTimezone($timezone)->format('Y-m-d\TH:i'), 'retained_percent' => $s->retained_percent])->all() ?? [];
+        $rule = $policy?->mode === 'custom' ? DeadlineRule::fromPolicy($policy) : null;
+        $stages = [];
         if (!$policy) {
             $legacy = $type === 'task' ? TaskDeadline::where('course_id', $course->id)->where('task_id', $id)->first() : Lesson::find($id)?->sharedDeadline($course->id);
-            if ($legacy?->expiration) $stages = [['cutoff_at' => ($legacy instanceof DeadlineRule ? $legacy->cutoffAt() : $legacy->expiration->copy()->addDay())->setTimezone($timezone)->format('Y-m-d\TH:i'), 'retained_percent' => (int) round($legacy->penalty * 100)]];
+            if ($legacy?->expiration) $rule = $legacy instanceof DeadlineRule ? $legacy : DeadlineRule::fromLegacy($legacy);
+        }
+        if ($rule) {
+            $timezone = $rule->ruleTimezone;
+            $stages = collect($rule->series)->map(fn ($s) => [
+                'deadline_date' => $rule->deadlineAt($s)->format('Y-m-d'), 'retained_percent' => $s['percent'],
+            ])->all();
         }
         return ['mode' => $policy?->mode ?? ($stages ? 'custom' : ($type === 'task' ? 'inherit' : 'none')),
             'revision' => $policy?->revision ?? 0, 'timezone' => $timezone, 'stages' => $stages];
@@ -104,16 +111,17 @@ class CourseDeadlineService
         $data = Validator::make($input, [
             'revision' => 'required|integer|min:0', 'mode' => 'required|in:custom,none,inherit',
             'timezone' => 'required|timezone', 'stages' => 'present|array',
-            'stages.*.cutoff_at' => 'required|date_format:Y-m-d\TH:i',
+            'stages.*.deadline_date' => 'required|date_format:Y-m-d',
             'stages.*.retained_percent' => 'required|numeric|min:0|max:100', 'apply_to_tasks' => 'sometimes|boolean',
         ])->validate();
         if ($data['mode'] === 'custom' && !$data['stages']) throw \Illuminate\Validation\ValidationException::withMessages(['stages' => 'Добавьте хотя бы один срок.']);
         if ($type === 'lesson' && $data['mode'] === 'inherit') throw \Illuminate\Validation\ValidationException::withMessages(['mode' => 'Для урока выберите свои сроки или отсутствие дедлайна.']);
         $normalized = collect($data['mode'] === 'custom' ? $data['stages'] : [])->map(fn ($s) => [
-            'cutoff_at' => Carbon::createFromFormat('Y-m-d\TH:i', $s['cutoff_at'], $data['timezone'])->second(0)->utc()->format('Y-m-d H:i:s'),
+            // The selected day is inclusive. Advance in local calendar time before converting to UTC (DST-safe).
+            'cutoff_at' => Carbon::createFromFormat('!Y-m-d', $s['deadline_date'], $data['timezone'])->addDay()->utc()->format('Y-m-d H:i:s'),
             'retained_percent' => (float) $s['retained_percent'],
         ])->sortBy('cutoff_at')->values();
-        if ($normalized->unique('cutoff_at')->count() !== $normalized->count()) throw \Illuminate\Validation\ValidationException::withMessages(['stages' => 'Сроки должны различаться по времени.']);
+        if ($normalized->unique('cutoff_at')->count() !== $normalized->count()) throw \Illuminate\Validation\ValidationException::withMessages(['stages' => 'Выберите разные даты сроков.']);
         return DB::transaction(function () use ($course, $type, $id, $data, $actorId, $legacy, $normalized) {
             // The course lock also serializes concurrent first writes of a policy.
             Course::whereKey($course->id)->lockForUpdate()->firstOrFail();
@@ -145,8 +153,8 @@ class CourseDeadlineService
                 $currentRow = TaskDeadline::where('course_id', $course->id)->where('task_id', $task->id)->first();
                 $this->savePolicy($course, 'task', $task->id, ['revision' => $currentPolicy?->revision ?? 0,
                     'mode' => $date ? 'custom' : 'none', 'timezone' => $this->timezone($course->id),
-                    'stages' => $date ? [['cutoff_at' => Carbon::parse($date, $this->timezone($course->id))->addDay()->format('Y-m-d\TH:i'),
-                        'retained_percent' => (int) round(($penalty ?? $currentRow?->penalty ?? 0) * 100)]] : []], auth()->id(), true);
+                    'stages' => $date ? [['deadline_date' => $date,
+                        'retained_percent' => (int) round(($penalty ?? $currentRow?->penalty ?? 0) * 100)]] : []], auth()->id());
             }
             if (!$date) {
                 TaskDeadline::where('course_id', $course->id)->where('task_id', $task->id)->delete();

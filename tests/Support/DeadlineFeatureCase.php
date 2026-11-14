@@ -27,7 +27,7 @@ abstract class DeadlineFeatureCase extends TestCase
         foreach (['2026_11_14_120000_create_code_checking_tables.php', '2026_11_14_130000_expand_task_submissions.php',
             '2026_11_14_140000_complete_native_submission_storage.php', '2026_11_13_180000_create_reward_notices_table.php',
             '2026_11_14_190000_create_deadline_policies.php', '2026_11_14_200000_create_deadline_notifications.php',
-            '2026_11_14_210000_create_classroom_bonuses.php'] as $file) (require database_path('migrations/'.$file))->up();
+            '2026_11_14_210000_create_classroom_bonuses.php', '2026_11_14_220000_harden_business_processes.php'] as $file) (require database_path('migrations/'.$file))->up();
         app()->forgetInstance(CourseDeadlineService::class);
         $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
         Http::preventStrayRequests(); Queue::fake(); Notification::fake();
@@ -44,8 +44,8 @@ abstract class DeadlineFeatureCase extends TestCase
         $current = $service->editor(Course::findOrFail(1), $type, $id);
         return $service->savePolicy(Course::findOrFail(1), $type, $id, $extra + ['revision' => $current['revision'],
             'mode' => 'custom', 'timezone' => 'Europe/Moscow', 'stages' => $stages ?: [
-                ['cutoff_at' => '2026-11-15T10:00', 'retained_percent' => 70],
-                ['cutoff_at' => '2026-11-22T10:00', 'retained_percent' => 0],
+                ['deadline_date' => '2026-11-15', 'retained_percent' => 70],
+                ['deadline_date' => '2026-11-22', 'retained_percent' => 0],
             ]], 2);
     }
 

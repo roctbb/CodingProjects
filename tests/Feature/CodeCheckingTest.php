@@ -38,19 +38,24 @@ class CodeCheckingTest extends TestCase
         $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
         DB::unprepared(<<<'SQL'
             CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT, role TEXT, email_verified_at TEXT);
-            CREATE TABLE courses (id INTEGER PRIMARY KEY, program_id INTEGER);
-            CREATE TABLE course_teachers (course_id INTEGER, user_id INTEGER);
-            CREATE TABLE course_students (course_id INTEGER, user_id INTEGER);
-            CREATE TABLE program_steps (id INTEGER PRIMARY KEY, program_id INTEGER);
+            CREATE TABLE courses (id INTEGER PRIMARY KEY, program_id INTEGER, state TEXT DEFAULT 'started');
+            CREATE TABLE course_teachers (course_id INTEGER, user_id INTEGER, hidden_from_stats INTEGER DEFAULT 0);
+            CREATE TABLE course_students (course_id INTEGER, user_id INTEGER, is_remote INTEGER DEFAULT 0, hidden_from_stats INTEGER DEFAULT 0);
+            CREATE TABLE program_steps (id INTEGER PRIMARY KEY, program_id INTEGER, lesson_id INTEGER);
+            CREATE TABLE lessons (id INTEGER PRIMARY KEY, program_id INTEGER);
+            CREATE TABLE lesson_info (id INTEGER PRIMARY KEY, course_id INTEGER, lesson_id INTEGER, start_date TEXT);
+            CREATE TABLE lesson_early_accesses (id INTEGER PRIMARY KEY, course_id INTEGER, lesson_id INTEGER, user_id INTEGER);
             CREATE TABLE tasks (id INTEGER PRIMARY KEY, step_id INTEGER, name TEXT, text TEXT, max_mark INTEGER, is_code BOOLEAN, is_hidden BOOLEAN, created_at TEXT, updated_at TEXT);
             CREATE TABLE blocked_tasks (task_id INTEGER, course_id INTEGER, user_id INTEGER);
             CREATE TABLE coin_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, price INTEGER, comment TEXT, created_at TEXT, updated_at TEXT);
             CREATE TABLE achievements (id INTEGER PRIMARY KEY, user_id INTEGER, status TEXT);
             INSERT INTO users VALUES (1, 'Teacher', 'teacher@test', 'teacher', '2026-01-01'), (2, 'Student', 'student@test', 'student', '2026-01-01'), (3, 'Other', 'other@test', 'student', '2026-01-01'), (4, 'Admin', 'admin@test', 'admin', '2026-01-01');
-            INSERT INTO courses VALUES (7, 1), (8, 2);
-            INSERT INTO course_teachers VALUES (7, 1);
-            INSERT INTO course_students VALUES (7, 2), (7, 3);
-            INSERT INTO program_steps VALUES (1, 1);
+            INSERT INTO courses (id,program_id) VALUES (7, 1), (8, 2);
+            INSERT INTO course_teachers (course_id,user_id) VALUES (7, 1);
+            INSERT INTO course_students (course_id,user_id) VALUES (7, 2), (7, 3);
+            INSERT INTO program_steps VALUES (1, 1, 1);
+            INSERT INTO lessons VALUES (1,1);
+            INSERT INTO lesson_info VALUES (1,7,1,'2000-01-01');
             INSERT INTO tasks (id, step_id, name, text, max_mark, is_code, is_hidden) VALUES (12, 1, 'Sum', 'Public task', 10, 1, 0);
             INSERT INTO coin_transactions (user_id, price, comment) VALUES (2, 20, 'Initial');
         SQL);
@@ -843,7 +848,6 @@ class CodeCheckingTest extends TestCase
 
     public function test_native_review_request_creates_only_an_ungraded_queue_entry_and_notifies_once(): void
     {
-        DB::statement('ALTER TABLE course_teachers ADD COLUMN hidden_from_stats BOOLEAN DEFAULT 0');
         DB::unprepared('CREATE TABLE solutions (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,course_id INTEGER,task_id INTEGER,teacher_id INTEGER,text TEXT,mark INTEGER,raw_mark INTEGER,comment TEXT,submitted TEXT,checked TEXT,recheck_requested BOOLEAN DEFAULT 0,recheck_comment TEXT,review_skipped BOOLEAN DEFAULT 0,geekpaste_integrity_dismissed_at TEXT,created_at TEXT,updated_at TEXT);');
         $created=$this->createSubmission();$id=$created['id'];
         CodeExecutionRun::find($created['execution_id'])->update(['state'=>'completed','points'=>4,'finished_at'=>now()]);

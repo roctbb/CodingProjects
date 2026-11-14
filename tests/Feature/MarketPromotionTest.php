@@ -38,6 +38,7 @@ class MarketPromotionTest extends TestCase
             INSERT INTO market_goods (id,name,price,number,in_stock,sale_type) VALUES (1,'Наклейка',101,2,1,'regular'),(2,'Значок',80,2,1,'regular'),(3,'Аукцион',100,2,1,'auction'),(4,'Архив',100,2,0,'regular');
             SQL);
         (require database_path('migrations/2026_11_02_120000_create_system_store_settings_table.php'))->up();
+        (require database_path('migrations/2026_11_14_220000_harden_business_processes.php'))->up();
         $this->actingAs(User::findOrFail(2));
     }
 
@@ -155,11 +156,11 @@ class MarketPromotionTest extends TestCase
         $this->settings()->save($this->promotion(['enabled' => false]), 2);
         $fullPrice = MarketGood::find(1)->buy($user);
         $this->assertSame(848, (int) $user->balance());
-        $this->get('/insider/market/cancel/'.$discounted->id)->assertRedirect();
+        $this->post('/insider/market/cancel/'.$discounted->id)->assertRedirect();
         $this->assertSame(899, (int) $user->balance());
         $this->assertNotNull($fullPrice->fresh());
         $this->assertSame(-101, (int) CoinTransaction::where('price', -101)->first()->price);
-        $this->get('/insider/market/cancel/'.$discounted->id)->assertNotFound();
+        $this->post('/insider/market/cancel/'.$discounted->id)->assertRedirect();
         $this->assertSame(899, (int) $user->balance());
     }
 
@@ -175,7 +176,7 @@ class MarketPromotionTest extends TestCase
         foreach ($returns as $return => $expected) {
             DB::table('market_goods')->where('id', 1)->update(['number' => 1]);
             $deal = MarketGood::find(1)->buy(User::find(1));
-            $this->get('/insider/market/cancel/'.$deal->id.'?'.http_build_query(['return_url' => $return]))->assertRedirect($expected);
+            $this->post('/insider/market/cancel/'.$deal->id,['return_url' => $return])->assertRedirect($expected);
         }
         $this->assertSame(1000, (int) User::find(1)->balance());
     }

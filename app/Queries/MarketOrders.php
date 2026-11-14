@@ -11,6 +11,7 @@ class MarketOrders
     public function paginate(bool $shipped, string $search, ?string $fragment = null): LengthAwarePaginator
     {
         $query = MarketDeal::with(['user', 'good'])->where('shipped', $shipped);
+        if (\Illuminate\Support\Facades\Schema::hasColumn('market_deals', 'cancelled_at')) $query->whereNull('cancelled_at');
         if ($search !== '') {
             $connection = DB::connection();
             $lower = 'LOWER';

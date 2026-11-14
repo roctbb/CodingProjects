@@ -44,6 +44,8 @@ class CourseStudentPoints extends Model
             ->map(function ($submissions) {
                 return (int) $submissions->max('mark');
             });
+        $earnedMarksByTask = $student->submissions->filter(fn ($s) => $s->evaluatedMark() > 0)
+            ->groupBy('task_id')->map(fn ($submissions) => (int) $submissions->max('mark'));
 
         foreach ($course->program->lessons as $lesson) {
             $isProgressLesson = self::isCommonProgressLesson($lesson, $course);
@@ -58,7 +60,7 @@ class CourseStudentPoints extends Model
                     }
 
                     if ($isProgressLesson && self::isCommonProgressTask($task)) {
-                        $progressPoints += $bestMark;
+                        $progressPoints += $earnedMarksByTask->get($task->id, 0);
                         if (!$task->is_star) {
                             $progressMaxPoints += $task->max_mark;
                         }
@@ -95,7 +97,7 @@ class CourseStudentPoints extends Model
         $student = User::with([
             'submissions' => function ($query) use ($courseId) {
                 $query->where('course_id', $courseId)
-                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark');
+                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark')->withEvaluation();
             },
         ])->findOrFail($studentId);
 
@@ -132,7 +134,7 @@ class CourseStudentPoints extends Model
         $students = User::with([
             'submissions' => function ($query) use ($courseId) {
                 $query->where('course_id', $courseId)
-                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark');
+                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark')->withEvaluation();
             },
         ])->whereIn('id', $studentIds)->get();
 

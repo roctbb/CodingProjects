@@ -48,28 +48,28 @@
 | GET\|HEAD | `/insider/courses` | screen | [Мои курсы](screens.md#courses) | web, verified, auth |
 | GET\|HEAD | `/insider/courses/create` | screen | [Создание курса](screens.md#course-create) | web, verified, auth, teacher |
 | POST | `/insider/courses/create` | action | [Создание курса](screens.md#course-create) | web, verified, auth, teacher |
-| POST | `/insider/courses/{course_id}/chapters/{chapter_id}/default` | action | [Страница курса](screens.md#course) | web, verified, auth, course, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/chapters/{chapter_id}/edit` | screen | [Редактирование главы](screens.md#chapter-edit) | web, verified, auth, course, teacher |
-| POST | `/insider/courses/{course_id}/chapters/{chapter_id}/edit` | action | [Редактирование главы](screens.md#chapter-edit) | web, verified, auth, course, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/chapters/{chapter_id}/export-points` | download | [Страница курса](screens.md#course) | web, verified, auth, course, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/chapters/{chapter_id}/lower` | action | [Страница курса](screens.md#course) | web, verified, auth |
-| GET\|HEAD | `/insider/courses/{course_id}/chapters/{chapter_id}/upper` | action | [Страница курса](screens.md#course) | web, verified, auth |
+| POST | `/insider/courses/{course_id}/chapters/{chapter_id}/default` | action | [Страница курса](screens.md#course) | web, verified, auth, course, teacher, course.manage:chapter |
+| GET\|HEAD | `/insider/courses/{course_id}/chapters/{chapter_id}/edit` | screen | [Редактирование главы](screens.md#chapter-edit) | web, verified, auth, course, teacher, course.manage:chapter |
+| POST | `/insider/courses/{course_id}/chapters/{chapter_id}/edit` | action | [Редактирование главы](screens.md#chapter-edit) | web, verified, auth, course, teacher, course.manage:chapter |
+| GET\|HEAD | `/insider/courses/{course_id}/chapters/{chapter_id}/export-points` | download | [Страница курса](screens.md#course) | web, verified, auth, course, teacher, course.manage |
+| GET\|HEAD | `/insider/courses/{course_id}/chapters/{chapter_id}/lower` | action | [Страница курса](screens.md#course) | web, verified, auth, course.manage:chapter |
+| GET\|HEAD | `/insider/courses/{course_id}/chapters/{chapter_id}/upper` | action | [Страница курса](screens.md#course) | web, verified, auth, course.manage:chapter |
 | POST | `/insider/courses/{course_id}/current-lesson` | action | [Текущий урок курса](screens.md#course-current-lesson) | web, verified, auth, course |
 | GET\|HEAD | `/insider/courses/{course_id}/deadline-policies/{type}/{target}` | api | [Дедлайны курса](screens.md#deadlines) | web, verified |
 | POST | `/insider/courses/{course_id}/deadline-policies/{type}/{target}` | action | [Дедлайны курса](screens.md#deadlines) | web, verified |
-| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/create` | screen | [Добавление ступени](screens.md#step-create) | web, verified, auth |
-| POST | `/insider/courses/{course_id}/lessons/{id}/create` | action | [Добавление ступени](screens.md#step-create) | web, verified, auth |
-| POST | `/insider/courses/{course_id}/lessons/{id}/deadline` | action | [Дедлайн всего урока](screens.md#lesson-deadline) | web, verified, auth, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/delete` | action | [Страница курса](screens.md#course) | web, verified, auth |
+| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/create` | screen | [Добавление ступени](screens.md#step-create) | web, verified, auth, step |
+| POST | `/insider/courses/{course_id}/lessons/{id}/create` | action | [Добавление ступени](screens.md#step-create) | web, verified, auth, step |
+| POST | `/insider/courses/{course_id}/lessons/{id}/deadline` | action | [Дедлайн всего урока](screens.md#lesson-deadline) | web, verified, auth, course.manage:lesson, teacher |
+| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/delete` | action | [Страница курса](screens.md#course) | web, verified, auth, course.manage:lesson |
 | POST | `/insider/courses/{course_id}/lessons/{id}/early-access` | action | [Ранний доступ к уроку](screens.md#early-access) | web, verified, auth |
-| POST | `/insider/courses/{course_id}/lessons/{id}/early-access/grant` | action | [Ранний доступ к уроку](screens.md#early-access) | web, verified, auth, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/edit` | screen | [Редактирование урока](screens.md#lesson-edit) | web, verified, auth, teacher |
-| POST | `/insider/courses/{course_id}/lessons/{id}/edit` | action | [Редактирование урока](screens.md#lesson-edit) | web, verified, auth, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/export` | download | [Страница курса](screens.md#course) | web, verified, auth, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/export-md` | download | [Страница курса](screens.md#course) | web, verified, auth, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/export-points` | download | [Страница курса](screens.md#course) | web, verified, auth, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/lower` | action | [Страница курса](screens.md#course) | web, verified, auth, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/upper` | action | [Страница курса](screens.md#course) | web, verified, auth, teacher |
+| POST | `/insider/courses/{course_id}/lessons/{id}/early-access/grant` | action | [Ранний доступ к уроку](screens.md#early-access) | web, verified, auth, course.manage:lesson, teacher |
+| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/edit` | screen | [Редактирование урока](screens.md#lesson-edit) | web, verified, auth, course.manage:lesson, teacher |
+| POST | `/insider/courses/{course_id}/lessons/{id}/edit` | action | [Редактирование урока](screens.md#lesson-edit) | web, verified, auth, course.manage:lesson, teacher |
+| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/export` | download | [Страница курса](screens.md#course) | web, verified, auth, course.manage:lesson, teacher |
+| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/export-md` | download | [Страница курса](screens.md#course) | web, verified, auth, course.manage:lesson, teacher |
+| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/export-points` | download | [Страница курса](screens.md#course) | web, verified, auth, course.manage:lesson, teacher |
+| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/lower` | action | [Страница курса](screens.md#course) | web, verified, auth, course.manage:lesson, teacher |
+| GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/upper` | action | [Страница курса](screens.md#course) | web, verified, auth, course.manage:lesson, teacher |
 | GET\|HEAD | `/insider/courses/{course_id}/lessons/{lesson_id}/statistics` | api | [Страница курса](screens.md#course) | web, verified, auth, course |
 | GET\|HEAD | `/insider/courses/{course_id}/perform/{id}` | screen | [Режим показа](screens.md#perform) | web, verified, auth, step, teacher |
 | GET\|HEAD | `/insider/courses/{course_id}/planner` | screen | [План занятий](screens.md#planner) | web, auth, verified |
@@ -92,7 +92,7 @@
 | GET\|HEAD | `/insider/courses/{course_id}/steps/{id}/task/create` | screen | [Создание задания](screens.md#task-create) | web, verified, teacher, auth, task |
 | GET\|HEAD | `/insider/courses/{course_id}/steps/{id}/upper` | action | [Ступень](screens.md#step) | web, verified, auth, step, teacher |
 | POST | `/insider/courses/{course_id}/tasks/{id}/ai-summary` | action | [ИИ-пересказ решений](screens.md#task-summary) | web, verified, auth, task, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/tasks/{id}/block/{student_id}` | action | [Оценка, комментарий, пропуск и блокировка](screens.md#review-tools) | web, verified, auth, task, teacher |
+| POST | `/insider/courses/{course_id}/tasks/{id}/block/{student_id}` | action | [Оценка, комментарий, пропуск и блокировка](screens.md#review-tools) | web, verified, auth, task, teacher |
 | POST | `/insider/courses/{course_id}/tasks/{id}/deadline` | action | [Дедлайн задачи](screens.md#task-deadline) | web, verified, auth, task |
 | GET\|HEAD | `/insider/courses/{course_id}/tasks/{id}/delete` | action | [Задача: текст, код или квиз](screens.md#step-task) | web, verified, auth, task, teacher |
 | GET\|HEAD | `/insider/courses/{course_id}/tasks/{id}/down` | action | [Задача: текст, код или квиз](screens.md#step-task) | web, verified, auth, task |
@@ -114,7 +114,7 @@
 | POST | `/insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/xp-booster` | action | [Повторная проверка, штраф и бустер](screens.md#solution-options) | web, verified, auth, task |
 | GET\|HEAD | `/insider/courses/{course_id}/tasks/{id}/student/{student_id}` | screen | [Проверка решений ученика](screens.md#review) | web, verified, auth, task, teacher |
 | POST | `/insider/courses/{course_id}/tasks/{id}/student/{student_id}/skip-review` | action | [Оценка, комментарий, пропуск и блокировка](screens.md#review-tools) | web, verified, auth, task, teacher |
-| GET\|HEAD | `/insider/courses/{course_id}/tasks/{id}/unblock/{student_id}` | action | [Оценка, комментарий, пропуск и блокировка](screens.md#review-tools) | web, verified, auth, task |
+| POST | `/insider/courses/{course_id}/tasks/{id}/unblock/{student_id}` | action | [Оценка, комментарий, пропуск и блокировка](screens.md#review-tools) | web, verified, auth, task |
 | GET\|HEAD | `/insider/courses/{course_id}/tasks/{id}/up` | action | [Задача: текст, код или квиз](screens.md#step-task) | web, verified, auth, task |
 | GET\|HEAD | `/insider/courses/{course}/tasks/{task}/checker` | api | [Ступень](screens.md#step) | web, auth, verified |
 | POST | `/insider/courses/{course}/tasks/{task}/checker/extra-attempt` | api | [Ступень](screens.md#step) | web, auth, verified |
@@ -130,48 +130,48 @@
 | GET\|POST\|HEAD | `/insider/courses/{course}/tasks/{task}/code-submissions` | api | [Ступень](screens.md#step) | web, auth, verified |
 | POST | `/insider/courses/{course}/tasks/{task}/code-submissions/recheck-latest` | api | [Проверка решений ученика](screens.md#review) | web, auth, verified |
 | GET\|HEAD | `/insider/courses/{id}` | screen | [Страница курса](screens.md#course) | web, verified, course |
-| GET\|HEAD | `/insider/courses/{id}/assessments` | screen | [Журнал опыта](screens.md#assessments) | web, verified, auth, course, teacher |
+| GET\|HEAD | `/insider/courses/{id}/assessments` | screen | [Журнал опыта](screens.md#assessments) | web, verified, auth, course, teacher, course.manage |
 | GET\|HEAD | `/insider/courses/{id}/blocked` | screen | [Заблокированные задачи](screens.md#blocked) | web, verified, auth |
-| GET\|HEAD | `/insider/courses/{id}/chapter` | screen | [Добавление главы](screens.md#chapter-create) | web, verified, auth, course, teacher |
-| POST | `/insider/courses/{id}/chapter` | action | [Добавление главы](screens.md#chapter-create) | web, verified, auth, course, teacher |
+| GET\|HEAD | `/insider/courses/{id}/chapter` | screen | [Добавление главы](screens.md#chapter-create) | web, verified, auth, course, teacher, course.manage |
+| POST | `/insider/courses/{id}/chapter` | action | [Добавление главы](screens.md#chapter-create) | web, verified, auth, course, teacher, course.manage |
 | GET\|HEAD | `/insider/courses/{id}/chapter-tasks` | screen | [Задачи главы ученика](screens.md#chapter-tasks) | web, verified, auth, course |
-| GET\|HEAD | `/insider/courses/{id}/create` | screen | [Добавление урока](screens.md#lesson-create) | web, verified, auth, teacher |
-| POST | `/insider/courses/{id}/create` | action | [Добавление урока](screens.md#lesson-create) | web, verified, auth, teacher |
+| GET\|HEAD | `/insider/courses/{id}/create` | screen | [Добавление урока](screens.md#lesson-create) | web, verified, auth, course.manage:lesson, teacher |
+| POST | `/insider/courses/{id}/create` | action | [Добавление урока](screens.md#lesson-create) | web, verified, auth, course.manage:lesson, teacher |
 | GET\|HEAD | `/insider/courses/{id}/deadlines` | screen | [Дедлайны курса](screens.md#deadlines) | web, verified, auth, course |
-| GET\|HEAD | `/insider/courses/{id}/edit` | screen | [Настройки курса](screens.md#course-edit) | web, verified, auth, course, teacher |
-| POST | `/insider/courses/{id}/edit` | action | [Настройки курса](screens.md#course-edit) | web, verified, auth, course, teacher |
+| GET\|HEAD | `/insider/courses/{id}/edit` | screen | [Настройки курса](screens.md#course-edit) | web, verified, auth, course, teacher, course.manage |
+| POST | `/insider/courses/{id}/edit` | action | [Настройки курса](screens.md#course-edit) | web, verified, auth, course, teacher, course.manage |
 | GET\|HEAD | `/insider/courses/{id}/enroll` | action | [Код приглашения / запись на курс](screens.md#join-course) | web, verified, auth |
-| GET\|HEAD | `/insider/courses/{id}/export` | download | [Страница курса](screens.md#course) | web, verified, auth |
-| GET\|HEAD | `/insider/courses/{id}/export-md` | download | [Страница курса](screens.md#course) | web, verified, auth, course, teacher |
+| GET\|HEAD | `/insider/courses/{id}/export` | download | [Страница курса](screens.md#course) | web, verified, auth, course.manage |
+| GET\|HEAD | `/insider/courses/{id}/export-md` | download | [Страница курса](screens.md#course) | web, verified, auth, course, teacher, course.manage |
 | GET\|HEAD | `/insider/courses/{id}/notifications` | screen | [Уведомления курса](screens.md#course-notifications) | web, verified |
 | POST | `/insider/courses/{id}/notifications` | action | [Уведомления курса](screens.md#course-notifications) | web, verified |
 | POST | `/insider/courses/{id}/notifications/chats/{chat}` | action | [Уведомления курса](screens.md#course-notifications) | web, verified |
 | POST | `/insider/courses/{id}/notifications/deliveries/{delivery}/retry` | action | [Уведомления курса](screens.md#course-notifications) | web, verified |
 | POST | `/insider/courses/{id}/notifications/link` | action | [Уведомления курса](screens.md#course-notifications) | web, verified |
 | POST | `/insider/courses/{id}/notifications/preference` | action | [Дедлайны курса](screens.md#deadlines) | web, verified |
-| POST | `/insider/courses/{id}/poster` | action | [Настройки курса](screens.md#course-edit) | web, verified, auth, course, teacher |
-| GET\|HEAD | `/insider/courses/{id}/report` | screen | [Отчёт по курсу](screens.md#report) | web, verified, auth, course, teacher |
-| POST | `/insider/courses/{id}/report/students/{student_id}/geekpaste-warning/reset` | action | [Отчёт по курсу](screens.md#report) | web, verified, auth, course, teacher |
-| GET\|HEAD | `/insider/courses/{id}/start` | action | [Страница курса](screens.md#course) | web, verified, auth, course, teacher |
-| GET\|HEAD | `/insider/courses/{id}/stop` | action | [Страница курса](screens.md#course) | web, verified, auth, course, teacher |
+| POST | `/insider/courses/{id}/poster` | action | [Настройки курса](screens.md#course-edit) | web, verified, auth, course, teacher, course.manage |
+| GET\|HEAD | `/insider/courses/{id}/report` | screen | [Отчёт по курсу](screens.md#report) | web, verified, auth, course, teacher, course.manage |
+| POST | `/insider/courses/{id}/report/students/{student_id}/geekpaste-warning/reset` | action | [Отчёт по курсу](screens.md#report) | web, verified, auth, course, teacher, course.manage |
+| GET\|HEAD | `/insider/courses/{id}/start` | action | [Страница курса](screens.md#course) | web, verified, auth, course, teacher, course.manage |
+| GET\|HEAD | `/insider/courses/{id}/stop` | action | [Страница курса](screens.md#course) | web, verified, auth, course, teacher, course.manage |
 | GET\|HEAD | `/insider/invite` | action | [Код приглашения / запись на курс](screens.md#join-course) | web, verified, auth |
 | GET\|HEAD | `/insider/jwt` | redirect | [GeekPaste](screens.md#geekpaste) | web, verified, auth |
 | GET\|HEAD | `/insider/market` | screen | [Магазин](screens.md#market) | web, verified, auth |
-| GET\|HEAD | `/insider/market/cancel/{id}` | action | [Заказы](screens.md#orders) | web, verified, auth, teacher |
+| POST | `/insider/market/cancel/{id}` | action | [Заказы](screens.md#orders) | web, verified, auth, teacher |
 | GET\|HEAD | `/insider/market/create` | screen | [Добавление товара](screens.md#market-create) | web, verified, auth, admin |
 | POST | `/insider/market/create` | action | [Добавление товара](screens.md#market-create) | web, verified, auth, admin |
 | GET\|HEAD | `/insider/market/credit` | screen | [Массовое начисление GC](screens.md#credit) | web, verified, auth, admin |
 | POST | `/insider/market/credit` | action | [Массовое начисление GC](screens.md#credit) | web, verified, auth, admin |
 | POST | `/insider/market/digital/{itemKey}/buy` | action | [Цифровые товары](screens.md#market-digital) | web, verified, auth |
 | GET\|HEAD | `/insider/market/orders` | screen | [Заказы](screens.md#orders) | web, verified, auth, teacher |
-| GET\|HEAD | `/insider/market/ship/{id}` | action | [Заказы](screens.md#orders) | web, verified, auth, teacher |
-| GET\|HEAD | `/insider/market/{id}/archive` | action | [Архив товаров](screens.md#market-archive) | web, verified, auth, admin |
+| POST | `/insider/market/ship/{id}` | action | [Заказы](screens.md#orders) | web, verified, auth, teacher |
+| POST | `/insider/market/{id}/archive` | action | [Архив товаров](screens.md#market-archive) | web, verified, auth, admin |
 | POST | `/insider/market/{id}/bid` | action | [Аукционы](screens.md#market-auctions) | web, verified, auth |
-| GET\|HEAD | `/insider/market/{id}/buy` | action | [Физические товары](screens.md#market-goods) | web, verified, auth |
+| POST | `/insider/market/{id}/buy` | action | [Физические товары](screens.md#market-goods) | web, verified, auth |
 | GET\|HEAD | `/insider/market/{id}/edit` | screen | [Редактирование товара](screens.md#market-edit) | web, verified, auth, admin |
 | POST | `/insider/market/{id}/edit` | action | [Редактирование товара](screens.md#market-edit) | web, verified, auth, admin |
-| GET\|HEAD | `/insider/market/{id}/finish-auction` | action | [Аукционы](screens.md#market-auctions) | web, verified, auth, admin |
-| GET\|HEAD | `/insider/market/{id}/restore` | action | [Архив товаров](screens.md#market-archive) | web, verified, auth, admin |
+| POST | `/insider/market/{id}/finish-auction` | action | [Аукционы](screens.md#market-auctions) | web, verified, auth, admin |
+| POST | `/insider/market/{id}/restore` | action | [Архив товаров](screens.md#market-archive) | web, verified, auth, admin |
 | GET\|HEAD | `/insider/profile/delete-course/{id}` | action | [Добавление завершённого курса](screens.md#completed-course) | web, verified, auth, self, admin |
 | GET\|HEAD | `/insider/profile/{id?}` | screen | [Профиль](screens.md#profile) | web, verified, auth |
 | POST | `/insider/profile/{id}/avatar-frame` | action | [Цифровые товары](screens.md#market-digital) | web, verified, auth, self |

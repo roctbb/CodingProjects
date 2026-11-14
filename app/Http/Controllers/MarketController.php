@@ -150,6 +150,14 @@ class MarketController extends Controller
 
     public function edit($id, Request $request)
     {
+        return DB::transaction(function () use ($id, $request) {
+            MarketGood::whereKey($id)->lockForUpdate()->firstOrFail();
+            return $this->editGood($id, $request);
+        }, 5);
+    }
+
+    private function editGood($id, Request $request)
+    {
         $this->validate($request, [
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -224,10 +232,13 @@ class MarketController extends Controller
 
     public function archive($id)
     {
-        $good = MarketGood::findOrFail($id);
-        $good->cancelActiveAuctionBids();
-        $good->in_stock = false;
-        $good->save();
+        $good = DB::transaction(function () use ($id) {
+            $good = MarketGood::whereKey($id)->lockForUpdate()->firstOrFail();
+            $good->cancelActiveAuctionBids();
+            $good->in_stock = false;
+            $good->save();
+            return $good;
+        }, 5);
 
         $this->make_success_alert("Готово!", 'Товар "' . $good->name . '" перенесён в архив.', $destination = 'head');
 
@@ -249,9 +260,9 @@ class MarketController extends Controller
     {
         $user = User::findOrFail(Auth::User()->id);
         $good = MarketGood::findOrFail($id);
-        $request->validate(['expected_price' => 'sometimes|integer|min:0']);
+        $request->validate(['expected_price' => 'required|integer|min:0', 'purchase_key' => 'required|uuid']);
         try {
-            $deal = $good->buy($user, $request->has('expected_price') ? $request->integer('expected_price') : null);
+            $deal = $good->buy($user, $request->integer('expected_price'), strtolower($request->purchase_key));
         } catch (\RuntimeException $exception) {
             if ($exception->getMessage() !== 'market_price_changed') throw $exception;
             $this->make_error_alert('Цена изменилась', 'Обновите цену товара перед покупкой. Монеты не списаны.', $destination = 'head');
@@ -259,9 +270,9 @@ class MarketController extends Controller
         }
 
         if ($deal) {
-            $receiver = User::findOrFail(1);
-            $receiver->notify(new NewOrder($deal));
-            $this->make_success_alert("Успех!", 'Покупка "' . $good->name . '" прошла успешно. Ожидайте доставки!', $destination = 'head');
+            if ($deal->wasRecentlyCreated) rescue(fn () => User::find(1)?->notify(new NewOrder($deal)));
+            $this->make_success_alert($deal->cancelled_at ? 'Заказ отменён' : 'Заказ оформлен',
+                $deal->cancelled_at ? 'Монеты за этот заказ уже возвращены.' : 'Заказ №'.$deal->id.' доступен в разделе «Мои покупки».');
         } else {
             $this->make_error_alert("Ошибка!", 'Покупка "' . $good->name . '" не прошла.', $destination = 'head');
         }
@@ -352,7 +363,7 @@ class MarketController extends Controller
 
             $receiver = User::findOrFail(1);
             foreach ($deals as $deal) {
-                $receiver->notify(new NewOrder($deal));
+                rescue(fn () => $receiver->notify(new NewOrder($deal)));
             }
 
             $this->make_success_alert('Аукцион завершён!', 'Создано заказов: ' . $deals->count() . '.', $destination = 'head');
@@ -366,15 +377,14 @@ class MarketController extends Controller
     public function ship($id, Request $request)
     {
         $user = User::findOrFail(Auth::User()->id);
-        $order = MarketDeal::findOrFail($id);
-
-        $this->make_success_alert("Успех!", 'Доставка товара "' . $order->good->name . '" проведена.', $destination = 'head');
-
-
-        $order->shipped = true;
-        $order->shipped_by = Auth::User()->id;
-        $order->save();
-        CourseActivity::recordMarketOrderShipped($order, $user);
+        DB::transaction(function () use ($id, $user) {
+            $order = MarketDeal::whereKey($id)->lockForUpdate()->firstOrFail();
+            abort_if($order->cancelled_at, 409, 'Заказ уже отменён.');
+            if ($order->shipped) return;
+            $order->shipped = true; $order->shipped_by = $user->id; $order->save();
+            CourseActivity::recordMarketOrderShipped($order, $user);
+        });
+        $this->make_success_alert('Успех!', 'Выдача заказа сохранена.');
 
         return redirect()->to($this->ordersReturnUrl($request));
     }
@@ -384,11 +394,18 @@ class MarketController extends Controller
         $user = User::findOrFail(Auth::User()->id);
         $order = MarketDeal::findOrFail($id);
 
-        app(\App\Services\CoinWallet::class)->transaction($order->user_id, function () use ($order) {
+        app(\App\Services\CoinWallet::class)->transaction($order->user_id, function () use ($order, $user) {
             $lockedOrder = MarketDeal::whereKey($order->id)->lockForUpdate()->first();
-            if (!$lockedOrder) return;
-            CoinTransaction::register($lockedOrder->user_id, $lockedOrder->displayPrice(), 'Market order cancel Deal #'.$lockedOrder->id);
-            $lockedOrder->delete();
+            if (!$lockedOrder || $lockedOrder->cancelled_at) return;
+            abort_if($lockedOrder->shipped, 409, 'Выданный заказ нельзя отменить.');
+            $price = $lockedOrder->displayPrice();
+            abort_if($price === null, 409, 'Цена заказа неизвестна.');
+            $refund = CoinTransaction::register($lockedOrder->user_id, $price, 'Market order cancel Deal #'.$lockedOrder->id);
+            if (($lockedOrder->source ?? 'purchase') !== 'auction') {
+                MarketGood::whereKey($lockedOrder->good_id)->increment('number');
+            }
+            $lockedOrder->cancelled_at = now(); $lockedOrder->cancelled_by = $user->id;
+            $lockedOrder->refund_transaction_id = $refund->id; $lockedOrder->save();
         });
 
         return redirect()->to($this->ordersReturnUrl($request));

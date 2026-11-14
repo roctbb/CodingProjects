@@ -187,7 +187,7 @@
                                     </div>
                                     <div class="solution-grade-field solution-grade-field--mark">
                                         <label for="mark-{{ $solution->id }}" class="form-label">XP <span class="text-muted fw-normal">из {{ $task->max_mark }}</span></label>
-                                        <input type="number" class="form-control form-control-sm rounded-3" id="mark-{{ $solution->id }}" name="mark" min="0" max="{{ $task->max_mark }}" value="{{ $useOldInput ? old('mark') : ($solution->raw_mark ?? $solution->mark) }}" placeholder="0">
+                                        <input type="number" class="form-control form-control-sm rounded-3" id="mark-{{ $solution->id }}" name="mark" min="0" max="{{ $task->max_mark }}" value="{{ $useOldInput ? old('mark') : ($solution->evaluated_mark ?? $solution->raw_mark ?? $solution->mark) }}" placeholder="0">
                                         @if ($useOldInput && $errors->has('mark'))
                                             <span class="text-danger small d-block mt-1"><strong>{{ $errors->first('mark') }}</strong></span>
                                         @endif
