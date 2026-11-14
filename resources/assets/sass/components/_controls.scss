@@ -1,0 +1,96 @@
+// Brand-aware shared components. Values come from tokens and runtime palette.
+.btn-primary {
+  --bs-btn-bg: var(--gc-button-primary);
+  --bs-btn-border-color: var(--gc-button-primary);
+  --bs-btn-color: var(--gc-button-primary-text);
+  --bs-btn-hover-bg: var(--gc-button-primary-hover);
+  --bs-btn-hover-border-color: var(--gc-button-primary);
+  --bs-btn-hover-color: var(--gc-button-primary-text);
+  --bs-btn-active-bg: var(--gc-button-primary-hover);
+  --bs-btn-active-border-color: var(--gc-button-primary-hover);
+  --bs-btn-active-color: var(--gc-button-primary-text);
+  --bs-btn-disabled-bg: var(--gc-button-primary);
+  --bs-btn-disabled-border-color: var(--gc-button-primary);
+  --bs-btn-disabled-color: var(--gc-button-primary-text);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--gc-primary);
+  --bs-btn-border-color: color-mix(in srgb, var(--gc-primary) 55%, var(--gc-border));
+  --bs-btn-hover-bg: var(--gc-selected-surface);
+  --bs-btn-hover-border-color: var(--gc-primary);
+  --bs-btn-hover-color: var(--gc-primary-hover);
+  --bs-btn-active-bg: var(--gc-primary-hover);
+  --bs-btn-active-border-color: var(--gc-primary-hover);
+  --bs-btn-active-color: var(--gc-button-primary-text);
+  --bs-btn-disabled-color: var(--gc-primary);
+  --bs-btn-disabled-border-color: var(--gc-border);
+}
+
+.btn-secondary {
+  --bs-btn-bg: color-mix(
+    in srgb,
+    var(--gc-secondary) 5%,
+    var(--gc-surface-variant)
+  );
+  --bs-btn-border-color: color-mix(
+    in srgb,
+    var(--gc-secondary) 12%,
+    var(--gc-border)
+  );
+  --bs-btn-color: var(--gc-on-surface);
+  --bs-btn-hover-bg: color-mix(
+    in srgb,
+    var(--gc-on-surface) 8%,
+    var(--gc-surface)
+  );
+  --bs-btn-hover-border-color: var(--gc-border);
+  --bs-btn-hover-color: var(--gc-on-surface);
+  --bs-btn-active-bg: var(--gc-surface-variant);
+  --bs-btn-active-border-color: var(--gc-border);
+  --bs-btn-active-color: var(--gc-on-surface);
+  --bs-btn-disabled-bg: var(--gc-surface-variant);
+  --bs-btn-disabled-border-color: var(--gc-border);
+  --bs-btn-disabled-color: var(--gc-on-surface-muted);
+}
+
+.btn-danger {
+  --bs-btn-bg: var(--gc-button-danger);
+  --bs-btn-border-color: var(--gc-button-danger);
+  --bs-btn-color: var(--gc-button-danger-text);
+  --bs-btn-hover-bg: var(--gc-button-danger-hover);
+  --bs-btn-hover-border-color: var(--gc-button-danger);
+  --bs-btn-hover-color: var(--gc-button-danger-text);
+  --bs-btn-active-bg: var(--gc-button-danger-hover);
+  --bs-btn-active-border-color: var(--gc-button-danger-hover);
+  --bs-btn-active-color: var(--gc-button-danger-text);
+  --bs-btn-disabled-bg: var(--gc-button-danger);
+  --bs-btn-disabled-border-color: var(--gc-button-danger);
+  --bs-btn-disabled-color: var(--gc-button-danger-text);
+}
+
+.btn-outline-info {
+  --bs-btn-color: var(--gc-info);
+  --bs-btn-border-color: var(--gc-info);
+  --bs-btn-hover-bg: var(--gc-info);
+  --bs-btn-hover-border-color: var(--gc-info);
+  --bs-btn-active-bg: var(--gc-button-info-hover);
+  --bs-btn-active-border-color: var(--gc-button-info-hover);
+  --bs-btn-hover-color: var(--gc-button-info-text);
+  --bs-btn-active-color: var(--gc-button-info-text);
+}
+
+.btn-outline-success {
+  --bs-btn-color: var(--gc-primary);
+  --bs-btn-border-color: var(--gc-primary);
+  --bs-btn-hover-bg: var(--gc-selected-surface);
+  --bs-btn-hover-border-color: var(--gc-primary);
+  --bs-btn-active-bg: var(--gc-primary-hover);
+  --bs-btn-active-border-color: var(--gc-primary-hover);
+  --bs-btn-hover-color: var(--gc-primary-hover);
+  --bs-btn-active-color: var(--gc-button-primary-text);
+}
+
+.btn-options { align-items:center; background:transparent; border:0; border-radius:var(--gc-radius-md); box-shadow:none; color:var(--gc-on-surface-muted); cursor:pointer; display:inline-flex; flex:none; height:var(--gc-control-height-sm); justify-content:center; min-height:var(--gc-control-height-sm); min-width:var(--gc-control-height-sm); padding:0; transition:background-color var(--gc-transition),color var(--gc-transition); width:var(--gc-control-height-sm); }
+.btn-options:is(:hover,[aria-expanded="true"]) { background:var(--gc-hover-surface); color:var(--gc-on-surface); }
+.btn-options:focus-visible { outline:2px solid var(--gc-focus-color); outline-offset:2px; }

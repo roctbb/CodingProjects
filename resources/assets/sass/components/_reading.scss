@@ -1,0 +1,405 @@
+// Shared reading content and syntax highlighting.
+.markdown pre,
+.markdown-big pre,
+.perform pre {
+  background: var(--gc-code-block-surface);
+  border: 1px solid var(--gc-code-block-border);
+  border-radius: var(--gc-radius-md);
+  box-shadow: inset 0 1px 0 var(--gc-code-block-highlight);
+  color: var(--gc-code-base-text);
+  font-family: var(--gc-code-font);
+  font-size: 0.94rem;
+  line-height: 1.65;
+  margin: 1.15rem 0 1.35rem;
+  overflow-x: auto;
+  padding: 1rem 1.1rem;
+  tab-size: 4;
+  text-shadow: none;
+}
+
+.markdown pre code,
+.markdown-big pre code,
+.perform pre code,
+.markdown code[class*="language-"],
+.markdown-big code[class*="language-"],
+.perform code[class*="language-"] {
+  background: transparent !important;
+  color: inherit;
+  display: block;
+  font-family: var(--gc-code-font);
+  font-size: inherit;
+  font-variant-ligatures: none;
+  letter-spacing: 0;
+  line-height: inherit;
+  padding: 0 !important;
+  text-shadow: none !important;
+  white-space: pre;
+}
+
+.markdown .hljs,
+.markdown-big .hljs,
+.perform .hljs {
+  background: transparent !important;
+  color: inherit;
+  padding: 0 !important;
+}
+
+.markdown pre code span,
+.markdown-big pre code span,
+.perform pre code span,
+.markdown pre .token.operator,
+.markdown-big pre .token.operator,
+.perform pre .token.operator,
+.markdown pre .token.entity,
+.markdown-big pre .token.entity,
+.perform pre .token.entity,
+.markdown pre .token.url,
+.markdown-big pre .token.url,
+.perform pre .token.url {
+  background: transparent !important;
+  text-shadow: none !important;
+}
+
+.markdown .hljs-keyword,
+.markdown .token.keyword,
+.markdown-big .hljs-keyword,
+.markdown-big .token.keyword,
+.perform .hljs-keyword,
+.perform .token.keyword { color: var(--gc-syntax-keyword); }
+
+.markdown .hljs-title,
+.markdown .hljs-function,
+.markdown .token.function,
+.markdown-big .hljs-title,
+.markdown-big .hljs-function,
+.markdown-big .token.function,
+.perform .hljs-title,
+.perform .hljs-function,
+.perform .token.function { color: var(--gc-syntax-function); }
+
+.markdown .hljs-string,
+.markdown .token.string,
+.markdown-big .hljs-string,
+.markdown-big .token.string,
+.perform .hljs-string,
+.perform .token.string { color: var(--gc-syntax-string); }
+
+.markdown .hljs-tag,
+.markdown .hljs-name,
+.markdown .hljs-selector-tag,
+.markdown .token.tag,
+.markdown .token.selector,
+.markdown-big .hljs-tag,
+.markdown-big .hljs-name,
+.markdown-big .hljs-selector-tag,
+.markdown-big .token.tag,
+.markdown-big .token.selector,
+.perform .hljs-tag,
+.perform .hljs-name,
+.perform .hljs-selector-tag,
+.perform .token.tag,
+.perform .token.selector { color: var(--gc-syntax-tag); }
+
+.markdown .hljs-attr,
+.markdown .hljs-attribute,
+.markdown .hljs-property,
+.markdown .token.attr-name,
+.markdown .token.property,
+.markdown-big .hljs-attr,
+.markdown-big .hljs-attribute,
+.markdown-big .hljs-property,
+.markdown-big .token.attr-name,
+.markdown-big .token.property,
+.perform .hljs-attr,
+.perform .hljs-attribute,
+.perform .hljs-property,
+.perform .token.attr-name,
+.perform .token.property { color: var(--gc-syntax-property); }
+
+.markdown .hljs-meta,
+.markdown .hljs-doctag,
+.markdown .hljs-template-tag,
+.markdown .token.doctype,
+.markdown .token.prolog,
+.markdown-big .hljs-meta,
+.markdown-big .hljs-doctag,
+.markdown-big .hljs-template-tag,
+.markdown-big .token.doctype,
+.markdown-big .token.prolog,
+.perform .hljs-meta,
+.perform .hljs-doctag,
+.perform .hljs-template-tag,
+.perform .token.doctype,
+.perform .token.prolog { color: var(--gc-syntax-meta); }
+
+.markdown .hljs-variable,
+.markdown .hljs-template-variable,
+.markdown .hljs-selector-class,
+.markdown .hljs-selector-id,
+.markdown .token.variable,
+.markdown .token.class-name,
+.markdown-big .hljs-variable,
+.markdown-big .hljs-template-variable,
+.markdown-big .hljs-selector-class,
+.markdown-big .hljs-selector-id,
+.markdown-big .token.variable,
+.markdown-big .token.class-name,
+.perform .hljs-variable,
+.perform .hljs-template-variable,
+.perform .hljs-selector-class,
+.perform .hljs-selector-id,
+.perform .token.variable,
+.perform .token.class-name { color: var(--gc-syntax-variable); }
+
+.markdown .hljs-number,
+.markdown .hljs-literal,
+.markdown .token.number,
+.markdown .token.boolean,
+.markdown-big .hljs-number,
+.markdown-big .hljs-literal,
+.markdown-big .token.number,
+.markdown-big .token.boolean,
+.perform .hljs-number,
+.perform .hljs-literal,
+.perform .token.number,
+.perform .token.boolean { color: var(--gc-syntax-number); }
+
+.markdown .hljs-comment,
+.markdown .token.comment,
+.markdown-big .hljs-comment,
+.markdown-big .token.comment,
+.perform .hljs-comment,
+.perform .token.comment { color: var(--gc-syntax-comment); }
+
+.markdown .hljs-operator,
+.markdown .token.operator,
+.markdown .token.punctuation,
+.markdown-big .hljs-operator,
+.markdown-big .token.operator,
+.markdown-big .token.punctuation,
+.perform .hljs-operator,
+.perform .token.operator,
+.perform .token.punctuation { color: var(--gc-syntax-operator); }
+
+.markdown code:not(pre code),
+.markdown-big code:not(pre code),
+.perform code:not(pre code) {
+  background: var(--gc-inline-code-surface);
+  border: 1px solid var(--gc-inline-code-border);
+  border-radius: 0.35rem;
+  color: var(--gc-inline-code-text);
+  font-family: var(--gc-code-font);
+  font-size: 0.88em;
+  font-variant-ligatures: none;
+  letter-spacing: 0;
+  padding: 0.1rem 0.32rem;
+}
+
+.markdown p,
+.markdown li { max-width: 840px; }
+
+.markdown-big p,
+.markdown-big li { max-width: 1300px; }
+
+.card-body pre { max-width: 100%; }
+
+.markdown {
+  font-size: var(--gc-font-body);
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+
+.markdown p { margin-bottom: 1.1rem; }
+
+.markdown ul,
+.markdown ol { padding-left: 1.35rem; }
+
+.markdown li + li { margin-top: 0.35rem; }
+
+.markdown blockquote {
+  background: var(--gc-surface-variant);
+  border: 0;
+  border-left: 3px solid color-mix(in srgb, var(--gc-primary) 32%, transparent);
+  border-radius: 0 var(--gc-radius-md) var(--gc-radius-md) 0;
+  color: var(--gc-on-surface);
+  margin: 1.35rem 0;
+  padding: 0.85rem 1rem 0.85rem 1.2rem;
+}
+
+.markdown blockquote > :last-child { margin-bottom: 0; }
+
+.markdown table {
+  border-collapse: separate;
+  border-spacing: 0;
+  display: block;
+  margin: 1.25rem 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.markdown th,
+.markdown td {
+  border-bottom: 1px solid var(--gc-border);
+  padding: 0.55rem 0.7rem;
+  vertical-align: top;
+}
+
+.markdown th {
+  color: var(--gc-on-surface);
+  font-weight: 500;
+}
+
+.perform { font-size: 1.15rem; }
+
+.markdown h2,
+.markdown h3,
+.markdown h4 {
+  margin: 1.5rem 0 0.75rem;
+}
+
+.markdown h2,
+.markdown h3 {
+  padding-bottom: 0;
+}
+
+.markdown h2 { font-size: 1.5rem; }
+
+.markdown h3 { font-size: 1.3rem; }
+
+.markdown h4 { font-size: 1.15rem; }
+
+.markdown img {
+  border-radius: var(--gc-radius-md);
+  height: auto;
+  max-width: 100%;
+}
+
+.step-media-figure {
+  margin: 1.6rem 0;
+  max-width: min(100%, 46rem);
+}
+
+.step-media-link {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+}
+
+.step-media-link--svg {
+  display: block;
+  width: 100%;
+}
+
+.step-media-link--svg img {
+  width: 100%;
+}
+
+.step-media-figure img {
+  border-radius: 0;
+  display: block;
+}
+
+.step-content .step-media-figure img {
+  height: auto;
+  max-height: min(72vh, 48rem);
+  max-width: 100%;
+  object-fit: contain;
+  width: auto;
+}
+
+.step-media-figure figcaption {
+  color: var(--gc-on-surface-muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  margin-top: 0.55rem;
+  max-width: 42rem;
+}
+
+.step-content .markdown {
+  color: var(--gc-on-surface);
+  font-size: 1rem;
+  line-height: 1.72;
+}
+
+.step-content .markdown > p,
+.step-content .markdown > ul,
+.step-content .markdown > ol,
+.step-content .markdown > blockquote,
+.step-content .markdown > h1,
+.step-content .markdown > h2,
+.step-content .markdown > h3,
+.step-content .markdown > h4,
+.step-content .markdown > h5,
+.step-content .markdown > h6,
+.step-content .markdown > table {
+  max-width: 72ch;
+}
+
+.step-content .markdown > pre {
+  max-width: 100%;
+}
+
+.step-content .markdown > .step-media-figure {
+  max-width: min(100%, 46rem);
+}
+
+.step-content .markdown > h2 {
+  margin-top: 1.5rem;
+}
+
+.step-content .markdown > h3,
+.step-content .markdown > h4 {
+  margin-top: 1.65rem;
+}
+
+[data-bs-theme="dark"] .markdown pre,
+[data-bs-theme="dark"] .markdown-big pre,
+[data-bs-theme="dark"] .perform pre {
+  background: var(--gc-code-block-surface);
+  border-color: var(--gc-code-block-border);
+  box-shadow: inset 0 1px 0 var(--gc-code-block-highlight);
+}
+
+[data-bs-theme="dark"] .markdown pre code,
+[data-bs-theme="dark"] .markdown-big pre code,
+[data-bs-theme="dark"] .perform pre code {
+  color: var(--gc-code-text);
+}
+
+[data-bs-theme="dark"] .markdown,
+[data-bs-theme="dark"] .markdown-big,
+[data-bs-theme="dark"] .perform {
+  color: var(--gc-on-surface);
+}
+
+[data-bs-theme="dark"] .markdown blockquote,
+[data-bs-theme="dark"] .markdown-big blockquote {
+  background: var(--gc-surface-variant);
+  border-left-color: var(--gc-primary);
+  color: var(--gc-on-surface);
+}
+
+[data-bs-theme="dark"] .markdown code:not(pre code),
+[data-bs-theme="dark"] .markdown-big code:not(pre code),
+[data-bs-theme="dark"] .perform code:not(pre code) {
+  background: var(--gc-surface-variant);
+  border-color: var(--gc-border-hover);
+  color: var(--gc-code-text);
+}
+
+.step-teacher-note .markdown > :last-child {
+  margin-bottom: 0;
+}
+
+// Feedback uses the review text size rather than the default article size.
+.solution-feedback__content {
+  font-size: inherit;
+  overflow-x: auto;
+}
+.solution-feedback__content > :last-child {
+  margin-bottom: 0;
+}

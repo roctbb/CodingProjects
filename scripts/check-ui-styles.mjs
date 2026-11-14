@@ -26,9 +26,15 @@ legacy.split("\n").forEach((line, index) => {
   }
 });
 
-for (const file of readdirSync(styles).filter((file) =>
-  file.endsWith(".scss"),
-)) {
+function styleFiles(directory, prefix = "") {
+  return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    const name = prefix + entry.name;
+    return entry.isDirectory() ? styleFiles(path.join(directory, entry.name), name + "/")
+      : entry.name.endsWith(".scss") ? [name] : [];
+  });
+}
+
+for (const file of styleFiles(styles)) {
   const source = readFileSync(path.join(styles, file), "utf8");
   source.split("\n").forEach((line, index) => {
     if (retiredLayouts.test(line)) {
