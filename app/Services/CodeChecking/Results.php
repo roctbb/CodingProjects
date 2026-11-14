@@ -29,6 +29,12 @@ class Results
             && in_array($data['state'] ?? null, ['done', 'partially done', 'execution error'], true)
             && is_int($data['points'] ?? null) && $data['points'] >= 0 && $data['points'] <= $run->snapshot['points']
             && is_string($data['comment'] ?? null) && strlen($data['comment']) <= 200000, 422, 'Invalid execution result.');
+        if (isset($data['suite_diagnostics'])) {
+            abort_unless(($run->snapshot['test_mode']??null)==='suite' && is_array($data['suite_diagnostics'])
+                && is_string($data['suite_diagnostics']['text']??null) && strlen($data['suite_diagnostics']['text'])<=400000
+                && ($data['suite_diagnostics']['suite_id']??null)===($run->snapshot['test_config']['suite_id']??null)
+                && ($data['suite_diagnostics']['suite_version']??null)===($run->snapshot['test_config']['suite_version']??null),422,'Invalid suite diagnostics.');
+        }
         DB::transaction(function () use ($run, $data, $hash) {
             $run = CodeExecutionRun::lockForUpdate()->findOrFail($run->id);
             if ($run->result_hash) {
@@ -45,6 +51,7 @@ class Results
                 $this->reports->accept($report);
             }
             $run->update(['result_hash' => $hash, 'points' => $data['points'], 'comment' => $data['comment'],
+                'legacy_report'=>isset($data['suite_diagnostics'])?['suite_diagnostics'=>$data['suite_diagnostics']]:$run->legacy_report,
                 'state' => $data['state'] === 'execution error' ? 'error' : 'completed', 'finished_at' => now(),
                 'progress' => ['phase' => $data['state'] === 'execution error' ? 'error' : 'completed', 'completed' => $data['report']['total'] ?? 0,
                     'total' => $data['report']['total'] ?? 0]]);

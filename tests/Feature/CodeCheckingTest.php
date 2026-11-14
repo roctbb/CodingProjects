@@ -275,7 +275,7 @@ class CodeCheckingTest extends TestCase
         $this->assertSame('2020-01-02 03:04:05', DB::table('solutions')->where('id', 99)->value('submitted'));
         $this->assertSame('2020-01-02 03:05:06', DB::table('solutions')->where('id', 99)->value('updated_at'));
         $this->assertStringContainsString('/insider/code-submissions/'.$submission->id, DB::table('solutions')->where('id', 99)->value('text'));
-        $this->assertSame('2020-01-02 03:04:05', $submission->created_at->format('Y-m-d H:i:s'));
+        $this->assertSame('2020-01-02 03:04:05', $submission->created_at->copy()->utc()->format('Y-m-d H:i:s'));
         $this->assertTrue(app(Integrity::class)->view($submission, true)['ai']['warning']);
         $this->login()->get('/insider/code-submissions/'.$submission->id.'/legacy-source')->assertStreamedContent("  print(6)\n");
         $this->login(3)->get('/insider/code-submissions/'.$submission->id.'/legacy-source')->assertForbidden();
@@ -300,6 +300,71 @@ class CodeCheckingTest extends TestCase
         $this->postJson('/insider/code-submissions/'.$submission->id.'/recheck', ['latest_configuration' => true])->assertStatus(202);
         $this->getJson('/insider/courses/7/tasks/12/checker/legacy')->assertOk()->assertSee('OLD PRIVATE PROMPT');
         $this->login()->getJson('/insider/courses/7/tasks/12/checker/legacy')->assertForbidden();
+    }
+
+    public function test_import_dates_preserve_the_instant_after_database_round_trip_in_moscow(): void
+    {
+        $previous = date_default_timezone_get();
+        config(['app.timezone' => 'Europe/Moscow']);
+        date_default_timezone_set('Europe/Moscow');
+        try {
+            $root = $this->legacyExport();
+            $this->rewriteLegacy($root, ['created_at' => '2020-01-02T03:04:05', 'checked_at' => '2020-01-02T06:05:06+03:00']);
+            app(\App\Services\CodeChecking\LegacyImport::class)->run($root, ['tasks' => ['12' => 12]], true, 4);
+            $submission = CodeSubmission::firstOrFail()->fresh();
+            $run = $submission->currentRun;
+            $this->assertSame('2020-01-02T03:04:05+00:00', $submission->created_at->copy()->utc()->toIso8601String());
+            $this->assertSame('2020-01-02T03:05:06+00:00', $run->finished_at->copy()->utc()->toIso8601String());
+            $this->assertSame('2020-01-02 06:04:05', substr(DB::table('code_submissions')->value('created_at'),0,19));
+            $this->assertSame('2020-01-02 06:04:05', substr(DB::table('code_integrity_reports')->value('created_at'),0,19));
+
+            $this->rewriteLegacy($root, ['id' => 'MOSCOW', 'created_at' => '2020-01-02T06:04:05']);
+            app(\App\Services\CodeChecking\LegacyImport::class)->run($root, ['tasks' => ['12' => 12]], true, 4, 'Europe/Moscow');
+            $this->assertSame('2020-01-02T03:04:05+00:00', CodeSubmission::where('legacy_id','MOSCOW')->firstOrFail()->created_at->utc()->toIso8601String());
+        } finally { date_default_timezone_set($previous); }
+    }
+
+    public function test_reviewed_import_plan_is_pinned_to_source_and_public_condition(): void
+    {
+        $root = $this->legacyExport();
+        $row = json_decode(trim(file_get_contents($root.'/tasks.jsonl')),true); ksort($row,SORT_STRING);
+        $plan = ['schema_version'=>1, 'source_manifest_sha256'=>hash_file('sha256',$root.'/manifest.json'), 'tasks'=>[
+            '12'=>['task_id'=>12,'source_definition_sha256'=>hash('sha256',json_encode($row,JSON_THROW_ON_ERROR)),
+                'target_public_text_sha256'=>hash('sha256','Public task'),'target_points'=>10,'action'=>'configure',
+                'private_instructions'=>'Reviewed additions only','reference_answer'=>'Private reference']]];
+        $import = app(\App\Services\CodeChecking\LegacyImport::class);
+        $this->assertSame([], $import->run($root,['tasks'=>['12'=>12]],false,null,'UTC',false,null,$plan)['issues']);
+        \App\Task::findOrFail(12)->update(['text'=>'Teacher edited the public condition']);
+        $this->assertStringContainsString('stale_or_invalid_task_plan',implode(' ',$import->run($root,['tasks'=>['12'=>12]],false,null,'UTC',false,null,$plan)['issues']));
+        try {$import->run($root,['tasks'=>['12'=>12]],true,4,'UTC',false,null,$plan);$this->fail('Stale plan must block all writes');}
+        catch (\InvalidArgumentException $e) {$this->assertStringContainsString('preflight',$e->getMessage());}
+        $this->assertDatabaseCount('code_submissions',0);
+        \App\Task::findOrFail(12)->update(['text'=>'Public task']);
+        $import->run($root,['tasks'=>['12'=>12]],true,4,'UTC',false,null,$plan);
+        $this->assertSame('Reviewed additions only',CodeTaskChecker::findOrFail(12)->config['private_instructions']);
+        $this->assertSame('Public task',\App\Task::findOrFail(12)->text);
+        $this->assertSame('OLD PRIVATE PROMPT',CodeSubmission::firstOrFail()->currentRun->snapshot['private_instructions']);
+    }
+
+    public function test_reviewed_plan_can_convert_ai_to_io_and_apply_explicit_public_corrections_repeatably(): void
+    {
+        $root=$this->legacyExport();$row=json_decode(trim(file_get_contents($root.'/tasks.jsonl')),true);ksort($row,SORT_STRING);
+        $plan=['schema_version'=>1,'source_manifest_sha256'=>hash_file('sha256',$root.'/manifest.json'),'tasks'=>[
+            '12'=>['task_id'=>12,'source_definition_sha256'=>hash('sha256',json_encode($row,JSON_THROW_ON_ERROR)),
+                'target_public_text_sha256'=>hash('sha256','Public task'),'target_points'=>10,'action'=>'configure',
+                'set_public_text'=>'Public task. Output one integer.','set_max_mark'=>15,'private_instructions'=>'',
+                'check_type'=>'tests','test_mode'=>'io','test_config'=>['comparison'=>'tokens','scoring'=>'all_or_nothing',
+                    'tests'=>[['input'=>"2 3\n",'output'=>"5\n",'is_public'=>false]]]]]];
+        $import=app(\App\Services\CodeChecking\LegacyImport::class);$map=['tasks'=>['12'=>12]];
+        $this->assertSame([],$import->run($root,$map,false,null,'UTC',false,null,$plan)['issues']);
+        $import->run($root,$map,true,4,'UTC',false,null,$plan);
+        $task=\App\Task::findOrFail(12);$config=CodeTaskChecker::findOrFail(12)->config;
+        $this->assertSame(15,(int)$task->max_mark);$this->assertSame('Public task. Output one integer.',$task->text);
+        $this->assertSame('tests',$config['check_type']);$this->assertFalse($config['requires_conversion']);
+        $this->assertSame("2 3\n",app(Artifacts::class)->get($config['test_config']['tests'][0]['input']['blob_id']));
+        $this->assertSame(10,CodeSubmission::firstOrFail()->currentRun->snapshot['points']);
+        $this->assertSame(1,$import->run($root,$map,true,4,'UTC',false,null,$plan)['already_imported']);
+        $this->assertSame([],$import->run($root,$map,false,null,'UTC',false,null,$plan)['issues']);
     }
 
     private function report(?string $run = null): array
@@ -343,6 +408,38 @@ class CodeCheckingTest extends TestCase
         $this->assertStringNotContainsString('PRIVATE RUBRIC', CodeTaskChecker::find(12)->toJson());
     }
 
+    public function test_ai_instructions_are_separate_from_the_student_condition(): void
+    {
+        $visible = "Сложите два числа.\nПокажите результат.";
+        $private = "PRIVATE AI CRITERIA: оцените обработку отрицательных чисел.";
+        $reference = 'PRIVATE REFERENCE ANSWER';
+        \App\Task::findOrFail(12)->update(['text' => $visible]);
+        $base = '/insider/courses/7/tasks/12';
+
+        $this->login(1)->putJson($base.'/checker/private', [
+            'language' => 'python', 'check_type' => 'gpt',
+            'private_instructions' => $private, 'reference_answer' => $reference,
+        ])->assertOk();
+        $this->assertSame($visible, \App\Task::findOrFail(12)->text);
+        $this->getJson($base.'/checker/private')->assertOk()
+            ->assertJsonPath('config.private_instructions', $private)
+            ->assertJsonPath('config.reference_answer', $reference);
+
+        $public = $this->login()->getJson($base.'/checker')->assertOk();
+        $this->assertStringNotContainsString($private, $public->getContent());
+        $this->assertStringNotContainsString($reference, $public->getContent());
+        $this->getJson($base.'/checker/private')->assertForbidden();
+        $response = $this->postJson($base.'/code-submissions', [
+            'request_id' => (string) Str::uuid(), 'code' => 'print(2+3)',
+        ])->assertCreated();
+        $this->assertStringNotContainsString($private, $response->getContent());
+        $this->assertStringNotContainsString($reference, $response->getContent());
+        $snapshot = CodeExecutionRun::findOrFail($response->json('execution_id'))->snapshot;
+        $this->assertSame($visible, $snapshot['public_text']);
+        $this->assertSame($private, $snapshot['private_instructions']);
+        $this->assertSame($reference, $snapshot['reference_answer']);
+    }
+
     public function test_submissions_keep_source_and_issue_only_scoped_socket_tokens(): void
     {
         $result = $this->createSubmission();
@@ -355,6 +452,17 @@ class CodeCheckingTest extends TestCase
         $this->login(3)->getJson('/insider/code-submissions/'.$result['id'])->assertForbidden();
         $this->login(1)->getJson('/insider/code-submissions/'.$result['id'])->assertOk();
         $this->login()->get($result['files'][0]['download_url'])->assertOk()->assertStreamedContent("  print(2+3)\n");
+    }
+
+    public function test_suite_diagnostics_with_hidden_data_are_visible_only_to_teachers(): void
+    {
+        $created=$this->createSubmission();
+        $run=CodeExecutionRun::findOrFail($created['execution_id']);
+        $run->update(['legacy_report'=>['suite_diagnostics'=>['text'=>'PRIVATE INPUT AND EXPECTED IMAGE','executions'=>3]]]);
+        $url='/insider/code-submissions/'.$created['id'];
+        $this->login()->getJson($url)->assertOk()->assertJsonPath('checker_diagnostics',null)->assertJsonPath('report',null)
+            ->assertDontSee('PRIVATE INPUT AND EXPECTED IMAGE');
+        $this->login(1)->getJson($url)->assertOk()->assertJsonPath('checker_diagnostics.text','PRIVATE INPUT AND EXPECTED IMAGE');
     }
 
     public function test_submission_retries_are_idempotent_and_conflicting_payload_is_rejected(): void

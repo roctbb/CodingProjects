@@ -24,7 +24,7 @@ class Configuration
         $data = Validator::make($input, [
             'language' => ['required', Rule::in(array_merge(self::LANGUAGES, ['ipynb', 'zip', 'image', 'xlsx', 'github']))],
             'check_type' => ['required', Rule::in(['manual', 'tests', 'gpt'])],
-            'test_mode' => ['sometimes', Rule::in(['io', 'environment'])],
+            'test_mode' => ['sometimes', Rule::in(['io', 'environment', 'suite'])],
             'private_instructions' => 'sometimes|nullable|string|max:200000',
             'submission_modes' => 'sometimes|array|min:1|max:5',
             'submission_modes.*' => ['required', 'distinct', Rule::in(self::MODES)],
@@ -67,6 +67,13 @@ class Configuration
             abort_unless(!array_diff($config['allowed_languages'], ['cpp', 'python'])
                 && !in_array('text', $config['submission_modes'], true), 422, 'Tests require executable source files.');
             $config['test_config'] = $this->io($data['test_config'] ?? [], (int) $task->max_mark);
+        }
+        if ($data['check_type']==='tests' && $config['test_mode']==='suite') {
+            $config['test_config']=app(LegacySuites::class)->validate($data['test_config']??[],$config['language'],(int)$task->max_mark);
+            $existing=CodeTaskChecker::find($task->id);
+            abort_unless($existing && ($existing->config['test_mode']??null)==='suite'
+                && $config['test_config']===$existing->config['test_config'],422,'Checking suites are installed only by the reviewed migration.');
+            abort_unless($config['allowed_languages']===[$config['language']] && !in_array('text',$config['submission_modes'],true),422);
         }
         $task->update(['is_code' => $config['check_type'] !== 'manual']);
         return CodeTaskChecker::updateOrCreate(['task_id' => $task->id], [
