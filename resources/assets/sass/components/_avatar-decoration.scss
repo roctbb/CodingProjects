@@ -1,0 +1,298 @@
+// Purchased avatar artwork retains its own palette; interface chrome uses theme tokens.
+.profile-custom-title {
+  align-items: center;
+  border: 1px solid color-mix(in srgb, #7c3aed 32%, var(--gc-border));
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.86rem;
+  font-weight: 500;
+  gap: 0.38rem;
+  max-width: 100%;
+  min-height: 1.85rem;
+  padding: 0.22rem 0.62rem;
+}
+
+.profile-custom-title span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-custom-title--compact {
+  font-size: var(--gc-font-caption);
+  gap: 0.18rem;
+  line-height: 1;
+  max-width: 7.5rem;
+  min-height: 1.25rem;
+  padding: 0.12rem 0.36rem;
+}
+
+.profile-custom-title--compact i {
+  font-size: 0.86em;
+}
+
+.profile-avatar-frame,
+.gc-avatar-frame {
+  --profile-avatar-frame-bg: transparent;
+  --profile-avatar-frame-width: 0.38rem;
+  --profile-avatar-frame-radius: 999px;
+  --profile-avatar-frame-inner-radius: 999px;
+  --profile-avatar-frame-pattern: none;
+  --profile-avatar-pattern-opacity: 72%;
+  --profile-avatar-frame-shadow: none;
+  --profile-avatar-frame-animation: none;
+  --profile-avatar-effect-bg: transparent;
+  --profile-avatar-effect-animation: none;
+  --profile-avatar-effect-opacity: 0;
+  background: var(--profile-avatar-frame-bg);
+  border-radius: var(--profile-avatar-frame-radius);
+  box-shadow: var(--profile-avatar-frame-shadow);
+  display: inline-grid;
+  isolation: isolate;
+  overflow: hidden;
+  padding: var(--profile-avatar-frame-width);
+  place-items: center;
+  position: relative;
+  width: max-content;
+}
+
+.profile-avatar-frame--none,
+.gc-avatar-frame--none {
+  padding: 0;
+}
+
+.profile-avatar-frame .avatar,
+.gc-avatar-frame .avatar {
+  border-radius: var(--profile-avatar-frame-inner-radius) !important;
+  margin-bottom: 0 !important;
+  position: relative;
+  z-index: 1;
+}
+
+.profile-avatar-frame__effect,
+.gc-avatar-frame__effect,
+.profile-avatar-frame__avatar-effect,
+.gc-avatar-frame__avatar-effect {
+  border-radius: inherit;
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.profile-avatar-frame__effect,
+.gc-avatar-frame__effect {
+  z-index: 0;
+}
+
+.profile-avatar-frame__avatar-effect,
+.gc-avatar-frame__avatar-effect {
+  background: var(--profile-avatar-effect-bg);
+  border-radius: var(--profile-avatar-frame-inner-radius);
+  inset: var(--profile-avatar-frame-width);
+  opacity: var(--profile-avatar-effect-opacity);
+  transform: translateX(-120%) rotate(0.001deg);
+  z-index: 2;
+}
+
+.profile-avatar-frame--neon,
+.gc-avatar-frame--neon {
+  --profile-avatar-frame-bg: linear-gradient(135deg, #22d3ee, #22c55e 58%, #a3e635);
+  --profile-avatar-frame-shadow: 0 0 0 0.18rem color-mix(in srgb, #22d3ee 16%, transparent), 0 0.8rem 2rem color-mix(in srgb, #22d3ee 24%, transparent);
+}
+
+.profile-avatar-frame--pixel,
+.gc-avatar-frame--pixel {
+  --profile-avatar-frame-bg:
+    conic-gradient(from 90deg, #38bdf8 0 25%, #0ea5e9 0 50%, #22c55e 0 75%, #a3e635 0) 0 0 / 1.1rem 1.1rem;
+  border-radius: 1.6rem;
+}
+
+.profile-avatar-frame--terminal,
+.gc-avatar-frame--terminal {
+  --profile-avatar-frame-bg: #101827;
+  --profile-avatar-frame-shadow: inset 0 0 0 0.16rem #22c55e, 0 0.7rem 1.7rem color-mix(in srgb, #22c55e 18%, transparent);
+}
+
+.profile-avatar-frame--gold,
+.gc-avatar-frame--gold {
+  --profile-avatar-frame-bg: conic-gradient(from 160deg, #fef3c7, #f59e0b, #b45309, #fde68a, #f59e0b, #fef3c7);
+  --profile-avatar-frame-shadow: 0 0.75rem 1.6rem color-mix(in srgb, #f59e0b 22%, transparent);
+}
+
+.profile-avatar-frame--rainbow,
+.gc-avatar-frame--rainbow {
+  --profile-avatar-frame-bg: conic-gradient(from 0deg, #f87171, #fbbf24, #34d399, #38bdf8, #a78bfa, #f87171);
+  --profile-avatar-frame-shadow: 0 0.75rem 1.8rem color-mix(in srgb, #38bdf8 20%, transparent);
+}
+
+.profile-avatar-frame--rainbow .profile-avatar-frame__effect,
+.gc-avatar-frame--rainbow .gc-avatar-frame__effect {
+  animation: profile-avatar-rainbow-spin 4.8s linear infinite;
+  background: inherit;
+}
+
+.profile-avatar-frame--custom,
+.gc-avatar-frame--custom {
+  --profile-avatar-frame-bg: linear-gradient(135deg, #22d3ee, #8b5cf6, #f97316, #22c55e);
+  --profile-avatar-frame-pattern: radial-gradient(circle at 50% 6%, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0.16rem, transparent 0.19rem), radial-gradient(circle at 94% 34%, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0.13rem, transparent 0.17rem), radial-gradient(circle at 76% 94%, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0.15rem, transparent 0.18rem), radial-gradient(circle at 9% 66%, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0.12rem, transparent 0.16rem), radial-gradient(circle at 13% 18%, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0, rgb(255 255 255 / var(--profile-avatar-pattern-opacity)) 0.11rem, transparent 0.15rem);
+  --profile-avatar-frame-shadow: 0 0.75rem 1.8rem color-mix(in srgb, #8b5cf6 28%, transparent);
+  --profile-avatar-frame-animation: profile-avatar-rainbow-spin 5.6s linear infinite;
+  --profile-avatar-effect-bg: linear-gradient(115deg, transparent 18%, rgba(255, 255, 255, 0.62) 45%, transparent 72%);
+  --profile-avatar-effect-animation: profile-avatar-sheen 3.6s ease-in-out infinite;
+  --profile-avatar-effect-opacity: 0.7;
+}
+
+.profile-avatar-frame--custom .avatar,
+.gc-avatar-frame--custom .avatar {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.profile-avatar-frame--custom .profile-avatar-frame__effect,
+.gc-avatar-frame--custom .gc-avatar-frame__effect {
+  animation: var(--profile-avatar-frame-animation);
+  background: var(--profile-avatar-frame-pattern), var(--profile-avatar-frame-bg);
+}
+
+.profile-avatar-frame--custom .profile-avatar-frame__avatar-effect,
+.gc-avatar-frame--custom .gc-avatar-frame__avatar-effect {
+  animation: var(--profile-avatar-effect-animation);
+}
+
+.gc-avatar-frame {
+  --profile-avatar-frame-width: 0.14rem;
+  vertical-align: middle;
+}
+
+.gc-avatar-frame .avatar {
+  background: var(--gc-surface-variant);
+  border: 2px solid var(--gc-surface);
+  box-shadow: var(--gc-shadow-sm);
+}
+
+.gc-avatar-frame--size-sm {
+  --profile-avatar-frame-width: 0.1rem;
+}
+
+.gc-avatar-frame--size-lg {
+  --profile-avatar-frame-width: 0.18rem;
+}
+
+.gc-avatar-frame--size-xl {
+  --profile-avatar-frame-width: 0.38rem;
+}
+
+.gc-avatar-frame--none {
+  padding: 0;
+}
+
+.gc-avatar-frame--none .avatar {
+  border: 0;
+  box-shadow: none;
+}
+
+.profile-avatar-frame-editor {
+  display: grid;
+  gap: 0;
+  padding: 0;
+}
+
+.profile-avatar-frame-color {
+  background:
+    linear-gradient(var(--frame-color), var(--frame-color)) padding-box,
+    linear-gradient(135deg, color-mix(in srgb, var(--frame-color) 72%, white), color-mix(in srgb, var(--frame-color) 72%, black)) border-box;
+  border: 2px solid transparent;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.45rem 1.1rem color-mix(in srgb, var(--frame-color) 18%, transparent);
+  cursor: pointer;
+  display: block;
+  height: 2.35rem;
+  overflow: hidden;
+}
+
+.profile-avatar-frame-color input {
+  cursor: pointer;
+  height: 150%;
+  opacity: 0;
+  width: 150%;
+}
+
+.profile-avatar-frame-editor__animation-options {
+  border-top: 1px solid var(--gc-border);
+  display: grid;
+  gap: 0.85rem;
+  padding-top: 0.85rem;
+}
+
+@keyframes profile-avatar-rainbow-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes profile-avatar-frame-pulse {
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.045);
+  }
+}
+
+@keyframes profile-avatar-frame-sweep {
+  0% {
+    filter: brightness(0.9) saturate(1);
+    transform: rotate(0deg) scale(1);
+  }
+
+  50% {
+    filter: brightness(1.18) saturate(1.18);
+    transform: rotate(180deg) scale(1.03);
+  }
+
+  100% {
+    filter: brightness(0.9) saturate(1);
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes profile-avatar-sheen {
+  0% {
+    transform: translateX(-125%) rotate(0.001deg);
+  }
+
+  44%,
+  100% {
+    transform: translateX(125%) rotate(0.001deg);
+  }
+}
+
+@keyframes profile-avatar-scanner {
+  0%,
+  100% {
+    transform: translateY(-120%);
+  }
+
+  50% {
+    transform: translateY(120%);
+  }
+}
+
+@keyframes profile-avatar-spark {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.78) rotate(0deg);
+  }
+
+  45% {
+    opacity: var(--profile-avatar-effect-opacity);
+    transform: scale(1.08) rotate(12deg);
+  }
+}

@@ -1,4 +1,5 @@
 // Shared component modules. This order preserves the existing cascade.
+@use "components/avatar-decoration";
 @use "components/reading";
 @use "components/selection";
 @use "components/controls";

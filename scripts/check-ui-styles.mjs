@@ -10,6 +10,8 @@ const colorOwners = new Set([
   "_tokens.scss",
   "_legacy.scss",
   "notebook.scss",
+  // Purchased avatar decorations are artwork, independent of interface branding.
+  "components/_avatar-decoration.scss",
 ]);
 const failures = [];
 const retiredLayouts = /\.(?:course-chapter-switcher(?:[-_]|\b)|course-lesson-card(?:[-_]|\b)|pending-review-card(?:[-_]|\b))/;
@@ -17,6 +19,9 @@ const retiredLayouts = /\.(?:course-chapter-switcher(?:[-_]|\b)|course-lesson-ca
 // Migrated primitives have one owner; legacy must not reintroduce another cascade.
 const legacy = readFileSync(path.join(styles, "_legacy.scss"), "utf8");
 legacy.split("\n").forEach((line, index) => {
+  if (/^\.(?:profile-avatar-frame|gc-avatar-frame|profile-custom-title)(?![\w-])/.test(line)) {
+    failures.push(`_legacy.scss:${index + 1}: avatar decorations belong in their shared component`);
+  }
   if (/\.(?:markdown(?:-big)?|perform)(?![\w-])|\.step-media-|\.gc-multiselect(?:__|--|(?=[^\w-]|$))|\.solution-feedback__content\b/.test(line)) {
     failures.push(`_legacy.scss:${index + 1}: reading and selection controls belong in shared components`);
   }
