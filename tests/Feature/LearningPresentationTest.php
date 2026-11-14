@@ -14,6 +14,14 @@ use Tests\TestCase;
 
 class LearningPresentationTest extends TestCase
 {
+    public function test_workbook_initializes_highlighters_before_loading_the_single_notebook_entry(): void
+    {
+        $html = view('layouts.fluid')->render();
+        $this->assertSame(1, substr_count($html, '/build/js/notebook-render.js'));
+        $this->assertStringNotContainsString('/build/js/nbv.js', $html);
+        $this->assertLessThan(strpos($html, '/build/js/notebook-render.js'), strpos($html, 'window.Prism.manual = true'));
+    }
+
     private function state(array $solutions = [], bool $blocked = false, bool $compact = false): string
     {
         $task = (new Task())->forceFill(['id' => 11, 'max_mark' => 10]);

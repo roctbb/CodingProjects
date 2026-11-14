@@ -1,4 +1,7 @@
 <script>
+    // Notebook cells invoke Prism explicitly; ordinary examples use Highlight.js.
+    window.Prism = window.Prism || {};
+    window.Prism.manual = true;
     (function () {
         try {
             var theme = localStorage.getItem('gc-theme');

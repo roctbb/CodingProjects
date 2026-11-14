@@ -13,17 +13,6 @@ export function initContentMedia() {
         if (image.complete && image.naturalWidth === 0) loadFallback();
     });
 
-    if (window.nbv) {
-        document.querySelectorAll('[data-notebook-content]').forEach(function (notebook) {
-            if (notebook.dataset.notebookRendered === '1') return;
-            try {
-                window.nbv.render(JSON.parse(notebook.dataset.notebookContent), notebook);
-                notebook.dataset.notebookRendered = '1';
-            } catch (error) {
-                console.error('Failed to render notebook:', error);
-            }
-        });
-    }
 }
 
 export function initCodeHighlighting() {
