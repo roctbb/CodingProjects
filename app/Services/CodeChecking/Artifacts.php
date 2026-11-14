@@ -118,6 +118,18 @@ class Artifacts
         finally {if(is_resource($stream))fclose($stream);}
     }
 
+    /** Saved code can be read without consulting the original-file storage. */
+    public function databaseContent(string $digest): ?string
+    {
+        $this->path($digest);
+        if (!Schema::hasTable('code_artifact_contents')) return null;
+        $row = DB::table('code_artifact_contents')->where('id', $digest)->first();
+        if (!$row) return null;
+        $body = $row->encoding === 'base64' ? base64_decode($row->content, true) : $row->content;
+        abort_unless(is_string($body), 503, 'Не удалось прочитать сохранённый исходник.');
+        return $body;
+    }
+
     public function readStream(string $digest)
     {
         $this->path($digest);

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CodeCheckingController;
+use App\Http\Controllers\ArchivePreviewController;
 use App\Http\Controllers\TaskSubmissionController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,7 +46,11 @@ Route::middleware(['web', 'auth', 'verified'])->prefix('insider')->where([
     Route::get('/code-submissions/{submission}/runs/{run}/tests/{number}', [TaskSubmissionController::class,'runTest'])->whereNumber('number');
     Route::get('/code-submissions/{submission}/subscription', [CodeCheckingController::class, 'subscription']);
     Route::get('/code-submissions/{submission}/files/{file}', [CodeCheckingController::class, 'file'])->whereNumber('file')->name('code-submissions.file');
+    Route::get('/code-submissions/{submission}/files/{file}/archive', [ArchivePreviewController::class, 'index'])->whereNumber('file')->name('code-submissions.archive');
+    Route::get('/code-submissions/{submission}/files/{file}/archive/entries/{entry}', [ArchivePreviewController::class, 'source'])->whereNumber('file')->where('entry', '[a-f0-9]{64}')->name('code-submissions.archive-source');
+    Route::get('/code-submissions/{submission}/files/{file}/archive/entries/{entry}/download', [ArchivePreviewController::class, 'download'])->whereNumber('file')->where('entry', '[a-f0-9]{64}')->name('code-submissions.archive-download');
     Route::post('/code-submissions/{submission}/recheck', [CodeCheckingController::class, 'recheck']);
+    Route::post('/code-submissions/{submission}/retry', [CodeCheckingController::class, 'retry']);
     Route::get('/code-test-reports/{run}', [CodeCheckingController::class, 'report']);
     Route::post('/code-test-reports/{run}/tests/{test}/purchase', [CodeCheckingController::class, 'purchase']);
     Route::get('/code-test-reports/{run}/tests/{test}/{field}', [CodeCheckingController::class, 'download'])->name('code-reports.download');

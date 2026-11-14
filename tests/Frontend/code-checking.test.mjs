@@ -44,3 +44,29 @@ test('line comparison preserves both attempts including blanks and repeated line
         assert.equal(result.filter(row=>row.type!=='removed').map(row=>row.text).join('\n'),after);
     }
 });
+
+import {submissionGroups,submissionMode,uploadDescription,executionPhase,draftFilePayload} from '../../resources/assets/js/code-checking/composer-options.js';
+
+test('student methods combine code/project and preserve fixed repository and restricted materials',()=>{
+    assert.deepEqual(submissionGroups({submission_modes:['code','project']}),['code']);
+    assert.deepEqual(submissionGroups({submission_modes:['repository']}),['repository']);
+    assert.equal(submissionMode({submission_modes:['code','project']},'code',1),'code');
+    assert.equal(submissionMode({submission_modes:['code','project']},'code',2),'project');
+    assert.equal(submissionMode({submission_modes:['project']},'code',1),'project');
+    assert.equal(submissionMode({submission_modes:['text']},'text',1),'text');
+    assert.equal(submissionMode({submission_modes:['files','text','code']},'files',0),'text');
+    assert.equal(uploadDescription({allowed_extensions:['ipynb']}),'Jupyter Notebook (.ipynb)');
+    assert.equal(uploadDescription({allowed_extensions:['xlsx']}),'Таблица Excel (.xlsx)');
+});
+
+test('execution progress has exact test counts and no invented preparation percentage',()=>{
+    assert.equal(executionPhase({phase:'preparing',completed:1,total:4}).total,null);
+    assert.equal(executionPhase({phase:'compiling',completed:1,total:4}).total,null);
+    assert.deepEqual(executionPhase({phase:'testing',completed:7,total:24}),{label:'Запускаю тесты · 7 из 24',completed:7,total:24});
+});
+
+test('saved originals and large legacy sources are retained without replacing their bytes',()=>{
+    const files=[{index:0,path:'main.cpp',bytes:3145728},{index:1,path:'notebook.ipynb',content:'original JSON'},{index:2,path:'helper.py',content:'updated',changed:true}];
+    assert.deepEqual(draftFilePayload(files,4),{keep_files:[0,1],editor_files:[{path:'helper.py',content:'updated'}]});
+    assert.deepEqual(draftFilePayload([{index:0,path:'main.py',content:'starter'}],0),{keep_files:[],editor_files:[{path:'main.py',content:'starter'}]});
+});

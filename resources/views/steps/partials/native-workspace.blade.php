@@ -1,4 +1,4 @@
-<section class="gc-card p-3 my-3 gc-execution-workspace"
+<section class="my-3 gc-execution-workspace"
     id="{{ $nativeWorkspaceId ?? 'execution-workspace-'.$task->id }}"
     data-execution-workspace
     @if($nativeTabWorkspace ?? false) data-execution-tab-workspace @endif

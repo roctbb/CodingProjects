@@ -92,7 +92,15 @@ class History
         $isLink=$source || preg_match('~(?:paste\.geekclass\.ru|/code-submissions/|^https?://)~i',$answer);
         $row['source_available']=$source!==null || (!$isLink && trim($answer)!=='');
         $penalty=(empty($saved->deadline_penalty_paid_at) && empty($saved->deadline_penalty_waived_at))?(int)($saved->deadline_penalty_amount??0):0;
-        return $row+['checked_at'=>$this->date($saved->checked??null),'comment'=>(string)($saved->comment??''),
+        $comment=(string)($saved->comment??'');
+        $checkType=$source?->check_type;
+        if(!$checkType && Schema::hasTable('code_task_checkers'))$checkType=DB::table('code_task_checkers')->where('task_id',$task->id)->value('config->check_type');
+        // Some old exports contain a test report despite an unrelated current
+        // checker. Its raw IO must not escape through the generic comment field.
+        if(app(HistoricalReport::class)->parse($comment)!==null)$checkType='tests';
+        $checkType??='manual';
+        $visibleComment=$checkType==='tests'?'':$comment;
+        return $row+['checked_at'=>$this->date($saved->checked??null),'check_type'=>$checkType,'comment_available'=>trim($comment)!=='','comment'=>$visibleComment,
             'text'=>$source?null:$answer,'original_reference'=>$isLink?$answer:null,'files'=>[],'report'=>null,
             'award_breakdown'=>['evaluated_points'=>$row['evaluated_points'],'deadline_penalty'=>$penalty,'xp_booster'=>(int)($saved->xp_booster_amount??0)],
             'source_url'=>$source?url('/insider/code-submissions/'.$source->id):null,
@@ -102,7 +110,7 @@ class History
             'review_url'=>$teacher?app(\App\Services\TaskLocation::class)->task($course,$task,(int)$event->user_id,'solution-'.$id):null,
             'can_grade'=>$teacher,'grade_url'=>$teacher?url('/insider/courses/'.$course.'/solution/'.$id):null,
             'grading_maximum_points'=>(int)$task->max_mark,'review_mark'=>$saved->evaluated_mark??$saved->raw_mark??$saved->mark,
-            'review_comment'=>(string)($saved->comment??'')];
+            'review_comment'=>$visibleComment];
     }
 
     private function sources(int $course,int $task,?int $author)
@@ -112,7 +120,7 @@ class History
             ->where('s.course_id',$course)->where('s.task_id',$task)
             ->when($author!==null,fn($q)=>$q->where('s.user_id',$author))
             ->get(['s.id','s.user_id','s.legacy_id','s.solution_id','s.created_at','s.teacher_viewed','s.preparation_state',
-                'u.name as user_name','r.id as execution_id','r.state','r.progress','r.points','r.snapshot->points as maximum_points']);
+                'u.name as user_name','r.id as execution_id','r.state','r.progress','r.points','r.snapshot->points as maximum_points','r.snapshot->check_type as check_type']);
     }
 
     private function solutions(int $course,int $task,?int $author)

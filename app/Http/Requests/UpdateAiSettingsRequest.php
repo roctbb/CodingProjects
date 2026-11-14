@@ -24,7 +24,7 @@ class UpdateAiSettingsRequest extends FormRequest
             'settings.provider' => ['required', Rule::in($providers)],
             'settings.shared_models' => ['sometimes', 'boolean'],
             'settings.providers' => ['required', 'array:' . implode(',', $providers)],
-            'settings.defaults' => ['required', 'array:text,image'],
+            'settings.defaults' => ['required', 'array:text,image,recheck'],
             'settings.commands' => ['sometimes', 'array:' . implode(',', array_keys(AiSettings::COMMANDS))],
             'secrets' => ['required', 'array:' . implode(',', $providers)],
         ];
@@ -80,6 +80,9 @@ class UpdateAiSettingsRequest extends FormRequest
             $rules['settings.defaults.' . $type . '.model'] = ['required', ...$model];
             $rules['settings.defaults.' . $type . '.timeout'] = ['required', 'integer', 'between:1,180'];
         }
+        $rules['settings.defaults.recheck'] = ['sometimes', 'array:model,timeout'];
+        $rules['settings.defaults.recheck.model'] = ['nullable', ...$model];
+        $rules['settings.defaults.recheck.timeout'] = ['required_with:settings.defaults.recheck', 'integer', 'between:1,180'];
         foreach (array_keys(AiSettings::COMMANDS) as $command) {
             $prefix = 'settings.commands.' . $command;
             $rules[$prefix] = ['required_with:settings.commands', 'array:provider,model,timeout'];

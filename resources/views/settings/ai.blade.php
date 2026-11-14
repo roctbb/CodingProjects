@@ -84,6 +84,19 @@
                 @endforeach
             </div>
             @if($hasCommandOverrides)<p class="gc-help-text mb-0">Сохранение заменит прежние настройки отдельных операций этими двумя моделями.</p>@endif
+            <div class="row g-3 mt-1">
+                <div class="col-12 col-md-6">
+                    <x-gc-field name="settings[defaults][recheck][model]" id="ai-model-recheck" label="Модель для повторной ИИ-проверки">
+                        <input id="ai-model-recheck" name="settings[defaults][recheck][model]" type="text" class="form-control" value="{{ old('settings.defaults.recheck.model', $settings['defaults']['recheck']['model'] ?? '') }}" maxlength="200" spellcheck="false">
+                        <p class="gc-help-text mb-0">Преподаватель может выбрать её при повторной проверке решения, которое уже проверял ИИ. Пустое поле отключает этот вариант. Проверка по тестам использует тесты задачи.</p>
+                    </x-gc-field>
+                </div>
+                <div class="col-12 col-md-6">
+                    <x-gc-field name="settings[defaults][recheck][timeout]" id="ai-timeout-recheck" label="Ожидание повторной ИИ-проверки, секунд">
+                        <input id="ai-timeout-recheck" name="settings[defaults][recheck][timeout]" type="number" class="form-control" value="{{ old('settings.defaults.recheck.timeout', $settings['defaults']['recheck']['timeout'] ?? 180) }}" min="1" max="180" required>
+                    </x-gc-field>
+                </div>
+            </div>
         </x-gc-form-section>
         <p class="gc-help-text mb-0">Изменения применяются со следующего запроса. Ключи и прокси хранятся зашифрованными.</p>
     </form>

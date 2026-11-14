@@ -55,7 +55,10 @@ class Results
                 'state' => $data['state'] === 'execution error' ? 'error' : 'completed', 'finished_at' => now(),
                 'progress' => ['phase' => $data['state'] === 'execution error' ? 'error' : 'completed', 'completed' => $data['report']['total'] ?? 0,
                     'total' => $data['report']['total'] ?? 0]]);
-            if ($data['state'] === 'execution error') app(\App\Services\ClassroomBonus::class)->reconcile($submission->course_id, $submission->task_id, $submission->user_id);
+            if ($data['state'] === 'execution error') {
+                app(\App\Services\ClassroomBonus::class)->reconcile($submission->course_id, $submission->task_id, $submission->user_id);
+                app(ExecutionAlerts::class)->technicalError($run);
+            }
             // Historical runs remain inspectable; only the current run can update the grade.
             if ($submission->current_run_id === $run->id && $data['state'] !== 'execution error') {
                 $user = null;

@@ -67,15 +67,18 @@ class DispatchCodeExecution implements ShouldQueue
         $run = CodeExecutionRun::find($this->executionId);
         if ($run && !$run->finished_at && !$run->dispatched_at
             && (!$run->dispatch_lease_until || $run->dispatch_lease_until->isPast())) $this->finishWithError($run,
-            'Не удалось подготовить или отправить решение. Преподаватель может повторить проверку.');
+            'Не удалось подготовить или отправить решение. Преподаватель может повторить проверку.', true);
     }
 
-    private function finishWithError(CodeExecutionRun $run, string $comment): void
+    private function finishWithError(CodeExecutionRun $run, string $comment, bool $technical = false): void
     {
-        \Illuminate\Support\Facades\DB::transaction(function () use ($run, $comment) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($run, $comment, $technical) {
+            $run = CodeExecutionRun::whereKey($run->id)->whereNull('finished_at')->lockForUpdate()->first();
+            if (!$run || ($technical && $run->dispatched_at)) return;
             $run->update(['state' => 'error', 'comment' => $comment, 'finished_at' => now()]);
             $submission = $run->submission;
             app(\App\Services\ClassroomBonus::class)->reconcile($submission->course_id, $submission->task_id, $submission->user_id);
+            if ($technical) app(\App\Services\CodeChecking\ExecutionAlerts::class)->technicalError($run);
         });
     }
 }

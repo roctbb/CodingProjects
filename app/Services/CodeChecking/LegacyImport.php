@@ -160,9 +160,8 @@ class LegacyImport
 
     private function settings(array $row): array
     {
-        $legacy=$row['lang']??'python';
-        $language=match($legacy){'ipynb'=>'python','xlsx','image','zip','github'=>'text',default=>$legacy};
-        if (!in_array($language,Configuration::LANGUAGES,true)) $language='text';
+        $format=LegacySubmissionFormat::settings($row['lang']??null);
+        $language=$format['language']??'text';
         $type=($row['check_type']??'tests')==='gpt'?'gpt':'tests';
         $io=$row['test_config']??null; $invalidIo=false;
         if ($type==='tests' && ($row['test_mode']??'environment')==='io') {
@@ -175,9 +174,10 @@ class LegacyImport
         return ['language'=>$language,'allowed_languages'=>[$language],'check_type'=>$type,
             'test_mode'=>$row['test_mode']??'environment','test_config'=>$io,
             'private_instructions'=>$row['text']??'','gpt_model'=>$row['gpt_model']??null,'gpt_rate_limit'=>$row['gpt_rate_limit']??3,
-            'submission_modes'=>in_array($legacy,['image','xlsx','zip','ipynb'],true)?['files']:($legacy==='github'?['repository']:($type==='tests'?['code','files','project','repository']:['text','code','files','project','repository'])),'max_files'=>100,'max_file_bytes'=>52428800,'max_total_bytes'=>52428800,'allowed_extensions'=>match($legacy){'image'=>['png','jpg','jpeg','gif','webp'],'xlsx'=>['xlsx'],'zip'=>['zip'],'ipynb'=>['ipynb'],default=>[]},
+            ...($format??['submission_modes'=>[],'allowed_extensions'=>[],'max_files'=>1]),
+            'max_file_bytes'=>52428800,'max_total_bytes'=>52428800,
             'bypass_similarity_check'=>(bool)($row['bypass_similarity_check']??false),'ai_authorship_check'=>true,
-            'requires_conversion'=>!empty($row['migration_archive_only']) || ($type==='tests' && ($invalidIo || ($row['test_mode']??'environment')!=='io' || !in_array($language,['python','cpp'],true)))];
+            'requires_conversion'=>!$format || !empty($row['migration_archive_only']) || ($type==='tests' && ($invalidIo || ($row['test_mode']??'environment')!=='io' || !in_array($language,['python','cpp'],true)))];
     }
 
     private function solution(array $row): void
@@ -303,7 +303,6 @@ class LegacyImport
                 }
             } else throw new \InvalidArgumentException('invalid_test_mode_plan');
             $config['requires_conversion']=false;
-            $config['submission_modes']=['code','files','project','repository'];
         }
         return $config;
     }

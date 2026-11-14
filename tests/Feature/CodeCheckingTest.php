@@ -132,7 +132,7 @@ class CodeCheckingTest extends TestCase
     {
         $base='/insider/courses/7/tasks/12';
         DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY,user_id INTEGER,course_id INTEGER,task_id INTEGER,text TEXT,mark INTEGER,raw_mark INTEGER,evaluated_mark INTEGER,comment TEXT,submitted TEXT,checked TEXT,created_at TEXT,updated_at TEXT,geekpaste_code_id TEXT)');
-        $this->login(1)->putJson($base.'/checker/private',$this->configBody())->assertOk();
+        $this->login(1)->putJson($base.'/checker/private',array_replace($this->configBody(),['check_type'=>'gpt']))->assertOk();
         $source=$this->login()->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'print(10)'])->assertCreated()->json();
         $record=CodeSubmission::findOrFail($source['id']);
         $record->update(['legacy_id'=>'OLD123','source_metadata'=>['legacy_id'=>'OLD123'],'solution_id'=>101]);
@@ -152,6 +152,7 @@ class CodeCheckingTest extends TestCase
         $this->getJson($base.'/code-attempts/101')->assertOk()->assertJsonPath('awarded_xp',5)->assertJsonPath('comment','Earlier feedback')
             ->assertJsonPath('report',null)->assertJsonPath('source_version_unknown',true)->assertJsonPath('source_submission_id',$record->id)->assertDontSee('LATEST GP RESULT')
             ->assertJsonPath('can_grade',true)->assertJsonPath('review_mark',5)->assertJsonPath('review_comment','Earlier feedback')
+            ->assertJsonPath('check_type','gpt')->assertJsonPath('comment_available',true)
             ->assertJsonPath('review_url',url('/insider/courses/7/steps/1').'?student=2&task=12&attempt=solution-101#task12');
         $this->getJson('/insider/code-submissions/'.$record->id)->assertOk()->assertJsonPath('points',10)->assertJsonPath('awarded_xp',null);
         $this->putJson('/insider/code-submissions/'.$record->id.'/flags',['teacher_viewed'=>true])->assertOk();
@@ -160,6 +161,34 @@ class CodeCheckingTest extends TestCase
         $this->login(3)->getJson($base.'/code-attempts/101')->assertForbidden();
         $this->getJson($base.'/code-attempts/201')->assertOk()->assertJsonPath('source_submission_id',null)->assertJsonPath('source_url',null);
         $this->getJson($base.'/code-submissions?user_id=2')->assertForbidden();
+    }
+
+    public function test_legacy_attempt_test_comments_are_metadata_only_and_ai_or_manual_feedback_remains_available():void
+    {
+        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY,user_id INTEGER,course_id INTEGER,task_id INTEGER,text TEXT,mark INTEGER,raw_mark INTEGER,comment TEXT,submitted TEXT,checked TEXT)');
+        $created=$this->createSubmission();$submission=CodeSubmission::findOrFail($created['id']);
+        $submission->update(['legacy_id'=>'OLDTEST','source_metadata'=>['legacy_id'=>'OLDTEST'],'solution_id'=>501]);
+        $raw="Пройдено тестов: 0 из 1.\n\nТест 1 (публичный): неверный ответ.\n\nВвод:\n<pre>SECRET HISTORICAL INPUT</pre>\n\nВывод программы:\n<pre>SECRET HISTORICAL OUTPUT</pre>";
+        DB::table('solutions')->insert(['id'=>501,'user_id'=>2,'course_id'=>7,'task_id'=>12,'text'=>url('/insider/code-submissions/'.$submission->id),'mark'=>5,'raw_mark'=>5,'comment'=>$raw,'submitted'=>'2026-11-10 12:00:00']);
+        $base='/insider/courses/7/tasks/12/code-attempts/';
+        foreach([1,2] as $viewer)$this->login($viewer)->getJson($base.'501')->assertOk()->assertJsonPath('check_type','tests')->assertJsonPath('awarded_xp',5)
+            ->assertJsonPath('comment_available',true)->assertJsonPath('comment','')->assertJsonPath('review_comment','')->assertDontSee('SECRET HISTORICAL')->assertDontSee('<pre>');
+        $this->assertSame($raw,DB::table('solutions')->where('id',501)->value('comment'));
+        DB::table('solutions')->where('id',501)->update(['comment'=>'UNSTRUCTURED TEST SECRET <pre>saved output</pre>']);
+        $this->getJson($base.'501')->assertJsonPath('check_type','tests')->assertJsonPath('comment','')->assertJsonPath('review_comment','')->assertDontSee('UNSTRUCTURED TEST SECRET');
+        foreach(['gpt'=>'AI feedback','manual'=>'Teacher feedback'] as $type=>$feedback){
+            CodeTaskChecker::whereKey(12)->update(['config'=>array_replace(CodeTaskChecker::find(12)->config,['check_type'=>$type])]);
+            DB::table('solutions')->where('id',501)->update(['text'=>'Historical answer','comment'=>$feedback]);
+            $submission->update(['solution_id'=>null]);
+            $this->login(1)->getJson($base.'501')->assertOk()->assertJsonPath('check_type',$type)->assertJsonPath('comment_available',true)
+                ->assertJsonPath('comment',$feedback)->assertJsonPath('review_comment',$feedback);
+        }
+        // Even without a linked source and with today's manual configuration,
+        // an identifiable old test report stays private until a test is opened.
+        DB::table('solutions')->where('id',501)->update(['comment'=>$raw]);
+        $this->getJson($base.'501')->assertJsonPath('check_type','tests')->assertJsonPath('comment','')->assertJsonPath('review_comment','')->assertDontSee('SECRET HISTORICAL');
+        DB::table('solutions')->where('id',501)->update(['comment'=>'']);
+        $this->getJson($base.'501')->assertJsonPath('comment_available',false);
     }
 
     public function test_course_author_access_does_not_depend_on_the_global_teacher_role():void
@@ -484,6 +513,63 @@ class CodeCheckingTest extends TestCase
         $this->assertFileExists($root.'/solutions.jsonl');
     }
 
+    public static function legacySubmissionFormats(): array
+    {
+        return array_combine(['python','cpp','zip','ipynb','xlsx','image','github','html','js','sql'],
+            array_map(fn($lang)=>[$lang],['python','cpp','zip','ipynb','xlsx','image','github','html','js','sql']));
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('legacySubmissionFormats')]
+    public function test_import_restores_the_explicit_task_format_without_widening_submission_modes(string $language): void
+    {
+        $root = $this->legacyExport();
+        $row = json_decode(trim(file_get_contents($root.'/tasks.jsonl')), true);
+        $row['lang'] = $language;
+        file_put_contents($root.'/tasks.jsonl', json_encode($row)."\n");
+        $this->rewriteLegacy($root);
+        app(\App\Services\CodeChecking\LegacyImport::class)->run($root, ['tasks'=>['12'=>12]], true, 4);
+        $expected = \App\Services\CodeChecking\LegacySubmissionFormat::settings($language);
+        $config = CodeTaskChecker::findOrFail(12)->config;
+        foreach ($expected as $key=>$value) $this->assertSame($value, $config[$key]);
+        $this->assertSame('Public task', \App\Task::findOrFail(12)->text);
+        $this->assertSame('OLD PRIVATE PROMPT', $config['private_instructions']);
+        $this->assertSame('gpt', $config['check_type']);
+        $base = '/insider/courses/7/tasks/12';
+        $this->login()->getJson($base.'/checker')->assertOk()->assertJsonPath('submission_modes', $expected['submission_modes'])
+            ->assertJsonPath('max_files', $expected['max_files'])->assertJsonPath('allowed_extensions', $expected['allowed_extensions']);
+        if ($language !== 'github') {
+            $this->postJson($base.'/code-submissions', ['request_id'=>(string)Str::uuid(), 'mode'=>'repository',
+                'repository_url'=>'https://github.com/example/project'])->assertUnprocessable();
+            $mode = $expected['submission_modes'][0];
+            $bad = $language === 'zip' ? 'wrong.xlsx' : 'wrong.zip';
+            $this->postJson($base.'/code-submissions', ['request_id'=>(string)Str::uuid(), 'mode'=>$mode,
+                'editor_files'=>[['path'=>$bad, 'content'=>'not allowed']]])->assertUnprocessable();
+            $this->postJson($base.'/code-submissions', ['request_id'=>(string)Str::uuid(), 'mode'=>$mode,
+                'editor_files'=>[['path'=>'first.'.$expected['allowed_extensions'][0], 'content'=>'one'],
+                    ['path'=>'second.'.$expected['allowed_extensions'][0], 'content'=>'two']]])->assertUnprocessable();
+        } else {
+            $this->postJson($base.'/code-submissions', ['request_id'=>(string)Str::uuid(), 'code'=>'print(5)'])->assertUnprocessable();
+        }
+        $this->assertSame(1, CodeSubmission::count()); // Historical source was preserved; rejected modes add nothing.
+    }
+
+    public function test_import_does_not_guess_a_missing_original_task_format(): void
+    {
+        $root = $this->legacyExport();
+        $row = json_decode(trim(file_get_contents($root.'/tasks.jsonl')), true);
+        $row['lang'] = null;
+        file_put_contents($root.'/tasks.jsonl', json_encode($row)."\n");
+        $this->rewriteLegacy($root);
+        $import = app(\App\Services\CodeChecking\LegacyImport::class);
+        $summary = $import->run($root, ['tasks'=>['12'=>12]], true, 4);
+        $this->assertSame(1, $summary['needs_conversion']);
+        $config = CodeTaskChecker::findOrFail(12)->config;
+        $this->assertTrue($config['requires_conversion']);
+        $this->assertSame([], $config['submission_modes']);
+        $this->login()->postJson('/insider/courses/7/tasks/12/code-submissions',
+            ['request_id'=>(string)Str::uuid(), 'code'=>'print(5)'])->assertConflict();
+    }
+
     public function test_legacy_environment_requires_conversion_before_native_recheck(): void
     {
         $root = $this->legacyExport('tests');
@@ -559,6 +645,7 @@ class CodeCheckingTest extends TestCase
         $task=\App\Task::findOrFail(12);$config=CodeTaskChecker::findOrFail(12)->config;
         $this->assertSame(15,(int)$task->max_mark);$this->assertSame('Public task. Output one integer.',$task->text);
         $this->assertSame('tests',$config['check_type']);$this->assertFalse($config['requires_conversion']);
+        $this->assertSame(['code'],$config['submission_modes']);$this->assertSame(1,$config['max_files']);$this->assertSame(['py'],$config['allowed_extensions']);
         $this->assertSame("2 3\n",app(Artifacts::class)->get($config['test_config']['tests'][0]['input']['blob_id']));
         $this->assertSame(10,CodeSubmission::firstOrFail()->currentRun->snapshot['points']);
         $this->assertSame(1,$import->run($root,$map,true,4,'UTC',false,null,$plan)['already_imported']);
@@ -646,9 +733,11 @@ class CodeCheckingTest extends TestCase
         $this->assertSame('geekexecutor', $claims->aud);
         $this->assertSame('execution-subscribe', $claims->purpose);
         $this->assertSame($result['execution_id'], $claims->execution_id);
+        $this->assertSame('tests',$result['check_type']);
         $this->assertStringNotContainsString('PRIVATE RUBRIC', json_encode($result));
         $this->login(3)->getJson('/insider/code-submissions/'.$result['id'])->assertForbidden();
-        $this->login(1)->getJson('/insider/code-submissions/'.$result['id'])->assertOk();
+        $this->login(1)->putJson('/insider/courses/7/tasks/12/checker/private',array_replace($this->configBody(),['check_type'=>'gpt']))->assertOk();
+        $this->getJson('/insider/code-submissions/'.$result['id'].'?test_data=metadata')->assertOk()->assertJsonPath('check_type','tests');
         $this->login()->get($result['files'][0]['download_url'])->assertOk()->assertStreamedContent("  print(2+3)\n");
     }
 
@@ -871,6 +960,162 @@ class CodeCheckingTest extends TestCase
         $this->assertNull(CodeExecutionRun::find($id)->finished_at);
         $this->mock(Grading::class)->shouldReceive('apply')->once();
         $this->service('POST', '/api/executor/executions/'.$id.'/result', $result)->assertOk();
+    }
+
+    public function test_author_retries_a_technical_failure_for_free_with_immutable_source_and_configuration(): void
+    {
+        $created = $this->createSubmission();
+        $record = CodeSubmission::findOrFail($created['id']);
+        $before = $record->only(['files', 'answer_text', 'source_metadata', 'payload_hash', 'solution_id']);
+        $snapshot = $record->currentRun->snapshot;
+        $coins = DB::table('coin_transactions')->count();
+        $this->mock(Grading::class)->shouldNotReceive('apply');
+        $result = ['execution_id' => $created['execution_id'], 'state' => 'execution error', 'points' => 0,
+            'comment' => 'PRIVATE TEST INPUT traceback https://secret.test?token=secret'];
+        $this->service('POST', '/api/executor/executions/'.$created['execution_id'].'/result', $result)->assertOk();
+        $base = '/insider/code-submissions/'.$created['id'];
+        $this->login()->getJson($base.'?test_data=metadata')->assertOk()->assertJsonPath('comment', '')
+            ->assertJsonPath('execution_error.code', 'execution_error')->assertJsonPath('execution_error.can_retry', true)
+            ->assertJsonPath('execution_error.retry_url', url($base.'/retry'))->assertJsonPath('text_report_available', false)
+            ->assertDontSee('PRIVATE TEST')->assertDontSee('traceback')->assertDontSee('secret.test');
+        $this->getJson($base.'/runs/'.$created['execution_id'].'?test_data=metadata')->assertJsonPath('execution_error.can_retry', true)->assertDontSee('PRIVATE TEST');
+        $this->getJson($base)->assertJsonPath('comment', '')->assertDontSee('PRIVATE TEST')->assertDontSee('secret.test');
+        $this->getJson($base.'/runs/'.$created['execution_id'])->assertJsonPath('comment', '')->assertDontSee('PRIVATE TEST')->assertDontSee('secret.test');
+        $this->login(3)->postJson($base.'/retry')->assertForbidden();
+        $this->login()->postJson($base.'/retry', ['latest_configuration' => true])->assertUnprocessable();
+        $this->postJson($base.'/retry', ['code' => 'new source'])->assertUnprocessable();
+        // Changed task settings must not affect a technical retry.
+        CodeTaskChecker::whereKey(12)->update(['config' => ['language' => 'cpp', 'check_type' => 'gpt']]);
+        Queue::fake();
+        $next = $this->postJson($base.'/retry')->assertStatus(202)->json();
+        $this->assertNotSame($created['execution_id'], $next['execution_id']);
+        $this->assertSame(array_replace($snapshot, ['legacy'=>false]), CodeExecutionRun::findOrFail($next['execution_id'])->snapshot);
+        $this->assertSame($before, $record->fresh()->only(array_keys($before)));
+        $this->assertSame('error', CodeExecutionRun::findOrFail($created['execution_id'])->state);
+        $this->assertSame($snapshot, CodeExecutionRun::findOrFail($created['execution_id'])->snapshot);
+        $this->assertNotNull(CodeExecutionRun::findOrFail($created['execution_id'])->result_hash);
+        $this->assertSame(1, CodeSubmission::count());
+        $this->assertSame(2, CodeExecutionRun::count());
+        $this->assertSame($coins, DB::table('coin_transactions')->count());
+        Queue::assertPushed(\App\Jobs\DispatchCodeExecution::class, 1);
+        $this->postJson($base.'/retry')->assertConflict();
+        $this->getJson($base.'/runs/'.$created['execution_id'].'?test_data=metadata')->assertJsonPath('execution_error.can_retry', false);
+    }
+
+    public function test_technical_retry_requires_a_current_error_with_ready_unblocked_source(): void
+    {
+        $created = $this->createSubmission();
+        $url = '/insider/code-submissions/'.$created['id'].'/retry';
+        $run = CodeExecutionRun::findOrFail($created['execution_id']);
+        $this->postJson($url)->assertConflict();
+        $run->update(['state' => 'completed', 'finished_at' => now()]);
+        $this->postJson($url)->assertConflict();
+        $run->update(['state' => 'error']);
+        DB::table('blocked_tasks')->insert(['task_id'=>12, 'course_id'=>7, 'user_id'=>2]);
+        $this->postJson($url)->assertConflict();
+        DB::table('blocked_tasks')->delete();
+        CodeSubmission::findOrFail($created['id'])->update(['preparation_state'=>'failed']);
+        $this->postJson($url)->assertConflict();
+        CodeSubmission::findOrFail($created['id'])->update(['preparation_state'=>'ready']);
+        $this->login(1)->postJson($url)->assertStatus(202);
+    }
+
+    public function test_stronger_ai_recheck_uses_only_the_admin_model_and_preserves_the_original_run_and_source(): void
+    {
+        config(['ai.shared_models' => true, 'ai.defaults.recheck' => ['model' => 'strong-model', 'timeout' => 150]]);
+        $base = '/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private', ['language'=>'python', 'check_type'=>'gpt', 'gpt_model'=>'original-model', 'gpt_rate_limit'=>1,
+            'private_instructions'=>'PRIVATE FROZEN RUBRIC'])->assertOk();
+        $created = $this->login()->postJson($base.'/code-submissions', ['request_id'=>(string)Str::uuid(), 'code'=>'print(5)'])->assertCreated()->json();
+        $record = CodeSubmission::findOrFail($created['id']);
+        $before = $record->only(['files', 'answer_text', 'source_metadata', 'payload_hash']);
+        $old = $record->currentRun;
+        $old->update(['state'=>'completed', 'points'=>6, 'finished_at'=>now(), 'comment'=>'Original feedback']);
+        $snapshot = $old->snapshot;
+        $url = '/insider/code-submissions/'.$record->id;
+        $this->getJson($url.'?test_data=metadata')->assertJsonPath('ai_recheck', null)->assertDontSee('strong-model');
+        $this->postJson($url.'/recheck', ['stronger_ai'=>true])->assertForbidden();
+        $this->login(1)->getJson($url.'?test_data=metadata')->assertJsonPath('ai_recheck.available', true)->assertJsonPath('ai_recheck.model', 'strong-model');
+        $this->postJson($url.'/recheck', ['stronger_ai'=>true, 'gpt_model'=>'injected-model'])->assertUnprocessable();
+        $this->postJson($url.'/recheck', ['stronger_ai'=>true, 'latest_configuration'=>true])->assertUnprocessable();
+        // Current instructions and mode are irrelevant to this frozen recheck.
+        CodeTaskChecker::whereKey(12)->update(['config'=>['check_type'=>'tests', 'language'=>'cpp']]);
+        Queue::fake();
+        $next = $this->postJson($url.'/recheck', ['stronger_ai'=>true])->assertStatus(202)->json();
+        $run = CodeExecutionRun::findOrFail($next['execution_id']);
+        $expected = array_replace($snapshot, ['legacy'=>false, 'gpt_model'=>'strong-model', 'gpt_timeout'=>150,
+            'ai_review'=>['source_run_id'=>$old->id, 'requested_by'=>1, 'previous_model'=>'original-model', 'model'=>'strong-model', 'timeout'=>150]]);
+        $this->assertSame($expected, $run->snapshot);
+        $this->assertSame($snapshot, $old->fresh()->snapshot);
+        $this->assertSame('Original feedback', $old->fresh()->comment);
+        $this->assertSame($before, $record->fresh()->only(array_keys($before)));
+        $input = app(\App\Services\CodeChecking\Submissions::class)->input($run);
+        $this->assertSame('strong-model', $input['task']['gpt_model']);
+        $this->assertSame(150, $input['task']['gpt_timeout']);
+        $this->assertSame('PRIVATE FROZEN RUBRIC', $input['task']['private_instructions']);
+        Queue::assertPushed(\App\Jobs\DispatchCodeExecution::class, 1);
+        $this->assertSame(1, CodeSubmission::count());
+    }
+
+    public function test_stronger_ai_never_converts_a_frozen_test_check_and_requires_a_configured_model(): void
+    {
+        config(['ai.defaults.recheck'=>['model'=>'strong-model', 'timeout'=>180]]);
+        $created = $this->createSubmission();
+        $run = CodeExecutionRun::findOrFail($created['execution_id']);
+        $run->update(['state'=>'completed', 'finished_at'=>now()]);
+        $url = '/insider/code-submissions/'.$created['id'];
+        $this->login(1)->putJson('/insider/courses/7/tasks/12/checker/private', ['language'=>'python', 'check_type'=>'gpt'])->assertOk();
+        $this->getJson($url.'?test_data=metadata')->assertJsonPath('check_type','tests')->assertJsonPath('ai_recheck',null);
+        $this->postJson($url.'/recheck', ['stronger_ai'=>true])->assertConflict();
+        $this->assertSame(1, CodeExecutionRun::count());
+        $run->update(['snapshot'=>array_replace($run->snapshot,['check_type'=>'gpt'])]);
+        config(['ai.defaults.recheck.model'=>null]);
+        $this->postJson($url.'/recheck', ['stronger_ai'=>true])->assertConflict();
+        $this->assertSame(1, CodeExecutionRun::count());
+    }
+
+    public function test_new_retry_and_stronger_ai_actions_cannot_overwrite_an_ambiguous_historical_grade(): void
+    {
+        config(['ai.defaults.recheck'=>['model'=>'strong-model', 'timeout'=>180]]);
+        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY,user_id INTEGER,course_id INTEGER,task_id INTEGER,text TEXT,mark INTEGER,raw_mark INTEGER,comment TEXT,submitted TEXT,checked TEXT)');
+        $created = $this->createSubmission();
+        $record = CodeSubmission::findOrFail($created['id']);
+        $record->update(['legacy_id'=>'MUTABLE_SOURCE','source_metadata'=>['legacy_id'=>'MUTABLE_SOURCE'],'solution_id'=>501]);
+        DB::table('solutions')->insert(['id'=>501,'user_id'=>2,'course_id'=>7,'task_id'=>12,'text'=>url('/insider/code-submissions/'.$record->id),
+            'mark'=>5,'raw_mark'=>5,'comment'=>'Historical feedback','submitted'=>'2026-11-10 12:00:00','checked'=>'2026-11-10 12:01:00']);
+        $before = DB::table('solutions')->where('id',501)->first();
+        $run = $record->currentRun;
+        $snapshot = array_replace($run->snapshot,['check_type'=>'gpt']);
+        $run->update(['state'=>'error','points'=>0,'finished_at'=>now(),'snapshot'=>$snapshot]);
+        $url = '/insider/code-submissions/'.$record->id;
+        $this->getJson($url.'?test_data=metadata')->assertJsonPath('execution_error.can_retry',false)->assertJsonPath('execution_error.retry_url',null);
+        $this->postJson($url.'/retry')->assertConflict();
+        $this->login(1)->getJson($url.'?test_data=metadata')->assertJsonPath('ai_recheck.available',false)
+            ->assertJsonPath('ai_recheck.reason','Версия кода исторической сдачи не подтверждена. Выберите конкретную работу для ручной оценки.');
+        $this->postJson($url.'/retry')->assertConflict();
+        $this->postJson($url.'/recheck',['stronger_ai'=>true])->assertConflict();
+        $this->assertSame($run->id,$record->fresh()->current_run_id);
+        $this->assertSame($snapshot,$run->fresh()->snapshot);
+        $this->assertEquals($before,DB::table('solutions')->where('id',501)->first());
+        $this->assertSame(1,CodeExecutionRun::count());
+        // The existing explicit teacher recheck contract is unchanged.
+        $this->postJson($url.'/recheck')->assertStatus(202);
+        $this->assertEquals($before,DB::table('solutions')->where('id',501)->first());
+    }
+
+    public function test_failed_ai_retry_does_not_consume_another_attempt_or_coins(): void
+    {
+        $base = '/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private', ['language'=>'python', 'check_type'=>'gpt', 'gpt_rate_limit'=>1])->assertOk();
+        $created = $this->login()->postJson($base.'/code-submissions', ['request_id'=>(string)Str::uuid(), 'code'=>'print(5)'])->assertCreated()->json();
+        CodeExecutionRun::findOrFail($created['execution_id'])->update(['state'=>'error','finished_at'=>now()]);
+        $this->postJson($base.'/code-submissions', ['request_id'=>(string)Str::uuid(), 'code'=>'print(6)'])->assertStatus(429);
+        $coins = DB::table('coin_transactions')->count();
+        $credits = DB::table('code_attempt_credits')->count();
+        $this->postJson('/insider/code-submissions/'.$created['id'].'/retry')->assertStatus(202);
+        $this->assertSame($coins, DB::table('coin_transactions')->count());
+        $this->assertSame($credits, DB::table('code_attempt_credits')->count());
+        $this->assertSame(1, CodeSubmission::count());
     }
 
     public function test_execution_error_never_applies_a_zero_grade_and_can_be_retried(): void

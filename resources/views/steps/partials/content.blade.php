@@ -59,7 +59,7 @@
                             @endif
                         </section>
                     @endif
-                    <div class="gc-section step-task-card step-task-card--{{$taskType}} @if ($task->is_star) is-optional @endif @if ($hasUserSolution) is-submitted @endif overflow-hidden">
+                    <div class="gc-section step-task-card step-task-card--{{$taskType}} @if ($task->is_star) is-optional @endif @if ($hasUserSolution) is-submitted @endif">
                         @include('steps.partials.task_header')
                         <div class="markdown step-task-card__body">
                             {!! parsedown_math($task->text) !!}

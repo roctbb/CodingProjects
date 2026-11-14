@@ -246,12 +246,11 @@
                                         <a class="btn btn-primary btn-sm course-continue" href="{{ url('/insider/courses/'.$course->id.'/steps/'.($nextLearningStep?->id ?? $lesson->steps->first()->id)) }}">{{ $isManager ? ($courseEnded ? 'Открыть материалы' : 'Открыть урок') : $focusView['action'] }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
                                     @endif
                                     <div class="course-path-meta">
-                                        @unless($isCurrent)<span class="course-path-step-count">Ступеней: {{ $lesson->steps->count() }}</span>@endunless
                                         @if ($lessonDeadline && (!$isLearner || $lessonDeadlines->isEmpty()))
                                             @if($lessonDeadline instanceof \App\Support\DeadlineRule && !empty($lessonDeadline->series))
-                                                <x-gc-deadline-chain :rule="$lessonDeadline" />
+                                                <span class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-chain :rule="$lessonDeadline" :show-time="false" /></span>
                                             @else
-                                                <small class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-label :expiration="$lessonDeadline->expiration" :rule="$lessonDeadline" :personal="$isLearner" /></small>
+                                                <small class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-label :expiration="$lessonDeadline->expiration" :rule="$lessonDeadline" :personal="$isLearner" :show-time="false" /></small>
                                             @endif
                                         @endif
 

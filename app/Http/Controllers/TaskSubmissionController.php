@@ -156,8 +156,11 @@ class TaskSubmissionController extends Controller
             :(isset($item->legacy_report['suite_diagnostics'])?null:app(\App\Services\CodeChecking\HistoricalReport::class)->view($item->legacy_report,$access->teacher($request->user(),$record->course_id)));
         if($report){$report['run_id']=$run;if(!$fields)$report=app(\App\Services\CodeChecking\Reports::class)->metadata($report);}
         $value = ['id' => $item->id, 'state' => $item->state, 'points' => $item->points,
-            'comment' => !$fields&&($report || ($item->snapshot['check_type']??null)==='tests')?'':$item->comment, 'progress' => $item->progress,
-            'text_report_available'=>!$fields && !$report && ($item->snapshot['check_type']??null)==='tests' && (bool)($item->comment || isset($item->legacy_report['suite_diagnostics'])),
+            'check_type' => $item->snapshot['check_type'] ?? null,
+            'execution_error' => app(\App\Services\CodeChecking\Submissions::class)->executionError($record, $item),
+            'ai_recheck' => app(\App\Services\CodeChecking\Submissions::class)->aiRecheck($record, $item, $request->user()),
+            'comment' => $item->state === 'error' || (!$fields&&($report || ($item->snapshot['check_type']??null)==='tests'))?'':$item->comment, 'progress' => $item->progress,
+            'text_report_available'=>$item->state !== 'error' && !$fields && !$report && ($item->snapshot['check_type']??null)==='tests' && (bool)($item->comment || isset($item->legacy_report['suite_diagnostics'])),
             'text_report_url'=>url('/insider/code-submissions/'.$record->id.'/runs/'.$run).'?test_data=full',
             'checker_diagnostics'=>$fields && $access->teacher($request->user(),$record->course_id)?($item->legacy_report['suite_diagnostics']??null):null];
         $value['report']=$report;

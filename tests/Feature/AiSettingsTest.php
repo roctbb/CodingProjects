@@ -142,6 +142,27 @@ class AiSettingsTest extends TestCase
         $this->get(self::URL)->assertOk()->assertDontSee('new-api-secret')->assertDontSee('proxy-secret');
     }
 
+    public function test_recheck_model_is_admin_configured_validated_and_independent_of_shared_models(): void
+    {
+        $this->login();
+        $payload = $this->payload();
+        $payload['settings']['shared_models'] = true;
+        $payload['settings']['defaults']['recheck'] = ['model'=>'strong-model', 'timeout'=>'150'];
+        $this->put(self::URL, $payload)->assertSessionHasNoErrors();
+        $this->assertSame(['model'=>'strong-model', 'timeout'=>150], app(AiSettings::class)->recheck());
+        $this->get(self::URL)->assertOk()->assertSee('Модель для повторной ИИ-проверки')->assertSee('strong-model');
+        foreach (['bad model', 'https://model.example?token=secret'] as $invalid) {
+            $payload['settings']['defaults']['recheck']['model'] = $invalid;
+            $this->put(self::URL, $payload)->assertSessionHasErrors('settings.defaults.recheck.model');
+            $this->assertSame('strong-model', app(AiSettings::class)->recheck()['model']);
+        }
+        $payload['settings']['defaults']['recheck'] = ['model'=>'strong-model', 'timeout'=>181];
+        $this->put(self::URL, $payload)->assertSessionHasErrors('settings.defaults.recheck.timeout');
+        $payload['settings']['defaults']['recheck'] = ['model'=>null, 'timeout'=>180];
+        $this->put(self::URL, $payload)->assertSessionHasNoErrors();
+        $this->assertNull(app(AiSettings::class)->recheck());
+    }
+
     public function testKeepClearAndInheritHaveDistinctMeanings(): void
     {
         $this->login();

@@ -75,6 +75,7 @@ class Integrity
 
     public function check(CodeSubmission $submission): void
     {
+        $analysisRunId = $submission->current_run_id;
         $settings = $submission->currentRun?->snapshot ?? [];
         $source = $this->source($submission);
         $fingerprints = $source && !($settings['bypass_similarity_check'] ?? false) ? $this->fingerprints($source) : [];
@@ -141,6 +142,11 @@ class Integrity
                 'geekpaste_similarity_matches_count' => $payload['similarity']['matches_count'],
                 'geekpaste_integrity_synced_at' => now(),
             ]);
+        }
+        // Rechecking cannot change this submission's source. Keep the analysis event
+        // attached to its original run even when grading advanced while AI analysis ran.
+        if ($run = \App\CodeExecutionRun::where('submission_id', $submission->id)->find($analysisRunId)) {
+            app(ExecutionAlerts::class)->plagiarism($run);
         }
     }
 

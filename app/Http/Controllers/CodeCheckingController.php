@@ -136,8 +136,17 @@ class CodeCheckingController extends Controller
 
     public function recheck(Request $request, string $submission, Submissions $submissions)
     {
-        $request->validate(['latest_configuration' => 'sometimes|boolean']);
-        $run = $submissions->recheck(CodeSubmission::findOrFail($submission), $request->user(), $request->boolean('latest_configuration'));
+        $request->validate(['latest_configuration' => 'sometimes|boolean', 'stronger_ai' => 'sometimes|boolean',
+            'model' => 'prohibited', 'gpt_model' => 'prohibited', 'gpt_timeout' => 'prohibited']);
+        $run = $submissions->recheck(CodeSubmission::findOrFail($submission), $request->user(), $request->boolean('latest_configuration'), $request->boolean('stronger_ai'));
+        return $this->json(['execution_id' => $run->id, 'state' => $run->state], 202);
+    }
+
+    public function retry(Request $request, string $submission, Submissions $submissions)
+    {
+        $request->validate(['latest_configuration' => 'prohibited', 'stronger_ai' => 'prohibited', 'model' => 'prohibited',
+            'gpt_model' => 'prohibited', 'gpt_timeout' => 'prohibited', 'code' => 'prohibited', 'files' => 'prohibited', 'text' => 'prohibited']);
+        $run = $submissions->retry(CodeSubmission::findOrFail($submission), $request->user());
         return $this->json(['execution_id' => $run->id, 'state' => $run->state], 202);
     }
 

@@ -1,6 +1,7 @@
-import {node, button, field, input, textarea, select, actions, modes, phases, verdicts, request, download} from './ui';
+import {node, button, field, input, textarea, select, actions, phases, verdicts, request, download} from './ui';
 import {subscribe} from './progress';
 import {resultHeader,submittedWork,resultActions} from './result-view';
+import {submissionGroups,submissionMode,uploadDescription,executionPhase,draftFilePayload} from './composer-options';
 
 export async function workspace(root) {
     const base = root.dataset.endpoint;
@@ -9,7 +10,9 @@ export async function workspace(root) {
     let config, draft, files = [], uploads = [], dirty = false, editing, stop = () => {}, page = 1, current, requestId, generation = 0;
     let saving = false, compareWith = null, settingsPromise, historyGeneration = 0, ownMode = false;
     let selectedUser = root.dataset.user ? {id:root.dataset.user,name:''} : null;
-    let attemptItems = [], activeAttempt = null, attemptList;
+    let attemptItems = [], activeAttempt = null, attemptList, composerVisible=true;
+    const submittedOrder=[];
+    const rewardedRuns=new Set();
     const toolbar = node('div',{class:'gc-execution-toolbar'});
     const notice = node('div', {role:'status', 'aria-live':'polite'});
     const attachmentsArea = node('div');
@@ -17,7 +20,7 @@ export async function workspace(root) {
     const results = node('div');
     const history = node('div');
     const browser = node('div',{class:'gc-execution-browser'},history,results);
-    root.replaceChildren(toolbar,notice,attachmentsArea,content,browser);
+    root.replaceChildren(toolbar,notice,browser,attachmentsArea,content);
     const error = e => {
         notice.className = 'alert alert-danger'; notice.textContent = e.message;
         if (e.status === 409 && dirty && draft) notice.append(actions(button('Скачать мой черновик',() => {
@@ -41,8 +44,9 @@ export async function workspace(root) {
     }
     function renderToolbar() {
         if (!teacher) return;
-        const title = ownMode ? 'Моя сдача' : selectedUser?.name || 'Сдачи ученика';
-        const heading = node('div',{},node('h3',{class:'h6 mb-1',tabIndex:-1},title),node('p',{class:'text-muted small mb-0'},ownMode ? 'Применяются обычные правила проверки и сроков. Опыт и награды начисляются как обычно.' : 'История сдач и результаты проверки.'));
+        if(ownMode){toolbar.replaceChildren();return;}
+        const title = selectedUser?.name || 'Сдачи ученика';
+        const heading = node('div',{},node('h3',{class:'h6 mb-0',tabIndex:-1},title));
         toolbar.replaceChildren(heading);
         if (inlineReview) toolbar.prepend(button('К списку учеников',() => {
             root.dispatchEvent(new CustomEvent('gc:execution-close'));
@@ -54,16 +58,13 @@ export async function workspace(root) {
         attachmentsArea.dataset.loaded = 'true';
         if (value.items.length) attachmentsArea.replaceChildren(node('div',{class:'gc-execution-attachments'},node('h3',{class:'h6'},'Материалы задания'),value.items.map(file => node('div',{},download(file.download_url,file.path),file.read_only ? ' · только чтение' : ''))));
     }
-    async function selectStudent(student,{autoOpen=true,attempt=null}={}) {
+    async function selectStudent(student,{attempt=null}={}) {
         generation++;historyGeneration++;stop();current=null;activeAttempt=null;compareWith=null;
         selectedUser=student;ownMode=false;attemptItems=[];attemptList=null;
         content.hidden=true;attachmentsArea.hidden=true;results.replaceChildren();notice.replaceChildren();renderToolbar();
         try {
-            const records=await loadHistory();
-            if(selectedUser===student && !ownMode){
-                if(attempt)await openAttemptById(attempt);
-                else if(autoOpen && records[0])await openAttempt(records[0]);
-            }
+            await loadHistory();
+            if(selectedUser===student && !ownMode && attempt)await openAttemptById(attempt);
         } catch(e) {history.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить загрузку сдач',safe(() => selectStudent(student))));}
     }
     async function startOwnSubmission({attempt=null}={}) {
@@ -81,7 +82,7 @@ export async function workspace(root) {
                 renderComposer();
                 [,records]=await Promise.all([attachments(),loadHistory()]);
             }
-            if(ownMode){if(attempt)await openAttemptById(attempt);else if(records[0])await openAttempt(records[0]);}
+            if(ownMode && attempt)await openAttemptById(attempt);
         } catch(e) {content.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить',safe(startOwnSubmission)));}
     }
 
@@ -90,14 +91,17 @@ export async function workspace(root) {
         if (value.revision === 0 && config.submission_modes.includes('files')) draft.mode = 'files';
         files = value.files.map((file,index) => ({...file, index})).filter(file => !file.is_answer);
         uploads = []; dirty = false;
+        if(!config.allowed_languages.includes(draft.language)){draft.language=config.allowed_languages[0];dirty=true;}
+        if(!config.submission_modes.includes(draft.mode)){draft.mode=config.submission_modes[0];dirty=true;}
     }
     function payload() {
-        const body = {revision:draft.revision, mode:draft.mode, language:draft.language, text:draft.text,
-            draft_revision:draft.revision, keep_files:files.filter(f => f.content === undefined).map(f => f.index),
-            editor_files:files.filter(f => f.content !== undefined).map(f => ({path:f.path, content:f.content})),
+        const kind=composerKind(),sourceFiles=kind==='repository'?[]:files;
+        const selectedUploads=['files','text'].includes(kind)?uploads:[];
+        const mode=submissionMode(config,kind,sourceFiles.length+selectedUploads.length);
+        const body = {revision:draft.revision, mode, language:draft.language, text:draft.text,
+            draft_revision:draft.revision, ...draftFilePayload(sourceFiles,draft.revision),
             repository_url:draft.repository?.url || '', repository_ref:draft.repository?.ref || null};
-        if (draft.mode === 'code' && uploads.length) {body.keep_files = []; body.editor_files = [];}
-        if (!uploads.length) return body;
+        if (!selectedUploads.length) return body;
         const data = new FormData();
         for (const [key,value] of Object.entries(body)) {
             if (Array.isArray(value)) value.forEach((row,index) => {
@@ -106,8 +110,19 @@ export async function workspace(root) {
             });
             else if (value !== null) data.append(key, value);
         }
-        uploads.forEach((file,index) => {data.append('files[]',file); data.append(`file_paths[${index}]`,file.name);});
+        selectedUploads.forEach((file,index) => {data.append('files[]',file); data.append(`file_paths[${index}]`,file.name);});
         return data;
+    }
+    function composerKind(){
+        const groups=submissionGroups(config);
+        if(config.submission_modes.includes('text') && !groups.includes('code') && !groups.includes('repository'))return 'text';
+        const selected=['code','project'].includes(draft.mode)?'code':draft.mode;
+        return groups.includes(selected)?selected:groups[0] || 'text';
+    }
+    function showComposer(){
+        generation++;stop();current=null;markSelectedAttempt(null);
+        composerVisible=true;requestId=null;notice.replaceChildren();notice.className='';content.hidden=false;renderComposer();
+        content.scrollIntoView({block:'nearest',behavior:'smooth'});
     }
     async function save() {
         if (saving) return;
@@ -125,8 +140,8 @@ export async function workspace(root) {
         content.setAttribute('inert','');
         try {
             const record = await request(base+'/code-submissions','POST',{request_id:requestId, use_draft:true, draft_revision:draft.revision});
-            notice.className = 'text-muted small'; notice.textContent = 'Решение отправлено';
-            if(generation===submittedGeneration){await loadHistory();if(generation===submittedGeneration)await show(record.id);}
+            notice.replaceChildren();notice.className='';
+            if(generation===submittedGeneration){composerVisible=false;content.hidden=true;if(!submittedOrder.includes(record.id))submittedOrder.push(record.id);await loadHistory();if(generation===submittedGeneration)await show(record.id);}
         } catch (e) {
             if (e.status === 429 && teacher) {
                 notice.className='alert alert-warning';notice.textContent='Лимит проверок исчерпан. Повторите сдачу позже или уточните настройки лимита проверки.';
@@ -142,75 +157,85 @@ export async function workspace(root) {
     }
     function renderComposer() {
         editing?.destroy(); editing = null;
-        const available = Object.fromEntries(Object.entries(modes).filter(([key]) => config.submission_modes.includes(key)));
-        const controls = actions(field('Способ сдачи',select(draft.mode,available,mode => {
-            draft.mode = mode;
-            if (mode === 'code') {files = files.filter(f => f.content !== undefined).slice(0,1); uploads = []; if (!files.length) files = [{path:config.entrypoint || (draft.language === 'cpp' ? 'main.cpp' : 'main.py'),content:''}];}
-            markDirty(); renderComposer();
-        })), field('Язык',select(draft.language,Object.fromEntries(config.allowed_languages.map(l => [l,l === 'text' ? 'Текст / файлы' : l])),value => {draft.language = value; markDirty(); renderComposer();})));
-        const body = node('div', {class:'gc-execution-composer'}, node('h3',{class:'h6'},'Сдать решение'), node('p',{class:'gc-help-text'},'Загрузите готовую работу или вставьте код из своего редактора.'), controls);
-        if (draft.mode === 'repository') {
-            draft.repository ||= {};
-            body.append(field('Публичный репозиторий GitHub',input(draft.repository.url, value => {draft.repository.url = value; markDirty();},{type:'url',placeholder:'https://github.com/username/project'})),
-                field('Ветка, тег или коммит',input(draft.repository.ref,value => {draft.repository.ref = value; markDirty();}), 'Можно оставить пустым. Сохранится конкретный коммит.'));
-        } else {
-            body.append(field(draft.mode === 'text' ? 'Ответ' : 'Пояснение к решению',textarea(draft.text,value => {draft.text = value; markDirty();},{rows:draft.mode === 'text' ? 8 : 3})));
-            if (['code','project'].includes(draft.mode)) {
-                const editable = files.filter(f => f.content !== undefined);
-                if (!editable.length) files.push({path:config.entrypoint || (draft.language === 'cpp' ? 'main.cpp' : 'main.py'),content:''});
-                const tabs = node('div',{class:'gc-execution-files'});
-                for (const file of files.filter(f => f.content !== undefined)) {
-                    const host = node('div',{class:'gc-code-editor'});
-                    const section = node('details',{open:true}, node('summary',{},file.path || 'Новый файл'),
-                        actions(field('Имя файла',input(file.path,value => {file.path = value; markDirty();},{placeholder:'lib/helper.py'})),
-                            draft.mode === 'project' ? button('Удалить файл',() => {files = files.filter(f => f !== file); markDirty(); renderComposer();}) : null), host);
-                    tabs.append(section);
-                    import('./editor').then(({editor}) => {
-                        if (!host.isConnected) return;
-                        const view = editor(host,file.content,draft.language,value => {file.content = value; markDirty();});
-                        const previous = editing;
-                        editing = {destroy:() => {previous?.destroy(); view.destroy();}};
-                    }).catch(error);
-                }
-                body.append(tabs);
-                if (draft.mode === 'project') body.append(button('Добавить файл кода',() => {files.push({path:`file${files.length+1}.${draft.language === 'cpp' ? 'cpp' : 'py'}`,content:''}); markDirty(); renderComposer();}));
+        const kind=composerKind(),groups=submissionGroups(config),allowed=config.submission_modes;
+        content.hidden=!composerVisible;
+        const body=node('section',{class:'gc-execution-composer gc-attempt-card','aria-label':'Новое решение'},
+            node('div',{class:'gc-composer-heading'},node('h3',{class:'h6 mb-0'},'Новое решение')));
+        const form=node('div',{class:'gc-composer-body'});body.append(form);
+        if(kind!=='text' && groups.length>1){
+            const labels={files:['fa-file-arrow-up','Файлы'],code:['fa-code','Код'],repository:['fa-code-branch','Репозиторий']};
+            const choices=node('div',{class:'gc-segmented-tabs gc-submission-modes',role:'group','aria-label':'Способ сдачи'});
+            for(const group of groups){
+                const choice=button('',()=>{draft.mode=group==='code'?(allowed.includes('code')?'code':'project'):group;markDirty();renderComposer();});
+                choice.className='nav-link'+(group===kind?' active':'');choice.setAttribute('aria-pressed',String(group===kind));
+                choice.append(node('i',{class:'fas '+labels[group][0],'aria-hidden':'true'}),' '+labels[group][1]);choices.append(choice);
             }
-            {
-                const upload = node('input',{type:'file',class:'form-control',multiple:draft.mode !== 'code', accept:config.allowed_extensions?.map(e => '.'+e).join(',') || '',
-                    onchange:event => {
-                        const selected = [...event.target.files];
-                        if (selected.some(file => file.size > config.max_file_bytes)) {error(new Error('Один из файлов превышает допустимый размер.')); return;}
-                        const names = new Set(selected.map(file => file.name));
-                        files = files.filter(file => !names.has(file.path));
-                        uploads = uploads.filter(file => !names.has(file.name));
-                        if (draft.mode === 'code') uploads = selected.slice(0,1); else uploads.push(...selected);
-                        markDirty(); renderComposer();
-                    }});
-                body.append(field(draft.mode === 'code' ? 'Или загрузить исходник вместо редактора' : 'Добавить файлы (ZIP, Excel, изображения и другие разрешённые форматы)',upload,
-                    `До ${config.max_files} файлов, суммарно ${Math.round(config.max_total_bytes/1048576)} МБ.`));
-                body.append(node('ul',{}, (['files','text'].includes(draft.mode) ? files : files.filter(f => f.content === undefined)).map(file => node('li',{}, file.download_url ? download(file.download_url,file.path) : file.path, ' ', button('Убрать',() => {files = files.filter(f => f !== file); markDirty(); renderComposer();}))),
-                    uploads.map(file => node('li',{},file.name,' ',button('Убрать',() => {uploads = uploads.filter(f => f !== file); markDirty(); renderComposer();})))));
+            form.append(choices);
+        }
+        if(kind==='code' || kind==='repository'){
+            const languageNames={cpp:'C++',python:'Python',py:'Python',javascript:'JavaScript',text:'Текст'};
+            const languages=config.allowed_languages.filter(value=>value!=='text');
+            if(languages.length>1)form.append(field('Язык',select(draft.language,Object.fromEntries(languages.map(value=>[value,languageNames[value] || value])),value=>{draft.language=value;markDirty();renderComposer();})));
+            else if(languages.length)form.append(node('p',{class:'gc-composer-language text-muted small'},node('i',{class:'fas fa-code','aria-hidden':'true'}),' '+(languageNames[languages[0]] || languages[0])));
+        }
+        if(kind==='repository'){
+            draft.repository ||= {};
+            form.append(field('Ссылка на репозиторий',input(draft.repository.url,value=>{draft.repository.url=value;markDirty();},{type:'url',placeholder:'https://github.com/username/project'})),
+                field('Ветка, тег или коммит',input(draft.repository.ref,value=>{draft.repository.ref=value;markDirty();},{placeholder:'По умолчанию — основная ветка'})));
+        }else if(kind==='code'){
+            if(!files.length)files.push({path:config.entrypoint || (draft.language==='cpp'?'main.cpp':'main.py'),content:''});
+            const editable=files;
+            const editors=node('div',{class:'gc-composer-editors'}),tabs=node('div',{class:'gc-source-tabs',role:'tablist','aria-label':'Файлы кода'});
+            let selected=editable[0];
+            const panes=[];
+            const activate=file=>{selected=file;for(const entry of panes){entry.pane.hidden=entry.file!==file;entry.tab.setAttribute('aria-selected',String(entry.file===file));entry.tab.tabIndex=entry.file===file?0:-1;entry.tab.classList.toggle('is-active',entry.file===file);}};
+            tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key)||event.target.getAttribute('role')!=='tab')return;event.preventDefault();activate(editable[(editable.indexOf(selected)+(event.key==='ArrowRight'?1:editable.length-1))%editable.length]);tabs.querySelector('[aria-selected="true"]')?.focus();});
+            for(const file of editable){
+                const host=node('div',{class:'gc-code-editor'}),pane=node('div',{role:'tabpanel'});
+                const name=input(file.path,value=>{file.path=value;file.changed=true;tab.textContent=value || 'Новый файл';markDirty();},{placeholder:'main.py','aria-label':'Имя файла кода'});
+                const controls=actions(field('Имя файла',name));
+                if(editable.length>1)controls.append(button('Удалить файл',()=>{files=files.filter(value=>value!==file);markDirty();renderComposer();}));
+                if(file.content===undefined){
+                    if(editable.length>1)pane.append(button('Удалить файл',()=>{files=files.filter(value=>value!==file);markDirty();renderComposer();}));
+                    pane.append(node('p',{class:'text-muted small'},'Исходник сохранён и будет отправлен без изменений. Для редактирования большого файла используйте свой редактор.'),file.download_url?download(file.download_url,'Скачать '+file.path):null,
+                        actions(button('Заменить код',()=>{if(!confirm('Заменить сохранённый исходник новым кодом? Сначала скачайте файл, если он нужен.'))return;file.content='';file.changed=true;markDirty();renderComposer();})));
+                }else pane.append(controls,host);
+                const tab=button(file.path || 'Новый файл',()=>activate(file));tab.className='gc-source-tab';tab.setAttribute('role','tab');tab.id=root.id+'-source-tab-'+editable.indexOf(file);pane.id=tab.id+'-panel';tab.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',tab.id);
+                tabs.append(tab);panes.push({file,pane,tab});editors.append(pane);
+                if(file.content!==undefined)import('./editor').then(({editor})=>{if(!host.isConnected)return;const view=editor(host,file.content,draft.language,value=>{file.content=value;file.changed=true;markDirty();});const previous=editing;editing={destroy:()=>{previous?.destroy();view.destroy();}};}).catch(error);
+            }
+            if(allowed.includes('project') && editable.length<config.max_files){const add=button('+ Файл',()=>{files.push({path:`file${editable.length+1}.${draft.language==='cpp'?'cpp':'py'}`,content:''});markDirty();renderComposer();const buttons=content.querySelectorAll('.gc-source-tab');buttons[buttons.length-1]?.click();});add.classList.add('btn-sm');tabs.append(add);}
+            form.append(tabs,editors);activate(selected);
+        }else{
+            if(kind==='text' || kind==='files' && allowed.includes('text'))form.append(field('Ответ',textarea(draft.text,value=>{draft.text=value;markDirty();},{rows:8})));
+            if(allowed.includes('files')){
+                const upload=node('input',{type:'file',class:'form-control',multiple:config.max_files>1,accept:config.allowed_extensions?.map(value=>'.'+value.replace(/^\./,'')).join(',') || '',onchange:event=>{
+                    const selected=[...event.target.files];
+                    if(selected.some(file=>file.size>config.max_file_bytes)){error(new Error('Один из файлов превышает допустимый размер.'));return;}
+                    const names=new Set(selected.map(file=>file.name)),existing=files.filter(file=>!names.has(file.path)),pending=uploads.filter(file=>!names.has(file.name));
+                    if(existing.length+pending.length+selected.length>config.max_files){error(new Error(`Можно отправить не больше ${config.max_files} файлов.`));return;}
+                    files=existing;uploads=[...pending,...selected];markDirty();renderComposer();
+                }});
+                form.append(field(uploadDescription(config),upload,`${config.max_files===1?'Один файл':`До ${config.max_files} файлов`} · суммарно до ${Math.round(config.max_total_bytes/1048576)} МБ.`));
+                if(files.length || uploads.length)form.append(node('ul',{class:'gc-upload-list'},files.map(file=>node('li',{},file.download_url?download(file.download_url,file.path):file.path,' ',button('Убрать',()=>{files=files.filter(value=>value!==file);markDirty();renderComposer();}))),uploads.map(file=>node('li',{},file.name,' ',button('Убрать',()=>{uploads=uploads.filter(value=>value!==file);markDirty();renderComposer();})))));
             }
         }
-        body.append(actions(button('Отправить решение',safe(submit),'primary'),button('Сохранить черновик',safe(save)),button('Восстановить шаблон',safe(async () => {
-            if (!confirm('Восстановить шаблон? Текущий черновик будет заменён.')) return;
-            setDraft(await request(base+'/code-draft','DELETE',{revision:draft.revision})); renderComposer();
-        }))));
-        content.replaceChildren(body);
+        const menu=resultActions();menu.add(button('Сохранить черновик',safe(save)));menu.add(button('Восстановить шаблон',safe(async()=>{if(!confirm('Восстановить шаблон? Текущий черновик будет заменён.'))return;setDraft(await request(base+'/code-draft','DELETE',{revision:draft.revision}));renderComposer();})));
+        form.append(actions(button('Отправить решение',safe(submit),'primary'),menu.root));content.replaceChildren(body);
     }
     function artifact(value) {
         if (!value) return node('span',{class:'text-muted'},'Нет данных');
         return value.type === 'inline' ? node('pre',{class:'gc-execution-output'},value.text || '(пусто)') : node('div',{},download(value.download_url,`Скачать (${value.bytes} байт)`),value.truncated ? ' · вывод сокращён' : '');
     }
     let reportSequence = 0;
-    function renderReport(report, parent, submissionId) {
+    function renderReport(report, parent, submissionId,{savedSource=false}={}) {
         if (!report) return;
         for (const note of report.notes || []) parent.append(node('p',{},note));
-        if (report.notice) parent.append(report.legacy
+        if (report.notice && !savedSource) parent.append(report.legacy
             ? node('details',{class:'gc-report-provenance'},node('summary',{},'О данных исторической проверки'),node('p',{class:'text-muted small'},report.notice))
             : node('p',{class:'alert alert-info'},report.notice));
         const section = node('section',{class:'gc-test-report','aria-label':'Результаты тестов'});
-        section.append(node('div',{class:'gc-test-report__heading'},node('h4',{class:'h6 mb-0'},'Результаты тестов'),
+        section.append(node('div',{class:'gc-test-report__heading'},node('h4',{class:'h6 mb-0'},savedSource?'Проверка сохранённого кода':'Результаты тестов'),
             node('span',{class:report.passed === report.total ? 'gc-test-total is-passed' : 'gc-test-total'},`${report.passed} из ${report.total} пройдено`)));
         const rows = node('tbody');
         const table = node('table',{class:'gc-test-table'},node('thead',{},node('tr',{},
@@ -258,7 +283,7 @@ export async function workspace(root) {
                     try {
                         const value = await request(`/insider/code-test-reports/${report.run_id}/tests/${test.test_id}/purchase?test_data=metadata`,'POST',{expected_price:report.price});
                         notice.className = 'text-muted small';notice.textContent = `Списано ${value.charged} GC. Баланс: ${value.balance} GC.`;config.balance = value.balance;
-                        await show(current.id);
+                        await show(current.id,current.snapshotOf?{snapshotOf:current.snapshotOf}:{});
                     } finally {purchase.disabled = false;}
                 }));
                 details.append(purchase);
@@ -345,7 +370,7 @@ export async function workspace(root) {
     }
     function attemptHeader(record){
         const label=record.kind==='legacy_attempt'?'Сдача':record.counts_as_attempt===false?'Сохранённая версия решения':'Решение';
-        const score=record.kind==='legacy_attempt'?record.awarded_xp!==null&&record.awarded_xp!==undefined?`${record.awarded_xp} XP`:'Ожидает оценки':record.points!==null&&record.points!==undefined?`${record.points}${record.maximum_points&&!record.source_version_unknown?' / '+record.maximum_points:''} баллов`:phases[record.state] || 'Загружаем результат…';
+        const score=record.state==='error'?'Ошибка проверки · без оценки':record.kind==='legacy_attempt'?record.awarded_xp!==null&&record.awarded_xp!==undefined?`${record.awarded_xp} XP`:'Ожидает оценки':record.points!==null&&record.points!==undefined?`${record.points}${record.maximum_points&&!record.source_version_unknown?' / '+record.maximum_points:''} баллов`:phases[record.state] || 'Загружаем результат…';
         return [node('span',{},node('strong',{},record.created_at?new Date(record.created_at).toLocaleString('ru-RU'):label,record.is_best?node('small',{class:'gc-attempt-best ms-2'},'Лучшая'):null),node('small',{class:'text-muted'},record.created_at?label:'',teacher&&record.kind==='submission'&&!record.source_version_unknown&&record.teacher_viewed===false?' · Не просмотрено':'')),node('span',{class:'gc-attempt-list__score'},score),node('i',{class:'fas fa-chevron-down','aria-hidden':'true'})];
     }
     function attemptCard(record){
@@ -379,6 +404,7 @@ export async function workspace(root) {
     }
     function historyState(url){globalThis.history.replaceState(globalThis.history.state,'',url);}
     async function openAttemptById(id){
+        if(!teacher || ownMode){composerVisible=false;content.hidden=true;}
         const item=attemptItems.find(item=>String(item.id)===String(id));
         if(item)return openAttempt(item);
         if(/^solution-\d+$/.test(id))return showLegacyAttempt({id,kind:'legacy_attempt',solution_id:Number(id.slice(9))});
@@ -405,16 +431,15 @@ export async function workspace(root) {
             if(selected!==generation)return;
             if(Number(record.user_id)!==Number(teacher && !ownMode ? selectedUser.id : root.dataset.viewerId))throw new Error('Эта сдача принадлежит другому ученику. Выберите его в списке.');
             ensureAttemptCard(record);
+            if(record.source_submission_id){await show(record.source_submission_id,{snapshotOf:record});return;}
             const {header}=resultHeader(record);
             const panel=node('section',{class:'gc-execution-result'},header);
             renderAward(record,panel,{label:false});
-            if(record.evaluated_points!==null && record.evaluated_points!==undefined)panel.append(node('p',{},`Сохранённая оценка: ${record.evaluated_points}`));
             if(record.text)panel.append(submittedWork({...record,mode:'text'}));
-            if(record.comment)panel.append(node('h4',{class:'h6'},'Комментарий к сдаче'),node('pre',{class:'gc-execution-output'},record.comment));
-            if(record.source_notice || (record.source_version_unknown && !record.text))panel.append(node('details',{class:'gc-report-provenance'},node('summary',{},'О сохранённой версии кода'),node('p',{},record.source_notice || 'Отдельная версия кода этой сдачи не сохранялась. Доступную версию можно посмотреть отдельно; её проверка могла относиться к другому изменению кода.')));
-            if(record.source_submission_id)panel.append(button('Открыть сохранённую версию кода',safe(() => show(record.source_submission_id,{snapshotOf:record}))));
-            else if(record.source_url)panel.append(download(record.source_url,'Открыть сохранённую версию кода'));
+            if(record.comment && record.check_type!=='tests')panel.append(node('pre',{class:'gc-execution-output'},record.comment));
+            if(!record.text)panel.append(node('p',{class:'text-muted small'},'Код этой сдачи не сохранился отдельно.'));
             if(record.can_grade)panel.append(legacyGrading(record));
+            if(!teacher || ownMode)panel.append(button('Ещё одно решение',showComposer,'primary'));
             results.replaceChildren(panel);
         } catch(e) {
             if(selected!==generation)return;
@@ -441,6 +466,7 @@ export async function workspace(root) {
         return panel;
     }
     async function openAttempt(item) {
+        if(!teacher || ownMode){composerVisible=false;content.hidden=true;}
         if(item.kind==='legacy_attempt')return showLegacyAttempt(item);
         return show(item.id);
     }
@@ -483,20 +509,24 @@ export async function workspace(root) {
             }
             results.replaceChildren(panel);notice.replaceChildren();return;
         }
-        current = record;
+        current = record;current.snapshotOf=options.snapshotOf;
         const status = node('div',{role:'status','aria-live':'polite',class:'gc-execution-status'}, phases[record.progress?.phase || record.state] || record.state);
-        const {header,terminal}=resultHeader(record,{sourceOnly});
+        const {header,terminal}=resultHeader(options.snapshotOf || record,{sourceOnly:sourceOnly&&!options.snapshotOf});
         const menu=resultActions();menu.add(button('Обновить результат',safe(() => show(id,options))));
         const body = node('section',{class:'gc-execution-result'},header);
         const contextBar=node('div',{class:'gc-result-context-bar'},menu.root);
-        if(!terminal)body.append(status);
-        if(options.snapshotOf)body.prepend(button('Вернуться к выбранной сдаче',safe(() => showLegacyAttempt(options.snapshotOf))));
-        if(sourceOnly)body.append(node('details',{class:'gc-report-provenance'},node('summary',{},'О сохранённой версии'),node('p',{},'Это доступная версия кода и результат её проверки. Связь этой версии с конкретной сдачей неизвестна.')));
-        if (!sourceOnly)renderAward(record,body);
-        body.append(contextBar,submittedWork(record));
+        if(!terminal){header.hidden=true;body.append(status);}
+        if(options.snapshotOf){renderAward(options.snapshotOf,body,{label:false});body.append(node('p',{class:'text-muted small'},`Код сохранён ${new Date(record.created_at).toLocaleString('ru-RU')}`));}
+        else if (!sourceOnly && record.state!=='error')renderAward(record,body);
+        body.append(contextBar);
+        if(record.state==='error'){
+            body.append(node('p',{class:'gc-execution-error',role:'alert'},record.execution_error?.message || 'Проверяющий сервис не смог завершить работу. Решение сохранено.'));
+            if(record.execution_error?.can_retry && !sourceOnly)body.append(button('Повторить проверку',safe(async()=>{await request(record.execution_error.retry_url,'POST',{});await show(id,options);await loadHistory();}),'primary'));
+        }
+        body.append(submittedWork(record));
         if (record.repository?.commit) body.append(node('p',{},`GitHub · ${record.repository.commit}`, ' ',download(`/insider/code-submissions/${id}/repository/archive`,'Скачать репозиторий')));
-        if (record.comment && !record.report?.legacy) body.append(node('pre',{class:'gc-execution-output'},record.comment));
-        renderReport(record.report,body,id);
+        if (record.comment && record.check_type!=='tests' && !record.report?.legacy && record.state!=='error') body.append(node('pre',{class:'gc-execution-output'},record.comment));
+        renderReport(record.report,body,id,{savedSource:!!options.snapshotOf});
         if(record.text_report_available)body.append(textReport(record));
         if (teacher && record.checker_diagnostics) body.append(node('details',{},node('summary',{},'Диагностика проверяющего модуля'),node('pre',{class:'gc-execution-output'},JSON.stringify(record.checker_diagnostics,null,2))));
         if (teacher && record.legacy) body.append(currentTests());
@@ -510,8 +540,8 @@ export async function workspace(root) {
                 await request(`/insider/code-submissions/${id}/flags`,'PUT',{is_public:!record.is_public}); await show(id);
             })));
             if (record.is_public) body.append(download(`/shared/code-submissions/${id}`,'Публичная ссылка'));
-            if (!teacher && record.review_request?.requested) body.append(node('p',{class:'text-muted'},record.review_request.message));
-            else if (!teacher && record.review_request?.available) {
+            if (!teacher && !sourceOnly && record.review_request?.requested) body.append(node('p',{class:'text-muted'},record.review_request.message));
+            else if (!teacher && !sourceOnly && record.review_request?.available) {
                 let comment = '';
                 const review = node('details',{},node('summary',{},'Попросить преподавателя проверить'),field('Что нужно проверить',textarea('',value => {comment = value;},{minlength:10,maxlength:1000})),button('Отправить запрос',safe(async () => {
                     await request(`/insider/code-submissions/${id}/review-request`,'POST',{comment}); await show(id);
@@ -529,7 +559,8 @@ export async function workspace(root) {
             if (['completed','error','imported_pending'].includes(record.state)) menu.add(button('Оценить вручную',safe(async () => {await request(`/insider/code-submissions/${id}/manual-review`,'POST',{}); await show(id);await loadHistory();})));
             const latest = node('input',{type:'checkbox',class:'form-check-input'});
             const recheck=node('section',{class:'gc-inline-grading',hidden:true},node('h4',{class:'h6'},'Перепроверка решения'),field('По текущим настройкам задачи',latest),actions(button('Запустить перепроверку',safe(async () => {await request(`/insider/code-submissions/${id}/recheck`,'POST',{latest_configuration:latest.checked}); await show(id);await loadHistory();}),'primary'),button('Отмена',()=>recheck.hidden=true)));
-            if(terminal){body.append(recheck);menu.add(button('Перепроверить решение',()=>{recheck.hidden=false;recheck.scrollIntoView({block:'nearest',behavior:'instant'});}));}
+            if(terminal && record.state!=='error'){body.append(recheck);menu.add(button('Перепроверить решение',()=>{recheck.hidden=false;recheck.scrollIntoView({block:'nearest',behavior:'instant'});}));}
+            if(record.ai_recheck?.available)recheck.append(button('Перепроверить усиленной ИИ-моделью',safe(async()=>{if(!confirm('Запустить повторную проверку усиленной ИИ-моделью?'))return;await request(`/insider/code-submissions/${id}/recheck`,'POST',{stronger_ai:true});await show(id,options);await loadHistory();})));
             if (record.state === 'awaiting_review') {
                 let points = '', comment = '';
                 body.append(field('Баллы',input('',value => {points = value;},{type:'number',min:0,max:record.maximum_points})),field('Комментарий ученику',textarea('',value => {comment = value;})),button('Поставить оценку',safe(async () => {
@@ -551,6 +582,9 @@ export async function workspace(root) {
                 }))); body.append(review);
             }
         }
+        if(options.snapshotOf?.text && options.snapshotOf.text!==record.text)body.append(submittedWork({...options.snapshotOf,mode:'text'}));
+        if(options.snapshotOf?.comment && options.snapshotOf.check_type!=='tests' && options.snapshotOf.comment!==record.comment)body.append(node('h4',{class:'h6'},'Обратная связь'),node('pre',{class:'gc-execution-output'},options.snapshotOf.comment));
+        if(options.snapshotOf?.can_grade)body.append(legacyGrading(options.snapshotOf));
         if (record.runs.length > 1) {
             const runs = node('details',{},node('summary',{},'История проверок'));
             record.runs.forEach(run => {
@@ -562,7 +596,8 @@ export async function workspace(root) {
                     loading=true;result.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем проверку…'));
                     try {
                         const value=await request(`/insider/code-submissions/${id}/runs/${run.id}?test_data=metadata`);
-                        result.replaceChildren(node('pre',{class:'gc-execution-output'},value.comment || 'Без комментария'));
+                        result.replaceChildren();
+                        if(value.comment)result.append(node('pre',{class:'gc-execution-output'},value.comment));
                         for(const file of value.files || [])result.append(node('p',{},download(file.download_url,file.name)));
                         if(value.report)renderReport(value.report,result,id);
                         if(value.text_report_available)result.append(textReport(value));
@@ -575,17 +610,32 @@ export async function workspace(root) {
             });
             body.append(runs);
         }
+        if(terminal && (!teacher || ownMode) && !root.hasAttribute('data-history-only'))body.append(actions(button('Ещё одно решение',showComposer,'primary')));
         results.replaceChildren(body);
         if (!['completed','error','awaiting_review','imported_pending'].includes(record.state)) {
-            stop = subscribe(record.subscription,event => {status.textContent = `${phases[event.phase] || event.phase}${event.total ? ` · ${event.completed} из ${event.total}` : ''}`;},
-                async () => {
-                    if (current?.id !== id) return;
+            const progressBar=node('progress',{class:'gc-execution-progress','aria-label':'Ход проверки тестов'});
+            const phaseTitle=node('strong'),phaseHint=node('span',{class:'text-muted small'},'Результат появится здесь автоматически.');
+            const phaseSteps=node('div',{class:'gc-execution-phases'},(record.check_type==='gpt'?['preparing','grading','publishing']:['preparing','compiling','testing','publishing'].filter(phase=>phase!=='compiling'||record.language==='cpp')).map(phase=>node('span',{'data-phase':phase},phases[phase])));
+            status.replaceChildren(node('i',{class:'fas fa-gear gc-execution-gear','aria-hidden':'true'}),node('div',{},phaseTitle,phaseHint),progressBar,phaseSteps);
+            const update=event=>{
+                const phase=executionPhase(event);phaseTitle.textContent=phase.label;
+                if(phase.total){progressBar.max=phase.total;progressBar.value=phase.completed;}else progressBar.removeAttribute('value');
+                phaseSteps.querySelectorAll('[data-phase]').forEach(step=>step.classList.toggle('is-current',step.dataset.phase===event.phase));
+            };
+            update({...record.progress,phase:record.progress?.phase || record.state});
+            const executionId=record.execution_id;
+            stop = subscribe(record.subscription,update,
+                async event => {
+                    if (current?.id !== id || current.execution_id!==executionId || event.execution_id!==executionId) return;
                     try {
-                        await show(id);
+                        await show(id,options);
                         await loadHistory();
-                        if ((!teacher || ownMode) && current?.id === id && current.awarded_xp !== null) document.dispatchEvent(new CustomEvent('gc:task-checked', {detail:{taskId:current.task_id,mark:current.awarded_xp}}));
+                        if ((!teacher || ownMode) && current?.id===id && current.execution_id===executionId && current.state==='completed' && current.awarded_xp!==null && !rewardedRuns.has(executionId)){
+                            rewardedRuns.add(executionId);
+                            document.dispatchEvent(new CustomEvent('gc:task-checked', {detail:{taskId:current.task_id,mark:current.awarded_xp,executionId}}));
+                        }
                     } catch (e) {error(e);}
-                }, () => {status.textContent = 'Связь прервана. Восстанавливаем подключение…';},
+                }, () => {phaseHint.textContent='Связь прервана. Восстанавливаем подключение…';},
                 () => request(`/insider/code-submissions/${id}/subscription`));
         }
     }
@@ -609,7 +659,7 @@ export async function workspace(root) {
         if(!append)attemptItems=[];
         const ids=new Set(attemptItems.map(item=>String(item.id)));attemptItems.push(...value.items.filter(item=>!ids.has(String(item.id))));
         if(selectedSummary&&!attemptItems.some(item=>String(item.id)===String(activeAttempt)))attemptItems.push(selectedSummary);
-        attemptItems.sort((a,b)=>(Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0));
+        attemptItems.sort((a,b)=>{const first=submittedOrder.indexOf(String(a.id)),second=submittedOrder.indexOf(String(b.id));return first>=0&&second>=0?first-second:first>=0?1:second>=0?-1:(Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0);});
         if(teacher && !ownMode && !selectedUser?.name && value.items[0]?.user_name){selectedUser.name=value.items[0].user_name;renderToolbar();}
         const heading=node('div',{class:'gc-attempt-history__heading'});
         if(value.total_attempts!==undefined)heading.append(node('span',{class:'text-muted small'},`Всего сдач: ${value.total_attempts}`));
@@ -617,7 +667,7 @@ export async function workspace(root) {
         heading.append(button('Обновить список',safe(() => loadHistory())));
         const list=node('ol',{class:'gc-attempt-list'},attemptItems.map(attemptCard));
         const footer=node('div',{class:'gc-attempt-history__footer'});
-        if(!attemptItems.length)footer.append(node('p',{class:'text-muted mb-0'},ownMode ? 'Ваших решений пока нет. Отправьте работу через форму выше.' : 'Сохранённых сдач пока нет.'));
+        if(!attemptItems.length)footer.append(node('p',{class:'text-muted mb-0'},ownMode ? 'Ваших решений пока нет.' : 'Сохранённых сдач пока нет.'));
         if(value.has_more){const more=button('Показать ещё сдачи',safe(async () => {
             more.disabled=true;
             try{await loadHistory(true);}finally{more.disabled=false;}
@@ -641,7 +691,7 @@ export async function workspace(root) {
             await attachments();
         }
         if(root.dataset.submission || activeAttempt)await openAttemptById(activeAttempt || root.dataset.submission);
-        else if(records[0])await openAttempt(records[0]);
+
     }
     function initializationError(e){
         error(e);

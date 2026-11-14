@@ -6,7 +6,7 @@ export function subscribe(subscription, update, terminal, disconnected, renew, c
     socket.on('execution_progress', event => {
         if (closed || event.execution_id !== subscription.execution_id || !Number.isInteger(event.sequence) || event.sequence < sequence) return;
         sequence = event.sequence; update(event);
-        if (['completed','error'].includes(event.phase) && !finished) { finished = true; terminal(); }
+        if (['completed','error'].includes(event.phase) && !finished) { finished = true; terminal(event); }
     });
     socket.on('disconnect', () => {if (!closed && !finished) disconnected();});
     socket.on('connect_error', async () => {

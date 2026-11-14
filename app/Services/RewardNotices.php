@@ -12,7 +12,7 @@ final class RewardNotices
 {
     public function experience(User $user, int $before, string $executionId, string $task): void
     {
-        if ($user->role !== 'student' || !Schema::hasTable('reward_notices')) return;
+        if (!in_array($user->role, ['student', 'teacher', 'admin'], true) || !Schema::hasTable('reward_notices')) return;
         $user->rescore();
         $after = (int) $user->score();
         if ($after <= $before) return;
@@ -22,13 +22,13 @@ final class RewardNotices
 
     public function taskCompleted(int $userId, int $taskId, string $title): void
     {
-        if (!Schema::hasTable('reward_notices') || !User::whereKey($userId)->where('role','student')->exists()) return;
+        if (!Schema::hasTable('reward_notices') || !User::whereKey($userId)->whereIn('role', ['student', 'teacher', 'admin'])->exists()) return;
         $this->record($userId, 'task_complete', (string) $taskId, ['title' => $title, 'reason' => 'Задача выполнена полностью']);
     }
 
     public function rank(User $user, $oldRank, $newRank): void
     {
-        if ($user->role !== 'student' || !$oldRank || !$newRank || $newRank->from <= $oldRank->from
+        if (!in_array($user->role, ['student', 'teacher', 'admin'], true) || !$oldRank || !$newRank || $newRank->from <= $oldRank->from
             || !Schema::hasTable('reward_notices')) return;
         $this->record($user->id, 'rank', (string) $newRank->id, ['title' => $newRank->name,
             'previous' => $oldRank->name, 'reason' => 'Новое звание за накопленный опыт']);
@@ -37,7 +37,7 @@ final class RewardNotices
     public function achievement(\App\Achievement $achievement): void
     {
         if ($achievement->status !== \App\Achievement::STATUS_PUBLISHED || !Schema::hasTable('reward_notices')
-            || !User::whereKey($achievement->user_id)->where('role','student')->exists()) return;
+            || !User::whereKey($achievement->user_id)->whereIn('role', ['student', 'teacher', 'admin'])->exists()) return;
         $this->record($achievement->user_id, 'achievement', (string) $achievement->id,
             ['title' => $achievement->title, 'reason' => mb_substr((string) $achievement->description, 0, 1000),
                 'achievement_id' => (int) $achievement->id, 'image' => $achievement->trophyImageUrl()]);
@@ -46,7 +46,7 @@ final class RewardNotices
     public function coins(CoinTransaction $transaction): void
     {
         if ($transaction->price <= 0 || !Schema::hasTable('reward_notices')
-            || !User::whereKey($transaction->user_id)->where('role', 'student')->exists()) {
+            || !User::whereKey($transaction->user_id)->whereIn('role', ['student', 'teacher', 'admin'])->exists()) {
             return;
         }
 
@@ -65,7 +65,7 @@ final class RewardNotices
         if ($eligible->isEmpty()) {
             return;
         }
-        $students = User::whereIn('id', $eligible->pluck('student_id'))->where('role', 'student')->pluck('id')->flip();
+        $students = User::whereIn('id', $eligible->pluck('student_id'))->whereIn('role', ['student', 'teacher', 'admin'])->pluck('id')->flip();
         $lessons = Lesson::whereIn('id', $eligible->pluck('lesson_id'))->whereHas('steps.tasks')
             ->whereNotNull('sticker')->where('sticker', '<>', '')->get(['id', 'name', 'sticker'])->keyBy('id');
 
@@ -95,7 +95,7 @@ final class RewardNotices
 
     public function claim(User $user): ?array
     {
-        if ($user->role !== 'student' || !Schema::hasTable('reward_notices')) {
+        if (!in_array($user->role, ['student', 'teacher', 'admin'], true) || !Schema::hasTable('reward_notices')) {
             return null;
         }
 

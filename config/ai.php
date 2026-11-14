@@ -26,6 +26,11 @@ return [
             'model' => env('GPT_IMAGE_MODEL') ?: env('GPT_MODEL', 'gpt-5-mini'),
             'timeout' => 180,
         ],
+        // Explicitly configured: ordinary checks keep the task's frozen model.
+        'recheck' => [
+            'model' => env('GPT_RECHECK_MODEL'),
+            'timeout' => 180,
+        ],
     ],
 
     // An empty command provider inherits AI_PROVIDER. Image models must match

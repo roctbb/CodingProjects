@@ -33,6 +33,7 @@ class Kernel extends ConsoleKernel
         Commands\ArchiveGeekPaste::class,
         Commands\MoveCodeOriginals::class,
         Commands\DispatchDeadlineNotifications::class,
+        Commands\DispatchCodeExecutionAlerts::class,
     ];
 
     /**
@@ -54,6 +55,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('deadlines:dispatch')->everyMinute()->withoutOverlapping();
         $schedule->command('room-characters:recover')->everyMinute()->withoutOverlapping();
         $schedule->command('code-checking:recover')->everyMinute()->withoutOverlapping();
+        $schedule->command('code-checking:notify')->everyMinute()->withoutOverlapping();
         $schedule->command('room-characters:recover --prune')->dailyAt('03:20')->withoutOverlapping();
         //          ->hourly();
     }

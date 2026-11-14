@@ -583,7 +583,7 @@
 .course-path-title a { color: inherit; text-decoration: none; }
 .course-path-title a:hover { color: var(--gc-primary); }
 .course-path-item.is-locked .course-path-title { color: var(--gc-on-surface-muted); }
-.course-path-description { -webkit-box-orient: vertical; -webkit-line-clamp: 3; color: var(--gc-on-surface-muted); display: -webkit-box; font-size: var(--gc-font-small); line-height: 1.5; margin-top: 0.55rem; max-width: 72ch; overflow: hidden; }
+.course-path-description { color: var(--gc-on-surface-muted); font-size: var(--gc-font-small); line-height: 1.5; margin-top: 0.55rem; max-width: 72ch; }
 .course-path-description p:last-child,
 .course-path-description ul:last-child { margin-bottom: 0; }
 .course-path-description ul { padding-left: 1.25rem; }

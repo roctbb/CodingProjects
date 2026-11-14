@@ -85,6 +85,17 @@ class AiSettings
         AiSetting::whereKey(1)->delete();
     }
 
+    /** The review model is independent of shared models and command overrides. */
+    public function recheck(): ?array
+    {
+        $value = $this->all()['defaults']['recheck'] ?? [];
+        $model = $value['model'] ?? null;
+        $timeout = filter_var($value['timeout'] ?? 180, FILTER_VALIDATE_INT);
+        if (!is_string($model) || !preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9._:\/-]{0,199}\z/', $model)
+            || $timeout === false || $timeout < 1 || $timeout > 180) return null;
+        return ['model' => $model, 'timeout' => $timeout];
+    }
+
     public function forForm(): array
     {
         $settings = $this->all();

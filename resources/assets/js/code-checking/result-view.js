@@ -1,4 +1,4 @@
-import {node,button,download,select} from './ui';
+import {node,button,download,request} from './ui';
 
 const terminal=['completed','error','awaiting_review','imported_pending'];
 
@@ -29,7 +29,7 @@ export function resultHeader(record,{sourceOnly=false}={}) {
         sourceOnly?node('p',{class:'text-muted small mb-0'},`Сохранённая версия решения · ${new Date(record.created_at).toLocaleString('ru-RU')}`):null);
     const header=node('header',{class:`gc-result-verdict is-${verdict.tone}`,'aria-label':'Итог проверки'},
         node('i',{class:`fas ${verdict.icon} gc-result-verdict__icon`,'aria-hidden':'true'}),details);
-    if(record.points!==null && record.points!==undefined)header.append(node('div',{class:'gc-result-score'},
+    if(record.state!=='error' && record.kind!=='legacy_attempt' && record.points!==null && record.points!==undefined)header.append(node('div',{class:'gc-result-score'},
         node('strong',{},String(record.points)),node('span',{},sourceOnly?' баллов':` / ${record.maximum_points} баллов`)));
     else if(record.kind==='legacy_attempt' && record.awarded_xp!==null)header.append(node('div',{class:'gc-result-score'},node('strong',{},String(record.awarded_xp)),node('span',{},' XP')));
     return {header,terminal:terminal.includes(record.state)};
@@ -38,51 +38,56 @@ export function resultHeader(record,{sourceOnly=false}={}) {
 export function submittedWork(record) {
     const files=record.files || [];
     const section=node('section',{class:'gc-submitted-work','aria-label':'Отправленная работа'});
-    const textFiles=files.filter(file=>file.source!==undefined);
-    const initial=textFiles.find(file=>/\.(py|cpp|cc|c|h|hpp|js|ts|java|cs|php|swift|go|rs|html|css|sql)$/i.test(file.name)) || textFiles[0];
-    if(initial){
-        const viewer=node('div',{class:'gc-submitted-code'});
-        const code=node('code');
-        const source=node('pre',{class:'gc-submitted-code__source',tabIndex:0},code);
-        const fileControls=node('div',{class:'gc-submitted-code__toolbar'});
-        const controls=node('div',{class:'gc-submitted-code__actions'});
-        let selected=initial;
-        const render=file=>{
-            selected=file;code.textContent=file.source || '(пустой файл)';
-            const ext=file.name.split('.').pop().toLowerCase();
-            const language=({py:'python',cc:'cpp',c:'cpp',h:'cpp',hpp:'cpp',js:'javascript',html:'xml',cs:'csharp'})[ext] || ext;
+    if(files.length){
+        const tabs=node('div',{class:'gc-source-tabs',role:'tablist','aria-label':'Файлы решения'});
+        const preview=node('div',{class:'gc-submitted-preview',role:'tabpanel'});
+        let selected,sequence=0;
+        const renderSource=(file,source)=>{
+            const code=node('code',{},source || '(пустой файл)'),pre=node('pre',{class:'gc-submitted-code__source',tabIndex:0,'aria-label':'Код решения: '+file.name},code);
+            const ext=file.name.split('.').pop().toLowerCase(),language=({py:'python',cc:'cpp',c:'cpp',h:'cpp',hpp:'cpp',js:'javascript',html:'xml',cs:'csharp'})[ext] || ext;
             code.className=globalThis.hljs?.getLanguage(language)?'language-'+language:'language-plaintext';
-            delete code.dataset.highlighted;
             if(globalThis.hljs?.getLanguage(language))globalThis.hljs.highlightElement(code);
-            source.setAttribute('aria-label','Код решения: '+file.name);
-            controls.replaceChildren(download(file.download_url,'Скачать'),button('Копировать',async event=>{
-                const target=event.currentTarget;
-                try{await navigator.clipboard.writeText(selected.source || '');target.textContent='Скопировано';}
-                catch{source.focus();const selection=getSelection(),range=document.createRange();range.selectNodeContents(code);selection.removeAllRanges();selection.addRange(range);}
-            }));
-            controls.querySelector('button').classList.add('btn-sm');
+            const copy=button('Копировать',async()=>{try{await navigator.clipboard.writeText(source);copy.textContent='Скопировано';}catch{pre.focus();const selection=getSelection(),range=document.createRange();range.selectNodeContents(code);selection.removeAllRanges();selection.addRange(range);}});copy.classList.add('btn-sm');
+            return node('div',{class:'gc-submitted-code'},node('div',{class:'gc-submitted-code__toolbar'},node('strong',{},file.name),node('div',{class:'gc-submitted-code__actions'},file.download_url?download(file.download_url,'Скачать'):null,copy)),pre);
         };
-        if(textFiles.length>1){
-            const picker=select(initial.name,Object.fromEntries(textFiles.map(file=>[file.name,file.name])),name=>render(textFiles.find(file=>file.name===name)));
-            picker.setAttribute('aria-label','Файл решения');fileControls.append(picker);
-        }else fileControls.append(node('strong',{},initial.original_name || initial.name));
-        fileControls.append(controls);viewer.append(fileControls,source);section.append(viewer);render(initial);
+        const show=async file=>{
+            selected=file;const version=++sequence;
+            tabs.querySelectorAll('[role="tab"]').forEach(tab=>{const active=tab.dataset.file===file.name;tab.classList.toggle('is-active',active);tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;});
+            preview.setAttribute('aria-label',file.name);
+            if(file.source!==undefined){preview.replaceChildren(renderSource(file,file.source));return;}
+            if(/\.(png|jpe?g|gif|webp)$/i.test(file.name)){
+                const url=new URL(file.download_url,location.origin);url.searchParams.set('proxy','1');
+                preview.replaceChildren(node('div',{class:'gc-submitted-file__heading'},node('strong',{},file.original_name || file.name),download(file.download_url,'Скачать')),node('img',{src:url.href,alt:file.original_name || file.name,class:'gc-execution-image',loading:'lazy'}));return;
+            }
+            if(file.archive_url){
+                preview.replaceChildren(node('p',{class:'text-muted',role:'status'},'Читаем список файлов архива…'));
+                try{
+                    const archive=await request(file.archive_url);if(version!==sequence)return;
+                    const archiveTabs=node('div',{class:'gc-source-tabs',role:'tablist','aria-label':'Файлы в архиве'}),archiveBody=node('div',{role:'tabpanel'});
+                    const entries=archive.entries || [],entryCache=new Map();let entrySequence=0;
+                    const showEntry=async entry=>{
+                        const entryVersion=++entrySequence;archiveTabs.querySelectorAll('[role="tab"]').forEach(tab=>{const active=tab.dataset.entry===String(entry.id);tab.classList.toggle('is-active',active);tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;});
+                        if(!entry.previewable){archiveBody.replaceChildren(node('p',{class:'text-muted'},'Файл доступен для скачивания.'),download(entry.download_url || archive.download_url || file.download_url,entry.download_kind==='file'?'Скачать файл':'Скачать архив'));return;}
+                        archiveBody.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем файл…'));
+                        try{const value=entryCache.get(entry.id) || await request(entry.source_url);entryCache.set(entry.id,value);if(version!==sequence || entryVersion!==entrySequence)return;archiveBody.replaceChildren(renderSource({name:entry.name || entry.path,download_url:entry.download_kind==='file'?entry.download_url:null},value.source ?? ''));}
+                        catch(e){if(version===sequence && entryVersion===entrySequence)archiveBody.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить',()=>showEntry(entry)));}
+                    };
+                    archiveTabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key)||event.target.getAttribute('role')!=='tab')return;event.preventDefault();const current=entries.findIndex(entry=>String(entry.id)===archiveTabs.querySelector('[aria-selected="true"]')?.dataset.entry),next=entries[(current+(event.key==='ArrowRight'?1:entries.length-1))%entries.length];showEntry(next);archiveTabs.querySelector('[aria-selected="true"]')?.focus();});
+                    entries.forEach(entry=>{const tab=button(entry.name || entry.path,()=>showEntry(entry));tab.className='gc-source-tab';tab.setAttribute('role','tab');tab.dataset.entry=entry.id;archiveTabs.append(tab);});
+                    const original=download(archive.download_url || file.download_url,'');original.setAttribute('aria-label','Скачать исходный архив');original.title='Скачать исходный архив';original.append(node('i',{class:'fas fa-download','aria-hidden':'true'}));archiveTabs.append(original);
+                    preview.replaceChildren(archiveTabs,archiveBody);
+                    if(entries[0])showEntry(entries[0]);else archiveBody.textContent='В архиве нет файлов для просмотра.';
+                }catch(e){if(version===sequence)preview.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить',()=>show(file)));}
+                return;
+            }
+            preview.replaceChildren(node('div',{class:'gc-submitted-file__heading'},node('i',{class:'fas fa-file-arrow-down','aria-hidden':'true'}),node('div',{},node('strong',{},file.original_name || file.name),node('small',{class:'d-block text-muted'},`${file.name.split('.').pop().toUpperCase()} · `,file.bytes>=1048576?`${(file.bytes/1048576).toFixed(1)} МБ`:`${Math.max(1,Math.round(file.bytes/1024))} КБ`)),download(file.download_url,'Скачать')));
+        };
+        for(const file of files){const tab=button(file.name,()=>show(file));tab.className='gc-source-tab';tab.setAttribute('role','tab');tab.dataset.file=file.name;tabs.append(tab);}
+        tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();const index=files.indexOf(selected),next=files[(index+(event.key==='ArrowRight'?1:files.length-1))%files.length];show(next);tabs.querySelector('[aria-selected="true"]')?.focus();});
+        if(files.length>1 || !files[0].archive_url)section.append(tabs);section.append(preview);show(files.find(file=>file.source!==undefined) || files[0]);
     }
-    if(record.text)section.append(node('h4',{class:'h6 mt-3'},record.mode==='text'?'Ответ':'Пояснение к решению'),node('pre',{class:'gc-execution-output'},record.text));
-    const otherFiles=files.filter(file=>file.source===undefined);
-    if(otherFiles.length){
-        const cards=node('div',{class:'gc-submitted-materials'});
-        for(const file of otherFiles){
-            const image=/\.(png|jpe?g|gif|webp)$/i.test(file.name);
-            const card=node('article',{class:'gc-submitted-file'},node('div',{class:'gc-submitted-file__heading'},
-                node('i',{class:`fas ${image?'fa-image':'fa-file-arrow-down'}`,'aria-hidden':'true'}),
-                node('div',{},node('strong',{},file.original_name || file.name),node('small',{class:'d-block text-muted'},`${file.name.split('.').pop().toUpperCase()} · `,file.bytes>=1048576?`${(file.bytes/1048576).toFixed(1)} МБ`:`${Math.max(1,Math.round(file.bytes/1024))} КБ`)),download(file.download_url,'Скачать')));
-            if(image){const url=new URL(file.download_url,location.origin);url.searchParams.set('proxy','1');card.append(node('img',{src:url.href,alt:file.original_name || file.name,class:'gc-execution-image',loading:'lazy'}));}
-            cards.append(card);
-        }
-        section.append(cards);
-    }
-    if(!files.length && !record.text)section.append(node('p',{class:'text-muted'},'Отдельная версия отправленной работы не сохранилась.'));
+    if(record.text && (record.mode==='text' || record.mode==='files'))section.append(node('h4',{class:'h6 mt-3'},'Ответ'),node('pre',{class:'gc-execution-output'},record.text));
+    if(!files.length && !record.text)section.append(node('p',{class:'text-muted'},'Отправленная работа не сохранилась отдельно.'));
     return section;
 }
 

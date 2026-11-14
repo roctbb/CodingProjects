@@ -19,7 +19,7 @@ class RewardNoticesTest extends TestCase
         Notification::fake();
         DB::unprepared(<<<'SQL'
             CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, role TEXT, email TEXT, email_verified_at TEXT);
-            INSERT INTO users VALUES (1,'Student','student','one@example.test','2026-01-01'),(2,'Other','student','two@example.test','2026-01-01'),(3,'Teacher','teacher','three@example.test','2026-01-01');
+            INSERT INTO users VALUES (1,'Student','student','one@example.test','2026-01-01'),(2,'Other','student','two@example.test','2026-01-01'),(3,'Teacher','teacher','three@example.test','2026-01-01'),(4,'Admin','admin','four@example.test','2026-01-01');
             CREATE TABLE coin_transactions (id INTEGER PRIMARY KEY, user_id INTEGER, price INTEGER, comment TEXT, created_at TEXT, updated_at TEXT);
             CREATE TABLE lessons (id INTEGER PRIMARY KEY, name TEXT, sticker TEXT);
             CREATE TABLE program_steps (id INTEGER PRIMARY KEY, lesson_id INTEGER, sort_index INTEGER);
@@ -49,7 +49,6 @@ class RewardNoticesTest extends TestCase
         $this->feed()->coins($transaction);
         CoinTransaction::register(1, -5, 'Good #2');
         CoinTransaction::register(1, 0, 'Nothing');
-        CoinTransaction::register(3, 20, 'Teacher credit');
         $this->assertDatabaseCount('reward_notices', 1);
         $this->assertNull($this->feed()->claim(User::find(2)));
         $notice = $this->feed()->claim(User::find(1));
@@ -58,6 +57,27 @@ class RewardNoticesTest extends TestCase
         $this->assertSame('Награда за задачу #1', $notice['payload']['reason']);
         $this->assertNull($this->feed()->claim(User::find(1)));
         $this->assertNull($this->feed()->claim(User::find(3)));
+    }
+
+    public function test_teacher_and_admin_own_rewards_are_deduplicated_and_never_claimed_by_another_user(): void
+    {
+        DB::unprepared('CREATE TABLE solutions (id INTEGER PRIMARY KEY, user_id INTEGER, task_id INTEGER, mark INTEGER)');
+        foreach ([3,4] as $id) {
+            DB::table('solutions')->insert(['id'=>$id,'user_id'=>$id,'task_id'=>1,'mark'=>10]);
+            $user=User::find($id);
+            $execution=(string) \Illuminate\Support\Str::uuid();
+            $this->feed()->experience($user,5,$execution,'Алгоритм');
+            $this->feed()->experience($user,5,$execution,'Алгоритм');
+            CoinTransaction::registerOnce($id,7,'Task #1');
+            CoinTransaction::registerOnce($id,7,'Task #1');
+        }
+        $this->assertDatabaseCount('reward_notices',4);
+        $this->actingAs(User::find(1))->postJson('/insider/rewards/claim',['user_id'=>3])->assertOk()->assertJsonPath('notice',null);
+        foreach ([3,4] as $id) {
+            $this->actingAs(User::find($id))->postJson('/insider/rewards/claim',['user_id'=>$id===3?4:3])->assertOk()->assertJsonPath('notice.kind','xp')->assertJsonPath('notice.payload.amount',5);
+            $this->postJson('/insider/rewards/claim')->assertOk()->assertJsonPath('notice.kind','coins')->assertJsonPath('notice.payload.amount',7);
+            $this->postJson('/insider/rewards/claim')->assertOk()->assertJsonPath('notice',null);
+        }
     }
 
     public function test_rolled_back_credit_never_leaves_a_notice_or_a_coin(): void
