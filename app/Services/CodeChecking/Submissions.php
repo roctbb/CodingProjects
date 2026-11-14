@@ -20,7 +20,7 @@ class Submissions
     public function create(Request $request, int $courseId, Task $task): CodeSubmission
     {
         $user = $request->user();
-        abort_unless($user->role === 'student' && !$this->access->teacher($user, $courseId), 403);
+        $this->access->task($user,$courseId,(int)$task->id);
         abort_if($task->isBlocked($user->id, $courseId), 403, 'Task is blocked.');
         $checker = CodeTaskChecker::findOrFail($task->id);
         abort_if($checker->config['requires_conversion'] ?? false, 409, 'Legacy checking configuration needs conversion.');
@@ -112,7 +112,7 @@ class Submissions
         });
     }
 
-    public function view(CodeSubmission $submission, User $viewer, bool $includeSource = true): array
+    public function view(CodeSubmission $submission, User $viewer, bool $includeSource = true,bool $includeTestFields=true): array
     {
         $this->access->authorOrTeacher($viewer, $submission);
         $run = $submission->currentRun;
@@ -128,19 +128,35 @@ class Submissions
             $files[] = $item;
         }
         $report = CodeTestReport::find($run->id);
-        $awardedXp = $submission->solution_id ? \App\Solution::find($submission->solution_id)?->mark : null;
+        $reportView=$report?app(Reports::class)->view($report,$viewer,$includeTestFields)
+            :(isset($run->legacy_report['suite_diagnostics'])?null:app(HistoricalReport::class)->view($run->legacy_report,$this->access->teacher($viewer,(int)$submission->course_id)));
+        if($reportView){
+            $reportView['run_id']=$run->id;
+            if(!$includeTestFields)$reportView=app(Reports::class)->metadata($reportView);
+        }
+        $legacy=isset($submission->source_metadata['legacy_id']);
+        // An imported mutable GP fragment cannot identify which CP attempt earned XP.
+        $solution = !$legacy && $submission->solution_id ? \App\Solution::find($submission->solution_id) : null;
+        $awardedXp = $solution?->mark;
         return ['id' => $submission->id, 'user_id' => (int) $submission->user_id, 'course_id' => (int) $submission->course_id,
             'task_id' => (int) $submission->task_id, 'language' => $submission->language, 'files' => $files,
             'mode' => $submission->mode, 'text' => $includeSource ? $submission->answer_text : null,
-            'user_name' => User::find($submission->user_id)?->name,
+            'user_name' => $submission->author?->name,
             'maximum_points' => $run->snapshot['points'],
             'repository' => array_intersect_key($submission->source_metadata ?? [], array_flip(['provider', 'url', 'ref', 'commit'])),
             'preparation_state' => $submission->preparation_state,
             'created_at' => $submission->created_at?->toIso8601String(), 'execution_id' => $run->id,
-            'state' => $run->state, 'progress' => $run->progress, 'points' => $run->points, 'comment' => $run->comment,
+            'checked_at'=>$run->finished_at?->toIso8601String(),
+            'state' => $run->state, 'progress' => $run->progress, 'points' => $run->points,
+            'comment' => !$includeTestFields && ($reportView || ($run->snapshot['check_type']??null)==='tests')?'':$run->comment,
+            'text_report_available'=>!$includeTestFields && !$reportView && ($run->snapshot['check_type']??null)==='tests' && (bool)($run->comment || isset($run->legacy_report['suite_diagnostics'])),
+            'text_report_url'=>url('/insider/code-submissions/'.$submission->id.'/runs/'.$run->id).'?test_data=full',
             'awarded_xp' => $awardedXp,
-            'report' => $report ? app(Reports::class)->view($report, $viewer) : (isset($run->legacy_report['suite_diagnostics'])?null:app(HistoricalReport::class)->view($run->legacy_report)),
-            'checker_diagnostics' => $this->access->teacher($viewer,(int)$submission->course_id) ? ($run->legacy_report['suite_diagnostics']??null) : null,
+            'award_breakdown'=>$solution ? ['evaluated_points'=>$solution->evaluatedMark(),
+                'deadline_penalty'=>(int)($solution->hasActiveDeadlinePenalty()?$solution->deadline_penalty_amount:0),
+                'xp_booster'=>(int)($solution->xp_booster_amount??0)] : null,
+            'report' => $reportView,
+            'checker_diagnostics' => $includeTestFields && $this->access->teacher($viewer,(int)$submission->course_id) ? ($run->legacy_report['suite_diagnostics']??null) : null,
             'teacher_viewed'=>$submission->teacher_viewed, 'is_public'=>$submission->is_public,
             'review_request'=>app(SubmissionReview::class)->status($submission),
             'legacy'=>isset($submission->source_metadata['legacy_id']) ? [
@@ -148,9 +164,10 @@ class Submissions
                 'warnings'=>$submission->source_metadata['migration_warnings']??[],
                 'requires_conversion'=>$submission->source_metadata['requires_conversion']??false,
                 'commit_unknown'=>$submission->source_metadata['commit_unknown']??false] : null,
-            'runs' => CodeExecutionRun::where('submission_id', $submission->id)->orderByDesc('created_at')->get()
+            'source_version_unknown'=>$legacy,
+            'runs' => CodeExecutionRun::where('submission_id', $submission->id)->orderByDesc('created_at')->get(['id','state','points','created_at'])
                 ->map(fn ($item) => ['id' => $item->id, 'state' => $item->state, 'points' => $item->points,
-                    'comment' => $item->comment, 'created_at' => $item->created_at?->toIso8601String()])->all(),
+                    'created_at' => $item->created_at?->toIso8601String()])->all(),
             'integrity' => app(Integrity::class)->view($submission, $this->access->teacher($viewer, (int) $submission->course_id)),
             'subscription' => $run->snapshot['check_type'] === 'manual' ? null : app(RunnerClient::class)->subscription($run->id, (int) $viewer->id)];
     }
@@ -196,7 +213,7 @@ class Submissions
     {
         $this->access->task($teacher, $course, $task, true);
         $seen = []; $queued = []; $skipped = [];
-        foreach (CodeSubmission::where('course_id', $course)->where('task_id', $task)->orderByDesc('created_at')->orderByDesc('id')->cursor() as $submission) {
+        foreach (CodeSubmission::forCourseStudents($course)->where('task_id', $task)->orderByDesc('created_at')->orderByDesc('id')->cursor() as $submission) {
             if (isset($seen[$submission->user_id])) continue;
             $seen[$submission->user_id] = true;
             if (!$submission->currentRun->finished_at && $submission->currentRun->state !== 'awaiting_review') {

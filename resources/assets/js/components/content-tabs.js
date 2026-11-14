@@ -62,7 +62,7 @@ export default function initContentTabs({ onChange = () => {} } = {}) {
             var targetPane = null;
 
             if (hash && hash !== '#') {
-                history.replaceState(null, '', window.location.pathname + window.location.search + hash);
+                if (!event.target.hasAttribute('data-no-tab-history')) history.replaceState(null, '', window.location.pathname + window.location.search + hash);
                 targetPane = document.querySelector(hash);
             }
 

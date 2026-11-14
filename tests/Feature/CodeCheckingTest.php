@@ -105,6 +105,161 @@ class CodeCheckingTest extends TestCase
         ]];
     }
 
+    public function test_teacher_uses_own_draft_and_the_normal_submission_limits_and_pipeline():void
+    {
+        $base='/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private',['language'=>'python','check_type'=>'gpt','gpt_rate_limit'=>1])->assertOk();
+        $this->getJson($base.'/checker')->assertJsonPath('teacher_submission_allowed',true)->assertJsonPath('viewer_user_id',1);
+        $this->getJson($base.'/code-draft')->assertOk();
+        $this->putJson($base.'/code-draft',['revision'=>0,'mode'=>'code','editor_files'=>[['path'=>'main.py','content'=>'print(5)']]])->assertOk();
+        DB::table('blocked_tasks')->insert(['task_id'=>12,'course_id'=>7,'user_id'=>1]);
+        $this->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'use_draft'=>true,'draft_revision'=>1])->assertForbidden();
+        DB::table('blocked_tasks')->delete();Queue::fake();
+        $first=$this->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'use_draft'=>true,'draft_revision'=>1])->assertCreated()->json();
+        Queue::assertPushed(\App\Jobs\CheckCodeIntegrity::class);Queue::assertPushed(\App\Jobs\DispatchCodeExecution::class);
+        $this->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'print(6)'])->assertStatus(429);
+        $this->getJson($base.'/code-submissions?user_id=1')->assertJsonCount(1,'items');
+        $this->postJson($base.'/code-submissions/recheck-latest',['latest_configuration'=>true])->assertJsonPath('execution_ids',[])->assertJsonPath('skipped_active',[]);
+        $this->mock(Grading::class)->shouldReceive('apply')->once();
+        $data=['execution_id'=>$first['execution_id'],'state'=>'done','points'=>10,'comment'=>'Teacher feedback'];
+        $hash=hash('sha256',json_encode($data));
+        app(\App\Services\CodeChecking\Results::class)->accept(CodeExecutionRun::findOrFail($first['execution_id']),$data,$hash);
+        app(\App\Services\CodeChecking\Results::class)->accept(CodeExecutionRun::findOrFail($first['execution_id']),$data,$hash);
+        $this->login()->getJson($base.'/code-submissions')->assertJsonCount(0,'items');
+    }
+
+    public function test_history_retains_each_old_cp_attempt_without_borrowing_latest_gp_result():void
+    {
+        $base='/insider/courses/7/tasks/12';
+        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY,user_id INTEGER,course_id INTEGER,task_id INTEGER,text TEXT,mark INTEGER,raw_mark INTEGER,evaluated_mark INTEGER,comment TEXT,submitted TEXT,checked TEXT,created_at TEXT,updated_at TEXT,geekpaste_code_id TEXT)');
+        $this->login(1)->putJson($base.'/checker/private',$this->configBody())->assertOk();
+        $source=$this->login()->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'print(10)'])->assertCreated()->json();
+        $record=CodeSubmission::findOrFail($source['id']);
+        $record->update(['legacy_id'=>'OLD123','source_metadata'=>['legacy_id'=>'OLD123'],'solution_id'=>101]);
+        CodeExecutionRun::findOrFail($source['execution_id'])->update(['state'=>'completed','points'=>10,'comment'=>'LATEST GP RESULT','finished_at'=>now()]);
+        foreach([[101,2,5,'Earlier feedback','2026-11-10 12:00:00'],[102,2,10,'Later feedback','2026-11-11 12:00:00'],[201,3,2,'Other student','2026-11-12 12:00:00']] as [$id,$user,$mark,$comment,$date])
+            DB::table('solutions')->insert(['id'=>$id,'user_id'=>$user,'course_id'=>7,'task_id'=>12,'text'=>url('/insider/code-submissions/'.$record->id),
+                'mark'=>$mark,'raw_mark'=>$mark,'comment'=>$comment,'submitted'=>$date,'checked'=>$date,'created_at'=>$date,'updated_at'=>$date,'geekpaste_code_id'=>'OLD123']);
+        $list=$this->login(1)->getJson($base.'/code-submissions?user_id=2')->assertOk()->assertJsonCount(2,'items')->assertJsonPath('total_attempts',2)->json();
+        $this->assertSame(['solution-102','solution-101'],array_column($list['items'],'id'));
+        $this->assertSame([10,5],array_column($list['items'],'awarded_xp'));
+        $this->assertSame(['legacy_attempt','legacy_attempt'],array_column($list['items'],'kind'));
+        $this->assertSame([true,false],array_column($list['items'],'is_best'));
+        $this->assertSame('solution-102',$list['best_attempt']['id']);
+        // Automatic grade timestamps are not evidence that a teacher viewed the work.
+        $this->getJson($base.'/code-submissions?user_id=2&teacher_viewed=0')->assertJsonCount(2,'items');
+        $this->assertArrayNotHasKey('report',$list['items'][0]);$this->assertArrayNotHasKey('files',$list['items'][0]);
+        $this->getJson($base.'/code-attempts/101')->assertOk()->assertJsonPath('awarded_xp',5)->assertJsonPath('comment','Earlier feedback')
+            ->assertJsonPath('report',null)->assertJsonPath('source_version_unknown',true)->assertJsonPath('source_submission_id',$record->id)->assertDontSee('LATEST GP RESULT')
+            ->assertJsonPath('can_grade',true)->assertJsonPath('review_mark',5)->assertJsonPath('review_comment','Earlier feedback')
+            ->assertJsonPath('review_url',url('/insider/courses/7/steps/1').'?student=2&task=12&attempt=solution-101#task12');
+        $this->getJson('/insider/code-submissions/'.$record->id)->assertOk()->assertJsonPath('points',10)->assertJsonPath('awarded_xp',null);
+        $this->putJson('/insider/code-submissions/'.$record->id.'/flags',['teacher_viewed'=>true])->assertOk();
+        $this->getJson($base.'/code-submissions?user_id=2&teacher_viewed=0')->assertJsonCount(0,'items');
+        $this->login()->getJson($base.'/code-attempts/101')->assertOk();
+        $this->login(3)->getJson($base.'/code-attempts/101')->assertForbidden();
+        $this->getJson($base.'/code-attempts/201')->assertOk()->assertJsonPath('source_submission_id',null)->assertJsonPath('source_url',null);
+        $this->getJson($base.'/code-submissions?user_id=2')->assertForbidden();
+    }
+
+    public function test_course_author_access_does_not_depend_on_the_global_teacher_role():void
+    {
+        $base='/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private',$this->configBody())->assertOk();
+        DB::table('users')->where('id',3)->update(['role'=>'teacher']);
+        $this->login(3)->putJson($base.'/code-draft',['revision'=>0,'mode'=>'code','editor_files'=>[['path'=>'main.py','content'=>'print(5)']]])->assertOk();
+        $this->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'use_draft'=>true,'draft_revision'=>1])->assertCreated()->assertJsonPath('user_id',3);
+        DB::table('users')->insert(['id'=>5,'name'=>'Unrelated teacher','email'=>'unrelated@test','role'=>'teacher','email_verified_at'=>'2026-01-01']);
+        $this->login(5)->getJson($base.'/code-draft')->assertForbidden();
+        $this->putJson($base.'/code-draft',['revision'=>0,'mode'=>'code','editor_files'=>[['path'=>'main.py','content'=>'print(5)']]])->assertForbidden();
+        $this->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'print(5)'])->assertForbidden();
+    }
+
+    public function test_private_submission_html_links_redirect_to_the_task_but_json_and_shared_links_keep_their_contract():void
+    {
+        $source=$this->createSubmission();$url='/insider/code-submissions/'.$source['id'];
+        $canonical=url('/insider/courses/7/steps/1').'?student=2&task=12&attempt='.$source['id'].'#task12';
+        $this->login()->get($url)->assertRedirect($canonical);
+        $this->getJson($url)->assertOk()->assertJsonPath('id',$source['id']);
+        $this->login(1)->get($url)->assertRedirect($canonical);
+        $this->login(3)->get($url)->assertForbidden();
+    }
+
+    public function test_task_deep_links_bind_attempts_to_their_actual_author_course_and_visible_task():void
+    {
+        $source=$this->createSubmission();$location=app(\App\Services\TaskLocation::class);
+        $course=\App\Course::findOrFail(7);$tasks=collect([\App\Task::findOrFail(12)]);$teacher=User::findOrFail(1);
+        $context=$location->context(new \Illuminate\Http\Request(['student'=>2,'attempt'=>$source['id']]),$teacher,$course,$tasks);
+        $this->assertSame(['student_id'=>2,'task_id'=>12,'attempt'=>$source['id']],$context);
+        foreach([
+            [new \Illuminate\Http\Request(['student'=>3,'attempt'=>$source['id']]),$teacher,$course,$tasks],
+            [new \Illuminate\Http\Request(['student'=>2,'task'=>13,'attempt'=>$source['id']]),$teacher,$course,$tasks],
+            [new \Illuminate\Http\Request(['student'=>2,'attempt'=>$source['id']]),$teacher,$course,collect()],
+            [new \Illuminate\Http\Request(['student'=>2,'attempt'=>$source['id']]),User::find(4),\App\Course::find(8),$tasks],
+        ] as [$request,$actor,$selectedCourse,$selectedTasks]){
+            try{$location->context($request,$actor,$selectedCourse,$selectedTasks);$this->fail('A mismatched deep link was accepted.');}
+            catch(\Illuminate\Database\Eloquent\ModelNotFoundException $error){$this->assertTrue(true);}
+            catch(\Symfony\Component\HttpKernel\Exception\HttpException $error){$this->assertSame(404,$error->getStatusCode());}
+        }
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $location->context(new \Illuminate\Http\Request(['student'=>3,'attempt'=>$source['id']]),User::find(2),$course,$tasks);
+    }
+
+    public function test_legacy_student_review_links_redirect_to_the_selected_attempt_on_the_task():void
+    {
+        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY,user_id INTEGER,course_id INTEGER,task_id INTEGER,text TEXT,mark INTEGER,submitted TEXT)');
+        foreach([[101,'2026-11-10 12:00:00'],[102,'2026-11-11 12:00:00']] as [$id,$date])DB::table('solutions')->insert(['id'=>$id,'user_id'=>2,'course_id'=>7,'task_id'=>12,'text'=>'historical answer','mark'=>5,'submitted'=>$date]);
+        $this->login(1)->get('/insider/courses/7/tasks/12/student/2')->assertRedirect(url('/insider/courses/7/steps/1').'?student=2&task=12&attempt=solution-102#task12');
+        $this->get('/insider/courses/7/tasks/12/student/2?legacy_attempt=101')->assertRedirect(url('/insider/courses/7/steps/1').'?student=2&task=12&attempt=solution-101#task12');
+        $this->get('/insider/courses/7/tasks/12/student/2?legacy_attempt=999')->assertNotFound();
+        $this->login(3)->get('/insider/courses/7/tasks/12/student/2')->assertForbidden();
+    }
+
+    public function test_best_attempt_remains_available_when_its_history_page_or_review_filter_is_not_visible():void
+    {
+        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY,user_id INTEGER,course_id INTEGER,task_id INTEGER,text TEXT,mark INTEGER,submitted TEXT)');
+        for($id=1;$id<=22;$id++)DB::table('solutions')->insert(['id'=>$id,'user_id'=>2,'course_id'=>7,'task_id'=>12,'text'=>'saved answer','mark'=>$id<=2?10:5,'submitted'=>sprintf('2026-11-%02d 12:00:00',$id)]);
+        $response=$this->login(1)->getJson('/insider/courses/7/tasks/12/code-submissions?user_id=2')->assertJsonCount(20,'items')->assertJsonPath('best_attempt.id','solution-2')->assertJsonPath('has_more',true)->json();
+        $this->assertSame([],array_filter($response['items'],fn($item)=>$item['is_best']));
+        $this->getJson('/insider/courses/7/tasks/12/code-submissions?user_id=2&page=2')->assertJsonPath('items.0.id','solution-2')->assertJsonPath('items.0.is_best',true);
+        $this->getJson('/insider/courses/7/tasks/12/code-submissions?user_id=2&teacher_viewed=1')->assertJsonCount(0,'items')->assertJsonPath('best_attempt.id','solution-2');
+    }
+
+    public function test_history_summary_query_count_does_not_grow_with_attempt_count_or_load_private_payloads():void
+    {
+        $base='/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private',$this->configBody())->assertOk();
+        $make=fn()=>$this->login()->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'PRIVATE SOURCE'])->assertCreated();
+        $make();
+        DB::enableQueryLog();DB::flushQueryLog();
+        $this->getJson($base.'/code-submissions')->assertJsonCount(1,'items');$one=count(DB::getQueryLog());DB::disableQueryLog();
+        for($i=0;$i<19;$i++)$make();
+        DB::enableQueryLog();DB::flushQueryLog();
+        $result=$this->getJson($base.'/code-submissions')->assertOk()->assertJsonCount(20,'items')->assertDontSee('PRIVATE SOURCE')->assertDontSee('PRIVATE RUBRIC')->json();
+        $many=count(DB::getQueryLog());DB::disableQueryLog();
+        $this->assertLessThanOrEqual($one+1,$many);
+        foreach(['report','files','comment','integrity','subscription','runs'] as $field)$this->assertArrayNotHasKey($field,$result['items'][0]);
+    }
+
+    public function test_teacher_progress_includes_live_and_failed_student_attempts_but_excludes_staff_and_gp_archives():void
+    {
+        $base='/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private',$this->configBody())->assertOk();
+        $this->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'teacher own solution'])->assertCreated();
+        DB::table('course_students')->insert(['course_id'=>7,'user_id'=>1]);
+        $failed=$this->login()->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'student attempt'])->assertCreated()->json();
+        CodeExecutionRun::findOrFail($failed['execution_id'])->update(['state'=>'error','finished_at'=>now()]);
+        $archive=$this->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'archival snippet'])->assertCreated()->json();
+        CodeSubmission::findOrFail($archive['id'])->update(['legacy_id'=>'OLD456']);
+        // A globally marked teacher can still be a learner in a different course.
+        DB::table('users')->where('id',3)->update(['role'=>'teacher']);
+        $this->login(3)->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'running attempt'])->assertCreated();
+        $progress=app(\App\Services\CodeChecking\History::class)->ungradedProgress(7,[12])->get(12);
+        $this->assertFalse($progress->has(1));
+        $this->assertSame(1,$progress->get(2)['attempts']);$this->assertTrue($progress->get(2)['error']);$this->assertFalse($progress->get(2)['pending']);
+        $this->assertSame(1,$progress->get(3)['attempts']);$this->assertTrue($progress->get(3)['pending']);
+    }
+
     public function test_task_attachments_starters_and_private_files_have_separate_access(): void
     {
         $base = '/insider/courses/7/tasks/12';
@@ -150,6 +305,44 @@ class CodeCheckingTest extends TestCase
         $this->login(3)->getJson($base.'/code-draft')->assertJsonPath('revision', 0);
         $draft['editor_files'][0]['path'] = '../escape.py';
         $this->login()->putJson($base.'/code-draft', array_replace($draft, ['revision' => 1]))->assertStatus(422);
+    }
+
+    public function test_first_cpp_editor_save_accepts_the_ui_empty_keep_files_payload_for_students_and_teachers():void
+    {
+        $base='/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private',array_replace($this->configBody(),['language'=>'cpp']))->assertOk();
+        foreach([2,1] as $user){
+            $this->login($user)->getJson($base.'/code-draft')->assertOk()->assertJsonPath('revision',0);
+            $this->assertFalse(\App\CodeDraft::where('user_id',$user)->exists());
+            $code="  #include <iostream>\nint main(){ std::cout << 5; }\n";
+            $payload=['revision'=>0,'mode'=>'code','language'=>'cpp','text'=>'','draft_revision'=>0,'keep_files'=>[],
+                'editor_files'=>[['path'=>'solution.cpp','content'=>$code]],'repository_url'=>'','repository_ref'=>null];
+            $this->putJson($base.'/code-draft',$payload)->assertOk()->assertJsonPath('revision',1)->assertJsonPath('files.0.content',$code);
+            $result=$this->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'use_draft'=>true,'draft_revision'=>1])->assertCreated()->json();
+            $this->assertSame($code,$result['files'][0]['source']);
+            // Sending a solution never removes or resets its author's saved draft.
+            $this->getJson($base.'/code-draft')->assertOk()->assertJsonPath('revision',1)->assertJsonPath('files.0.content',$code);
+        }
+        $this->assertDatabaseCount('code_drafts',2);
+    }
+
+    public function test_missing_and_multitab_drafts_return_conflicts_without_overwriting_saved_work():void
+    {
+        $base='/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private',$this->configBody())->assertOk();$this->login();
+        $initial=['revision'=>0,'mode'=>'code','language'=>'python','draft_revision'=>0,'keep_files'=>[],
+            'editor_files'=>[['path'=>'main.py','content'=>'print("first tab")']]];
+        $this->putJson($base.'/code-draft',$initial)->assertOk()->assertJsonPath('revision',1);
+        $updated=array_replace($initial,['revision'=>1,'draft_revision'=>1,'editor_files'=>[['path'=>'main.py','content'=>'print("new saved work")']]]);
+        $this->putJson($base.'/code-draft',$updated)->assertOk()->assertJsonPath('revision',2);
+        $this->putJson($base.'/code-draft',$initial)->assertConflict();
+        $this->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'use_draft'=>true,'draft_revision'=>1])->assertConflict();
+        $this->getJson($base.'/code-draft')->assertJsonPath('revision',2)->assertJsonPath('files.0.content','print("new saved work")');
+        \App\CodeDraft::where('user_id',2)->delete();
+        $this->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'use_draft'=>true,'draft_revision'=>2])->assertConflict()->assertDontSee('App\\CodeDraft');
+        $this->putJson($base.'/code-draft',$updated)->assertConflict();
+        $this->putJson($base.'/code-draft',array_replace($initial,['keep_files'=>[0]]))->assertConflict();
+        $this->assertDatabaseCount('code_drafts',0);$this->assertDatabaseCount('code_submissions',0);
     }
 
     public function test_multiple_uploads_and_format_constraints_are_owned_by_the_task(): void
@@ -468,6 +661,9 @@ class CodeCheckingTest extends TestCase
         $this->login()->getJson($url)->assertOk()->assertJsonPath('checker_diagnostics',null)->assertJsonPath('report',null)
             ->assertDontSee('PRIVATE INPUT AND EXPECTED IMAGE');
         $this->login(1)->getJson($url)->assertOk()->assertJsonPath('checker_diagnostics.text','PRIVATE INPUT AND EXPECTED IMAGE');
+        $this->getJson($url.'?test_data=metadata')->assertOk()->assertDontSee('PRIVATE INPUT AND EXPECTED IMAGE')->assertJsonPath('text_report_available',true);
+        $this->getJson($url.'/runs/'.$run->id.'?test_data=metadata')->assertOk()->assertDontSee('PRIVATE INPUT AND EXPECTED IMAGE')->assertJsonPath('text_report_available',true);
+        $this->getJson($url.'/runs/'.$run->id.'/tests/1')->assertNotFound();
     }
 
     public function test_submission_retries_are_idempotent_and_conflicting_payload_is_rejected(): void
@@ -497,6 +693,68 @@ class CodeCheckingTest extends TestCase
         $this->login(1)->getJson($url)->assertJsonPath('tests.0.unlocked', true);
         $this->assertDatabaseCount('code_test_purchases', 1);
         $this->assertDatabaseCount('coin_transactions', 2);
+    }
+
+    public function test_test_metadata_and_purchases_are_body_free_and_single_test_access_is_scoped():void
+    {
+        $submission=$this->createSubmission();$run=$submission['execution_id'];
+        $payload=$this->report($run);$payload['code_id']=$submission['id'];$payload['total']=2;$payload['passed']=1;
+        $payload['tests'][]=['number'=>2,'test_id'=>str_repeat('c',64),'is_public'=>true,'verdict'=>'passed',
+            'input'=>$this->field('PUBLIC SECOND INPUT'),'expected'=>$this->field('PUBLIC SECOND EXPECTED'),
+            'actual'=>$this->field('PUBLIC SECOND ACTUAL'),'error'=>$this->field('PUBLIC SECOND ERROR'),'comparison'=>['equal'=>true],'limits'=>['time'=>1]];
+        $testArtifact=app(Artifacts::class)->put('TEST ARTIFACT THAT MUST NOT BE READ BY METADATA');
+        $payload['tests'][1]['error']=$testArtifact;
+        app(Reports::class)->accept($payload);
+        $this->partialMock(Artifacts::class,function($mock)use($testArtifact){
+            $mock->shouldNotReceive('get')->with($testArtifact['blob_id']);
+            $mock->shouldNotReceive('readStream')->with($testArtifact['blob_id']);
+        });
+        CodeExecutionRun::findOrFail($run)->update(['comment'=>'RAW SECRET INPUT AND PUBLIC SECOND INPUT','state'=>'completed','points'=>5,'finished_at'=>now()]);
+        $base='/insider/code-submissions/'.$submission['id'];$report='/insider/code-test-reports/'.$run;
+        foreach([2,1] as $user){
+            $this->login($user);
+            foreach([$base.'?test_data=metadata',$base.'/runs/'.$run.'?test_data=metadata',$report.'?test_data=metadata'] as $url){
+                $response=$this->getJson($url)->assertOk()->assertDontSee('SECRET INPUT')->assertDontSee('PUBLIC SECOND')->assertDontSee($testArtifact['blob_id'])->json();
+                $metadata=$response['report']??$response;
+                $this->assertSame($run,$metadata['run_id']);$this->assertSame('metadata',$metadata['test_data']);
+                foreach($metadata['tests'] as $test)foreach(['input','expected','actual','error','comparison','limits'] as $field)$this->assertArrayNotHasKey($field,$test);
+                $this->assertArrayNotHasKey('configuration',$response);
+            }
+        }
+        $this->login()->getJson($base.'/runs/'.$run.'/tests/2')->assertOk()->assertJsonPath('input.text','PUBLIC SECOND INPUT')->assertDontSee('SECRET');
+        $this->getJson($base.'/runs/'.$run.'/tests/1')->assertForbidden();
+        $this->assertDatabaseCount('code_test_purchases',0);$this->assertSame(20,(int)User::find(2)->balance());
+        $this->login(3)->getJson($base.'/runs/'.$run.'/tests/2')->assertForbidden();
+        $this->login(1)->getJson($base.'/runs/'.$run.'/tests/1')->assertOk()->assertJsonPath('input.text','SECRET INPUT')->assertDontSee('PUBLIC SECOND');
+        $other=$this->login()->postJson('/insider/courses/7/tasks/12/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'print(6)'])->assertCreated()->json();
+        $this->getJson('/insider/code-submissions/'.$other['id'].'/runs/'.$run.'/tests/2')->assertNotFound();
+        $this->getJson($base.'/runs/'.$run.'/tests/3')->assertNotFound();
+        $this->postJson($report.'/tests/'.str_repeat('b',64).'/purchase?test_data=metadata',['expected_price'=>5])->assertOk()
+            ->assertJsonPath('charged',5)->assertJsonPath('report.tests.0.unlocked',true)->assertDontSee('SECRET')->assertDontSee('PUBLIC SECOND');
+        $this->getJson($base.'/runs/'.$run.'/tests/1')->assertOk()->assertJsonPath('input.text','SECRET INPUT')->assertDontSee('PUBLIC SECOND');
+        $this->postJson($report.'/tests/'.str_repeat('b',64).'/purchase?test_data=metadata',['expected_price'=>5])->assertOk()->assertJsonPath('charged',0)->assertDontSee('SECRET');
+        $this->assertSame(15,(int)User::find(2)->balance());$this->assertDatabaseCount('code_test_purchases',1);
+        // The existing full report API stays compatible for other consumers.
+        $this->getJson($report)->assertOk()->assertJsonPath('tests.0.input.text','SECRET INPUT')->assertJsonPath('tests.1.input.text','PUBLIC SECOND INPUT');
+    }
+
+    public function test_historical_test_metadata_and_detail_never_borrow_current_task_fixtures():void
+    {
+        $text="Пройдено тестов: 1 из 2.\n\nТест 1 (публичный): пройден.\n\nВвод:\n<pre>SAVED PUBLIC INPUT</pre>\n\nВывод программы:\n<pre>SAVED PUBLIC OUTPUT</pre>\n\nТест 2 (приватный): неверный ответ.";
+        $root=$this->legacyExport();$this->rewriteLegacy($root,['check_comments'=>$text]);
+        app(\App\Services\CodeChecking\LegacyImport::class)->run($root,['tasks'=>['12'=>12]],true,4);
+        $submission=CodeSubmission::first();$run=$submission->current_run_id;$base='/insider/code-submissions/'.$submission->id;
+        foreach([2,1] as $user){
+            $this->login($user);
+            foreach([$base.'?test_data=metadata',$base.'/runs/'.$run.'?test_data=metadata'] as $url){
+                $response=$this->getJson($url)->assertOk()->assertDontSee('SAVED PUBLIC INPUT')->assertDontSee('SAVED PUBLIC OUTPUT')->assertJsonPath('comment','')->assertJsonPath('report.run_id',$run)->json();
+                foreach($response['report']['tests'] as $test)foreach(['input','expected','actual','error'] as $field)$this->assertArrayNotHasKey($field,$test);
+            }
+        }
+        $this->login()->getJson($base.'/runs/'.$run.'/tests/1')->assertOk()->assertJsonPath('input.text','SAVED PUBLIC INPUT')->assertJsonPath('actual.text','SAVED PUBLIC OUTPUT');
+        $this->getJson($base.'/runs/'.$run.'/tests/2')->assertForbidden();
+        $this->login(1)->getJson($base.'/runs/'.$run.'/tests/2')->assertOk()->assertJsonPath('data_unavailable',true)->assertJsonMissingPath('input')->assertJsonMissingPath('actual');
+        $this->assertDatabaseCount('code_test_purchases',0);$this->assertSame(20,(int)User::find(2)->balance());
     }
 
     public function test_failed_purchase_rolls_back_coins_and_never_unlocks(): void

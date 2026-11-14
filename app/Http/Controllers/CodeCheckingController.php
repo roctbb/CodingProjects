@@ -50,7 +50,8 @@ class CodeCheckingController extends Controller
     public function settings(Request $request, int $course, int $task, Access $access, Configuration $configuration)
     {
         $access->task($request->user(), $course, $task);
-        return $this->json($configuration->publicSettings(CodeTaskChecker::findOrFail($task)) + ['balance' => (int) $request->user()->balance()]);
+        return $this->json($configuration->publicSettings(CodeTaskChecker::findOrFail($task)) + ['balance' => (int) $request->user()->balance(),
+            'teacher_submission_allowed'=>$access->teacher($request->user(),$course),'viewer_user_id'=>(int)$request->user()->id]);
     }
 
     public function privateSettings(Request $request, int $course, int $task, Access $access, Configuration $configuration)
@@ -90,24 +91,30 @@ class CodeCheckingController extends Controller
     {
         $model = $access->task($request->user(), $course, $task);
         if ($request->isMethod('post')) {
-            return $this->json($submissions->view($submissions->create($request, $course, $model), $request->user()), 201);
+            return $this->json($submissions->view($submissions->create($request, $course, $model), $request->user(),true,$this->testFields($request)), 201);
         }
-        $query = CodeSubmission::where('course_id', $course)->where('task_id', $task);
-        if (!$access->teacher($request->user(), $course)) $query->where('user_id', $request->user()->id);
-        if ($request->filled('user_id')) $query->where('user_id', $request->integer('user_id'));
-        if ($access->teacher($request->user(),$course) && $request->has('teacher_viewed')) $query->where('teacher_viewed',$request->boolean('teacher_viewed'));
-        $page = $query->orderByDesc('created_at')->orderByDesc('id')->simplePaginate(20);
-        return $this->json(['items' => $page->map(fn ($row) => $submissions->view($row, $request->user(), false)), 'has_more' => $page->hasMorePages()]);
+        $request->validate(['user_id'=>'sometimes|integer|min:1','page'=>'sometimes|integer|min:1','teacher_viewed'=>'sometimes|boolean']);
+        $teacher=$access->teacher($request->user(),$course);
+        return $this->json(app(\App\Services\CodeChecking\History::class)->page($request->user(),$course,$model,
+            $request->filled('user_id')?$request->integer('user_id'):null,
+            $teacher && $request->has('teacher_viewed')?$request->boolean('teacher_viewed'):null,max(1,$request->integer('page',1))));
     }
 
-    public function show(Request $request, string $submission, Submissions $submissions)
+    public function attempt(Request $request,int $course,int $task,int $solution,Access $access)
+    {
+        $model=$access->task($request->user(),$course,$task);
+        return $this->json(app(\App\Services\CodeChecking\History::class)->event($request->user(),$course,$model,$solution));
+    }
+
+    public function show(Request $request, string $submission, Submissions $submissions,Access $access)
     {
         $record = CodeSubmission::findOrFail($submission);
-        $value = $submissions->view($record, $request->user());
-        if (!$request->expectsJson()) return response()->view('steps.native-submission', ['submission' => $record,
-            'task' => \App\Task::findOrFail($record->task_id), 'course' => \App\Course::findOrFail($record->course_id)])
-            ->header('Cache-Control', 'private, no-store');
-        return $this->json($value);
+        if (!$request->expectsJson()) {
+            $access->authorOrTeacher($request->user(),$record);
+            return redirect()->to(app(\App\Services\TaskLocation::class)->submission($record))->header('Cache-Control','private, no-store');
+        }
+        $record->load('currentRun','author');
+        return $this->json($submissions->view($record, $request->user(),true,$this->testFields($request)));
     }
 
     public function subscription(Request $request, string $submission, Access $access, RunnerClient $runner)
@@ -136,14 +143,14 @@ class CodeCheckingController extends Controller
 
     public function report(Request $request, string $run, Reports $reports)
     {
-        return $this->json($reports->view(CodeTestReport::findOrFail($run), $request->user()));
+        return $this->json($reports->view(CodeTestReport::findOrFail($run), $request->user(),$this->testFields($request)));
     }
 
     public function purchase(Request $request, string $run, string $test, Reports $reports)
     {
         $request->validate(['expected_price' => 'sometimes|integer|min:0']);
         return $this->json($reports->buy(CodeTestReport::findOrFail($run), $test, $request->user(),
-            $request->has('expected_price') ? $request->integer('expected_price') : null));
+            $request->has('expected_price') ? $request->integer('expected_price') : null,$this->testFields($request)));
     }
 
     public function download(Request $request, string $run, string $test, string $field, Reports $reports)
@@ -154,5 +161,11 @@ class CodeCheckingController extends Controller
     private function json(array $data, int $status = 200)
     {
         return response()->json($data, $status)->header('Cache-Control', 'private, no-store');
+    }
+
+    private function testFields(Request $request):bool
+    {
+        $request->validate(['test_data'=>'sometimes|in:metadata,full']);
+        return $request->input('test_data')!=='metadata';
     }
 }

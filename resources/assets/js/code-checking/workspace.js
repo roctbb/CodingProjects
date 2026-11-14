@@ -1,17 +1,23 @@
-import {node, button, field, input, textarea, select, actions, check, modes, phases, verdicts, request, download} from './ui';
+import {node, button, field, input, textarea, select, actions, modes, phases, verdicts, request, download} from './ui';
 import {subscribe} from './progress';
+import {resultHeader,submittedWork,resultActions} from './result-view';
 
 export async function workspace(root) {
     const base = root.dataset.endpoint;
     const teacher = root.dataset.teacher === 'true';
+    const inlineReview = root.hasAttribute('data-execution-inline-review');
     let config, draft, files = [], uploads = [], dirty = false, editing, stop = () => {}, page = 1, current, requestId, generation = 0;
-    let saving = false, unreadOnly = false, compareWith = null;
+    let saving = false, compareWith = null, settingsPromise, historyGeneration = 0, ownMode = false;
+    let selectedUser = root.dataset.user ? {id:root.dataset.user,name:''} : null;
+    let attemptItems = [], activeAttempt = null, attemptList;
+    const toolbar = node('div',{class:'gc-execution-toolbar'});
     const notice = node('div', {role:'status', 'aria-live':'polite'});
     const attachmentsArea = node('div');
     const content = node('div');
     const results = node('div');
     const history = node('div');
-    root.replaceChildren(notice, attachmentsArea, content, results, history);
+    const browser = node('div',{class:'gc-execution-browser'},history,results);
+    root.replaceChildren(toolbar,notice,attachmentsArea,content,browser);
     const error = e => {
         notice.className = 'alert alert-danger'; notice.textContent = e.message;
         if (e.status === 409 && dirty && draft) notice.append(actions(button('Скачать мой черновик',() => {
@@ -26,6 +32,58 @@ export async function workspace(root) {
     const markDirty = () => {dirty = true; requestId = null; notice.className = 'text-muted small'; notice.textContent = 'Есть несохранённые изменения';};
     window.addEventListener('beforeunload', event => {if (dirty) {event.preventDefault(); event.returnValue = '';}});
     window.addEventListener('pagehide', () => {stop(); editing?.destroy();}, {once:true});
+    root.addEventListener('gc:execution-close',()=>{generation++;historyGeneration++;stop();current=null;});
+
+    async function settings() {
+        if (config) return config;
+        settingsPromise ||= request(base+'/checker').then(value => config=value).catch(e => {settingsPromise=null;throw e;});
+        return settingsPromise;
+    }
+    function renderToolbar() {
+        if (!teacher) return;
+        const title = ownMode ? 'Моя сдача' : selectedUser?.name || 'Сдачи ученика';
+        const heading = node('div',{},node('h3',{class:'h6 mb-1',tabIndex:-1},title),node('p',{class:'text-muted small mb-0'},ownMode ? 'Применяются обычные правила проверки и сроков. Опыт и награды начисляются как обычно.' : 'История сдач и результаты проверки.'));
+        toolbar.replaceChildren(heading);
+        if (inlineReview) toolbar.prepend(button('К списку учеников',() => {
+            root.dispatchEvent(new CustomEvent('gc:execution-close'));
+        }));
+    }
+    async function attachments() {
+        if (attachmentsArea.dataset.loaded) return;
+        const value = await request(base+'/checker/files');
+        attachmentsArea.dataset.loaded = 'true';
+        if (value.items.length) attachmentsArea.replaceChildren(node('div',{class:'gc-execution-attachments'},node('h3',{class:'h6'},'Материалы задания'),value.items.map(file => node('div',{},download(file.download_url,file.path),file.read_only ? ' · только чтение' : ''))));
+    }
+    async function selectStudent(student,{autoOpen=true,attempt=null}={}) {
+        generation++;historyGeneration++;stop();current=null;activeAttempt=null;compareWith=null;
+        selectedUser=student;ownMode=false;attemptItems=[];attemptList=null;
+        content.hidden=true;attachmentsArea.hidden=true;results.replaceChildren();notice.replaceChildren();renderToolbar();
+        try {
+            const records=await loadHistory();
+            if(selectedUser===student && !ownMode){
+                if(attempt)await openAttemptById(attempt);
+                else if(autoOpen && records[0])await openAttempt(records[0]);
+            }
+        } catch(e) {history.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить загрузку сдач',safe(() => selectStudent(student))));}
+    }
+    async function startOwnSubmission({attempt=null}={}) {
+        generation++;historyGeneration++;stop();current=null;activeAttempt=null;compareWith=null;
+        ownMode=true;selectedUser=null;results.replaceChildren();notice.replaceChildren();renderToolbar();
+        content.hidden=false;attachmentsArea.hidden=false;
+        content.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем форму сдачи…'));
+        try {
+            let records;
+            if(root.hasAttribute('data-history-only')){content.hidden=true;attachmentsArea.hidden=true;records=await loadHistory();}
+            else{
+                await settings();
+                if (!config.teacher_submission_allowed) throw new Error('Сдача этой задачи пока недоступна. Проверьте настройки проверки.');
+                if (!draft) setDraft(await request(base+'/code-draft'));
+                renderComposer();
+                [,records]=await Promise.all([attachments(),loadHistory()]);
+            }
+            if(ownMode){if(attempt)await openAttemptById(attempt);else if(records[0])await openAttempt(records[0]);}
+        } catch(e) {content.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить',safe(startOwnSubmission)));}
+    }
 
     function setDraft(value) {
         draft = value;
@@ -61,15 +119,18 @@ export async function workspace(root) {
     }
     async function submit() {
         if (saving) return;
+        const submittedGeneration=generation;
         if (dirty || draft.revision === 0) await save();
         requestId ||= crypto.randomUUID();
         content.setAttribute('inert','');
         try {
             const record = await request(base+'/code-submissions','POST',{request_id:requestId, use_draft:true, draft_revision:draft.revision});
             notice.className = 'text-muted small'; notice.textContent = 'Решение отправлено';
-            await show(record.id); await loadHistory();
+            if(generation===submittedGeneration){await loadHistory();if(generation===submittedGeneration)await show(record.id);}
         } catch (e) {
-            if (e.status === 429) {
+            if (e.status === 429 && teacher) {
+                notice.className='alert alert-warning';notice.textContent='Лимит проверок исчерпан. Повторите сдачу позже или уточните настройки лимита проверки.';
+            } else if (e.status === 429) {
                 notice.replaceChildren(node('p',{},e.message), button('Дополнительная попытка', safe(async () => {
                     if (!confirm(`Приобрести дополнительную попытку за ${root.dataset.attemptPrice || '5'} GC?`)) return;
                     const value = await request(base+'/checker/extra-attempt','POST',{});
@@ -141,23 +202,94 @@ export async function workspace(root) {
         if (!value) return node('span',{class:'text-muted'},'Нет данных');
         return value.type === 'inline' ? node('pre',{class:'gc-execution-output'},value.text || '(пусто)') : node('div',{},download(value.download_url,`Скачать (${value.bytes} байт)`),value.truncated ? ' · вывод сокращён' : '');
     }
-    function renderReport(report, parent) {
+    let reportSequence = 0;
+    function renderReport(report, parent, submissionId) {
         if (!report) return;
         for (const note of report.notes || []) parent.append(node('p',{},note));
-        if (report.notice) parent.append(node('p',{class:'alert alert-info'},report.notice));
-        parent.append(node('h4',{class:'h6'},`Тесты: ${report.passed} из ${report.total}`));
-        report.tests.forEach(test => {
-            const detail = node('details',{},node('summary',{},`Тест ${test.number} · ${verdicts[test.verdict] || test.verdict}${test.unlocked ? '' : ' · скрытый'}`));
-            if (test.unlocked) {for (const [key,label] of Object.entries({input:'Ввод',expected:'Ожидается',actual:'Получено',error:'Ошибка'})) if (test[key]) detail.append(node('div',{},node('strong',{},label),artifact(test[key])));}
-            else if (test.can_purchase) detail.append(node('p',{class:'text-muted small'},'Откроется этот тест для следующих попыток. Оценка не изменится.'),button(`Открыть за ${report.price} GC`,safe(async () => {
-                if (!confirm(`Открыть тест ${test.number} за ${report.price} GC?\nБаланс: ${config.balance} GC. Тест останется доступным в следующих попытках.`)) return;
-                const value = await request(`/insider/code-test-reports/${report.run_id}/tests/${test.test_id}/purchase`,'POST',{expected_price:report.price});
-                notice.className = 'text-muted small'; notice.textContent = `Списано ${value.charged} GC. Баланс: ${value.balance} GC.`;
-                config.balance = value.balance;
-                await show(current.id);
-            })));
-            parent.append(detail);
-        });
+        if (report.notice) parent.append(report.legacy
+            ? node('details',{class:'gc-report-provenance'},node('summary',{},'О данных исторической проверки'),node('p',{class:'text-muted small'},report.notice))
+            : node('p',{class:'alert alert-info'},report.notice));
+        const section = node('section',{class:'gc-test-report','aria-label':'Результаты тестов'});
+        section.append(node('div',{class:'gc-test-report__heading'},node('h4',{class:'h6 mb-0'},'Результаты тестов'),
+            node('span',{class:report.passed === report.total ? 'gc-test-total is-passed' : 'gc-test-total'},`${report.passed} из ${report.total} пройдено`)));
+        const rows = node('tbody');
+        const table = node('table',{class:'gc-test-table'},node('thead',{},node('tr',{},
+            node('th',{scope:'col'},'Тест'),node('th',{scope:'col'},'Результат'),node('th',{scope:'col',class:'gc-test-access'},'Доступ'),node('th',{scope:'col'},node('span',{class:'visually-hidden'},'Данные теста')))),rows);
+        const sequence = ++reportSequence;
+        for (const test of report.tests || []) {
+            const passed = test.verdict === 'passed';
+            const detailsId = `${root.id || 'execution'}-report-${sequence}-test-${test.number}`;
+            const details = node('div',{class:'gc-test-data'});
+            const detailRow = node('tr',{class:'gc-test-detail',id:detailsId,hidden:true},node('td',{colSpan:4},details));
+            let loaded=false, loading;
+            const loadDetails=async () => {
+                if(loaded)return;
+                loading ||= request(`/insider/code-submissions/${submissionId}/runs/${report.run_id}/tests/${test.number}`).then(value => {
+                    const data=value.test || value;
+                    details.replaceChildren();
+                    for(const [key,label] of Object.entries({input:'Ввод',expected:'Ожидаемый ответ',actual:'Вывод программы',error:'Ошибка'})) {
+                        if(data[key])details.append(node('div',{},node('strong',{},label),artifact(data[key])));
+                    }
+                    if(data.notice)details.append(node('p',{class:'text-muted mb-0'},data.notice));
+                    if(!details.children.length)details.append(node('p',{class:'text-muted mb-0'},'В этой проверке подробные данные теста не сохранялись.'));
+                    loaded=true;
+                }).catch(e => {
+                    loading=null;
+                    details.replaceChildren(node('p',{class:'text-danger mb-2'},e.message),button('Повторить загрузку теста',safe(loadDetails)));
+                });
+                details.replaceChildren(node('p',{class:'text-muted mb-0',role:'status'},'Загружаем данные теста…'));
+                await loading;
+            };
+            const toggle = button('Данные',() => {
+                detailRow.hidden = !detailRow.hidden;
+                toggle.setAttribute('aria-expanded',String(!detailRow.hidden));
+                toggle.textContent = detailRow.hidden ? 'Данные' : 'Свернуть';
+                if(!detailRow.hidden && test.unlocked)loadDetails();
+            });
+            toggle.classList.add('btn-sm');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls',detailsId);toggle.setAttribute('aria-label',`Данные теста ${test.number}`);
+            if (test.unlocked) {
+                // Authorized test contents are fetched only when this row is expanded.
+            } else if (test.can_purchase) {
+                details.append(node('p',{class:'text-muted'},'После открытия данные этого теста будут доступны и в следующих попытках. Оценка этой работы сохранится.'));
+                const purchase = button(`Открыть за ${report.price} GC`,safe(async () => {
+                    await settings();
+                    if (!confirm(`Открыть тест ${test.number} за ${report.price} GC?\nБаланс: ${config.balance} GC.`)) return;
+                    purchase.disabled = true;
+                    try {
+                        const value = await request(`/insider/code-test-reports/${report.run_id}/tests/${test.test_id}/purchase?test_data=metadata`,'POST',{expected_price:report.price});
+                        notice.className = 'text-muted small';notice.textContent = `Списано ${value.charged} GC. Баланс: ${value.balance} GC.`;config.balance = value.balance;
+                        await show(current.id);
+                    } finally {purchase.disabled = false;}
+                }));
+                details.append(purchase);
+            } else details.append(node('p',{class:'text-muted mb-0'},report.legacy
+                ? 'В старом отчёте сохранён результат, но ввод и вывод скрытого теста не записывались. Текущие тесты преподаватель может посмотреть отдельно.'
+                : 'Данные этого теста скрыты. Результат проверки доступен в таблице.'));
+            const verdict = node('span',{class:`gc-test-verdict ${passed ? 'is-passed' : 'is-failed'}`},
+                node('i',{class:`fas ${passed ? 'fa-check-circle' : 'fa-circle-xmark'}`,'aria-hidden':'true'}),' ',verdicts[test.verdict] || test.verdict);
+            const visibility=(test.is_public?'Публичный':'Скрытый')+(!teacher&&test.unlocked&&!test.is_public?' · Открыт вам':'');
+            rows.append(node('tr',{},node('th',{scope:'row'},`№ ${test.number}`),node('td',{},verdict,node('small',{class:'gc-test-access-mobile text-muted'},visibility)),
+                node('td',{class:'gc-test-access'},node('span',{class:'gc-test-visibility'},test.is_public ? 'Публичный' : 'Скрытый'),!teacher && test.unlocked && !test.is_public ? node('small',{class:'d-block text-muted'},'Открыт вам') : null),node('td',{},toggle)),detailRow);
+        }
+        section.append(node('div',{class:'gc-test-table-scroll'},table));parent.append(section);
+    }
+    function textReport(record) {
+        const panel=node('details',{},node('summary',{},'Текстовый отчёт проверки'));
+        const content=node('div');panel.append(content);
+        let loaded=false,loading=false;
+        const load=async () => {
+            if(loaded || loading)return;
+            loading=true;content.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем отчёт…'));
+            try {
+                const value=await request(record.text_report_url);
+                content.replaceChildren(node('pre',{class:'gc-execution-output'},value.comment || 'Текстовый отчёт пуст.'));
+                if(teacher && value.checker_diagnostics)content.append(node('pre',{class:'gc-execution-output'},JSON.stringify(value.checker_diagnostics,null,2)));
+                loaded=true;
+            }catch(e){content.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить загрузку отчёта',safe(load)));}
+            finally{loading=false;}
+        };
+        panel.addEventListener('toggle',() => {if(panel.open)load();});
+        return panel;
     }
     function currentTests() {
         const panel = node('details',{},node('summary',{},'Текущие тесты задачи (для преподавателя)'));
@@ -199,15 +331,141 @@ export async function workspace(root) {
         }));
         return panel;
     }
-    async function show(id) {
+    function markSelectedAttempt(id) {
+        activeAttempt=id;
+        writeContext(id);
+        history.querySelectorAll('[data-attempt-id]').forEach(item => {
+            const selected=item.dataset.attemptId === String(id);
+            item.classList.toggle('is-selected',selected);item.setAttribute('aria-expanded',String(selected));
+        });
+        history.querySelectorAll('[data-attempt-body]').forEach(body=>{
+            body.hidden=body.dataset.attemptBody!==String(id);
+            if(!body.hidden)body.append(results);
+        });
+    }
+    function attemptHeader(record){
+        const label=record.kind==='legacy_attempt'?'Сдача':record.counts_as_attempt===false?'Сохранённая версия решения':'Решение';
+        const score=record.kind==='legacy_attempt'?record.awarded_xp!==null&&record.awarded_xp!==undefined?`${record.awarded_xp} XP`:'Ожидает оценки':record.points!==null&&record.points!==undefined?`${record.points}${record.maximum_points&&!record.source_version_unknown?' / '+record.maximum_points:''} баллов`:phases[record.state] || 'Загружаем результат…';
+        return [node('span',{},node('strong',{},record.created_at?new Date(record.created_at).toLocaleString('ru-RU'):label,record.is_best?node('small',{class:'gc-attempt-best ms-2'},'Лучшая'):null),node('small',{class:'text-muted'},record.created_at?label:'',teacher&&record.kind==='submission'&&!record.source_version_unknown&&record.teacher_viewed===false?' · Не просмотрено':'')),node('span',{class:'gc-attempt-list__score'},score),node('i',{class:'fas fa-chevron-down','aria-hidden':'true'})];
+    }
+    function attemptCard(record){
+        const id=String(record.id),bodyId=root.id+'-attempt-'+id;
+        const heading=button('',safe(async()=>{
+            if(activeAttempt===id){generation++;stop();current=null;markSelectedAttempt(null);return;}
+            await openAttempt(record);
+        }));
+        heading.className='gc-attempt-list__item';heading.dataset.attemptId=id;
+        heading.id=bodyId+'-toggle';heading.setAttribute('aria-expanded',String(activeAttempt===id));heading.setAttribute('aria-controls',bodyId);
+        heading.append(...attemptHeader(record));
+        const body=node('div',{id:bodyId,class:'gc-attempt-card__body',hidden:activeAttempt!==id,'data-attempt-body':id,role:'region','aria-labelledby':heading.id});
+        return node('li',{},node('article',{class:'gc-attempt-card'},heading,body));
+    }
+    function ensureAttemptCard(record){
+        const id=String(record.id);let summary=attemptItems.find(item=>String(item.id)===id);
+        if(!summary){summary={id,kind:record.kind || 'submission'};attemptItems.push(summary);}
+        for(const key of ['kind','created_at','awarded_xp','points','maximum_points','state','counts_as_attempt','is_best','source_version_unknown','teacher_viewed','solution_id'])if(record[key]!==undefined)summary[key]=record[key];
+        if(!attemptList?.isConnected){attemptList=node('ol',{class:'gc-attempt-list'});history.append(attemptList);}
+        const heading=[...attemptList.querySelectorAll('[data-attempt-id]')].find(item=>item.dataset.attemptId===id);
+        if(heading)heading.replaceChildren(...attemptHeader(summary));else attemptList.append(attemptCard(summary));
+    }
+    function writeContext(id){
+        if(root.dataset.taskId && location.pathname.includes('/steps/') && root.getClientRects().length){
+            const url=new URL(location.href);
+            url.searchParams.set('task',root.dataset.taskId);
+            url.searchParams.set('student',teacher && !ownMode ? selectedUser.id : root.dataset.viewerId);
+            if(id)url.searchParams.set('attempt',id);else url.searchParams.delete('attempt');url.hash='task'+root.dataset.taskId;
+            historyState(url);
+        }
+    }
+    function historyState(url){globalThis.history.replaceState(globalThis.history.state,'',url);}
+    async function openAttemptById(id){
+        const item=attemptItems.find(item=>String(item.id)===String(id));
+        if(item)return openAttempt(item);
+        if(/^solution-\d+$/.test(id))return showLegacyAttempt({id,kind:'legacy_attempt',solution_id:Number(id.slice(9))});
+        return show(id);
+    }
+    function renderAward(record,parent,{label=true}={}) {
+        if(record.awarded_xp===null || record.awarded_xp===undefined)return;
+        if(label)parent.append(node('p',{},node('strong',{},`Опыт за работу: ${record.awarded_xp} XP`)));
+        const award=record.award_breakdown;
+        if(!award)return;
+        const notes=[];
+        if(award.deadline_penalty>0){
+            if(award.evaluated_points!==null && award.evaluated_points!==undefined)notes.push(`До применения правил срока: ${award.evaluated_points}`);
+            notes.push(`Снижение по сроку: −${award.deadline_penalty} XP`);
+        }
+        if(award.xp_booster>0)notes.push(`Бонус опыта: +${award.xp_booster} XP`);
+        if(notes.length)parent.append(node('p',{class:'text-muted small'},notes.join(' · ')));
+    }
+    async function showLegacyAttempt(item) {
+        const selected=++generation;stop();current=null;compareWith=null;ensureAttemptCard({...item,kind:'legacy_attempt'});markSelectedAttempt(item.id);
+        results.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем сведения о сдаче…'));
+        try {
+            const record=await request(base+'/code-attempts/'+item.solution_id);
+            if(selected!==generation)return;
+            if(Number(record.user_id)!==Number(teacher && !ownMode ? selectedUser.id : root.dataset.viewerId))throw new Error('Эта сдача принадлежит другому ученику. Выберите его в списке.');
+            ensureAttemptCard(record);
+            const {header}=resultHeader(record);
+            const panel=node('section',{class:'gc-execution-result'},header);
+            renderAward(record,panel,{label:false});
+            if(record.evaluated_points!==null && record.evaluated_points!==undefined)panel.append(node('p',{},`Сохранённая оценка: ${record.evaluated_points}`));
+            if(record.text)panel.append(submittedWork({...record,mode:'text'}));
+            if(record.comment)panel.append(node('h4',{class:'h6'},'Комментарий к сдаче'),node('pre',{class:'gc-execution-output'},record.comment));
+            if(record.source_notice || (record.source_version_unknown && !record.text))panel.append(node('details',{class:'gc-report-provenance'},node('summary',{},'О сохранённой версии кода'),node('p',{},record.source_notice || 'Отдельная версия кода этой сдачи не сохранялась. Доступную версию можно посмотреть отдельно; её проверка могла относиться к другому изменению кода.')));
+            if(record.source_submission_id)panel.append(button('Открыть сохранённую версию кода',safe(() => show(record.source_submission_id,{snapshotOf:record}))));
+            else if(record.source_url)panel.append(download(record.source_url,'Открыть сохранённую версию кода'));
+            if(record.can_grade)panel.append(legacyGrading(record));
+            results.replaceChildren(panel);
+        } catch(e) {
+            if(selected!==generation)return;
+            results.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить загрузку сдачи',safe(() => showLegacyAttempt(item))));
+        }
+    }
+    function legacyGrading(record){
+        const panel=node('details',{class:'gc-inline-grading',open:record.awarded_xp===null},node('summary',{},record.awarded_xp===null?'Оценить работу':'Изменить оценку и комментарий'));
+        let mark=record.review_mark ?? '',comment=record.review_comment || '';
+        const feedback=node('p',{role:'status',class:'text-danger small'});
+        const save=button('Сохранить оценку',safe(async ()=>{
+            if(mark===''){feedback.textContent='Укажите оценку.';return;}
+            save.disabled=true;feedback.textContent='';
+            try{
+                await request(record.grade_url,'POST',{mark:Number(mark),comment,review_solution_id:record.solution_id});
+                await showLegacyAttempt(record);await loadHistory();
+                notice.className='text-muted small';notice.textContent='Оценка и комментарий сохранены';
+            }catch(e){feedback.textContent=e.message;}
+            finally{save.disabled=false;}
+        }),'primary');
+        panel.append(node('div',{class:'gc-inline-grading__form'},
+            field('Оценка, XP',input(mark,value=>mark=value,{type:'number',min:0,max:record.grading_maximum_points}),`Максимум ${record.grading_maximum_points}. Правила срока применяются при сохранении.`),
+            field('Комментарий ученику',textarea(comment,value=>comment=value,{rows:3})),save,feedback));
+        return panel;
+    }
+    async function openAttempt(item) {
+        if(item.kind==='legacy_attempt')return showLegacyAttempt(item);
+        return show(item.id);
+    }
+    async function show(id,options={}) {
         const selected = ++generation;
-        stop();
-        const record = await request('/insider/code-submissions/'+id);
+        stop();current=null;compareWith=options.snapshotOf ? null : compareWith;
+        if(!options.snapshotOf){ensureAttemptCard({id,kind:'submission'});markSelectedAttempt(id);}
+        results.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем выбранное решение…'));
+        let record;
+        try {record = await request('/insider/code-submissions/'+id+'?test_data=metadata');} catch(e) {
+            if(selected!==generation)return;
+            results.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить загрузку решения',safe(() => show(id,options))));return;
+        }
         if (selected !== generation) return;
+        const expectedUser=teacher && !ownMode ? selectedUser.id : root.dataset.viewerId;
+        if((root.dataset.taskId && Number(record.task_id)!==Number(root.dataset.taskId)) || (root.dataset.courseId && Number(record.course_id)!==Number(root.dataset.courseId)) || Number(record.user_id)!==Number(expectedUser)){
+            results.replaceChildren(node('p',{class:'text-danger'},'Эта сдача относится к другой задаче или ученику. Откройте её со страницы соответствующей задачи.'));return;
+        }
+        const sourceOnly=!!record.source_version_unknown || !!options.snapshotOf;
+        if(!options.snapshotOf)ensureAttemptCard(record);
         if (compareWith && compareWith.id !== id) {
             const target = compareWith; compareWith = null;
             const value = await request(`/insider/code-submissions/${target.id}/compare?with=${id}`);
             const {diffLines} = await import('./diff');
+            if(selected!==generation)return;
             const panel = node('section',{class:'gc-execution-result'},node('h3',{class:'h6'},'Сравнение попыток'),node('p',{class:'text-muted small'},'− выбранная в истории · + исходная попытка'));
             const oldFiles = new Map(value.before.files.map(f => [f.name,f]));
             const newFiles = new Map(value.after.files.map(f => [f.name,f]));
@@ -227,43 +485,33 @@ export async function workspace(root) {
         }
         current = record;
         const status = node('div',{role:'status','aria-live':'polite',class:'gc-execution-status'}, phases[record.progress?.phase || record.state] || record.state);
-        const body = node('section',{class:'gc-execution-result'},actions(node('h3',{class:'h6'},'Отправленное решение'),button('Обновить результат',safe(() => show(id)))),status);
-        if (record.points !== null) body.append(node('p',{},`Результат проверки: ${record.points} / ${record.maximum_points} баллов`));
-        if (record.awarded_xp !== null) body.append(node('p',{},`Оценка работы: ${record.awarded_xp} XP`));
-        if (record.text) body.append(node('pre',{class:'gc-execution-output'},record.text));
-        for (const file of record.files) {
-            const detail = node('details',{},node('summary',{},file.original_name || file.name));
-            detail.append(download(file.download_url,'Скачать оригинал'));
-            if (file.source !== undefined) detail.append(node('pre',{class:'gc-execution-output'},file.source));
-            if (/\.(png|jpe?g|gif|webp)$/i.test(file.name)) {
-                const preview = button('Показать изображение',safe(async () => {
-                    const response = await fetch(file.download_url+'?proxy=1',{credentials:'same-origin'});
-                    if (!response.ok) throw new Error('Не удалось загрузить изображение');
-                    const url = URL.createObjectURL(await response.blob());
-                    const img = node('img',{src:url,alt:file.name,class:'gc-execution-image',onload:() => URL.revokeObjectURL(url)});
-                    preview.replaceWith(img);
-                })); detail.append(preview);
-            }
-            body.append(detail);
-        }
+        const {header,terminal}=resultHeader(record,{sourceOnly});
+        const menu=resultActions();menu.add(button('Обновить результат',safe(() => show(id,options))));
+        const body = node('section',{class:'gc-execution-result'},header);
+        const contextBar=node('div',{class:'gc-result-context-bar'},menu.root);
+        if(!terminal)body.append(status);
+        if(options.snapshotOf)body.prepend(button('Вернуться к выбранной сдаче',safe(() => showLegacyAttempt(options.snapshotOf))));
+        if(sourceOnly)body.append(node('details',{class:'gc-report-provenance'},node('summary',{},'О сохранённой версии'),node('p',{},'Это доступная версия кода и результат её проверки. Связь этой версии с конкретной сдачей неизвестна.')));
+        if (!sourceOnly)renderAward(record,body);
+        body.append(contextBar,submittedWork(record));
         if (record.repository?.commit) body.append(node('p',{},`GitHub · ${record.repository.commit}`, ' ',download(`/insider/code-submissions/${id}/repository/archive`,'Скачать репозиторий')));
         if (record.comment && !record.report?.legacy) body.append(node('pre',{class:'gc-execution-output'},record.comment));
-        renderReport(record.report,body);
+        renderReport(record.report,body,id);
+        if(record.text_report_available)body.append(textReport(record));
         if (teacher && record.checker_diagnostics) body.append(node('details',{},node('summary',{},'Диагностика проверяющего модуля'),node('pre',{class:'gc-execution-output'},JSON.stringify(record.checker_diagnostics,null,2))));
         if (teacher && record.legacy) body.append(currentTests());
         if (record.legacy) {
-            body.append(node('p',{},download(record.legacy.source_url,'Скачать исходную запись GeekPaste')));
-            if (record.legacy.requires_conversion || record.legacy.warnings.length) body.append(node('p',{class:'alert alert-warning'},'Историческая работа. Часть материалов может требовать восстановления или преобразования; сохранена исходная запись.'));
-            if (record.legacy.commit_unknown) body.append(node('p',{class:'text-muted small'},'Исходники GitHub сохранены из старой базы. Коммит и оригинальный архив неизвестны.'));
+            if (record.legacy.requires_conversion || record.legacy.warnings.length) body.append(node('details',{class:'gc-report-provenance'},node('summary',{},'О материалах работы'),node('p',{},'Некоторые материалы этой сдачи нельзя показать в текущем формате. Доступные материалы приведены выше.')));
+            if (record.legacy.commit_unknown) body.append(node('p',{class:'text-muted small'},'Коммит этой версии GitHub и оригинальный архив не сохранены.'));
         }
-        if (!teacher) {
-            body.append(button(record.is_public ? 'Закрыть публичный доступ' : 'Поделиться решением',safe(async () => {
+        if (!teacher || ownMode) {
+            menu.add(button(record.is_public ? 'Закрыть публичный доступ' : 'Поделиться решением',safe(async () => {
                 if (!record.is_public && !confirm('Опубликовать отправленный текст и все файлы? Их сможет скачать любой, у кого есть ссылка. Тесты и критерии остаются закрытыми.')) return;
                 await request(`/insider/code-submissions/${id}/flags`,'PUT',{is_public:!record.is_public}); await show(id);
             })));
             if (record.is_public) body.append(download(`/shared/code-submissions/${id}`,'Публичная ссылка'));
-            if (record.review_request?.requested) body.append(node('p',{class:'text-muted'},record.review_request.message));
-            else if (record.review_request?.available) {
+            if (!teacher && record.review_request?.requested) body.append(node('p',{class:'text-muted'},record.review_request.message));
+            else if (!teacher && record.review_request?.available) {
                 let comment = '';
                 const review = node('details',{},node('summary',{},'Попросить преподавателя проверить'),field('Что нужно проверить',textarea('',value => {comment = value;},{minlength:10,maxlength:1000})),button('Отправить запрос',safe(async () => {
                     await request(`/insider/code-submissions/${id}/review-request`,'POST',{comment}); await show(id);
@@ -271,15 +519,17 @@ export async function workspace(root) {
                 body.append(review);
             }
         }
-        body.append(button('Сравнить с другой попыткой',safe(async () => {
-            compareWith = record; notice.className='alert alert-info'; notice.textContent='Выберите другую попытку этого ученика в истории ниже.';
+        if(!sourceOnly)menu.add(button('Сравнить с другой попыткой',safe(async () => {
+            compareWith = record;notice.className='alert alert-info';notice.textContent='Выберите другую сохранённую попытку этого ученика в списке сдач.';history.scrollIntoView({block:'nearest',behavior:'instant'});
         })));
-        if (teacher) {
+        if (teacher && !sourceOnly) {
             if (record.review_request?.requested) body.append(node('p',{class:'alert alert-info'},'Запрос ученика: '+record.review_request.comment));
-            body.append(button(record.teacher_viewed ? 'Отметить непросмотренным' : 'Отметить просмотренным',safe(async () => {await request(`/insider/code-submissions/${id}/flags`,'PUT',{teacher_viewed:!record.teacher_viewed}); await show(id); await loadHistory();})));
-            if (['completed','error','imported_pending'].includes(record.state)) body.append(button('Оценить вручную',safe(async () => {await request(`/insider/code-submissions/${id}/manual-review`,'POST',{}); await show(id);await loadHistory();})));
+            const viewed=button(record.teacher_viewed ? 'Отметить непросмотренным' : 'Отметить просмотренным',safe(async () => {await request(`/insider/code-submissions/${id}/flags`,'PUT',{teacher_viewed:!record.teacher_viewed}); await show(id); await loadHistory();}));
+            if(record.teacher_viewed)menu.add(viewed);else{viewed.classList.add('btn-sm');contextBar.prepend(viewed);}
+            if (['completed','error','imported_pending'].includes(record.state)) menu.add(button('Оценить вручную',safe(async () => {await request(`/insider/code-submissions/${id}/manual-review`,'POST',{}); await show(id);await loadHistory();})));
             const latest = node('input',{type:'checkbox',class:'form-check-input'});
-            body.append(actions(button('Перепроверить',safe(async () => {await request(`/insider/code-submissions/${id}/recheck`,'POST',{latest_configuration:latest.checked}); await show(id);await loadHistory();})),field('По текущим настройкам',latest)));
+            const recheck=node('section',{class:'gc-inline-grading',hidden:true},node('h4',{class:'h6'},'Перепроверка решения'),field('По текущим настройкам задачи',latest),actions(button('Запустить перепроверку',safe(async () => {await request(`/insider/code-submissions/${id}/recheck`,'POST',{latest_configuration:latest.checked}); await show(id);await loadHistory();}),'primary'),button('Отмена',()=>recheck.hidden=true)));
+            if(terminal){body.append(recheck);menu.add(button('Перепроверить решение',()=>{recheck.hidden=false;recheck.scrollIntoView({block:'nearest',behavior:'instant'});}));}
             if (record.state === 'awaiting_review') {
                 let points = '', comment = '';
                 body.append(field('Баллы',input('',value => {points = value;},{type:'number',min:0,max:record.maximum_points})),field('Комментарий ученику',textarea('',value => {comment = value;})),button('Поставить оценку',safe(async () => {
@@ -303,13 +553,27 @@ export async function workspace(root) {
         }
         if (record.runs.length > 1) {
             const runs = node('details',{},node('summary',{},'История проверок'));
-            record.runs.forEach(run => runs.append(button(`${new Date(run.created_at).toLocaleString()} · ${phases[run.state] || run.state}`,safe(async () => {
-                const value = await request(`/insider/code-submissions/${id}/runs/${run.id}`);
-                const result = node('div',{},node('pre',{class:'gc-execution-output'},value.comment || 'Без комментария'));
-                for (const file of value.files || []) result.append(node('p',{},download(file.download_url,file.name)));
-                try {renderReport(value.report || await request('/insider/code-test-reports/'+run.id),result);} catch (e) {if (e.status !== 404) throw e;}
-                runs.append(result);
-            })))); body.append(runs);
+            record.runs.forEach(run => {
+                const detail=node('details',{},node('summary',{},`${new Date(run.created_at).toLocaleString()} · ${phases[run.state] || run.state}`));
+                const result=node('div');detail.append(result);
+                let loaded=false,loading=false;
+                const load=async () => {
+                    if(loaded || loading)return;
+                    loading=true;result.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем проверку…'));
+                    try {
+                        const value=await request(`/insider/code-submissions/${id}/runs/${run.id}?test_data=metadata`);
+                        result.replaceChildren(node('pre',{class:'gc-execution-output'},value.comment || 'Без комментария'));
+                        for(const file of value.files || [])result.append(node('p',{},download(file.download_url,file.name)));
+                        if(value.report)renderReport(value.report,result,id);
+                        if(value.text_report_available)result.append(textReport(value));
+                        loaded=true;
+                    }catch(e){result.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить загрузку проверки',safe(load)));}
+                    finally{loading=false;}
+                };
+                detail.addEventListener('toggle',() => {if(detail.open)load();});
+                runs.append(detail);
+            });
+            body.append(runs);
         }
         results.replaceChildren(body);
         if (!['completed','error','awaiting_review','imported_pending'].includes(record.state)) {
@@ -318,37 +582,83 @@ export async function workspace(root) {
                     if (current?.id !== id) return;
                     try {
                         await show(id);
-                        if (!teacher && current?.id === id && current.awarded_xp !== null) document.dispatchEvent(new CustomEvent('gc:task-checked', {detail:{taskId:current.task_id,mark:current.awarded_xp}}));
+                        await loadHistory();
+                        if ((!teacher || ownMode) && current?.id === id && current.awarded_xp !== null) document.dispatchEvent(new CustomEvent('gc:task-checked', {detail:{taskId:current.task_id,mark:current.awarded_xp}}));
                     } catch (e) {error(e);}
                 }, () => {status.textContent = 'Связь прервана. Восстанавливаем подключение…';},
                 () => request(`/insider/code-submissions/${id}/subscription`));
         }
     }
     async function loadHistory(append = false) {
-        if (!append) page = 1;
-        const query = new URLSearchParams({page:String(page)});
-        if (teacher && unreadOnly) query.set('teacher_viewed','0');
-        if (root.dataset.user) query.set('user_id',root.dataset.user);
-        const value = await request(base+'/code-submissions?'+query);
-        if (!append) history.replaceChildren(node('h3',{class:'h6 mt-3'},teacher ? 'Решения учеников' : 'Ваши попытки'));
-        if (teacher && !append && !root.dataset.user) history.append(button('Перепроверить последние работы группы',safe(async () => {
-            if (!confirm('Перепроверить последние решения всех учеников с текущими настройками? Прежние оценки сохранятся до нового результата.')) return;
-            const value = await request(base+'/code-submissions/recheck-latest','POST',{latest_configuration:true});
-            notice.className = 'text-muted small'; notice.textContent = `Проверок запущено: ${value.execution_ids.length}. Уже выполняются: ${value.skipped_active.length}.`;
-        })));
-        if (teacher && !append) history.append(check('Только непросмотренные',unreadOnly,value => {unreadOnly=value; page=1;loadHistory().catch(error);}));
-        value.items.forEach(record => history.append(button(`${new Date(record.created_at).toLocaleString()}${teacher && !record.teacher_viewed ? ' · новое' : ''}${teacher ? ` · ${record.user_name || 'Ученик '+record.user_id}` : ''} · ${phases[record.state] || record.state}${record.points !== null ? ` · ${record.points} баллов` : ''}`,safe(() => show(record.id)))));
-        if (value.has_more) {const more = button('Показать ещё',safe(async () => {more.remove(); page++; await loadHistory(true);})); history.append(more);}
+        if(teacher && !ownMode && !selectedUser)return [];
+        const requestGeneration=++historyGeneration;
+        const requestedPage=append ? page+1 : 1;
+        const query = new URLSearchParams({page:String(requestedPage)});
+        if(teacher && ownMode)query.set('user_id',config?.viewer_user_id || root.dataset.viewerId);
+        else if(teacher && selectedUser)query.set('user_id',selectedUser.id);
+        if(!append && !attemptItems.length)history.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем сдачи…'));
+        let value;
+        try {value = await request(base+'/code-submissions?'+query);} catch(e) {
+            if(requestGeneration!==historyGeneration)return [];
+            if(!append && !attemptItems.length)history.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить загрузку списка',safe(() => loadHistory())));
+            throw e;
+        }
+        if(requestGeneration!==historyGeneration)return [];
+        page=requestedPage;
+        const selectedSummary=attemptItems.find(item=>String(item.id)===String(activeAttempt));
+        if(!append)attemptItems=[];
+        const ids=new Set(attemptItems.map(item=>String(item.id)));attemptItems.push(...value.items.filter(item=>!ids.has(String(item.id))));
+        if(selectedSummary&&!attemptItems.some(item=>String(item.id)===String(activeAttempt)))attemptItems.push(selectedSummary);
+        attemptItems.sort((a,b)=>(Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0));
+        if(teacher && !ownMode && !selectedUser?.name && value.items[0]?.user_name){selectedUser.name=value.items[0].user_name;renderToolbar();}
+        const heading=node('div',{class:'gc-attempt-history__heading'});
+        if(value.total_attempts!==undefined)heading.append(node('span',{class:'text-muted small'},`Всего сдач: ${value.total_attempts}`));
+        if(value.best_attempt)heading.append(button('Лучшая сдача',safe(() => openAttempt(value.best_attempt))));
+        heading.append(button('Обновить список',safe(() => loadHistory())));
+        const list=node('ol',{class:'gc-attempt-list'},attemptItems.map(attemptCard));
+        const footer=node('div',{class:'gc-attempt-history__footer'});
+        if(!attemptItems.length)footer.append(node('p',{class:'text-muted mb-0'},ownMode ? 'Ваших решений пока нет. Отправьте работу через форму выше.' : 'Сохранённых сдач пока нет.'));
+        if(value.has_more){const more=button('Показать ещё сдачи',safe(async () => {
+            more.disabled=true;
+            try{await loadHistory(true);}finally{more.disabled=false;}
+        }));footer.append(more);}
+        const focusedAttempt=history.contains(document.activeElement) ? document.activeElement.closest('[data-attempt-id]')?.dataset.attemptId : null;
+        results.remove();history.replaceChildren(heading,list,footer);attemptList=list;
+        if(activeAttempt)markSelectedAttempt(activeAttempt);else{results.replaceChildren();browser.append(results);}
+        if(focusedAttempt)Array.from(history.querySelectorAll('[data-attempt-id]')).find(item=>item.dataset.attemptId===focusedAttempt)?.focus({preventScroll:true});
         return value.items;
     }
+    const activate=()=>{if(ownMode || selectedUser || !teacher)writeContext(activeAttempt);};
+    const controller={selectStudent,startOwnSubmission,openAttemptById,activate,context:async attempt=>{if(attempt && activeAttempt!==attempt)await openAttemptById(attempt);else activate();}};
+    async function initializeStudent(){
+        let records;
+        if(root.hasAttribute('data-history-only'))records=await loadHistory();
+        else{
+            [,records]=await Promise.all([settings(),loadHistory()]);
+            if(root.dataset.blocked!=='true' && !config.requires_conversion){
+                if(!draft){setDraft(await request(base+'/code-draft'));renderComposer();}
+            }else if(!content.children.length)content.append(node('p',{class:'alert alert-warning'},config.requires_conversion ? 'Преподавателю нужно настроить проверку перед сдачей.' : 'Новые сдачи этой задачи заблокированы.'));
+            await attachments();
+        }
+        if(root.dataset.submission || activeAttempt)await openAttemptById(activeAttempt || root.dataset.submission);
+        else if(records[0])await openAttempt(records[0]);
+    }
+    function initializationError(e){
+        error(e);
+        notice.append(button('Повторить загрузку',async()=>{
+            try{
+                if(teacher){if(ownMode)await startOwnSubmission();else if(selectedUser)await selectStudent(selectedUser);}
+                else await initializeStudent();
+                notice.replaceChildren();
+            }catch(e){initializationError(e);}
+        }));
+    }
     try {
-        config = await request(base+'/checker');
-        if (!teacher && root.dataset.blocked !== 'true' && !config.requires_conversion) {setDraft(await request(base+'/code-draft')); renderComposer();}
-        else if (!teacher) content.append(node('p',{class:'alert alert-warning'},config.requires_conversion ? 'Преподавателю нужно настроить проверку перед сдачей.' : 'Новые сдачи этой задачи заблокированы.'));
-        const attachments = await request(base+'/checker/files');
-        if (attachments.items.length) attachmentsArea.append(node('div',{class:'gc-execution-attachments'},node('h3',{class:'h6'},'Материалы задания'), attachments.items.map(file => node('div',{}, download(file.download_url,file.path),file.read_only ? ' · только чтение' : ''))));
-        const records = await loadHistory();
-        if (root.dataset.submission) await show(root.dataset.submission);
-        else if (records[0]) await show(records[0].id);
-    } catch (e) {error(e); notice.append(button('Повторить загрузку',() => workspace(root)));}
+        if(teacher){
+            renderToolbar();content.hidden=true;attachmentsArea.hidden=true;
+            if(root.dataset.user && root.dataset.user===root.dataset.viewerId)await startOwnSubmission({attempt:root.dataset.submission});
+            else if(root.dataset.user)await selectStudent(selectedUser,{attempt:root.dataset.submission});
+        }else await initializeStudent();
+    } catch(e){initializationError(e);}
+    return controller;
 }

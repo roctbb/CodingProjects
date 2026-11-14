@@ -37,6 +37,7 @@ class SolutionRecheckTest extends TestCase
         DB::table('tasks')->insert(['id' => 12, 'is_code' => true, 'max_mark' => 10]);
         DB::table('courses')->insert(['id' => 7]);
         DB::table('users')->insert(['id' => 99, 'name' => 'Teacher', 'email' => 'teacher@example.test']);
+        DB::table('users')->insert(['id' => 42, 'name' => 'Student', 'email' => 'student@example.test']);
         DB::table('course_teachers')->insert(['course_id' => 7, 'user_id' => 99]);
         DB::table('solutions')->insert(['id' => 1, 'user_id' => 42, 'course_id' => 7, 'task_id' => 12,
             'text' => 'https://paste.test/?id=TEST', 'submitted' => now(), 'checked' => now(),
@@ -69,10 +70,10 @@ class SolutionRecheckTest extends TestCase
     {
         $reviews=app(\App\Services\SolutionRecheck::class);
         foreach ([10,null] as $mark) {
-            DB::table('solutions')->where('id',1)->update(['mark'=>$mark]);
+            DB::table('solutions')->where('id',1)->update(['mark'=>$mark,'raw_mark'=>$mark]);
             $this->assertFalse($reviews->status(Solution::findOrFail(1))['available']);
         }
-        DB::table('solutions')->where('id',1)->update(['mark'=>5]);
+        DB::table('solutions')->where('id',1)->update(['mark'=>5,'raw_mark'=>5]);
         DB::table('blocked_tasks')->insert(['task_id'=>12,'course_id'=>7,'user_id'=>42]);
         $this->assertFalse($reviews->status(Solution::findOrFail(1))['available']);
         Notification::assertNothingSent();

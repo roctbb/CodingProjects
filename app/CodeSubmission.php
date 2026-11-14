@@ -29,4 +29,18 @@ class CodeSubmission extends Model
     {
         return $this->belongsTo(CodeExecutionRun::class, 'current_run_id');
     }
+
+    public function author()
+    {
+        return $this->belongsTo(User::class,'user_id');
+    }
+
+    public function scopeForCourseStudents($query,int $course)
+    {
+        return $query->where('course_id',$course)->whereHas('author',fn($users)=>$users
+            ->whereExists(fn($members)=>$members->selectRaw('1')->from('course_students')
+                ->whereColumn('course_students.user_id','users.id')->where('course_students.course_id',$course))
+            ->whereNotExists(fn($staff)=>$staff->selectRaw('1')->from('course_teachers')
+                ->whereColumn('course_teachers.user_id','users.id')->where('course_teachers.course_id',$course)));
+    }
 }

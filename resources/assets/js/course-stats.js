@@ -62,13 +62,14 @@ document.addEventListener('DOMContentLoaded', function () {
             var panel = document.querySelector(button.dataset.courseStatsTarget);
             if (!panel) return;
             var shouldOpen = panel.classList.contains('d-none');
-            panels.forEach(closePanel);
-            buttons.forEach(function (b) { setButtonState(b, false); });
             if (shouldOpen) {
                 panel.classList.remove('d-none');
                 if (!panel.dataset.courseStatsLoaded) load(panel);
                 setSummaryState(button.dataset.courseStatsTarget, true);
                 setButtonState(button, true);
+            } else {
+                closePanel(panel);
+                setButtonState(button, false);
             }
         });
     });

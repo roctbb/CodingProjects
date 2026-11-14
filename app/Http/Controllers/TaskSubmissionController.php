@@ -43,7 +43,6 @@ class TaskSubmissionController extends Controller
     public function draft(Request $request, int $course, int $task, Access $access, Drafts $drafts)
     {
         $model = $access->task($request->user(), $course, $task);
-        abort_unless($request->user()->role === 'student' && !$access->teacher($request->user(), $course), 403);
         if (!$request->isMethod('get')) {
             abort_if($model->isBlocked($request->user()->id, $course), 403);
             $drafts->save($request, $course, $task);
@@ -92,7 +91,7 @@ class TaskSubmissionController extends Controller
     public function reviewRequest(Request $request,string $submission,Access $access,\App\Services\CodeChecking\SubmissionReview $reviews)
     {
         $record=CodeSubmission::findOrFail($submission);$access->authorOrTeacher($request->user(),$record);
-        abort_unless((int)$record->user_id===(int)$request->user()->id && $request->user()->role==='student',403);
+        abort_unless((int)$record->user_id===(int)$request->user()->id,403);
         $input=$request->validate(['comment'=>'required|string|min:10|max:1000']);
         return $this->json($reviews->request($record,$input['comment']));
     }
@@ -151,12 +150,33 @@ class TaskSubmissionController extends Controller
         $record = CodeSubmission::findOrFail($submission);
         $access->authorOrTeacher($request->user(), $record);
         $item = CodeExecutionRun::where('submission_id', $record->id)->findOrFail($run);
-        $value = ['id' => $item->id, 'state' => $item->state, 'points' => $item->points, 'comment' => $item->comment, 'progress' => $item->progress];
-        $value['report']=$item->legacy_report;
+        $request->validate(['test_data'=>'sometimes|in:metadata,full']);$fields=$request->input('test_data')!=='metadata';
+        $native=\App\CodeTestReport::find($run);
+        $report=$native?app(\App\Services\CodeChecking\Reports::class)->view($native,$request->user(),$fields)
+            :(isset($item->legacy_report['suite_diagnostics'])?null:app(\App\Services\CodeChecking\HistoricalReport::class)->view($item->legacy_report,$access->teacher($request->user(),$record->course_id)));
+        if($report){$report['run_id']=$run;if(!$fields)$report=app(\App\Services\CodeChecking\Reports::class)->metadata($report);}
+        $value = ['id' => $item->id, 'state' => $item->state, 'points' => $item->points,
+            'comment' => !$fields&&($report || ($item->snapshot['check_type']??null)==='tests')?'':$item->comment, 'progress' => $item->progress,
+            'text_report_available'=>!$fields && !$report && ($item->snapshot['check_type']??null)==='tests' && (bool)($item->comment || isset($item->legacy_report['suite_diagnostics'])),
+            'text_report_url'=>url('/insider/code-submissions/'.$record->id.'/runs/'.$run).'?test_data=full',
+            'checker_diagnostics'=>$fields && $access->teacher($request->user(),$record->course_id)?($item->legacy_report['suite_diagnostics']??null):null];
+        $value['report']=$report;
         $value['files']=[];
         foreach ($item->snapshot['legacy_submission']['files']??[] as $index=>$file) $value['files'][]=['name'=>$file['original_name']??$file['name'],'download_url'=>url('/insider/code-submissions/'.$record->id.'/runs/'.$item->id.'/files/'.$index)];
-        if ($access->teacher($request->user(), $record->course_id)) $value['configuration'] = $item->snapshot;
+        if ($fields && $access->teacher($request->user(), $record->course_id)) $value['configuration'] = $item->snapshot;
         return $this->json($value);
+    }
+
+    public function runTest(Request $request,string $submission,string $run,int $number,Access $access)
+    {
+        $record=CodeSubmission::findOrFail($submission);$access->authorOrTeacher($request->user(),$record);
+        $item=CodeExecutionRun::where('submission_id',$submission)->findOrFail($run);
+        if($native=\App\CodeTestReport::find($run))return $this->json(app(\App\Services\CodeChecking\Reports::class)->test($native,$number,$request->user()));
+        $report=app(\App\Services\CodeChecking\HistoricalReport::class)->view($item->legacy_report,$access->teacher($request->user(),$record->course_id));
+        $test=collect($report['tests']??[])->firstWhere('number',$number);abort_unless($test,404);
+        abort_unless(($test['unlocked']??false)||$access->teacher($request->user(),$record->course_id),403);
+        if(!array_intersect(['input','expected','actual','error'],array_keys($test)))$test+=['data_unavailable'=>true,'notice'=>\App\Services\CodeChecking\HistoricalReport::NOTICE];
+        return $this->json($test);
     }
 
     public function runFile(Request $request,string $submission,string $run,int $file,Access $access,Artifacts $artifacts)

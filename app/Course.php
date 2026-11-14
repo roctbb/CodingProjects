@@ -42,7 +42,9 @@ class Course extends Model
         return $this->belongsToMany('App\User', 'course_students', 'course_id', 'user_id')
             ->withPivot(['is_remote', 'hidden_from_stats'])
             ->wherePivot('hidden_from_stats', false)
-            ->orderBy('name');
+            ->whereNotExists(fn($staff)=>$staff->selectRaw('1')->from('course_teachers')
+                ->whereColumn('course_teachers.course_id','course_students.course_id')->whereColumn('course_teachers.user_id','users.id'))
+            ->orderBy('name')->orderBy('users.id');
     }
 
     public function program()

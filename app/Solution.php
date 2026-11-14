@@ -46,6 +46,7 @@ class Solution extends Model
         static::saving(fn (self $solution) => $solution->freezeDeadline());
         static::saving(fn (self $solution) => app(\App\Services\ClassroomBonus::class)->freeze($solution));
         static::saved(fn (self $solution) => app(\App\Services\ClassroomBonus::class)->award($solution));
+        static::saved(fn (self $solution) => $solution->dismissSupersededRechecks());
     }
 
     public function save(array $options = [])
@@ -77,6 +78,32 @@ class Solution extends Model
         return \Illuminate\Support\Facades\Schema::hasColumn('solutions', 'evaluated_mark')
             ? $query->whereRaw('COALESCE(solutions.evaluated_mark, solutions.raw_mark, solutions.mark) > 0')
             : $query->where('solutions.mark', '>', 0);
+    }
+
+    public function scopeFullEvaluation($query, int $maximum)
+    {
+        if ($maximum <= 0) return $query->whereRaw('1 = 0');
+        $fields = ['solutions.mark'];
+        foreach (['raw_mark', 'evaluated_mark'] as $field) {
+            if (\Illuminate\Support\Facades\Schema::hasColumn('solutions', $field)) array_unshift($fields, 'solutions.'.$field);
+        }
+        $score = count($fields) > 1 ? 'COALESCE('.implode(',', $fields).')' : $fields[0];
+        return $query->whereNotNull('solutions.submitted')->whereNotNull('solutions.mark')->whereRaw($score.' >= ?', [$maximum]);
+    }
+
+    private function dismissSupersededRechecks(): void
+    {
+        if (!$this->submitted || $this->mark === null || !$this->course_id || !$this->task_id || !$this->user_id
+            || !\Illuminate\Support\Facades\Schema::hasColumn('solutions', 'recheck_requested')) return;
+        $maximum = (int) $this->task?->max_mark;
+        if ($maximum <= 0 || $this->evaluatedMark() < $maximum) return;
+
+        // Preserve grades, original request comments and ungraded answers needed for classroom bonuses.
+        self::where('course_id', $this->course_id)->where('task_id', $this->task_id)->where('user_id', $this->user_id)
+            ->where('recheck_requested', true)
+            ->where(fn ($older) => $older->where('submitted', '<', $this->submitted)
+                ->orWhere(fn ($same) => $same->where('submitted', $this->submitted)->where('id', '<', $this->id)))
+            ->update(['recheck_requested' => false]);
     }
 
     public function freezeDeadline($deadline = null): void
@@ -169,27 +196,30 @@ class Solution extends Model
                     ->whereColumn('max_mark_solutions.user_id', 'solutions.user_id')
                     ->whereNotNull('max_mark_solutions.submitted')
                     ->whereNotNull('max_mark_solutions.mark')
-                    ->where('max_mark_tasks.max_mark', '>', 0)
-                    ->whereColumn('max_mark_solutions.mark', '>=', 'max_mark_tasks.max_mark');
+                    ->where('max_mark_tasks.max_mark', '>', 0);
                 if (\Illuminate\Support\Facades\Schema::hasColumn('solutions', 'evaluated_mark')) {
-                    $query->whereRaw('COALESCE(max_mark_solutions.evaluated_mark, max_mark_solutions.raw_mark, max_mark_solutions.mark) > 0');
-                }
+                    $query->whereRaw('COALESCE(max_mark_solutions.evaluated_mark, max_mark_solutions.raw_mark, max_mark_solutions.mark) >= max_mark_tasks.max_mark');
+                } elseif (\Illuminate\Support\Facades\Schema::hasColumn('solutions', 'raw_mark')) {
+                    $query->whereRaw('COALESCE(max_mark_solutions.raw_mark, max_mark_solutions.mark) >= max_mark_tasks.max_mark');
+                } else $query->whereColumn('max_mark_solutions.mark', '>=', 'max_mark_tasks.max_mark');
             })
-            ->whereNotExists(function ($query) {
-                $query->select(DB::raw(1))
-                    ->from('solutions as checked_solutions')
-                    ->whereColumn('checked_solutions.course_id', 'solutions.course_id')
-                    ->whereColumn('checked_solutions.task_id', 'solutions.task_id')
-                    ->whereColumn('checked_solutions.user_id', 'solutions.user_id')
-                    ->whereNotNull('checked_solutions.submitted')
-                    ->whereNotNull('checked_solutions.mark')
-                    ->where(function ($query) {
-                        $query->whereColumn('checked_solutions.submitted', '>', 'solutions.submitted')
-                            ->orWhere(function ($query) {
-                                $query->whereColumn('checked_solutions.submitted', 'solutions.submitted')
-                                    ->whereColumn('checked_solutions.id', '>', 'solutions.id');
-                            });
-                    });
+            ->where(function ($pending) {
+                $pending->where('solutions.recheck_requested', true)->orWhereNotExists(function ($query) {
+                    $query->select(DB::raw(1))
+                        ->from('solutions as checked_solutions')
+                        ->whereColumn('checked_solutions.course_id', 'solutions.course_id')
+                        ->whereColumn('checked_solutions.task_id', 'solutions.task_id')
+                        ->whereColumn('checked_solutions.user_id', 'solutions.user_id')
+                        ->whereNotNull('checked_solutions.submitted')
+                        ->whereNotNull('checked_solutions.mark')
+                        ->where(function ($query) {
+                            $query->whereColumn('checked_solutions.submitted', '>', 'solutions.submitted')
+                                ->orWhere(function ($query) {
+                                    $query->whereColumn('checked_solutions.submitted', 'solutions.submitted')
+                                        ->whereColumn('checked_solutions.id', '>', 'solutions.id');
+                                });
+                        });
+                });
             });
     }
 

@@ -38,4 +38,27 @@ class CourseLessonStatisticsTest extends CourseCurrentLessonTest
         $this->actingAs(User::find(2))->getJson('/insider/courses/1/lessons/3/statistics')->assertNotFound();
         $this->actingAs(User::find(1))->getJson('/insider/courses/1/lessons/1/statistics')->assertOk();
     }
+
+    public function test_preloaded_lesson_panels_render_the_first_page_without_queries_and_hide_non_roster_scores():void
+    {
+        DB::table('course_students')->where('course_id',1)->where('user_id',10)->update(['hidden_from_stats'=>true]);
+        DB::table('course_students')->insert(['course_id'=>1,'user_id'=>2]);
+        foreach([2,10] as $user)DB::table('lesson_student_stats')->insert(['course_id'=>1,'lesson_id'=>1,'student_id'=>$user,'points'=>999999,'max_points'=>999999,'percent'=>100]);
+        $course=\App\Course::findOrFail(1);$students=$course->statsStudents()->get(['users.id','users.name']);
+        $stats=\App\LessonStudentStats::where('course_id',1)->where('lesson_id',1)->get()->keyBy('student_id');
+        $render=function($lesson,$stats)use($course,$students){return view('courses.partials.lesson-statistics-panel',compact('course','students','stats','lesson'))->render();};
+        $first=\App\Lesson::findOrFail(1);$second=\App\Lesson::findOrFail(2);
+        DB::enableQueryLog();DB::flushQueryLog();
+        $html=$render($first,$stats).$render($second,collect());
+        $queries=DB::getQueryLog();DB::disableQueryLog();
+        $this->assertSame([],$queries);
+        $this->assertSame(2,substr_count($html,'data-course-stats-loaded="true"'));
+        $this->assertSame(50,substr_count($html,'class="course-stat-row small"'));
+        $this->assertStringContainsString('id="marks1"',$html);$this->assertStringContainsString('id="marks2"',$html);
+        $this->assertStringContainsString('1–25 из 69',$html);
+        $this->assertStringContainsString('1 / 69',$html);$this->assertStringContainsString('10 / 10 XP',$html);
+        $this->assertStringNotContainsString('999999',$html);$this->assertStringNotContainsString('Ученик 010',$html);
+        $ajax=$this->getJson('/insider/courses/1/lessons/1/statistics')->assertOk()->json('html');
+        $this->assertStringContainsString('1–25 из 69',$ajax);$this->assertStringNotContainsString('999999',$ajax);
+    }
 }

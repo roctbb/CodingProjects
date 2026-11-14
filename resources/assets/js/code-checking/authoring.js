@@ -57,7 +57,7 @@ export function authoring(root) {
             field('Попыток в час',input(config.gpt_rate_limit ?? 3,value => update('gpt_rate_limit',Number(value)),{type:'number',min:1,max:1000})));
         if (config.check_type !== 'gpt') panel.append(field('Закрытые пояснения к проверке',textarea(config.private_instructions,value=>update('private_instructions',value),{rows:4}),'Видны только преподавателю и сервису проверки.'));
         if (config.check_type === 'tests' && config.test_mode === 'suite') {
-            panel.append(node('p',{class:'gc-help-text mt-3'},'Перенесённый проверяющий сценарий выполняется через GeekExecutor. Он сохраняет проверки структуры кода, файлов и критериев исходной задачи. Для замены сценария обычными тестами заново выберите тип «По тестам».'));
+            panel.append(node('p',{class:'gc-help-text mt-3'},'Проверяющий сценарий проверяет структуру кода, файлы и критерии задачи. Чтобы заменить его обычными тестами, выберите тип «По тестам».'));
         } else if (config.check_type === 'tests') {
             config.test_config ||= {tests:[]};
             testEditor=testSettings(config.test_config,{base,maximum,sync,safe});

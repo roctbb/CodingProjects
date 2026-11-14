@@ -34,6 +34,74 @@ class BusinessLearningTest extends DeadlineFeatureCase
             'resource_snapshot'=>json_encode(['provider_key'=>'codingprojects','type'=>'task','external_id'=>'11'])]);
     }
 
+    public function test_legacy_manual_grading_can_return_the_updated_task_attempt_inline():void
+    {
+        $answer=$this->solution('2026-11-14 12:00:00');
+        $url='/insider/courses/1/solution/'.$answer->id;
+        $this->actingAs(User::find(1))->postJson($url,['mark'=>7,'comment'=>'Manual feedback'])->assertForbidden();
+        $this->actingAs(User::find(2))->postJson($url,['mark'=>7,'comment'=>'Manual feedback'])->assertOk()
+            ->assertJsonPath('solution_id',$answer->id)->assertJsonPath('awarded_xp',7)->assertJsonPath('review_mark',7)
+            ->assertJsonPath('review_comment','Manual feedback')->assertJsonPath('can_grade',true)->assertJsonPath('report',null);
+        $this->assertSame(7,(int)$answer->fresh()->mark);
+    }
+
+    public function test_teacher_normal_submission_earns_xp_and_coins_once_without_joining_student_progress():void
+    {
+        config(['services.geekexecutor_secret'=>str_repeat('t',64),'code_checking.ai_detection_enabled'=>false]);
+        $task=Task::findOrFail(11);
+        $task->forceFill(['is_code'=>true,'is_quiz'=>false,'max_mark'=>10,'price'=>5,'generates_ai_achievement'=>false])->save();
+        app(\App\Services\CodeChecking\Configuration::class)->save($task,['language'=>'python','check_type'=>'tests','submission_modes'=>['code'],
+            'test_config'=>['tests'=>[['input'=>'1','output'=>'1','is_public'=>true]]]],2);
+        $teacher=User::findOrFail(2);$beforeXp=$teacher->score();$beforeCoins=$teacher->balance();
+        $result=$this->actingAs($teacher)->postJson('/insider/courses/1/tasks/11/code-submissions',[
+            'request_id'=>(string)Str::uuid(),'code'=>'print(1)'])->assertCreated()->json();
+        $run=\App\CodeExecutionRun::findOrFail($result['execution_id']);
+        $data=['execution_id'=>$run->id,'state'=>'done','points'=>10,'comment'=>'Teacher checked'];$hash=hash('sha256',json_encode($data));
+        app(\App\Services\CodeChecking\Results::class)->accept($run,$data,$hash);
+        app(\App\Services\CodeChecking\Results::class)->accept($run,$data,$hash);
+        $answer=Solution::where('user_id',2)->where('course_id',1)->where('task_id',11)->sole();
+        $this->assertSame(10,(int)$answer->mark);$this->assertSame(10,$answer->evaluatedMark());
+        $this->assertGreaterThan($beforeXp,User::find(2)->score());
+        $this->assertEquals($beforeCoins+5,User::find(2)->balance());
+        $this->assertSame(1,DB::table('coin_transactions')->where('user_id',2)->where('comment','Task #11')->count());
+        $this->assertFalse(Course::find(1)->students->contains('id',2));
+        $this->getJson('/insider/courses/1/tasks/11/code-submissions?user_id=2')->assertJsonCount(1,'items')->assertJsonPath('items.0.awarded_xp',10);
+        $this->assertFalse(app(\App\Services\CodeChecking\History::class)->ungradedProgress(1,[11])->get(11,collect())->has(2));
+        // Even an old duplicate student membership must not make a class teacher a group work item.
+        DB::table('course_students')->insert(['course_id'=>1,'user_id'=>2]);
+        $this->postJson('/insider/courses/1/tasks/11/code-submissions/recheck-latest',['latest_configuration'=>true])
+            ->assertStatus(202)->assertJsonPath('execution_ids',[])->assertJsonPath('skipped_active',[]);
+    }
+
+    public function test_teacher_submission_retains_the_same_legacy_deadline_penalty_as_a_student():void
+    {
+        config(['services.geekexecutor_secret'=>str_repeat('t',64),'code_checking.ai_detection_enabled'=>false]);
+        $task=Task::findOrFail(11);$task->forceFill(['is_code'=>true,'is_quiz'=>false,'max_mark'=>10,'generates_ai_achievement'=>false])->save();
+        $this->policy(stages:[['deadline_date'=>'2026-11-13','retained_percent'=>50]]);
+        app(\App\Services\CodeChecking\Configuration::class)->save($task,['language'=>'python','check_type'=>'tests','submission_modes'=>['code'],
+            'test_config'=>['tests'=>[['input'=>'1','output'=>'1','is_public'=>true]]]],2);
+        foreach([1,2] as $user){
+            $result=$this->actingAs(User::find($user))->postJson('/insider/courses/1/tasks/11/code-submissions',[
+                'request_id'=>(string)Str::uuid(),'code'=>'print(1)'])->assertCreated()->json();
+            $run=\App\CodeExecutionRun::findOrFail($result['execution_id']);
+            $data=['execution_id'=>$run->id,'state'=>'done','points'=>10,'comment'=>'Checked'];
+            app(\App\Services\CodeChecking\Results::class)->accept($run,$data,hash('sha256',json_encode($data)));
+        }
+        $student=Solution::where('user_id',1)->where('task_id',11)->sole();$teacher=Solution::where('user_id',2)->where('task_id',11)->sole();
+        $this->assertEquals(5,$teacher->mark);$this->assertEquals($student->mark,$teacher->mark);
+        $this->assertEquals($student->deadline_penalty_amount,$teacher->deadline_penalty_amount);
+        $this->assertSame(10,$teacher->evaluatedMark());
+    }
+
+    public function test_statistics_exclude_only_this_courses_teachers_and_keep_them_as_learners_elsewhere():void
+    {
+        DB::table('course_students')->insert(['course_id'=>1,'user_id'=>2]);
+        $this->assertFalse(Course::find(1)->statsStudents->contains('id',2));
+        DB::table('courses')->insert(['id'=>900,'program_id'=>1,'name'=>'Teacher learns here','state'=>'started']);
+        DB::table('course_students')->insert(['course_id'=>900,'user_id'=>2]);
+        $this->assertTrue(Course::find(900)->statsStudents->contains('id',2));
+    }
+
     public function test_minimum_xp_does_not_complete_an_incorrect_quiz_or_award_coins_or_stickers(): void
     {
         $this->bonus();

@@ -70,7 +70,7 @@ class CoinTransaction extends Authenticatable
         }
 
         if (preg_match('/^GeekPaste extra attempt Task #(\d+)$/', $comment, $matches)) {
-            return 'Дополнительная попытка GeekPaste для задачи #' . $matches[1];
+            return 'Дополнительная попытка проверки для задачи #' . $matches[1];
         }
 
         if (preg_match('/^Code test reveal Task #(\d+) Test #[a-f0-9]{64}$/D', $comment, $matches)) {

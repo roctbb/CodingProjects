@@ -11,7 +11,7 @@
     <fieldset id="answer_mode" class="gc-field" data-answer-mode>
         <legend class="form-label">Способ проверки</legend>
         <div class="gc-choice-grid">
-            @foreach(($nativeChecker ? ['native'=>['Сдача в Coding Projects', 'Текст, код и файлы. Ручная проверка, тесты или ИИ.']] : (['manual'=>['Преподавателем', 'Работу проверяет преподаватель.'], 'short'=>['Короткий ответ', 'Ответ ученика сравнивается с указанным ниже.']] + ($nativeAvailable ? ['native'=>['Сдача в Coding Projects', 'Текст, код и файлы. Ручная проверка, тесты или ИИ.']] : []) + ($task?->is_code ? ['code'=>['Ожидает переноса', 'Архивная задача. Настройте сдачу в Coding Projects, чтобы открыть новые отправки.']] : []))) as $key=>[$label,$hint])
+            @foreach(($nativeChecker ? ['native'=>['Сдача в Coding Projects', 'Текст, код и файлы. Ручная проверка, тесты или ИИ.']] : (['manual'=>['Преподавателем', 'Работу проверяет преподаватель.'], 'short'=>['Короткий ответ', 'Ответ ученика сравнивается с указанным ниже.']] + ($nativeAvailable ? ['native'=>['Сдача в Coding Projects', 'Текст, код и файлы. Ручная проверка, тесты или ИИ.']] : []) + ($task?->is_code ? ['code'=>['Проверка не настроена', 'Настройте способ сдачи и проверки, чтобы открыть новые отправки.']] : []))) as $key=>[$label,$hint])
                 <label class="gc-choice"><input class="form-check-input" type="radio" name="answer_mode" value="{{ $key }}" @checked($answerMode === $key)><span><strong>{{ $label }}</strong><span class="gc-help-text d-block">{{ $hint }}</span></span></label>
             @endforeach
         </div>

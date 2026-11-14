@@ -118,7 +118,7 @@
                                     <span class="report-student-risk-slot">
                                     @if ($navRiskLevel === 'high' || $navRiskLevel === 'medium')
                                         <span class="report-student-risk-dot report-student-risk-dot--{{ $navRiskLevel }}"
-                                              title="GeekPaste: {{ $navRiskLevel === 'high' ? 'высокий риск' : 'средний риск' }}">
+                                              title="Анализ авторства: {{ $navRiskLevel === 'high' ? 'высокий риск' : 'средний риск' }}">
                                             <i class="fas fa-exclamation-triangle"></i>
                                         </span>
                                     @endif
@@ -225,7 +225,7 @@
                                             <form method="POST"
                                                   action="{{ url('/insider/courses/'.$course->id.'/report/students/'.$student->id.'/geekpaste-warning/reset') }}"
                                                   class="ms-auto"
-                                                  data-confirm="Снять предупреждение GeekPaste по ученику? Старые флаги будут скрыты в отчете.">
+                                                  data-confirm="Снять предупреждение об авторстве по ученику? Оно больше не будет отображаться в отчёте.">
                                                 @csrf
                                                 <button type="submit" class="btn btn-sm report-integrity-reset">
                                                     <i class="fas fa-check"></i>

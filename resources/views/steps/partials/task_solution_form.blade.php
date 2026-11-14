@@ -18,7 +18,7 @@
                         <div class="mb-3">
                             <label for="text{{$task->id}}" class="form-label">Ваше решение</label>
                             <textarea id="text{{$task->id}}" class="form-control rounded-3" name="text" rows="3">{{old('text')}}</textarea>
-                            <small class="solution-submit-hint gc-help-note d-block mt-2">Для кода лучше отправить ссылку на <a target="_blank" href="https://paste.geekclass.ru">GeekPaste</a>, <a target="_blank" href="https://pastebin.com">pastebin</a>, <a target="_blank" href="https://gist.github.com">gist</a> или <a target="_blank" href="https://paste.ofcode.org/">paste.ofcode</a>. Файлы и картинки: <a href="https://storage.geekclass.ru/" target="_blank">storage.geekclass.ru</a>.</small>
+                            <small class="solution-submit-hint gc-help-note d-block mt-2">Можно отправить текст ответа или ссылку на работу. Файлы и картинки можно загрузить в <a href="https://storage.geekclass.ru/" target="_blank" rel="noopener">хранилище</a>.</small>
 
                             @if ($errors->has('text'))
                                 <span class="text-danger small d-block mt-2"><strong>{{ $errors->first('text') }}</strong></span>

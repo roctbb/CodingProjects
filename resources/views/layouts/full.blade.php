@@ -67,7 +67,6 @@
                     <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://gekkon-club.ru/courses">Курсы</a></li>
                     <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://github.com/geekon-school/">GitHub</a></li>
                     <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://storage.geekclass.ru">Storage</a></li>
-                    <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://paste.geekclass.ru">Paste</a></li>
                     <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://exam.geekclass.ru">Exam</a></li>
                     <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://arena.geekclass.ru">Arena</a></li>
                     <li><a class="gc-public-footer-link" target="_blank" rel="noopener" href="https://battle.geekclass.ru">CodeBattle</a></li>

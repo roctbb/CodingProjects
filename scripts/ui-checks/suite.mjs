@@ -54,7 +54,8 @@ export default async function suite(page, config) {
         }
         // Force both module-load orders. Only notebook cells may have Prism tokens.
         for (const delayed of ['vendor.js', 'notebook-render.js']) {
-            await context.route(`**/build/js/${delayed}*`, async route => { await new Promise(resolve => setTimeout(resolve, 250)); await route.continue(); });
+            const pattern=delayed==='vendor.js' ? '**/build/js/vendor*.js*' : `**/build/js/${delayed}*`;
+            await context.route(pattern, async route => { await new Promise(resolve => setTimeout(resolve, 250)); await route.continue(); });
             for (const scenario of ['reading', 'notebook']) {
                 try {
                     await target.goto(urlFor('/insider/courses/1/steps/1', 'student', scenario));
@@ -73,7 +74,7 @@ export default async function suite(page, config) {
                     results.push({ name: `${scenario}-load-order-${delayed}`, width, passed: true });
                 } catch (error) { errors.push({ scenario, delayed, width, error: error.message }); }
             }
-            await context.unroute(`**/build/js/${delayed}*`);
+            await context.unroute(pattern);
         }
         await context.close();
     }

@@ -11,6 +11,7 @@ use App\Support\SqlTextSearch;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 
 class ReviewWorkspace
 {
@@ -33,9 +34,13 @@ class ReviewWorkspace
             ->when($actor->role !== 'admin', fn ($query) => $query->whereHas('teachers', fn ($teachers) => $teachers->where('users.id', $actor->id)))
             ->select('id');
         $query = Solution::select(['id', 'course_id', 'task_id', 'user_id', 'submitted', 'recheck_requested'])
-            ->with(['course:id,name', 'task:id,name', 'user:id,name,image,custom_title,custom_title_expires_at,avatar_frame,avatar_frame_config,avatar_frame_expires_at'])
+            ->with(['course:id,name', 'task:id,name,step_id', 'user:id,name,image,custom_title,custom_title_expires_at,avatar_frame,avatar_frame_config,avatar_frame_expires_at'])
             ->has('user')->has('task')->whereIn('course_id', $courseIds)->when($courseId !== null, fn ($query) => $query->where('course_id', $courseId))
             ->pendingReview()->orderByDesc('submitted')->orderByDesc('id');
+        if(Schema::hasTable('code_submissions'))$query->addSelect(['native_submission_id'=>\App\CodeSubmission::select('id')->whereNull('legacy_id')
+            ->whereColumn('solution_id','solutions.id')->whereColumn('user_id','solutions.user_id')
+            ->whereColumn('course_id','solutions.course_id')->whereColumn('task_id','solutions.task_id')->limit(1)]);
+        else $query->selectRaw('NULL as native_submission_id');
         if (($filters['review_status'] ?? '') === 'recheck') $query->where('recheck_requested', true);
         if (($filters['review_status'] ?? '') === 'new') $query->where(fn ($q) => $q->where('recheck_requested', false)->orWhereNull('recheck_requested'));
         if (filled($filters['q'] ?? '')) {

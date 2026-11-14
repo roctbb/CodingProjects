@@ -94,9 +94,11 @@ class StepsController extends Controller
             if (!$task->is_quiz) $quizer = false;
 
         $quizer = $quizer && $zero_theory && !$empty;
+        $nativeTaskProgress=app(\App\Services\CourseAccess::class)->manages($user,$course)
+            ? app(\App\Services\CodeChecking\History::class)->ungradedProgress($course->id,$tasks->pluck('id')->all()) : collect();
+        $taskReviewContext=app(\App\Services\TaskLocation::class)->context(request(),$user,$course,$tasks);
 
-
-        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'latestTaskAiSummaries', 'earnedTaskAchievements'));
+        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'latestTaskAiSummaries', 'earnedTaskAchievements','nativeTaskProgress','taskReviewContext'));
     }
 
     public function downloadNotebook($course_id, $id)

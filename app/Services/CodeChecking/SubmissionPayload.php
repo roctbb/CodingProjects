@@ -21,7 +21,8 @@ class SubmissionPayload
     {
         $input = $this->body($request);
         if (($input['use_draft'] ?? false) === true) {
-            $saved = CodeDraft::where('user_id', $request->user()->id)->where('course_id', $courseId)->where('task_id', $taskId)->firstOrFail();
+            $saved = CodeDraft::where('user_id', $request->user()->id)->where('course_id', $courseId)->where('task_id', $taskId)->first();
+            abort_unless($saved,409,'Черновик не найден. Сохраните решение перед отправкой.');
             abort_unless(($input['draft_revision'] ?? null) === (int) $saved->revision, 409, 'Draft has changed.');
             $value = $saved->value;
             $this->validate($value, $config, $draft);
@@ -37,9 +38,12 @@ class SubmissionPayload
         } else {
             if (isset($input['keep_files'])) {
                 abort_unless(is_array($input['keep_files']) && count($input['keep_files']) <= 100, 422);
-                $saved = CodeDraft::where('user_id', $request->user()->id)->where('course_id', $courseId)->where('task_id', $taskId)->firstOrFail();
+                $saved = CodeDraft::where('user_id', $request->user()->id)->where('course_id', $courseId)->where('task_id', $taskId)->first();
                 abort_unless((is_int($input['draft_revision'] ?? null) || ctype_digit((string) ($input['draft_revision'] ?? '')))
-                    && (int) $input['draft_revision'] === (int) $saved->revision, 409, 'Draft has changed.');
+                    && (int) $input['draft_revision'] === (int) ($saved?->revision ?? 0), 409, 'Draft has changed.');
+                // GET returns an unsaved revision-0 draft. The first editor save
+                // includes keep_files:[] and does not need an existing DB row.
+                abort_if(!$saved && $input['keep_files'],409,'Черновик с выбранными файлами не найден. Сохранённые файлы не были заменены.');
                 foreach ($input['keep_files'] as $index) {
                     abort_unless((is_int($index) || (is_string($index) && ctype_digit($index))) && isset($saved->value['files'][(int) $index]), 422);
                     $kept = $saved->value['files'][(int) $index];

@@ -37,8 +37,9 @@ export async function request(url, method = 'GET', body) {
     ...(body ? {body:multipart ? body : JSON.stringify(body)} : {})});
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-        const messages = {403:'Недостаточно прав для этого действия.',409:'Данные изменились. Обновите страницу перед повторением действия.',413:'Файлы слишком велики.',429:'Лимит попыток исчерпан. Можно приобрести дополнительную попытку.'};
-        const error = new Error(Object.values(data.errors || {}).flat().join('\n') || messages[response.status] || data.message || 'Не удалось выполнить запрос. Повторите попытку.');
+        const messages = {401:'Сессия завершилась. Войдите снова и повторите действие.',403:'Недостаточно прав для этого действия.',404:'Не удалось найти сохранённые данные. Повторите загрузку.',409:'Данные изменились. Повторите действие после проверки сохранённой версии.',413:'Файлы слишком велики.',429:'Лимит попыток исчерпан. Можно приобрести дополнительную попытку.'};
+        const conflict=response.status===409 && typeof data.message==='string' && /[А-Яа-яЁё]/.test(data.message) ? data.message : null;
+        const error = new Error(Object.values(data.errors || {}).flat().join('\n') || conflict || messages[response.status] || data.message || 'Не удалось выполнить запрос. Повторите попытку.');
         error.status = response.status; throw error;
     }
     return data;

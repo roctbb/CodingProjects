@@ -69,18 +69,20 @@ class Reports
         return DB::table('code_test_purchases')->where('user_id', $user->id)->where('task_id', $record->task_id)->pluck('test_id')->all();
     }
 
-    public function view(CodeTestReport $record, User $viewer): array
+    public function view(CodeTestReport $record, User $viewer,bool $includeFields=true): array
     {
         $this->access->authorOrTeacher($viewer, $record);
         $teacher = $this->access->teacher($viewer, (int) $record->course_id);
         $purchased = $this->purchased($viewer, $record);
+        $canPurchase=$teacher?false:$this->purchaseAllowed($record,$viewer);
         $report = $record->report;
-        $report['tests'] = array_map(function ($test) use ($teacher, $purchased, $record, $viewer) {
+        $report['tests'] = array_map(function ($test) use ($teacher, $purchased, $record, $viewer,$includeFields,$canPurchase) {
             $unlocked = $teacher || $test['is_public'] || in_array($test['test_id'], $purchased, true);
             $row = array_intersect_key($test, array_flip(['number', 'test_id', 'is_public', 'verdict']));
             $row['unlocked'] = $unlocked;
-            $row['can_purchase'] = !$unlocked && $this->canPurchase($record, $test, $viewer);
-            if ($unlocked) {
+            $row['can_purchase'] = !$unlocked && $canPurchase && in_array($test['verdict'],self::PURCHASABLE,true);
+            $row['has_details']=$unlocked;
+            if ($unlocked && $includeFields) {
                 foreach (['input', 'expected', 'actual', 'error'] as $key) {
                     $field = $test[$key];
                     if ($field && $field['type'] === 'blob') {
@@ -95,21 +97,59 @@ class Reports
             return $row;
         }, $report['tests']);
         $report['price'] = app(SystemStoreSettings::class)->price('code_test_reveal');
+        if(!$includeFields)$report['test_data']='metadata';
         return $report;
+    }
+
+    public function test(CodeTestReport $record,int $number,User $viewer):array
+    {
+        $summary=$this->view($record,$viewer,false);
+        $row=collect($summary['tests'])->firstWhere('number',$number);abort_unless($row,404);
+        abort_unless($row['unlocked'],403);
+        $stored=collect($record->report['tests'])->firstWhere('number',$number);
+        foreach(['input','expected','actual','error'] as $key){
+            $field=$stored[$key]??null;
+            if($field && $field['type']==='blob'){
+                unset($field['blob_id'],$field['sha256']);
+                $field['download_url']=route('code-reports.download',['run'=>$record->id,'test'=>$stored['test_id'],'field'=>$key]);
+            }
+            $row[$key]=$field;
+        }
+        $row['comparison']=$stored['comparison'];$row['limits']=$stored['limits'];
+        return $row;
+    }
+
+    public function metadata(array $report):array
+    {
+        // Free-form historical notes may contain test bodies too.
+        unset($report['notes']);
+        $tests=$report['tests']??[];
+        foreach($tests as &$test){
+            $test['has_details']=$test['has_details']??(bool)array_intersect(['input','expected','actual','error'],array_keys($test));
+            foreach(['input','expected','actual','error','comparison','limits'] as $field)unset($test[$field]);
+        }unset($test);
+        $report['tests']=$tests;
+        $report['test_data']='metadata';return $report;
+    }
+
+    private function purchaseAllowed(CodeTestReport $record,User $user):bool
+    {
+        return $user->role==='student' && (int)$record->user_id===(int)$user->id
+            && (CodeTaskChecker::find($record->task_id)?->allows_test_reveals??true)
+            && !Task::findOrFail($record->task_id)->isBlocked($user->id,$record->course_id);
     }
 
     private function canPurchase(CodeTestReport $record, array $test, User $user): bool
     {
-        return $user->role === 'student' && (int) $record->user_id === (int) $user->id && !$test['is_public']
+        return !$test['is_public']
             && in_array($test['verdict'], self::PURCHASABLE, true)
-            && (CodeTaskChecker::find($record->task_id)?->allows_test_reveals ?? true)
-            && !Task::findOrFail($record->task_id)->isBlocked($user->id, $record->course_id);
+            && $this->purchaseAllowed($record,$user);
     }
 
-    public function buy(CodeTestReport $record, string $testId, User $user, ?int $expectedPrice = null): array
+    public function buy(CodeTestReport $record, string $testId, User $user, ?int $expectedPrice = null,bool $includeFields=true): array
     {
         $this->access->authorOrTeacher($user, $record);
-        return app(CoinWallet::class)->transaction($user->id, function ($lockedUser) use ($record, $testId, $expectedPrice) {
+        return app(CoinWallet::class)->transaction($user->id, function ($lockedUser) use ($record, $testId, $expectedPrice,$includeFields) {
             $test = collect($record->report['tests'])->firstWhere('test_id', $testId);
             abort_unless($test, 404);
             $already = in_array($testId, $this->purchased($lockedUser, $record), true);
@@ -125,7 +165,7 @@ class Reports
                     'created_at' => now(), 'updated_at' => now()]);
             }
             return ['purchased' => true, 'already_purchased' => $already, 'charged' => $already ? 0 : $price,
-                'balance' => (int) $lockedUser->balance(), 'report' => $this->view($record, $lockedUser)];
+                'balance' => (int) $lockedUser->balance(), 'report' => $this->view($record, $lockedUser,$includeFields)];
         });
     }
 

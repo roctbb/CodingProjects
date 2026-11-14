@@ -24,10 +24,18 @@
         $currentQueuedId = $reviewQueue->first(fn ($queued) => $queued->task_id == $task->id && $queued->user_id == $student->id && $queued->course_id == $course->id)?->id;
         $isBlocked = ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin') && $task->isBlocked($student->id, $course->id);
         $nativeReview = \Illuminate\Support\Facades\Schema::hasTable('code_task_checkers') && \App\CodeTaskChecker::whereKey($task->id)->exists();
+        $legacyReviewAttempt = $nativeReview && request()->filled('legacy_attempt') ? $solutions->firstWhere('id', request()->integer('legacy_attempt')) : null;
+        $legacyReview = $legacyReviewAttempt !== null;
+        if ($legacyReview) {
+            $nativeReview = false;
+            $activeSolutions = collect([$legacyReviewAttempt]);
+            $historySolutions = collect();
+        }
         if ($nativeReview) {
-            $nativeSolutionIds = \App\CodeSubmission::where('course_id', $course->id)->where('task_id', $task->id)->where('user_id', $student->id)->pluck('solution_id')->filter()->all();
-            $activeSolutions = $activeSolutions->whereNotIn('id', $nativeSolutionIds);
-            $historySolutions = $historySolutions->whereNotIn('id', $nativeSolutionIds);
+            // The native history includes every saved event, including old rows which
+            // share one mutable GeekPaste source. Do not show a second competing list.
+            $activeSolutions = collect();
+            $historySolutions = collect();
         }
     @endphp
     <div class="container-fluid px-0 solution-review-page gc-stack">
@@ -99,6 +107,9 @@
 
         @if($nativeReview)
             @include('steps.partials.native-workspace', ['nativeTeacher' => true, 'nativeUser' => $student->id])
+        @endif
+        @if($legacyReview)
+            <p class="gc-help-note">Редактируется оценка выбранной исторической сдачи. <a href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id) }}">Вернуться к истории сдач</a></p>
         @endif
         @forelse($activeSolutions as $solution)
             @include('steps.partials.review-attempt')

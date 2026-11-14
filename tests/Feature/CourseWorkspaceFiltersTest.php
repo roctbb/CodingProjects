@@ -23,12 +23,12 @@ class CourseWorkspaceFiltersTest extends TestCase
             CREATE TABLE course_activities (id INTEGER PRIMARY KEY, course_id INTEGER, user_id INTEGER, lesson_id INTEGER, task_id INTEGER, type TEXT, payload TEXT, created_at TEXT, updated_at TEXT);
             CREATE TABLE achievements (id INTEGER PRIMARY KEY, course_id INTEGER, task_id INTEGER, user_id INTEGER);
             CREATE TABLE lessons (id INTEGER PRIMARY KEY, name TEXT, program_id INTEGER, chapter_id INTEGER, sort_index INTEGER);
-            CREATE TABLE tasks (id INTEGER PRIMARY KEY, name TEXT, max_mark INTEGER);
+            CREATE TABLE tasks (id INTEGER PRIMARY KEY, name TEXT, max_mark INTEGER, step_id INTEGER DEFAULT 1);
             CREATE TABLE solutions (id INTEGER PRIMARY KEY, course_id INTEGER, task_id INTEGER, user_id INTEGER, submitted TEXT, mark INTEGER, recheck_requested INTEGER DEFAULT 0, review_skipped INTEGER DEFAULT 0, recheck_comment TEXT, updated_at TEXT);
             INSERT INTO users (id, name, role) VALUES (1,'Teacher','teacher'),(2,'Student','student');
             INSERT INTO courses VALUES (1,'Managed course','started'),(2,'Other managed course','started'),(3,'Private course','started'),(4,'Ended course','ended');
             INSERT INTO course_teachers (course_id,user_id) VALUES (1,1),(2,1),(4,1);
-            INSERT INTO tasks VALUES (1,'Task',10);
+            INSERT INTO tasks (id,name,max_mark) VALUES (1,'Task',10);
             INSERT INTO solutions (id,course_id,task_id,user_id,submitted,mark) VALUES (1,1,1,2,'2026-11-11 10:00:00',NULL),(2,2,1,2,'2026-11-11 10:00:00',NULL),(3,3,1,2,'2026-11-11 10:00:00',NULL),(4,4,1,2,'2026-11-11 10:00:00',NULL);
             INSERT INTO course_activities (id,course_id,type,created_at) VALUES (1,1,'solution_submitted','2026-11-11 10:00:00'),(2,2,'solution_checked','2026-11-11 09:00:00'),(3,3,'solution_submitted','2026-11-11 11:00:00'),(4,4,'solution_submitted','2026-11-11 12:00:00'),(5,1,'market_purchase','2026-11-11 13:00:00');
             SQL);
@@ -61,7 +61,9 @@ class CourseWorkspaceFiltersTest extends TestCase
         $all = $controller->reviews(new Request())->getData();
         $this->assertTrue($all['reviewQueueAll']);
         $this->assertSame([2, 1], $all['reviewQueue']->pluck('id')->all());
-        $this->assertSame(1, $all['nextReview']->id);
+        foreach(['task','student','solutions','nextReview'] as $detail)$this->assertArrayNotHasKey($detail,$all);
+        $this->assertSame('courses.reviews',$controller->reviews(new Request())->getName());
+        $this->assertSame(url('/insider/courses/2/steps/1').'?student=2&task=1&attempt=solution-2#task1',app(\App\Services\TaskLocation::class)->solution($all['pendingSolutions']->first()));
         $this->assertSame(0, $controller->reviews(new Request(['course' => 3]))->getData()['pendingSolutions']->total());
         $controller->resetPendingReviews(new Request(['course' => 1]));
         $this->assertSame(1, (int) DB::table('solutions')->where('id', 1)->value('review_skipped'));
@@ -78,6 +80,16 @@ class CourseWorkspaceFiltersTest extends TestCase
             $this->assertSame([1], $data['activities']->pluck('id')->all());
         }
         $this->assertSame(0, (new CoursesController())->pulse(new Request(['q' => "%' OR 1=1 --"]))->getData()['activities']->total());
+    }
+
+    public function test_filtered_global_review_toolbar_renders_without_an_open_task_or_student():void
+    {
+        $request=Request::create('/insider/reviews?course=1');$this->app->instance('request',$request);
+        $view=(new CoursesController())->reviews($request);
+        $this->assertSame('courses.reviews',$view->getName());
+        $html=view('steps.partials.review-filters',$view->getData())->render();
+        $this->assertStringContainsString('value="1" selected',$html);
+        $this->assertStringNotContainsString('Курс вне активной очереди',$html);
     }
 
     public function test_pulse_chart_uses_selected_accessible_course_instead_of_all_courses(): void
@@ -134,7 +146,6 @@ class CourseWorkspaceFiltersTest extends TestCase
             CREATE TABLE programs (id INTEGER PRIMARY KEY, name TEXT);
             CREATE TABLE program_chapters (id INTEGER PRIMARY KEY, name TEXT, program_id INTEGER, sort_index INTEGER);
             CREATE TABLE program_steps (id INTEGER PRIMARY KEY, lesson_id INTEGER, sort_index INTEGER);
-            ALTER TABLE tasks ADD COLUMN step_id INTEGER;
             CREATE TABLE blocked_tasks (id INTEGER PRIMARY KEY, course_id INTEGER, task_id INTEGER, user_id INTEGER);
             INSERT INTO programs VALUES (1,'Program');
             INSERT INTO program_chapters VALUES (1,'First',1,100),(2,'Second',1,200);

@@ -8,7 +8,7 @@ export default defineConfig({
   build: {
     outDir: 'public/build',
     emptyOutDir: true,
-    manifest: false,
+    manifest: 'manifest.json',
     sourcemap: false,
     commonjsOptions: {
       include: [/resources\/assets\/js/, /node_modules/],
@@ -29,7 +29,7 @@ export default defineConfig({
       },
       output: {
         entryFileNames: (chunk) => {
-          if (chunk.name === 'vendor') return 'js/vendor.js';
+          if (chunk.name === 'vendor') return 'js/vendor-[hash].js';
           if (chunk.name === 'courseStats') return 'js/course-stats.js';
           if (chunk.name === 'easymdeBridge') return 'js/easymde-bridge.js';
           if (chunk.name === 'mathjaxConfig') return 'js/mathjax-config.js';

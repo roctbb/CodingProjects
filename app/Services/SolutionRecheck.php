@@ -19,7 +19,7 @@ class SolutionRecheck
             $reason = 'Задача заблокирована преподавателем.';
         } elseif (Solution::where('task_id', $solution->task_id)
             ->where('course_id', $solution->course_id)->where('user_id', $solution->user_id)
-            ->whereNotNull('submitted')->positiveEvaluation()->where('mark', '>=', $solution->task->max_mark)->exists()) {
+            ->fullEvaluation((int) $solution->task->max_mark)->exists()) {
             $reason = 'Задача уже зачтена на полный балл.';
         }
 
@@ -35,6 +35,7 @@ class SolutionRecheck
     public function request(Solution $solution, string $comment): array
     {
         return DB::transaction(function () use ($solution, $comment) {
+            \App\User::whereKey($solution->user_id)->lockForUpdate()->firstOrFail();
             // Serialize requests from every local entry point; retries must not notify twice.
             $locked = Solution::whereKey($solution->id)->lockForUpdate()->firstOrFail();
             $status = $this->status($locked);

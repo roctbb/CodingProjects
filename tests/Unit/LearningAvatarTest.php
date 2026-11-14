@@ -1025,7 +1025,7 @@ class LearningAvatarTest extends TestCase
 
         $this->assertSame('усилил(а) решение с помощью питомца «Тунг Тунг Тунг Сахур»', $xpBoosterActivity->actionText());
         $this->assertSame('открыл(а) урок «Массивы» раньше с помощью питомца «Брр Брр Потапим»', $earlyAccessActivity->actionText());
-        $this->assertSame('получил(а) бесплатную попытку GeekPaste от питомца «Робопес»', $geekPasteActivity->actionText());
+        $this->assertSame('получил(а) бесплатную попытку проверки от питомца «Робопес»', $geekPasteActivity->actionText());
     }
 
     public function testDailyPetActionsHavePulsePresentation()

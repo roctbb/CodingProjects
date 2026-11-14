@@ -281,13 +281,8 @@ class CoursesController extends Controller
             return redirect()->to($request->fullUrlWithQuery(['page' => $pendingSolutions->lastPage()]));
         }
 
-        if ($first = $pendingSolutions->first()) {
-            $workspace = app(\App\Services\ReviewWorkspace::class)->data(
-                Course::findOrFail($first->course_id), \App\Task::findOrFail($first->task_id), \App\User::findOrFail($first->user_id), $pendingSolutions, !$request->filled('course'), $reviewFilters
-            );
-            return view('steps.review', $workspace + compact('user', 'pendingSolutions'));
-        }
-        return view('courses.reviews', compact('user', 'pendingSolutions', 'reviewFilters', 'reviewCourses'));
+        $reviewQueue=$pendingSolutions;$reviewQueueAll=!$request->filled('course');
+        return view('courses.reviews', compact('user', 'pendingSolutions', 'reviewQueue','reviewQueueAll','reviewFilters', 'reviewCourses'));
     }
 
     public function resetPendingReviews(Request $request)
@@ -530,9 +525,9 @@ class CoursesController extends Controller
             ->update($updateValues);
 
         if ($updated > 0) {
-            $this->make_success_alert('Предупреждение снято', 'Сброшены локальные флаги GeekPaste для ученика.');
+            $this->make_success_alert('Предупреждение снято', 'Сняты предупреждения анализа авторства для ученика.');
         } else {
-            $this->make_info_alert('Без изменений', 'У ученика не было активных предупреждений GeekPaste.');
+            $this->make_info_alert('Без изменений', 'У ученика не было активных предупреждений анализа авторства.');
         }
 
         return redirect('/insider/courses/' . $course->id . '/report#student' . $student_id);
@@ -733,7 +728,7 @@ class CoursesController extends Controller
         abort_unless(Auth::user()->role === 'admin' || $course->teachers->contains('id', Auth::id()), 403);
         $lesson = $course->lessons()->whereKey($lesson_id)->firstOrFail();
         $request->validate(['page' => ['sometimes', 'integer', 'min:1']]);
-        $students = $course->statsStudents()->orderBy('name')->orderBy('users.id')->paginate(25, ['users.id', 'users.name']);
+        $students = $course->statsStudents()->orderBy('name')->orderBy('users.id')->paginate(\App\Support\CourseLessonStatistics::PAGE_SIZE, ['users.id', 'users.name']);
         abort_if($students->currentPage() > $students->lastPage(), 404);
         $allStats = LessonStudentStats::where('course_id', $course->id)->where('lesson_id', $lesson->id)
             ->whereIn('student_id', $course->statsStudents()->select('users.id'))->get();

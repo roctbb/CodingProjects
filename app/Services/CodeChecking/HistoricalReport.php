@@ -4,11 +4,15 @@ namespace App\Services\CodeChecking;
 /** Parse only the old report grammar. No stored HTML is rendered. */
 class HistoricalReport
 {
-    public const NOTICE='Исторический отчёт содержит данные, сохранённые GeekPaste при проверке. GeekPaste не сохранял ввод, ожидаемый ответ и фактический вывод скрытых тестов в отчёте. Настройки и тесты задачи перенесены отдельно; их текущая версия может отличаться от использованной тогда.';
+    public const NOTICE='Отчёт содержит только сохранённые результаты проверки. Ввод, ожидаемый ответ и фактический вывод скрытых тестов в нём не записаны. Текущие тесты задачи могут отличаться от использованных при этой проверке.';
 
-    public function view(?array $report): ?array
+    public function view(?array $report,bool $teacher=false): ?array
     {
         if ($report && ($report['legacy']??false)) $report['notice']=self::NOTICE;
+        if($report && $teacher && isset($report['tests'])){
+            foreach($report['tests'] as &$test)$test['unlocked']=true;
+            unset($test);
+        }
         return $report;
     }
 

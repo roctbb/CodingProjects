@@ -16,7 +16,9 @@ class SubmissionReview
         $reason=null;
         if (!$run->finished_at && $run->state!=='imported_pending') $reason='Дождитесь результата проверки.';
         elseif ($task->isBlocked($submission->user_id,$submission->course_id)) $reason='Задача заблокирована.';
-        elseif ($run->points >= $run->snapshot['points'] || (\Illuminate\Support\Facades\Schema::hasTable('solutions') && Solution::where('task_id',$task->id)->where('course_id',$submission->course_id)->where('user_id',$submission->user_id)->positiveEvaluation()->where('mark','>=',$task->max_mark)->exists())) $reason='Задача уже зачтена на полный балл.';
+        elseif (($run->points !== null && (int)($run->snapshot['points']??0)>0 && $run->points >= $run->snapshot['points'])
+            || (\Illuminate\Support\Facades\Schema::hasTable('solutions') && Solution::where('task_id',$task->id)->where('course_id',$submission->course_id)
+                ->where('user_id',$submission->user_id)->fullEvaluation((int)$task->max_mark)->exists())) $reason='Задача уже зачтена на полный балл.';
         return ['available'=>!$requested && !$reason,'requested'=>$requested,'comment'=>$requested?$solution->recheck_comment:null,
             'message'=>$requested?'Запрос отправлен преподавателю.':$reason];
     }
@@ -25,6 +27,7 @@ class SubmissionReview
     {
         return DB::transaction(function () use ($submission,$comment) {
             $locked=CodeSubmission::lockForUpdate()->findOrFail($submission->id);
+            \App\User::whereKey($locked->user_id)->lockForUpdate()->firstOrFail();
             $status=$this->status($locked);
             if (!$status['available']) return $status;
             if ($locked->solution_id) $solution=Solution::lockForUpdate()->findOrFail($locked->solution_id);

@@ -233,8 +233,11 @@
                                         @endif
                                     @endif
                                     @if ($isManager && $lessonTaskCount > 0 && $students->isNotEmpty())
-                                        @php $lessonSummary = \App\Support\CourseLessonStatistics::summary($lessonStats->get($lesson->id, collect()), $students->count()); @endphp
-                                        <div class="course-lesson-stats d-none mt-3" id="marks{{$lesson->id}}" data-course-stats-panel data-course-stats-url="{{ route('courses.lesson-statistics', [$course->id, $lesson->id]) }}" aria-live="polite"></div>
+                                        @php
+                                            $lessonDisplayStats = \App\Support\CourseLessonStatistics::forStudents($lessonStats->get($lesson->id, collect()), $students);
+                                            $lessonSummary = \App\Support\CourseLessonStatistics::summary($lessonDisplayStats, $students->count());
+                                        @endphp
+                                        @include('courses.partials.lesson-statistics-panel', ['stats' => $lessonDisplayStats])
                                     @endif
                                 </div>
 
@@ -245,8 +248,11 @@
                                     <div class="course-path-meta">
                                         @unless($isCurrent)<span class="course-path-step-count">Ступеней: {{ $lesson->steps->count() }}</span>@endunless
                                         @if ($lessonDeadline && (!$isLearner || $lessonDeadlines->isEmpty()))
-                                            <small class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-label :expiration="$lessonDeadline->expiration" :rule="$lessonDeadline" /></small>
-                                            <x-gc-deadline-chain :rule="$lessonDeadline" />
+                                            @if($lessonDeadline instanceof \App\Support\DeadlineRule && !empty($lessonDeadline->series))
+                                                <x-gc-deadline-chain :rule="$lessonDeadline" />
+                                            @else
+                                                <small class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-label :expiration="$lessonDeadline->expiration" :rule="$lessonDeadline" :personal="$isLearner" /></small>
+                                            @endif
                                         @endif
 
                                         @if ($startDate != null && $startDate->isFuture())
@@ -351,7 +357,7 @@
                 @endif
                 <div class="gc-course-program-about">
                 @if($isManager)
-                    <x-gc-deadline-preview :items="$courseDeadlines" :all-url="route('courses.deadlines', $course->id)" class="mb-3" />
+                    <x-gc-deadline-preview :items="$courseDeadlines" :all-url="route('courses.deadlines', $course->id)" :personal="false" class="mb-3" />
                 @endif
                 <section class="course-info-panel mb-3">
                     <div class="course-info-panel__inner">

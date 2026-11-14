@@ -618,7 +618,7 @@ class User extends Authenticatable implements MustVerifyEmail
             ],
             'learning_bot_pet' => [
                 'name' => 'Робопес',
-                'description' => 'Маленький робот-собака. Раз в день может бесплатно сбросить лимит GeekPaste-попыток, если выбран в комнате.',
+                'description' => 'Маленький робот-собака. Раз в день может бесплатно добавить попытку ИИ-проверки, если выбран в комнате.',
                 'icon' => 'fas fa-dog',
                 'cost' => app(\App\Services\SystemStoreSettings::class)->price('learning_bot_pet'),
             ],
@@ -674,7 +674,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'free_xp_booster_gift' => 'с шансом 15% раз в день дарит бесплатный XP-бустер',
-            'daily_free_geekpaste_reset' => 'позволяет раз в день бесплатно сбросить лимит GeekPaste-попыток',
+            'daily_free_geekpaste_reset' => 'позволяет раз в день бесплатно добавить попытку ИИ-проверки',
             'daily_coin_gift' => 'с шансом 30% раз в день приносит 3 GC',
             'daily_big_coin_gift' => 'с шансом 15% раз в день приносит 7 GC',
             'task_coin_bonus_10' => 'увеличивает награду GC за задачи на 10%',

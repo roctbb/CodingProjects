@@ -2,7 +2,7 @@
                 $solutionScoreBadgeClass = $solution->scoreBadgeClass();
                 $solutionChecked = $solution->mark !== null;
                 $useOldInput = (string) old('review_solution_id') === (string) $solution->id;
-                $editingReview = $useOldInput || $solution->recheck_requested;
+                $editingReview = $useOldInput || $solution->recheck_requested || (!empty($legacyReview) && $legacyReviewAttempt?->id === $solution->id);
                 $solutionPendingReview = $pendingAttempts->contains('id', $solution->id);
                 $solutionGradeFormId = ($solutionChecked ? 'solution-recheck-form-' : 'solution-grade-form-') . $solution->id;
                 $geekPasteHasData = $solution->hasGeekPasteIntegrityData();
@@ -62,7 +62,7 @@
                             @if($geekPasteHasData)
                                 <div class="solution-integrity-panel @if($solution->geekpaste_integrity_dismissed_at) is-dismissed @endif">
                                     <div class="solution-integrity-panel__head">
-                                        <span class="solution-block__label mb-0">GeekPaste · {{ $solution->geekpaste_integrity_dismissed_at ? 'предупреждение снято' : $geekPasteRiskLabel }}</span>
+                                        <span class="solution-block__label mb-0">Анализ авторства · {{ $solution->geekpaste_integrity_dismissed_at ? 'предупреждение снято' : $geekPasteRiskLabel }}</span>
                                         <span class="solution-integrity-icons">
                                             <span class="report-integrity-icon {{ $geekPasteRiskTone }}"
                                                   title="{{ $solution->geekpaste_integrity_dismissed_at ? 'Предупреждение снято' : 'Риск: '.$geekPasteRiskLabel }}">
@@ -109,12 +109,6 @@
                                             <span class="report-integrity-metric is-muted" title="Синхронизировано {{ $solution->geekpaste_integrity_synced_at->format('d.m.Y H:i') }}">
                                                 <i class="fas fa-clock"></i>
                                                 <span>{{ $solution->geekpaste_integrity_synced_at->format('d.m') }}</span>
-                                            </span>
-                                        @endif
-                                        @if($solution->geekpaste_code_id)
-                                            <span class="report-integrity-metric is-muted" title="GeekPaste ID">
-                                                <i class="fas fa-code"></i>
-                                                <span>{{ $solution->geekpaste_code_id }}</span>
                                             </span>
                                         @endif
                                     </div>

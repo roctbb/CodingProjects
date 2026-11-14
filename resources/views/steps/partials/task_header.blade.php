@@ -1,3 +1,4 @@
+@php($hasDeadlineChain = $deadline instanceof \App\Support\DeadlineRule && !empty($deadline->series))
 <div class="step-task-card__header gc-section-header">
     <div class="gc-task-heading min-width-0">
         <div class="gc-task-heading__type">
@@ -9,8 +10,8 @@
             @if($isInsider && !$isManager && !$task->is_quiz)
                 <x-gc-task-state :task="$task" :viewer="$user" :course="$course" />
             @endif
-            @if($deadline)
-                <span class="gc-task-metadata__deadline"><span class="gc-help-text">Срок:</span> <x-gc-deadline-label :expiration="$deadline->expiration" :rule="$deadline" :settled="!$isManager && $task->isDone($user->id)" /></span>
+            @if($deadline && !$hasDeadlineChain)
+                <span class="gc-task-metadata__deadline"><span class="gc-help-text">{{ $isManager ? 'Срок сдачи:' : 'Срок:' }}</span> <x-gc-deadline-label :expiration="$deadline->expiration" :rule="$deadline" :personal="!$isManager" :settled="!$isManager && $task->isDone($user->id)" /></span>
             @endif
             @if($earnedAchievementId)
                 <a class="step-task-achievement-badge" href="{{ url('/insider/profile/'.$user->id.'#achievement-'.$earnedAchievementId) }}"><i class="fas fa-trophy" aria-hidden="true"></i> Достижение получено</a>
@@ -19,7 +20,7 @@
                 <span><i class="fas fa-coins text-warning" aria-hidden="true"></i> {{$task->price}} GC</span>
             @endif
         </div>
-        @if($deadline instanceof \App\Support\DeadlineRule)<div class="mt-2"><x-gc-deadline-chain :rule="$deadline" /></div>@endif
+        @if($hasDeadlineChain)<div class="mt-2"><x-gc-deadline-chain :rule="$deadline" /></div>@endif
         @if($isInsider && !$isManager)
             @php($classBonus = app(\App\Services\ClassroomBonus::class)->at($task, $course->id, $user->id, now()))
             @if(!empty($classBonus['amount']))<p class="gc-help-note mt-2 mb-0"><i class="fas fa-coins text-warning" aria-hidden="true"></i> Решите полностью на занятии: +{{ $classBonus['amount'] }} GC. Сдайте до {{ \Carbon\Carbon::parse($classBonus['ends_at'])->setTimezone(config('app.timezone'))->format('H:i') }}.</p>@endif
@@ -36,6 +37,8 @@
                 <a class="dropdown-item" href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}" data-confirm="Добавить пустое фантомное решение для всех студентов?"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>Фантомные решения</a>
                 @if ($task->is_code && empty($nativeTaskChecker))
                     <a class="dropdown-item" href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/recheck-all')}}" data-confirm="Вы уверены? Это обнулит все баллы и отправит последние решения на перепроверку."><i class="fas fa-rotate" aria-hidden="true"></i>Перепроверить решения</a>
+                @elseif(!empty($nativeTaskChecker))
+                    <button type="button" class="dropdown-item" data-execution-recheck-latest="#execution-workspace-{{ $task->id }}"><i class="fas fa-rotate" aria-hidden="true"></i>Перепроверить последние работы группы</button>
                 @endif
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item" href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i class="fas fa-arrow-left" aria-hidden="true"></i>Сдвинуть влево</a>

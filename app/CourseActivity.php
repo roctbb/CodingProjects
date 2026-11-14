@@ -900,10 +900,10 @@ class CourseActivity extends Model
                 return 'Открылся урок «' . $lessonName . '»';
             case static::TYPE_GEEKPASTE_ATTEMPT_BOUGHT:
                 if (!empty($payload['pet_name']) && (int) ($payload['cost'] ?? 0) <= 0) {
-                    return 'получил(а) бесплатную попытку GeekPaste от питомца «' . $payload['pet_name'] . '»';
+                    return 'получил(а) бесплатную попытку проверки от питомца «' . $payload['pet_name'] . '»';
                 }
 
-                return 'взял(а) ещё попытку GeekPaste';
+                return 'взял(а) ещё попытку проверки';
             case static::TYPE_TASK_AI_SUMMARY:
                 return 'опубликовал(а) пересказ «' . $taskName . '»';
             case static::TYPE_AI_ACHIEVEMENT_EARNED:

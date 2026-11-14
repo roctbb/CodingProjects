@@ -404,12 +404,11 @@ class TasksController extends Controller
     {
         $task = Task::findOrFail($id);
         $student = User::findOrFail($student_id);
-        $course = Course::findOrFail($course_id);
-        $workspace = app(\App\Services\ReviewWorkspace::class);
-        $reviewFilters = $workspace->filters($request);
-        $reviewQueueAll = $request->input('queue') === 'all';
-        $reviewQueue = $workspace->queue($request->user(), $reviewQueueAll ? null : $course->id, $reviewFilters)->paginate(40)->withQueryString();
-        return view('steps.review', $workspace->data($course, $task, $student, $reviewQueue, $reviewQueueAll, $reviewFilters));
+        $request->validate(['legacy_attempt'=>'sometimes|integer|min:1']);
+        $query=Solution::where('course_id',$course_id)->where('task_id',$task->id)->where('user_id',$student->id)->whereNotNull('submitted');
+        $solution=$request->filled('legacy_attempt')?$query->findOrFail($request->integer('legacy_attempt')):$query->orderByDesc('submitted')->orderByDesc('id')->first();
+        $location=app(\App\Services\TaskLocation::class);
+        return redirect()->to($solution?$location->solution($solution):$location->task((int)$course_id,$task,(int)$student->id));
     }
 
     public function skipSolutionReview($course_id, $id, $solution_id)
@@ -763,8 +762,8 @@ class TasksController extends Controller
 
         $solution->user->awardRankPromotionIfNeeded($old_rank);
 
+        if($request->expectsJson())return response()->json(app(\App\Services\CodeChecking\History::class)->event($request->user(),(int)$course_id,$solution->task,(int)$solution->id))->header('Cache-Control','private, no-store');
         return redirect()->back();
-
     }
 
     private function dispatchAiAchievementGeneration(Solution $solution)
@@ -930,7 +929,7 @@ class TasksController extends Controller
     {
         if ($this->nativeChecker($task->id)) {
             $seen = []; $parts = [];
-            foreach (\App\CodeSubmission::where('course_id', $course->id)->where('task_id', $task->id)->orderByDesc('created_at')->cursor() as $submission) {
+            foreach (\App\CodeSubmission::forCourseStudents($course->id)->where('task_id', $task->id)->orderByDesc('created_at')->cursor() as $submission) {
                 if (isset($seen[$submission->user_id])) continue;
                 $seen[$submission->user_id] = true;
                 $source = app(\App\Services\CodeChecking\Integrity::class)->source($submission) ?? $submission->answer_text ?? '';

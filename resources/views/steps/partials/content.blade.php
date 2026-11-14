@@ -75,7 +75,7 @@
                                     </div>
                                 @endif
                                 @if ($task->is_code && !$nativeTaskChecker)
-                                    <p class="alert alert-info">Проверка этой задачи ожидает переноса в Coding Projects. Преподаватель сможет открыть сдачу после настройки проверки.</p>
+                                    <p class="alert alert-info">Для отправки решения нужно настроить способ сдачи и проверки этой задачи.</p>
                                 @endif
 
                                 @if ($user->role == 'student' and $task->solution!=null and $task->isFullDone(Auth::User()->id))
@@ -191,14 +191,23 @@
                     @if ($course->teachers->contains($user) || $user->role == 'admin')
                         @php
                             $stepProgressStudents = $course->relationLoaded('statsStudents') ? $course->statsStudents : $course->students;
+                            $ownTabActive = $errors->has('text');
                         @endphp
+                        <div class="gc-task-workspaces mt-3">
+                            <div class="nav gc-segmented-tabs" role="tablist" aria-label="Работа с задачей">
+                                <button class="nav-link @if(!$ownTabActive) active @endif" id="student-solutions-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#student-solutions-{{ $task->id }}" data-execution-tab-target="#execution-workspace-{{ $task->id }}" aria-controls="student-solutions-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'false' : 'true' }}">Решения учеников</button>
+                                <button class="nav-link @if($ownTabActive) active @endif" id="own-solution-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#own-solution-{{ $task->id }}" data-execution-tab-target="#execution-own-workspace-{{ $task->id }}" aria-controls="own-solution-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'true' : 'false' }}">Моё решение</button>
+                            </div>
+                            <div class="tab-content">
+                            <div class="tab-pane fade @if(!$ownTabActive) show active @endif" id="student-solutions-{{ $task->id }}" role="tabpanel" aria-labelledby="student-solutions-tab-{{ $task->id }}" tabindex="0">
                         <div class="row my-3">
                             <div class="col">
-                                <div class="gc-section step-progress-card overflow-hidden">
+                                <div class="gc-section step-progress-card overflow-hidden" data-execution-review-navigation>
+                                    <div data-execution-student-list>
                                     <div class="gc-section-header gc-section-header--between">
                                         <div>
                                             <h6 class="mb-0">Прогресс учеников</h6>
-                                            <p class="text-muted small mb-0">Решения учеников по этой задаче.</p>
+                                            <p class="text-muted small mb-0">Выберите ученика, чтобы увидеть его сдачи.</p>
                                         </div>
                                         <div class="input-group input-group-sm gc-search-box step-progress-search">
                                             <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -216,10 +225,13 @@
                                         @foreach($stepProgressStudents as $student)
                                             @php
                                                 $filtered = $task->solutions->filter(function ($value) use ($student) {
-                                                return $value->user_id == $student->id;
+                                                return $value->user_id == $student->id && $value->submitted !== null;
                                                 });
                                                 $bestSolution = \App\Solution::bestScoredIn($filtered);
                                                 $latestSolution = $filtered->sortByDesc('submitted')->first();
+                                                $nativeProgress = ($nativeTaskProgress ?? collect())->get($task->id, collect())->get($student->id);
+                                                $latestSubmittedAt = $latestSolution?->submitted;
+                                                if ($nativeProgress && (!$latestSubmittedAt || $nativeProgress['latest_at']?->gt($latestSubmittedAt))) $latestSubmittedAt = $nativeProgress['latest_at'];
                                                 $blocked = $task->isBlocked($student->id, $course->id);
                                                 if ($blocked) {
                                                     $mark = 0;
@@ -250,15 +262,27 @@
                                                     {
                                                     $class = 'gc-badge--pending';
                                                     }
+                                                    if ($nativeProgress['pending'] ?? false) {
+                                                        $need_check = true;
+                                                        $class = 'gc-badge--pending';
+                                                        $stateClass = 'is-pending';
+                                                        $stateLabel = 'Проверяется';
+                                                    } elseif (!$bestSolution && ($nativeProgress['error'] ?? false)) {
+                                                        $stateClass = 'is-blocked';
+                                                        $stateLabel = 'Ошибка проверки';
+                                                    } elseif (!$bestSolution && !empty($nativeProgress['attempts'])) {
+                                                        $stateLabel = 'Решение отправлено';
+                                                    }
                                                 }
                                                 $maxMark = max(1, (int) $task->max_mark);
                                                 $progressPercent = min(100, max(0, round(((int) $mark / $maxMark) * 100)));
-                                                $solutionsCount = $filtered->count();
+                                                $solutionsCount = $filtered->count() + ($nativeProgress['attempts'] ?? 0);
                                                 $searchTitle = trim($student->name . ' ' . $stateLabel . ' ' . $mark . ' ' . $task->max_mark);
                                             @endphp
                                             <a class="step-progress-cardlet {{ $stateClass }}"
-                                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}"
-                                               target="_blank"
+                                               href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id).'?student='.$student->id.'&task='.$task->id.'#task'.$task->id}}"
+                                                   data-execution-student="#execution-workspace-{{ $task->id }}"
+                                                   data-student-id="{{ $student->id }}" data-student-name="{{ $student->name }}"
                                                data-step-progress-card
                                                data-step-progress-text="{{ $searchTitle }}">
                                                 <span class="step-progress-cardlet__head">
@@ -274,9 +298,9 @@
                                                     <span>{{ $stateLabel }}</span>
                                                     <span>
                                                         @if($solutionsCount > 0)
-                                                            {{ $solutionsCount }} реш.
-                                                            @if($latestSolution && $latestSolution->submitted)
-                                                                · {{ $latestSolution->submitted->format('d.m H:i') }}
+                                                            {{ $solutionsCount }} {{ trans_choice('сдача|сдачи|сдач', $solutionsCount) }}
+                                                            @if($latestSubmittedAt)
+                                                                · {{ $latestSubmittedAt->format('d.m H:i') }}
                                                             @endif
                                                         @else
                                                             перейти к ученику
@@ -288,20 +312,32 @@
                                         </div>
                                         <div class="step-progress-empty text-muted small text-center d-none" data-step-progress-empty>Ничего не найдено</div>
                                     </div>
+                                    </div>
+                                    @if($nativeTaskChecker)<p class="gc-help-text px-3 mb-2" role="status" data-execution-status-for="execution-workspace-{{ $task->id }}" hidden></p>@endif
+                                        @include('steps.partials.native-workspace', ['nativeTeacher' => true])
                                 </div>
                             </div>
                         </div>
+                            </div>
+                            <div class="tab-pane fade @if($ownTabActive) show active @endif" id="own-solution-{{ $task->id }}" role="tabpanel" aria-labelledby="own-solution-tab-{{ $task->id }}" tabindex="0">
+                                @if($nativeTaskChecker)
+                                    @include('steps.partials.native-workspace', ['nativeTeacher' => true, 'nativeUser' => Auth::id(), 'nativeWorkspaceId' => 'execution-own-workspace-'.$task->id, 'nativeTabWorkspace' => true])
+                                @else
+                                    @if(!$task->is_code) @include('steps.partials.task_solution_form') @endif
+                                    @include('steps.partials.native-workspace', ['nativeTeacher' => true, 'nativeUser' => Auth::id(), 'nativeWorkspaceId' => 'execution-own-workspace-'.$task->id, 'nativeTabWorkspace' => true, 'nativeHistoryOnly' => true])
+                                @endif
+                            </div>
+                            </div>
+                        </div>
                     @endif
-                    @if(!$nativeTaskChecker) @include('steps.partials.task_solutions_list') @endif
+                    @if(!$nativeTaskChecker && !$isManager) @include('steps.partials.native-workspace', ['nativeTeacher' => false, 'nativeHistoryOnly' => true]) @endif
                 @endif
 
-                @if($isInsider && $nativeTaskChecker)
+                @if($isInsider && $nativeTaskChecker && !$isManager)
                     @include('steps.partials.native-workspace', ['nativeTeacher' => $isManager])
                 @endif
                 @if (!$task->is_quiz && !$task->is_code && !$nativeTaskChecker)
-                    @if($isManager)
-                        <details class="gc-disclosure gc-disclosure--inline mt-3"><summary>Добавить своё решение</summary>@include('steps.partials.task_solution_form')</details>
-                    @else
+                    @if(!$isManager)
                         @include('steps.partials.task_solution_form')
                     @endif
                 @endif

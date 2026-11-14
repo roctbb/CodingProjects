@@ -29,6 +29,7 @@ Route::middleware(['web', 'auth', 'verified'])->prefix('insider')->where([
     Route::post($base.'/checker/fixtures', [CodeCheckingController::class, 'uploadFixture']);
     Route::post($base.'/checker/extra-attempt', [CodeCheckingController::class, 'extraAttempt']);
     Route::match(['get', 'post'], $base.'/code-submissions', [CodeCheckingController::class, 'index']);
+    Route::get($base.'/code-attempts/{solution}', [CodeCheckingController::class,'attempt'])->whereNumber('solution');
     Route::get('/code-submissions/{submission}', [CodeCheckingController::class, 'show'])->name('code-submissions.show');
     Route::post('/code-submissions/{submission}/manual-review', [TaskSubmissionController::class, 'manualReview']);
     Route::post('/code-submissions/{submission}/review-request', [TaskSubmissionController::class, 'reviewRequest']);
@@ -41,6 +42,7 @@ Route::middleware(['web', 'auth', 'verified'])->prefix('insider')->where([
     Route::get('/code-submissions/{submission}/legacy-source', [TaskSubmissionController::class, 'legacySource']);
     Route::get('/code-submissions/{submission}/runs/{run}/files/{file}', [TaskSubmissionController::class, 'runFile'])->whereNumber('file');
     Route::get('/code-submissions/{submission}/runs/{run}', [TaskSubmissionController::class, 'run']);
+    Route::get('/code-submissions/{submission}/runs/{run}/tests/{number}', [TaskSubmissionController::class,'runTest'])->whereNumber('number');
     Route::get('/code-submissions/{submission}/subscription', [CodeCheckingController::class, 'subscription']);
     Route::get('/code-submissions/{submission}/files/{file}', [CodeCheckingController::class, 'file'])->whereNumber('file')->name('code-submissions.file');
     Route::post('/code-submissions/{submission}/recheck', [CodeCheckingController::class, 'recheck']);

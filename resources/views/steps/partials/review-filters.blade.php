@@ -1,6 +1,6 @@
 @php
     $reviewFilters = $reviewFilters ?? ['q' => '', 'review_status' => 'all'];
-    $reviewCourseValue = isset($reviewQueueAll) && !$reviewQueueAll ? $course->id : request('course');
+    $reviewCourseValue = isset($reviewQueueAll, $course) && !$reviewQueueAll ? $course->id : request('course');
     $reviewFiltered = filled($reviewCourseValue) || $reviewFilters['q'] !== '' || $reviewFilters['review_status'] !== 'all';
 @endphp
 <div class="{{ ($embedded ?? false) ? 'gc-review-filters' : 'gc-workspace-toolbar mb-0' }}">
