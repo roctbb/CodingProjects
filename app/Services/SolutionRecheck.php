@@ -35,7 +35,7 @@ class SolutionRecheck
     public function request(Solution $solution, string $comment): array
     {
         return DB::transaction(function () use ($solution, $comment) {
-            // The web form and GeekPaste API share a lock: retries must not notify twice.
+            // Serialize requests from every local entry point; retries must not notify twice.
             $locked = Solution::whereKey($solution->id)->lockForUpdate()->firstOrFail();
             $status = $this->status($locked);
             if (!$status['available']) {

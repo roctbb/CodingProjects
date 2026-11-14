@@ -11,7 +11,6 @@ use App\Lesson;
 use App\Question;
 use App\QuestionVariant;
 use App\Solution;
-use App\Services\GeekPasteClient;
 use App\Task;
 use App\User;
 use Carbon\Carbon;
@@ -96,23 +95,8 @@ class StepsController extends Controller
 
         $quizer = $quizer && $zero_theory && !$empty;
 
-        $geekpasteAttemptResetStatuses = [];
-        $isStudent = $user->role == 'student' && !$course->teachers->contains('id', $user->id);
-        if ($isStudent) {
-            $geekpaste = app(GeekPasteClient::class);
-            foreach ($tasks as $task) {
-                if (!$task->is_code || $task->isBlocked($user->id, $course->id)) {
-                    continue;
-                }
 
-                $status = $geekpaste->gptRateLimitStatus($user->id, $task->id, $course->id);
-                if ($geekpaste->allowsExtraAttempt($status)) {
-                    $geekpasteAttemptResetStatuses[$task->id] = $status;
-                }
-            }
-        }
-
-        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'geekpasteAttemptResetStatuses', 'latestTaskAiSummaries', 'earnedTaskAchievements'));
+        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'latestTaskAiSummaries', 'earnedTaskAchievements'));
     }
 
     public function downloadNotebook($course_id, $id)

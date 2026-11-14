@@ -25,6 +25,7 @@ import initFormWorkspaces from './components/form-workspace';
 import initAccountForms from './components/account-forms';
 import initAiSettings from './components/ai-settings';
 import initRewardNotices from './components/reward-notices';
+import initCodeChecking from './components/code-checking';
 
 // Compatibility entry: retain legacy globals and run each initializer once.
 import axios from 'axios';
@@ -127,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initMarkdownEditors();
     initFormWorkspaces();
+    initCodeChecking();
     initAiSettings();
 
     initNavigation();

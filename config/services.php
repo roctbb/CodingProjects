@@ -35,8 +35,11 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
 
-    'geekpaste_url' => env('GEEKPASTE_URL', 'https://paste.geekclass.ru/'),
-    'geekpaste_api_key' => env('GEEKPASTE_API_KEY'),
+    'geekexecutor_url' => env('GEEKEXECUTOR_URL', 'http://geekexecutor:8086'),
+    'geekexecutor_public_url' => env('GEEKEXECUTOR_PUBLIC_URL'),
+    'geekexecutor_socket_url' => env('GEEKEXECUTOR_SOCKET_URL'),
+    'geekexecutor_secret' => env('GEEKEXECUTOR_SECRET'),
+    'code_executor_callback_url' => env('CODE_EXECUTOR_CALLBACK_URL'),
 
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),

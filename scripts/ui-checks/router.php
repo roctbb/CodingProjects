@@ -13,13 +13,18 @@ $app->instance('request', $request);
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $kernel->bootstrap();
 $variant = $_GET['scenario'] ?? $_COOKIE['ui_qa_scenario'] ?? 'base';
-if (!in_array($variant, ['base', 'reading', 'notebook', 'catalog-desktop', 'catalog-phone'], true)) $variant = 'base';
+if (!in_array($variant, ['base', 'reading', 'notebook', 'catalog-desktop', 'catalog-phone', 'submissions'], true)) $variant = 'base';
 $actor = $_GET['actor'] ?? $_COOKIE['ui_qa_actor'] ?? 'student';
 if (isset($_GET['actor'])) setcookie('ui_qa_actor', $actor, ['path' => '/']);
 if (isset($_GET['scenario'])) setcookie('ui_qa_scenario', $variant, ['path' => '/']);
 config(['app.env' => 'testing', 'app.debug' => false, 'app.url' => getenv('UI_QA_URL'), 'app.enable_recaptcha' => false,
     'app.key' => getenv('UI_QA_KEY'), 'app.cipher' => 'AES-256-CBC',
     'database.default' => 'sqlite', 'database.connections.sqlite.database' => $directory.'/'.$variant.'.sqlite',
+    'filesystems.disks.code_originals'=>['driver'=>'local','root'=>$directory.'/code-originals','throw'=>true],
+    'filesystems.disks.code_checking' => ['driver'=>'local', 'root'=>$directory.'/code-checking', 'throw'=>true],
+    'services.geekexecutor_secret' => str_repeat('qa-execution-',4), 'services.geekexecutor_url'=>'http://127.0.0.1:9',
+    'services.geekexecutor_socket_url'=>getenv('UI_QA_URL'),
+    'code_checking.ai_detection_enabled'=>false,
     'cache.default' => 'array', 'session.driver' => 'file', 'session.files' => $directory.'/sessions',
     'session.cookie' => 'ui_qa_session', 'session.expire_on_close' => true, 'session.secure' => false,
     'session.domain' => null, 'session.path' => '/', 'queue.default' => 'sync',

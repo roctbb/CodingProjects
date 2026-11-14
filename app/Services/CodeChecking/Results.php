@@ -1,0 +1,71 @@
+<?php
+
+namespace App\Services\CodeChecking;
+
+use App\CodeExecutionRun;
+use App\CodeSubmission;
+use Illuminate\Support\Facades\DB;
+
+class Results
+{
+    public function __construct(private Reports $reports, private Grading $grading) {}
+
+    public function progress(CodeExecutionRun $run, array $data): void
+    {
+        abort_unless(is_int($data['sequence'] ?? null) && $data['sequence'] > 0
+            && (!isset($data['execution_id']) || $data['execution_id'] === $run->id)
+            && in_array($data['phase'] ?? null, ['queued', 'preparing', 'compiling', 'testing', 'grading', 'publishing'], true)
+            && is_int($data['completed'] ?? null) && is_int($data['total'] ?? null)
+            && $data['completed'] >= 0 && $data['total'] >= $data['completed'] && $data['total'] <= 50, 422);
+        // A late progress callback cannot reopen a terminal run or replace a newer event.
+        CodeExecutionRun::whereKey($run->id)->whereNull('finished_at')->where('progress_sequence', '<', $data['sequence'])
+            ->update(['progress_sequence' => $data['sequence'], 'state' => 'running', 'progress' => json_encode(
+                array_intersect_key($data, array_flip(['sequence', 'phase', 'completed', 'total'])), JSON_THROW_ON_ERROR)]);
+    }
+
+    public function accept(CodeExecutionRun $run, array $data, string $hash): void
+    {
+        abort_unless(($data['execution_id'] ?? null) === $run->id
+            && in_array($data['state'] ?? null, ['done', 'partially done', 'execution error'], true)
+            && is_int($data['points'] ?? null) && $data['points'] >= 0 && $data['points'] <= $run->snapshot['points']
+            && is_string($data['comment'] ?? null) && strlen($data['comment']) <= 200000, 422, 'Invalid execution result.');
+        DB::transaction(function () use ($run, $data, $hash) {
+            $run = CodeExecutionRun::lockForUpdate()->findOrFail($run->id);
+            if ($run->result_hash) {
+                abort_unless(hash_equals($run->result_hash, $hash), 409, 'Result is immutable.');
+                return;
+            }
+            $submission = CodeSubmission::lockForUpdate()->findOrFail($run->submission_id);
+            if (isset($data['report'])) {
+                $report = $data['report'];
+                abort_unless(($report['run_id'] ?? null) === $run->id && ($report['code_id'] ?? null) === $submission->id
+                    && ($report['user_id'] ?? null) === (int) $submission->user_id
+                    && ($report['task_id'] ?? null) === (int) $submission->task_id
+                    && ($report['course_id'] ?? null) === (int) $submission->course_id, 422, 'Report belongs to another execution.');
+                $this->reports->accept($report);
+            }
+            $run->update(['result_hash' => $hash, 'points' => $data['points'], 'comment' => $data['comment'],
+                'state' => $data['state'] === 'execution error' ? 'error' : 'completed', 'finished_at' => now(),
+                'progress' => ['phase' => $data['state'] === 'execution error' ? 'error' : 'completed', 'completed' => $data['report']['total'] ?? 0,
+                    'total' => $data['report']['total'] ?? 0]]);
+            // Historical runs remain inspectable; only the current run can update the grade.
+            if ($submission->current_run_id === $run->id && $data['state'] !== 'execution error') {
+                $user = null;
+                if (\Illuminate\Support\Facades\Schema::hasTable('reward_notices')) {
+                    $user = \App\User::lockForUpdate()->findOrFail($submission->user_id);
+                    $user->rescore();
+                    $before = (int) $user->score();
+                }
+                $this->grading->apply($submission, $data);
+                if ($user) app(\App\Services\RewardNotices::class)->experience($user, $before, $run->id, $run->snapshot['name'] ?? 'За решение задачи');
+                $gradedSubmission = $submission->fresh();
+                $awarded = $gradedSubmission->solution_id ? \App\Solution::find($gradedSubmission->solution_id)?->mark : null;
+                if ($awarded !== null && $awarded >= $run->snapshot['points'] && $data['points'] > 0 && $data['points'] === $run->snapshot['points']
+                    && (!isset($data['report']) || $data['report']['passed'] === $data['report']['total'])) {
+                    app(\App\Services\RewardNotices::class)->taskCompleted($submission->user_id, $submission->task_id, $run->snapshot['name'] ?? 'Задача');
+                }
+            }
+        });
+    }
+
+}

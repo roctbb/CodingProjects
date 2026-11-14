@@ -73,6 +73,13 @@ class CoinTransaction extends Authenticatable
             return 'Дополнительная попытка GeekPaste для задачи #' . $matches[1];
         }
 
+        if (preg_match('/^Code test reveal Task #(\d+) Test #[a-f0-9]{64}$/D', $comment, $matches)) {
+            return 'Открытие скрытого теста к задаче #' . $matches[1];
+        }
+        if (preg_match('/^GeekExecutor extra attempt Task #(\d+)$/D', $comment, $matches)) {
+            return 'Дополнительная попытка проверки задачи #'.$matches[1];
+        }
+
         if (preg_match('/^Custom title User #(\d+)$/', $comment, $matches)) {
             return 'Кастомное звание в профиле';
         }

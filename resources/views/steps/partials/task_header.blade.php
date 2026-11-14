@@ -29,7 +29,7 @@
                 <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#deadline-modal-{{$task->id}}"><i class="fas fa-calendar-days" aria-hidden="true"></i>Дедлайн</button>
                 @if(!$quizer)<button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#task-ai-summary-modal-{{$task->id}}"><i class="fas fa-newspaper" aria-hidden="true"></i>Пересказ решений</button>@endif
                 <a class="dropdown-item" href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}" data-confirm="Добавить пустое фантомное решение для всех студентов?"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>Фантомные решения</a>
-                @if ($task->is_code)
+                @if ($task->is_code && empty($nativeTaskChecker))
                     <a class="dropdown-item" href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/recheck-all')}}" data-confirm="Вы уверены? Это обнулит все баллы и отправит последние решения на перепроверку."><i class="fas fa-rotate" aria-hidden="true"></i>Перепроверить решения</a>
                 @endif
                 <div class="dropdown-divider"></div>

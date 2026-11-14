@@ -313,7 +313,7 @@
 
 Проверка: Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.
 
-Состояния для макета и проверки: теория; текст; код; квиз; пустая ступень; сдано / проверено / блокировка; ученик / преподаватель; список ступеней слева с текущим пунктом; мобильный список раскрыт / скрыт; одна ступень без боковой колонки; вкладка задачи по прямой ссылке видна на узком экране.
+Состояния для макета и проверки: теория; текст; код; квиз; пустая ступень; сдано / проверено / блокировка; ученик / преподаватель; список ступеней слева с текущим пунктом; мобильный список раскрыт / скрыт; одна ступень без боковой колонки; вкладка задачи по прямой ссылке видна на узком экране; загрузка готовых файлов и вставка кода; неизменяемая отправленная версия; WebSocket: очередь / компиляция / тесты / результат; покупка скрытого теста; реальный прирост XP / новое звание / GC без перезагрузки.
 
 Шаблон экрана: learning-workspace. Статус: implemented.
 
@@ -325,6 +325,11 @@
 - `GET|HEAD /insider/courses/{course_id}/steps/{id}/lower` — action
 - `POST /insider/courses/{course_id}/steps/{id}/question` — action
 - `GET|HEAD /insider/courses/{course_id}/steps/{id}/upper` — action
+- `GET|HEAD /insider/courses/{course}/tasks/{task}/checker` — api
+- `POST /insider/courses/{course}/tasks/{task}/checker/extra-attempt` — api
+- `GET|PUT|DELETE|HEAD /insider/courses/{course}/tasks/{task}/code-draft` — api
+- `GET|HEAD /insider/courses/{course}/tasks/{task}/code-draft/files/{file}` — download
+- `GET|POST|HEAD /insider/courses/{course}/tasks/{task}/code-submissions` — api
 
 Переходы:
 
@@ -343,6 +348,7 @@
 - Изменить задачу → [Редактирование задачи](#task-edit) (navigate)
 - Режим показа → [Режим показа](#perform) (navigate)
 - Оглавление конспекта → [Оглавление конспекта](#reading-outline) (state)
+- Ссылка на отправленную работу → [Отправленное решение и проверки](#code-submission) (navigate)
 
 Исходники:
 
@@ -357,6 +363,9 @@
 - [resources/assets/js/components/tab-strip.js](../../resources/assets/js/components/tab-strip.js)
 - [resources/views/steps/partials/task_header.blade.php](../../resources/views/steps/partials/task_header.blade.php)
 - [resources/views/components/gc-task-state.blade.php](../../resources/views/components/gc-task-state.blade.php)
+- [resources/assets/js/code-checking/workspace.js](../../resources/assets/js/code-checking/workspace.js)
+- [resources/assets/js/components/reward-notices.js](../../resources/assets/js/components/reward-notices.js)
+- [docs/ux/code-submissions-ux.mmd](../../docs/ux/code-submissions-ux.mmd)
 
 <a id="public-step"></a>
 
@@ -661,6 +670,13 @@
 
 - `GET|HEAD /insider/courses/{course_id}/tasks/{id}/edit` — screen
 - `POST /insider/courses/{course_id}/tasks/{id}/edit` — action
+- `GET|POST|HEAD /insider/courses/{course}/tasks/{task}/checker/files` — api
+- `GET|DELETE|HEAD /insider/courses/{course}/tasks/{task}/checker/files/{attachment}` — api
+- `POST /insider/courses/{course}/tasks/{task}/checker/files/{attachment}/replace` — api
+- `POST /insider/courses/{course}/tasks/{task}/checker/fixtures` — api
+- `GET|HEAD /insider/courses/{course}/tasks/{task}/checker/fixtures/{artifact}` — download
+- `GET|HEAD /insider/courses/{course}/tasks/{task}/checker/legacy` — api
+- `GET|PUT|HEAD /insider/courses/{course}/tasks/{task}/checker/private` — api
 
 Переходы:
 
@@ -670,6 +686,7 @@
 Исходники:
 
 - [resources/views/steps/edit_task.blade.php](../../resources/views/steps/edit_task.blade.php)
+- [resources/assets/js/code-checking/authoring.js](../../resources/assets/js/code-checking/authoring.js)
 
 <a id="perform"></a>
 
@@ -745,7 +762,12 @@
 
 Маршруты:
 
+- `PUT /insider/code-submissions/{submission}/grade` — api
+- `PUT /insider/code-submissions/{submission}/integrity/review` — api
+- `POST /insider/code-submissions/{submission}/manual-review` — api
+- `POST /insider/code-submissions/{submission}/recheck` — api
 - `GET|HEAD /insider/courses/{course_id}/tasks/{id}/student/{student_id}` — screen
+- `POST /insider/courses/{course}/tasks/{task}/code-submissions/recheck-latest` — api
 
 Переходы:
 
@@ -1567,6 +1589,7 @@
 
 - [resources/views/steps/create_task.blade.php](../../resources/views/steps/create_task.blade.php)
 - [resources/views/steps/partials/task-form.blade.php](../../resources/views/steps/partials/task-form.blade.php)
+- [resources/assets/js/code-checking/authoring.js](../../resources/assets/js/code-checking/authoring.js)
 
 <a id="task-deadline"></a>
 
@@ -2346,11 +2369,6 @@ GeekPaste
 
 Маршруты:
 
-- `POST /api/geekpaste` — api
-- `POST /api/geekpaste/integrity` — api
-- `POST /api/geekpaste/recheck` — api
-- `POST /api/geekpaste/recheck/status` — api
-- `GET|HEAD /api/geekpaste/users/{id}` — api
 - `GET|HEAD /insider/jwt` — redirect
 
 Исходники:
@@ -2725,6 +2743,34 @@ Telegram, почта и Силаэдр в личных настройках; н�
 - [resources/views/components/gc-course-header.blade.php](../../resources/views/components/gc-course-header.blade.php)
 - [app/Http/Controllers/StudentCourseTasksController.php](../../app/Http/Controllers/StudentCourseTasksController.php)
 
+<a id="geekexecutor"></a>
+
+## GeekExecutor: исполнение кода
+
+Тип: external. Роли сценария: Ученик, Преподаватель, Администратор.
+
+Граница исполнения кода: передача запусков, результатов и файлов.
+
+Проверка: Внешний исполнитель: контейнеры и ИИ, прямой WebSocket статуса. Исходники, отчёты и награды показываются в Coding Projects.
+
+Маршруты:
+
+- `GET|HEAD /api/executor/artifacts/{artifact}` — api
+- `GET|HEAD /api/executor/executions/{execution}/input` — api
+- `POST /api/executor/executions/{execution}/progress` — api
+- `POST /api/executor/executions/{execution}/result` — api
+- `POST /api/executor/test-artifacts/status` — api
+- `PUT /api/executor/test-artifacts/{artifact}` — api
+- `POST /api/executor/test-reports` — api
+- `GET|HEAD /insider/settings/code-executor/legacy-exports/{export}/files/{file}` — download
+- `GET|HEAD /insider/settings/code-executor/login` — redirect
+- `GET|HEAD /insider/settings/code-executor/status` — api
+
+Исходники:
+
+- [routes/code-checking.php](../../routes/code-checking.php)
+- [docs/code-checking-backend.md](../../docs/code-checking-backend.md)
+
 <a id="reward-notices"></a>
 
 ## Уведомления о наградах
@@ -2744,3 +2790,45 @@ Telegram, почта и Силаэдр в личных настройках; н�
 - [resources/views/components/gc-reward-notices.blade.php](../../resources/views/components/gc-reward-notices.blade.php)
 - [resources/assets/js/components/reward-notices.js](../../resources/assets/js/components/reward-notices.js)
 - [app/Http/Controllers/RewardNoticesController.php](../../app/Http/Controllers/RewardNoticesController.php)
+
+<a id="code-submission"></a>
+
+## Отправленное решение и проверки
+
+Тип: page. Роли сценария: Ученик, Преподаватель, Администратор.
+
+Посмотреть неизменяемые исходники, результат, историю проверок и доступные тесты.
+
+Условия: Автор решения либо преподаватель соответствующего курса.
+
+Проверка: HTML-страница по обычной ссылке; тот же API отдаёт JSON для формы в уроке. AJAX, Socket.IO, тесты и награды проверены в изолированном сценарии.
+
+Маршруты:
+
+- `GET|HEAD /insider/code-submissions/{submission}` — screen
+- `GET|HEAD /insider/code-submissions/{submission}/compare` — api
+- `GET|HEAD /insider/code-submissions/{submission}/files/{file}` — download
+- `PUT /insider/code-submissions/{submission}/flags` — api
+- `GET|HEAD /insider/code-submissions/{submission}/legacy-source` — download
+- `GET|HEAD /insider/code-submissions/{submission}/repository/archive` — download
+- `POST /insider/code-submissions/{submission}/review-request` — api
+- `GET|HEAD /insider/code-submissions/{submission}/runs/{run}` — api
+- `GET|HEAD /insider/code-submissions/{submission}/runs/{run}/files/{file}` — download
+- `GET|HEAD /insider/code-submissions/{submission}/subscription` — api
+- `GET|HEAD /insider/code-submissions/{submission}/task-files/{file}` — download
+- `GET|HEAD /insider/code-test-reports/{run}` — api
+- `POST /insider/code-test-reports/{run}/tests/{test}/purchase` — api
+- `GET|HEAD /insider/code-test-reports/{run}/tests/{test}/{field}` — download
+- `GET|HEAD /legacy/geekpaste/{legacy}/{action?}` — redirect
+- `GET|HEAD /shared/code-submissions/{submission}/files/{file}` — download
+- `GET|HEAD /shared/code-submissions/{submission}/{action?}` — screen
+
+Переходы:
+
+- Вернуться к задаче → [Ступень](#step) (navigate)
+
+Исходники:
+
+- [resources/views/steps/native-submission.blade.php](../../resources/views/steps/native-submission.blade.php)
+- [resources/views/steps/partials/native-workspace.blade.php](../../resources/views/steps/partials/native-workspace.blade.php)
+- [resources/assets/js/code-checking/workspace.js](../../resources/assets/js/code-checking/workspace.js)

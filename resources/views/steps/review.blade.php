@@ -23,6 +23,12 @@
         $attemptNumbers = $solutions->values()->mapWithKeys(fn ($solution, $index) => [$solution->id => $solutions->count() - $index]);
         $currentQueuedId = $reviewQueue->first(fn ($queued) => $queued->task_id == $task->id && $queued->user_id == $student->id && $queued->course_id == $course->id)?->id;
         $isBlocked = ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin') && $task->isBlocked($student->id, $course->id);
+        $nativeReview = \Illuminate\Support\Facades\Schema::hasTable('code_task_checkers') && \App\CodeTaskChecker::whereKey($task->id)->exists();
+        if ($nativeReview) {
+            $nativeSolutionIds = \App\CodeSubmission::where('course_id', $course->id)->where('task_id', $task->id)->where('user_id', $student->id)->pluck('solution_id')->filter()->all();
+            $activeSolutions = $activeSolutions->whereNotIn('id', $nativeSolutionIds);
+            $historySolutions = $historySolutions->whereNotIn('id', $nativeSolutionIds);
+        }
     @endphp
     <div class="container-fluid px-0 solution-review-page gc-stack">
         <div class="gc-page-masthead">
@@ -91,10 +97,13 @@
             </div>
         </div>
 
+        @if($nativeReview)
+            @include('steps.partials.native-workspace', ['nativeTeacher' => true, 'nativeUser' => $student->id])
+        @endif
         @forelse($activeSolutions as $solution)
             @include('steps.partials.review-attempt')
         @empty
-            <div class="gc-empty-state"><h2 class="h6">Решений пока нет</h2><p class="mb-0">Когда ученик отправит работу, она появится здесь.</p></div>
+            @unless($nativeReview)<div class="gc-empty-state"><h2 class="h6">Решений пока нет</h2><p class="mb-0">Когда ученик отправит работу, она появится здесь.</p></div>@endunless
         @endforelse
         @if($historySolutions->isNotEmpty())
             <details class="gc-disclosure gc-review-history" @if($historySolutions->contains(fn ($item) => (string) $item->id === (string) old('review_solution_id'))) open @endif>

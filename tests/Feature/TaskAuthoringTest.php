@@ -67,6 +67,24 @@ class TaskAuthoringTest extends TestCase
         return [['manual',false,false],['code',true,false],['short',false,true]];
     }
 
+    public function test_native_settings_and_task_save_atomically(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('code_checking'); \Illuminate\Support\Facades\Storage::fake('code_originals');
+        (require database_path('migrations/2026_11_14_120000_create_code_checking_tables.php'))->up();
+        (require database_path('migrations/2026_11_14_130000_expand_task_submissions.php'))->up();
+        (require database_path('migrations/2026_11_14_140000_complete_native_submission_storage.php'))->up();
+        $data=['name'=>'Files task','text'=>'Upload work','max_mark'=>10,'price'=>0,'answer_mode'=>'native',
+            'checker_config'=>json_encode(['check_type'=>'manual','language'=>'text','submission_modes'=>['files','text']])];
+        $this->post('/insider/courses/1/steps/1/task',$data)->assertRedirect()->assertSessionHasNoErrors();
+        $task=Task::firstOrFail();
+        $this->assertSame('manual',\App\CodeTaskChecker::findOrFail($task->id)->config['check_type']);
+        $data['name']='Should roll back';
+        $data['checker_config']=json_encode(['check_type'=>'tests','language'=>'python','test_config'=>['tests'=>[]]]);
+        $this->post('/insider/courses/1/tasks/'.$task->id.'/edit',$data)->assertRedirect()->assertSessionHasErrors('checker_config');
+        $this->assertSame('Files task',$task->fresh()->name);
+        $this->assertSame('manual',\App\CodeTaskChecker::findOrFail($task->id)->config['check_type']);
+    }
+
     public function testShortAnswerRequiresAnAnswerAndInvalidModeDoesNotWrite(): void
     {
         foreach(['short','unknown'] as $mode){

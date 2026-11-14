@@ -190,4 +190,39 @@ class DeadlinePenaltyWaiverTest extends TestCase
         $this->assertDatabaseCount('course_activities', 0);
         $this->assertDatabaseCount('coin_transactions', 0);
     }
+
+    public function testNativeExecutionUsesSubmissionTimeAndExistingXpAndRewardRules(): void
+    {
+        config(['auth.jwt_secret' => str_repeat('test', 16)]);
+        \Illuminate\Support\Facades\Queue::fake();
+        DB::unprepared('CREATE TABLE blocked_tasks (task_id INTEGER, course_id INTEGER, user_id INTEGER)');
+        \Illuminate\Support\Facades\Schema::table('tasks', function ($t) { $t->boolean('is_code')->default(true); });
+        \Illuminate\Support\Facades\Schema::table('solutions', function ($t) {
+            $t->boolean('recheck_requested')->default(false);$t->text('recheck_comment')->nullable();$t->boolean('review_skipped')->default(false);
+            foreach (['geekpaste_ai_warning', 'geekpaste_similarity_checked', 'geekpaste_similarity_warning', 'geekpaste_similarity_critical'] as $key) $t->boolean($key)->default(false);
+            foreach (['geekpaste_ai_confidence', 'geekpaste_ai_reasons', 'geekpaste_integrity_synced_at', 'geekpaste_integrity_dismissed_at'] as $key) $t->text($key)->nullable();
+            foreach (['geekpaste_llm_probability', 'geekpaste_similarity_max_percent', 'geekpaste_similarity_matches_count'] as $key) $t->integer($key)->nullable();
+        });
+        (require database_path('migrations/2026_11_14_120000_create_code_checking_tables.php'))->up();
+        (require database_path('migrations/2026_11_14_130000_expand_task_submissions.php'))->up();
+        (require database_path('migrations/2026_11_14_140000_complete_native_submission_storage.php'))->up();
+        DB::table('tasks')->where('id', 1)->update(['price' => 3]);
+        $id = (string) \Illuminate\Support\Str::uuid();
+        $runId = (string) \Illuminate\Support\Str::uuid();
+        $submission = \App\CodeSubmission::create(['id' => $id, 'user_id' => 2, 'course_id' => 1, 'task_id' => 1,
+            'request_id' => (string) \Illuminate\Support\Str::uuid(), 'payload_hash' => str_repeat('a', 64),
+            'language' => 'python', 'files' => [], 'current_run_id' => $runId, 'created_at' => '2026-01-01 00:00:00']);
+        $run = \App\CodeExecutionRun::create(['id' => $runId, 'submission_id' => $id, 'snapshot' => ['points' => 20], 'state' => 'queued']);
+        $result = ['execution_id' => $runId, 'points' => 20, 'state' => 'done', 'comment' => 'Full marks'];
+        foreach ([1, 2] as $_) app(\App\Services\CodeChecking\Results::class)->accept($run, $result, hash('sha256', json_encode($result)));
+        $solution = Solution::findOrFail($submission->fresh()->solution_id);
+        $this->assertSame(20, $solution->mark);
+        $this->assertSame(20, $solution->raw_mark);
+        $this->assertFalse($solution->hasActiveDeadlinePenalty());
+        $this->assertSame('2026-01-01', $solution->submitted->format('Y-m-d'));
+        $this->assertSame(url('/insider/code-submissions/'.$id), $solution->text);
+        $this->assertDatabaseHas('course_student_points', ['course_id' => 1, 'student_id' => 2, 'points' => 20]);
+        $this->assertDatabaseCount('coin_transactions', 1);
+        $this->assertDatabaseHas('coin_transactions', ['user_id' => 2, 'price' => 3, 'comment' => 'Task #1']);
+    }
 }

@@ -4,6 +4,7 @@ export default function initWorkbookNavigation() {
     const workbook = document.querySelector('[data-step-details-page]');
     if (workbook) {
         document.addEventListener('gc:task-checked', function (event) {
+            if (!event.detail?.taskId) return;
             workbook.querySelectorAll('[data-task-state]').forEach(function (state) {
                 if (state.dataset.taskState !== String(event.detail.taskId) || state.classList.contains('gc-task-state--danger')) return;
                 const complete = state.dataset.taskComplete === 'true' || Number(event.detail.mark) === Number(state.dataset.taskMaximum);

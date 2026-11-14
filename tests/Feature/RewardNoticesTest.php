@@ -74,6 +74,58 @@ class RewardNoticesTest extends TestCase
         $this->assertDatabaseCount('coin_transactions', 0);
     }
 
+    public function test_native_experience_reports_only_actual_increase_and_deduplicates_execution(): void
+    {
+        DB::unprepared('CREATE TABLE solutions (id INTEGER PRIMARY KEY, user_id INTEGER, task_id INTEGER, mark INTEGER)');
+        DB::table('solutions')->insert(['id'=>1,'user_id'=>1,'task_id'=>1,'mark'=>15]);
+        $user = User::find(1);
+        $id = (string) \Illuminate\Support\Str::uuid();
+        $this->feed()->experience($user, 10, $id, 'Task');
+        $this->feed()->experience($user, 10, $id, 'Task');
+        $this->feed()->experience($user, 15, (string) \Illuminate\Support\Str::uuid(), 'Task');
+        $notice = $this->feed()->claim($user);
+        $this->assertSame('xp', $notice['kind']);
+        $this->assertSame(['amount'=>5,'before'=>10,'after'=>15,'reason'=>'Task'], $notice['payload']);
+        $this->assertNull($this->feed()->claim($user));
+    }
+
+    public function test_rank_and_task_completion_are_once_only_and_rollback_with_the_award(): void
+    {
+        $old = (object) ['id'=>1,'name'=>'Новичок','from'=>0];
+        $new = (object) ['id'=>2,'name'=>'Исследователь','from'=>100];
+        $user = User::find(1);
+        foreach ([1,2] as $_) {
+            $this->feed()->rank($user,$old,$new);
+            $this->feed()->taskCompleted(1,11,'Исследование');
+        }
+        $this->assertSame('rank', $this->feed()->claim($user)['kind']);
+        $this->assertSame('task_complete', $this->feed()->claim($user)['kind']);
+        $this->assertNull($this->feed()->claim($user));
+        try {DB::transaction(function () use ($user,$new) {
+            $this->feed()->rank($user,$new,(object) ['id'=>3,'name'=>'Мастер','from'=>200]);
+            throw new \RuntimeException('rollback');
+        });} catch (\RuntimeException $error) {$this->assertSame('rollback',$error->getMessage());}
+        $this->assertNull($this->feed()->claim($user));
+        $this->feed()->rank($user,$new,$old);
+        $this->assertNull($this->feed()->claim($user));
+    }
+
+    public function test_published_achievement_gets_one_notice_with_a_collection_link(): void
+    {
+        $achievement = (new \App\Achievement())->forceFill(['id'=>9,'user_id'=>1,'status'=>'published',
+            'title'=>'Новый алгоритм','description'=>'Освоен поиск максимума','payload'=>[]]);
+        $this->feed()->achievement($achievement);
+        $this->feed()->achievement($achievement);
+        $notice=$this->feed()->claim(User::find(1));
+        $this->assertSame('achievement',$notice['kind']);
+        $this->assertSame('Новый алгоритм',$notice['payload']['title']);
+        $this->assertSame(9,$notice['payload']['achievement_id']);
+        $this->assertNull($this->feed()->claim(User::find(1)));
+        $achievement->forceFill(['id'=>10,'status'=>'hidden']);
+        $this->feed()->achievement($achievement);
+        $this->assertNull($this->feed()->claim(User::find(1)));
+    }
+
     public function test_stickers_use_existing_award_threshold_and_deduplicate_across_courses_and_recalculations(): void
     {
         $rows = array_map(fn ($lesson) => ['course_id' => 1, 'student_id' => 1, 'lesson_id' => $lesson, 'percent' => 90], [1, 2, 3, 4]);

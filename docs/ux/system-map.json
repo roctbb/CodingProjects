@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "date": "2026-11-13",
+  "date": "2026-11-14",
   "scope": "CodingProjects: routed screens, local UI states, transitions, endpoint owners and external boundaries.",
   "roles": {
     "guest": "Гость",
@@ -449,7 +449,10 @@
         "resources/views/components/gc-tab-strip.blade.php",
         "resources/assets/js/components/tab-strip.js",
         "resources/views/steps/partials/task_header.blade.php",
-        "resources/views/components/gc-task-state.blade.php"
+        "resources/views/components/gc-task-state.blade.php",
+        "resources/assets/js/code-checking/workspace.js",
+        "resources/assets/js/components/reward-notices.js",
+        "docs/ux/code-submissions-ux.mmd"
       ],
       "goal": "Прочитать теорию, решить задачи, увидеть обратную связь",
       "review": {
@@ -469,7 +472,12 @@
         "список ступеней слева с текущим пунктом",
         "мобильный список раскрыт / скрыт",
         "одна ступень без боковой колонки",
-        "вкладка задачи по прямой ссылке видна на узком экране"
+        "вкладка задачи по прямой ссылке видна на узком экране",
+        "загрузка готовых файлов и вставка кода",
+        "неизменяемая отправленная версия",
+        "WebSocket: очередь / компиляция / тесты / результат",
+        "покупка скрытого теста",
+        "реальный прирост XP / новое звание / GC без перезагрузки"
       ],
       "guard": "Участник курса; для ученика учитываются состояние курса, урок и видимость задачи.",
       "design": {
@@ -893,7 +901,8 @@
         "admin"
       ],
       "sources": [
-        "resources/views/steps/edit_task.blade.php"
+        "resources/views/steps/edit_task.blade.php",
+        "resources/assets/js/code-checking/authoring.js"
       ],
       "goal": "Изменить условие, проверку и параметры задачи",
       "review": {
@@ -2055,7 +2064,8 @@
       ],
       "sources": [
         "resources/views/steps/create_task.blade.php",
-        "resources/views/steps/partials/task-form.blade.php"
+        "resources/views/steps/partials/task-form.blade.php",
+        "resources/assets/js/code-checking/authoring.js"
       ],
       "goal": "Создать условие, выбрать способ проверки и настроить награды",
       "review": {
@@ -3287,6 +3297,26 @@
       ]
     },
     {
+      "id": "geekexecutor",
+      "title": "GeekExecutor: исполнение кода",
+      "domain": "external",
+      "kind": "external",
+      "roles": [
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "routes/code-checking.php",
+        "docs/code-checking-backend.md"
+      ],
+      "goal": "Граница исполнения кода: передача запусков, результатов и файлов.",
+      "review": {
+        "stage": "boundary",
+        "note": "Внешний исполнитель: контейнеры и ИИ, прямой WebSocket статуса. Исходники, отчёты и награды показываются в Coding Projects."
+      }
+    },
+    {
       "id": "reward-notices",
       "title": "Уведомления о наградах",
       "domain": "shell",
@@ -3303,6 +3333,28 @@
       "review": {
         "stage": "verified",
         "note": "Проверены последовательная выдача, две вкладки, повторное открытие, закрытие и пауза при фокусе."
+      }
+    },
+    {
+      "id": "code-submission",
+      "title": "Отправленное решение и проверки",
+      "domain": "courses",
+      "kind": "page",
+      "roles": [
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/native-submission.blade.php",
+        "resources/views/steps/partials/native-workspace.blade.php",
+        "resources/assets/js/code-checking/workspace.js"
+      ],
+      "goal": "Посмотреть неизменяемые исходники, результат, историю проверок и доступные тесты.",
+      "guard": "Автор решения либо преподаватель соответствующего курса.",
+      "review": {
+        "stage": "implemented",
+        "note": "HTML-страница по обычной ссылке; тот же API отдаёт JSON для формы в уроке. AJAX, Socket.IO, тесты и награды проверены в изолированном сценарии."
       }
     }
   ],
@@ -5442,6 +5494,20 @@
       "kind": "navigate",
       "label": "Открыть задание",
       "source": "resources/views/courses/chapter-tasks.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "code-submission",
+      "label": "Ссылка на отправленную работу",
+      "kind": "navigate",
+      "source": "app/Services/CodeChecking/Grading.php"
+    },
+    {
+      "from": "code-submission",
+      "to": "step",
+      "label": "Вернуться к задаче",
+      "kind": "navigate",
+      "source": "resources/views/steps/native-submission.blade.php"
     }
   ],
   "routeBindings": {
@@ -6049,26 +6115,6 @@
       "node": "planner",
       "kind": "api"
     },
-    "GeekPasteAPI@submitSolution": {
-      "node": "geekpaste",
-      "kind": "api"
-    },
-    "GeekPasteAPI@syncIntegrity": {
-      "node": "geekpaste",
-      "kind": "api"
-    },
-    "GeekPasteAPI@requestRecheck": {
-      "node": "geekpaste",
-      "kind": "api"
-    },
-    "GeekPasteAPI@recheckStatus": {
-      "node": "geekpaste",
-      "kind": "api"
-    },
-    "GeekPasteAPI@userProfile": {
-      "node": "geekpaste",
-      "kind": "api"
-    },
     "RemoteAuthController@remoteAuth": {
       "node": "geekpaste",
       "kind": "redirect"
@@ -6148,6 +6194,182 @@
     "RewardNoticesController@claim": {
       "node": "reward-notices",
       "kind": "api"
+    },
+    "CodeCheckerAPI@artifact": {
+      "node": "geekexecutor",
+      "kind": "api"
+    },
+    "CodeCheckerAPI@input": {
+      "node": "geekexecutor",
+      "kind": "api"
+    },
+    "CodeCheckerAPI@progress": {
+      "node": "geekexecutor",
+      "kind": "api"
+    },
+    "CodeCheckerAPI@result": {
+      "node": "geekexecutor",
+      "kind": "api"
+    },
+    "CodeCheckerAPI@artifactStatus": {
+      "node": "geekexecutor",
+      "kind": "api"
+    },
+    "CodeCheckerAPI@uploadArtifact": {
+      "node": "geekexecutor",
+      "kind": "api"
+    },
+    "CodeCheckerAPI@report": {
+      "node": "geekexecutor",
+      "kind": "api"
+    },
+    "CodeCheckingController@executorStatus": {
+      "node": "geekexecutor",
+      "kind": "api"
+    },
+    "CodeCheckingController@settings": {
+      "node": "step",
+      "kind": "api"
+    },
+    "CodeCheckingController@privateSettings": {
+      "node": "task-edit",
+      "kind": "api"
+    },
+    "CodeCheckingController@uploadFixture": {
+      "node": "task-edit",
+      "kind": "api"
+    },
+    "CodeCheckingController@extraAttempt": {
+      "node": "step",
+      "kind": "api"
+    },
+    "CodeCheckingController@index": {
+      "node": "step",
+      "kind": "api"
+    },
+    "CodeCheckingController@show": {
+      "node": "code-submission",
+      "kind": "screen"
+    },
+    "CodeCheckingController@subscription": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "CodeCheckingController@recheck": {
+      "node": "review",
+      "kind": "api"
+    },
+    "CodeCheckingController@report": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "CodeCheckingController@purchase": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "CodeCheckingController@file": {
+      "node": "code-submission",
+      "kind": "download"
+    },
+    "CodeCheckingController@download": {
+      "node": "code-submission",
+      "kind": "download"
+    },
+    "CodeCheckingController@executorLogin": {
+      "node": "geekexecutor",
+      "kind": "redirect"
+    },
+    "TaskSubmissionController@taskFiles": {
+      "node": "task-edit",
+      "kind": "api"
+    },
+    "TaskSubmissionController@taskFile": {
+      "node": "task-edit",
+      "kind": "api"
+    },
+    "TaskSubmissionController@draft": {
+      "node": "step",
+      "kind": "api"
+    },
+    "TaskSubmissionController@draftFile": {
+      "node": "step",
+      "kind": "download"
+    },
+    "TaskSubmissionController@recheckLatest": {
+      "node": "review",
+      "kind": "api"
+    },
+    "TaskSubmissionController@grade": {
+      "node": "review",
+      "kind": "api"
+    },
+    "TaskSubmissionController@snapshotFile": {
+      "node": "code-submission",
+      "kind": "download"
+    },
+    "TaskSubmissionController@repositoryArchive": {
+      "node": "code-submission",
+      "kind": "download"
+    },
+    "TaskSubmissionController@run": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "TaskSubmissionController@reviewIntegrity": {
+      "node": "review",
+      "kind": "api"
+    },
+    "TaskSubmissionController@legacySource": {
+      "node": "code-submission",
+      "kind": "download"
+    },
+    "TaskSubmissionController@fixture": {
+      "node": "task-edit",
+      "kind": "download"
+    },
+    "TaskSubmissionController@legacySettings": {
+      "node": "task-edit",
+      "kind": "api"
+    },
+    "TaskSubmissionController@compare": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "TaskSubmissionController@flags": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "TaskSubmissionController@manualReview": {
+      "node": "review",
+      "kind": "api"
+    },
+    "TaskSubmissionController@reviewRequest": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "TaskSubmissionController@replaceTaskFile": {
+      "node": "task-edit",
+      "kind": "api"
+    },
+    "LegacySubmissionController@resolve": {
+      "node": "code-submission",
+      "kind": "redirect"
+    },
+    "LegacySubmissionController@file": {
+      "node": "code-submission",
+      "kind": "download"
+    },
+    "LegacySubmissionController@show": {
+      "node": "code-submission",
+      "kind": "screen"
+    },
+    "TaskSubmissionController@runFile": {
+      "node": "code-submission",
+      "kind": "download"
+    },
+    "TaskSubmissionController@exportFile": {
+      "node": "geekexecutor",
+      "kind": "download"
     }
   },
   "observations": [

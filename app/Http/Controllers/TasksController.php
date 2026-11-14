@@ -15,7 +15,6 @@ use App\ProgramStep;
 use App\Http\Controllers\Controller;
 use App\Question;
 use App\QuestionVariant;
-use App\Services\GeekPasteClient;
 use App\Services\ChatGptService;
 use App\Services\SolutionAchievementGenerator;
 use App\Solution;
@@ -27,8 +26,6 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Auth;
 use Notification;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Client;
 
 class TasksController extends Controller
 {
@@ -68,11 +65,32 @@ class TasksController extends Controller
 
     public function create($course_id, $id, Request $request)
     {
+        return DB::transaction(fn () => $this->createTask($course_id, $id, $request));
+    }
+
+    private function saveNativeChecker(Task $task, Request $request): void
+    {
+        if ($request->answer_mode !== 'native') return;
+        try {
+            $config = json_decode($request->input('checker_config', '{}'), true, 64, JSON_THROW_ON_ERROR);
+            abort_unless(is_array($config), 422, 'Настройки проверки должны быть объектом.');
+            app(\App\Services\CodeChecking\Configuration::class)->save($task, $config, (int) $request->user()->id);
+            $task->update(['is_quiz' => false]);
+        } catch (\Illuminate\Validation\ValidationException $error) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['checker_config' => collect($error->errors())->flatten()->all()]);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $error) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['checker_config' => $error->getMessage()]);
+        }
+    }
+
+    private function createTask($course_id, $id, Request $request)
+    {
         $step = ProgramStep::findOrFail($id);
         $this->validate($request, [
             'text' => 'required|string',
             'name' => 'required|string|max:255',
-            'answer_mode' => 'sometimes|required|in:manual,code,short',
+            'answer_mode' => 'sometimes|required|in:manual,code,short,native',
+            'checker_config' => 'required_if:answer_mode,native|nullable|json',
             'answer' => 'required_if:answer_mode,short|nullable|string|max:255',
             'price' => 'nullable|numeric|min:0',
             'max_mark' => 'required|integer|min:0|max:1000',
@@ -107,6 +125,7 @@ class TasksController extends Controller
             $task->is_code = true;
         }
         $task->save();
+        $this->saveNativeChecker($task, $request);
         $course = Course::findOrFail($course_id);
         CourseActivity::recordTaskCreated($course, $task, Auth::user());
 
@@ -137,11 +156,17 @@ class TasksController extends Controller
 
     public function edit($course_id, $id, Request $request)
     {
+        return DB::transaction(fn () => $this->editTask($course_id, $id, $request));
+    }
+
+    private function editTask($course_id, $id, Request $request)
+    {
         $task = Task::findOrFail($id);
         $this->validate($request, [
             'text' => 'required|string',
             'name' => 'required|string|max:255',
-            'answer_mode' => 'sometimes|required|in:manual,code,short',
+            'answer_mode' => 'sometimes|required|in:manual,code,short,native',
+            'checker_config' => 'required_if:answer_mode,native|nullable|json',
             'answer' => 'required_if:answer_mode,short|nullable|string|max:255',
             'price' => 'nullable|numeric|min:0',
             'max_mark' => 'required|integer|min:0|max:1000',
@@ -203,6 +228,10 @@ class TasksController extends Controller
 
         $task->save();
 
+        $this->saveNativeChecker($task, $request);
+        if ($checker = $this->nativeChecker($task->id)) {
+            $task->update(['is_code' => $checker->config['check_type'] !== 'manual', 'is_quiz' => false]);
+        }
         // Recalculate points for all students after editing task
         RecalculateCoursePoints::dispatch($course_id);
 
@@ -234,6 +263,7 @@ class TasksController extends Controller
     public function postSolution($course_id, $id, Request $request)
     {
         $task = Task::findOrFail($id);
+        abort_if($this->nativeChecker($task->id), 409, 'Для этой задачи используется API сдач Coding Projects.');
         $user = User::findOrFail(Auth::User()->id);
         $step_id = $task->step_id;
         $autoXpBoosterDelta = 0;
@@ -770,7 +800,7 @@ class TasksController extends Controller
         return $delta;
     }
 
-    public function aiTaskSummary($course_id, $id, Request $request, ChatGptService $chatGpt, GeekPasteClient $geekPaste)
+    public function aiTaskSummary($course_id, $id, Request $request, ChatGptService $chatGpt)
     {
         $course = Course::with('teachers')->findOrFail($course_id);
         $task = Task::with('step.lesson')->findOrFail($id);
@@ -780,12 +810,12 @@ class TasksController extends Controller
             abort(403);
         }
 
-        $answers = $task->is_code
-            ? $this->buildGeekPasteTaskSummaryAnswers($course, $task, $geekPaste)
+        $answers = ($task->is_code || $this->nativeChecker($task->id))
+            ? $this->buildNativeTaskSummaryAnswers($course, $task)
             : $this->buildLocalTaskSummaryAnswers($course, $task);
 
         if ($answers === null) {
-            $this->make_error_alert('Не удалось получить решения', 'GeekPaste не вернул код решений для этой задачи. Проверьте настройки интеграции и попробуйте позже.');
+            $this->make_error_alert('Не удалось получить решения', 'Сначала импортируйте решения и настройте проверку в Coding Projects.');
             return redirect()->back();
         }
 
@@ -859,67 +889,20 @@ class TasksController extends Controller
         })->implode("\n\n");
     }
 
-    private function buildGeekPasteTaskSummaryAnswers(Course $course, Task $task, GeekPasteClient $geekPaste): ?string
+    private function buildNativeTaskSummaryAnswers(Course $course, Task $task): ?string
     {
-        $payload = $geekPaste->taskSolutions($task->id, 500);
-
-        if (!is_array($payload)) {
-            return null;
+        if ($this->nativeChecker($task->id)) {
+            $seen = []; $parts = [];
+            foreach (\App\CodeSubmission::where('course_id', $course->id)->where('task_id', $task->id)->orderByDesc('created_at')->cursor() as $submission) {
+                if (isset($seen[$submission->user_id])) continue;
+                $seen[$submission->user_id] = true;
+                $source = app(\App\Services\CodeChecking\Integrity::class)->source($submission) ?? $submission->answer_text ?? '';
+                $parts[] = 'Ученик '.$submission->user_id.":\n".Str::limit($source, 2200);
+                if (count($parts) >= 30) break;
+            }
+            return implode("\n\n", $parts);
         }
-
-        $solutions = collect($payload['solutions'] ?? [])
-            ->filter(function ($solution) use ($course) {
-                if (!is_array($solution)) {
-                    return false;
-                }
-
-                if (!array_key_exists('course_id', $solution) || $solution['course_id'] === null || $solution['course_id'] === '') {
-                    return true;
-                }
-
-                return (int) $solution['course_id'] === (int) $course->id;
-            })
-            ->filter(function ($solution) {
-                $text = trim((string) (!empty($solution['solution_text']) ? $solution['solution_text'] : ($solution['raw_code'] ?? '')));
-
-                return $text !== '' && !empty($solution['user_id']);
-            })
-            ->unique(function ($solution) {
-                return (int) $solution['user_id'];
-            })
-            ->take(30)
-            ->values();
-
-        if ($solutions->isEmpty()) {
-            return '';
-        }
-
-        $studentNames = User::whereIn('id', $solutions->pluck('user_id')->filter()->values()->all())
-            ->pluck('name', 'id');
-
-        return $solutions->map(function ($solution, $index) use ($studentNames) {
-            $studentId = (int) $solution['user_id'];
-            $studentName = $studentNames[$studentId] ?? 'Ученик ' . ($index + 1);
-            $text = trim((string) (!empty($solution['solution_text']) ? $solution['solution_text'] : ($solution['raw_code'] ?? '')));
-
-            $meta = [];
-            if (!empty($solution['lang'])) {
-                $meta[] = 'язык: ' . $solution['lang'];
-            }
-            if (array_key_exists('check_points', $solution) && $solution['check_points'] !== null) {
-                $meta[] = 'баллы автопроверки: ' . $solution['check_points'];
-            }
-            if (!empty($solution['check_comments'])) {
-                $meta[] = 'комментарий проверки: ' . Str::limit(strip_tags((string) $solution['check_comments']), 300);
-            }
-
-            $prefix = ($index + 1) . '. ' . $studentName;
-            if (!empty($meta)) {
-                $prefix .= ' (' . implode('; ', $meta) . ')';
-            }
-
-            return $prefix . ":\n" . Str::limit($text, 2200);
-        })->implode("\n\n");
+        return null;
     }
 
     public function waiveDeadlinePenalty($course_id, $id, $solution_id)
@@ -1122,33 +1105,12 @@ class TasksController extends Controller
             return redirect()->back();
         }
 
-        $geekpaste = app(GeekPasteClient::class);
-        if (!$geekpaste->canBuyExtraGptAttempt($user->id, $task->id, $course->id)) {
-            $this->make_info_alert('Попытка пока не нужна', 'GeekPaste не подтвердил, что лимит GPT-сдач для этой задачи исчерпан.');
+        if ($this->nativeChecker($task->id)) {
+            app(\App\Services\CodeChecking\Attempts::class)->buy($user, $task, (int)$course_id);
+            $this->make_success_alert('Попытка добавлена', 'Можно отправить ещё одно решение в Coding Projects.');
             return redirect()->back();
         }
-
-        $result = $geekpaste->addExtraGptAttempt($user->id, $task->id, $course->id);
-        if (!$result || !($result['extra_attempt_added'] ?? false)) {
-            $this->make_error_alert('Не удалось добавить попытку', 'GeekPaste не подтвердил сброс лимита. GC не списаны.');
-            return redirect()->back();
-        }
-
-        if ($cost > 0) {
-            CoinTransaction::register($user->id, -1 * $cost, 'GeekPaste extra attempt Task #' . $task->id);
-            $petName = null;
-            $petKey = null;
-        } else {
-            $petName = $user->activeLearningAvatarPetName();
-            $petKey = $user->activeLearningAvatarPetKey();
-            $user->consumeFreeGeekPasteResetToday();
-            $user->notify(new \App\Notifications\PetEvent('Ваш питомец бесплатно сбросил лимит GeekPaste-попыток для задачи «' . $task->name . '».', 'success'));
-        }
-        CourseActivity::recordGeekPasteAttemptBought($task, $course, $user, $cost, $petName, $petKey);
-
-        $this->make_success_alert('Попытка добавлена', 'Можно отправить еще одно решение в GeekPaste.' . ($cost > 0 ? ' Со счета списано ' . $cost . ' GC.' : ' Питомец помог бесплатно.'));
-
-        return redirect('/insider/courses/' . $course_id . '/steps/' . $task->step_id . '#task' . $task->id);
+        abort(409, 'Сначала импортируйте задачу и настройте проверку в Coding Projects.');
     }
 
     public function makeLower($course_id, $id, Request $request)
@@ -1206,81 +1168,20 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         $course = Course::findOrFail($course_id);
 
+        if ($this->nativeChecker($task->id)) {
+            $result = app(\App\Services\CodeChecking\Submissions::class)->recheckLatest(Auth::user(), (int) $course_id, (int) $id, false);
+            return redirect()->back()->with('success', 'Отправлено на перепроверку решений: '.count($result['execution_ids']));
+        }
+
         if (!$task->is_code) {
             return redirect()->back()->with('error', 'Перепроверка доступна только для задач с кодом.');
         }
 
-        // Get all unique students who have solutions for this task in this course
-        $studentIds = Solution::where('task_id', $id)
-            ->where('course_id', $course_id)
-            ->pluck('user_id')
-            ->unique();
-
-        $recheckCount = 0;
-        $client = new Client([
-            'connect_timeout' => 2,
-            'timeout' => 5,
-        ]);
-
-        foreach ($studentIds as $studentId) {
-            // Zero out all solutions for this student/task/course
-            Solution::where('task_id', $id)
-                ->where('user_id', $studentId)
-                ->where('course_id', $course_id)
-                ->update([
-                    'mark' => 0,
-                    'raw_mark' => 0,
-                    'deadline_penalty_amount' => 0,
-                    'deadline_penalty_days' => 0,
-                    'deadline_penalty_paid_at' => null,
-                    'deadline_penalty_waived_at' => null,
-                    'deadline_penalty_waived_by' => null,
-                    'xp_booster_amount' => 0,
-                    'xp_booster_used_at' => null,
-                    'comment' => null,
-                    'checked' => null
-                ]);
-
-            // Get the last solution for recheck
-            $lastSolution = Solution::where('task_id', $id)
-                ->where('user_id', $studentId)
-                ->where('course_id', $course_id)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            if ($lastSolution && !empty($lastSolution->text)) {
-                $codeId = $this->extractGeekPasteId($lastSolution->text);
-                if ($codeId) {
-                    try {
-
-                        // Send recheck request to GeekPaste API
-                        $response = $client->post(config('services.geekpaste_url') . '/recheck', [
-                            'http_errors' => false,
-                            'query' => ['id' => $codeId],
-                        ]);
-
-                        if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
-                            $recheckCount++;
-                        } else {
-                            \Log::warning("GeekPaste recheck failed for student {$studentId}: HTTP " . $response->getStatusCode());
-                        }
-                    } catch (GuzzleException $e) {
-                        // Log error but continue with other students
-                        \Log::error("Failed to recheck solution for student {$studentId}: " . $e->getMessage());
-                    }
-                }
-            }
-        }
-
-        return redirect()->back()->with('success', "Отправлено на перепроверку решений: {$recheckCount}");
+        return redirect()->back()->with('error', 'Сначала импортируйте решения и настройте проверку в Coding Projects.');
     }
 
-    private function extractGeekPasteId($text): ?string
+    private function nativeChecker(int $taskId): ?\App\CodeTaskChecker
     {
-        if (preg_match('/(?:\\?|&amp;|&)id=([A-Za-z0-9_-]+)/', html_entity_decode($text), $matches)) {
-            return $matches[1];
-        }
-
-        return null;
+        return \Illuminate\Support\Facades\Schema::hasTable('code_task_checkers') ? \App\CodeTaskChecker::find($taskId) : null;
     }
 }

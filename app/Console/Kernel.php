@@ -24,11 +24,13 @@ class Kernel extends ConsoleKernel
         Commands\RandomCoinDrop::class,
         Commands\GeneratePulseInsights::class,
         Commands\RunPetDailyActions::class,
-        Commands\SyncGeekPasteIntegrity::class,
         Commands\DispatchMissingAchievementTrophies::class,
         Commands\RecoverRoomCharacters::class,
         Commands\RepairGeneratedImagePermissions::class,
         Commands\CheckPlannerProviders::class,
+        Commands\RecoverCodeExecutions::class,
+        Commands\ImportGeekPaste::class,
+        Commands\MoveCodeOriginals::class,
     ];
 
     /**
@@ -48,6 +50,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('pulse:insights --streaks')->dailyAt('20:30');
         $schedule->command('telegram:poll --once')->everyMinute()->withoutOverlapping();
         $schedule->command('room-characters:recover')->everyMinute()->withoutOverlapping();
+        $schedule->command('code-checking:recover')->everyMinute()->withoutOverlapping();
         $schedule->command('room-characters:recover --prune')->dailyAt('03:20')->withoutOverlapping();
         //          ->hourly();
     }

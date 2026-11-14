@@ -20,6 +20,7 @@ flowchart TB
   reading_outline["Оглавление конспекта"]
   course_current_lesson["Текущий урок курса"]
   chapter_tasks["Задачи главы ученика"]
+  code_submission["Отправленное решение и проверки"]
   task_create["Создание задания"]
   course_create["Создание курса"]
   course_edit["Настройки курса"]
@@ -97,3 +98,5 @@ flowchart TB
   course_current_lesson -.->|"Сохранить или сбросить общий текущий урок"| course
   course -->|"Задачи главы"| chapter_tasks
   chapter_tasks -->|"Открыть задание"| step
+  step -->|"Ссылка на отправленную работу"| code_submission
+  code_submission -->|"Вернуться к задаче"| step

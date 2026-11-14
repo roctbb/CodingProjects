@@ -879,7 +879,7 @@ class LearningAvatarTest extends TestCase
             ],
         ];
 
-        $this->assertSame(\App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST, $user->geekPasteExtraAttemptCost());
+        $this->assertSame(\App\Services\CodeChecking\Attempts::EXTRA_ATTEMPT_COST, $user->geekPasteExtraAttemptCost());
     }
 
     public function testOnlyEquippedPetAbilityAffectsRoomBonuses()
@@ -897,28 +897,28 @@ class LearningAvatarTest extends TestCase
             ],
             'cheremsha_pet' => [
                 'ability' => 'daily_coin_gift',
-                'geekpaste_cost' => \App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST,
+                'geekpaste_cost' => \App\Services\CodeChecking\Attempts::EXTRA_ATTEMPT_COST,
                 'early_lesson_cost' => 10,
                 'task_reward' => 10,
                 'auto_xp' => false,
             ],
             'brr_brr_patapim_pet' => [
                 'ability' => 'early_lesson_unlock',
-                'geekpaste_cost' => \App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST,
+                'geekpaste_cost' => \App\Services\CodeChecking\Attempts::EXTRA_ATTEMPT_COST,
                 'early_lesson_cost' => 0,
                 'task_reward' => 10,
                 'auto_xp' => false,
             ],
             'tralalelo_tralala_pet' => [
                 'ability' => 'task_coin_bonus_10',
-                'geekpaste_cost' => \App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST,
+                'geekpaste_cost' => \App\Services\CodeChecking\Attempts::EXTRA_ATTEMPT_COST,
                 'early_lesson_cost' => 10,
                 'task_reward' => 11,
                 'auto_xp' => false,
             ],
             'tung_tung_tung_sahur_pet' => [
                 'ability' => 'daily_auto_xp_booster',
-                'geekpaste_cost' => \App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST,
+                'geekpaste_cost' => \App\Services\CodeChecking\Attempts::EXTRA_ATTEMPT_COST,
                 'early_lesson_cost' => 10,
                 'task_reward' => 10,
                 'auto_xp' => true,
@@ -970,7 +970,7 @@ class LearningAvatarTest extends TestCase
         $this->assertFalse($user->hasActiveLearningAvatarPetAbility('early_lesson_unlock'));
         $this->assertFalse($user->hasActiveLearningAvatarPetAbility('task_coin_bonus_10'));
         $this->assertFalse($user->hasActiveLearningAvatarPetAbility('daily_auto_xp_booster'));
-        $this->assertSame(\App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST, $user->geekPasteExtraAttemptCost());
+        $this->assertSame(\App\Services\CodeChecking\Attempts::EXTRA_ATTEMPT_COST, $user->geekPasteExtraAttemptCost());
         $this->assertSame(10, $user->earlyLessonAccessCost($lesson));
         $this->assertSame(10, $user->taskCoinReward(10));
         $this->assertFalse($user->canUseDailyAutoXpBoosterToday());
@@ -990,7 +990,7 @@ class LearningAvatarTest extends TestCase
 
         $this->assertNull($user->activeLearningAvatarPetKey());
         $this->assertFalse($user->hasActiveLearningAvatarPetAbility('task_coin_bonus_10'));
-        $this->assertSame(\App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST, $user->geekPasteExtraAttemptCost());
+        $this->assertSame(\App\Services\CodeChecking\Attempts::EXTRA_ATTEMPT_COST, $user->geekPasteExtraAttemptCost());
         $this->assertSame(10, $user->earlyLessonAccessCost($lesson));
         $this->assertSame(10, $user->taskCoinReward(10));
         $this->assertFalse($user->canUseDailyAutoXpBoosterToday());

@@ -4,13 +4,11 @@ namespace Tests\Feature;
 
 use App\Achievement;
 use App\CourseActivity;
-use App\Http\Controllers\GeekPasteAPI;
 use App\Http\Controllers\TasksController;
 use App\Jobs\GenerateAchievementTrophy;
 use App\Jobs\GenerateSolutionAchievement;
 use App\Services\AchievementTrophyGenerator;
 use App\Services\ChatGptService;
-use App\Services\GeekPasteClient;
 use App\Services\SolutionAchievementGenerator;
 use App\Solution;
 use App\User;
@@ -61,7 +59,6 @@ class AchievementGenerationTest extends TestCase
         Notification::fake();
         Storage::fake();
         $this->instance(ChatGptService::class, Mockery::mock(ChatGptService::class));
-        $this->instance(GeekPasteClient::class, Mockery::mock(GeekPasteClient::class));
     }
 
     protected function tearDown(): void
@@ -95,6 +92,26 @@ class AchievementGenerationTest extends TestCase
         return $this->app->make(SolutionAchievementGenerator::class)->createForSolution(
             Solution::findOrFail(1), $this->variants()['variants'][1] + ['coin_reward' => 15], true
         );
+    }
+
+    public function test_native_achievement_uses_owned_source_without_contacting_geekpaste(): void
+    {
+        Storage::fake('code_checking'); Storage::fake('code_originals');
+        (require database_path('migrations/2026_11_14_120000_create_code_checking_tables.php'))->up();
+        (require database_path('migrations/2026_11_14_130000_expand_task_submissions.php'))->up();
+        (require database_path('migrations/2026_11_14_140000_complete_native_submission_storage.php'))->up();
+        DB::table('tasks')->where('id',12)->update(['is_code'=>true]);
+        $id=(string) \Illuminate\Support\Str::uuid();
+        $source=app(\App\Services\CodeChecking\Artifacts::class)->put("print(max([-8,-2,-5]))\n");
+        \App\CodeSubmission::create(['id'=>$id,'user_id'=>42,'course_id'=>7,'task_id'=>12,'solution_id'=>1,
+            'current_run_id'=>(string) \Illuminate\Support\Str::uuid(),
+            'language'=>'python','mode'=>'files','files'=>[['name'=>'main.py','artifact'=>$source]],
+            'request_id'=>(string) \Illuminate\Support\Str::uuid(),'payload_hash'=>str_repeat('a',64)]);
+        $this->app->make(ChatGptService::class)->shouldReceive('generate')->once()->withArgs(function ($messages) {
+            $this->assertStringContainsString('print(max([-8,-2,-5]))',json_encode($messages));
+            return true;
+        })->andReturn(json_encode($this->variants()));
+        $this->assertSame($this->variants(),app(SolutionAchievementGenerator::class)->previewForSolution(Solution::findOrFail(1)));
     }
 
     public function testRealServicesMakeExactlyTwoAiRequestsWithMixedProviders(): void
@@ -226,38 +243,26 @@ class AchievementGenerationTest extends TestCase
         $this->assertSame(0, Achievement::count());
     }
 
-    #[DataProvider('unavailableCode')]
-    public function testCodeLookupNeverFallsBackToAnotherAttempt(?array $response): void
+    public function testUnimportedLegacyCodeDoesNotCallTheRetiredService(): void
     {
-        DB::table('tasks')->update(['is_code' => true]);
-        DB::table('solutions')->update(['text' => 'https://paste.geekclass.ru/?id=wanted123']);
-        $this->app->make(GeekPasteClient::class)->shouldReceive('solution')->with('wanted123')->once()->andReturn($response);
+        DB::table('tasks')->update(['is_code'=>true]);
+        DB::table('solutions')->update(['text'=>'https://paste.geekclass.ru/?id=wanted123']);
         $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Импортируйте решение');
         app(SolutionAchievementGenerator::class)->previewForSolution(Solution::findOrFail(1));
     }
 
-    public static function unavailableCode(): array
+    public function testExactNativeCodeIsIncludedInTheTextRequest(): void
     {
-        return [
-            'unavailable' => [null],
-            'other code' => [['id' => 'different456', 'raw_code' => 'different code']],
-            'other student' => [['id' => 'wanted123', 'user_id' => 43, 'raw_code' => 'different code']],
-            'empty code' => [['id' => 'wanted123', 'raw_code' => '']],
-        ];
-    }
-
-    public function testExactCodeIsIncludedInTheTextRequest(): void
-    {
-        DB::table('tasks')->update(['is_code' => true]);
-        DB::table('solutions')->update(['text' => 'https://paste.geekclass.ru/?id=wanted123']);
-        $this->app->make(GeekPasteClient::class)->shouldReceive('solution')->with('wanted123')->once()->andReturn([
-            'solution' => ['id' => 'wanted123', 'task_id' => 12, 'course_id' => 7, 'user_id' => 42, 'raw_code' => 'print("specific attempt")', 'lang' => 'python'],
-        ]);
+        foreach (['120000_create_code_checking_tables','130000_expand_task_submissions','140000_complete_native_submission_storage'] as $name)
+            (require database_path('migrations/2026_11_14_'.$name.'.php'))->up();
+        $artifact=app(\App\Services\CodeChecking\Artifacts::class)->put('print("specific attempt")');
+        \App\CodeSubmission::create(['id'=>(string)\Illuminate\Support\Str::uuid(),'user_id'=>42,'course_id'=>7,'task_id'=>12,'solution_id'=>1,
+            'language'=>'python','current_run_id'=>(string)\Illuminate\Support\Str::uuid(),'request_id'=>(string)\Illuminate\Support\Str::uuid(),'payload_hash'=>str_repeat('a',64),'files'=>[['name'=>'main.py','artifact'=>$artifact]]]);
         $this->app->make(ChatGptService::class)->shouldReceive('generate')->once()->withArgs(function ($messages) {
-            $this->assertStringContainsString('print("specific attempt")', $messages[1]['content']);
-            return true;
+            $this->assertStringContainsString('print("specific attempt")',$messages[1]['content']);return true;
         })->andReturn(json_encode($this->variants()));
-        $this->assertSame($this->variants(), app(SolutionAchievementGenerator::class)->previewForSolution(Solution::findOrFail(1)));
+        $this->assertSame($this->variants(),app(SolutionAchievementGenerator::class)->previewForSolution(Solution::findOrFail(1)));
     }
 
     public function testDatabaseFailureRollsBackTheAwardAndCoinsInsteadOfBecomingADuplicate(): void
@@ -351,11 +356,11 @@ class AchievementGenerationTest extends TestCase
 
     public function testBothAutomaticEntryPointsPersistJobsBeforeTheResponseEnds(): void
     {
-        foreach ([TasksController::class, GeekPasteAPI::class] as $controller) {
+        foreach ([TasksController::class] as $controller) {
             $method = new \ReflectionMethod($controller, 'dispatchAiAchievementGeneration');
             $method->invoke(app($controller), Solution::findOrFail(1));
         }
-        $this->assertSame(2, DB::table('jobs')->count());
+        $this->assertSame(1, DB::table('jobs')->count());
         foreach (['database', 'redis', 'beanstalkd'] as $driver) {
             $this->assertGreaterThan((new GenerateAchievementTrophy(1))->timeout, config('queue.connections.' . $driver . '.retry_after'));
         }

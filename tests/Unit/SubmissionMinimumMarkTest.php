@@ -23,7 +23,7 @@ class SubmissionMinimumMarkTest extends TestCase
     {
         foreach ([0 => 1, 1 => 1, 5 => 5, 75 => 75] as $received => $expected) {
             $solution = $this->submittedSolution();
-            // Same two defensive boundaries as GeekPasteAPI -> Solution.
+            // Same defensive boundaries as native Grading -> Solution.
             $normalized = $solution->normalizeSubmittedMark($received);
             $solution->applyDeadlinePenalty($normalized);
             $this->assertSame($expected, $solution->raw_mark);

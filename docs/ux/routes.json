@@ -22,58 +22,87 @@
     "kind": "redirect"
   },
   {
-    "method": "POST",
-    "uri": "api/geekpaste",
-    "name": null,
-    "action": "GeekPasteAPI@submitSolution",
+    "method": "GET|HEAD",
+    "uri": "api/executor/artifacts/{artifact}",
+    "name": "checker.artifact",
+    "action": "CodeCheckerAPI@artifact",
     "middleware": [
-      "api"
+      "api",
+      "throttle:6000,1"
     ],
-    "node": "geekpaste",
-    "kind": "api"
-  },
-  {
-    "method": "POST",
-    "uri": "api/geekpaste/integrity",
-    "name": null,
-    "action": "GeekPasteAPI@syncIntegrity",
-    "middleware": [
-      "api"
-    ],
-    "node": "geekpaste",
-    "kind": "api"
-  },
-  {
-    "method": "POST",
-    "uri": "api/geekpaste/recheck",
-    "name": null,
-    "action": "GeekPasteAPI@requestRecheck",
-    "middleware": [
-      "api"
-    ],
-    "node": "geekpaste",
-    "kind": "api"
-  },
-  {
-    "method": "POST",
-    "uri": "api/geekpaste/recheck/status",
-    "name": null,
-    "action": "GeekPasteAPI@recheckStatus",
-    "middleware": [
-      "api"
-    ],
-    "node": "geekpaste",
+    "node": "geekexecutor",
     "kind": "api"
   },
   {
     "method": "GET|HEAD",
-    "uri": "api/geekpaste/users/{id}",
+    "uri": "api/executor/executions/{execution}/input",
     "name": null,
-    "action": "GeekPasteAPI@userProfile",
+    "action": "CodeCheckerAPI@input",
     "middleware": [
-      "api"
+      "api",
+      "throttle:6000,1"
     ],
-    "node": "geekpaste",
+    "node": "geekexecutor",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "api/executor/executions/{execution}/progress",
+    "name": null,
+    "action": "CodeCheckerAPI@progress",
+    "middleware": [
+      "api",
+      "throttle:6000,1"
+    ],
+    "node": "geekexecutor",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "api/executor/executions/{execution}/result",
+    "name": null,
+    "action": "CodeCheckerAPI@result",
+    "middleware": [
+      "api",
+      "throttle:6000,1"
+    ],
+    "node": "geekexecutor",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "api/executor/test-artifacts/status",
+    "name": null,
+    "action": "CodeCheckerAPI@artifactStatus",
+    "middleware": [
+      "api",
+      "throttle:6000,1"
+    ],
+    "node": "geekexecutor",
+    "kind": "api"
+  },
+  {
+    "method": "PUT",
+    "uri": "api/executor/test-artifacts/{artifact}",
+    "name": null,
+    "action": "CodeCheckerAPI@uploadArtifact",
+    "middleware": [
+      "api",
+      "throttle:6000,1"
+    ],
+    "node": "geekexecutor",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "api/executor/test-reports",
+    "name": null,
+    "action": "CodeCheckerAPI@report",
+    "middleware": [
+      "api",
+      "throttle:6000,1"
+    ],
+    "node": "geekexecutor",
     "kind": "api"
   },
   {
@@ -238,6 +267,240 @@
     ],
     "node": "text-assist",
     "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-submissions/{submission}",
+    "name": "code-submissions.show",
+    "action": "CodeCheckingController@show",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-submissions/{submission}/compare",
+    "name": null,
+    "action": "TaskSubmissionController@compare",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-submissions/{submission}/files/{file}",
+    "name": "code-submissions.file",
+    "action": "CodeCheckingController@file",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "download"
+  },
+  {
+    "method": "PUT",
+    "uri": "insider/code-submissions/{submission}/flags",
+    "name": null,
+    "action": "TaskSubmissionController@flags",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "api"
+  },
+  {
+    "method": "PUT",
+    "uri": "insider/code-submissions/{submission}/grade",
+    "name": null,
+    "action": "TaskSubmissionController@grade",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "review",
+    "kind": "api"
+  },
+  {
+    "method": "PUT",
+    "uri": "insider/code-submissions/{submission}/integrity/review",
+    "name": null,
+    "action": "TaskSubmissionController@reviewIntegrity",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "review",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-submissions/{submission}/legacy-source",
+    "name": null,
+    "action": "TaskSubmissionController@legacySource",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "download"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/code-submissions/{submission}/manual-review",
+    "name": null,
+    "action": "TaskSubmissionController@manualReview",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "review",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/code-submissions/{submission}/recheck",
+    "name": null,
+    "action": "CodeCheckingController@recheck",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "review",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-submissions/{submission}/repository/archive",
+    "name": null,
+    "action": "TaskSubmissionController@repositoryArchive",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "download"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/code-submissions/{submission}/review-request",
+    "name": null,
+    "action": "TaskSubmissionController@reviewRequest",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-submissions/{submission}/runs/{run}",
+    "name": null,
+    "action": "TaskSubmissionController@run",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-submissions/{submission}/runs/{run}/files/{file}",
+    "name": null,
+    "action": "TaskSubmissionController@runFile",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-submissions/{submission}/subscription",
+    "name": null,
+    "action": "CodeCheckingController@subscription",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-submissions/{submission}/task-files/{file}",
+    "name": null,
+    "action": "TaskSubmissionController@snapshotFile",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-test-reports/{run}",
+    "name": null,
+    "action": "CodeCheckingController@report",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/code-test-reports/{run}/tests/{test}/purchase",
+    "name": null,
+    "action": "CodeCheckingController@purchase",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-test-reports/{run}/tests/{test}/{field}",
+    "name": "code-reports.download",
+    "action": "CodeCheckingController@download",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "download"
   },
   {
     "method": "GET|HEAD",
@@ -1232,6 +1495,175 @@
   },
   {
     "method": "GET|HEAD",
+    "uri": "insider/courses/{course}/tasks/{task}/checker",
+    "name": null,
+    "action": "CodeCheckingController@settings",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "step",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course}/tasks/{task}/checker/extra-attempt",
+    "name": null,
+    "action": "CodeCheckingController@extraAttempt",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "step",
+    "kind": "api"
+  },
+  {
+    "method": "GET|POST|HEAD",
+    "uri": "insider/courses/{course}/tasks/{task}/checker/files",
+    "name": null,
+    "action": "TaskSubmissionController@taskFiles",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "task-edit",
+    "kind": "api"
+  },
+  {
+    "method": "GET|DELETE|HEAD",
+    "uri": "insider/courses/{course}/tasks/{task}/checker/files/{attachment}",
+    "name": "code-task-files.download",
+    "action": "TaskSubmissionController@taskFile",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "task-edit",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course}/tasks/{task}/checker/files/{attachment}/replace",
+    "name": null,
+    "action": "TaskSubmissionController@replaceTaskFile",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "task-edit",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course}/tasks/{task}/checker/fixtures",
+    "name": null,
+    "action": "CodeCheckingController@uploadFixture",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "task-edit",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course}/tasks/{task}/checker/fixtures/{artifact}",
+    "name": "code-fixtures.download",
+    "action": "TaskSubmissionController@fixture",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "task-edit",
+    "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course}/tasks/{task}/checker/legacy",
+    "name": null,
+    "action": "TaskSubmissionController@legacySettings",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "task-edit",
+    "kind": "api"
+  },
+  {
+    "method": "GET|PUT|HEAD",
+    "uri": "insider/courses/{course}/tasks/{task}/checker/private",
+    "name": null,
+    "action": "CodeCheckingController@privateSettings",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "task-edit",
+    "kind": "api"
+  },
+  {
+    "method": "GET|PUT|DELETE|HEAD",
+    "uri": "insider/courses/{course}/tasks/{task}/code-draft",
+    "name": null,
+    "action": "TaskSubmissionController@draft",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "step",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course}/tasks/{task}/code-draft/files/{file}",
+    "name": "code-drafts.file",
+    "action": "TaskSubmissionController@draftFile",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "step",
+    "kind": "download"
+  },
+  {
+    "method": "GET|POST|HEAD",
+    "uri": "insider/courses/{course}/tasks/{task}/code-submissions",
+    "name": null,
+    "action": "CodeCheckingController@index",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "step",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course}/tasks/{task}/code-submissions/recheck-latest",
+    "name": null,
+    "action": "TaskSubmissionController@recheckLatest",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "review",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
     "uri": "insider/courses/{id}",
     "name": null,
     "action": "CoursesController@details",
@@ -2110,6 +2542,45 @@
   },
   {
     "method": "GET|HEAD",
+    "uri": "insider/settings/code-executor/legacy-exports/{export}/files/{file}",
+    "name": null,
+    "action": "TaskSubmissionController@exportFile",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "geekexecutor",
+    "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/settings/code-executor/login",
+    "name": "code-executor.login",
+    "action": "CodeCheckingController@executorLogin",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "geekexecutor",
+    "kind": "redirect"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/settings/code-executor/status",
+    "name": null,
+    "action": "CodeCheckingController@executorStatus",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "geekexecutor",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
     "uri": "insider/settings/system-store",
     "name": "settings.system-store.edit",
     "action": "SystemStoreSettingsController@edit",
@@ -2215,6 +2686,17 @@
     ],
     "node": "text-assist",
     "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "legacy/geekpaste/{legacy}/{action?}",
+    "name": null,
+    "action": "LegacySubmissionController@resolve",
+    "middleware": [
+      "web"
+    ],
+    "node": "code-submission",
+    "kind": "redirect"
   },
   {
     "method": "GET|HEAD",
@@ -2366,6 +2848,28 @@
     ],
     "node": "register",
     "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "shared/code-submissions/{submission}/files/{file}",
+    "name": null,
+    "action": "LegacySubmissionController@file",
+    "middleware": [
+      "web"
+    ],
+    "node": "code-submission",
+    "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "shared/code-submissions/{submission}/{action?}",
+    "name": null,
+    "action": "LegacySubmissionController@show",
+    "middleware": [
+      "web"
+    ],
+    "node": "code-submission",
+    "kind": "screen"
   },
   {
     "method": "GET|HEAD",

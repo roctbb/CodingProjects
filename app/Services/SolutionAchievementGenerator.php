@@ -14,12 +14,10 @@ use Illuminate\Support\Str;
 class SolutionAchievementGenerator
 {
     protected ChatGptService $chatGpt;
-    protected GeekPasteClient $geekPaste;
 
-    public function __construct(ChatGptService $chatGpt, GeekPasteClient $geekPaste)
+    public function __construct(ChatGptService $chatGpt)
     {
         $this->chatGpt = $chatGpt;
-        $this->geekPaste = $geekPaste;
     }
 
     public function generateForSolution(Solution $solution): ?Achievement
@@ -85,6 +83,7 @@ class SolutionAchievementGenerator
 
                 $this->awardManualAchievementCoins($achievement, $coinReward);
                 CourseActivity::recordAchievementEarned($achievement);
+                app(RewardNotices::class)->achievement($achievement);
                 GenerateAchievementTrophy::dispatch($achievement->id)->afterCommit();
 
                 return $achievement;
@@ -117,6 +116,14 @@ class SolutionAchievementGenerator
 
     protected function buildContext(Solution $solution): ?array
     {
+        if (\Illuminate\Support\Facades\Schema::hasTable('code_submissions')) {
+            $native = \App\CodeSubmission::where('solution_id', $solution->id)->first();
+            if ($native) {
+                $source = app(\App\Services\CodeChecking\Integrity::class)->source($native);
+                $text = trim(($native->answer_text ?? '')."\n".($source ?? ''));
+                return $text !== '' ? ['source' => 'codingprojects', 'solution_text' => $text, 'language' => $native->language] : null;
+            }
+        }
         if ($solution->task->is_code) {
             return $this->buildGeekPasteContext($solution);
         }
@@ -130,106 +137,7 @@ class SolutionAchievementGenerator
 
     protected function buildGeekPasteContext(Solution $solution): ?array
     {
-        $codeId = $this->extractGeekPasteCodeId(trim((string) $solution->text))
-            ?? $this->extractGeekPasteCodeId(trim((string) $solution->geekpaste_code_id));
-        if ($codeId === null) {
-            throw new \RuntimeException('The solution has no GeekPaste code ID');
-        }
-
-        $payload = $this->geekPaste->solution($codeId);
-        $item = is_array($payload) ? $this->extractGeekPasteItem($payload) : null;
-        if (!$item || !$this->matchesGeekPasteSolution($item, $solution)) {
-            throw new \RuntimeException('GeekPaste did not return the requested solution');
-        }
-
-        // The endpoint addresses one code ID. Reject an explicitly different code ID.
-        if ((string) ($item['code_id'] ?? $item['id'] ?? $codeId) !== $codeId) {
-            throw new \RuntimeException('GeekPaste returned a different code ID');
-        }
-
-        $context = $this->contextFromGeekPasteItem($item);
-        if ($context === null) {
-            throw new \RuntimeException('GeekPaste returned an empty solution');
-        }
-
-        return $context;
-    }
-
-    protected function extractGeekPasteItem(array $payload): ?array
-    {
-        foreach (['solution', 'data'] as $key) {
-            if (isset($payload[$key]) && is_array($payload[$key])) {
-                return $payload[$key];
-            }
-        }
-
-        foreach (['id', 'code_id', 'solution_text', 'raw_code', 'task_id'] as $key) {
-            if (array_key_exists($key, $payload)) {
-                return $payload;
-            }
-        }
-
-        return null;
-    }
-
-    protected function matchesGeekPasteSolution(array $item, Solution $solution): bool
-    {
-        foreach (['task_id', 'course_id', 'user_id'] as $key) {
-            if (array_key_exists($key, $item) && $item[$key] !== null && $item[$key] !== '') {
-                if ((int) $item[$key] !== (int) $solution->{$key}) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    protected function contextFromGeekPasteItem(array $item): ?array
-    {
-        $code = $this->stringifyGeekPasteValue($item['raw_code'] ?? '');
-        $text = $this->stringifyGeekPasteValue($item['solution_text'] ?? '');
-        $solutionBody = $code !== '' ? $code : $text;
-
-        if ($solutionBody === '') {
-            return null;
-        }
-
-        return [
-            'source' => 'geekpaste',
-            'solution_text' => $solutionBody,
-            'language' => $item['lang'] ?? null,
-        ];
-    }
-
-    protected function stringifyGeekPasteValue($value): string
-    {
-        if (is_array($value)) {
-            return trim((string) json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-        }
-
-        return trim((string) $value);
-    }
-
-    protected function extractGeekPasteCodeId(string $solutionText): ?string
-    {
-        if ($solutionText === '') {
-            return null;
-        }
-
-        if (preg_match('/[?&]id=([A-Za-z0-9_-]+)/', $solutionText, $matches)) {
-            return $matches[1];
-        }
-
-        if (preg_match('#paste\.geekclass\.ru/(?:raw/|view/)?([A-Za-z0-9_-]+)#', $solutionText, $matches)) {
-            return $matches[1];
-        }
-
-        if (preg_match('/^[A-Za-z0-9_-]{4,}$/', $solutionText)) {
-            return $solutionText;
-        }
-
-        return null;
+        throw new \RuntimeException('Импортируйте решение в Coding Projects перед созданием достижения.');
     }
 
     protected function generateAchievementPayload(Solution $solution, array $context): array

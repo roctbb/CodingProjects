@@ -57,3 +57,4 @@ foreach (['catalog-desktop', 'catalog-phone'] as $variant) {
         $insert->execute([500 + $i, sprintf('QA материал %02d', $i), 'Материал для проверки страниц каталога', 500 + $i]);
     }
 }
+require __DIR__.'/prepare-code-checking.php';

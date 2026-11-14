@@ -40,6 +40,7 @@ class RouteServiceProvider extends ServiceProvider
         $this->mapWebRoutes();
 
         require base_path('routes/course-planner.php');
+        require base_path('routes/code-checking.php');
 
         //
     }

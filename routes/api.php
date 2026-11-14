@@ -18,8 +18,14 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 
-Route::post('/geekpaste', 'GeekPasteAPI@submitSolution');
-Route::post('/geekpaste/integrity', 'GeekPasteAPI@syncIntegrity');
-Route::get('/geekpaste/users/{id}', 'GeekPasteAPI@userProfile');
-Route::post('/geekpaste/recheck/status', 'GeekPasteAPI@recheckStatus');
-Route::post('/geekpaste/recheck', 'GeekPasteAPI@requestRecheck');
+// Separate budget from the legacy 60/minute API limit: one check may emit
+// dozens of progress events and upload multiple output artifacts.
+Route::prefix('executor')->withoutMiddleware('throttle:60,1')->middleware('throttle:6000,1')->group(function () {
+    Route::get('/executions/{execution}/input', 'CodeCheckerAPI@input');
+    Route::post('/executions/{execution}/progress', 'CodeCheckerAPI@progress');
+    Route::post('/executions/{execution}/result', 'CodeCheckerAPI@result');
+    Route::post('/test-reports', 'CodeCheckerAPI@report');
+    Route::post('/test-artifacts/status', 'CodeCheckerAPI@artifactStatus');
+    Route::put('/test-artifacts/{artifact}', 'CodeCheckerAPI@uploadArtifact');
+    Route::get('/artifacts/{artifact}', 'CodeCheckerAPI@artifact')->name('checker.artifact');
+});

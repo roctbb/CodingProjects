@@ -286,6 +286,8 @@ class User extends Authenticatable implements MustVerifyEmail
             return true;
         }
 
+        app(\App\Services\RewardNotices::class)->rank($this, $oldRank, $newRank);
+
         $coins = 2 * $this->rankPosition($newRank);
         CoinTransaction::registerOnce(
             $this->id,

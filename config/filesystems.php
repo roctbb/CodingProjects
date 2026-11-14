@@ -43,6 +43,26 @@ return [
 
     'disks' => [
 
+        'code_originals' => [
+            'driver' => env('CODE_ORIGINALS_DRIVER', 'local'),
+            'root' => env('CODE_ORIGINALS_DRIVER', 'local') === 'local' ? storage_path('app-private/code-originals') : env('CODE_ORIGINALS_PREFIX', 'originals'),
+            'key' => env('CODE_S3_ACCESS_KEY_ID'),
+            'secret' => env('CODE_S3_SECRET_ACCESS_KEY'),
+            'region' => env('CODE_S3_REGION', 'ru-central1'),
+            'bucket' => env('CODE_S3_BUCKET'),
+            'endpoint' => env('CODE_S3_ENDPOINT'),
+            'use_path_style_endpoint' => env('CODE_S3_PATH_STYLE', false),
+            'visibility' => 'private',
+            'throw' => true,
+        ],
+
+        'code_checking' => [
+            'driver' => 'local',
+            'root' => storage_path('app-private/code-checking'),
+            'visibility' => 'private',
+            'throw' => true,
+        ],
+
         // Avatar snapshots must stay outside the root exposed by /media/{dir}/{name}.
         'room_character_sources' => [
             'driver' => 'local',

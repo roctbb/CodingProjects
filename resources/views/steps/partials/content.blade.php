@@ -4,19 +4,12 @@
              id="task{{$task->id}}"
              role="tabpanel" aria-labelledby="tasks-tab{{$task->id}}">
             @php
-                $geekpasteAttemptResetStatuses = $geekpasteAttemptResetStatuses ?? [];
                 $isInsider = \Request::is('insider/*');
+                $nativeTaskChecker = $isInsider && \Illuminate\Support\Facades\Schema::hasTable('code_task_checkers') ? \App\CodeTaskChecker::find($task->id) : null;
                 $isManager = $isInsider && ($course->teachers->contains($user) || $user->role=='admin');
                 $deadline = $isInsider ? $task->getDeadline($course->id) : null;
                 $latestUserSolution = $isInsider && Auth::check() ? $task->latestSolutionForUser(Auth::id()) : null;
                 $hasUserSolution = $latestUserSolution !== null;
-                $geekpasteExtraAttemptCost = Auth::check() ? Auth::user()->geekPasteExtraAttemptCost() : \App\Services\GeekPasteClient::EXTRA_ATTEMPT_COST;
-                $geekpasteAttemptResetStatus = $geekpasteAttemptResetStatuses[$task->id] ?? null;
-                $canBuyGeekPasteExtraAttempt = $geekpasteAttemptResetStatus
-                    && $user->role == 'student'
-                    && !$isManager
-                    && Auth::check()
-                    && Auth::user()->balance() >= $geekpasteExtraAttemptCost;
                 $taskType = $task->is_code ? 'code' : ($task->is_quiz ? 'quiz' : 'text');
                 $taskTypeLabel = ['code' => 'Код', 'quiz' => 'Квиз', 'text' => 'Ответ'][$taskType];
                 $taskTypeIcon = ['code' => 'fas fa-code', 'quiz' => 'fas fa-question-circle', 'text' => 'fas fa-pen'][$taskType];
@@ -81,29 +74,8 @@
                                         </div>
                                     </div>
                                 @endif
-                                @if ($task->is_code)
-                                    @if (!$blocked)
-                                        <div class="step-code-submit mb-3 d-flex flex-wrap align-items-center gap-2">
-                                            <a href="{{ config('services.geekpaste_url').'/?task_id=' . $task->id . '&course_id=' . $course->id }}"
-                                               class="btn btn-success rounded-3 fw-medium" target="_blank" rel="noopener">
-                                                <i class="fas fa-code me-1"></i>Сдать решение
-                                            </a>
-                                            @if ($canBuyGeekPasteExtraAttempt)
-                                                <form method="POST" action="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/geekpaste-extra-attempt') }}" class="d-inline-flex">
-                                                    {{ csrf_field() }}
-                                                    <button type="submit" class="btn btn-sm solution-special-action"
-                                                            data-confirm="{{ $geekpasteExtraAttemptCost > 0 ? 'Купить одну дополнительную попытку GeekPaste за '.$geekpasteExtraAttemptCost.' GC?' : 'Использовать бесплатный сброс попытки GeekPaste от питомца?' }}">
-                                                        <i class="fas fa-plus-circle"></i>
-                                                        @if($geekpasteExtraAttemptCost > 0)
-                                                            + попытка за {{ $geekpasteExtraAttemptCost }} GC
-                                                        @else
-                                                            + бесплатная попытка
-                                                        @endif
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    @endif
+                                @if ($task->is_code && !$nativeTaskChecker)
+                                    <p class="alert alert-info">Проверка этой задачи ожидает переноса в Coding Projects. Преподаватель сможет открыть сдачу после настройки проверки.</p>
                                 @endif
 
                                 @if ($user->role == 'student' and $task->solution!=null and $task->isFullDone(Auth::User()->id))
@@ -320,10 +292,13 @@
                             </div>
                         </div>
                     @endif
-                    @include('steps.partials.task_solutions_list')
+                    @if(!$nativeTaskChecker) @include('steps.partials.task_solutions_list') @endif
                 @endif
 
-                @if (!$task->is_quiz and !$task->is_code)
+                @if($isInsider && $nativeTaskChecker)
+                    @include('steps.partials.native-workspace', ['nativeTeacher' => $isManager])
+                @endif
+                @if (!$task->is_quiz && !$task->is_code && !$nativeTaskChecker)
                     @if($isManager)
                         <details class="gc-disclosure gc-disclosure--inline mt-3"><summary>Добавить своё решение</summary>@include('steps.partials.task_solution_form')</details>
                     @else

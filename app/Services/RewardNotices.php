@@ -10,6 +10,39 @@ use Illuminate\Support\Facades\Schema;
 
 final class RewardNotices
 {
+    public function experience(User $user, int $before, string $executionId, string $task): void
+    {
+        if ($user->role !== 'student' || !Schema::hasTable('reward_notices')) return;
+        $user->rescore();
+        $after = (int) $user->score();
+        if ($after <= $before) return;
+        $this->record($user->id, 'xp', $executionId, ['amount' => $after - $before,
+            'before' => $before, 'after' => $after, 'reason' => mb_substr($task, 0, 500)]);
+    }
+
+    public function taskCompleted(int $userId, int $taskId, string $title): void
+    {
+        if (!Schema::hasTable('reward_notices') || !User::whereKey($userId)->where('role','student')->exists()) return;
+        $this->record($userId, 'task_complete', (string) $taskId, ['title' => $title, 'reason' => 'Задача выполнена полностью']);
+    }
+
+    public function rank(User $user, $oldRank, $newRank): void
+    {
+        if ($user->role !== 'student' || !$oldRank || !$newRank || $newRank->from <= $oldRank->from
+            || !Schema::hasTable('reward_notices')) return;
+        $this->record($user->id, 'rank', (string) $newRank->id, ['title' => $newRank->name,
+            'previous' => $oldRank->name, 'reason' => 'Новое звание за накопленный опыт']);
+    }
+
+    public function achievement(\App\Achievement $achievement): void
+    {
+        if ($achievement->status !== \App\Achievement::STATUS_PUBLISHED || !Schema::hasTable('reward_notices')
+            || !User::whereKey($achievement->user_id)->where('role','student')->exists()) return;
+        $this->record($achievement->user_id, 'achievement', (string) $achievement->id,
+            ['title' => $achievement->title, 'reason' => mb_substr((string) $achievement->description, 0, 1000),
+                'achievement_id' => (int) $achievement->id, 'image' => $achievement->trophyImageUrl()]);
+    }
+
     public function coins(CoinTransaction $transaction): void
     {
         if ($transaction->price <= 0 || !Schema::hasTable('reward_notices')
@@ -69,7 +102,9 @@ final class RewardNotices
         return DB::transaction(function () use ($user) {
             // Serialize simultaneous tabs without relying on a browser-only marker.
             User::whereKey($user->id)->lockForUpdate()->firstOrFail();
-            $notice = DB::table('reward_notices')->where('user_id', $user->id)->whereNull('displayed_at')->orderBy('id')->lockForUpdate()->first();
+            $notice = DB::table('reward_notices')->where('user_id', $user->id)->whereNull('displayed_at')
+                ->orderByRaw("CASE kind WHEN 'xp' THEN 0 WHEN 'rank' THEN 1 WHEN 'achievement' THEN 2 ELSE 3 END")
+                ->orderBy('id')->lockForUpdate()->first();
             if (!$notice) {
                 return null;
             }

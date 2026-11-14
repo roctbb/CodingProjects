@@ -1,5 +1,7 @@
 @php
-    $answerMode = old('answer_mode', $task?->is_code ? 'code' : ($task?->is_quiz ? 'short' : 'manual'));
+    $nativeAvailable = \Illuminate\Support\Facades\Schema::hasTable('code_task_checkers');
+    $nativeChecker = $nativeAvailable && $task ? \App\CodeTaskChecker::find($task->id) : null;
+    $answerMode = old('answer_mode', $nativeChecker ? 'native' : ($task?->is_code ? 'code' : ($task?->is_quiz ? 'short' : 'manual')));
 @endphp
 <x-gc-form-section title="Условие задания" description="Материалы задания общие для курсов этой программы.">
     <x-gc-field name="name" label="Название задания"><input id="name" name="name" class="form-control" value="{{ old('name', $task?->name) }}" maxlength="255" required></x-gc-field>
@@ -9,12 +11,17 @@
     <fieldset id="answer_mode" class="gc-field" data-answer-mode>
         <legend class="form-label">Способ проверки</legend>
         <div class="gc-choice-grid">
-            @foreach(['manual'=>['Преподавателем', 'Работу проверяет преподаватель.'], 'code'=>['Автопроверка кода', 'Решение отправляется в систему проверки.'], 'short'=>['Короткий ответ', 'Ответ ученика сравнивается с указанным ниже.']] as $key=>[$label,$hint])
+            @foreach(($nativeChecker ? ['native'=>['Сдача в Coding Projects', 'Текст, код и файлы. Ручная проверка, тесты или ИИ.']] : (['manual'=>['Преподавателем', 'Работу проверяет преподаватель.'], 'short'=>['Короткий ответ', 'Ответ ученика сравнивается с указанным ниже.']] + ($nativeAvailable ? ['native'=>['Сдача в Coding Projects', 'Текст, код и файлы. Ручная проверка, тесты или ИИ.']] : []) + ($task?->is_code ? ['code'=>['Ожидает переноса', 'Архивная задача. Настройте сдачу в Coding Projects, чтобы открыть новые отправки.']] : []))) as $key=>[$label,$hint])
                 <label class="gc-choice"><input class="form-check-input" type="radio" name="answer_mode" value="{{ $key }}" @checked($answerMode === $key)><span><strong>{{ $label }}</strong><span class="gc-help-text d-block">{{ $hint }}</span></span></label>
             @endforeach
         </div>
         @error('answer_mode')<p class="gc-field__error">{{ $message }}</p>@enderror
     </fieldset>
+    @if($nativeAvailable)
+        <input type="hidden" name="checker_config" value="{{ old('checker_config', json_encode(($nativeChecker?->config ?? ['language'=>'python','check_type'=>'manual','submission_modes'=>['files','code','project'],'allowed_languages'=>['python'],'test_mode'=>'io']) + ['allows_test_reveals' => $nativeChecker?->allows_test_reveals ?? true], JSON_UNESCAPED_UNICODE)) }}" data-checker-value>
+        <div data-checker-editor data-endpoint="{{ $task ? url('/insider/courses/'.$course->id.'/tasks/'.$task->id) : '' }}" @if($answerMode !== 'native') hidden @endif></div>
+        @error('checker_config')<p class="gc-field__error" role="alert">{{ $message }}</p>@enderror
+    @endif
     <x-gc-field name="answer" label="Короткий ответ" hint="Используется при выборе проверки короткого ответа."><input id="answer" name="answer" class="form-control" value="{{ old('answer', $task?->answer) }}" maxlength="255" data-short-answer></x-gc-field>
     <x-gc-markdown-field name="solution" label="Авторское решение" :value="$task?->solution ?? ''" :compact="true" hint="Разбор решения и пояснения преподавателя." />
 </x-gc-form-section>
