@@ -11,7 +11,10 @@
     "prebuild": "npm run styles:check && npm run frontend:test",
     "ux:build": "node scripts/ux/map.mjs --write",
     "ux:check": "node scripts/ux/map.mjs",
-    "frontend:test": "node --experimental-default-type=module --test tests/Frontend/*.test.mjs"
+    "frontend:test": "node --experimental-default-type=module --test tests/Frontend/*.test.mjs",
+    "ui:check": "node scripts/ui-checks/run.mjs",
+    "ui:baseline": "node scripts/ui-checks/run.mjs --baseline",
+    "ui:compare": "node scripts/ui-checks/run.mjs --compare"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

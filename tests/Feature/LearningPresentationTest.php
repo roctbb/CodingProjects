@@ -19,6 +19,7 @@ class LearningPresentationTest extends TestCase
         $html = view('layouts.fluid')->render();
         $this->assertSame(1, substr_count($html, '/build/js/notebook-render.js'));
         $this->assertStringNotContainsString('/build/js/nbv.js', $html);
+        $this->assertStringContainsString('window.Prism.manual = true', $html);
         $this->assertLessThan(strpos($html, '/build/js/notebook-render.js'), strpos($html, 'window.Prism.manual = true'));
     }
 

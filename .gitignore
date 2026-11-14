@@ -16,3 +16,5 @@ npm-debug.log
 yarn-error.log
 package-lock.json
 test-results
+/.playwright-cli/
+/output/playwright/
