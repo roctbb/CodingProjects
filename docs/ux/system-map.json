@@ -1,0 +1,6266 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-13",
+  "scope": "CodingProjects: routed screens, local UI states, transitions, endpoint owners and external boundaries.",
+  "roles": {
+    "guest": "Гость",
+    "novice": "Новый пользователь",
+    "student": "Ученик",
+    "teacher": "Преподаватель",
+    "admin": "Администратор"
+  },
+  "domains": [
+    {
+      "id": "access",
+      "title": "Вход и доступ"
+    },
+    {
+      "id": "courses",
+      "title": "Курсы и обучение"
+    },
+    {
+      "id": "authoring",
+      "title": "Редактор программы"
+    },
+    {
+      "id": "review",
+      "title": "Проверка и результаты"
+    },
+    {
+      "id": "planner",
+      "title": "Планировщик"
+    },
+    {
+      "id": "people",
+      "title": "Люди и профиль"
+    },
+    {
+      "id": "market",
+      "title": "Магазин и GC"
+    },
+    {
+      "id": "admin",
+      "title": "Настройки"
+    },
+    {
+      "id": "shell",
+      "title": "Навигация"
+    },
+    {
+      "id": "external",
+      "title": "Внешние системы"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "login",
+      "title": "Вход",
+      "domain": "access",
+      "kind": "page",
+      "roles": [
+        "guest"
+      ],
+      "sources": [
+        "resources/views/auth/login.blade.php"
+      ],
+      "goal": "Войти по паролю или через Силаэдр",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/login-guest-desktop-1440.png"
+      },
+      "layout": "auth",
+      "checkStates": [
+        "пустая форма",
+        "ошибка входа",
+        "ошибка SSO",
+        "доступность SSO"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "auth",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "register",
+      "title": "Регистрация",
+      "domain": "access",
+      "kind": "page",
+      "roles": [
+        "guest"
+      ],
+      "sources": [
+        "resources/views/auth/register.blade.php"
+      ],
+      "goal": "Создать учётную запись; возможен контекст приглашения на курс",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/register-guest-desktop-1440.png"
+      },
+      "layout": "auth",
+      "checkStates": [
+        "обычная регистрация",
+        "course_id",
+        "валидация",
+        "капча"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "auth",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "password-request",
+      "title": "Восстановление доступа",
+      "domain": "access",
+      "kind": "page",
+      "roles": [
+        "guest"
+      ],
+      "sources": [
+        "resources/views/auth/passwords/email.blade.php"
+      ],
+      "goal": "Получить ссылку сброса пароля",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/password-request-guest-desktop-1440.png"
+      },
+      "layout": "auth",
+      "checkStates": [
+        "форма",
+        "ссылка отправлена",
+        "ошибка адреса"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "auth",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "password-reset",
+      "title": "Новый пароль",
+      "domain": "access",
+      "kind": "page",
+      "roles": [
+        "guest"
+      ],
+      "sources": [
+        "resources/views/auth/passwords/reset.blade.php"
+      ],
+      "goal": "Задать пароль по токену",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/password-reset-guest-desktop-1440.png"
+      },
+      "layout": "auth",
+      "checkStates": [
+        "валидный токен",
+        "просроченный токен",
+        "валидация"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "auth",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "verify",
+      "title": "Подтверждение почты",
+      "domain": "access",
+      "kind": "page",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/auth/verify.blade.php"
+      ],
+      "goal": "Подтвердить почту и продолжить вход",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/verify-student-desktop-1440.png"
+      },
+      "layout": "auth",
+      "checkStates": [
+        "письмо отправлено",
+        "повторная отправка",
+        "переход по подписанной ссылке"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "auth",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "courses",
+      "title": "Мои курсы",
+      "domain": "courses",
+      "kind": "page",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/home.blade.php",
+        "resources/views/courses/partials/home_profile_panel.blade.php",
+        "resources/views/courses/partials/birthday_rows.blade.php",
+        "resources/views/components/gc-deadline-preview.blade.php",
+        "resources/views/courses/partials/home_course_card.blade.php",
+        "app/Queries/CourseDeadlineList.php",
+        "resources/views/courses/partials/home_activity_feed.blade.php",
+        "resources/views/components/gc-page-header.blade.php",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js"
+      ],
+      "goal": "Выбрать курс, продолжить работу или присоединиться",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/courses-student-desktop-1440.png"
+      },
+      "layout": "course-list",
+      "checkStates": [
+        "ученик",
+        "преподаватель",
+        "активные",
+        "черновики",
+        "архив",
+        "нет курсов",
+        "дедлайны",
+        "дни рождения",
+        "преподаватель: один счётчик GC и XP",
+        "сегодняшние дни рождения",
+        "группы будущих дат",
+        "все даты ближайших семи дней",
+        "пустой пульс",
+        "больше восьми именинников",
+        "переход года",
+        "скрытая дата рождения",
+        "карточка курса: наведение и клавиатурный фокус",
+        "SVG-иконки: автовыбор и ручной выбор",
+        "пульс между заголовком и действиями / под заголовком",
+        "именинники без аватаров"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "course-list",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ],
+        "prototype": {
+          "file": "docs/ux/prototypes.html",
+          "screen": "courses"
+        }
+      }
+    },
+    {
+      "id": "course",
+      "title": "Страница курса",
+      "domain": "courses",
+      "kind": "page",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/details.blade.php",
+        "resources/views/components/gc-chapter-timeline.blade.php",
+        "resources/assets/js/components/chapter-timeline.js",
+        "app/Support/CourseChapterNavigation.php",
+        "resources/views/components/gc-course-header.blade.php",
+        "resources/views/components/gc-deadline-preview.blade.php",
+        "app/Queries/CourseDeadlineList.php",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js",
+        "resources/views/components/gc-lesson-reward.blade.php",
+        "resources/views/components/gc-lesson-outline.blade.php",
+        "resources/assets/js/course-stats.js",
+        "app/Support/CourseLessonView.php",
+        "app/Support/CourseStudyOutcome.php",
+        "app/Support/CourseLessonStatistics.php",
+        "resources/assets/js/components/course-context.js",
+        "resources/assets/js/components/charts.js",
+        "resources/views/courses/partials/lesson-statistics.blade.php",
+        "resources/views/courses/partials/due-summary.blade.php"
+      ],
+      "goal": "Найти главу, урок и следующую ступень",
+      "review": {
+        "stage": "verified",
+        "note": "Исправлены контекст главы, статусы продолжения и награды, завершение обучения, мобильные сроки и доступность статистики больших групп. Графики и подробная статистика загружаются по запросу. Проверки — ui-round-23.md.",
+        "evidence": "output/playwright/ui-round-23/audit-normal-student-1440.png"
+      },
+      "layout": "course-workspace",
+      "checkStates": [
+        "ученик / преподаватель",
+        "пустая глава",
+        "закрытый урок",
+        "ранний доступ",
+        "статистика урока",
+        "стикер за выполнение",
+        "95% и возможность улучшения",
+        "завершённая глава / завершённый курс",
+        "группа из 70 учеников / страницы статистики",
+        "ошибка загрузки / повтор",
+        "сохранение главы между разделами"
+      ],
+      "guard": "Участник курса либо администратор; материалы зависят от доступности урока.",
+      "design": {
+        "stage": "implemented",
+        "layout": "course-workspace",
+        "rules": [
+          "Последовательная программа и компактный таймлайн глав.",
+          "Текущий урок открыт, имеет явное действие; остальные карточки показывают счётчик ступеней без раскрытия.",
+          "Увеличенный блок наклейки справа; текст и ступени текущего урока слева, на телефоне ступени занимают ширину карточки.",
+          "Из другой главы или длинного списка есть возврат к текущему уроку.",
+          "Сводка результатов и сроков справа на компьютере; на телефоне сохраняется приоритет программы.",
+          "Действия преподавателя видны без наведения, ближайшие сроки предшествуют справочной информации.",
+          "Общие токены, тонкие полосы прогресса, нейтральный фон и спокойный hover."
+        ],
+        "prototype": {
+          "file": "docs/ux/prototypes.html",
+          "screen": "course"
+        }
+      }
+    },
+    {
+      "id": "deadlines",
+      "title": "Дедлайны курса",
+      "domain": "courses",
+      "kind": "page",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/deadlines.blade.php",
+        "resources/views/components/gc-course-header.blade.php",
+        "app/Queries/CourseDeadlineList.php",
+        "resources/assets/js/components/deadline-workspace.js",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js"
+      ],
+      "goal": "Посмотреть сроки по всем главам и перейти к задаче",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/deadlines-student-desktop-1440.png"
+      },
+      "layout": "timeline",
+      "checkStates": [
+        "предстоящие",
+        "просроченные",
+        "пусто",
+        "ученик / преподаватель",
+        "поиск по задаче, ступени и уроку",
+        "выполнено / к выполнению / просрочено",
+        "преподаватель: предстоящие сроки и срок прошёл",
+        "пустой поиск и сброс",
+        "месяцы и даты без подходящих задач скрываются"
+      ],
+      "guard": "Участник курса либо администратор.",
+      "design": {
+        "stage": "implemented",
+        "layout": "timeline",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "step",
+      "title": "Ступень",
+      "domain": "courses",
+      "kind": "page",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/details.blade.php",
+        "resources/views/steps/partials/notes.blade.php",
+        "resources/assets/js/nbv.js",
+        "resources/assets/js/components/reading-workspace.js",
+        "resources/assets/js/components/content-media.js",
+        "resources/views/steps/partials/nav.blade.php",
+        "resources/assets/js/components/workbook-navigation.js",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js",
+        "resources/views/steps/partials/task_header.blade.php",
+        "resources/views/components/gc-task-state.blade.php"
+      ],
+      "goal": "Прочитать теорию, решить задачи, увидеть обратную связь",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/step-student-desktop-1440.png"
+      },
+      "layout": "learning-workspace",
+      "checkStates": [
+        "теория",
+        "текст",
+        "код",
+        "квиз",
+        "пустая ступень",
+        "сдано / проверено / блокировка",
+        "ученик / преподаватель",
+        "список ступеней слева с текущим пунктом",
+        "мобильный список раскрыт / скрыт",
+        "одна ступень без боковой колонки",
+        "вкладка задачи по прямой ссылке видна на узком экране"
+      ],
+      "guard": "Участник курса; для ученика учитываются состояние курса, урок и видимость задачи.",
+      "design": {
+        "stage": "implemented",
+        "layout": "learning-workspace",
+        "rules": [
+          "Тетрадь с видимым списком ступеней слева; на телефоне раскрытие, без select.",
+          "Быстрые переходы в шапке и полные названия внизу.",
+          "Теория и задачи по закрепляемым вкладкам, переход к практике после конспекта.",
+          "Единая шапка задачи и квиза, текстовые состояния, последняя попытка открыта; предыдущие по раскрытию.",
+          "Код и таблицы прокручиваются локально; содержимое не обрезается."
+        ],
+        "prototype": {
+          "file": "docs/ux/prototypes.html",
+          "screen": "step"
+        }
+      }
+    },
+    {
+      "id": "public-step",
+      "title": "Открытая ступень",
+      "domain": "access",
+      "kind": "page",
+      "roles": [
+        "guest",
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/details.blade.php",
+        "resources/views/steps/partials/nav.blade.php",
+        "resources/assets/js/components/workbook-navigation.js",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js"
+      ],
+      "goal": "Прочитать доступный без входа учебный материал",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/public-step-student-desktop-1440.png"
+      },
+      "layout": "reading",
+      "checkStates": [
+        "гость",
+        "авторизованный",
+        "открытый урок",
+        "урок закрыт",
+        "список ступеней слева с текущим пунктом",
+        "мобильный список раскрыт / скрыт",
+        "одна ступень без боковой колонки"
+      ],
+      "guard": "Публичен только урок с is_open; закрытая ступень сейчас возвращает 503.",
+      "design": {
+        "stage": "implemented",
+        "layout": "reading",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "pulse",
+      "title": "Пульс",
+      "domain": "courses",
+      "kind": "page",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/pulse.blade.php"
+      ],
+      "goal": "Увидеть события и перейти к их контексту",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/pulse-student-desktop-1440.png"
+      },
+      "layout": "feed",
+      "checkStates": [
+        "пусто",
+        "фильтр курса",
+        "начисления",
+        "достижения",
+        "новые уроки"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "feed",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "course-create",
+      "title": "Создание курса",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/create.blade.php"
+      ],
+      "goal": "Выбрать программу и создать курс",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/course-create-teacher-desktop-1440.png"
+      },
+      "layout": "form",
+      "checkStates": [
+        "новый курс",
+        "импорт",
+        "нет программ",
+        "валидация"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "form",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "course-edit",
+      "title": "Настройки курса",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/edit.blade.php",
+        "resources/views/components/gc-course-icon-picker.blade.php",
+        "app/Support/CourseIcons.php"
+      ],
+      "goal": "Изменить курс, участников, доступ и описание",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/course-edit-teacher-desktop-1440.png"
+      },
+      "layout": "form",
+      "checkStates": [
+        "ученики",
+        "преподаватели для администратора",
+        "видимость статистики",
+        "постер",
+        "валидация",
+        "выбор и сохранение иконки",
+        "преподаватель без поля инвайта"
+      ],
+      "guard": "Преподаватель с доступом к курсу либо администратор.",
+      "design": {
+        "stage": "implemented",
+        "layout": "form",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "chapter-create",
+      "title": "Добавление главы",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/create_chapter.blade.php"
+      ],
+      "goal": "Добавить главу программы",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/chapter-create-teacher-desktop-1440.png"
+      },
+      "layout": "form",
+      "checkStates": [
+        "форма",
+        "ошибки",
+        "возврат к главе"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "form",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "chapter-edit",
+      "title": "Редактирование главы",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/edit_chapter.blade.php"
+      ],
+      "goal": "Изменить главу и ограничения",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/chapter-edit-teacher-desktop-1440.png"
+      },
+      "layout": "form",
+      "checkStates": [
+        "текущие значения",
+        "блокировки по времени / прогрессу",
+        "ошибки"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "form",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "lesson-create",
+      "title": "Добавление урока",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/lessons/create.blade.php"
+      ],
+      "goal": "Создать урок и стартовую ступень либо импортировать",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/lesson-create-teacher-desktop-1440.png"
+      },
+      "layout": "form",
+      "checkStates": [
+        "форма",
+        "импорт",
+        "валидация"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "form",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "lesson-edit",
+      "title": "Редактирование урока",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/lessons/edit.blade.php"
+      ],
+      "goal": "Изменить название, главу, доступ и стикер",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/lesson-edit-teacher-desktop-1440.png"
+      },
+      "layout": "form",
+      "checkStates": [
+        "параметры",
+        "доступ",
+        "превью стикера",
+        "валидация"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "form",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "step-create",
+      "title": "Добавление ступени",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/create.blade.php"
+      ],
+      "goal": "Добавить теорию и материалы ступени",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/step-create-teacher-desktop-1440.png"
+      },
+      "layout": "editor",
+      "checkStates": [
+        "Markdown",
+        "Notebook",
+        "валидация"
+      ],
+      "guard": "В интерфейсе — действие преподавателя; у createView/create в списке middleware только auth/verified. Роли здесь обозначают UX-сценарий, а не утверждение о полноте серверной авторизации.",
+      "design": {
+        "stage": "implemented",
+        "layout": "editor",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "step-edit",
+      "title": "Редактирование ступени",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/edit.blade.php"
+      ],
+      "goal": "Редактировать теорию, заметки и видео",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/step-edit-teacher-desktop-1440.png"
+      },
+      "layout": "editor",
+      "checkStates": [
+        "Markdown",
+        "Notebook",
+        "видео",
+        "предпросмотр",
+        "ошибки"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "editor",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "task-edit",
+      "title": "Редактирование задачи",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/edit_task.blade.php"
+      ],
+      "goal": "Изменить условие, проверку и параметры задачи",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/task-edit-teacher-desktop-1440.png"
+      },
+      "layout": "editor",
+      "checkStates": [
+        "текст",
+        "автопроверка",
+        "шаблон кода",
+        "авторское решение",
+        "ИИ-достижение",
+        "валидация"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "editor",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "perform",
+      "title": "Режим показа",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/perform/details.blade.php",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js"
+      ],
+      "goal": "Показывать теорию и задания всему классу",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/perform-teacher-desktop-1440.png"
+      },
+      "layout": "presentation",
+      "checkStates": [
+        "теория",
+        "задача",
+        "предыдущая / следующая ступень"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "presentation",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "reviews",
+      "title": "Очередь проверки",
+      "domain": "review",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/reviews.blade.php",
+        "resources/views/steps/partials/review-queue.blade.php",
+        "app/Services/ReviewWorkspace.php"
+      ],
+      "goal": "Выбрать непроверенное решение",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/reviews-teacher-desktop-1440.png"
+      },
+      "layout": "review-queue",
+      "checkStates": [
+        "очередь",
+        "пагинация",
+        "пусто",
+        "пропустить одно / все"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "review-queue",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "review",
+      "title": "Проверка решений ученика",
+      "domain": "review",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/review.blade.php",
+        "resources/views/steps/partials/review-queue.blade.php",
+        "app/Services/ReviewWorkspace.php"
+      ],
+      "goal": "Изучить попытки, оценить и дать обратную связь",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/review-teacher-desktop-1440.png"
+      },
+      "layout": "review-workspace",
+      "checkStates": [
+        "несколько попыток",
+        "нет решений",
+        "подозрения GeekPaste",
+        "повторная проверка",
+        "блокировка",
+        "достижение",
+        "ответ виден до раскрытия условия",
+        "условие открыто при отсутствии решений",
+        "полное длинное название задачи"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "review-workspace",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "achievement-preview",
+      "title": "Предпросмотр достижения",
+      "domain": "review",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/achievement_preview.blade.php"
+      ],
+      "goal": "Проверить сгенерированное достижение перед публикацией",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/achievement-preview-teacher-desktop-1440.png"
+      },
+      "layout": "preview",
+      "checkStates": [
+        "генерация",
+        "готово",
+        "ошибка",
+        "опубликовать",
+        "вернуться"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "preview",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "report",
+      "title": "Отчёт по курсу",
+      "domain": "review",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/report.blade.php",
+        "resources/views/components/gc-course-header.blade.php",
+        "resources/views/courses/partials/report-activity.blade.php",
+        "resources/assets/js/components/charts.js",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js",
+        "resources/assets/js/components/report-workspace.js",
+        "app/Support/CourseReportLessons.php"
+      ],
+      "goal": "Найти отставание, открыть ученика и задачу",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 20: текущий урок, наклейки и отчёт только по урокам с заданиями; проверка 320/390/768/1440 px — ui-round-20.md.",
+        "evidence": "output/playwright/ui-round-20/report-expanded-1440.png"
+      },
+      "layout": "report",
+      "checkStates": [
+        "выбор ученика",
+        "главы",
+        "уроки",
+        "графики",
+        "сигналы GeekPaste",
+        "нет статистики",
+        "поиск и смена ученика в мобильной панели",
+        "выбор главы и восстановление из URL",
+        "пустой поиск без устаревшего результата",
+        "задачи появляются при раскрытии"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "report",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "assessments",
+      "title": "Журнал опыта",
+      "domain": "review",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/assessments.blade.php",
+        "resources/views/components/gc-course-header.blade.php",
+        "app/Http/Controllers/CoursesController.php",
+        "resources/assets/js/components/assessment-workspace.js",
+        "resources/views/courses/partials/assessment-detail.blade.php",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js",
+        "resources/assets/js/components/table-navigation.js",
+        "resources/views/components/gc-table-navigation.blade.php"
+      ],
+      "goal": "Сопоставить учеников и баллы за задачи",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/assessments-teacher-desktop-1440.png"
+      },
+      "layout": "matrix",
+      "checkStates": [
+        "пусто",
+        "много задач",
+        "блокированные задачи",
+        "переход к проверке",
+        "текущая глава по умолчанию",
+        "смена главы",
+        "фильтры по состояниям и поиск",
+        "локальная прокрутка таблицы на телефоне",
+        "мобильный выбор состояния работ",
+        "прокрутка колонок кнопками",
+        "переход к разбору и возврат к итогам",
+        "32 ученика и длинная глава"
+      ],
+      "guard": "",
+      "note": "Существующий журнал XP; не новая итоговая ведомость, отложенная на следующий этап.",
+      "design": {
+        "stage": "implemented",
+        "layout": "matrix",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "blocked",
+      "title": "Заблокированные задачи",
+      "domain": "review",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/blocked.blade.php"
+      ],
+      "goal": "Найти блокировку ученика и снять её",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/blocked-teacher-desktop-1440.png"
+      },
+      "layout": "table",
+      "checkStates": [
+        "нет блокировок",
+        "группы по ученикам",
+        "разблокировка"
+      ],
+      "guard": "Контроллер: администратор либо преподаватель данного курса.",
+      "design": {
+        "stage": "implemented",
+        "layout": "table",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "planner",
+      "title": "План занятий",
+      "domain": "planner",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/course-planner/index.blade.php",
+        "resources/views/components/gc-course-header.blade.php",
+        "resources/assets/js/course-planner/index.js",
+        "resources/assets/js/course-planner/deadline-strip.js",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js"
+      ],
+      "goal": "Планировать занятия и фиксировать факт",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/planner-teacher-desktop-1440.png"
+      },
+      "layout": "planner",
+      "checkStates": [
+        "календарь",
+        "обзор",
+        "без даты",
+        "нет расписания",
+        "каталог недоступен",
+        "конфликт версии",
+        "нативный выбор календаря / обзора",
+        "план / факт"
+      ],
+      "guard": "Администратор либо назначенный преподаватель с role=teacher; feature flag и миграции.",
+      "design": {
+        "stage": "implemented",
+        "layout": "planner",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "community",
+      "title": "Сообщество",
+      "domain": "people",
+      "kind": "page",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/index.blade.php",
+        "app/Queries/CommunityDirectory.php",
+        "resources/views/components/gc-person-card.blade.php",
+        "resources/views/components/gc-page-navigation.blade.php",
+        "app/Support/CommunityNavigation.php"
+      ],
+      "goal": "Найти знакомого по имени и внешнему виду, увидеть аватар, рамку и звание, открыть профиль.",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/community-student-desktop-1440.png"
+      },
+      "layout": "directory",
+      "checkStates": [
+        "поиск",
+        "фильтр роли",
+        "нет результатов",
+        "свой / чужой профиль",
+        "скрытые участники",
+        "обычные и пользовательские рамки",
+        "длинные имена и звания",
+        "мобильная сетка",
+        "первая / средняя / последняя страница",
+        "поиск вне первой страницы",
+        "сброс страницы при изменении фильтра",
+        "страница за пределами результатов",
+        "глобальные лидеры на разных страницах",
+        "звание без прогресс-бара",
+        "80 px и персональные рамки"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "directory",
+        "rules": [
+          "Плотная галерея с полными именами и местом для широкой платной рамки.",
+          "Ранг и XP без дополнительной полосы прогресса.",
+          "Серверный поиск, видимые роли, 20 участников на странице, переключение страниц сверху и снизу.",
+          "Возврат из профиля сохраняет фильтры и страницу, отмечает исходную карточку."
+        ],
+        "prototype": {
+          "file": "docs/ux/prototypes.html",
+          "screen": "community"
+        }
+      }
+    },
+    {
+      "id": "profile",
+      "title": "Профиль",
+      "domain": "people",
+      "kind": "page",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/details.blade.php",
+        "resources/views/profile/partials/contacts.blade.php",
+        "app/Support/ContactLinks.php",
+        "resources/views/profile/partials/about.blade.php",
+        "resources/views/profile/partials/courses.blade.php",
+        "resources/views/profile/partials/stickers.blade.php",
+        "resources/views/profile/partials/achievement.blade.php",
+        "resources/views/profile/partials/course-row.blade.php",
+        "resources/views/components/gc-contact.blade.php",
+        "app/Support/CommunityNavigation.php"
+      ],
+      "goal": "Увидеть человека, прогресс, комнату и достижения",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/profile-student-desktop-1440.png"
+      },
+      "layout": "profile",
+      "checkStates": [
+        "свой / чужой",
+        "ученик / преподаватель",
+        "пустые секции",
+        "комната",
+        "история GC",
+        "приватные поля",
+        "открытые контакты",
+        "почта: владелец/преподаватель/ученик",
+        "скрытая дата рождения",
+        "наклейки владельца и посетителя",
+        "длинное имя и платное звание на телефоне",
+        "нет публичных контактов",
+        "длинные коллекции",
+        "прямая ссылка на свёрнутое достижение",
+        "служебный комментарий только уполномоченным ролям",
+        "визитка и контакты / комната на широком экране",
+        "три курса и раскрытие остальных",
+        "мобильный порядок: контакты → комната → обучение"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "profile",
+        "rules": [
+          "Единая визитка с комнатой справа, обучение и достижения ниже.",
+          "На телефоне: имя и ранг, контакты, комната, краткое резюме.",
+          "Контакты открыты и подписаны; приватность и права сохранены.",
+          "Рамки, аватар и ранг заметны; декоративного третьего уровня нет."
+        ],
+        "prototype": {
+          "file": "docs/ux/prototypes.html",
+          "screen": "profile"
+        }
+      }
+    },
+    {
+      "id": "profile-edit",
+      "title": "Личные настройки",
+      "domain": "people",
+      "kind": "page",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/edit.blade.php",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js"
+      ],
+      "goal": "Изменить данные профиля, пароль, Telegram и связь с Силаэдром.",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/profile-edit-student-desktop-1440.png"
+      },
+      "layout": "form",
+      "checkStates": [
+        "свой / администратор",
+        "аватар",
+        "почта",
+        "привязка SSO",
+        "валидация"
+      ],
+      "guard": "Владелец профиля либо администратор.",
+      "design": {
+        "stage": "implemented",
+        "layout": "form",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ],
+        "prototype": {
+          "file": "docs/ux/prototypes.html",
+          "screen": "account"
+        }
+      }
+    },
+    {
+      "id": "market",
+      "title": "Магазин",
+      "domain": "market",
+      "kind": "page",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/index.blade.php",
+        "resources/views/components/gc-purchase-footer.blade.php",
+        "resources/views/market/partials/orders_table.blade.php",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js"
+      ],
+      "goal": "Выбрать физический или цифровой товар, участвовать в аукционе",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/market-student-desktop-1440.png"
+      },
+      "layout": "catalog",
+      "checkStates": [
+        "товары",
+        "цифровые",
+        "аукционы",
+        "архив",
+        "заказы",
+        "нет товаров",
+        "не хватает GC",
+        "преподаватель / администратор",
+        "компактная покупка справа",
+        "цена слева",
+        "недостаточный баланс",
+        "контраст обычной и наведённой кнопки доставки",
+        "монеты в цвете акцента темы",
+        "текущая вкладка видна на телефоне",
+        "компактный заказ с ценой и действиями на телефоне"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "catalog",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ],
+        "prototype": {
+          "file": "docs/ux/prototypes.html",
+          "screen": "market"
+        }
+      }
+    },
+    {
+      "id": "market-create",
+      "title": "Добавление товара",
+      "domain": "market",
+      "kind": "page",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/create.blade.php"
+      ],
+      "goal": "Создать товар, программу или аукцион",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/market-create-admin-desktop-1440.png"
+      },
+      "layout": "form",
+      "checkStates": [
+        "товар / аукцион",
+        "количество",
+        "цена",
+        "изображение",
+        "программа",
+        "валидация"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "form",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "market-edit",
+      "title": "Редактирование товара",
+      "domain": "market",
+      "kind": "page",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/edit.blade.php"
+      ],
+      "goal": "Изменить товар или параметры аукциона",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/market-edit-admin-desktop-1440.png"
+      },
+      "layout": "form",
+      "checkStates": [
+        "текущие значения",
+        "предпросмотр",
+        "ошибки"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "form",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "orders",
+      "title": "Заказы",
+      "domain": "market",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/orders.blade.php",
+        "resources/views/market/partials/orders_table.blade.php"
+      ],
+      "goal": "Выдать заказ либо отменить, посмотреть историю",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/orders-teacher-desktop-1440.png"
+      },
+      "layout": "table",
+      "checkStates": [
+        "активные",
+        "доставленные",
+        "пагинация",
+        "пусто",
+        "контраст кнопки доставки",
+        "альтернативная палитра"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "table",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "credit",
+      "title": "Массовое начисление GC",
+      "domain": "market",
+      "kind": "page",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/credit.blade.php"
+      ],
+      "goal": "Выбрать получателей, сумму и комментарий",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/credit-admin-desktop-1440.png"
+      },
+      "layout": "form",
+      "checkStates": [
+        "получатели",
+        "сумма",
+        "комментарий",
+        "валидация",
+        "успех"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "form",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "settings-ai",
+      "title": "Настройки ИИ",
+      "domain": "admin",
+      "kind": "page",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/settings/ai.blade.php",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js",
+        "resources/assets/js/components/ai-settings.js",
+        "app/Services/Ai/Connection.php",
+        "app/Services/Ai/AiSettings.php",
+        "app/Services/Ai/ImagesClient.php",
+        "app/Http/Requests/UpdateAiSettingsRequest.php"
+      ],
+      "goal": "Выбрать одно подключение и две общие модели",
+      "review": {
+        "stage": "verified",
+        "note": "Два режима подключения: встроенный шлюз или OpenAI-совместимый API. Видны только параметры выбранного режима, единый базовый адрес и две модели. RouterAI поддерживается по его адресу без отдельного выбора сервиса. Сохранение включает общие модели, неактивные ключи сохраняются. Проверка и конфигурация — docs/ai.md.",
+        "evidence": "output/playwright/routerai/chromium-openai-light-1440.png"
+      },
+      "layout": "settings",
+      "checkStates": [
+        "серверные / переопределённые",
+        "секрет скрыт",
+        "проверка значений",
+        "сброс",
+        "встроенный шлюз / OpenAI-совместимый API",
+        "один базовый адрес / старые отдельные адреса",
+        "переключение без удаления неактивных ключей",
+        "две модели вместо переопределений операций"
+      ],
+      "guard": "Только глобальный администратор. Секреты не возвращаются в HTML и не попадают в old input.",
+      "design": {
+        "stage": "implemented",
+        "layout": "settings",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "settings-store",
+      "title": "Цены и акции",
+      "domain": "admin",
+      "kind": "page",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/settings/system-store.blade.php",
+        "resources/views/settings/partials/store-promotion.blade.php",
+        "app/Services/SystemStoreSettings.php",
+        "app/Http/Controllers/SystemStoreSettingsController.php",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js"
+      ],
+      "goal": "Настроить цены и акцию",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/settings-store-admin-desktop-1440.png"
+      },
+      "layout": "settings",
+      "checkStates": [
+        "цены",
+        "акция",
+        "валидация",
+        "сохранено"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "settings",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "settings-telegram",
+      "title": "Настройки Telegram",
+      "domain": "admin",
+      "kind": "page",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/settings/telegram.blade.php",
+        "resources/views/components/gc-tab-strip.blade.php",
+        "resources/assets/js/components/tab-strip.js"
+      ],
+      "goal": "Настроить существующего Telegram-бота платформы",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/settings-telegram-admin-desktop-1440.png"
+      },
+      "layout": "settings",
+      "checkStates": [
+        "секрет скрыт",
+        "webhook",
+        "сохранение",
+        "сброс"
+      ],
+      "guard": "",
+      "note": "Существующая привязка Telegram; бот сопровождения курса из обсуждения ещё не реализуется.",
+      "design": {
+        "stage": "implemented",
+        "layout": "settings",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "room-debug",
+      "title": "Редактор комнаты",
+      "domain": "admin",
+      "kind": "page",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/admin/room-debug.blade.php"
+      ],
+      "goal": "Настроить положение слоёв комнаты",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/room-debug-admin-desktop-1440.png"
+      },
+      "layout": "editor",
+      "checkStates": [
+        "фон",
+        "слои",
+        "предпросмотр",
+        "сохранение layout"
+      ],
+      "guard": "",
+      "design": {
+        "stage": "implemented",
+        "layout": "editor",
+        "rules": [
+          "Самостоятельные блоки сохраняют карточки.",
+          "Внутри — строки и разделители; декоративного третьего уровня нет.",
+          "Цвета через токены; основной цвет темы и её оранжевый акцент.",
+          "Первичное действие одно; второстепенные доступны в контексте.",
+          "Проверить пустое состояние, ошибку, ожидание и мобильную компоновку."
+        ]
+      }
+    },
+    {
+      "id": "course-tabs",
+      "title": "Активные / черновики / архив",
+      "domain": "courses",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/home.blade.php"
+      ],
+      "goal": "Для преподавателя — вкладки; ученик видит свои, доступные и завершённые курсы.",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "courses"
+    },
+    {
+      "id": "join-course",
+      "title": "Код приглашения / запись на курс",
+      "domain": "courses",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/home.blade.php"
+      ],
+      "goal": "Форма кода и запись в открытый курс возвращают в учебный контекст.",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "courses"
+    },
+    {
+      "id": "course-chapter",
+      "title": "Глава и список уроков",
+      "domain": "courses",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/details.blade.php"
+      ],
+      "goal": "Глава и список уроков",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "course",
+      "checkStates": [
+        "точка и перетаскивание на телефоне",
+        "выбор после отпускания",
+        "вертикальная прокрутка без перехода",
+        "Home/End и Escape",
+        "ранний доступ",
+        "одна и последняя глава",
+        "без JavaScript"
+      ]
+    },
+    {
+      "id": "lesson-stats",
+      "title": "Статистика урока",
+      "domain": "courses",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/details.blade.php"
+      ],
+      "goal": "Статистика урока",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "course"
+    },
+    {
+      "id": "lesson-deadline",
+      "title": "Дедлайн всего урока",
+      "domain": "courses",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/partials/lesson_deadline_modal.blade.php"
+      ],
+      "goal": "Дедлайн всего урока",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "course"
+    },
+    {
+      "id": "early-access",
+      "title": "Ранний доступ к уроку",
+      "domain": "courses",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/details.blade.php"
+      ],
+      "goal": "Покупка учеником и выдача преподавателем — разные действия в карточке урока.",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "course"
+    },
+    {
+      "id": "step-theory",
+      "title": "Теория / оглавление / Notebook",
+      "domain": "courses",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/details.blade.php"
+      ],
+      "goal": "Теория / оглавление / Notebook",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 10, 12.11.2026: обе роли, 1440/768/390/320 px. Программа с адаптивной сводкой, видимый список ступеней, переход к практике, состояния, сроки и история попыток; проверки длинного содержимого и краевых состояний. Данные изолированы; подробности и ограничения — ui-round-10.md.",
+        "evidence": "output/playwright/ui-round-10/final/reading-student-phone.png"
+      },
+      "parent": "step"
+    },
+    {
+      "id": "step-task",
+      "title": "Задача: текст, код или квиз",
+      "domain": "courses",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/details.blade.php"
+      ],
+      "goal": "Задача: текст, код или квиз",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 10, 12.11.2026: обе роли, 1440/768/390/320 px. Программа с адаптивной сводкой, видимый список ступеней, переход к практике, состояния, сроки и история попыток; проверки длинного содержимого и краевых состояний. Данные изолированы; подробности и ограничения — ui-round-10.md.",
+        "evidence": "output/playwright/ui-round-10/final/tasks-student-phone.png"
+      },
+      "parent": "step"
+    },
+    {
+      "id": "task-solutions",
+      "title": "Попытки и обратная связь",
+      "domain": "courses",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/partials/task_solutions_list.blade.php",
+        "resources/views/steps/solution_partial.blade.php"
+      ],
+      "goal": "Попытки и обратная связь",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "step"
+    },
+    {
+      "id": "student-progress",
+      "title": "Прогресс учеников и поиск",
+      "domain": "courses",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/details.blade.php"
+      ],
+      "goal": "Прогресс учеников и поиск",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 10, 12.11.2026: обе роли, 1440/768/390/320 px. Программа с адаптивной сводкой, видимый список ступеней, переход к практике, состояния, сроки и история попыток; проверки длинного содержимого и краевых состояний. Данные изолированы; подробности и ограничения — ui-round-10.md.",
+        "evidence": "output/playwright/ui-round-10/final/tasks-teacher-phone.png"
+      },
+      "parent": "step"
+    },
+    {
+      "id": "task-create",
+      "title": "Создание задания",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/create_task.blade.php",
+        "resources/views/steps/partials/task-form.blade.php"
+      ],
+      "goal": "Создать условие, выбрать способ проверки и настроить награды",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.",
+        "evidence": "output/playwright/ui-round-19/after/task-create-teacher-desktop-1440.png"
+      },
+      "parent": "step"
+    },
+    {
+      "id": "task-deadline",
+      "title": "Дедлайн задачи",
+      "domain": "courses",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/partials/deadline_modal.blade.php"
+      ],
+      "goal": "Дедлайн задачи",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "step"
+    },
+    {
+      "id": "task-summary",
+      "title": "ИИ-пересказ решений",
+      "domain": "courses",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/details.blade.php"
+      ],
+      "goal": "ИИ-пересказ решений",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "step"
+    },
+    {
+      "id": "solution-options",
+      "title": "Повторная проверка, штраф и бустер",
+      "domain": "courses",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/partials/deadline_penalty.blade.php",
+        "resources/views/steps/partials/xp_booster.blade.php",
+        "resources/views/steps/solution_partial.blade.php"
+      ],
+      "goal": "Повторная проверка, штраф и бустер",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "step"
+    },
+    {
+      "id": "review-tools",
+      "title": "Оценка, комментарий, пропуск и блокировка",
+      "domain": "review",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/review.blade.php"
+      ],
+      "goal": "Оценка, комментарий, пропуск и блокировка",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "review"
+    },
+    {
+      "id": "planner-journal",
+      "title": "Прошедшие занятия и комментарии",
+      "domain": "planner",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/course-planner/index.blade.php"
+      ],
+      "goal": "Посмотреть материалы и комментарии по датам",
+      "review": {
+        "stage": "verified",
+        "note": "Единый список занятий; комментарий показывает содержание прошедшего занятия рядом с материалами. Отдельного переключателя факта нет. Проверено в браузере на изолированных данных на 1440 и 390 px.",
+        "evidence": "output/playwright/ui-reaudit/implemented/results.json"
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-summary",
+      "title": "Обзор покрытия и нагрузки",
+      "domain": "planner",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/course-planner/index.blade.php"
+      ],
+      "goal": "Связь уроков с материалами провайдеров и дедлайнами.",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-catalog",
+      "title": "Каталог провайдера",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/course-planner/index.blade.php"
+      ],
+      "goal": "Выбрать материалы и добавить к занятию без дублей",
+      "review": {
+        "stage": "verified",
+        "note": "Нативный модальный каталог: серверный поиск, типы, дочерние материалы, страницы, выбор нескольких элементов; уже добавленные заблокированы. Проверено в браузере на изолированных данных на 1440 и 390 px.",
+        "evidence": "output/playwright/ui-reaudit/implemented/results.json"
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-schedule",
+      "title": "Расписание курса",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "Расписание курса",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-preview",
+      "title": "Предпросмотр новой сетки",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "Предпросмотр новой сетки",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-providers",
+      "title": "Подключение провайдеров",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "Подключение провайдеров",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-session",
+      "title": "Редактор занятия",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "Редактор занятия",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-note",
+      "title": "Произвольная запись",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "Произвольная запись",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-move",
+      "title": "Перенос материала",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "Перенос материала",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-split",
+      "title": "Разделение урока по занятиям",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "Разделение урока по занятиям",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-relations",
+      "title": "Связь материала с уроками",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "Связь материала с уроками",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-deadline",
+      "title": "Дедлайн работы",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "Дедлайн работы",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-exclude",
+      "title": "Исключение дат",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "Исключение дат",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-record",
+      "title": "Комментарий к занятию",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "Запомнить, что успели на завершившемся занятии",
+      "review": {
+        "stage": "verified",
+        "note": "Комментарий к прошедшему занятию без подтверждения посещения и отдельного слоя материалов. Проверено в браузере на изолированных данных на 1440 и 390 px.",
+        "evidence": "output/playwright/ui-reaudit/implemented/results.json"
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "planner-history",
+      "title": "История изменений",
+      "domain": "planner",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/course-planner/index.js"
+      ],
+      "goal": "История изменений",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "planner"
+    },
+    {
+      "id": "profile-room",
+      "title": "Комната участника",
+      "domain": "people",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/details.blade.php"
+      ],
+      "goal": "Просмотр комнаты; редактирование открывается владельцем по кнопке.",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 11, 12.11.2026: профиль и галерея, обе роли, 1440/768/390/320 px. Проверены структура, контекст возврата, полные имена, широкие платные рамки, контакты, приватность, действия владельца и преподавателя, ссылки на достижения, палитра и сенсорные цели. Изолированные данные; подробности и ограничения — ui-round-11.md.",
+        "evidence": "output/playwright/ui-round-11/final/generating-profile-student-touch-320.png"
+      },
+      "parent": "profile"
+    },
+    {
+      "id": "room-generation",
+      "title": "Создание своего персонажа",
+      "domain": "people",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/partials/room-character.blade.php"
+      ],
+      "goal": "Цена → запуск → ожидание → результат / ошибка и возврат; без перехода на отдельную страницу.",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "room-editor"
+    },
+    {
+      "id": "profile-history",
+      "title": "История GC ученика",
+      "domain": "people",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/details.blade.php"
+      ],
+      "goal": "Последние 20 операций чужого профиля в диалоге для уполномоченного преподавателя или администратора. Личная история перенесена в магазин.",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 11, 12.11.2026: профиль и галерея, обе роли, 1440/768/390/320 px. Проверены структура, контекст возврата, полные имена, широкие платные рамки, контакты, приватность, действия владельца и преподавателя, ссылки на достижения, палитра и сенсорные цели. Изолированные данные; подробности и ограничения — ui-round-11.md.",
+        "evidence": "output/playwright/ui-round-11/final/long-profile-teacher-phone.png"
+      },
+      "parent": "profile"
+    },
+    {
+      "id": "profile-achievements",
+      "title": "Достижения и просмотр кубка",
+      "domain": "people",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/partials/achievements.blade.php"
+      ],
+      "goal": "Достижения и просмотр кубка",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 11, 12.11.2026: профиль и галерея, обе роли, 1440/768/390/320 px. Проверены структура, контекст возврата, полные имена, широкие платные рамки, контакты, приватность, действия владельца и преподавателя, ссылки на достижения, палитра и сенсорные цели. Изолированные данные; подробности и ограничения — ui-round-11.md.",
+        "evidence": "output/playwright/ui-round-11/final/long-profile-teacher-phone.png"
+      },
+      "parent": "profile"
+    },
+    {
+      "id": "achievement-edit",
+      "title": "Редактирование достижения",
+      "domain": "people",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/partials/achievements.blade.php",
+        "resources/views/profile/partials/achievement.blade.php"
+      ],
+      "goal": "Редактирование достижения",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "profile"
+    },
+    {
+      "id": "profile-money",
+      "title": "Операция с GC",
+      "domain": "people",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/partials/management-dialogs.blade.php"
+      ],
+      "goal": "Операция с GC",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 11, 12.11.2026: профиль и галерея, обе роли, 1440/768/390/320 px. Проверены структура, контекст возврата, полные имена, широкие платные рамки, контакты, приватность, действия владельца и преподавателя, ссылки на достижения, палитра и сенсорные цели. Изолированные данные; подробности и ограничения — ui-round-11.md.",
+        "evidence": "output/playwright/ui-round-11/final/long-profile-teacher-phone.png"
+      },
+      "parent": "profile"
+    },
+    {
+      "id": "completed-course",
+      "title": "Добавление завершённого курса",
+      "domain": "people",
+      "kind": "dialog",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/partials/management-dialogs.blade.php"
+      ],
+      "goal": "Добавление завершённого курса",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "profile"
+    },
+    {
+      "id": "telegram-link",
+      "title": "Привязка Telegram",
+      "domain": "people",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/partials/account-settings.blade.php"
+      ],
+      "goal": "Личная ссылка на существующего бота, ожидание привязки, отключение.",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "account-preferences",
+      "guard": "В интерфейсе подключение доступно только владельцу; административные настройки бота — отдельно."
+    },
+    {
+      "id": "market-goods",
+      "title": "Физические товары",
+      "domain": "market",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/index.blade.php"
+      ],
+      "goal": "Физические товары",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "market"
+    },
+    {
+      "id": "market-digital",
+      "title": "Цифровые товары",
+      "domain": "market",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/index.blade.php"
+      ],
+      "goal": "Цифровые товары",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "market"
+    },
+    {
+      "id": "market-auctions",
+      "title": "Аукционы",
+      "domain": "market",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/index.blade.php"
+      ],
+      "goal": "Аукционы",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "market"
+    },
+    {
+      "id": "market-archive",
+      "title": "Архив товаров",
+      "domain": "market",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/index.blade.php"
+      ],
+      "goal": "Архив товаров",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "market"
+    },
+    {
+      "id": "market-orders",
+      "title": "Заказы внутри магазина",
+      "domain": "market",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/index.blade.php"
+      ],
+      "goal": "Заказы внутри магазина",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "market"
+    },
+    {
+      "id": "custom-frame",
+      "title": "Настройка своей рамки",
+      "domain": "market",
+      "kind": "dialog",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/partials/digital_goods_grid.blade.php"
+      ],
+      "goal": "Настройка своей рамки",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "parent": "market"
+    },
+    {
+      "id": "navigation",
+      "title": "Общая навигация",
+      "domain": "shell",
+      "kind": "shell",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/layouts/left-menu.blade.php"
+      ],
+      "goal": "Перейти в основной раздел или контекст текущего курса.",
+      "review": {
+        "stage": "implemented",
+        "note": "Активный пункт обозначен мягкой заливкой, цветом иконки и насыщенностью текста; убрана цветная скобка слева. Оранжевый акцент вкладок сохранён. Проверка: docs/ux/validation.md."
+      }
+    },
+    {
+      "id": "user-menu",
+      "title": "Меню пользователя",
+      "domain": "shell",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/layouts/partials/sidebar-user-resources.blade.php",
+        "resources/views/layouts/partials/sidebar-settings-link.blade.php"
+      ],
+      "goal": "Профиль, настройки администратора, ресурсы, тема и выход.",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      }
+    },
+    {
+      "id": "course-navigation",
+      "title": "Навигация внутри ступени",
+      "domain": "shell",
+      "kind": "shell",
+      "roles": [
+        "guest",
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/partials/nav.blade.php",
+        "resources/views/steps/partials/breadcrumb_widget.blade.php"
+      ],
+      "goal": "Вернуться к курсу или перейти к соседней ступени.",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      }
+    },
+    {
+      "id": "feedback",
+      "title": "Ошибки и обратная связь",
+      "domain": "shell",
+      "kind": "state",
+      "roles": [
+        "guest",
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/layouts/partials/session-alert.blade.php",
+        "app/Exceptions/Handler.php"
+      ],
+      "goal": "Валидация, 403/404/419/503, уведомления, ожидание запроса и пустые состояния.",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "note": "Общий контракт, а не отдельный вручную нарисованный экран ошибки; кастомные error views не обнаружены."
+    },
+    {
+      "id": "silaeder",
+      "title": "Личный кабинет Силаэдра",
+      "domain": "external",
+      "kind": "external",
+      "roles": [
+        "guest",
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [],
+      "goal": "Личный кабинет Силаэдра",
+      "review": {
+        "stage": "boundary",
+        "note": "Внешний сервис: его внутренние экраны не входят в аудит CodingProjects."
+      },
+      "url": "/auth/silaeder"
+    },
+    {
+      "id": "geekpaste",
+      "title": "GeekPaste",
+      "domain": "external",
+      "kind": "external",
+      "roles": [
+        "guest",
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [],
+      "goal": "GeekPaste",
+      "review": {
+        "stage": "boundary",
+        "note": "Внешний сервис: его внутренние экраны не входят в аудит CodingProjects."
+      },
+      "url": "https://paste.geekclass.ru"
+    },
+    {
+      "id": "geekexam",
+      "title": "GeekExam",
+      "domain": "external",
+      "kind": "external",
+      "roles": [
+        "guest",
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [],
+      "goal": "GeekExam",
+      "review": {
+        "stage": "boundary",
+        "note": "Внешний сервис: его внутренние экраны не входят в аудит CodingProjects."
+      },
+      "url": "https://exam.geekclass.ru"
+    },
+    {
+      "id": "geekbattle",
+      "title": "GeekBattle / CodeBattle",
+      "domain": "external",
+      "kind": "external",
+      "roles": [
+        "guest",
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [],
+      "goal": "GeekBattle / CodeBattle",
+      "review": {
+        "stage": "boundary",
+        "note": "Внешний сервис: его внутренние экраны не входят в аудит CodingProjects."
+      },
+      "url": "https://battle.geekclass.ru"
+    },
+    {
+      "id": "ai-code-battle",
+      "title": "AI Code Battle",
+      "domain": "external",
+      "kind": "external",
+      "roles": [
+        "guest",
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [],
+      "goal": "AI Code Battle",
+      "review": {
+        "stage": "boundary",
+        "note": "Внешний сервис: его внутренние экраны не входят в аудит CodingProjects."
+      },
+      "url": ""
+    },
+    {
+      "id": "storage",
+      "title": "Storage",
+      "domain": "external",
+      "kind": "external",
+      "roles": [
+        "guest",
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [],
+      "goal": "Storage",
+      "review": {
+        "stage": "boundary",
+        "note": "Внешний сервис: его внутренние экраны не входят в аудит CodingProjects."
+      },
+      "url": "https://storage.geekclass.ru"
+    },
+    {
+      "id": "arena",
+      "title": "Arena",
+      "domain": "external",
+      "kind": "external",
+      "roles": [
+        "guest",
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [],
+      "goal": "Arena",
+      "review": {
+        "stage": "boundary",
+        "note": "Внешний сервис: его внутренние экраны не входят в аудит CodingProjects."
+      },
+      "url": "https://arena.geekclass.ru"
+    },
+    {
+      "id": "telegram",
+      "title": "Telegram",
+      "domain": "external",
+      "kind": "external",
+      "roles": [
+        "guest",
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [],
+      "goal": "Telegram",
+      "review": {
+        "stage": "boundary",
+        "note": "Внешний сервис: его внутренние экраны не входят в аудит CodingProjects."
+      },
+      "url": "https://t.me/"
+    },
+    {
+      "id": "provider-resource",
+      "title": "Материал подключённого провайдера",
+      "domain": "external",
+      "kind": "external",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "app/CoursePlanner/Providers/ProviderRegistry.php"
+      ],
+      "goal": "Открыть внешнюю единицу контента из привязки занятия.",
+      "review": {
+        "stage": "mapped",
+        "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
+      },
+      "note": "Провайдеры расширяемые; тесты и баттлы не являются жёстко заданными типами планировщика."
+    },
+    {
+      "id": "text-assist",
+      "title": "Помощь ИИ в редакторе",
+      "domain": "authoring",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/assets/js/components/markdown-editor.js"
+      ],
+      "goal": "Исправить текст, дождаться ответа, вернуть результат в редактор.",
+      "review": {
+        "stage": "mapped",
+        "note": "Состояние общего редактора, не отдельная страница."
+      }
+    },
+    {
+      "id": "account-preferences",
+      "title": "Аккаунт и уведомления",
+      "domain": "people",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/partials/account-settings.blade.php"
+      ],
+      "goal": "Telegram, почта и Силаэдр в личных настройках; не административные настройки.",
+      "parent": "profile-edit",
+      "review": {
+        "stage": "implemented",
+        "note": "Перенесено в Blade; проверяется вместе с профилем, магазином и личными настройками."
+      }
+    },
+    {
+      "id": "room-editor",
+      "title": "Настройка комнаты по кнопке",
+      "domain": "people",
+      "kind": "dialog",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/partials/room-settings.blade.php"
+      ],
+      "goal": "Только купленные предметы и генерация; просмотр профиля не загружен формами.",
+      "parent": "profile",
+      "review": {
+        "stage": "implemented",
+        "note": "Перенесено в Blade; проверяется вместе с профилем, магазином и личными настройками."
+      }
+    },
+    {
+      "id": "personal-purchases",
+      "title": "Мои покупки",
+      "domain": "market",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/partials/purchases.blade.php"
+      ],
+      "goal": "Личные заказы и доступные цифровые предметы владельца; отдельная пагинация по 25 заказов.",
+      "parent": "market",
+      "review": {
+        "stage": "implemented",
+        "note": "Перенесено в Blade; проверяется вместе с профилем, магазином и личными настройками."
+      }
+    },
+    {
+      "id": "wallet",
+      "title": "История GC в магазине",
+      "domain": "market",
+      "kind": "state",
+      "roles": [
+        "novice",
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/market/index.blade.php",
+        "resources/views/components/gc-wallet-history.blade.php"
+      ],
+      "goal": "Личная история операций текущего пользователя, по 25 на страницу; переход из баланса и совместимость со старым #gc-history.",
+      "parent": "market",
+      "review": {
+        "stage": "implemented",
+        "note": "Перенесено в Blade; проверяется вместе с профилем, магазином и личными настройками."
+      }
+    },
+    {
+      "id": "register-profile",
+      "title": "Профиль при регистрации",
+      "kind": "state",
+      "parent": "register",
+      "domain": "access",
+      "roles": [
+        "guest"
+      ],
+      "goal": "Заполнить обязательные сведения ученика и при желании добавить контакты",
+      "sources": [
+        "resources/views/auth/register.blade.php"
+      ],
+      "review": {
+        "stage": "verified",
+        "note": "Проверено переключение состояния в изолированном браузере 11.11.2026."
+      }
+    },
+    {
+      "id": "achievement-choice",
+      "title": "Выбор идеи достижения",
+      "kind": "state",
+      "parent": "achievement-preview",
+      "domain": "review",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "goal": "Выбрать один вариант и отредактировать его в общей форме",
+      "sources": [
+        "resources/views/steps/achievement_preview.blade.php"
+      ],
+      "review": {
+        "stage": "verified",
+        "note": "Проверено переключение состояния в изолированном браузере 11.11.2026."
+      }
+    },
+    {
+      "id": "profile-collections",
+      "title": "Коллекции и завершённые курсы",
+      "domain": "people",
+      "kind": "state",
+      "parent": "profile",
+      "roles": [
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/profile/partials/stickers.blade.php"
+      ],
+      "goal": "Открыть второстепенные коллекции без перегрузки первого экрана",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 11, 12.11.2026: профиль и галерея, обе роли, 1440/768/390/320 px. Проверены структура, контекст возврата, полные имена, широкие платные рамки, контакты, приватность, действия владельца и преподавателя, ссылки на достижения, палитра и сенсорные цели. Изолированные данные; подробности и ограничения — ui-round-11.md.",
+        "evidence": "output/playwright/ui-round-11/final/long-profile-teacher-phone.png"
+      }
+    },
+    {
+      "id": "reading-outline",
+      "title": "Оглавление конспекта",
+      "domain": "courses",
+      "kind": "state",
+      "parent": "step",
+      "roles": [
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/steps/details.blade.php"
+      ],
+      "goal": "Выбрать раздел конспекта на телефоне или в боковом оглавлении",
+      "review": {
+        "stage": "verified",
+        "note": "Итерация 10, 12.11.2026: обе роли, 1440/768/390/320 px. Программа с адаптивной сводкой, видимый список ступеней, переход к практике, состояния, сроки и история попыток; проверки длинного содержимого и краевых состояний. Данные изолированы; подробности и ограничения — ui-round-10.md.",
+        "evidence": "output/playwright/ui-round-10/final/reading-student-phone.png"
+      }
+    },
+    {
+      "id": "market-promotion-picker",
+      "title": "Выбор товаров акции",
+      "domain": "admin",
+      "kind": "dialog",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/settings/partials/store-promotion.blade.php",
+        "resources/assets/js/components/promotion-picker.js",
+        "app/Http/Controllers/SystemStoreSettingsController.php"
+      ],
+      "goal": "Найти и выбрать обычные и цифровые товары с сохранением выбора между страницами",
+      "review": {
+        "stage": "verified",
+        "note": "Проверены серверные страницы по 25, кириллица, выбор между страницами и страницы целиком, отмена, применение, удаление, повтор после ошибки, сохранение акции и баннер. Проверен сенсорный диалог 320×740.",
+        "evidence": "output/playwright/ui-round-4/interaction/promotion-touch-320.png"
+      },
+      "parent": "settings-store",
+      "checkStates": [
+        "поиск",
+        "пусто",
+        "загрузка",
+        "ошибка и повтор",
+        "постраничный выбор",
+        "отмена",
+        "телефон"
+      ]
+    },
+    {
+      "id": "report-student-picker",
+      "title": "Выбор ученика в отчёте",
+      "domain": "review",
+      "kind": "dialog",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/report.blade.php",
+        "resources/assets/js/components/report-workspace.js"
+      ],
+      "goal": "Найти ученика на телефоне; список и сортировка общие с компьютерной колонкой",
+      "review": {
+        "stage": "verified",
+        "note": "Проверены поиск среди 32 учеников, пустой результат, сброс, выбор и закрытие панели. Компьютер использует тот же список слева.",
+        "evidence": "output/playwright/ui-round-7/interaction/roster-open-phone.png"
+      },
+      "parent": "report",
+      "checkStates": [
+        "поиск",
+        "пусто",
+        "сортировка",
+        "выбранный ученик",
+        "закрытие"
+      ]
+    },
+    {
+      "id": "course-current-lesson",
+      "title": "Текущий урок курса",
+      "domain": "courses",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/details.blade.php",
+        "app/Http/Controllers/CoursesController.php",
+        "app/Course.php",
+        "resources/views/components/gc-lesson-reward.blade.php"
+      ],
+      "goal": "Выбрать общий текущий урок и вернуть автоматическое личное продолжение ученика.",
+      "review": {
+        "stage": "verified",
+        "note": "Итерации 20–21: общий текущий урок, доступность, возврат из другой главы и стикер; ui-round-21.md.",
+        "evidence": "output/playwright/ui-round-21/after/mixed-course-teacher-1440.png"
+      },
+      "parent": "course",
+      "checkStates": [
+        "выбор и замена урока",
+        "автоматический выбор после сброса",
+        "выбор в другой главе",
+        "закрытый урок не открывает доступ",
+        "серая и полученная наклейка",
+        "нет наклейки"
+      ],
+      "guard": "Администратор или преподаватель именно этого курса. Урок принадлежит программе курса и содержит ступени; отметка не меняет расписание и результаты."
+    },
+    {
+      "id": "chapter-tasks",
+      "title": "Задачи главы ученика",
+      "domain": "courses",
+      "kind": "page",
+      "roles": [
+        "student"
+      ],
+      "sources": [
+        "resources/views/courses/chapter-tasks.blade.php",
+        "resources/views/components/gc-course-header.blade.php",
+        "app/Http/Controllers/StudentCourseTasksController.php"
+      ],
+      "goal": "Посмотреть собственные результаты задач выбранной главы и перейти к заданию.",
+      "guard": "Ученик, зачисленный на этот курс. Закрытые уроки и скрытые задачи без собственной попытки не раскрываются.",
+      "review": {
+        "stage": "verified",
+        "note": "Проверены выбор главы, фильтры, переход к заданию, телефон и компьютер.",
+        "evidence": "output/playwright/course-actions/student-tasks-390.png"
+      },
+      "layout": "task-list",
+      "checkStates": [
+        "одна / несколько глав",
+        "к выполнению / выполнено / на проверке",
+        "нет доступных задач",
+        "пустой фильтр",
+        "ранний доступ"
+      ]
+    },
+    {
+      "id": "reward-notices",
+      "title": "Уведомления о наградах",
+      "domain": "shell",
+      "kind": "state",
+      "roles": [
+        "student"
+      ],
+      "sources": [
+        "resources/views/components/gc-reward-notices.blade.php",
+        "resources/assets/js/components/reward-notices.js",
+        "app/Http/Controllers/RewardNoticesController.php"
+      ],
+      "goal": "Увидеть фактически полученную наклейку или монеты без повторения после обновления.",
+      "review": {
+        "stage": "verified",
+        "note": "Проверены последовательная выдача, две вкладки, повторное открытие, закрытие и пауза при фокусе."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "courses",
+      "to": "course-tabs",
+      "label": "Активные / черновики / архив",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/home.blade.php"
+    },
+    {
+      "from": "courses",
+      "to": "join-course",
+      "label": "Код приглашения / запись на курс",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/home.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "course-chapter",
+      "label": "Глава и список уроков",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "lesson-stats",
+      "label": "Статистика урока",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "lesson-deadline",
+      "label": "Дедлайн всего урока",
+      "kind": "open",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/courses/partials/lesson_deadline_modal.blade.php"
+    },
+    {
+      "from": "lesson-deadline",
+      "to": "course",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/views/courses/partials/lesson_deadline_modal.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "early-access",
+      "label": "Ранний доступ к уроку",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "step-theory",
+      "label": "Теория / оглавление / Notebook",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "step-task",
+      "label": "Задача: текст, код или квиз",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "task-solutions",
+      "label": "Попытки и обратная связь",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/steps/partials/task_solutions_list.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "student-progress",
+      "label": "Прогресс учеников и поиск",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "task-create",
+      "label": "Создать задание",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/steps/partials/screen-actions.blade.php"
+    },
+    {
+      "from": "task-create",
+      "to": "step",
+      "label": "Сохранить / отменить",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/create_task.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "task-deadline",
+      "label": "Дедлайн задачи",
+      "kind": "open",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/steps/partials/deadline_modal.blade.php"
+    },
+    {
+      "from": "task-deadline",
+      "to": "step",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/views/steps/partials/deadline_modal.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "task-summary",
+      "label": "ИИ-пересказ решений",
+      "kind": "open",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "task-summary",
+      "to": "step",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "solution-options",
+      "label": "Повторная проверка, штраф и бустер",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/steps/partials/deadline_penalty.blade.php"
+    },
+    {
+      "from": "review",
+      "to": "review-tools",
+      "label": "Оценка, комментарий, пропуск и блокировка",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/steps/review.blade.php"
+    },
+    {
+      "from": "planner",
+      "to": "planner-journal",
+      "label": "Материалы и комментарии прошедших занятий",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/course-planner/index.blade.php"
+    },
+    {
+      "from": "planner",
+      "to": "planner-summary",
+      "label": "Обзор покрытия и нагрузки",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/course-planner/index.blade.php"
+    },
+    {
+      "from": "planner",
+      "to": "planner-catalog",
+      "label": "Каталог провайдера",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/course-planner/index.blade.php"
+    },
+    {
+      "from": "planner",
+      "to": "planner-schedule",
+      "label": "Расписание курса",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-schedule",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner",
+      "to": "planner-preview",
+      "label": "Предпросмотр новой сетки",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-preview",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner",
+      "to": "planner-providers",
+      "label": "Подключение провайдеров",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-providers",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner",
+      "to": "planner-session",
+      "label": "Редактор занятия",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-session",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner",
+      "to": "planner-note",
+      "label": "Произвольная запись",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-note",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner",
+      "to": "planner-move",
+      "label": "Перенос материала",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-move",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner",
+      "to": "planner-split",
+      "label": "Разделение урока по занятиям",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-split",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner",
+      "to": "planner-relations",
+      "label": "Связь материала с уроками",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-relations",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner",
+      "to": "planner-deadline",
+      "label": "Дедлайн работы",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-deadline",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner",
+      "to": "planner-exclude",
+      "label": "Исключение дат",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-exclude",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner",
+      "to": "planner-record",
+      "label": "Комментарий к завершившемуся занятию",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-record",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner",
+      "to": "planner-history",
+      "label": "История изменений",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-history",
+      "to": "planner",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "profile",
+      "to": "profile-room",
+      "label": "Комната и купленные предметы",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "profile",
+      "to": "profile-history",
+      "label": "История GC ученика, по правам",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "profile",
+      "to": "profile-achievements",
+      "label": "Достижения и просмотр кубка",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "profile",
+      "to": "achievement-edit",
+      "label": "Редактирование достижения",
+      "kind": "open",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "achievement-edit",
+      "to": "profile",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "profile",
+      "to": "profile-money",
+      "label": "Операция с GC",
+      "kind": "open",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "profile-money",
+      "to": "profile",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "profile",
+      "to": "completed-course",
+      "label": "Добавление завершённого курса",
+      "kind": "open",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "completed-course",
+      "to": "profile",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "market-goods",
+      "label": "Физические товары",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "market-digital",
+      "label": "Цифровые товары",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "market-auctions",
+      "label": "Аукционы",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "market-archive",
+      "label": "Архив товаров",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "market-orders",
+      "label": "Заказы внутри магазина",
+      "kind": "state",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "custom-frame",
+      "label": "Настройка своей рамки",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/views/market/partials/digital_goods_grid.blade.php"
+    },
+    {
+      "from": "custom-frame",
+      "to": "market",
+      "label": "Закрыть / отменить",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/views/market/partials/digital_goods_grid.blade.php"
+    },
+    {
+      "from": "navigation",
+      "to": "courses",
+      "label": "Открыть раздел",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "navigation",
+      "to": "pulse",
+      "label": "Открыть раздел",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "navigation",
+      "to": "market",
+      "label": "Открыть раздел",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "navigation",
+      "to": "community",
+      "label": "Открыть раздел",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "navigation",
+      "to": "profile",
+      "label": "Открыть раздел",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "navigation",
+      "to": "reviews",
+      "label": "Проверка",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "navigation",
+      "to": "user-menu",
+      "label": "Меню профиля",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "user-menu",
+      "to": "settings-ai",
+      "label": "Настройки",
+      "kind": "navigate",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/layouts/partials/sidebar-user-resources.blade.php"
+    },
+    {
+      "from": "user-menu",
+      "to": "profile",
+      "label": "Мой профиль",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/layouts/partials/sidebar-user-resources.blade.php"
+    },
+    {
+      "from": "user-menu",
+      "to": "geekpaste",
+      "label": "Открыть ресурс",
+      "kind": "external",
+      "roles": [],
+      "source": "resources/views/layouts/partials/sidebar-user-resources.blade.php"
+    },
+    {
+      "from": "user-menu",
+      "to": "geekexam",
+      "label": "Открыть ресурс",
+      "kind": "external",
+      "roles": [],
+      "source": "resources/views/layouts/partials/sidebar-user-resources.blade.php"
+    },
+    {
+      "from": "user-menu",
+      "to": "geekbattle",
+      "label": "Открыть ресурс",
+      "kind": "external",
+      "roles": [],
+      "source": "resources/views/layouts/partials/sidebar-user-resources.blade.php"
+    },
+    {
+      "from": "user-menu",
+      "to": "storage",
+      "label": "Открыть ресурс",
+      "kind": "external",
+      "roles": [],
+      "source": "resources/views/layouts/partials/sidebar-user-resources.blade.php"
+    },
+    {
+      "from": "user-menu",
+      "to": "arena",
+      "label": "Открыть ресурс",
+      "kind": "external",
+      "roles": [],
+      "source": "resources/views/layouts/partials/sidebar-user-resources.blade.php"
+    },
+    {
+      "from": "user-menu",
+      "to": "login",
+      "label": "Выход",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/layouts/partials/sidebar-user-resources.blade.php"
+    },
+    {
+      "from": "user-menu",
+      "to": "user-menu",
+      "label": "Переключить тему",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/layouts/partials/sidebar-user-resources.blade.php"
+    },
+    {
+      "from": "login",
+      "to": "register",
+      "label": "Создать аккаунт",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/auth/login.blade.php"
+    },
+    {
+      "from": "register",
+      "to": "login",
+      "label": "Уже есть аккаунт",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/auth/register.blade.php"
+    },
+    {
+      "from": "login",
+      "to": "password-request",
+      "label": "Забыли пароль",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/auth/login.blade.php"
+    },
+    {
+      "from": "password-request",
+      "to": "password-reset",
+      "label": "Ссылка из письма",
+      "kind": "external",
+      "roles": [],
+      "source": "resources/views/auth/passwords/email.blade.php"
+    },
+    {
+      "from": "password-reset",
+      "to": "courses",
+      "label": "Сохранить пароль",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/auth/passwords/reset.blade.php"
+    },
+    {
+      "from": "register",
+      "to": "verify",
+      "label": "Зарегистрироваться",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/auth/register.blade.php"
+    },
+    {
+      "from": "verify",
+      "to": "courses",
+      "label": "Подтвердить почту",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/auth/verify.blade.php"
+    },
+    {
+      "from": "login",
+      "to": "courses",
+      "label": "Успешный вход",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/auth/login.blade.php"
+    },
+    {
+      "from": "login",
+      "to": "silaeder",
+      "label": "Войти через Силаэдр",
+      "kind": "external",
+      "roles": [],
+      "source": "resources/views/auth/login.blade.php"
+    },
+    {
+      "from": "silaeder",
+      "to": "courses",
+      "label": "Успешный callback",
+      "kind": "redirect",
+      "roles": [],
+      "source": "routes/web.php"
+    },
+    {
+      "from": "silaeder",
+      "to": "profile-edit",
+      "label": "Привязка / заполнение профиля",
+      "kind": "redirect",
+      "roles": [],
+      "source": "routes/web.php"
+    },
+    {
+      "from": "courses",
+      "to": "course",
+      "label": "Открыть курс",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/home.blade.php"
+    },
+    {
+      "from": "courses",
+      "to": "course-create",
+      "label": "Создать курс",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/home.blade.php"
+    },
+    {
+      "from": "join-course",
+      "to": "course",
+      "label": "Запись в открытый курс",
+      "kind": "action",
+      "roles": [],
+      "source": "app/Http/Controllers/CoursesController.php"
+    },
+    {
+      "from": "course",
+      "to": "deadlines",
+      "label": "Дедлайны · общая навигация курса",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "deadlines",
+      "to": "step",
+      "label": "Открыть задачу",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/deadlines.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "step",
+      "label": "Открыть ступень",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "course-edit",
+      "label": "Изменить курс",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "chapter-create",
+      "label": "Добавить главу",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "chapter-edit",
+      "label": "Изменить главу",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "lesson-create",
+      "label": "Добавить урок",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "lesson-edit",
+      "label": "Изменить урок",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "planner",
+      "label": "План занятий · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "report",
+      "label": "Отчёт · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "assessments",
+      "label": "Журнал · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "blocked",
+      "label": "Блокировки",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "profile",
+      "label": "Ученик / преподаватель",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "course",
+      "label": "К курсу",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "step",
+      "label": "Соседняя ступень",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "step-edit",
+      "label": "Изменить ступень",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "step-create",
+      "label": "Новый этап",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "task-edit",
+      "label": "Изменить задачу",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "perform",
+      "label": "Режим показа",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "perform",
+      "to": "step",
+      "label": "Вернуться",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/perform/details.blade.php"
+    },
+    {
+      "from": "perform",
+      "to": "perform",
+      "label": "Соседняя ступень",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/perform/details.blade.php"
+    },
+    {
+      "from": "course-navigation",
+      "to": "course",
+      "label": "К курсу",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/partials/nav.blade.php"
+    },
+    {
+      "from": "course-navigation",
+      "to": "step",
+      "label": "Другая ступень",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/partials/nav.blade.php"
+    },
+    {
+      "from": "review",
+      "to": "step",
+      "label": "К задаче",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/review.blade.php"
+    },
+    {
+      "from": "review",
+      "to": "profile",
+      "label": "Профиль ученика",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/review.blade.php"
+    },
+    {
+      "from": "reviews",
+      "to": "review",
+      "label": "Открыть попытку",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/reviews.blade.php"
+    },
+    {
+      "from": "report",
+      "to": "review",
+      "label": "Открыть задачу ученика",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/report.blade.php"
+    },
+    {
+      "from": "assessments",
+      "to": "review",
+      "label": "Выбрать ячейку",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/assessments.blade.php"
+    },
+    {
+      "from": "blocked",
+      "to": "review",
+      "label": "Открыть блокировку",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/blocked.blade.php"
+    },
+    {
+      "from": "blocked",
+      "to": "profile",
+      "label": "Профиль ученика",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/blocked.blade.php"
+    },
+    {
+      "from": "student-progress",
+      "to": "review",
+      "label": "Выбрать ученика",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "review",
+      "to": "achievement-preview",
+      "label": "Создать достижение",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/review.blade.php"
+    },
+    {
+      "from": "achievement-preview",
+      "to": "profile-achievements",
+      "label": "Опубликовать",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/achievement_preview.blade.php"
+    },
+    {
+      "from": "achievement-preview",
+      "to": "review",
+      "label": "Вернуться",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/achievement_preview.blade.php"
+    },
+    {
+      "from": "pulse",
+      "to": "course",
+      "label": "Событие урока",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/pulse.blade.php"
+    },
+    {
+      "from": "pulse",
+      "to": "review",
+      "label": "Событие решения: преподаватель",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/pulse.blade.php"
+    },
+    {
+      "from": "pulse",
+      "to": "profile-achievements",
+      "label": "Событие достижения",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/pulse.blade.php"
+    },
+    {
+      "from": "community",
+      "to": "profile",
+      "label": "Открыть человека",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/profile/index.blade.php"
+    },
+    {
+      "from": "profile",
+      "to": "profile-edit",
+      "label": "Редактировать профиль",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "profile",
+      "to": "course",
+      "label": "Текущий / завершённый курс",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "profile-edit",
+      "to": "profile",
+      "label": "Сохранить / отменить",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/profile/edit.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "market-create",
+      "label": "Добавить товар",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "market-edit",
+      "label": "Изменить товар",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "credit",
+      "label": "Начислить GC",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "orders",
+      "label": "Управление заказами",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "orders",
+      "to": "profile",
+      "label": "Покупатель",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/market/orders.blade.php"
+    },
+    {
+      "from": "market-digital",
+      "to": "profile-room",
+      "label": "Купить и экипировать",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "telegram-link",
+      "to": "telegram",
+      "label": "Открыть личную ссылку",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/profile/partials/account-settings.blade.php"
+    },
+    {
+      "from": "planner",
+      "to": "course",
+      "label": "Программа · общая навигация курса",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "planner-catalog",
+      "to": "provider-resource",
+      "label": "Открыть материал",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/course-planner/index.blade.php"
+    },
+    {
+      "from": "planner-catalog",
+      "to": "planner-session",
+      "label": "Добавить выбранные материалы",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/views/course-planner/index.blade.php"
+    },
+    {
+      "from": "planner-schedule",
+      "to": "planner-preview",
+      "label": "Рассчитать",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-preview",
+      "to": "planner",
+      "label": "Применить сетку",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-summary",
+      "to": "planner",
+      "label": "Открыть занятие из сводки",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/course-planner/index.blade.php"
+    },
+    {
+      "from": "planner-session",
+      "to": "planner-catalog",
+      "label": "Выбрать материалы",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/assets/js/course-planner/index.js"
+    },
+    {
+      "from": "planner-journal",
+      "to": "planner-record",
+      "label": "Добавить / изменить комментарий",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/course-planner/index.blade.php"
+    },
+    {
+      "from": "course-create",
+      "to": "courses",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/courses/create.blade.php"
+    },
+    {
+      "from": "course-edit",
+      "to": "course",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/courses/edit.blade.php"
+    },
+    {
+      "from": "chapter-create",
+      "to": "course",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/courses/create_chapter.blade.php"
+    },
+    {
+      "from": "chapter-edit",
+      "to": "course",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/courses/edit_chapter.blade.php"
+    },
+    {
+      "from": "lesson-create",
+      "to": "step",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/lessons/create.blade.php"
+    },
+    {
+      "from": "lesson-edit",
+      "to": "course",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/lessons/edit.blade.php"
+    },
+    {
+      "from": "step-create",
+      "to": "step",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/steps/create.blade.php"
+    },
+    {
+      "from": "step-edit",
+      "to": "step",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/steps/edit.blade.php"
+    },
+    {
+      "from": "task-edit",
+      "to": "step",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/steps/edit_task.blade.php"
+    },
+    {
+      "from": "market-create",
+      "to": "market",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/market/create.blade.php"
+    },
+    {
+      "from": "market-edit",
+      "to": "market",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/market/edit.blade.php"
+    },
+    {
+      "from": "credit",
+      "to": "market",
+      "label": "Сохранить",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/market/credit.blade.php"
+    },
+    {
+      "from": "step-task",
+      "to": "geekpaste",
+      "label": "Написать / проверить код",
+      "kind": "external",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "step-task",
+      "to": "task-solutions",
+      "label": "Отправить решение",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "task-solutions",
+      "to": "solution-options",
+      "label": "Действия с попыткой",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/views/steps/partials/task_solutions_list.blade.php"
+    },
+    {
+      "from": "room-generation",
+      "to": "profile-room",
+      "label": "Готово / возврат при ошибке",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/profile/partials/room-character.blade.php"
+    },
+    {
+      "from": "custom-frame",
+      "to": "profile",
+      "label": "Купить рамку",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/market/partials/digital_goods_grid.blade.php"
+    },
+    {
+      "from": "courses",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "deadlines",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "pulse",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "course-create",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "course-edit",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "chapter-create",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "chapter-edit",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "lesson-create",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "lesson-edit",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "step-create",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "step-edit",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "task-edit",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "reviews",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "review",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "achievement-preview",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "report",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "assessments",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "blocked",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "planner",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "community",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "profile",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "profile-edit",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "market-create",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "market-edit",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "orders",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "credit",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "settings-ai",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "settings-store",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "settings-telegram",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "room-debug",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "course-edit",
+      "to": "text-assist",
+      "label": "Исправить / улучшить текст",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/assets/js/components/markdown-editor.js"
+    },
+    {
+      "from": "step-edit",
+      "to": "text-assist",
+      "label": "Исправить / улучшить текст",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/assets/js/components/markdown-editor.js"
+    },
+    {
+      "from": "task-edit",
+      "to": "text-assist",
+      "label": "Исправить / улучшить текст",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/assets/js/components/markdown-editor.js"
+    },
+    {
+      "from": "settings-ai",
+      "to": "settings-store",
+      "label": "Цены товаров",
+      "kind": "navigate",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/settings/partials/tabs.blade.php"
+    },
+    {
+      "from": "settings-ai",
+      "to": "settings-telegram",
+      "label": "Telegram",
+      "kind": "navigate",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/settings/partials/tabs.blade.php"
+    },
+    {
+      "from": "settings-store",
+      "to": "settings-ai",
+      "label": "ИИ",
+      "kind": "navigate",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/settings/partials/tabs.blade.php"
+    },
+    {
+      "from": "settings-store",
+      "to": "settings-telegram",
+      "label": "Telegram",
+      "kind": "navigate",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/settings/partials/tabs.blade.php"
+    },
+    {
+      "from": "settings-telegram",
+      "to": "settings-ai",
+      "label": "ИИ",
+      "kind": "navigate",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/settings/partials/tabs.blade.php"
+    },
+    {
+      "from": "settings-telegram",
+      "to": "settings-store",
+      "label": "Цены товаров",
+      "kind": "navigate",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/settings/partials/tabs.blade.php"
+    },
+    {
+      "from": "join-course",
+      "to": "courses",
+      "label": "Код приглашения принят: вернуться к списку",
+      "kind": "action",
+      "roles": [],
+      "source": "app/Http/Controllers/CoursesController.php"
+    },
+    {
+      "from": "verify",
+      "to": "navigation",
+      "label": "Навигация приложения",
+      "kind": "shell",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "user-menu",
+      "to": "account-preferences",
+      "label": "Личные настройки",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "from": "profile-edit",
+      "to": "account-preferences",
+      "label": "Аккаунт и уведомления",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "account-preferences",
+      "to": "telegram-link",
+      "label": "Подключить / отключить Telegram",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/profile/partials/account-settings.blade.php"
+    },
+    {
+      "from": "profile",
+      "to": "room-editor",
+      "label": "Настроить комнату",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "room-editor",
+      "to": "profile-room",
+      "label": "Сохранить и вернуться",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/views/profile/partials/room-settings.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "personal-purchases",
+      "label": "Мои покупки",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "market",
+      "to": "wallet",
+      "label": "История GC",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/market/index.blade.php"
+    },
+    {
+      "from": "profile",
+      "to": "wallet",
+      "label": "Баланс GC",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/profile/details.blade.php"
+    },
+    {
+      "from": "room-editor",
+      "to": "room-generation",
+      "label": "Создать своего персонажа",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/profile/partials/room-settings.blade.php"
+    },
+    {
+      "from": "room-editor",
+      "to": "profile",
+      "label": "Отменить настройки",
+      "kind": "close",
+      "roles": [],
+      "source": "resources/views/profile/partials/room-settings.blade.php"
+    },
+    {
+      "from": "account-preferences",
+      "to": "silaeder",
+      "label": "Привязать учётную запись",
+      "kind": "external",
+      "roles": [],
+      "source": "resources/views/profile/partials/account-settings.blade.php"
+    },
+    {
+      "from": "community",
+      "to": "community",
+      "label": "Поиск и роль → первая страница",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/profile/index.blade.php"
+    },
+    {
+      "from": "community",
+      "to": "community",
+      "label": "Следующая / предыдущая страница",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/profile/index.blade.php"
+    },
+    {
+      "from": "register",
+      "to": "register-profile",
+      "label": "Далее: профиль",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/auth/register.blade.php"
+    },
+    {
+      "from": "register-profile",
+      "to": "register",
+      "label": "Назад без потери полей",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/auth/register.blade.php"
+    },
+    {
+      "from": "register-profile",
+      "to": "verify",
+      "label": "Зарегистрироваться",
+      "kind": "action",
+      "roles": [],
+      "source": "resources/views/auth/register.blade.php"
+    },
+    {
+      "from": "achievement-preview",
+      "to": "achievement-choice",
+      "label": "Выбрать идею и заполнить форму",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/steps/achievement_preview.blade.php"
+    },
+    {
+      "from": "review",
+      "to": "review",
+      "label": "Следующее решение этого курса",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/review.blade.php"
+    },
+    {
+      "from": "review",
+      "to": "reviews",
+      "label": "Очередь курса",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/review.blade.php"
+    },
+    {
+      "from": "report",
+      "to": "reviews",
+      "label": "Решения на проверке в этом курсе",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/report.blade.php"
+    },
+    {
+      "from": "planner",
+      "to": "assessments",
+      "label": "Журнал · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "planner",
+      "to": "report",
+      "label": "Отчёт · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "planner",
+      "to": "deadlines",
+      "label": "Дедлайны · общая навигация курса",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "assessments",
+      "to": "course",
+      "label": "Программа · общая навигация курса",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "assessments",
+      "to": "planner",
+      "label": "План занятий · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "assessments",
+      "to": "report",
+      "label": "Отчёт · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "assessments",
+      "to": "deadlines",
+      "label": "Дедлайны · общая навигация курса",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "report",
+      "to": "course",
+      "label": "Программа · общая навигация курса",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "report",
+      "to": "planner",
+      "label": "План занятий · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "report",
+      "to": "assessments",
+      "label": "Журнал · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "report",
+      "to": "deadlines",
+      "label": "Дедлайны · общая навигация курса",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "deadlines",
+      "to": "course",
+      "label": "Программа · общая навигация курса",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "deadlines",
+      "to": "planner",
+      "label": "План занятий · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "deadlines",
+      "to": "assessments",
+      "label": "Журнал · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "deadlines",
+      "to": "report",
+      "label": "Отчёт · общая навигация курса",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "profile",
+      "to": "profile-collections",
+      "label": "Коллекции и завершённые курсы",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/profile/partials/stickers.blade.php"
+    },
+    {
+      "from": "step",
+      "to": "reading-outline",
+      "label": "Оглавление конспекта",
+      "kind": "state",
+      "roles": [],
+      "source": "resources/views/steps/details.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "step",
+      "label": "Продолжить обучение",
+      "kind": "navigate",
+      "roles": [
+        "student"
+      ],
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "courses",
+      "to": "pulse",
+      "label": "Пульс в шапке",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/partials/home_activity_feed.blade.php"
+    },
+    {
+      "from": "settings-store",
+      "to": "market-promotion-picker",
+      "label": "Выбрать товары акции",
+      "kind": "open",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/settings/partials/store-promotion.blade.php"
+    },
+    {
+      "from": "market-promotion-picker",
+      "to": "settings-store",
+      "label": "Применить выбор / отменить",
+      "kind": "close",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/assets/js/components/promotion-picker.js"
+    },
+    {
+      "from": "report",
+      "to": "report-student-picker",
+      "label": "Выбрать ученика на телефоне",
+      "kind": "open",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/courses/report.blade.php"
+    },
+    {
+      "from": "report-student-picker",
+      "to": "report",
+      "label": "Выбор / закрытие",
+      "kind": "close",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/assets/js/components/report-workspace.js"
+    },
+    {
+      "from": "course",
+      "to": "course-current-lesson",
+      "kind": "open",
+      "label": "Выбрать текущий урок в меню карточки",
+      "source": "resources/views/courses/details.blade.php"
+    },
+    {
+      "from": "course-current-lesson",
+      "to": "course",
+      "kind": "close",
+      "label": "Сохранить или сбросить общий текущий урок",
+      "source": "app/Http/Controllers/CoursesController.php"
+    },
+    {
+      "from": "course",
+      "to": "chapter-tasks",
+      "kind": "navigate",
+      "label": "Задачи главы",
+      "source": "resources/views/components/gc-course-header.blade.php"
+    },
+    {
+      "from": "chapter-tasks",
+      "to": "step",
+      "kind": "navigate",
+      "label": "Открыть задание",
+      "source": "resources/views/courses/chapter-tasks.blade.php"
+    }
+  ],
+  "routeBindings": {
+    "Auth\\LoginController@showLoginForm": {
+      "node": "login",
+      "kind": "screen"
+    },
+    "Auth\\RegisterController@showRegistrationForm": {
+      "node": "register",
+      "kind": "screen"
+    },
+    "Auth\\ForgotPasswordController@showLinkRequestForm": {
+      "node": "password-request",
+      "kind": "screen"
+    },
+    "Auth\\ResetPasswordController@showResetForm": {
+      "node": "password-reset",
+      "kind": "screen"
+    },
+    "Auth\\VerificationController@show": {
+      "node": "verify",
+      "kind": "screen"
+    },
+    "CoursesController@index": {
+      "node": "courses",
+      "kind": "screen"
+    },
+    "CoursesController@details": {
+      "node": "course",
+      "kind": "screen"
+    },
+    "CoursesController@lessonStatistics": {
+      "node": "course",
+      "kind": "api"
+    },
+    "CoursesController@deadlines": {
+      "node": "deadlines",
+      "kind": "screen"
+    },
+    "StepsController@details": {
+      "node": "step",
+      "kind": "screen"
+    },
+    "OpenStepsController@details": {
+      "node": "public-step",
+      "kind": "screen"
+    },
+    "CoursesController@pulse": {
+      "node": "pulse",
+      "kind": "screen"
+    },
+    "CoursesController@createView": {
+      "node": "course-create",
+      "kind": "screen"
+    },
+    "CoursesController@editView": {
+      "node": "course-edit",
+      "kind": "screen"
+    },
+    "CoursesController@createChapterView": {
+      "node": "chapter-create",
+      "kind": "screen"
+    },
+    "CoursesController@editChapterView": {
+      "node": "chapter-edit",
+      "kind": "screen"
+    },
+    "LessonsController@createView": {
+      "node": "lesson-create",
+      "kind": "screen"
+    },
+    "LessonsController@editView": {
+      "node": "lesson-edit",
+      "kind": "screen"
+    },
+    "StepsController@createView": {
+      "node": "step-create",
+      "kind": "screen"
+    },
+    "StepsController@editView": {
+      "node": "step-edit",
+      "kind": "screen"
+    },
+    "TasksController@editForm": {
+      "node": "task-edit",
+      "kind": "screen"
+    },
+    "StepsController@perform": {
+      "node": "perform",
+      "kind": "screen"
+    },
+    "CoursesController@reviews": {
+      "node": "reviews",
+      "kind": "screen"
+    },
+    "TasksController@reviewSolutions": {
+      "node": "review",
+      "kind": "screen"
+    },
+    "TasksController@showSolutionAchievementPreview": {
+      "node": "achievement-preview",
+      "kind": "screen"
+    },
+    "CoursesController@report": {
+      "node": "report",
+      "kind": "screen"
+    },
+    "CoursesController@assessments": {
+      "node": "assessments",
+      "kind": "screen"
+    },
+    "CoursesController@blocked": {
+      "node": "blocked",
+      "kind": "screen"
+    },
+    "CoursePlanner\\PlannerController@page": {
+      "node": "planner",
+      "kind": "screen"
+    },
+    "ProfileController@index": {
+      "node": "community",
+      "kind": "screen"
+    },
+    "ProfileController@details": {
+      "node": "profile",
+      "kind": "screen"
+    },
+    "ProfileController@editView": {
+      "node": "profile-edit",
+      "kind": "screen"
+    },
+    "MarketController@index": {
+      "node": "market",
+      "kind": "screen"
+    },
+    "MarketController@createView": {
+      "node": "market-create",
+      "kind": "screen"
+    },
+    "MarketController@editView": {
+      "node": "market-edit",
+      "kind": "screen"
+    },
+    "MarketController@orders": {
+      "node": "orders",
+      "kind": "screen"
+    },
+    "MarketController@creditView": {
+      "node": "credit",
+      "kind": "screen"
+    },
+    "AiSettingsController@edit": {
+      "node": "settings-ai",
+      "kind": "screen"
+    },
+    "SystemStoreSettingsController@edit": {
+      "node": "settings-store",
+      "kind": "screen"
+    },
+    "TelegramSettingsController@edit": {
+      "node": "settings-telegram",
+      "kind": "screen"
+    },
+    "RoomDebugController@index": {
+      "node": "room-debug",
+      "kind": "screen"
+    },
+    "Auth\\LoginController@login": {
+      "node": "login",
+      "kind": "action"
+    },
+    "Auth\\LoginController@logout": {
+      "node": "user-menu",
+      "kind": "action"
+    },
+    "Auth\\RegisterController@register": {
+      "node": "register",
+      "kind": "action"
+    },
+    "Auth\\ForgotPasswordController@sendResetLinkEmail": {
+      "node": "password-request",
+      "kind": "action"
+    },
+    "Auth\\ResetPasswordController@reset": {
+      "node": "password-reset",
+      "kind": "action"
+    },
+    "Auth\\VerificationController@resend": {
+      "node": "verify",
+      "kind": "action"
+    },
+    "Auth\\VerificationController@verify": {
+      "node": "verify",
+      "kind": "action"
+    },
+    "Auth\\SilaederOidcController@redirectToProvider": {
+      "node": "silaeder",
+      "kind": "callback"
+    },
+    "Auth\\SilaederOidcController@callback": {
+      "node": "silaeder",
+      "kind": "callback"
+    },
+    "Auth\\SilaederOidcController@link": {
+      "node": "silaeder",
+      "kind": "callback"
+    },
+    "Auth\\SilaederOidcController@confirmLink": {
+      "node": "silaeder",
+      "kind": "callback"
+    },
+    "Auth\\SilaederOidcController@logoutCallback": {
+      "node": "silaeder",
+      "kind": "callback"
+    },
+    "CoursesController@create": {
+      "node": "course-create",
+      "kind": "action"
+    },
+    "CoursesController@edit": {
+      "node": "course-edit",
+      "kind": "action"
+    },
+    "CoursesController@generatePoster": {
+      "node": "course-edit",
+      "kind": "action"
+    },
+    "CoursesController@createChapter": {
+      "node": "chapter-create",
+      "kind": "action"
+    },
+    "CoursesController@editChapter": {
+      "node": "chapter-edit",
+      "kind": "action"
+    },
+    "CoursesController@setDefaultChapter": {
+      "node": "course",
+      "kind": "action"
+    },
+    "CoursesController@makeChapterUpper": {
+      "node": "course",
+      "kind": "action"
+    },
+    "CoursesController@makeChapterLower": {
+      "node": "course",
+      "kind": "action"
+    },
+    "CoursesController@start": {
+      "node": "course",
+      "kind": "action"
+    },
+    "CoursesController@stop": {
+      "node": "course",
+      "kind": "action"
+    },
+    "CoursesController@invite": {
+      "node": "join-course",
+      "kind": "action"
+    },
+    "CoursesController@enroll": {
+      "node": "join-course",
+      "kind": "action"
+    },
+    "CoursesController@resetPendingReviews": {
+      "node": "reviews",
+      "kind": "action"
+    },
+    "CoursesController@resetStudentGeekPasteWarning": {
+      "node": "report",
+      "kind": "action"
+    },
+    "CoursesController@export": {
+      "node": "course",
+      "kind": "download"
+    },
+    "CoursesController@exportMarkdown": {
+      "node": "course",
+      "kind": "download"
+    },
+    "CoursesController@exportChapterPoints": {
+      "node": "course",
+      "kind": "download"
+    },
+    "LessonsController@create": {
+      "node": "lesson-create",
+      "kind": "action"
+    },
+    "LessonsController@edit": {
+      "node": "lesson-edit",
+      "kind": "action"
+    },
+    "LessonsController@delete": {
+      "node": "course",
+      "kind": "action"
+    },
+    "LessonsController@makeLower": {
+      "node": "course",
+      "kind": "action"
+    },
+    "LessonsController@makeUpper": {
+      "node": "course",
+      "kind": "action"
+    },
+    "LessonsController@makeDeadline": {
+      "node": "lesson-deadline",
+      "kind": "action"
+    },
+    "LessonsController@buyEarlyAccess": {
+      "node": "early-access",
+      "kind": "action"
+    },
+    "LessonsController@grantEarlyAccess": {
+      "node": "early-access",
+      "kind": "action"
+    },
+    "LessonsController@export": {
+      "node": "course",
+      "kind": "download"
+    },
+    "LessonsController@exportMarkdown": {
+      "node": "course",
+      "kind": "download"
+    },
+    "LessonsController@exportPoints": {
+      "node": "course",
+      "kind": "download"
+    },
+    "StepsController@create": {
+      "node": "step-create",
+      "kind": "action"
+    },
+    "StepsController@edit": {
+      "node": "step-edit",
+      "kind": "action"
+    },
+    "StepsController@delete": {
+      "node": "step",
+      "kind": "action"
+    },
+    "StepsController@makeLower": {
+      "node": "step",
+      "kind": "action"
+    },
+    "StepsController@makeUpper": {
+      "node": "step",
+      "kind": "action"
+    },
+    "StepsController@question": {
+      "node": "step",
+      "kind": "action"
+    },
+    "StepsController@deleteQuestion": {
+      "node": "step",
+      "kind": "action"
+    },
+    "StepsController@downloadNotebook": {
+      "node": "step-theory",
+      "kind": "download"
+    },
+    "OpenStepsController@downloadNotebook": {
+      "node": "public-step",
+      "kind": "download"
+    },
+    "TasksController@create": {
+      "node": "task-create",
+      "kind": "action"
+    },
+    "TasksController@edit": {
+      "node": "task-edit",
+      "kind": "action"
+    },
+    "TasksController@delete": {
+      "node": "step-task",
+      "kind": "action"
+    },
+    "TasksController@makeLower": {
+      "node": "step-task",
+      "kind": "action"
+    },
+    "TasksController@makeUpper": {
+      "node": "step-task",
+      "kind": "action"
+    },
+    "TasksController@toNextTask": {
+      "node": "step-task",
+      "kind": "action"
+    },
+    "TasksController@toPreviousTask": {
+      "node": "step-task",
+      "kind": "action"
+    },
+    "TasksController@phantomSolution": {
+      "node": "step-task",
+      "kind": "action"
+    },
+    "TasksController@recheckAllSolutions": {
+      "node": "step-task",
+      "kind": "action"
+    },
+    "TasksController@makeDeadline": {
+      "node": "task-deadline",
+      "kind": "action"
+    },
+    "TasksController@aiTaskSummary": {
+      "node": "task-summary",
+      "kind": "action"
+    },
+    "TasksController@postSolution": {
+      "node": "task-solutions",
+      "kind": "action"
+    },
+    "TasksController@estimateSolution": {
+      "node": "review-tools",
+      "kind": "action"
+    },
+    "TasksController@skipStudentReviews": {
+      "node": "review-tools",
+      "kind": "action"
+    },
+    "TasksController@skipSolutionReview": {
+      "node": "review-tools",
+      "kind": "action"
+    },
+    "TasksController@blockStudent": {
+      "node": "review-tools",
+      "kind": "action"
+    },
+    "TasksController@unblockStudent": {
+      "node": "review-tools",
+      "kind": "action"
+    },
+    "TasksController@waiveDeadlinePenalty": {
+      "node": "review-tools",
+      "kind": "action"
+    },
+    "TasksController@askForRecheck": {
+      "node": "solution-options",
+      "kind": "action"
+    },
+    "TasksController@payDeadlinePenalty": {
+      "node": "solution-options",
+      "kind": "action"
+    },
+    "TasksController@useXpBooster": {
+      "node": "solution-options",
+      "kind": "action"
+    },
+    "TasksController@buyGeekPasteExtraAttempt": {
+      "node": "solution-options",
+      "kind": "action"
+    },
+    "TasksController@previewSolutionAchievement": {
+      "node": "achievement-preview",
+      "kind": "action"
+    },
+    "TasksController@awardSolutionAchievement": {
+      "node": "achievement-preview",
+      "kind": "action"
+    },
+    "ProfileController@edit": {
+      "node": "profile-edit",
+      "kind": "action"
+    },
+    "ProfileController@buyAvatarFrame": {
+      "node": "market-digital",
+      "kind": "action"
+    },
+    "ProfileController@buyCustomTitle": {
+      "node": "market-digital",
+      "kind": "action"
+    },
+    "ProfileController@updateLearningAvatar": {
+      "node": "room-editor",
+      "kind": "action"
+    },
+    "ProfileController@telegramLink": {
+      "node": "telegram-link",
+      "kind": "action"
+    },
+    "ProfileController@telegramUnlink": {
+      "node": "telegram-link",
+      "kind": "action"
+    },
+    "ProfileController@course": {
+      "node": "completed-course",
+      "kind": "action"
+    },
+    "ProfileController@deleteCourse": {
+      "node": "completed-course",
+      "kind": "action"
+    },
+    "ProfileController@deleteCurrentCourse": {
+      "node": "completed-course",
+      "kind": "action"
+    },
+    "ProfileController@updateAchievement": {
+      "node": "achievement-edit",
+      "kind": "action"
+    },
+    "ProfileController@deleteAchievement": {
+      "node": "achievement-edit",
+      "kind": "action"
+    },
+    "ProfileController@addMoney": {
+      "node": "profile-money",
+      "kind": "action"
+    },
+    "RoomCharacterController@store": {
+      "node": "room-generation",
+      "kind": "api"
+    },
+    "RoomCharacterController@show": {
+      "node": "room-generation",
+      "kind": "api"
+    },
+    "MarketController@create": {
+      "node": "market-create",
+      "kind": "action"
+    },
+    "MarketController@edit": {
+      "node": "market-edit",
+      "kind": "action"
+    },
+    "MarketController@buy": {
+      "node": "market-goods",
+      "kind": "action"
+    },
+    "MarketController@buyDigital": {
+      "node": "market-digital",
+      "kind": "action"
+    },
+    "MarketController@bid": {
+      "node": "market-auctions",
+      "kind": "action"
+    },
+    "MarketController@finishAuction": {
+      "node": "market-auctions",
+      "kind": "action"
+    },
+    "MarketController@archive": {
+      "node": "market-archive",
+      "kind": "action"
+    },
+    "MarketController@restore": {
+      "node": "market-archive",
+      "kind": "action"
+    },
+    "MarketController@ship": {
+      "node": "orders",
+      "kind": "action"
+    },
+    "MarketController@cancel": {
+      "node": "orders",
+      "kind": "action"
+    },
+    "MarketController@credit": {
+      "node": "credit",
+      "kind": "action"
+    },
+    "AiSettingsController@update": {
+      "node": "settings-ai",
+      "kind": "action"
+    },
+    "AiSettingsController@reset": {
+      "node": "settings-ai",
+      "kind": "action"
+    },
+    "TelegramSettingsController@update": {
+      "node": "settings-telegram",
+      "kind": "action"
+    },
+    "TelegramSettingsController@reset": {
+      "node": "settings-telegram",
+      "kind": "action"
+    },
+    "SystemStoreSettingsController@update": {
+      "node": "settings-store",
+      "kind": "action"
+    },
+    "RoomDebugController@saveLayout": {
+      "node": "room-debug",
+      "kind": "action"
+    },
+    "CoursePlanner\\PlannerController@state": {
+      "node": "planner",
+      "kind": "api"
+    },
+    "CoursePlanner\\PlannerController@details": {
+      "node": "planner",
+      "kind": "api"
+    },
+    "CoursePlanner\\PlannerController@preview": {
+      "node": "planner",
+      "kind": "api"
+    },
+    "CoursePlanner\\PlannerController@command": {
+      "node": "planner",
+      "kind": "api"
+    },
+    "CoursePlanner\\PlannerController@catalog": {
+      "node": "planner",
+      "kind": "api"
+    },
+    "CoursePlanner\\PlannerController@entry": {
+      "node": "planner",
+      "kind": "api"
+    },
+    "GeekPasteAPI@submitSolution": {
+      "node": "geekpaste",
+      "kind": "api"
+    },
+    "GeekPasteAPI@syncIntegrity": {
+      "node": "geekpaste",
+      "kind": "api"
+    },
+    "GeekPasteAPI@requestRecheck": {
+      "node": "geekpaste",
+      "kind": "api"
+    },
+    "GeekPasteAPI@recheckStatus": {
+      "node": "geekpaste",
+      "kind": "api"
+    },
+    "GeekPasteAPI@userProfile": {
+      "node": "geekpaste",
+      "kind": "api"
+    },
+    "RemoteAuthController@remoteAuth": {
+      "node": "geekpaste",
+      "kind": "redirect"
+    },
+    "TextImprovementController@improveText": {
+      "node": "text-assist",
+      "kind": "api"
+    },
+    "TelegramBotController@webhook": {
+      "node": "telegram",
+      "kind": "api"
+    },
+    "MediaController@index": {
+      "node": "profile-room",
+      "kind": "media"
+    },
+    "MediaController@roomCharacterPreview": {
+      "node": "profile-room",
+      "kind": "media"
+    },
+    "Closure:/": {
+      "node": "login",
+      "kind": "redirect"
+    },
+    "Closure:home": {
+      "node": "login",
+      "kind": "redirect"
+    },
+    "Closure:insider": {
+      "node": "courses",
+      "kind": "redirect"
+    },
+    "Closure:start-exam": {
+      "node": "public-step",
+      "kind": "redirect"
+    },
+    "Closure:telegram-bot": {
+      "node": "public-step",
+      "kind": "redirect"
+    },
+    "Closure:1561test": {
+      "node": "provider-resource",
+      "kind": "redirect"
+    },
+    "Closure:api/user": {
+      "node": "profile",
+      "kind": "api"
+    },
+    "Closure:insider/testmail": {
+      "node": "feedback",
+      "kind": "maintenance"
+    },
+    "ProfileController@updatePassword": {
+      "node": "account-preferences",
+      "kind": "action"
+    },
+    "SystemStoreSettingsController@targets": {
+      "node": "market-promotion-picker",
+      "kind": "api"
+    },
+    "TasksController@createForm": {
+      "node": "task-create",
+      "kind": "screen"
+    },
+    "AuthoringPreviewController": {
+      "node": "step-edit",
+      "kind": "api"
+    },
+    "CoursesController@setCurrentLesson": {
+      "node": "course-current-lesson",
+      "kind": "action"
+    },
+    "StudentCourseTasksController@index": {
+      "node": "chapter-tasks",
+      "kind": "screen"
+    },
+    "RewardNoticesController@claim": {
+      "node": "reward-notices",
+      "kind": "api"
+    }
+  },
+  "observations": [
+    {
+      "id": "UX-01",
+      "nodes": [
+        "course",
+        "step",
+        "step-create",
+        "perform"
+      ],
+      "basis": "code",
+      "finding": "В одном учебном пути встречаются «урок», «ступень» и «этап».",
+      "proposal": "В навигации сохранять иерархию «Курс → глава → урок → ступень → задача»; занятие относится к календарю.",
+      "source": "resources/views/steps/partials/nav.blade.php"
+    },
+    {
+      "id": "UX-02",
+      "nodes": [
+        "deadlines",
+        "course-create",
+        "course-edit",
+        "lesson-create",
+        "profile-edit"
+      ],
+      "basis": "user-and-code",
+      "finding": "Карточки вокруг названий разделов «Сообщество» и «Магазин» перегружают верх страницы; горизонтальный разделитель также бросается в глаза.",
+      "proposal": "Единый открытый заголовок и действия, без карточки и линии; карточки оставлять у содержимого.",
+      "source": "resources/views/courses/deadlines.blade.php"
+    },
+    {
+      "id": "UX-03",
+      "nodes": [
+        "market",
+        "orders",
+        "market-orders"
+      ],
+      "basis": "code",
+      "finding": "Заказы доступны внутри вкладки магазина и на отдельной странице.",
+      "proposal": "Сохранить оба входа, использовать один компонент списка и одинаковые состояния выдачи/отмены.",
+      "source": "resources/views/market/partials/orders_table.blade.php"
+    },
+    {
+      "id": "UX-04",
+      "nodes": [
+        "course-create",
+        "chapter-create",
+        "lesson-edit",
+        "task-edit"
+      ],
+      "basis": "code",
+      "finding": "Формы и редакторы имеют локальные контейнеры и переопределения оформления.",
+      "proposal": "Один шаблон формы: контекст → основные поля → необязательные настройки → действия; редактор Markdown не заворачивать в несколько панелей.",
+      "source": "resources/assets/sass/_legacy.scss"
+    },
+    {
+      "id": "UX-05",
+      "nodes": [
+        "navigation",
+        "user-menu"
+      ],
+      "basis": "code",
+      "finding": "Мобильное меню профиля содержит меньше пунктов, чем настольное: ресурсы и переключатель темы находятся в настольном partial.",
+      "proposal": "Предусмотреть одинаковый доступ к ресурсам при разных компоновках навигации.",
+      "source": "resources/views/layouts/left-menu.blade.php"
+    },
+    {
+      "id": "UX-06",
+      "nodes": [
+        "planner",
+        "planner-summary",
+        "assessments",
+        "settings-telegram"
+      ],
+      "basis": "scope",
+      "finding": "На карте нужно отличать существующие функции от отложенных.",
+      "proposal": "Не добавлять итоговую ведомость и бота сопровождения курса. Существующие XP и Telegram-привязка остаются текущими функциями.",
+      "source": "docs/course-planner-spec.md"
+    }
+  ],
+  "deferred": [
+    "Итоговая ведомость и перевод баллов в отметку",
+    "Бот сопровождения курса и автоматические напоминания"
+  ],
+  "decision": "Согласованный B+ с компактными иконками курсов перенесён. Все 41 экран повторно проверены; покрытие, состояния и границы — ui-round-19.md.",
+  "proposedNodes": [],
+  "proposedEdges": [],
+  "suppressedEdges": [],
+  "designSystem": {
+    "font": "Golos Text",
+    "body": "14/20",
+    "title": "28/36 на компьютере, 24/32 на телефоне",
+    "section": "16/24",
+    "caption": "12/16",
+    "spacing": [
+      4,
+      8,
+      12,
+      16,
+      24,
+      32
+    ],
+    "controlHeight": 36,
+    "compactControlHeight": 32,
+    "touchTarget": 44,
+    "cardRadius": 10,
+    "dialogRadius": 12,
+    "cardPadding": 16,
+    "pageHeader": "Компактная поверхность темы для заголовка и связанных действий, поиска и вкладок. Без тяжёлой тени. Внутри существующей визитки поверхность не дублируется.",
+    "surface": "Самостоятельные блоки в карточках, внутри строки; третий декоративный уровень не используется.",
+    "palette": "Настройки BRAND_* через config/branding.php → Branding → CSS-токены. Основной цвет действий и акцент наград на нейтральных поверхностях; цвета компонентов не задаются отдельно.",
+    "fontWeight": "400 — основной текст; 500 — элементы интерфейса; 600 — заголовки. Без повсеместного полужирного.",
+    "shadows": "Карточки без теней. Мягкая тень только у меню и диалога.",
+    "dividers": "Шапка на самостоятельной поверхности с мягкой границей; внутренние заголовки без декоративной линии, разделители строк приглушены."
+  }
+}

@@ -5,19 +5,19 @@
 @endsection
 
 @section('content')
-    <div class="container-xl px-0">
-        <div class="gc-card gc-page-header mb-3">
+    <div class="container-xl px-0 gc-form-layout">
+        <div class="gc-page-header mb-3">
             <div class="min-width-0">
                 <a class="assessment-back-link" href="{{ url('/insider/market') }}"><i class="fas fa-chevron-left"></i> В магазин</a>
-                <h2 class="mb-1">Создание товара</h2>
+                <h1 class="mb-1">Создание товара</h1>
                 <p class="mb-0 text-muted">Новый товар для магазина и быстрый предпросмотр карточки.</p>
             </div>
         </div>
 
         <div class="row g-3 align-items-start">
-            <div class="col-12 col-lg-8">
+            <div class="col-12">
                 <div class="gc-card overflow-hidden">
-                    <form method="POST" enctype="multipart/form-data">
+                    <form id="market-create-form" method="POST" enctype="multipart/form-data" data-authoring-form>
                         {{ csrf_field() }}
 
                         <div class="p-3 p-md-4">
@@ -84,43 +84,14 @@
                             </label>
                         </div>
 
-                        <div class="gc-form-footer flex-column-reverse flex-sm-row justify-content-end gap-2">
-                            <a class="btn btn-outline-secondary rounded-3" href="{{ url('/insider/market') }}">Отмена</a>
-                            <button type="submit" class="btn btn-success rounded-3 px-3 fw-medium">Создать товар</button>
-                        </div>
+
                     </form>
                 </div>
             </div>
 
-            <aside class="col-12 col-lg-4 sticky-lg-top pt-lg-1">
-                <div class="text-muted fw-medium small mb-2">Предпросмотр</div>
-                <article class="gc-card overflow-hidden d-flex flex-column">
-                    <div class="ratio ratio-4x3 gc-media-frame">
-                        <img class="w-100 h-100 object-fit-cover @if (!old('image')) d-none @endif" src="{{ old('image') }}" alt="{{ old('name', 'Новый товар') }}" data-market-preview-image>
-                        <div class="d-flex align-items-center justify-content-center text-muted fs-2 @if (old('image')) d-none @endif" data-market-preview-empty><i class="fas fa-gift"></i></div>
-                    </div>
-
-                    <div class="p-3 d-flex flex-column flex-grow-1">
-                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-                            @if (old('number', 1) > 0)
-                                <span class="badge rounded-pill bg-body-tertiary" data-market-preview-stock>В наличии: {{ old('number', 1) }}</span>
-                            @else
-                                <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium" data-market-preview-stock>Закончился</span>
-                            @endif
-                            <span class="badge rounded-pill bg-info-subtle text-info-emphasis border border-info-subtle" data-market-preview-sale-type>{{ old('sale_type') == 'auction' ? 'Аукцион' : 'Покупка' }}</span>
-                        </div>
-
-                        <h6 class="fw-medium lh-sm mb-2" data-market-preview-name>{{ old('name', 'Новый товар') }}</h6>
-                        <p class="text-muted small lh-sm mb-3" data-market-preview-description>{{ old('description', 'Описание товара появится здесь.') }}</p>
-
-                        <button class="btn btn-success gc-action-button gc-action-button--block mt-auto pe-none" type="button" tabindex="-1" aria-disabled="true">
-                            <span data-market-preview-action>Купить за</span> <span data-market-preview-price>{{ old('price', 0) }}</span> <i class="fas fa-coins"></i>
-                        </button>
-                    </div>
-                </article>
-            </aside>
+            @include('market.partials.form-preview', ['good' => $good ?? null])
         </div>
+        <x-gc-form-actions form="market-create-form" label="Создать товар" />
     </div>
 
-    @include('market.partials.form_preview_script')
 @endsection

@@ -1,0 +1,580 @@
+{
+  "date": "2026-11-11",
+  "environment": {
+    "baseUrl": "http://127.0.0.1:8876",
+    "data": "isolated synthetic SQLite fixtures",
+    "productionMutations": false
+  },
+  "results": [
+    {
+      "screen": "profile-resume",
+      "width": 1440,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "profile-owner",
+      "width": 1440,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "courses-teacher",
+      "width": 1440,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "courses-student",
+      "width": 1440,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "journal",
+      "width": 1440,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "planner",
+      "width": 1440,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "market-orders",
+      "width": 1440,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "orders",
+      "width": 1440,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "profile-resume",
+      "width": 390,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "profile-owner",
+      "width": 390,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "courses-teacher",
+      "width": 390,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "courses-student",
+      "width": 390,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "journal",
+      "width": 390,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "planner",
+      "width": 390,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "market-orders",
+      "width": 390,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "orders",
+      "width": 390,
+      "palette": "configured",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "profile-resume",
+      "width": 320,
+      "palette": "violet",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "profile-owner",
+      "width": 320,
+      "palette": "violet",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "courses-teacher",
+      "width": 320,
+      "palette": "violet",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "courses-student",
+      "width": 320,
+      "palette": "violet",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "journal",
+      "width": 320,
+      "palette": "violet",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "planner",
+      "width": 320,
+      "palette": "violet",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "market-orders",
+      "width": 320,
+      "palette": "violet",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "orders",
+      "width": 320,
+      "palette": "violet",
+      "mode": "light",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "profile-resume",
+      "width": 390,
+      "palette": "configured",
+      "mode": "dark",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "courses-teacher",
+      "width": 390,
+      "palette": "configured",
+      "mode": "dark",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "screen": "journal",
+      "width": 390,
+      "palette": "configured",
+      "mode": "dark",
+      "status": 200,
+      "overflow": false,
+      "h1": 1
+    }
+  ],
+  "errors": [],
+  "interactive": {
+    "journal": {
+      "initialCounts": {
+        "empty": 3,
+        "partial": 1,
+        "complete": 1,
+        "review": 2,
+        "blocked": 1
+      },
+      "visibleStudents": {
+        "review": 2,
+        "blocked": 1,
+        "complete": 1,
+        "all": 3
+      },
+      "reviewAndNameSearch": 1,
+      "clearSearchPreservesReview": 2,
+      "chapter50Lessons": [
+        "Циклы и алгоритмы",
+        "Свой проект"
+      ],
+      "allChaptersOption": false
+    },
+    "profile": {
+      "headingOrder": [
+        "Имя",
+        "Контакты",
+        "Комната программиста",
+        "Обучение",
+        "Достижения при наличии",
+        "О себе",
+        "Наклейки при наличии",
+        "Служебный комментарий по правам"
+      ],
+      "teachingCoursePreview": 3,
+      "additionalCoursesAfterExpand": 5
+    },
+    "fact": "Факт · подтверждается вручную",
+    "plan": "План курса",
+    "headers": [
+      {
+        "actor": "teacher",
+        "width": 1440,
+        "title": {
+          "left": 273.375,
+          "right": 948.4140625,
+          "top": 31.203125,
+          "bottom": 64.796875
+        },
+        "pulse": {
+          "left": 964.4140625,
+          "right": 1252.4140625,
+          "top": 24,
+          "bottom": 72
+        },
+        "actions": {
+          "left": 1268.4140625,
+          "right": 1403.625,
+          "top": 30,
+          "bottom": 66
+        },
+        "pulseCount": 1,
+        "quickLinks": 0,
+        "birthdayAvatars": 0,
+        "fontSizes": [
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px"
+        ],
+        "overflow": false
+      },
+      {
+        "actor": "teacher",
+        "width": 390,
+        "title": {
+          "left": 14,
+          "right": 209.7890625,
+          "top": 86.8984375,
+          "bottom": 115.6953125
+        },
+        "pulse": {
+          "left": 14,
+          "right": 334,
+          "top": 135.296875,
+          "bottom": 183.296875
+        },
+        "actions": {
+          "left": 225.7890625,
+          "right": 361,
+          "top": 83.296875,
+          "bottom": 119.296875
+        },
+        "pulseCount": 1,
+        "quickLinks": 0,
+        "birthdayAvatars": 0,
+        "fontSizes": [
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px"
+        ],
+        "overflow": false
+      },
+      {
+        "actor": "teacher",
+        "width": 320,
+        "title": {
+          "left": 14,
+          "right": 139.7890625,
+          "top": 83.296875,
+          "bottom": 140.890625
+        },
+        "pulse": {
+          "left": 14,
+          "right": 291,
+          "top": 156.890625,
+          "bottom": 204.890625
+        },
+        "actions": {
+          "left": 155.7890625,
+          "right": 291,
+          "top": 94.09375,
+          "bottom": 130.09375
+        },
+        "pulseCount": 1,
+        "quickLinks": 0,
+        "birthdayAvatars": 0,
+        "fontSizes": [
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px"
+        ],
+        "overflow": false
+      },
+      {
+        "actor": "student",
+        "width": 1440,
+        "title": {
+          "left": 273.375,
+          "right": 757.7890625,
+          "top": 33.203125,
+          "bottom": 66.796875
+        },
+        "pulse": {
+          "left": 773.7890625,
+          "right": 1061.7890625,
+          "top": 26,
+          "bottom": 74
+        },
+        "actions": {
+          "left": 1077.7890625,
+          "right": 1403.625,
+          "top": 24,
+          "bottom": 76
+        },
+        "pulseCount": 1,
+        "quickLinks": 0,
+        "birthdayAvatars": 0,
+        "fontSizes": [
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px"
+        ],
+        "overflow": false
+      },
+      {
+        "actor": "student",
+        "width": 390,
+        "title": {
+          "left": 14,
+          "right": 361,
+          "top": 83.296875,
+          "bottom": 112.09375
+        },
+        "pulse": {
+          "left": 14,
+          "right": 334,
+          "top": 128.09375,
+          "bottom": 176.09375
+        },
+        "actions": {
+          "left": 14,
+          "right": 361,
+          "top": 192.09375,
+          "bottom": 288.09375
+        },
+        "pulseCount": 1,
+        "quickLinks": 0,
+        "birthdayAvatars": 0,
+        "fontSizes": [
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px"
+        ],
+        "overflow": false
+      },
+      {
+        "actor": "student",
+        "width": 320,
+        "title": {
+          "left": 14,
+          "right": 291,
+          "top": 83.296875,
+          "bottom": 112.09375
+        },
+        "pulse": {
+          "left": 14,
+          "right": 291,
+          "top": 128.09375,
+          "bottom": 176.09375
+        },
+        "actions": {
+          "left": 14,
+          "right": 291,
+          "top": 192.09375,
+          "bottom": 288.09375
+        },
+        "pulseCount": 1,
+        "quickLinks": 0,
+        "birthdayAvatars": 0,
+        "fontSizes": [
+          "14px",
+          "14px",
+          "14px",
+          "14px",
+          "14px"
+        ],
+        "overflow": false
+      }
+    ],
+    "shop": [
+      {
+        "palette": "",
+        "normal": {
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(52, 91, 209)",
+          "href": "http://127.0.0.1:8876/insider/market/ship/2?return_url=http%3A%2F%2F127.0.0.1%3A8876%2Finsider%2Fmarket%3Factor%3Dadmin%26fixture%3D%26palette%3D%23market-orders"
+        },
+        "hover": {
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(43, 75, 171)",
+          "href": "http://127.0.0.1:8876/insider/market/ship/2?return_url=http%3A%2F%2F127.0.0.1%3A8876%2Finsider%2Fmarket%3Factor%3Dadmin%26fixture%3D%26palette%3D%23market-orders"
+        },
+        "coin": {
+          "color": "rgb(255, 161, 23)",
+          "accent": "#ffa117"
+        }
+      },
+      {
+        "palette": "violet",
+        "normal": {
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(112, 87, 130)",
+          "href": "http://127.0.0.1:8876/insider/market/ship/2?return_url=http%3A%2F%2F127.0.0.1%3A8876%2Finsider%2Fmarket%3Factor%3Dadmin%26fixture%3D%26palette%3Dviolet%23market-orders"
+        },
+        "hover": {
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(92, 71, 107)",
+          "href": "http://127.0.0.1:8876/insider/market/ship/2?return_url=http%3A%2F%2F127.0.0.1%3A8876%2Finsider%2Fmarket%3Factor%3Dadmin%26fixture%3D%26palette%3Dviolet%23market-orders"
+        },
+        "coin": {
+          "color": "rgb(185, 119, 98)",
+          "accent": "#b97762"
+        }
+      }
+    ]
+  },
+  "checks": {
+    "fullPhpSuite": {
+      "tests": 534,
+      "assertions": 4472
+    },
+    "finalTargetedPhp": {
+      "tests": 26,
+      "assertions": 233
+    },
+    "build": "passed",
+    "styleBoundaries": "passed",
+    "bladeCache": "passed",
+    "uxMap": "40 pages / 106 nodes / 247 transitions / 170 routes",
+    "diffWhitespace": "passed"
+  },
+  "evidenceDirectory": "output/playwright/screenshot-feedback",
+  "limits": [
+    "No live purchases, shipping, cancellation, messages or generated-character requests.",
+    "Synthetic data; not a full check of every role and business state."
+  ]
+}

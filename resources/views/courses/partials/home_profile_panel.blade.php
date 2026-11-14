@@ -1,110 +1,43 @@
 <div class="col-12 col-xl-3">
-    <div class="gc-card overflow-hidden sticky-xl-top">
-        <div class="p-0">
-            <div class="p-3">
-                <div class="home-profile-head">
-                    <x-gc-avatar :user="$user" size="lg" class="home-profile-head__avatar" alt="" />
-                    <div class="home-profile-head__body">
-                        <h5 class="home-profile-head__title mb-1"><a href="{{ url('/insider/profile/'.$user->id) }}" class="text-decoration-none">{{ $user->name }}</a></h5>
-                        <div class="home-profile-head__badges">
-                            @include('profile.partials.custom_title_badge', ['profileUser' => $user, 'compact' => true])
-                            <span class="badge rounded-pill bg-body-tertiary home-profile-badge"><i class="fas fa-arrow-up me-1"></i>{{ $rank->name }}</span>
-                            @if ($user->is_trainee)
-                                <span class="badge rounded-pill bg-body-tertiary home-profile-badge">Стажер</span>
-                            @endif
-                            @if ($user->is_teacher)
-                                <span class="badge rounded-pill bg-body-tertiary home-profile-badge">Преподаватель</span>
-                            @endif
-                        </div>
-                    </div>
-
+    <aside class="gc-stack gc-sticky-panel" aria-label="Личный обзор">
+        <x-gc-panel>
+            <div class="gc-identity gc-identity--compact">
+                <x-gc-avatar :user="$user" size="lg" alt="" />
+                <div class="min-width-0">
+                    <a href="{{ url('/insider/profile/'.$user->id) }}" class="gc-entry__title text-decoration-none">{{ $user->name }}</a>
+                    @if($user->activeCustomTitle())
+                        <div class="gc-help-text mt-1">{{ $user->activeCustomTitle() }}</div>
+                    @endif
                 </div>
-
-                <div class="row g-2 border-top pt-3 mb-3">
-                    <div class="col-6">
-                        <div class="gc-info-tile h-100">
-                            <span class="text-muted small d-block mb-1">Монеты</span>
-                            <div class="d-flex align-items-center gap-1">
-                                <i class="fas fa-coins" aria-hidden="true"></i>
-                                <strong class="lh-1">{{ $balance }}</strong>
-                                <span class="text-muted small">GC</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="gc-info-tile h-100">
-                            <span class="text-muted small d-block mb-1">Опыт</span>
-                            <div class="d-flex align-items-baseline gap-1">
-                                <strong class="lh-1">{{ $score }}</strong>
-                                <span class="text-muted small">XP</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
-                        <span class="text-muted small">До следующего ранга</span>
-                        <span class="text-muted small">{{ $rankProgress }}%</span>
-                    </div>
-                    <x-gc-progress :percent="$rankProgress" height="6px" />
-                    <small class="text-muted d-block mt-1">{{ $score }} / {{ $rank->to }} XP</small>
-                </div>
-
-                @if($user->school || $user->grade_year)
-                    <div class="border-top pt-3 mt-2">
-                        <span class="gc-eyebrow">Учеба</span>
-                        <strong class="fw-medium small d-block lh-sm">
-                            {{ $user->school ?: 'Школа не указана' }}@if($user->grade_year), {{ $user->grade() }} класс@endif
-                        </strong>
-                    </div>
-                @else
-                    <div class="border-top pt-3 mt-2">
-                        <span class="gc-eyebrow">Профиль</span>
-                        <strong class="fw-medium small d-block lh-sm">
-                            {{ $user->role == 'admin' ? 'Администратор' : ($isTeacher ? 'Преподаватель' : 'Ученик') }}
-                        </strong>
-                    </div>
-                @endif
             </div>
+            <div class="gc-summary-line mt-4">
+                <span class="gc-meta-label">Баланс</span>
+                <a href="{{ url('/insider/market#market-history') }}" class="gc-amount gc-wallet-link text-decoration-none"><i class="fas fa-coins gc-currency-icon" aria-hidden="true"></i>{{ $balance }} GC</a>
+            </div>
+            <section class="mt-3" aria-label="Опыт и ранг">
+                <div class="gc-summary-line">
+                    <span class="gc-meta-label">Опыт · {{ $rank->name }}</span>
+                    <span class="gc-amount">{{ $score }} XP</span>
+                </div>
+                <div class="mt-2" title="Прогресс к следующему рангу"><x-gc-progress :percent="$rankProgress" height="5px" /></div>
+            </section>
+        </x-gc-panel>
 
-            <div class="p-3 border-top">
-                <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
-                    <div class="d-flex align-items-center gap-2 min-width-0">
-                        <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-cake-candles"></i></span>
-                        <div class="min-width-0">
-                            <h6 class="mb-0">Дни рождения</h6>
-                            <small class="text-muted">Ближайшие даты</small>
-                        </div>
+        <x-gc-panel class="gc-panel--occasion" aria-label="Дни рождения в ближайшие семь дней">
+            <x-slot:heading>
+                <div class="gc-occasion-heading">
+                    <span class="gc-occasion-icon" aria-hidden="true"><i class="fas fa-cake-candles"></i></span>
+                    <div>
+                        <h2>Дни рождения</h2>
+                        <p class="gc-help-text mb-0">Ближайшие 7 дней</p>
                     </div>
                 </div>
-                <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
-                    @forelse($birthdayUsers->take(8) as $buser)
-                        @php
-                            $birthdayDistance = $buser->birthday_distance_days ?? null;
-                            $isBirthdayToday = $birthdayDistance == 0;
-                            $birthdayLabel = $isBirthdayToday
-                                ? 'Сегодня'
-                                : ($birthdayDistance == 1 ? 'Завтра' : 'через '.$birthdayDistance.' дн.');
-                        @endphp
-                        <li class="home-birthday-item @if($isBirthdayToday) is-today @endif">
-                            <span class="badge rounded-pill home-birthday-date">
-                                {{ $buser->birthday->format('d.m') }}
-                            </span>
-                            <span class="d-flex align-items-center justify-content-between gap-2 min-width-0 flex-grow-1">
-                                <a class="text-decoration-none {{ $isBirthdayToday ? 'fw-medium' : 'text-body' }} d-inline-flex align-items-center gap-1 min-width-0" href="{{ url('insider/profile/'.$buser->id) }}">
-                                    <span class="text-truncate">{{ $buser->name }}</span>
-                                    @include('profile.partials.custom_title_badge', ['profileUser' => $buser, 'compact' => true])
-                                </a>
-                                <small class="{{ $isBirthdayToday ? 'text-warning-emphasis fw-medium' : 'text-muted' }} flex-shrink-0">{{ $birthdayLabel }}</small>
-                            </span>
-                        </li>
-                    @empty
-                        <li class="text-center text-muted bg-body-tertiary rounded-3 px-3 py-3">Пока нет ближайших дней рождения.</li>
-                    @endforelse
-                </ul>
-            </div>
-        </div>
-    </div>
-
+            </x-slot:heading>
+            @if($birthdayUsers->isNotEmpty())
+                @include('courses.partials.birthday_rows', ['people' => $birthdayUsers])
+            @else
+                <p class="gc-help-text mb-0">В ближайшие 7 дней именинников нет.</p>
+            @endif
+        </x-gc-panel>
+    </aside>
 </div>

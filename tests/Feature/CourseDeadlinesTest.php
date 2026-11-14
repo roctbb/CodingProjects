@@ -85,6 +85,23 @@ class CourseDeadlinesTest extends TestCase
         $this->assertFalse($data['deadlines'][1]->is_done);
     }
 
+    public function test_dashboard_keeps_low_marks_and_overdue_work_without_exposing_closed_lessons(): void
+    {
+        DB::table('solutions')->insert([
+            ['id' => 1, 'task_id' => 1, 'course_id' => 1, 'user_id' => 1, 'mark' => 0],
+            ['id' => 2, 'task_id' => 2, 'course_id' => 1, 'user_id' => 1, 'mark' => 4],
+            ['id' => 3, 'task_id' => 3, 'course_id' => 2, 'user_id' => 1, 'mark' => 10],
+            ['id' => 4, 'task_id' => 4, 'course_id' => 1, 'user_id' => 1, 'mark' => 10],
+        ]);
+        $viewer = User::findOrFail(1);
+        $items = app(\App\Queries\CourseDeadlineList::class)->forCourses(\App\Course::all(), $viewer);
+        $this->assertSame([1, 2, 3, 5, 6, 7], $items->pluck('task_id')->all());
+        $this->assertTrue($items->first()->is_overdue);
+        $this->assertNotContains(4, $items->pluck('task_id'));
+        $this->assertNotContains(9, $items->pluck('task_id'));
+        $this->assertNotContains(11, $items->pluck('task_id'));
+    }
+
     public function test_teacher_sees_hidden_and_unopened_course_tasks(): void
     {
         $this->assertEqualsCanonicalizing(range(1, 9), $this->deadlineData(2)['deadlines']->pluck('task_id')->all());

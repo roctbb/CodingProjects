@@ -1,0 +1,740 @@
+{
+  "date": "2026-11-11",
+  "status": "implemented-and-verified",
+  "applicationCodeChanged": true,
+  "scope": {
+    "nativeChrome": "Основные экраны на 127.0.0.1:8000 в текущей сессии администратора",
+    "isolatedBrowser": "40 типов экранов того же приложения на синтетических данных, порт 8876",
+    "desktopViewport": [
+      1440,
+      1000
+    ],
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "mobileDocumentOverflow": false,
+    "notes": [
+      "Полная проверка каждой роли и всех состояний не заявляется.",
+      "Подтверждение почты и предпросмотр достижения проверены прямым рендером существующих шаблонов в тестовом окружении.",
+      "Регистрация, отправка решений, выдача наград, покупки и сохранение настроек не выполнялись."
+    ]
+  },
+  "screens": [
+    {
+      "id": "login",
+      "status": 200,
+      "url": "/login",
+      "heading": "Вход",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "register",
+      "status": 200,
+      "url": "/register",
+      "heading": "Регистрация",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "password-request",
+      "status": 200,
+      "url": "/password/reset",
+      "heading": "Восстановление пароля",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "password-reset",
+      "status": 200,
+      "url": "/password/reset/ui-preview",
+      "heading": "Новый пароль",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "courses",
+      "status": 200,
+      "url": "/insider/courses",
+      "heading": "Мои курсы",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "course",
+      "status": 200,
+      "url": "/insider/courses/1",
+      "heading": "Python · Осень 2026",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "deadlines",
+      "status": 200,
+      "url": "/insider/courses/1/deadlines",
+      "heading": "Дедлайны",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "step",
+      "status": 200,
+      "url": "/insider/courses/1/steps/1",
+      "heading": "Ввод и вывод",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "public-step",
+      "status": 200,
+      "url": "/open/steps/1",
+      "heading": "Ввод и вывод",
+      "overflow": false,
+      "h1": 1,
+      "fixtureNote": "После открытия синтетического урока в отдельной тестовой БД"
+    },
+    {
+      "id": "pulse",
+      "status": 200,
+      "url": "/insider/pulse",
+      "heading": "Пульс",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "course-create",
+      "status": 200,
+      "url": "/insider/courses/create",
+      "heading": "Создание курса",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "course-edit",
+      "status": 200,
+      "url": "/insider/courses/1/edit",
+      "heading": "Настройки курса",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "chapter-create",
+      "status": 200,
+      "url": "/insider/courses/1/chapter",
+      "heading": "Добавление главы",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "chapter-edit",
+      "status": 200,
+      "url": "/insider/courses/1/chapters/1/edit",
+      "heading": "Изменение главы",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "lesson-create",
+      "status": 200,
+      "url": "/insider/courses/1/create",
+      "heading": "Создание урока",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "lesson-edit",
+      "status": 200,
+      "url": "/insider/courses/1/lessons/1/edit",
+      "heading": "Изменение урока",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "step-create",
+      "status": 200,
+      "url": "/insider/courses/1/lessons/1/create",
+      "heading": "Создание этапа",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "step-edit",
+      "status": 200,
+      "url": "/insider/courses/1/steps/1/edit",
+      "heading": "Изменение темы",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "task-edit",
+      "status": 200,
+      "url": "/insider/courses/1/tasks/11/edit",
+      "heading": "Изменение задачи",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "perform",
+      "status": 200,
+      "url": "/insider/courses/1/perform/1",
+      "heading": "Программа начинается с идеи",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "reviews",
+      "status": 200,
+      "url": "/insider/reviews",
+      "heading": "Проверка",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "review",
+      "status": 200,
+      "url": "/insider/courses/1/tasks/11/student/1",
+      "heading": "Проверка решения",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "report",
+      "status": 200,
+      "url": "/insider/courses/1/report",
+      "heading": "Отчет по курсу",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "assessments",
+      "status": 200,
+      "url": "/insider/courses/1/assessments",
+      "heading": "Журнал опыта",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "blocked",
+      "status": 200,
+      "url": "/insider/courses/1/blocked",
+      "heading": "Заблокированные задачи",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "planner",
+      "status": 200,
+      "url": "/insider/courses/1/planner",
+      "heading": "План занятий",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "community",
+      "status": 200,
+      "url": "/insider/community",
+      "heading": "Сообщество",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "profile",
+      "status": 200,
+      "url": "/insider/profile/1",
+      "heading": "Александр Соколов",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "profile-edit",
+      "status": 200,
+      "url": "/insider/profile/5/edit",
+      "heading": "Личные настройки",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "market",
+      "status": 200,
+      "url": "/insider/market",
+      "heading": "Магазин",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "market-create",
+      "status": 200,
+      "url": "/insider/market/create",
+      "heading": "Создание товара",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "market-edit",
+      "status": 200,
+      "url": "/insider/market/1/edit",
+      "heading": "Изменение товара",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "orders",
+      "status": 200,
+      "url": "/insider/market/orders",
+      "heading": "Заказы магазина",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "credit",
+      "status": 200,
+      "url": "/insider/market/credit",
+      "heading": "Массовое начисление GC",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "settings-ai",
+      "status": 200,
+      "url": "/insider/settings/ai",
+      "heading": "Настройки ИИ",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "settings-store",
+      "status": 200,
+      "url": "/insider/settings/system-store",
+      "heading": "Цены системных товаров",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "settings-telegram",
+      "status": 200,
+      "url": "/insider/settings/telegram",
+      "heading": "Настройки Telegram",
+      "overflow": false,
+      "h1": 0
+    },
+    {
+      "id": "room-debug",
+      "status": 200,
+      "url": "/insider/room-debug",
+      "heading": "Редактор комнаты ученика",
+      "overflow": false,
+      "h1": 1
+    },
+    {
+      "id": "verify",
+      "status": 200,
+      "url": "/__verify",
+      "heading": "Подтвердите E-mail адрес",
+      "fixtureNote": "Прямой рендер существующего шаблона в изолированном окружении"
+    },
+    {
+      "id": "achievement-preview",
+      "status": 200,
+      "url": "/__achievement",
+      "heading": "Выдача достижения",
+      "fixtureNote": "Синтетические варианты; генерация и выдача не запускались"
+    }
+  ],
+  "interactionMetrics": {
+    "results": [
+      {
+        "name": "course-card",
+        "before": {
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(223, 228, 235)",
+          "shadow": "none",
+          "transform": "none",
+          "text": "rgb(32, 42, 58)"
+        },
+        "hover": {
+          "background": "rgb(255, 255, 255)",
+          "border": "color(srgb 0.659922 0.722196 0.888941)",
+          "shadow": "none",
+          "transform": "none",
+          "text": "rgb(52, 91, 209)"
+        }
+      },
+      {
+        "name": "lesson-card",
+        "before": {
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(223, 228, 235)",
+          "shadow": "none",
+          "transform": "none",
+          "text": "rgb(32, 42, 58)"
+        },
+        "hover": {
+          "background": "rgb(255, 255, 255)",
+          "border": "color(srgb 0.552627 0.636235 0.872627)",
+          "shadow": "none",
+          "transform": "none",
+          "text": "rgb(52, 91, 209)"
+        }
+      },
+      {
+        "name": "person-card",
+        "before": {
+          "background": "rgb(255, 255, 255)",
+          "border": "rgb(223, 228, 235)",
+          "shadow": "none",
+          "transform": "none",
+          "text": "rgb(32, 42, 58)"
+        },
+        "hover": {
+          "background": "rgb(255, 255, 255)",
+          "border": "color(srgb 0.659922 0.722196 0.888941)",
+          "shadow": "none",
+          "transform": "none",
+          "text": "rgb(32, 42, 58)"
+        }
+      },
+      {
+        "name": "secondary-button",
+        "before": {
+          "background": "color(srgb 0.936314 0.948549 0.985569)",
+          "border": "color(srgb 0.72698 0.775922 0.899137)",
+          "shadow": "none",
+          "transform": "none",
+          "text": "color(srgb 0.176471 0.289608 0.612353)"
+        },
+        "hover": {
+          "background": "color(srgb 0.880588 0.903529 0.972941)",
+          "border": "color(srgb 0.639804 0.706078 0.885882)",
+          "shadow": "none",
+          "transform": "none",
+          "text": "color(srgb 0.176471 0.289608 0.612353)"
+        }
+      }
+    ],
+    "search": {
+      "rest": {
+        "background": "rgb(247, 248, 250)",
+        "border": "0px none rgb(32, 42, 58)",
+        "outline": "rgb(32, 42, 58) none 3px",
+        "shadow": "none",
+        "parentBackground": "rgba(0, 0, 0, 0)",
+        "parentBorder": "0px none rgb(32, 42, 58)",
+        "parentOverflow": "hidden",
+        "bodyBackground": "rgb(245, 246, 248)"
+      },
+      "focused": {
+        "background": "rgb(247, 248, 250)",
+        "border": "0px none color(srgb 0.505686 0.598627 0.86549)",
+        "outline": "rgb(32, 42, 58) none 0px",
+        "shadow": "color(srgb 1 0.631373 0.0901961 / 0.14) 0px 0px 0px 3.2px",
+        "parentBackground": "rgba(0, 0, 0, 0)",
+        "parentBorder": "0px none rgb(32, 42, 58)",
+        "parentOverflow": "hidden",
+        "bodyBackground": "rgb(245, 246, 248)"
+      }
+    }
+  },
+  "findings": [
+    {
+      "id": "search-control",
+      "priority": 1,
+      "screens": [
+        "community",
+        "market",
+        "report",
+        "assessments",
+        "blocked",
+        "step"
+      ],
+      "observation": "Поле поиска сливается с фоном. Граница отключена; внешний индикатор фокуса обрезается обёрткой.",
+      "proposal": "Белая поверхность и видимая нейтральная граница всего поля; единая рамка :focus-within у группы, без изменения заливки.",
+      "evidence": [
+        "resources/assets/sass/_legacy.scss:4218",
+        "resources/assets/sass/_components.scss:222",
+        "output/playwright/ui-audit-2026-11-11/search-focus.png"
+      ],
+      "implementation": {
+        "status": "implemented",
+        "result": "Общие белые поля и нейтральная рамка, фокус всей группы без обрезания; удалены старые владельцы оформления поиска.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "interaction-states",
+      "priority": 1,
+      "screens": [
+        "courses",
+        "course",
+        "community",
+        "market"
+      ],
+      "observation": "При наведении заголовок целиком становится ярко-синим и появляется цветная граница. У урока контур заметнее, чем у курса/участника.",
+      "proposal": "У hover спокойная нейтральная граница и мягкое изменение заголовка; отдельные токены для выбранного состояния и клавиатурного фокуса. Белый фон и размеры карточки сохраняются.",
+      "evidence": [
+        "resources/assets/sass/_components.scss:177",
+        "resources/assets/sass/_legacy.scss:1148",
+        "output/playwright/ui-audit-2026-11-11/lesson-card-hover.png"
+      ],
+      "implementation": {
+        "status": "implemented",
+        "result": "Наведение, выбор и фокус разделены токенами; без синей заливки карточки, подъёма и новой тени.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "header-layout",
+      "priority": 1,
+      "screens": [
+        "deadlines",
+        "chapter-create",
+        "chapter-edit",
+        "lesson-create",
+        "lesson-edit",
+        "step-create",
+        "step-edit",
+        "task-edit",
+        "assessments",
+        "settings-ai",
+        "settings-store",
+        "settings-telegram"
+      ],
+      "observation": "У ряда экранов gc-page-header одновременно получает gc-card: текст прилегает к рамке без отступов. Семантика заголовков и компоновка отличаются от новых экранов.",
+      "proposal": "Один общий заголовок страницы без декоративной карточки; самостоятельные панели ниже сохраняются. Единые отступы и размеры шрифта.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Все 40 проверенных типов экранов имеют один h1; декоративные карточки вокруг заголовка удалены. Проверка решений использует общий компонент заголовка.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "forms",
+      "priority": 1,
+      "screens": [
+        "course-create",
+        "course-edit",
+        "chapter-create",
+        "chapter-edit",
+        "lesson-create",
+        "lesson-edit",
+        "step-create",
+        "step-edit",
+        "task-edit",
+        "market-create",
+        "market-edit",
+        "credit"
+      ],
+      "observation": "Справа дублируются название, дата, режим и статус из формы; отдельные переключатели превращены в карточки. Главное сохранение часто бледное.",
+      "proposal": "Группы по смыслу, единая контрастная кнопка сохранения и доступная при прокрутке панель действий; убрать дубли сводки и третью декоративную вложенность.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Общая закреплённая панель сохранения, удаление дублирующих мини-сводок, переключатели без собственных рамок; ручной доступ и предпросмотры сохранены.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "icon-picker",
+      "priority": 2,
+      "screens": [
+        "course-create",
+        "course-edit"
+      ],
+      "observation": "17 плиток иконок постоянно занимают значительную часть формы; длинные названия разрываются.",
+      "proposal": "Текущая иконка с кнопкой «Изменить» и компактная сетка выбора в отдельном раскрытии/диалоге.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Текущая иконка и действие «Изменить», раскрываемый каталог с нативными радиокнопками.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "course-context",
+      "priority": 2,
+      "screens": [
+        "course"
+      ],
+      "observation": "Повторяющиеся старые даты открытия, пустые дедлайны и служебные сведения занимают много внимания; планировщик скрыт в общем меню.",
+      "proposal": "Явный вход в план занятий/результаты, более компактные метаданные, акцент на нужном учебном действии. Таймлайн глав сохраняется.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Навигация программы, плана, журнала, отчёта и дедлайнов; прошлые даты открытия и пустая сводка дедлайнов не отвлекают.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "pulse-chronology",
+      "priority": 2,
+      "screens": [
+        "pulse"
+      ],
+      "observation": "Лента событий показана сеткой равноправных серых карточек, хронологию сложно проследить.",
+      "proposal": "Последовательная лента с группировкой по дате; фильтры курса и типа событий; небольшая цветная иконка события вместо заливки всего блока.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Одноколоночная лента с группировкой по дням и серверными фильтрами курса и типа.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "assessment-mobile",
+      "priority": 1,
+      "screens": [
+        "assessments"
+      ],
+      "observation": "На 390 px закреплённая колонка с длинным именем и званием почти полностью скрывает баллы.",
+      "proposal": "Ограничить ширину колонки на телефоне, вторичные подписи показывать по запросу, добавить выбор главы для сокращения числа колонок.",
+      "evidence": [
+        "output/playwright/ui-audit-2026-11-11/assessments-mobile.png"
+      ],
+      "implementation": {
+        "status": "implemented",
+        "result": "Ограниченная колонка ученика, звание в подсказке, выбор главы, сокращённая мобильная шапка. Выборка баллов ограничена курсом.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "review-text",
+      "priority": 1,
+      "screens": [
+        "review"
+      ],
+      "observation": "Обычный ответ ученика оформлен моноширинным блоком с неразрывными пробелами и требует горизонтальной прокрутки.",
+      "proposal": "Перенос строк и обычная типографика для текстовых ответов; сохранение форматирования и прокрутки для кода. Оценка, комментарий и следующее решение — основная рабочая зона.",
+      "evidence": [
+        "resources/views/steps/review.blade.php:254",
+        "output/playwright/ui-audit-2026-11-11/review-mobile.png"
+      ],
+      "implementation": {
+        "status": "implemented",
+        "result": "Обычный текст переносится с сохранением абзацев; код сохраняет форматирование. Очередь курса и следующее решение доступны явно, служебные действия — в меню.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "report-signals",
+      "priority": 2,
+      "screens": [
+        "report"
+      ],
+      "observation": "Много равнозначных сводок и красных процентов; 0/0 XP отображается как зелёные 100%. В реальной сессии счётчик ожидания отличается от общей очереди.",
+      "proposal": "Нейтральное состояние «Без оцениваемых задач», явное объяснение критериев счётчиков, фильтр «Требуют внимания» и переход от показателя к нужным работам. Сначала сверить правила подсчёта.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Нулевой максимум нейтрален, фильтр внимания, переход к очереди; общий Solution::pendingReview для счётчика и ячеек. Графики берут цвета из темы.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "profile-contact-format",
+      "priority": 2,
+      "screens": [
+        "profile"
+      ],
+      "observation": "Контакты уже открыты, но длинные URL ломаются внутри слова. Красные управляющие действия заметнее учебных сведений.",
+      "proposal": "Подписи GitHub/Telegram с коротким именем; вторичные действия управления курсами в меню. Сохранить приоритет аватара, рамки, имени, звания и прогресса.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Короткие подписи Telegram/Git, исходные безопасные адреса ссылок сохранены; управление обучением в меню.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "community",
+      "priority": 2,
+      "screens": [
+        "community"
+      ],
+      "observation": "Крупные одинаковые серые аватары-заглушки и одинаковые вертикальные интервалы делают галерею однообразной. При 5 колонках 12 карточек дают короткую последнюю строку.",
+      "proposal": "Инициалы на спокойной подложке темы вместо одинакового силуэта; сетка 3/4 колонок при подходящей ширине, компактнее интервалы. Сохранить заметные платные рамки, звания и пагинацию.",
+      "implementation": {
+        "status": "implemented",
+        "result": "До четырёх колонок на широком экране, 12 участников на странице, инициалы вместо общей фотографии, рамки и звания сохранены.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "market-density",
+      "priority": 2,
+      "screens": [
+        "market"
+      ],
+      "observation": "Недоступные товары стоят в начале, статусы наличия выделены сильно; для маленьких цифровых предметов превью слишком большие.",
+      "proposal": "Фильтр наличия, доступные товары выше; масштаб превью по типу предмета; короткая информация о сроке действия. Компактная покупка справа сохраняется.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Доступные материалы выше, фильтр доступности, компактные цифровые превью и пустые изображения, явный срок действия и компактные действия справа.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "achievement-choice",
+      "priority": 2,
+      "screens": [
+        "achievement-preview"
+      ],
+      "observation": "Три полные формы в оранжевых рамках неудобны для быстрого сравнения; имя и задача повторяются в нескольких местах.",
+      "proposal": "Сначала выбор варианта, затем одна форма уточнения и одно явное действие выдачи; праздничный акцент оставить у награды.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Выбор идеи и одна форма с одной кнопкой выдачи вместо трёх форм.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "planner",
+      "priority": 1,
+      "screens": [
+        "planner"
+      ],
+      "observation": "На настольной ширине у вкладок видна лишняя вертикальная прокрутка. В обзоре остаётся подсказка перетаскивания, график нагрузки находится после длинной таблицы.",
+      "proposal": "Убрать паразитную прокрутку, показывать подсказки по режиму; нагрузку и сводку покрытия поднять перед таблицей. Компактная закреплённая панель периода и понятное выбранное занятие.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Компактные вкладки без вертикального скролла, закреплённый период, график перед таблицей покрытия, скрытие подсказки перетаскивания в обзоре; DnD и мобильное добавление проверены.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "registration",
+      "priority": 2,
+      "screens": [
+        "login",
+        "register",
+        "password-request",
+        "password-reset",
+        "verify"
+      ],
+      "observation": "Регистрация просит много данных до первого входа; основные кнопки используют более бледный вариант, чем на новых экранах.",
+      "proposal": "На первом шаге необходимые данные аккаунта/приглашение, заполнение профиля отдельным шагом; единый первичный стиль кнопок и видимые границы полей.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Аккаунт и профиль разделены на два шага; необязательные сведения свёрнуты. Обязательные поля и серверные ограничения сохранены, есть вариант без JavaScript.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    },
+    {
+      "id": "settings",
+      "priority": 3,
+      "screens": [
+        "settings-ai",
+        "settings-store",
+        "settings-telegram",
+        "room-debug"
+      ],
+      "observation": "Настройки используют другой вариант вкладок и шапок; расширенные параметры постоянно конкурируют с основными.",
+      "proposal": "Общая навигация настроек, базовые параметры выше, дополнительные по раскрытию, одинаковое сохранение. Диагностические цвета слоёв редактора комнаты сохранять по их техническому смыслу.",
+      "implementation": {
+        "status": "implemented",
+        "result": "Общие заголовки и вкладки, единое сохранение, дополнительные настройки операций раскрываются отдельно; диагностические наложения редактора комнаты сохранены.",
+        "verification": "docs/ux/ui-verification-2026-11-11.json"
+      }
+    }
+  ],
+  "implementation": {
+    "date": "2026-11-11",
+    "findingsResolved": 17,
+    "verification": "docs/ux/ui-verification-2026-11-11.json",
+    "screenshots": "output/playwright/ui-implementation/",
+    "note": "Исходные наблюдения и их снимки выше сохранены как история аудита; актуальные результаты вынесены в отдельный файл проверки."
+  }
+}

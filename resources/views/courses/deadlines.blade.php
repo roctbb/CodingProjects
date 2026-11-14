@@ -3,18 +3,26 @@
 @section('title', 'Дедлайны — '.$course->name)
 
 @section('content')
-    <div class="container-fluid px-0">
-        <div class="gc-card gc-page-header mb-4">
+    @php
+        $pendingCount = $deadlines->where('is_done', false)->count();
+        $pastCount = $deadlines->where('is_overdue', true)->count();
+        $filters = $isManager
+            ? ['all' => ['Все', $deadlines->count()], 'upcoming' => ['Предстоящие', $deadlines->count() - $pastCount], 'overdue' => ['Срок прошёл', $pastCount]]
+            : ['all' => ['Все', $deadlines->count()], 'pending' => ['К выполнению', $pendingCount], 'overdue' => ['Просрочено', $pastCount], 'done' => ['Выполнено', $deadlines->count() - $pendingCount]];
+        $states = [
+            'done' => ['Выполнено', 'fa-check-circle'],
+            'overdue' => [$isManager ? 'Срок прошёл' : 'Просрочено', 'fa-clock'],
+            'today' => ['Сегодня', 'fa-clock'],
+            'soon' => ['Скоро', 'fa-clock'],
+            'upcoming' => ['Предстоит', 'fa-calendar'],
+        ];
+    @endphp
+    <div class="container-fluid px-0" data-deadline-workspace>
+        <x-gc-course-header :course="$course" active="deadlines" />
+        <div class="gc-course-section-heading">
             <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="fas fa-chevron-left" aria-hidden="true"></i> К курсу</a>
                 <h2 class="mb-1">Дедлайны</h2>
-                <p class="text-muted mb-0">{{ $course->name }} · Все главы</p>
-            </div>
-            <div class="d-flex flex-wrap gap-2">
-                <span class="badge rounded-pill bg-body-tertiary">Всего: {{ $deadlines->count() }}</span>
-                @if ($deadlines->where('is_overdue', true)->count())
-                    <span class="badge rounded-pill bg-danger-subtle text-danger">Просрочено: {{ $deadlines->where('is_overdue', true)->count() }}</span>
-                @endif
+                <p class="text-muted small mb-0">Сроки задач из всех доступных глав</p>
             </div>
         </div>
 
@@ -25,60 +33,73 @@
                 <p class="mx-auto mb-0">Здесь появятся сроки задач из доступных вам уроков курса.</p>
             </div>
         @else
-            <nav class="d-flex flex-wrap gap-2 mb-4" aria-label="Перейти к месяцу">
-                @foreach ($deadlineMonths as $monthKey => $days)
-                    <a class="btn btn-outline-secondary btn-sm rounded-pill" href="#month-{{ $monthKey }}">
-                        {{ $days->first()->first()->expiration->copy()->locale('ru')->translatedFormat('F Y') }}
-                    </a>
-                @endforeach
-            </nav>
+            <div class="gc-deadline-tools">
+                <label class="input-group gc-search-box gc-deadline-search">
+                    <span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span>
+                    <input class="form-control" type="search" placeholder="Найти задачу, ступень или урок" aria-label="Поиск по дедлайнам" data-deadline-search>
+                </label>
+                <span class="gc-help-text" role="status" data-deadline-count>Показано {{ $deadlines->count() }} из {{ $deadlines->count() }}</span>
+                <div class="gc-deadline-filters" role="group" aria-label="Состояние задач">
+                    @foreach ($filters as $key => [$label, $count])
+                        <button class="gc-filter-toggle" type="button" data-deadline-filter="{{ $key }}" aria-pressed="{{ $key === 'all' ? 'true' : 'false' }}">{{ $label }} <span class="gc-help-text">{{ $count }}</span></button>
+                    @endforeach
+                </div>
+            </div>
+
+            @if ($deadlineMonths->count() > 1)
+                <nav class="d-flex flex-wrap gap-2 mb-3" aria-label="Перейти к месяцу" data-deadline-month-links>
+                    @foreach ($deadlineMonths as $monthKey => $days)
+                        <a class="btn btn-outline-secondary btn-sm" href="#month-{{ $monthKey }}" data-deadline-month-link="{{ $monthKey }}">{{ $days->first()->first()->expiration->copy()->locale('ru')->translatedFormat('F Y') }}</a>
+                    @endforeach
+                </nav>
+            @endif
 
             @foreach ($deadlineMonths as $monthKey => $days)
-                <section class="mb-5" aria-labelledby="month-{{ $monthKey }}">
-                    <h3 class="h4 mb-3 text-capitalize" id="month-{{ $monthKey }}">
-                        {{ $days->first()->first()->expiration->copy()->locale('ru')->translatedFormat('F Y') }}
-                    </h3>
-                    <div class="d-flex flex-column gap-3">
+                <section class="gc-deadline-month" aria-labelledby="month-{{ $monthKey }}" data-deadline-month="{{ $monthKey }}">
+                    <h3 class="h6 mb-3 text-capitalize @if ($deadlineMonths->count() === 1) visually-hidden @endif" id="month-{{ $monthKey }}">{{ $days->first()->first()->expiration->copy()->locale('ru')->translatedFormat('F Y') }}</h3>
+                    <div class="d-grid gap-3">
                         @foreach ($days as $dateKey => $dayDeadlines)
-                            @php($date = $dayDeadlines->first()->expiration->copy()->locale('ru'))
-                            <section class="gc-card p-3 p-md-4" aria-labelledby="day-{{ $dateKey }}">
-                                <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-                                    <h4 class="h6 mb-0" id="day-{{ $dateKey }}">
-                                        <time datetime="{{ $dateKey }}">{{ $date->translatedFormat('j F, l') }}</time>
-                                    </h4>
-                                    <span class="badge rounded-pill bg-body-tertiary">{{ $dayDeadlines->count() }}</span>
+                            @php
+                                $date = $dayDeadlines->first()->expiration->copy()->locale('ru');
+                                $lessonGroups = $dayDeadlines->groupBy(fn ($deadline) => $deadline->task->step->lesson->id);
+                            @endphp
+                            <section class="gc-card gc-deadline-day" aria-labelledby="day-{{ $dateKey }}" data-deadline-day>
+                                <header class="gc-deadline-day__heading">
+                                    <h4 class="h6 mb-0" id="day-{{ $dateKey }}"><time datetime="{{ $dateKey }}">{{ $date->translatedFormat('j F, l') }}</time></h4>
+                                    <span class="gc-meta-label" data-deadline-day-count>{{ $dayDeadlines->count() }}</span>
+                                </header>
+                                <div class="gc-deadline-day__lessons">
+                                @foreach ($lessonGroups as $lessonDeadlines)
+                                    <div class="gc-deadline-lesson" data-deadline-lesson>
+                                        <h5 class="gc-deadline-lesson__title">{{ $lessonDeadlines->first()->task->step->lesson->name }}</h5>
+                                        <ul class="list-unstyled mb-0">
+                                            @foreach ($lessonDeadlines as $deadline)
+                                                @php
+                                                    $state = $deadline->is_done ? 'done' : ($deadline->is_overdue ? 'overdue' : ($deadline->is_today ? 'today' : ($deadline->is_soon ? 'soon' : 'upcoming')));
+                                                    [$stateLabel, $stateIcon] = $states[$state];
+                                                @endphp
+                                                <li data-deadline-row data-deadline-state="{{ $state }}" data-deadline-search-text="{{ $deadline->task->name.' '.$deadline->task->step->name.' '.$deadline->task->step->lesson->name }}">
+                                                    <a class="gc-deadline-task" href="{{ url('/insider/courses/'.$course->id.'/steps/'.$deadline->task->step->id.'#task'.$deadline->task_id) }}">
+                                                        <span class="gc-deadline-task__body"><strong>{{ $deadline->task->name }}</strong><small>{{ $deadline->task->step->name }}</small></span>
+                                                        <span class="gc-deadline-task__state gc-deadline-task__state--{{ $state }}"><i class="fas {{ $stateIcon }}" aria-hidden="true"></i>{{ $stateLabel }}</span>
+                                                    </a>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endforeach
                                 </div>
-                                <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
-                                    @foreach ($dayDeadlines as $deadline)
-                                        <li>
-                                            <a class="course-deadline-item d-flex flex-wrap justify-content-between gap-3 p-3 @if ($deadline->is_overdue) is-overdue @elseif ($deadline->is_soon) is-soon @endif"
-                                               href="{{ url('/insider/courses/'.$course->id.'/steps/'.$deadline->task->step->id.'#task'.$deadline->task_id) }}">
-                                                <span class="course-deadline-body min-width-0 text-break">
-                                                    <strong>{{ $deadline->task->name }}</strong>
-                                                    <small class="text-muted">{{ $deadline->task->step->lesson->name }} · {{ $deadline->task->step->name }}</small>
-                                                </span>
-                                                <span class="course-deadline-state @if ($deadline->is_done) bg-success-subtle text-success @endif">
-                                                    @if ($deadline->is_done)
-                                                        Выполнено
-                                                    @elseif ($deadline->is_overdue)
-                                                        Просрочено
-                                                    @elseif ($deadline->is_today)
-                                                        Сегодня
-                                                    @elseif ($deadline->is_soon)
-                                                        Скоро
-                                                    @else
-                                                        Предстоит
-                                                    @endif
-                                                </span>
-                                            </a>
-                                        </li>
-                                    @endforeach
-                                </ul>
                             </section>
                         @endforeach
                     </div>
                 </section>
             @endforeach
+            <div class="gc-empty-state" data-deadline-empty hidden>
+                <div class="gc-empty-icon"><i class="fas fa-search" aria-hidden="true"></i></div>
+                <h3 class="h6">Задачи не найдены</h3>
+                <p>Попробуйте другое название или измените фильтр.</p>
+                <button class="btn btn-outline-secondary btn-sm" type="button" data-deadline-reset>Сбросить поиск и фильтр</button>
+            </div>
         @endif
     </div>
 @endsection

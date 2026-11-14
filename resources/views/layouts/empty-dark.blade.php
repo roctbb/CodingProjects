@@ -9,7 +9,7 @@
 	    @include('layouts.partials.npm-vendor-assets')
 	    @yield('head')
 </head>
-<body class="auth-shell">
+<body class="auth-shell @yield('auth-shell-class')">
 
 @hasSection('auth-background-image')
     <div class="auth-shell-background" data-background-image="@yield('auth-background-image')"></div>
@@ -23,7 +23,7 @@
     </div>
 </main>
 
-{!! \NoCaptcha::renderJs() !!}
+@stack('captcha')
 @include('layouts.partials.common-footer-scripts')
 @include('layouts.partials.yandex-metrika')
 

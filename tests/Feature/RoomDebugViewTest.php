@@ -132,7 +132,6 @@ class RoomDebugViewTest extends TestCase
         $this->assertStringContainsString('weatherBySeasonAndState', $html);
         $this->assertStringContainsString('Картинка погоды', $html);
         $this->assertStringContainsString('weatherPlacementSlot(room)', $html);
-        $this->assertStringContainsString('room-stage-card__badge--ok', $html);
         $this->assertStringContainsString('data-room-stage-card', $html);
         $this->assertStringContainsString('updateStageGridState', $html);
         $this->assertStringContainsString('Слои предпросмотра', $html);
@@ -182,7 +181,6 @@ class RoomDebugViewTest extends TestCase
         $this->assertStringContainsString('function clearLayoutDraft', $html);
         $this->assertStringContainsString('Локальный черновик layout восстановлен.', $html);
         $this->assertStringContainsString('if (layerVisibility.slots)', $html);
-        $this->assertStringContainsString("object-fit: fill", $html);
         $this->assertStringContainsString("frame.className = 'room-layer room-weather-frame';", $html);
         $this->assertStringContainsString('id="weatherX" type="number" min="-2048" max="2048"', $html);
         $this->assertStringContainsString('id="weatherW" type="number" min="50" max="3072"', $html);

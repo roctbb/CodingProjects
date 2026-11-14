@@ -5,21 +5,11 @@
 @section('auth-background-image', url('/images/bg/'.random_int(1,16).'.jpg'))
 
 @section('content')
-    <div class="text-center text-white mb-3">
-        <a href="{{ url('/') }}" class="auth-brand d-inline-flex align-items-center gap-2 text-decoration-none text-white">
-            <x-brand-logo width="28" height="28" alt="" />
-            <span class="fs-5 fw-medium">{{ config('app.name', 'Laravel') }}</span>
-        </a>
-    </div>
-
-    <form method="POST" action="{{ url('/login') }}" class="auth-card p-4">
+    <form method="POST" action="{{ url('/login') }}" class="auth-card gc-auth-card">
         @csrf
-        <div class="d-flex align-items-center gap-3 mb-4">
-            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-terminal"></i></span>
-            <div class="min-width-0">
-                <h1 class="h4 fw-medium mb-0">Вход</h1>
-            </div>
-        </div>
+        <a href="{{ url('/') }}" class="gc-auth-brand"><x-brand-logo width="26" height="26" alt="" /><span>{{ config('app.name', 'Laravel') }}</span></a>
+        <h1 class="gc-auth-title">Войти в аккаунт</h1>
+        <p class="gc-help-text gc-auth-description">Продолжим работу над проектами.</p>
 
         @if (session('oidc_error'))
             <div class="alert alert-danger rounded-3 small" role="alert">{{ session('oidc_error') }}</div>
@@ -28,21 +18,23 @@
             <div class="alert alert-success rounded-3 small" role="status">{{ session('oidc_status') }}</div>
         @endif
 
-        <div class="form-floating mb-3">
+        <div class="mb-3">
+            <label for="inputEmail" class="form-label">Email</label>
             <input type="email" name="email" id="inputEmail" class="form-control rounded-3"
-                   placeholder="you@example.com" value="{{ old('email') }}" autocomplete="email" required autofocus>
-            <label for="inputEmail">Email</label>
+                   placeholder="you@example.com" value="{{ old('email') }}" autocomplete="email" required autofocus @error('email') aria-invalid="true" aria-describedby="login-email-error" @enderror>
             @error('email')
-                <div class="text-danger small mt-1">{{ $message }}</div>
+                <div class="text-danger small mt-1" id="login-email-error" role="alert">{{ $message }}</div>
             @enderror
         </div>
 
-        <div class="form-floating mb-3">
-            <input type="password" name="password" id="inputPassword" class="form-control rounded-3"
-                   placeholder="Введите пароль" autocomplete="current-password" required>
-            <label for="inputPassword">Пароль</label>
+        <div class="mb-3">
+            <label for="inputPassword" class="form-label">Пароль</label>
+            <div class="gc-password-control">
+                <input type="password" name="password" id="inputPassword" class="form-control rounded-3" autocomplete="current-password" required @error('password') aria-invalid="true" aria-describedby="login-password-error" @enderror>
+                <button type="button" class="gc-password-toggle" data-password-target="inputPassword" aria-label="Показать пароль" aria-pressed="false"><i class="far fa-eye" aria-hidden="true"></i></button>
+            </div>
             @error('password')
-                <div class="text-danger small mt-1">{{ $message }}</div>
+                <div class="text-danger small mt-1" id="login-password-error" role="alert">{{ $message }}</div>
             @enderror
         </div>
 
@@ -54,22 +46,17 @@
             <a href="{{ url('/password/reset') }}" class="small text-decoration-none">Забыли пароль?</a>
         </div>
 
-        <button class="btn btn-success rounded-3 fw-medium w-100 py-2 mb-3" type="submit">Войти</button>
+        <button class="btn btn-primary w-100" type="submit">Войти <i class="fas fa-arrow-right ms-2" aria-hidden="true"></i></button>
 
         @if (config('services.silaeder_oidc.enabled'))
-            <div class="d-flex align-items-center gap-2 text-muted small mb-3" aria-hidden="true">
-                <span class="border-top flex-grow-1"></span>
-                <span>или</span>
-                <span class="border-top flex-grow-1"></span>
-            </div>
-            <a class="btn silaeder-login-button rounded-3 fw-medium w-100 py-2 mb-3 d-flex align-items-center justify-content-center gap-2"
+            <a class="btn btn-outline-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-2"
                href="{{ route('silaeder.login') }}">
                 <img class="silaeder-login-button__logo" src="{{ asset('images/silaeder-logo.png') }}" alt="">
                 <span>Войти через ЛК Силаэдра</span>
             </a>
         @endif
 
-        <div class="border-top pt-3 text-center small text-muted">
+        <div class="gc-auth-footer small text-muted">
             Нет аккаунта?
             <a href="{{ url('/register') }}" class="text-decoration-none fw-medium">Зарегистрироваться</a>
         </div>

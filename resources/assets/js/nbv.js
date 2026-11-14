@@ -91,7 +91,7 @@ var nbv = (function() {
         }
 
         if (st.nbformat > 3) {
-            st.lang = (obj.metadata.kernelspec || {'language': null}).language;
+            st.lang = obj.metadata?.kernelspec?.language || obj.metadata?.language_info?.name || 'text';
         }
 
         // wipe all inner elements of our target
@@ -99,10 +99,7 @@ var nbv = (function() {
             target.removeChild(target.firstChild);
         }
         var t = d.createElement('div');
-        t.setAttribute('style', [
-            'padding: 1.5em 1.5em 1.5em 7em',
-            'background-color: white',
-        ].join(';'));
+        t.className = 'gc-notebook';
         target.appendChild(t);
         st.target = t;
 
@@ -120,7 +117,7 @@ var nbv = (function() {
             var tc = cells[j];
 
             var cell = d.createElement('div');
-            cell.setAttribute('style', 'padding-bottom: .5em;');
+            cell.className = 'gc-notebook__cell';
 
             var dm = d.createElement('div'); // empty div as a fallback
 
@@ -157,16 +154,7 @@ var nbv = (function() {
 
     function excount(cell, tin) {
         var cc = d.createElement('span');
-        cc.setAttribute('style', [
-            'display: block',
-            'position: absolute',
-            'top: ' + (tin ? '5px' : '0 !important'),
-            'left: -7.5em',
-            'width: 7em',
-            'font-family: monospace',
-            'text-align: right',
-            'color: ' + (tin ? '#303fba' : '#de4815')
-        ].join(';'));
+        cc.className = 'gc-notebook__prompt' + (tin ? '' : ' gc-notebook__prompt--output');
         cc.textContent = (tin ? 'In': 'Out') + ' [' +
             ((!cell.execution_count && !cell.prompt_number) ? ' ' :
                 (cell.execution_count || cell.prompt_number)) + ']:';
@@ -176,25 +164,16 @@ var nbv = (function() {
     // receives cell, outputs DOM
     function handle_code(cell) {
         var el = d.createElement('div'); // container for it all
-        el.style.position = 'relative'; // for excount positioning
+        el.className = 'gc-notebook__code';
 
         el.appendChild(excount(cell, true));
 
         var pre = d.createElement('pre');
-        // because code may also be within markdown:
-        pre.setAttribute('style', [
-            'background: #f7f7f7',
-            'border: 1px solid #cfcfcf',
-            'padding: .4em',
-            'margin-bottom: 0',
-            'margin-top: 0',
-            'border-radius: 2px',
-            'min-height: .85em'
-        ].join(';'));
+        pre.className = 'gc-notebook__input';
         var code = d.createElement('code');
 
         // if (st.hasOwnProperty('lang'))
-        code.setAttribute('class', 'language-' + st.lang || cell.language);
+        code.setAttribute('class', 'language-' + (st.lang || cell.language || 'text'));
 
         // no need to join on '\n' - newlines are in the code already
         // .source for v4, .input for v3
@@ -207,11 +186,11 @@ var nbv = (function() {
 
         // outputs now
         var outp = d.createElement('div');
-        outp.style.margin = '1em 0 .5em 0';
+        outp.className = 'gc-notebook__outputs';
 
         for (var j=0; j < cell.outputs.length; j++) {
             var dm = d.createElement('div'); // wrapper
-            dm.style.position = 'relative'; // for excount positioning
+            dm.className = 'gc-notebook__output';
             var dt = cell.outputs[j];
             if (dt.output_type == 'execute_result')
                 dm.appendChild(excount(dt, false));

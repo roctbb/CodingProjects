@@ -1,0 +1,41 @@
+flowchart TB
+  reviews["Очередь проверки"]
+  review["Проверка решений ученика"]
+  achievement_preview["Предпросмотр достижения"]
+  report["Отчёт по курсу"]
+  assessments["Журнал опыта"]
+  blocked["Заблокированные задачи"]
+  review_tools["Оценка, комментарий, пропуск и блокировка"]
+  achievement_choice["Выбор идеи достижения"]
+  report_student_picker(["Выбор ученика в отчёте"])
+  step["Ступень"]
+  profile["Профиль"]
+  profile_achievements["Достижения и просмотр кубка"]
+  course["Страница курса"]
+  planner["План занятий"]
+  deadlines["Дедлайны курса"]
+  review -->|"Оценка, комментарий, пропуск и блокировка"| review_tools
+  review -->|"К задаче"| step
+  review -->|"Профиль ученика"| profile
+  reviews -->|"Открыть попытку"| review
+  report -->|"Открыть задачу ученика"| review
+  assessments -->|"Выбрать ячейку"| review
+  blocked -->|"Открыть блокировку"| review
+  blocked -->|"Профиль ученика"| profile
+  review -->|"Создать достижение"| achievement_preview
+  achievement_preview -->|"Опубликовать"| profile_achievements
+  achievement_preview -->|"Вернуться"| review
+  achievement_preview -->|"Выбрать идею и заполнить форму"| achievement_choice
+  review -->|"Следующее решение этого курса"| review
+  review -->|"Очередь курса"| reviews
+  report -->|"Решения на проверке в этом курсе"| reviews
+  assessments -->|"Программа · общая навигация курса"| course
+  assessments -->|"План занятий · общая навигация курса"| planner
+  assessments -->|"Отчёт · общая навигация курса"| report
+  assessments -->|"Дедлайны · общая навигация курса"| deadlines
+  report -->|"Программа · общая навигация курса"| course
+  report -->|"План занятий · общая навигация курса"| planner
+  report -->|"Журнал · общая навигация курса"| assessments
+  report -->|"Дедлайны · общая навигация курса"| deadlines
+  report -->|"Выбрать ученика на телефоне"| report_student_picker
+  report_student_picker -.->|"Выбор / закрытие"| report

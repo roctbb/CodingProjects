@@ -1,0 +1,99 @@
+flowchart TB
+  courses["Мои курсы"]
+  course["Страница курса"]
+  deadlines["Дедлайны курса"]
+  step["Ступень"]
+  pulse["Пульс"]
+  course_tabs["Активные / черновики / архив"]
+  join_course["Код приглашения / запись на курс"]
+  course_chapter["Глава и список уроков"]
+  lesson_stats["Статистика урока"]
+  lesson_deadline(["Дедлайн всего урока"])
+  early_access["Ранний доступ к уроку"]
+  step_theory["Теория / оглавление / Notebook"]
+  step_task["Задача: текст, код или квиз"]
+  task_solutions["Попытки и обратная связь"]
+  student_progress["Прогресс учеников и поиск"]
+  task_deadline(["Дедлайн задачи"])
+  task_summary(["ИИ-пересказ решений"])
+  solution_options["Повторная проверка, штраф и бустер"]
+  reading_outline["Оглавление конспекта"]
+  course_current_lesson["Текущий урок курса"]
+  chapter_tasks["Задачи главы ученика"]
+  task_create["Создание задания"]
+  course_create["Создание курса"]
+  course_edit["Настройки курса"]
+  chapter_create["Добавление главы"]
+  chapter_edit["Редактирование главы"]
+  lesson_create["Добавление урока"]
+  lesson_edit["Редактирование урока"]
+  planner["План занятий"]
+  report["Отчёт по курсу"]
+  assessments["Журнал опыта"]
+  blocked["Заблокированные задачи"]
+  profile["Профиль"]
+  step_edit["Редактирование ступени"]
+  step_create["Добавление ступени"]
+  task_edit["Редактирование задачи"]
+  perform["Режим показа"]
+  review["Проверка решений ученика"]
+  profile_achievements["Достижения и просмотр кубка"]
+  geekpaste["GeekPaste"]
+  courses -->|"Активные / черновики / архив"| course_tabs
+  courses -->|"Код приглашения / запись на курс"| join_course
+  course -->|"Глава и список уроков"| course_chapter
+  course -->|"Статистика урока"| lesson_stats
+  course -->|"Дедлайн всего урока"| lesson_deadline
+  lesson_deadline -.->|"Закрыть / отменить"| course
+  course -->|"Ранний доступ к уроку"| early_access
+  step -->|"Теория / оглавление / Notebook"| step_theory
+  step -->|"Задача: текст, код или квиз"| step_task
+  step -->|"Попытки и обратная связь"| task_solutions
+  step -->|"Прогресс учеников и поиск"| student_progress
+  step -->|"Создать задание"| task_create
+  step -->|"Дедлайн задачи"| task_deadline
+  task_deadline -.->|"Закрыть / отменить"| step
+  step -->|"ИИ-пересказ решений"| task_summary
+  task_summary -.->|"Закрыть / отменить"| step
+  step -->|"Повторная проверка, штраф и бустер"| solution_options
+  courses -->|"Открыть курс"| course
+  courses -->|"Создать курс"| course_create
+  join_course -->|"Запись в открытый курс"| course
+  course -->|"Дедлайны · общая навигация курса"| deadlines
+  deadlines -->|"Открыть задачу"| step
+  course -->|"Открыть ступень"| step
+  course -->|"Изменить курс"| course_edit
+  course -->|"Добавить главу"| chapter_create
+  course -->|"Изменить главу"| chapter_edit
+  course -->|"Добавить урок"| lesson_create
+  course -->|"Изменить урок"| lesson_edit
+  course -->|"План занятий · общая навигация курса"| planner
+  course -->|"Отчёт · общая навигация курса"| report
+  course -->|"Журнал · общая навигация курса"| assessments
+  course -->|"Блокировки"| blocked
+  course -->|"Ученик / преподаватель"| profile
+  step -->|"К курсу"| course
+  step -->|"Соседняя ступень"| step
+  step -->|"Изменить ступень"| step_edit
+  step -->|"Новый этап"| step_create
+  step -->|"Изменить задачу"| task_edit
+  step -->|"Режим показа"| perform
+  student_progress -->|"Выбрать ученика"| review
+  pulse -->|"Событие урока"| course
+  pulse -->|"Событие решения: преподаватель"| review
+  pulse -->|"Событие достижения"| profile_achievements
+  step_task -->|"Написать / проверить код"| geekpaste
+  step_task -->|"Отправить решение"| task_solutions
+  task_solutions -->|"Действия с попыткой"| solution_options
+  join_course -->|"Код приглашения принят: вернуться к списку"| courses
+  deadlines -->|"Программа · общая навигация курса"| course
+  deadlines -->|"План занятий · общая навигация курса"| planner
+  deadlines -->|"Журнал · общая навигация курса"| assessments
+  deadlines -->|"Отчёт · общая навигация курса"| report
+  step -->|"Оглавление конспекта"| reading_outline
+  course -->|"Продолжить обучение"| step
+  courses -->|"Пульс в шапке"| pulse
+  course -->|"Выбрать текущий урок в меню карточки"| course_current_lesson
+  course_current_lesson -.->|"Сохранить или сбросить общий текущий урок"| course
+  course -->|"Задачи главы"| chapter_tasks
+  chapter_tasks -->|"Открыть задание"| step

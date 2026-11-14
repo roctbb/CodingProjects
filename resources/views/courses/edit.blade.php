@@ -1,269 +1,63 @@
 @extends('layouts.left-menu')
-
-@section('title')
-    Изменение курса "{{$course->name}}"
-@endsection
-
+@section('title', 'Настройки курса')
 @section('content')
-    @php
-        $selectedCategoryIds = collect(old('categories', $course->categories->pluck('id')->all()))->map(fn ($id) => (int) $id);
-        $selectedTeacherIds = collect(old('teachers', $course->teachers->pluck('id')->all()))->map(fn ($id) => (int) $id);
-        $selectedStudentIds = collect(old('students', $course->students->pluck('id')->all()))->map(fn ($id) => (int) $id);
-        $hiddenTeacherIds = collect(old('hidden_teachers', $course->teachers->filter(fn ($teacher) => $teacher->pivot && $teacher->pivot->hidden_from_stats)->pluck('id')->all()))->map(fn ($id) => (int) $id);
-        $hiddenStudentIds = collect(old('hidden_students', $course->students->filter(fn ($student) => $student->pivot && $student->pivot->hidden_from_stats)->pluck('id')->all()))->map(fn ($id) => (int) $id);
-        $courseStartDate = $course->start_date ? $course->start_date->format('Y-m-d') : '';
-        $coursePosterUrl = $course->learningAvatarPosterUrl();
-        $programPosterGeneratedAt = optional($course->program)->learning_avatar_poster_generated_at;
-    @endphp
-
-    <div class="container-xl px-0">
-        <div class="gc-card gc-page-header mb-3">
-            <div class="min-width-0">
-                <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="fas fa-chevron-left"></i> К курсу</a>
-                <h2 class="mb-1 text-truncate">Настройки курса</h2>
-                <p class="mb-0 text-muted text-truncate">{{ $course->name }}</p>
-            </div>
-            <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
-                <span class="badge course-status-pill course-status-pill--primary">{{ $course->state }}</span>
-                @if($course->mode)
-                    <span class="badge course-status-pill course-status-pill--muted">{{ $course->mode }}</span>
-                @endif
-            </div>
-        </div>
-
-        <div class="gc-card overflow-hidden">
-            <form method="POST" enctype="multipart/form-data">
-                {{ csrf_field() }}
-
-                <div class="p-3 p-md-4">
-                    <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-                        <div>
-                            <h5 class="mb-1">Основное</h5>
-                            <p class="mb-0 text-muted small">Название, описание и публичные ссылки курса.</p>
-                        </div>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                            <label for="name" class="form-label">Название</label>
-                            <input id="name" type="text" class="form-control rounded-3" name="name" value="{{ old('name', $course->name) }}" maxlength="255" required>
-                            @error('name')
-                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
-                            @enderror
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label for="site" class="form-label">Ссылка на описание курса</label>
-                            <input id="site" type="text" class="form-control rounded-3" name="site" value="{{ old('site', $course->site) }}" maxlength="255">
-                            @error('site')
-                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
-                            @enderror
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label for="image" class="form-label">Ссылка на обложку</label>
-                            <input id="image" type="text" class="form-control rounded-3" name="image" value="{{ old('image', $course->image) }}" maxlength="255">
-                            @error('image')
-                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
-                            @enderror
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label for="git" class="form-label">Git репозиторий</label>
-                            <input id="git" type="text" class="form-control rounded-3" name="git" value="{{ old('git', $course->git) }}" maxlength="255">
-                            @error('git')
-                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
-                            @enderror
-                        </div>
-
-                        <div class="col-12">
-                            <label for="description" class="form-label">Описание</label>
-                            <textarea id="description" class="form-control rounded-3" name="description" rows="5" maxlength="1024" required>{{ old('description', $course->description) }}</textarea>
-                            @error('description')
-                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
-                            @enderror
-                        </div>
-
-                        <div class="col-12">
-                            <div class="border rounded-3 p-3 bg-body-tertiary">
-                                <div class="d-flex flex-column flex-lg-row gap-3 align-items-start">
-                                    <div class="flex-shrink-0">
-                                        <img
-                                            src="{{ $coursePosterUrl ?: url('/images/avatar-layers/room-system/posters/default.png') }}"
-                                            alt="Плакат курса"
-                                            class="rounded-3 border bg-white"
-                                            style="width: 120px; aspect-ratio: 3 / 4; object-fit: cover;"
-                                        >
-                                    </div>
-                                    <div class="flex-grow-1 min-width-0">
-                                        <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
-                                            <div>
-                                                <h6 class="mb-1">Плакат программы для комнаты ученика</h6>
-                                                <p class="mb-2 text-muted small">
-                                                    GPT-прокси соберет постер по названию и описанию программы. Он генерируется один раз и переиспользуется во всех курсах этой программы; иначе останется стандартный.
-                                                </p>
-                                                @if($programPosterGeneratedAt)
-                                                    <p class="mb-0 text-muted small">Обновлен: {{ $programPosterGeneratedAt->format('d.m.Y H:i') }}</p>
-                                                @endif
-                                            </div>
-                                            <button type="submit" form="course-poster-form" class="btn btn-outline-primary rounded-3 fw-medium align-self-start">
-                                                {{ $programPosterGeneratedAt ? 'Обновить плакат' : 'Сгенерировать плакат' }}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                @if (Auth::user()->role=='admin')
-                    <div class="border-top p-3 p-md-4">
-                        <div class="mb-3">
-                            <h5 class="mb-1">Доступ и команда</h5>
-                            <p class="mb-0 text-muted small">Тип курса, направления и преподаватели.</p>
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-12 col-md-6">
-                                <label for="mode" class="form-label">Тип курса</label>
-                                <select class="form-select rounded-3" id="mode" name="mode">
-                                    <option value="private" @selected(old('mode', $course->mode) == 'private')>Скрытый</option>
-                                    <option value="offline" @selected(old('mode', $course->mode) == 'offline')>Офлайн</option>
-                                    <option value="zoom" @selected(old('mode', $course->mode) == 'zoom')>Платный онлайн курс</option>
-                                    <option value="paid" @selected(old('mode', $course->mode) == 'paid')>Платный онлайн курс без преподавателя</option>
-                                    <option value="open" @selected(old('mode', $course->mode) == 'open')>Бесплатный онлайн курс</option>
-                                </select>
-                            </div>
-
-                            <div class="col-12 col-md-6">
-                                <label for="invite" class="form-label">Инвайт</label>
-                                <input id="invite" type="text" class="form-control rounded-3" name="invite" value="{{ old('invite', $course->invite) }}" maxlength="253">
-                                @error('invite')
-                                    <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
-                                @enderror
-                            </div>
-
-                            <div class="col-12">
-                                <label for="categories" class="form-label d-flex align-items-center justify-content-between gap-2">
-                                    <span>Образовательные направления</span>
-                                    <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="categories-selected-count">{{ $selectedCategoryIds->count() }} выбрано</span>
-                                </label>
-                                <select class="form-select rounded-3" id="categories" name="categories[]" multiple data-selected-count="#categories-selected-count" data-enhanced-multiselect data-placeholder="Выберите направления" data-search-placeholder="Найти направление">
-                                    @foreach ($categories as $category)
-                                        <option value="{{ $category->id }}" @selected($selectedCategoryIds->contains($category->id))>{{ $category->title }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-12">
-                                <label for="teachers" class="form-label d-flex align-items-center justify-content-between gap-2">
-                                    <span>Учителя</span>
-                                    <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="teachers-selected-count">{{ $selectedTeacherIds->count() }} выбрано</span>
-                                </label>
-                                <select class="form-select rounded-3" id="teachers" name="teachers[]" multiple data-selected-count="#teachers-selected-count" data-enhanced-multiselect data-placeholder="Выберите учителей" data-search-placeholder="Найти учителя">
-                                    @foreach ($teachers as $teacher)
-                                        <option value="{{ $teacher->id }}" @selected($selectedTeacherIds->contains($teacher->id))>{{ $teacher->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-12">
-                                <label for="hidden_teachers" class="form-label d-flex align-items-center justify-content-between gap-2">
-                                    <span>Скрыть преподавателей из статистики</span>
-                                    <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="hidden-teachers-selected-count">{{ $hiddenTeacherIds->count() }} выбрано</span>
-                                </label>
-                                <select class="form-select rounded-3" id="hidden_teachers" name="hidden_teachers[]" multiple data-selected-count="#hidden-teachers-selected-count" data-enhanced-multiselect data-placeholder="Выберите преподавателей" data-search-placeholder="Найти преподавателя">
-                                    @foreach ($teachers as $teacher)
-                                        <option value="{{ $teacher->id }}" @selected($hiddenTeacherIds->contains($teacher->id))>{{ $teacher->name }}</option>
-                                    @endforeach
-                                </select>
-                                <p class="text-muted small mb-0 mt-1">Они сохранят доступ к курсу и проверке, но не будут отображаться в статистических блоках.</p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
-                <div class="border-top p-3 p-md-4">
-                    <div class="mb-3">
-                        <h5 class="mb-1">Ученики и расписание</h5>
-                        <p class="mb-0 text-muted small">Состав группы, дни занятий и импорт материалов.</p>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label for="students" class="form-label d-flex align-items-center justify-content-between gap-2">
-                                <span>Ученики</span>
-                                <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="students-selected-count">{{ $selectedStudentIds->count() }} выбрано</span>
-                            </label>
-                            <select class="form-select rounded-3" id="students" name="students[]" multiple data-selected-count="#students-selected-count" data-enhanced-multiselect data-placeholder="Выберите учеников" data-search-placeholder="Найти ученика">
-                                @foreach ($students as $student)
-                                    <option value="{{ $student->id }}" @selected($selectedStudentIds->contains($student->id))>{{ $student->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-12">
-                            <label for="hidden_students" class="form-label d-flex align-items-center justify-content-between gap-2">
-                                <span>Скрыть учеников из статистики</span>
-                                <span class="badge rounded-pill bg-body-tertiary form-selected-count" id="hidden-students-selected-count">{{ $hiddenStudentIds->count() }} выбрано</span>
-                            </label>
-                            <select class="form-select rounded-3" id="hidden_students" name="hidden_students[]" multiple data-selected-count="#hidden-students-selected-count" data-enhanced-multiselect data-placeholder="Выберите учеников" data-search-placeholder="Найти ученика">
-                                @foreach ($students as $student)
-                                    <option value="{{ $student->id }}" @selected($hiddenStudentIds->contains($student->id))>{{ $student->name }}</option>
-                                @endforeach
-                            </select>
-                            <p class="text-muted small mb-0 mt-1">Скрытые ученики сохранят доступ к материалам, но не попадут в отчет, журнал опыта, лидерборд и экспорт баллов.</p>
-                        </div>
-
-                        @if ($course->state == 'draft')
-                            <div class="col-12 col-md-6">
-                                <label for="start_date" class="form-label">Дата начала</label>
-                                <input id="start_date" type="text" class="form-control rounded-3 date" value="{{ old('start_date', $courseStartDate) }}" name="start_date">
-                                @error('start_date')
-                                    <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
-                                @enderror
-                            </div>
-                        @endif
-
-                        <div class="col-12 col-md-6">
-                            <label for="weekdays" class="form-label">Дни недели</label>
-                            <input id="weekdays" type="text" class="form-control rounded-3" name="weekdays" value="{{ old('weekdays', $course->weekdays) }}" maxlength="255" placeholder="1;4">
-                            @error('weekdays')
-                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
-                            @enderror
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label for="telegram" class="form-label">Telegram чат</label>
-                            <input id="telegram" type="text" class="form-control rounded-3" name="telegram" value="{{ old('telegram', $course->telegram) }}" maxlength="255">
-                            @error('telegram')
-                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
-                            @enderror
-                        </div>
-
-                        <div class="col-12">
-                            <label for="import" class="form-label">Импорт</label>
-                            <input id="import" type="file" class="form-control rounded-3" name="import">
-                            @error('import')
-                                <span class="text-danger small d-block mt-1"><strong>{{ $message }}</strong></span>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gc-form-footer justify-content-end">
-                    <button type="submit" class="btn btn-success rounded-3 fw-medium px-4">Сохранить настройки</button>
-                </div>
-            </form>
-            <form id="course-poster-form"
-                  method="POST"
-                  action="{{ url('/insider/courses/'.$course->id.'/poster') }}"
-                  class="d-none"
-                  data-fullscreen-loading
-                  data-loading-message="Генерирую плакат программы">
-                {{ csrf_field() }}
-            </form>
-        </div>
-    </div>
+@php
+    $selectedIds = fn ($key, $defaults) => collect(session()->hasOldInput() ? old($key, []) : $defaults)->map(fn ($id) => (int)$id)->filter()->unique();
+    $selectedCategoryIds = $selectedIds('categories', $course->categories->pluck('id'));
+    $selectedTeacherIds = $selectedIds('teachers', $course->teachers->pluck('id'));
+    $selectedStudentIds = $selectedIds('students', $course->students->pluck('id'));
+    $hiddenTeacherIds = $selectedIds('hidden_teachers', $course->teachers->filter(fn ($teacher) => $teacher->pivot?->hidden_from_stats)->pluck('id'));
+    $hiddenStudentIds = $selectedIds('hidden_students', $course->students->filter(fn ($student) => $student->pivot?->hidden_from_stats)->pluck('id'));
+    $courseStartDate = $course->start_date?->format('Y-m-d') ?? '';
+@endphp
+<x-gc-authoring-page title="Настройки курса" :description="$course->name" :back="url('/insider/courses/'.$course->id)" back-label="К курсу" form="course-edit-form" submit="Сохранить курс">
+<form id="course-edit-form" method="POST" enctype="multipart/form-data" class="gc-card gc-form-sheet" data-authoring-form>
+@csrf
+<x-gc-form-section title="Основное">
+    <x-gc-field name="name" label="Название курса"><input id="name" name="name" class="form-control" value="{{ old('name', $course->name) }}" maxlength="255" required></x-gc-field>
+    <x-gc-field name="description" label="Описание курса"><textarea id="description" name="description" class="form-control" rows="4" maxlength="1024" required>{{ old('description', $course->description) }}</textarea></x-gc-field>
+    <x-gc-course-icon-picker :course="$course" />
+</x-gc-form-section>
+<x-gc-form-section title="Участники" description="Выбор участников сохраняется вместе с настройками курса.">
+    <x-gc-field name="students" label="Ученики"><select id="students" name="students[]" class="form-select" multiple data-enhanced-multiselect data-placeholder="Выберите учеников" data-search-placeholder="Найти ученика">@foreach($students as $student)<option value="{{ $student->id }}" @selected($selectedStudentIds->contains($student->id))>{{ $student->name }}</option>@endforeach</select></x-gc-field>
+    <x-gc-field name="hidden_students" label="Ученики, скрытые из статистики" hint="Доступ к материалам сохранится. Эти ученики не попадут в журнал, отчёт, рейтинг и экспорт баллов."><select id="hidden_students" name="hidden_students[]" class="form-select" multiple data-membership-source="#students" data-enhanced-multiselect data-placeholder="Никто не скрыт" data-search-placeholder="Найти ученика">@foreach($students as $student)<option value="{{ $student->id }}" @selected($hiddenStudentIds->contains($student->id))>{{ $student->name }}</option>@endforeach</select></x-gc-field>
+    @if(Auth::user()->role === 'admin')
+        <x-gc-field name="teachers" label="Преподаватели"><select id="teachers" name="teachers[]" class="form-select" multiple data-enhanced-multiselect data-placeholder="Выберите преподавателей" data-search-placeholder="Найти преподавателя">@foreach($teachers as $teacher)<option value="{{ $teacher->id }}" @selected($selectedTeacherIds->contains($teacher->id))>{{ $teacher->name }}</option>@endforeach</select></x-gc-field>
+        <x-gc-field name="hidden_teachers" label="Преподаватели, скрытые из статистики" hint="Сохраняют доступ к курсу и проверке."><select id="hidden_teachers" name="hidden_teachers[]" class="form-select" multiple data-membership-source="#teachers" data-enhanced-multiselect data-placeholder="Никто не скрыт" data-search-placeholder="Найти преподавателя">@foreach($teachers as $teacher)<option value="{{ $teacher->id }}" @selected($hiddenTeacherIds->contains($teacher->id))>{{ $teacher->name }}</option>@endforeach</select></x-gc-field>
+    @endif
+</x-gc-form-section>
+<x-gc-form-section title="Доступ и расписание">
+    @if(Auth::user()->role === 'admin')
+        <x-gc-field name="mode" label="Тип курса"><select id="mode" name="mode" class="form-select">@foreach(['private'=>'Скрытый', 'offline'=>'Офлайн', 'zoom'=>'Платный онлайн с преподавателем', 'paid'=>'Платный онлайн без преподавателя', 'open'=>'Бесплатный онлайн'] as $key=>$label)<option value="{{ $key }}" @selected(old('mode', $course->mode) === $key)>{{ $label }}</option>@endforeach</select></x-gc-field>
+        <x-gc-field name="invite" label="Код приглашения"><input id="invite" name="invite" class="form-control" value="{{ old('invite', $course->invite) }}" maxlength="253"></x-gc-field>
+    @else
+        <x-gc-field name="invite" label="Код приглашения"><input id="invite" class="form-control" value="{{ $course->invite }}" readonly></x-gc-field>
+    @endif
+    @if($course->state === 'draft')
+        <x-gc-field name="start_date" label="Дата начала"><input id="start_date" name="start_date" type="date" class="form-control" value="{{ old('start_date', $courseStartDate) }}"></x-gc-field>
+    @else
+        <input type="hidden" name="start_date" value="{{ $courseStartDate }}">
+    @endif
+    <x-gc-field name="weekdays" label="Дни занятий" hint="Краткая подпись, например «Пн, Чт». Сетка занятий настраивается в плане курса."><input id="weekdays" name="weekdays" class="form-control" value="{{ old('weekdays', $course->weekdays) }}" maxlength="255"></x-gc-field>
+    <a class="gc-text-action" href="{{ url('/insider/courses/'.$course->id.'/planner') }}">Открыть план занятий</a>
+</x-gc-form-section>
+<x-gc-form-section title="Ссылки">
+    @foreach(['site'=>'Описание курса на сайте', 'git'=>'Git-репозиторий', 'telegram'=>'Чат курса в Telegram', 'image'=>'Изображение курса'] as $key=>$label)
+        <x-gc-field :name="$key" :label="$label"><input id="{{ $key }}" name="{{ $key }}" class="form-control" value="{{ old($key, $course->$key) }}" maxlength="255" inputmode="url"></x-gc-field>
+    @endforeach
+</x-gc-form-section>
+@if(Auth::user()->role === 'admin')
+<x-gc-form-section title="Направления">
+    <x-gc-field name="categories" label="Образовательные направления"><select id="categories" name="categories[]" class="form-select" multiple data-enhanced-multiselect data-placeholder="Выберите направления" data-search-placeholder="Найти направление">@foreach($categories as $category)<option value="{{ $category->id }}" @selected($selectedCategoryIds->contains($category->id))>{{ $category->title }}</option>@endforeach</select></x-gc-field>
+</x-gc-form-section>
+@endif
+<x-gc-form-section title="Плакат программы" description="Общий плакат программы отображается в комнатах учеников.">
+    <div class="gc-form-media"><img src="{{ $course->learningAvatarPosterUrl() ?: url('/images/avatar-layers/room-system/posters/default.png') }}" alt="Плакат программы" class="gc-program-poster"><div class="gc-stack"><p class="gc-help-text mb-0">Плакат создаётся по сохранённому названию и описанию программы.</p><div><button type="submit" form="course-poster-form" class="btn btn-outline-secondary btn-sm">{{ $course->program?->learning_avatar_poster_generated_at ? 'Обновить плакат' : 'Создать плакат' }}</button></div></div></div>
+</x-gc-form-section>
+<x-gc-form-section title="Импорт материалов">
+    <x-gc-field name="import" label="Файл курса" hint="JSON-файл, экспортированный из системы. Импорт будет выполнен при сохранении."><input id="import" type="file" name="import" class="form-control" accept=".json,application/json"></x-gc-field>
+</x-gc-form-section>
+</form>
+<form id="course-poster-form" method="POST" action="{{ url('/insider/courses/'.$course->id.'/poster') }}" data-fullscreen-loading data-loading-message="Создаём плакат программы">@csrf</form>
+</x-gc-authoring-page>
 @endsection

@@ -57,6 +57,7 @@ class NewCoinTransaction extends Notification
         $comment = e(strip_tags($comment));
     
         $data = [
+            'coin_transaction_id' => $this->transaction->id,
             "text" => $this->text ?: "🏧 Вам начислено {$price} GC ({$comment})",
             "type" => $this->type ?: "success"
         ];

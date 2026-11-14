@@ -1,0 +1,22 @@
+flowchart TB
+  login["Вход"]
+  register["Регистрация"]
+  password_request["Восстановление доступа"]
+  password_reset["Новый пароль"]
+  verify["Подтверждение почты"]
+  public_step["Открытая ступень"]
+  register_profile["Профиль при регистрации"]
+  courses["Мои курсы"]
+  silaeder["Личный кабинет Силаэдра"]
+  login -->|"Создать аккаунт"| register
+  register -->|"Уже есть аккаунт"| login
+  login -->|"Забыли пароль"| password_request
+  password_request -->|"Ссылка из письма"| password_reset
+  password_reset -->|"Сохранить пароль"| courses
+  register -->|"Зарегистрироваться"| verify
+  verify -->|"Подтвердить почту"| courses
+  login -->|"Успешный вход"| courses
+  login -->|"Войти через Силаэдр"| silaeder
+  register -->|"Далее: профиль"| register_profile
+  register_profile -->|"Назад без потери полей"| register
+  register_profile -->|"Зарегистрироваться"| verify

@@ -1,4 +1,4 @@
-<div class="col-12">
+<div class="col-12" data-sticker-field>
     <label for="sticker" class="form-label">Ссылка на стикер</label>
     <input id="sticker" type="text" inputmode="url" class="form-control rounded-3 @error('sticker') is-invalid @enderror"
            name="sticker" value="{{ old('sticker', $sticker ?? null) }}" maxlength="255"
@@ -16,38 +16,3 @@
     </div>
     <div id="sticker-preview-error" class="form-text text-danger" role="status" hidden>Не удалось загрузить изображение. Проверьте прямую ссылку.</div>
 </div>
-
-@push('editor')
-<script>
-    (() => {
-        const input = document.getElementById('sticker');
-        const preview = document.getElementById('sticker-preview');
-        const image = document.getElementById('sticker-preview-image');
-        const error = document.getElementById('sticker-preview-error');
-        const update = () => {
-            const value = input.value.trim();
-            preview.hidden = true;
-            error.hidden = true;
-            image.removeAttribute('src');
-            if (/^https?:\/\//i.test(value) || /^\/stickers\/[1-9][0-9]*\.png$/.test(value)) {
-                image.src = value;
-            }
-        };
-        const hasCurrentImage = () => input.value.trim() !== '' && image.getAttribute('src') === input.value.trim();
-        image.addEventListener('load', () => {
-            if (hasCurrentImage()) {
-                preview.hidden = false;
-                error.hidden = true;
-            }
-        });
-        image.addEventListener('error', () => {
-            if (hasCurrentImage()) {
-                preview.hidden = true;
-                error.hidden = false;
-            }
-        });
-        input.addEventListener('input', update);
-        update();
-    })();
-</script>
-@endpush

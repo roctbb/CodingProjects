@@ -1,0 +1,2403 @@
+[
+  {
+    "method": "GET|HEAD",
+    "uri": "/",
+    "name": null,
+    "action": "Closure",
+    "middleware": [
+      "web"
+    ],
+    "node": "login",
+    "kind": "redirect"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "1561test",
+    "name": null,
+    "action": "Closure",
+    "middleware": [
+      "web"
+    ],
+    "node": "provider-resource",
+    "kind": "redirect"
+  },
+  {
+    "method": "POST",
+    "uri": "api/geekpaste",
+    "name": null,
+    "action": "GeekPasteAPI@submitSolution",
+    "middleware": [
+      "api"
+    ],
+    "node": "geekpaste",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "api/geekpaste/integrity",
+    "name": null,
+    "action": "GeekPasteAPI@syncIntegrity",
+    "middleware": [
+      "api"
+    ],
+    "node": "geekpaste",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "api/geekpaste/recheck",
+    "name": null,
+    "action": "GeekPasteAPI@requestRecheck",
+    "middleware": [
+      "api"
+    ],
+    "node": "geekpaste",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "api/geekpaste/recheck/status",
+    "name": null,
+    "action": "GeekPasteAPI@recheckStatus",
+    "middleware": [
+      "api"
+    ],
+    "node": "geekpaste",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "api/geekpaste/users/{id}",
+    "name": null,
+    "action": "GeekPasteAPI@userProfile",
+    "middleware": [
+      "api"
+    ],
+    "node": "geekpaste",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "api/user",
+    "name": null,
+    "action": "Closure",
+    "middleware": [
+      "api",
+      "auth:api"
+    ],
+    "node": "profile",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "auth/silaeder",
+    "name": "silaeder.login",
+    "action": "Auth\\SilaederOidcController@redirectToProvider",
+    "middleware": [
+      "web",
+      "guest",
+      "throttle:30,1"
+    ],
+    "node": "silaeder",
+    "kind": "callback"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "auth/silaeder/callback",
+    "name": "silaeder.callback",
+    "action": "Auth\\SilaederOidcController@callback",
+    "middleware": [
+      "web",
+      "throttle:60,1"
+    ],
+    "node": "silaeder",
+    "kind": "callback"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "auth/silaeder/link",
+    "name": "silaeder.link",
+    "action": "Auth\\SilaederOidcController@link",
+    "middleware": [
+      "web",
+      "auth",
+      "throttle:30,1"
+    ],
+    "node": "silaeder",
+    "kind": "callback"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "auth/silaeder/link/confirm/{token}",
+    "name": "silaeder.link.confirm",
+    "action": "Auth\\SilaederOidcController@confirmLink",
+    "middleware": [
+      "web",
+      "signed",
+      "throttle:20,1"
+    ],
+    "node": "silaeder",
+    "kind": "callback"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "auth/silaeder/logout/callback",
+    "name": "silaeder.logout.callback",
+    "action": "Auth\\SilaederOidcController@logoutCallback",
+    "middleware": [
+      "web",
+      "throttle:60,1"
+    ],
+    "node": "silaeder",
+    "kind": "callback"
+  },
+  {
+    "method": "POST",
+    "uri": "email/resend",
+    "name": "verification.resend",
+    "action": "Auth\\VerificationController@resend",
+    "middleware": [
+      "web",
+      "auth",
+      "throttle:6,1"
+    ],
+    "node": "verify",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "email/verify",
+    "name": "verification.notice",
+    "action": "Auth\\VerificationController@show",
+    "middleware": [
+      "web",
+      "auth"
+    ],
+    "node": "verify",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "email/verify/{id}/{hash}",
+    "name": "verification.verify",
+    "action": "Auth\\VerificationController@verify",
+    "middleware": [
+      "web",
+      "auth",
+      "signed",
+      "throttle:6,1"
+    ],
+    "node": "verify",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "home",
+    "name": null,
+    "action": "Closure",
+    "middleware": [
+      "web"
+    ],
+    "node": "login",
+    "kind": "redirect"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider",
+    "name": null,
+    "action": "Closure",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "courses",
+    "kind": "redirect"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/authoring/preview",
+    "name": null,
+    "action": "AuthoringPreviewController",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "step-edit",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/chatgpt/improve-text",
+    "name": null,
+    "action": "TextImprovementController@improveText",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "text-assist",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/community",
+    "name": null,
+    "action": "ProfileController@index",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "community",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses",
+    "name": "Courses",
+    "action": "CoursesController@index",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "courses",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/create",
+    "name": "Create course",
+    "action": "CoursesController@createView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "course-create",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/create",
+    "name": null,
+    "action": "CoursesController@create",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "course-create",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/chapters/{chapter_id}/default",
+    "name": null,
+    "action": "CoursesController@setDefaultChapter",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "course",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/chapters/{chapter_id}/edit",
+    "name": null,
+    "action": "CoursesController@editChapterView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "chapter-edit",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/chapters/{chapter_id}/edit",
+    "name": null,
+    "action": "CoursesController@editChapter",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "chapter-edit",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/chapters/{chapter_id}/export-points",
+    "name": null,
+    "action": "CoursesController@exportChapterPoints",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "course",
+    "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/chapters/{chapter_id}/lower",
+    "name": null,
+    "action": "CoursesController@makeChapterLower",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "course",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/chapters/{chapter_id}/upper",
+    "name": null,
+    "action": "CoursesController@makeChapterUpper",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "course",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/current-lesson",
+    "name": "courses.current-lesson",
+    "action": "CoursesController@setCurrentLesson",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course"
+    ],
+    "node": "course-current-lesson",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/lessons/{id}/create",
+    "name": null,
+    "action": "StepsController@createView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "step-create",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/lessons/{id}/create",
+    "name": null,
+    "action": "StepsController@create",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "step-create",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/lessons/{id}/deadline",
+    "name": null,
+    "action": "LessonsController@makeDeadline",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "lesson-deadline",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/lessons/{id}/delete",
+    "name": null,
+    "action": "LessonsController@delete",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "course",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/lessons/{id}/early-access",
+    "name": null,
+    "action": "LessonsController@buyEarlyAccess",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "early-access",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/lessons/{id}/early-access/grant",
+    "name": null,
+    "action": "LessonsController@grantEarlyAccess",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "early-access",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/lessons/{id}/edit",
+    "name": null,
+    "action": "LessonsController@editView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "lesson-edit",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/lessons/{id}/edit",
+    "name": null,
+    "action": "LessonsController@edit",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "lesson-edit",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/lessons/{id}/export",
+    "name": null,
+    "action": "LessonsController@export",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "course",
+    "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/lessons/{id}/export-md",
+    "name": null,
+    "action": "LessonsController@exportMarkdown",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "course",
+    "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/lessons/{id}/export-points",
+    "name": null,
+    "action": "LessonsController@exportPoints",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "course",
+    "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/lessons/{id}/lower",
+    "name": null,
+    "action": "LessonsController@makeLower",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "course",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/lessons/{id}/upper",
+    "name": null,
+    "action": "LessonsController@makeUpper",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "course",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/lessons/{lesson_id}/statistics",
+    "name": "courses.lesson-statistics",
+    "action": "CoursesController@lessonStatistics",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course"
+    ],
+    "node": "course",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/perform/{id}",
+    "name": null,
+    "action": "StepsController@perform",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "step",
+      "teacher"
+    ],
+    "node": "perform",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/planner",
+    "name": "courses.planner",
+    "action": "CoursePlanner\\PlannerController@page",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "planner",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/planner/api/calendar/preview",
+    "name": null,
+    "action": "CoursePlanner\\PlannerController@preview",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "planner",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/planner/api/commands/{operation}",
+    "name": null,
+    "action": "CoursePlanner\\PlannerController@command",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "planner",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/planner/api/entries/{link_id}",
+    "name": null,
+    "action": "CoursePlanner\\PlannerController@entry",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "planner",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/planner/api/providers/{provider_key}/resources",
+    "name": null,
+    "action": "CoursePlanner\\PlannerController@catalog",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "planner",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/planner/api/state",
+    "name": null,
+    "action": "CoursePlanner\\PlannerController@state",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "planner",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/planner/api/summary/details",
+    "name": null,
+    "action": "CoursePlanner\\PlannerController@details",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "planner",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/questions/{id}/delete",
+    "name": null,
+    "action": "StepsController@deleteQuestion",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "step"
+    ],
+    "node": "step",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/solution/{id}",
+    "name": null,
+    "action": "TasksController@estimateSolution",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "review-tools",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/steps/{id}",
+    "name": null,
+    "action": "StepsController@details",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "step"
+    ],
+    "node": "step",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/steps/{id}/delete",
+    "name": null,
+    "action": "StepsController@delete",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "step",
+      "teacher"
+    ],
+    "node": "step",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/steps/{id}/edit",
+    "name": null,
+    "action": "StepsController@editView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "step",
+      "teacher"
+    ],
+    "node": "step-edit",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/steps/{id}/edit",
+    "name": null,
+    "action": "StepsController@edit",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "step",
+      "teacher"
+    ],
+    "node": "step-edit",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/steps/{id}/lower",
+    "name": null,
+    "action": "StepsController@makeLower",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "step",
+      "teacher"
+    ],
+    "node": "step",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/steps/{id}/notebook",
+    "name": null,
+    "action": "StepsController@downloadNotebook",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "step"
+    ],
+    "node": "step-theory",
+    "kind": "download"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/steps/{id}/question",
+    "name": null,
+    "action": "StepsController@question",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "step"
+    ],
+    "node": "step",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/steps/{id}/task",
+    "name": null,
+    "action": "TasksController@create",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "task-create",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/steps/{id}/task/create",
+    "name": null,
+    "action": "TasksController@createForm",
+    "middleware": [
+      "web",
+      "verified",
+      "teacher",
+      "auth",
+      "task"
+    ],
+    "node": "task-create",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/steps/{id}/upper",
+    "name": null,
+    "action": "StepsController@makeUpper",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "step",
+      "teacher"
+    ],
+    "node": "step",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/ai-summary",
+    "name": null,
+    "action": "TasksController@aiTaskSummary",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "task-summary",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/block/{student_id}",
+    "name": null,
+    "action": "TasksController@blockStudent",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "review-tools",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/deadline",
+    "name": null,
+    "action": "TasksController@makeDeadline",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "task-deadline",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/delete",
+    "name": null,
+    "action": "TasksController@delete",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "step-task",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/down",
+    "name": null,
+    "action": "TasksController@toNextTask",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "step-task",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/edit",
+    "name": null,
+    "action": "TasksController@editForm",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "task-edit",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/edit",
+    "name": null,
+    "action": "TasksController@edit",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "task-edit",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/geekpaste-extra-attempt",
+    "name": null,
+    "action": "TasksController@buyGeekPasteExtraAttempt",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "solution-options",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/left",
+    "name": null,
+    "action": "TasksController@makeLower",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "step-task",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/phantom",
+    "name": null,
+    "action": "TasksController@phantomSolution",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "step-task",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/recheck-all",
+    "name": null,
+    "action": "TasksController@recheckAllSolutions",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "step-task",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/right",
+    "name": null,
+    "action": "TasksController@makeUpper",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "step-task",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/solution",
+    "name": null,
+    "action": "TasksController@postSolution",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "task-solutions",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/achievement",
+    "name": null,
+    "action": "TasksController@awardSolutionAchievement",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "achievement-preview",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/achievement-preview",
+    "name": null,
+    "action": "TasksController@showSolutionAchievementPreview",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "achievement-preview",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/achievement-preview",
+    "name": null,
+    "action": "TasksController@previewSolutionAchievement",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "achievement-preview",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/deadline-penalty",
+    "name": null,
+    "action": "TasksController@payDeadlinePenalty",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "solution-options",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/recheck",
+    "name": null,
+    "action": "TasksController@askForRecheck",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "solution-options",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/skip-review",
+    "name": null,
+    "action": "TasksController@skipSolutionReview",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "review-tools",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/waive-deadline-penalty",
+    "name": null,
+    "action": "TasksController@waiveDeadlinePenalty",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "review-tools",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/xp-booster",
+    "name": null,
+    "action": "TasksController@useXpBooster",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "solution-options",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/student/{student_id}",
+    "name": null,
+    "action": "TasksController@reviewSolutions",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "review",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/tasks/{id}/student/{student_id}/skip-review",
+    "name": null,
+    "action": "TasksController@skipStudentReviews",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task",
+      "teacher"
+    ],
+    "node": "review-tools",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/unblock/{student_id}",
+    "name": null,
+    "action": "TasksController@unblockStudent",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "review-tools",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/tasks/{id}/up",
+    "name": null,
+    "action": "TasksController@toPreviousTask",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "task"
+    ],
+    "node": "step-task",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}",
+    "name": null,
+    "action": "CoursesController@details",
+    "middleware": [
+      "web",
+      "verified",
+      "course"
+    ],
+    "node": "course",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/assessments",
+    "name": null,
+    "action": "CoursesController@assessments",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "assessments",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/blocked",
+    "name": null,
+    "action": "CoursesController@blocked",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "blocked",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/chapter",
+    "name": null,
+    "action": "CoursesController@createChapterView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "chapter-create",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{id}/chapter",
+    "name": null,
+    "action": "CoursesController@createChapter",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "chapter-create",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/chapter-tasks",
+    "name": "courses.chapter-tasks",
+    "action": "StudentCourseTasksController@index",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course"
+    ],
+    "node": "chapter-tasks",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/create",
+    "name": null,
+    "action": "LessonsController@createView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "lesson-create",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{id}/create",
+    "name": null,
+    "action": "LessonsController@create",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "lesson-create",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/deadlines",
+    "name": "courses.deadlines",
+    "action": "CoursesController@deadlines",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course"
+    ],
+    "node": "deadlines",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/edit",
+    "name": null,
+    "action": "CoursesController@editView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "course-edit",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{id}/edit",
+    "name": null,
+    "action": "CoursesController@edit",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "course-edit",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/enroll",
+    "name": null,
+    "action": "CoursesController@enroll",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "join-course",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/export",
+    "name": null,
+    "action": "CoursesController@export",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "course",
+    "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/export-md",
+    "name": null,
+    "action": "CoursesController@exportMarkdown",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "course",
+    "kind": "download"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{id}/poster",
+    "name": null,
+    "action": "CoursesController@generatePoster",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "course-edit",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/report",
+    "name": null,
+    "action": "CoursesController@report",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "report",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{id}/report/students/{student_id}/geekpaste-warning/reset",
+    "name": null,
+    "action": "CoursesController@resetStudentGeekPasteWarning",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "report",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/start",
+    "name": null,
+    "action": "CoursesController@start",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "course",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/stop",
+    "name": null,
+    "action": "CoursesController@stop",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "course",
+      "teacher"
+    ],
+    "node": "course",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/invite",
+    "name": null,
+    "action": "CoursesController@invite",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "join-course",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/jwt",
+    "name": null,
+    "action": "RemoteAuthController@remoteAuth",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "geekpaste",
+    "kind": "redirect"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/market",
+    "name": null,
+    "action": "MarketController@index",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "market",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/market/cancel/{id}",
+    "name": null,
+    "action": "MarketController@cancel",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "orders",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/market/create",
+    "name": null,
+    "action": "MarketController@createView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "market-create",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/market/create",
+    "name": null,
+    "action": "MarketController@create",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "market-create",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/market/credit",
+    "name": null,
+    "action": "MarketController@creditView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "credit",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/market/credit",
+    "name": null,
+    "action": "MarketController@credit",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "credit",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/market/digital/{itemKey}/buy",
+    "name": null,
+    "action": "MarketController@buyDigital",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "market-digital",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/market/orders",
+    "name": null,
+    "action": "MarketController@orders",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "orders",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/market/ship/{id}",
+    "name": null,
+    "action": "MarketController@ship",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "orders",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/market/{id}/archive",
+    "name": null,
+    "action": "MarketController@archive",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "market-archive",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/market/{id}/bid",
+    "name": null,
+    "action": "MarketController@bid",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "market-auctions",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/market/{id}/buy",
+    "name": null,
+    "action": "MarketController@buy",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "market-goods",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/market/{id}/edit",
+    "name": null,
+    "action": "MarketController@editView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "market-edit",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/market/{id}/edit",
+    "name": null,
+    "action": "MarketController@edit",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "market-edit",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/market/{id}/finish-auction",
+    "name": null,
+    "action": "MarketController@finishAuction",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "market-auctions",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/market/{id}/restore",
+    "name": null,
+    "action": "MarketController@restore",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "market-archive",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/profile/delete-course/{id}",
+    "name": null,
+    "action": "ProfileController@deleteCourse",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "self",
+      "admin"
+    ],
+    "node": "completed-course",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/profile/{id?}",
+    "name": null,
+    "action": "ProfileController@details",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "profile",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/profile/{id}/avatar-frame",
+    "name": null,
+    "action": "ProfileController@buyAvatarFrame",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "self"
+    ],
+    "node": "market-digital",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/profile/{id}/course",
+    "name": null,
+    "action": "ProfileController@course",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "self",
+      "admin"
+    ],
+    "node": "completed-course",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/profile/{id}/custom-title",
+    "name": null,
+    "action": "ProfileController@buyCustomTitle",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "self"
+    ],
+    "node": "market-digital",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/profile/{id}/edit",
+    "name": null,
+    "action": "ProfileController@editView",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "self"
+    ],
+    "node": "profile-edit",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/profile/{id}/edit",
+    "name": null,
+    "action": "ProfileController@edit",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "self"
+    ],
+    "node": "profile-edit",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/profile/{id}/learning-avatar",
+    "name": null,
+    "action": "ProfileController@updateLearningAvatar",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "self"
+    ],
+    "node": "room-editor",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/profile/{id}/password",
+    "name": null,
+    "action": "ProfileController@updatePassword",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "self"
+    ],
+    "node": "account-preferences",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/profile/{id}/telegram-link",
+    "name": null,
+    "action": "ProfileController@telegramLink",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "self"
+    ],
+    "node": "telegram-link",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/profile/{id}/telegram-unlink",
+    "name": null,
+    "action": "ProfileController@telegramUnlink",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "self"
+    ],
+    "node": "telegram-link",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/profile/{user_id}/achievement/{achievement_id}",
+    "name": null,
+    "action": "ProfileController@updateAchievement",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "achievement-edit",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/profile/{user_id}/achievement/{achievement_id}/delete",
+    "name": null,
+    "action": "ProfileController@deleteAchievement",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "achievement-edit",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/profile/{user_id}/delete-course/{course_id}",
+    "name": null,
+    "action": "ProfileController@deleteCurrentCourse",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "self",
+      "admin"
+    ],
+    "node": "completed-course",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/profile/{user_id}/money",
+    "name": null,
+    "action": "ProfileController@addMoney",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "profile-money",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/profile/{user_id}/room-character",
+    "name": "room-character.store",
+    "action": "RoomCharacterController@store",
+    "middleware": [
+      "web",
+      "verified",
+      "throttle:10,1",
+      "auth"
+    ],
+    "node": "room-generation",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/profile/{user_id}/room-character/{generation_id}",
+    "name": "room-character.show",
+    "action": "RoomCharacterController@show",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "room-generation",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/pulse",
+    "name": null,
+    "action": "CoursesController@pulse",
+    "middleware": [
+      "web",
+      "verified",
+      "auth"
+    ],
+    "node": "pulse",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/reviews",
+    "name": null,
+    "action": "CoursesController@reviews",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "reviews",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/reviews/reset-pending",
+    "name": null,
+    "action": "CoursesController@resetPendingReviews",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "teacher"
+    ],
+    "node": "reviews",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/rewards/claim",
+    "name": "rewards.claim",
+    "action": "RewardNoticesController@claim",
+    "middleware": [
+      "web",
+      "verified",
+      "throttle:60,1"
+    ],
+    "node": "reward-notices",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/room-debug",
+    "name": null,
+    "action": "RoomDebugController@index",
+    "middleware": [
+      "web",
+      "verified",
+      "admin"
+    ],
+    "node": "room-debug",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/room-debug/layout",
+    "name": null,
+    "action": "RoomDebugController@saveLayout",
+    "middleware": [
+      "web",
+      "verified",
+      "admin"
+    ],
+    "node": "room-debug",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/settings/ai",
+    "name": "settings.ai.edit",
+    "action": "AiSettingsController@edit",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-ai",
+    "kind": "screen"
+  },
+  {
+    "method": "PUT",
+    "uri": "insider/settings/ai",
+    "name": "settings.ai.update",
+    "action": "AiSettingsController@update",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-ai",
+    "kind": "action"
+  },
+  {
+    "method": "DELETE",
+    "uri": "insider/settings/ai",
+    "name": "settings.ai.reset",
+    "action": "AiSettingsController@reset",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-ai",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/settings/system-store",
+    "name": "settings.system-store.edit",
+    "action": "SystemStoreSettingsController@edit",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-store",
+    "kind": "screen"
+  },
+  {
+    "method": "PUT",
+    "uri": "insider/settings/system-store",
+    "name": "settings.system-store.update",
+    "action": "SystemStoreSettingsController@update",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-store",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/settings/system-store/targets",
+    "name": "settings.system-store.targets",
+    "action": "SystemStoreSettingsController@targets",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "market-promotion-picker",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/settings/telegram",
+    "name": "settings.telegram.edit",
+    "action": "TelegramSettingsController@edit",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-telegram",
+    "kind": "screen"
+  },
+  {
+    "method": "PUT",
+    "uri": "insider/settings/telegram",
+    "name": "settings.telegram.update",
+    "action": "TelegramSettingsController@update",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-telegram",
+    "kind": "action"
+  },
+  {
+    "method": "DELETE",
+    "uri": "insider/settings/telegram",
+    "name": "settings.telegram.reset",
+    "action": "TelegramSettingsController@reset",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-telegram",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/testmail",
+    "name": null,
+    "action": "Closure",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "feedback",
+    "kind": "maintenance"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/yandexgpt/improve-text",
+    "name": null,
+    "action": "TextImprovementController@improveText",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "text-assist",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "login",
+    "name": "login",
+    "action": "Auth\\LoginController@showLoginForm",
+    "middleware": [
+      "web",
+      "guest"
+    ],
+    "node": "login",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "login",
+    "name": null,
+    "action": "Auth\\LoginController@login",
+    "middleware": [
+      "web",
+      "guest"
+    ],
+    "node": "login",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "logout",
+    "name": "logout",
+    "action": "Auth\\LoginController@logout",
+    "middleware": [
+      "web"
+    ],
+    "node": "user-menu",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "media/room-character-previews/{generation_id}",
+    "name": "room-character.preview",
+    "action": "MediaController@roomCharacterPreview",
+    "middleware": [
+      "web"
+    ],
+    "node": "profile-room",
+    "kind": "media"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "media/{dir}/{name}",
+    "name": null,
+    "action": "MediaController@index",
+    "middleware": [
+      "web"
+    ],
+    "node": "profile-room",
+    "kind": "media"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "open/steps/{id}",
+    "name": null,
+    "action": "OpenStepsController@details",
+    "middleware": [
+      "web"
+    ],
+    "node": "public-step",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "open/steps/{id}/notebook",
+    "name": null,
+    "action": "OpenStepsController@downloadNotebook",
+    "middleware": [
+      "web"
+    ],
+    "node": "public-step",
+    "kind": "download"
+  },
+  {
+    "method": "POST",
+    "uri": "password/email",
+    "name": "password.email",
+    "action": "Auth\\ForgotPasswordController@sendResetLinkEmail",
+    "middleware": [
+      "web",
+      "guest"
+    ],
+    "node": "password-request",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "password/reset",
+    "name": "password.request",
+    "action": "Auth\\ForgotPasswordController@showLinkRequestForm",
+    "middleware": [
+      "web",
+      "guest"
+    ],
+    "node": "password-request",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "password/reset",
+    "name": "password.update",
+    "action": "Auth\\ResetPasswordController@reset",
+    "middleware": [
+      "web",
+      "guest"
+    ],
+    "node": "password-reset",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "password/reset/{token}",
+    "name": "password.reset",
+    "action": "Auth\\ResetPasswordController@showResetForm",
+    "middleware": [
+      "web",
+      "guest"
+    ],
+    "node": "password-reset",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "register",
+    "name": "register",
+    "action": "Auth\\RegisterController@showRegistrationForm",
+    "middleware": [
+      "web",
+      "guest"
+    ],
+    "node": "register",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "register",
+    "name": null,
+    "action": "Auth\\RegisterController@register",
+    "middleware": [
+      "web",
+      "guest"
+    ],
+    "node": "register",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "start-exam",
+    "name": null,
+    "action": "Closure",
+    "middleware": [
+      "web"
+    ],
+    "node": "public-step",
+    "kind": "redirect"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "telegram-bot",
+    "name": null,
+    "action": "Closure",
+    "middleware": [
+      "web"
+    ],
+    "node": "public-step",
+    "kind": "redirect"
+  },
+  {
+    "method": "POST",
+    "uri": "telegram/webhook/{secret?}",
+    "name": null,
+    "action": "TelegramBotController@webhook",
+    "middleware": [
+      "web"
+    ],
+    "node": "telegram",
+    "kind": "api"
+  }
+]

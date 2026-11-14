@@ -21,18 +21,18 @@ class BrandingTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_defaults_preserve_the_existing_brand(): void
+    public function test_defaults_use_the_shared_light_and_dark_palette(): void
     {
         config(['branding.logo_url' => null, 'branding.colors' => [], 'branding.dark_colors' => []]);
 
         $this->assertSame(url('images/icons/icons8-idea-64.png'), Branding::logoUrl());
-        $this->assertSame('#2d9ccc', Branding::palette()['primary']);
-        $this->assertSame('#17a2b8', Branding::palette()['info']);
-        $this->assertSame('#28a745', Branding::palette()['success']);
-        $this->assertSame('#5bbce0', Branding::palette('dark')['primary']);
-        $this->assertSame('#28a745', Branding::buttons()['success']);
-        $this->assertSame('#17a2b8', Branding::buttons()['info']);
-        $this->assertSame('#4ade80', Branding::buttons('dark')['success']);
+        $this->assertSame('#345bd1', Branding::palette()['primary']);
+        $this->assertSame('#5877cf', Branding::palette()['info']);
+        $this->assertSame('#237052', Branding::palette()['success']);
+        $this->assertSame('#a9bdff', Branding::palette('dark')['primary']);
+        $this->assertSame('#237052', Branding::buttons()['success']);
+        $this->assertSame('#5877cf', Branding::buttons()['info']);
+        $this->assertSame('#9bdbbc', Branding::buttons('dark')['success']);
         $this->assertFalse(Branding::hasCustomPalette());
     }
 
@@ -71,8 +71,8 @@ class BrandingTest extends TestCase
             'branding.colors.danger' => '#xyzxyz',
         ]);
 
-        $this->assertSame('#2d9ccc', Branding::palette()['primary']);
-        $this->assertSame('#dc3545', Branding::palette()['danger']);
+        $this->assertSame('#345bd1', Branding::palette()['primary']);
+        $this->assertSame('#ad3547', Branding::palette()['danger']);
     }
 
     public function test_logo_accepts_remote_urls_and_public_paths(): void
@@ -82,5 +82,17 @@ class BrandingTest extends TestCase
 
         config(['branding.logo_url' => '/images/custom-brand.png']);
         $this->assertSame(url('images/custom-brand.png'), Branding::logoUrl());
+    }
+
+    public function test_custom_palette_chooses_readable_button_text_in_both_modes(): void
+    {
+        config(['branding.colors' => ['primary' => '#705782'], 'branding.dark_colors' => []]);
+
+        $this->assertSame('#ffffff', Branding::buttons()['primary_text']);
+        $this->assertSame('#111827', Branding::buttons('dark')['primary_text']);
+        $this->assertSame(Branding::palette()['primary'], Branding::palette()['accent']);
+        $this->assertSame(Branding::palette('dark')['primary'], Branding::palette('dark')['accent']);
+        config(['branding.colors.primary' => '#777777']);
+        $this->assertSame('#000000', Branding::buttons()['primary_text']);
     }
 }

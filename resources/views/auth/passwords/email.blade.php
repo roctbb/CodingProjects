@@ -1,56 +1,15 @@
 @extends('layouts.empty-dark')
-
-@section('title')
-    Восстановление пароля
-@endsection
-
-@section('auth-background-image', url('/images/bg/'.random_int(1,7).'.jpg'))
-
+@section('title', 'Восстановление пароля')
+@section('auth-background-image', url('/images/bg/'.random_int(1,16).'.jpg'))
 @section('content')
-    <div class="text-center text-white mb-3">
-        <a href="{{ url('/') }}" class="auth-brand d-inline-flex align-items-center gap-2 text-decoration-none text-white">
-            <x-brand-logo width="28" height="28" alt="" />
-            <span class="fs-5 fw-medium">{{ config('app.name', 'Laravel') }}</span>
-        </a>
+<form id="password-email-form" method="POST" action="{{ route('password.email') }}" class="auth-card gc-auth-card" data-auth-form data-form-page>
+    @csrf
+    <x-gc-auth-heading title="Забыли пароль?" description="Укажите почту аккаунта — отправим ссылку для восстановления." />
+    @if(session('status'))<p class="alert alert-primary" role="status">{{ session('status') }}</p>@endif
+    <div class="gc-form-stack">
+        <x-gc-field name="email" label="Email"><input id="email" type="email" name="email" class="form-control" value="{{ old('email') }}" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required></x-gc-field>
+        <button type="submit" class="btn btn-primary w-100">Отправить ссылку</button>
     </div>
-
-    @if (session('status'))
-        <div class="gc-session-alert gc-session-alert--success auth-card gc-alert-row" role="status">
-            <span class="gc-session-alert__icon">
-                <i class="fas fa-check"></i>
-            </span>
-            <div class="min-width-0">{{ session('status') }}</div>
-        </div>
-    @endif
-
-    <form method="POST" action="{{ route('password.email') }}" class="auth-card p-4">
-        {{ csrf_field() }}
-
-        <div class="d-flex align-items-center gap-3 mb-4">
-            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-key"></i></span>
-            <div class="min-width-0">
-                <span class="gc-eyebrow">доступ</span>
-                <h1 class="h4 fw-medium mb-0">Восстановление пароля</h1>
-            </div>
-        </div>
-
-        <div class="form-floating mb-3">
-            <input id="email" type="email" class="form-control rounded-3" name="email" value="{{ old('email') }}" placeholder="you@example.com" required>
-            <label for="email">Email</label>
-
-            @if ($errors->has('email'))
-                <span class="text-danger small d-block mt-1">
-                    <strong>{{ $errors->first('email') }}</strong>
-                </span>
-            @endif
-        </div>
-
-        <button type="submit" class="btn btn-success rounded-3 fw-medium w-100 py-2">
-            Восстановить пароль
-        </button>
-
-        <div class="border-top pt-3 mt-3 text-center small">
-            <a href="{{ url('/login') }}" class="text-decoration-none fw-medium">Вернуться ко входу</a>
-        </div>
-    </form>
+    <p class="gc-auth-footer"><a href="{{ url('/login') }}">Вернуться ко входу</a></p>
+</form>
 @endsection

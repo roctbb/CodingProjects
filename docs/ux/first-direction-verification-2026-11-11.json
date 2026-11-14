@@ -1,0 +1,168 @@
+{
+  "date": "2026-11-11",
+  "direction": "First accepted direction: filled tabs, stable course workspace navigation, compact plain login",
+  "environment": "127.0.0.1:8876; isolated synthetic SQLite data; production data untouched",
+  "viewports": {
+    "desktop": [
+      1440,
+      1000
+    ],
+    "mobile": [
+      390,
+      844
+    ],
+    "narrow": [
+      320,
+      760
+    ]
+  },
+  "desktopAndMobile": {
+    "course": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "planner": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "assessments": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "report": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "deadlines": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "profile": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "courses": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "market": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "login": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    }
+  },
+  "narrowAlternatePalette": {
+    "courses": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "course": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "planner": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "profile": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "market": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "profile-edit": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    },
+    "login": {
+      "status": 200,
+      "h1": 1,
+      "documentOverflow": false,
+      "jsErrors": []
+    }
+  },
+  "functionalChecks": [
+    "All five course navigation links follow actual destinations with the same desktop y position of 130.234375 px. Mobile screenshots retain the same navigation position at 205.046875 px.",
+    "Copy invitation sends QA2026 to a stubbed Clipboard API and announces success; OS clipboard is not changed.",
+    "Password reveal toggles password -> text -> password.",
+    "Failed login redirects with an error and retains email.",
+    "Course participant rows keep long names and purchased titles within their own grid column, without overlap with rank.",
+    "Active tab count renders white text on a theme-derived blue fill after removing Bootstrap bg-body ownership.",
+    "Focused course tab has a 2 px visible outline.",
+    "Birthday groups for today and the next six days remain visible without disclosure.",
+    "Coarse-pointer check found legacy form sizing after the base touch rule; the shared touch sizing now follows legacy rules. Password control and tabs use 44 px targets.",
+    "Course navigation scrolls its selected link into view horizontally after layout; the document does not scroll vertically."
+  ],
+  "fixedDuringVerification": [
+    "Long purchased title overlapping right-side rank",
+    "Muted gray tab count on filled selected tab"
+  ],
+  "checks": {
+    "tests": {
+      "command": "php artisan test --compact",
+      "passed": 532,
+      "assertions": 4454
+    },
+    "build": "passed",
+    "styleBoundaries": "passed",
+    "bladeCache": "passed",
+    "uxMap": "passed",
+    "diffWhitespace": "passed"
+  },
+  "artifacts": "output/playwright/first-direction/",
+  "limits": [
+    "Every role/business-state combination is not claimed.",
+    "Profile body restructuring is a separate proposal; current section order is unchanged.",
+    "No real purchases, registration, awards or production settings were submitted."
+  ],
+  "touchCheck": {
+    "viewport": [
+      390,
+      844
+    ],
+    "passwordFieldHeight": 44,
+    "passwordToggleSize": [
+      44,
+      44
+    ],
+    "allFiveSelectedCourseSectionsVisible": true,
+    "tabHeight": 44,
+    "documentOverflow": false,
+    "jsErrors": []
+  }
+}

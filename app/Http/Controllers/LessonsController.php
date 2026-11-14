@@ -377,16 +377,9 @@ class LessonsController extends Controller
 
         $penalty = $request->filled('penalty') ? $request->penalty : 0;
 
-        foreach ($taskIds as $taskId) {
-            TaskDeadline::updateOrCreate(
-                [
-                    'course_id' => $course_id,
-                    'task_id' => $taskId,
-                ],
-                [
-                    'expiration' => $request->deadline,
-                    'penalty' => $penalty,
-                ]
+        foreach (\App\Task::with('step.lesson')->whereIn('id', $taskIds)->get() as $task) {
+            app(\App\Services\CourseDeadlineService::class)->set(
+                $course, $task, $request->deadline, $penalty
             );
         }
 

@@ -7,27 +7,27 @@ final class Branding
     private const DEFAULT_LOGO = 'images/icons/icons8-idea-64.png';
 
     private const LIGHT_DEFAULTS = [
-        'primary' => '#2d9ccc',
-        'primary_hover' => '#1f7ca5',
-        'primary_light' => '#e8f6fc',
+        'primary' => '#345bd1',
+        'primary_hover' => '#2e4fb8',
+        'primary_light' => '#edf1fe',
         'secondary' => '#6c757d',
-        'accent' => '#2d9ccc',
-        'info' => '#17a2b8',
-        'success' => '#28a745',
-        'warning' => '#ffc107',
-        'danger' => '#dc3545',
+        'accent' => '#345bd1',
+        'info' => '#5877cf',
+        'success' => '#237052',
+        'warning' => '#976d18',
+        'danger' => '#ad3547',
     ];
 
     private const DARK_DEFAULTS = [
-        'primary' => '#5bbce0',
-        'primary_hover' => '#7dccea',
-        'primary_light' => '#1a3a4a',
+        'primary' => '#a9bdff',
+        'primary_hover' => '#c0ceff',
+        'primary_light' => '#293959',
         'secondary' => '#6c757d',
-        'accent' => '#5bbce0',
-        'info' => '#67c9e8',
-        'success' => '#4ade80',
-        'warning' => '#fbbf24',
-        'danger' => '#f87171',
+        'accent' => '#a9bdff',
+        'info' => '#a9bdff',
+        'success' => '#9bdbbc',
+        'warning' => '#d5b970',
+        'danger' => '#ffafbd',
     ];
 
     public static function logoUrl(): string
@@ -69,6 +69,10 @@ final class Branding
             if (self::configuredColor('colors.info') === null) {
                 $palette['info'] = self::mix($palette['primary'], '#ffffff', 18);
             }
+        }
+
+        if (self::configuredColor('colors.accent') === null) {
+            $palette['accent'] = $palette['primary'];
         }
 
         return $palette;
@@ -142,11 +146,15 @@ final class Branding
             $palette['primary_hover'] = self::configuredColor('dark_colors.primary_hover')
                 ?? self::mix($palette['primary'], '#ffffff', 18);
             $palette['primary_light'] = self::configuredColor('dark_colors.primary_light')
-                ?? self::mix($light['primary'], '#0f172a', 76);
+                ?? self::mix($light['primary'], '#121820', 76);
 
             if (self::configuredColor('dark_colors.info') === null) {
                 $palette['info'] = self::mix($light['info'], '#ffffff', 22);
             }
+        }
+
+        if (self::configuredColor('colors.accent') === null && self::configuredColor('dark_colors.accent') === null) {
+            $palette['accent'] = $palette['primary'];
         }
 
         return $palette;
@@ -165,10 +173,25 @@ final class Branding
 
     private static function contrastColor(string $color): string
     {
-        [$red, $green, $blue] = self::channels($color);
-        $luminance = (($red * 299) + ($green * 587) + ($blue * 114)) / 1000;
+        $luminance = self::luminance($color);
+        $whiteContrast = 1.05 / ($luminance + 0.05);
+        $darkContrast = ($luminance + 0.05) / (self::luminance('#111827') + 0.05);
 
-        return $luminance > 154 ? '#111827' : '#ffffff';
+        if ($whiteContrast >= 4.5 && $whiteContrast >= $darkContrast) {
+            return '#ffffff';
+        }
+
+        return $darkContrast >= 4.5 ? '#111827' : '#000000';
+    }
+
+    private static function luminance(string $color): float
+    {
+        $linear = array_map(function ($channel) {
+            $value = $channel / 255;
+            return $value <= 0.04045 ? $value / 12.92 : (($value + 0.055) / 1.055) ** 2.4;
+        }, self::channels($color));
+
+        return $linear[0] * 0.2126 + $linear[1] * 0.7152 + $linear[2] * 0.0722;
     }
 
     private static function mix(string $color, string $target, int $targetPercent): string

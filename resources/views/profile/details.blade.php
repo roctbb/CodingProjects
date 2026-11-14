@@ -1,743 +1,98 @@
 @extends('layouts.left-menu')
-
 @section('title', $user->name)
-
 @section('content')
     @php
         $rank = $user->rank();
-        $progressPercent = 100 * ($user->score() - $rank->from) / ($rank->to - $rank->from);
+        $score = $user->score();
+        $progressPercent = max(0, min(100, 100 * ($score - $rank->from) / max(1, $rank->to - $rank->from)));
+        $isOwner = $guest->id == $user->id;
+        $hasLongName = mb_strlen($user->name) > 36 || collect(preg_split('/\s+/u', trim($user->name)))->contains(fn ($word) => mb_strlen($word) > 10);
         $managedCourses = $user->managed_courses->where('state', 'started');
         $startedCourses = $user->courses->where('state', 'started');
-        $completedCourses = $user->completedCourses;
-        $orders = $user->orders;
-        $hasAbout = $user->interests || $user->hobbies || (($guest->role == 'teacher' || $guest->role == 'admin') && $user->comments);
-        $activeCustomTitle = $user->activeCustomTitle();
-        $customTitleCost = $user->customTitleCost();
-        $canBuyCustomTitle = $guest->id == $user->id && $coinBalance >= $customTitleCost;
-        $avatarFrames = $avatarFrames ?? \App\User::avatarFrames();
-        $activeAvatarFrame = $activeAvatarFrame ?? $user->activeAvatarFrame();
-        $activeAvatarFrameConfig = $user->activeAvatarFrameConfig();
-        $customAvatarFrameCost = $customAvatarFrameCost ?? $user->customAvatarFrameCost();
-        $customAvatarFrameDefaults = $customAvatarFrameDefaults ?? \App\User::customAvatarFrameDefaults();
-        $canBuyCustomAvatarFrame = $guest->id == $user->id && $coinBalance >= $customAvatarFrameCost;
+        $completedCourses = app(\App\Queries\StudentCompletedCourses::class)->forStudent($user);
+        $hasAbout = filled($user->school) || $user->grade_year !== null || $user->hasVisibleBirthday() || filled($user->interests) || filled($user->hobbies);
+        $hasTeacherComment = in_array($guest->role, ['teacher', 'admin']) && filled($user->comments);
         $learningAvatarData = $learningAvatarData ?? $user->learningAvatarRenderData();
         $learningAvatarConfig = $learningAvatarData['config'];
         $learningAvatarOwned = $learningAvatarConfig['owned'] ?? [];
-        $learningAvatarAppearance = $learningAvatarData['appearance'] ?? [];
         $learningAvatarOptionsBySlot = $learningAvatarData['optionsBySlot'];
         $learningAvatarPreviewItemsBySlot = $learningAvatarData['previewItemsBySlot'];
-        $learningAvatarManifests = \App\User::learningAvatarManifests();
         $currentLearningAvatarManifest = $learningAvatarConfig['manifest'] ?? 'room-system';
-        $learningAvatarManifestName = $learningAvatarManifests[$currentLearningAvatarManifest]['name'] ?? 'Комната программиста';
-        $learningAvatarSlotLabels = [
-            'desk_center' => 'Стол',
-            'pet_right' => 'Питомец',
-        ];
-        $telegramBotConfigured = app(\App\Services\TelegramSettings::class)->botUsername() !== '';
+        $learningAvatarSlotLabels = ['desk_center' => 'Стол', 'pet_right' => 'Питомец'];
     @endphp
-
-    <div class="row g-4">
-        <div class="col-lg-4 col-xl-3">
-            <div class="gc-card gc-profile-card overflow-hidden">
-                <div class="p-3 p-md-4 text-center border-bottom">
-                    <x-gc-avatar :user="$user" size="xl" img-class="profile-avatar" class="mb-3 mx-auto" alt="" />
-                    <h2 class="h5 fw-medium lh-sm mb-2">{{ $user->name }}</h2>
-                    @if ($activeCustomTitle)
-                        <div class="mb-2">
-                            @include('profile.partials.custom_title_badge', ['profileUser' => $user])
+    <div class="gc-stack" data-profile-sections>
+        <section class="gc-card gc-profile-hero" aria-label="Профиль участника">
+            <div class="gc-profile-hero__identity">
+                <x-gc-page-header :title="$user->name" class="gc-profile-hero__heading {{ $hasLongName ? 'gc-profile-hero__heading--long' : '' }}" :embedded="true">
+                    <x-slot:portrait><x-gc-avatar :user="$user" size="xxl" class="flex-shrink-0" alt="" /></x-slot:portrait>
+                    <x-slot:breadcrumb><a href="{{ \App\Support\CommunityNavigation::returnUrl(request(), $user->id) }}">← Сообщество</a></x-slot:breadcrumb>
+                    <x-slot:summary>
+                        <div class="gc-actions mt-2">
+                            <button type="button" class="gc-text-action gc-rank-label" data-bs-toggle="popover" data-bs-trigger="focus" title="Ранги" data-bs-html="true" data-bs-content="{{ \App\Rank::getRanksListHTML($rank) }}" aria-label="Ранг {{ $rank->name }}. Шкала рангов"><i class="far fa-star" aria-hidden="true"></i>{{ $rank->name }}</button>
+                            @include('profile.partials.custom_title_badge', ['profileUser' => $user, 'compact' => false])
+                            @if($user->is_teacher || in_array($user->role, ['teacher', 'admin']))<span class="gc-help-text">Преподаватель</span>@endif
+                            @if($user->is_trainee)<span class="gc-help-text">Стажёр</span>@endif
                         </div>
+                        <div class="gc-rank-progress mt-3" aria-label="Прогресс к следующему рангу">
+                            <div class="gc-summary-line mb-2"><span class="gc-amount">{{ $score }} XP</span><span class="gc-help-text">До следующего ранга {{ max(0, $rank->to - $score) }} XP</span></div>
+                            <x-gc-progress :percent="$progressPercent" height="6px" />
+                        </div>
+                    </x-slot:summary>
+                    @if($isOwner || $guest->role == 'admin')
+                        <a href="{{ url('/insider/profile/'.$user->id.'/edit') }}" class="btn btn-outline-secondary btn-sm">{{ $isOwner ? 'Личные настройки' : 'Редактировать профиль' }}</a>
                     @endif
-                    <div class="d-flex flex-wrap justify-content-center gap-1 mb-3">
-                        <a tabindex="0" data-bs-toggle="popover" data-bs-trigger="focus" title="Ранги" data-bs-html="true"
-                           data-bs-content="{{ \App\Rank::getRanksListHTML($rank) }}" class="text-decoration-none">
-                            <span class="gc-soft-badge"><i class="fas fa-arrow-up me-1"></i>{{ $rank->name }}</span>
-                        </a>
-                        @if ($user->is_trainee)
-                            <span class="gc-soft-badge">Стажер</span>
-                        @endif
-                        @if ($user->is_teacher)
-                            <span class="gc-soft-badge">Преподаватель</span>
-                        @endif
-                    </div>
-                    <div class="gc-balance-pill">
-                        <i class="fas fa-coins" aria-hidden="true"></i>
-                        <strong class="text-body">{{ $coinBalance }}</strong>
-                        <span>GC</span>
-                    </div>
-                </div>
-
-                <div class="p-3">
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="gc-meta-label">Прогресс</span>
-                            <span class="text-muted small">{{ $user->score() }} / {{ $rank->to }} XP</span>
-                        </div>
-                        <x-gc-progress :percent="$progressPercent" height="6px" />
-                    </div>
-
-                    <div class="d-flex flex-column gap-2 small border-top pt-3">
-                        <div class="d-flex justify-content-between gap-3">
-                            <span class="text-muted">Дата рождения</span>
-                            <strong class="text-end fw-medium">@if($user->hasVisibleBirthday()){{ $user->birthday->format('d.m.Y') }}@else - @endif</strong>
-                        </div>
-                        <div class="d-flex justify-content-between gap-3">
-                            <span class="text-muted">Учеба</span>
-                            <strong class="text-end fw-medium">{{ $user->school ?: '-' }}</strong>
-                        </div>
-                        <div class="d-flex justify-content-between gap-3">
-                            <span class="text-muted">Класс</span>
-                            <strong class="text-end fw-medium">{{ $user->gradeLabel() }}</strong>
-                        </div>
-                        @if ($guest->id == $user->id || $guest->role == 'teacher' || $guest->role == 'admin')
-                            <div class="d-flex justify-content-between gap-3">
-                                <span class="text-muted">Почта</span>
-                                <a class="text-end fw-medium text-decoration-none text-break" href="mailto:{{ $user->email }}">{{ $user->email }}</a>
-                            </div>
-                        @endif
-                    </div>
-
-                    @if ($user->telegram || $user->git)
-                        <div class="border-top mt-3 pt-3 d-flex flex-column gap-2 small">
-                            @if ($user->telegram)
-                                <div class="d-flex align-items-center gap-2 min-width-0">
-                                    <i class="fab fa-telegram text-primary"></i>
-                                    <span class="text-truncate">{{ $user->telegram }}</span>
-                                </div>
-                            @endif
-                            @if ($user->git)
-                                <div class="d-flex align-items-center gap-2 min-width-0">
-                                    <i class="fab fa-github text-muted"></i>
-                                    <span class="text-truncate">{{ $user->git }}</span>
-                                </div>
-                            @endif
-                        </div>
+                    @if($canManageMoney)
+                        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#addMoney">Операция с GC</button>
                     @endif
-
-                    @if($stickers->count())
-                        <div class="border-top mt-3 pt-3">
-                            <div class="gc-eyebrow mb-2">Наклейки</div>
-                            <div class="d-flex flex-wrap gap-1">
-                                @foreach($stickers as $sticker)
-                                    <img src="{{ url($sticker) }}" title="{{ $sticker_description[$sticker] ?? '' }}" height="32" alt="" class="gc-sticker">
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            @if ($guest->role == 'admin' || $guest->id == $user->id || $canManageMoney)
-                <div class="gc-card p-2 d-flex gap-2 mt-3 profile-actions-card">
-                    @if ($guest->role == 'admin' || $guest->id == $user->id)
-                        <a href="{{ url('insider/profile/'.$user->id.'/edit') }}" class="btn btn-outline-primary rounded-3 btn-sm flex-fill fw-medium">
-                            <i class="fas fa-edit me-1"></i>Редактировать
-                        </a>
-                    @endif
-                    @if ($canManageMoney)
-                        <button type="button" class="btn btn-outline-secondary rounded-3 btn-sm fw-medium" data-bs-toggle="modal" data-bs-target="#addMoney">
-                            <i class="fas fa-coins me-1"></i>Операция GC
-                        </button>
-                    @endif
-                </div>
-            @endif
-
-            @if ($guest->id == $user->id)
-                <div class="gc-card profile-telegram-card overflow-hidden mt-3">
-                    <div class="gc-section-header">
-                        <div class="d-flex align-items-center gap-2 min-width-0">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="fab fa-telegram"></i></span>
-                            <div class="min-width-0">
-                                <span class="gc-eyebrow">уведомления</span>
-                                <h6 class="mb-0 text-truncate">Telegram</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-3">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                            <span class="text-muted small">Статус</span>
-                            @if($user->telegram_chat_id)
-                                <span class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle">Подключено</span>
-                            @else
-                                <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle">Не подключено</span>
-                            @endif
-                        </div>
-
-                        @if($telegramBotConfigured)
-                            <div class="d-grid gap-2">
-                                <a class="btn btn-outline-primary rounded-3 fw-medium" href="{{ url('/insider/profile/'.$user->id.'/telegram-link') }}">
-                                    <i class="fab fa-telegram me-1"></i>{{ $user->telegram_chat_id ? 'Переподключить Telegram' : 'Подключить Telegram' }}
-                                </a>
-                                @if($user->telegram_chat_id)
-                                    <button type="submit" form="telegram-unlink-form" class="btn btn-outline-danger rounded-3 fw-medium" data-confirm="Отключить Telegram-уведомления?">
-                                        <i class="fas fa-link-slash me-1"></i>Отключить
-                                    </button>
-                                @endif
-                            </div>
-                            <small class="text-muted d-block mt-2">Откроется бот с одноразовой ссылкой. Нажмите Start, и уведомления привяжутся автоматически.</small>
-                        @elseif($user->telegram_chat_id)
-                            <button type="submit" form="telegram-unlink-form" class="btn btn-outline-danger rounded-3 fw-medium w-100" data-confirm="Отключить Telegram-уведомления?">
-                                <i class="fas fa-link-slash me-1"></i>Отключить
-                            </button>
-                            <small class="text-muted d-block mt-2">Бот сейчас не настроен администратором, но уже сохраненную привязку можно отключить.</small>
+                    @if($canViewMoneyHistory)
+                        @if($isOwner)
+                            <a class="gc-balance-pill text-decoration-none" href="{{ url('/insider/market#market-history') }}" aria-label="Баланс {{ $coinBalance }} GC, история операций"><i class="fas fa-coins" aria-hidden="true"></i><strong>{{ $coinBalance }}</strong> GC</a>
                         @else
-                            <small class="text-muted d-block">Telegram-бот пока не настроен администратором.</small>
+                            <button class="gc-balance-pill" type="button" data-bs-toggle="modal" data-bs-target="#gc-history" aria-label="Баланс {{ $coinBalance }} GC, история операций"><i class="fas fa-coins" aria-hidden="true"></i><strong>{{ $coinBalance }}</strong> GC</button>
                         @endif
-                    </div>
-                </div>
-
-                <form id="telegram-unlink-form" method="POST" action="{{ url('/insider/profile/'.$user->id.'/telegram-unlink') }}" class="d-none">
-                    @csrf
-                </form>
-
-                <div class="gc-card profile-custom-title-card overflow-hidden mt-3">
-                    <div class="p-3 d-grid gap-2">
-                        <div class="d-flex align-items-center gap-2 min-width-0">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-store"></i></span>
-                            <div class="min-width-0">
-                                <span class="gc-eyebrow">цифровые товары</span>
-                                <h6 class="mb-0 text-truncate">Звания и рамки</h6>
-                            </div>
-                        </div>
-                        <a href="{{ url('/insider/market#market-digital') }}" class="btn btn-outline-primary rounded-3 fw-medium">
-                            Открыть магазин
-                        </a>
-                    </div>
-                </div>
-
-            @endif
-        </div>
-
-        <div class="col-lg-8 col-xl-9">
-            <div class="row row-cols-2 row-cols-xl-4 g-3 mb-4 profile-summary-grid">
-                <div class="col">
-                    <div class="gc-card profile-summary-card gc-metric-card">
-                        <span class="gc-meta-label">XP</span>
-                        <strong>{{ $user->score() }}</strong>
-                        <small class="text-muted">до {{ $rank->to }}</small>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="gc-card profile-summary-card gc-metric-card">
-                        <span class="gc-meta-label">Курсы</span>
-                        <strong>{{ $startedCourses->count() }}</strong>
-                        <small class="text-muted">активных</small>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="gc-card profile-summary-card gc-metric-card">
-                        <span class="gc-meta-label">Завершено</span>
-                        <strong>{{ $completedCourses->count() }}</strong>
-                        <small class="text-muted">курсов</small>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="gc-card profile-summary-card gc-metric-card">
-                        <span class="gc-meta-label">Покупки</span>
-                        <strong>{{ $orders->count() }}</strong>
-                        <small class="text-muted">в магазине</small>
-                    </div>
-                </div>
-            </div>
-
-            <div class="gc-card overflow-hidden mb-4" id="learning-avatar">
-                <div class="d-flex align-items-center justify-content-between gap-3 gc-section-header">
-                    <div class="d-flex align-items-center gap-2 min-width-0">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-user-astronaut"></i></span>
-                            <div class="min-width-0">
-                                <span class="gc-eyebrow">персонаж</span>
-                                <h5 class="mb-0 text-truncate">{{ $learningAvatarManifestName }}</h5>
-                            </div>
-                        </div>
-                    </div>
-
-                <div class="profile-learning-avatar-layout p-3 p-md-4">
-                    <div class="profile-learning-avatar-stage">
-                        <x-gc-learning-avatar :user="$user" :data="$learningAvatarData" id="learning-avatar-preview-{{ $user->id }}" data-learning-avatar-preview data-custom-character-url="{{ $user->roomCharacterImageUrl() }}" />
-                    </div>
-
-                    <div class="profile-learning-avatar-panel">
-                        <div class="d-flex align-items-start gap-2 mb-3">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-layer-group"></i></span>
-                            <div class="min-width-0">
-                                <div class="fw-medium">Настройки комнаты</div>
-                                <div class="text-muted small">Выберите купленные предметы для комнаты.</div>
-                            </div>
-                        </div>
-
-                        @if($guest->id == $user->id)
-                            <form method="POST"
-                                  action="{{ url('/insider/profile/'.$user->id.'/learning-avatar') }}"
-                                  class="profile-learning-avatar-form"
-                                  data-learning-avatar-form
-                                  data-learning-avatar-balance="{{ $coinBalance }}"
-                                  data-learning-avatar-preview-target="learning-avatar-preview-{{ $user->id }}">
-                                @csrf
-                                <input type="hidden" name="manifest" value="{{ $currentLearningAvatarManifest }}">
-                                @foreach($learningAvatarSlotLabels as $slotKey => $slotLabel)
-                                    <label class="profile-learning-avatar-field">
-                                        <span>{{ $slotLabel }}</span>
-                                        <select name="equipped[{{ $slotKey }}]" class="form-select form-select-sm rounded-3">
-                                            <option value="">Пусто</option>
-                                            @foreach(($learningAvatarOptionsBySlot[$slotKey] ?? []) as $itemKey => $item)
-                                                @php
-                                                    $isOwned = in_array($itemKey, $learningAvatarOwned, true);
-                                                @endphp
-                                                @continue(!$isOwned)
-                                                @php
-                                                    $previewLayer = $learningAvatarPreviewItemsBySlot[$slotKey][$itemKey] ?? null;
-                                                @endphp
-                                                <option value="{{ $itemKey }}"
-                                                        @selected(($learningAvatarConfig['equipped'][$slotKey] ?? '') === $itemKey)
-                                                        data-item-cost="0"
-                                                        data-item-owned="1"
-                                                        @if($previewLayer)
-                                                            data-preview-src="{{ $previewLayer['src'] }}"
-                                                            data-preview-slot="{{ $previewLayer['slot'] }}"
-                                                            data-preview-equipped-slot="{{ $previewLayer['equippedSlot'] }}"
-                                                            data-preview-order="{{ $learningAvatarData['renderOrder'][$slotKey] ?? 99 }}"
-                                                            data-preview-style="{{ $previewLayer['style'] }}"
-                                                            data-preview-fit="{{ $previewLayer['fit'] === 'cover' ? 'cover' : 'contain' }}"
-                                                            data-preview-object-position="{{ $previewLayer['objectPosition'] }}"
-                                                        @endif>
-                                                    {{ $item['name'] }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </label>
-                                @endforeach
-
-                                <button type="submit" class="btn btn-sm solution-special-action justify-content-center" data-learning-avatar-submit>
-                                    <i class="fas fa-save"></i>
-                                    Сохранить комнату
-                                </button>
-                                <a href="{{ url('/insider/market#market-digital') }}" class="btn btn-sm btn-outline-secondary rounded-3 justify-content-center">
-                                    Открыть цифровой магазин
-                                </a>
-                            </form>
-                            @if($roomCharacterAvailable ?? false)
-                                @include('profile.partials.room-character')
-                            @endif
-                        @else
-                            <div class="profile-learning-avatar-equipped">
-                                @foreach($learningAvatarSlotLabels as $slotKey => $slotLabel)
-                                    @php
-                                        $equippedItemKey = $learningAvatarConfig['equipped'][$slotKey] ?? null;
-                                        $equippedItem = $equippedItemKey ? ($learningAvatarOptionsBySlot[$slotKey][$equippedItemKey] ?? null) : null;
-                                    @endphp
-                                    <div class="profile-learning-avatar-equipped__row">
-                                        <span>{{ $slotLabel }}</span>
-                                        <strong>{{ $equippedItem['name'] ?? 'Пусто' }}</strong>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            @if($achievements->count())
-                <div class="gc-card overflow-hidden mb-4" id="achievements">
-                    <div class="d-flex align-items-center justify-content-between gap-3 gc-section-header">
-                        <div class="d-flex align-items-center gap-2 min-width-0">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-trophy"></i></span>
-                            <div class="min-width-0">
-                                <span class="gc-eyebrow">{{ $achievements->count() }} достижений</span>
-                                <h5 class="mb-0 text-truncate">Достижения</h5>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="profile-achievement-grid p-3 p-md-4">
-                        @foreach($achievements->take(12) as $achievement)
-                            @php
-                                $canEditAchievement = $guest->role == 'admin'
-                                    || ($achievement->course && $achievement->course->teachers->contains('id', $guest->id));
-                                $canDeleteAchievement = $guest->role == 'admin';
-                                $achievementTrophyUrl = $achievement->trophyImageUrl();
-                            @endphp
-                            <article class="profile-achievement" id="achievement-{{ $achievement->id }}">
-                                @if($canEditAchievement || $canDeleteAchievement)
-                                    <span class="profile-achievement__actions">
-                                        @if($canEditAchievement)
-                                            <button type="button"
-                                                    class="profile-achievement__action"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#achievement-edit-{{ $achievement->id }}"
-                                                    title="Редактировать достижение"
-                                                    aria-label="Редактировать достижение">
-                                                <i class="fas fa-pen"></i>
-                                            </button>
-                                        @endif
-                                        @if($canDeleteAchievement)
-                                            <form method="POST"
-                                                  action="{{ url('/insider/profile/'.$user->id.'/achievement/'.$achievement->id.'/delete') }}"
-                                                  class="d-inline-flex">
-                                                @csrf
-                                                <button type="submit"
-                                                        class="profile-achievement__action profile-achievement__action--danger"
-                                                        title="Удалить достижение"
-                                                        aria-label="Удалить достижение"
-                                                        data-confirm="Удалить достижение «{{ $achievement->title }}» из профиля и пульса?">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </span>
-                                @endif
-                                <span class="profile-achievement__icon">
-                                    @if($achievementTrophyUrl)
-                                        <button type="button"
-                                                class="profile-achievement__trophy-button"
-                                                data-achievement-trophy-viewer
-                                                data-trophy-src="{{ $achievementTrophyUrl }}"
-                                                data-trophy-title="{{ $achievement->title }}"
-                                                data-trophy-description="{{ $achievement->description }}"
-                                                aria-label="Увеличить кубок «{{ $achievement->title }}»">
-                                            <img src="{{ $achievementTrophyUrl }}" alt="">
-                                        </button>
-                                    @else
-                                        <i class="fas fa-trophy"></i>
-                                    @endif
-                                </span>
-                                <div class="profile-achievement__body min-width-0">
-                                    <h6 class="profile-achievement__title">{{ $achievement->title }}</h6>
-                                    <p class="profile-achievement__description">{{ $achievement->description }}</p>
-                                    <div class="profile-achievement__meta">
-                                        @if($achievement->task)
-                                            <span>{{ $achievement->task->name }}</span>
-                                        @endif
-                                        @if($achievement->course)
-                                            <span>{{ $achievement->course->name }}</span>
-                                        @endif
-                                        @if($achievement->published_at)
-                                            <span>{{ $achievement->published_at->format('d.m.Y') }}</span>
-                                        @endif
-                                    </div>
-                                </div>
-                            </article>
-                            @if($canEditAchievement)
-                                <div class="modal fade" id="achievement-edit-{{ $achievement->id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content border-0 rounded-3 shadow-sm overflow-hidden">
-                                            <div class="modal-header border-bottom p-3">
-                                                <div class="d-flex align-items-center gap-2 min-width-0">
-                                                    <span class="gc-icon-tile flex-shrink-0">
-                                                        @if($achievementTrophyUrl)
-                                                            <img src="{{ $achievementTrophyUrl }}" alt="">
-                                                        @else
-                                                            <i class="fas fa-trophy"></i>
-                                                        @endif
-                                                    </span>
-                                                    <h5 class="modal-title text-truncate">Редактировать достижение</h5>
-                                                </div>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-                                            </div>
-                                            <form method="POST"
-                                                  action="{{ url('/insider/profile/'.$user->id.'/achievement/'.$achievement->id) }}"
-                                                  data-fullscreen-loading
-                                                  data-loading-message="Сохраняю достижение">
-                                                @csrf
-                                                <div class="modal-body p-3 p-md-4">
-                                                    <div class="mb-3">
-                                                        <label for="achievement-title-{{ $achievement->id }}" class="form-label">Название</label>
-                                                        <input id="achievement-title-{{ $achievement->id }}"
-                                                               type="text"
-                                                               name="title"
-                                                               class="form-control rounded-3"
-                                                               maxlength="120"
-                                                               value="{{ old('title', $achievement->title) }}"
-                                                               required>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label for="achievement-description-{{ $achievement->id }}" class="form-label">Описание</label>
-                                                        <textarea id="achievement-description-{{ $achievement->id }}"
-                                                                  name="description"
-                                                                  class="form-control rounded-3"
-                                                                  rows="4"
-                                                                  required>{{ old('description', $achievement->description) }}</textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer gc-form-footer">
-                                                    <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Отмена</button>
-                                                    @if($guest->role == 'admin')
-                                                        <button type="submit" name="regenerate_trophy" value="1" class="btn btn-outline-primary rounded-3">Сохранить и перегенерировать кубок</button>
-                                                    @endif
-                                                    <button type="submit" class="btn btn-success rounded-3">Сохранить</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-                    </div>
-                </div>
-            @endif
-
-            @if($canViewMoneyHistory)
-                <div class="gc-card overflow-hidden mb-4" id="gc-history">
-                    <div class="d-flex align-items-center justify-content-between gap-3 gc-section-header">
-                        <div class="d-flex align-items-center gap-2 min-width-0">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-coins"></i></span>
-                            <div class="min-width-0">
-                                <span class="gc-eyebrow">Баланс {{ $coinBalance }} GC</span>
-                                <h5 class="mb-0 text-truncate">История GC</h5>
-                            </div>
-                        </div>
-                        <button class="btn btn-outline-secondary btn-sm rounded-3 profile-coin-history-toggle"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#gc-history-list"
-                                aria-expanded="false"
-                                aria-controls="gc-history-list">
-                            <i class="fas fa-chevron-down me-1"></i>
-                            Показать
-                        </button>
-                    </div>
-
-                    <div class="collapse" id="gc-history-list">
-                        <div class="profile-coin-history">
-                            @forelse($coinTransactions as $transaction)
-                                @php
-                                    $isIncome = $transaction->price > 0;
-                                    $formattedAmount = ($isIncome ? '+' : '') . $transaction->price;
-                                @endphp
-                                <div class="profile-coin-transaction">
-                                    <div class="profile-coin-transaction__amount @if($isIncome) is-income @else is-expense @endif">
-                                        {{ $formattedAmount }} GC
-                                    </div>
-                                    <div class="profile-coin-transaction__body min-width-0">
-                                        <div class="fw-medium text-truncate">{{ $transaction->displayComment() }}</div>
-                                        <div class="text-muted small">
-                                            @if($transaction->created_at)
-                                                {{ $transaction->created_at->format('d.m.Y H:i') }}
-                                            @else
-                                                Дата не указана
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="profile-coin-history__empty">
-                                    <span class="gc-icon-tile"><i class="fas fa-coins"></i></span>
-                                    <div>
-                                        <h6 class="mb-1">Операций пока нет</h6>
-                                        <p class="text-muted mb-0 small">Когда появятся начисления, покупки или ставки, они будут видны здесь.</p>
-                                    </div>
-                                </div>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            <div class="gc-card overflow-hidden mb-4">
-                <div class="d-flex align-items-center gap-2 gc-section-header">
-                    <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-user"></i></span>
-                    <div class="min-width-0">
-                        <span class="gc-eyebrow">Профиль</span>
-                        <h5 class="mb-0 text-truncate">О себе</h5>
-                    </div>
-                </div>
-
-                <div class="p-3 p-md-4">
-                    @if ($hasAbout)
-                        <div class="row g-3">
-                            @if ($user->interests)
-                                <div class="col-12 col-md-6">
-                                    <div class="profile-about-tile h-100">
-                                        <div class="profile-about-tile__label">Технологические интересы</div>
-                                        <p class="mb-0">{{ $user->interests }}</p>
-                                    </div>
-                                </div>
-                            @endif
-                            @if ($user->hobbies)
-                                <div class="col-12 col-md-6">
-                                    <div class="profile-about-tile h-100">
-                                        <div class="profile-about-tile__label">Увлечения</div>
-                                        <p class="mb-0">{{ $user->hobbies }}</p>
-                                    </div>
-                                </div>
-                            @endif
-                            @if (($guest->role == 'teacher' || $guest->role == 'admin') && $user->comments)
-                                <div class="col-12">
-                                    <div class="profile-about-tile">
-                                        <div class="profile-about-tile__label">Комментарий</div>
-                                        <p class="mb-0">{{ $user->comments }}</p>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    @else
-                        <p class="text-muted mb-0">Пока без описания.</p>
                     @endif
+                </x-gc-page-header>
+                <div class="gc-profile-hero__details">
+                    @include('profile.partials.contacts', ['embedded' => true])
+                    @if($hasAbout) @include('profile.partials.about', ['embedded' => true]) @endif
                 </div>
             </div>
+            <section id="learning-avatar" class="gc-profile-hero__room" aria-label="Комната программиста">
+                @if($isOwner)
+                    <div class="gc-profile-hero__room-controls">
+                        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="offcanvas" data-bs-target="#room-settings" aria-controls="room-settings">Настроить</button>
+                        @if(($roomCharacterGeneration ?? null)?->isActive())<span class="gc-help-text gc-profile-hero__room-state" role="status">Создаём персонажа…</span>@endif
+                    </div>
+                @endif
+                <x-gc-learning-avatar :user="$user" :data="$learningAvatarData" id="learning-avatar-preview-{{ $user->id }}" data-learning-avatar-preview data-custom-character-url="{{ $user->roomCharacterImageUrl() }}" />
 
-            @if($managedCourses->count())
-                <h6 class="text-muted text-uppercase small fw-medium mb-2">Преподаёт</h6>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
-                    @foreach($managedCourses as $course)
-                        <div class="col">
-                            <div class="gc-card h-100 p-3 position-relative profile-course-card">
-                                <h6 class="fw-medium lh-sm mb-0">{{ $course->name }}</h6>
-                                @if ($guest->role == 'admin' || $course->students->contains($guest) || $course->teachers->contains($guest))
-                                    <a href="{{ url('insider/courses/'.$course->id) }}" class="stretched-link" aria-label="Открыть курс {{ $course->name }}"></a>
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-
-            @if($startedCourses->count())
-                <h6 class="text-muted text-uppercase small fw-medium mb-2">Текущие курсы</h6>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
-                    @foreach($startedCourses as $course)
-                        <div class="col">
-                            <div class="gc-card h-100 p-3 profile-course-card">
-                                <h6 class="fw-medium lh-sm mb-2">{{ $course->name }}</h6>
-                                <div class="d-flex flex-wrap align-items-center gap-2">
-                                    @if ($guest->role == 'admin' || $course->students->contains($guest) || $course->teachers->contains($guest))
-                                        <a href="{{ url('insider/courses/'.$course->id) }}" class="small text-decoration-none">Страница курса</a>
-                                    @endif
-                                    @if ($guest->role == 'admin')
-                                        <a href="{{ url('insider/profile/'.$user->id.'/delete-course/'.$course->id) }}" class="text-danger small text-decoration-none" data-confirm="Вы уверены?">Отчислить</a>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-
-            @if($completedCourses->count() || $guest->role == 'admin')
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="text-muted text-uppercase small fw-medium mb-0">Завершённые курсы</h6>
-                    @if ($guest->role == 'admin')
-                        <button class="btn btn-outline-success rounded-3 btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    @endif
-                </div>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
-                    @foreach($completedCourses as $completedCourse)
-                        @php
-                            $linkedCourse = $completedCourse->course;
-                            $canOpenCompletedCourse = $linkedCourse && (
-                                $guest->role == 'admin'
-                                || $guest->id == $completedCourse->user_id
-                                || $linkedCourse->students->contains('id', $guest->id)
-                                || $linkedCourse->teachers->contains('id', $guest->id)
-                            );
-                        @endphp
-                        <div class="col">
-                            <div class="gc-card h-100 p-3 profile-course-card">
-                                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                                    <h6 class="fw-medium lh-sm mb-0">{{ $completedCourse->name }}</h6>
-                                    @if ($guest->role == 'admin')
-                                        <a href="{{ url('/insider/profile/delete-course/'.$completedCourse->id) }}" class="text-danger" data-confirm="Вы уверены?"><i class="fas fa-times"></i></a>
-                                    @endif
-                                </div>
-                                <div class="d-flex flex-wrap align-items-center gap-2">
-                                    <span class="gc-soft-badge">{{ $completedCourse->mark }}</span>
-                                    @if ($canOpenCompletedCourse)
-                                        <a href="{{ url('insider/courses/'.$completedCourse->course_id) }}" class="small text-decoration-none">Страница курса</a>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-
-            @if ($orders->count())
-                <h6 class="text-muted text-uppercase small fw-medium mb-2">Покупки</h6>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
-                    @foreach($orders as $deal)
-                        <div class="col">
-                            <div class="gc-card h-100 p-3 profile-course-card">
-                                <h6 class="fw-medium lh-sm mb-2">{{ $deal->good->name }}</h6>
-                                @if ($deal->shipped)
-                                    <span class="gc-soft-badge">Доставлено</span>
-                                @else
-                                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium">Доставляется...</span>
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
+            </section>
+        </section>
+        <div class="gc-profile-resume {{ $achievements->isEmpty() ? 'gc-profile-resume--single' : '' }}">
+            @include('profile.partials.courses')
+            @if($achievements->isNotEmpty())
+                @include('profile.partials.achievements')
             @endif
         </div>
+        @if($hasTeacherComment)
+            <x-gc-panel title="Комментарий преподавателя" id="profile-teacher-comment">
+                <p class="gc-preserve-lines mb-0">{{ $user->comments }}</p>
+            </x-gc-panel>
+        @endif
+        @if($stickers->count())
+            @include('profile.partials.stickers')
+        @endif
     </div>
-
-    {{-- Add course modal --}}
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 rounded-3 shadow-sm overflow-hidden">
-                <div class="modal-header border-bottom p-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-graduation-cap"></i></span>
-                        <h5 class="modal-title">Добавление курса</h5>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-                </div>
-                <form action="{{ url('/insider/profile/'.$user->id.'/course') }}" method="POST">
-                    @csrf
-                    <div class="modal-body p-3 p-md-4">
-                        <div class="mb-3">
-                            <label for="completed-course-name" class="form-label">Название</label>
-                            <input type="text" name="name" class="form-control rounded-3" id="completed-course-name" maxlength="255">
-                        </div>
-                        <div class="mb-3">
-                            <label for="completed-course-mark" class="form-label">Оценка за курс</label>
-                            <input type="text" name="mark" maxlength="255" class="form-control rounded-3" id="completed-course-mark">
-                            <div class="form-text">Завершение курса не добавляет очки опыта.</div>
-                        </div>
-                    </div>
-                    <div class="modal-footer gc-form-footer">
-                        <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Отмена</button>
-                        <button type="submit" class="btn btn-success rounded-3">Создать</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    @if ($canManageMoney)
-        {{-- GC operation modal --}}
-        <div class="modal fade" id="addMoney" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 rounded-3 shadow-sm overflow-hidden">
-                    <div class="modal-header border-bottom p-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-coins"></i></span>
-                            <div>
-                                <h5 class="modal-title">Операция с GC</h5>
-                                <div class="text-muted small">Плюс начисляет, минус списывает монеты.</div>
-                            </div>
-                        </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-                    </div>
-                    <form action="{{ url('/insider/profile/'.$user->id.'/money') }}" method="POST">
-                        @csrf
-                        <div class="modal-body p-3 p-md-4">
-                            <div class="mb-3">
-                                <label for="money-description" class="form-label">Причина</label>
-                                <input type="text" name="description" class="form-control rounded-3" id="money-description" maxlength="255" placeholder="Например: возврат, награда, списание за заказ">
-                            </div>
-                            <div>
-                                <label for="money-amount" class="form-label">Изменение баланса</label>
-                                <input type="number" name="amount" min="-10000" max="10000" step="1" class="form-control rounded-3" id="money-amount" placeholder="Например: 15 или -220">
-                                <div class="form-text">Для списания укажите отрицательное число, например −220.</div>
-                            </div>
-                        </div>
-                        <div class="modal-footer gc-form-footer">
-                            <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Отмена</button>
-                            <button type="submit" class="btn btn-success rounded-3">Сохранить операцию</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    @if($isOwner)
+        @include('profile.partials.room-settings')
+        <span data-profile-history-url="{{ url('/insider/market#market-history') }}" hidden></span>
+    @elseif($canViewMoneyHistory)
+        <div class="modal fade" id="gc-history" tabindex="-1" aria-labelledby="gc-history-title" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+                <div class="modal-header"><h2 class="modal-title h5" id="gc-history-title">История GC · {{ $user->name }}</h2><button class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div>
+                <div class="modal-body"><p class="text-muted">Последние 20 операций · баланс {{ $coinBalance }} GC</p><x-gc-wallet-history :transactions="$coinTransactions" /></div>
+            </div></div>
         </div>
     @endif
+    @include('profile.partials.management-dialogs')
 @endsection

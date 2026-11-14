@@ -1,148 +1,58 @@
 @extends('layouts.left-menu')
-
 @section('title', 'Пульс')
-
 @section('content')
-    <div class="gc-title-row gc-title-row--center">
-        <div class="min-width-0">
-            <h2 class="mb-1">Пульс</h2>
-        </div>
-
-        <a class="btn btn-outline-secondary rounded-3 fw-medium px-3 py-2" href="{{ url('/insider/courses') }}">
-            <i class="fas fa-graduation-cap me-1"></i>Мои курсы
-        </a>
-    </div>
-
-    <section class="gc-card pulse-feed">
-        <div class="pulse-feed__head">
-            <div class="d-flex align-items-center gap-2 min-width-0">
-                <span class="pulse-feed__head-icon"><i class="fas fa-wave-square"></i></span>
-                <h5 class="mb-0">Все события</h5>
-            </div>
-            <span class="badge rounded-pill bg-body-tertiary">{{ $activities->total() }}</span>
-        </div>
-
-        @php
-            $pulseSeries = collect($pulse['series'] ?? []);
-            $chartWidth = 320;
-            $chartHeight = 92;
-            $chartPadding = 7;
-            $chartInnerWidth = $chartWidth - ($chartPadding * 2);
-            $chartInnerHeight = $chartHeight - ($chartPadding * 2);
-            $seriesCount = max(1, $pulseSeries->count());
-            $formatChartNumber = function ($value) {
-                return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
-            };
-            $formatChartPoint = function ($point) use ($formatChartNumber) {
-                return $formatChartNumber($point['x']).','.$formatChartNumber($point['y']);
-            };
-            $buildPulseLine = function ($points) use ($formatChartNumber, $formatChartPoint) {
-                $points = array_values($points);
-                $count = count($points);
-
-                if ($count === 0) {
-                    return '';
-                }
-
-                if ($count === 1) {
-                    return 'M '.$formatChartPoint($points[0]);
-                }
-
-                $path = 'M '.$formatChartPoint($points[0]);
-
-                for ($i = 0; $i < $count - 1; $i++) {
-                    $p0 = $points[max(0, $i - 1)];
-                    $p1 = $points[$i];
-                    $p2 = $points[$i + 1];
-                    $p3 = $points[min($count - 1, $i + 2)];
-                    $control1 = [
-                        'x' => $p1['x'] + (($p2['x'] - $p0['x']) / 6),
-                        'y' => $p1['y'] + (($p2['y'] - $p0['y']) / 6),
-                    ];
-                    $control2 = [
-                        'x' => $p2['x'] - (($p3['x'] - $p1['x']) / 6),
-                        'y' => $p2['y'] - (($p3['y'] - $p1['y']) / 6),
-                    ];
-
-                    $path .= ' C '.$formatChartPoint($control1).' '.$formatChartPoint($control2).' '.$formatChartPoint($p2);
-                }
-
-                return $path;
-            };
-            $maxPulseValue = max(0, (int) $pulseSeries->max('value'));
-            $visualPulseMax = $maxPulseValue > 0 ? min(\App\CourseActivity::PULSE_MAX_VALUE, max(8, $maxPulseValue * 1.18)) : \App\CourseActivity::PULSE_MAX_VALUE;
-            $pulsePoints = $pulseSeries->values()->map(function ($point, $index) use ($chartPadding, $chartInnerWidth, $chartInnerHeight, $chartHeight, $seriesCount, $visualPulseMax) {
-                $x = $seriesCount === 1 ? $chartPadding : $chartPadding + ($chartInnerWidth * $index / ($seriesCount - 1));
-                $visualValue = min(1, max(0, (int) $point['value'] / $visualPulseMax));
-                $y = $chartHeight - $chartPadding - ($chartInnerHeight * $visualValue);
-
-                return [
-                    'x' => $x,
-                    'y' => $y,
-                    'value' => (int) $point['value'],
-                ];
-            })->values();
-            $pulseLine = '';
-            $pulseArea = '';
-
-            if ($pulsePoints->isNotEmpty()) {
-                $points = $pulsePoints->all();
-                $firstPoint = $points[0];
-                $lastPoint = $points[count($points) - 1];
-                $baseline = $chartHeight - $chartPadding;
-
-                $pulseLine = $buildPulseLine($points);
-                $pulseArea = 'M '.$formatChartNumber($firstPoint['x']).','.$formatChartNumber($baseline)
-                    .' L '.$formatChartPoint($firstPoint)
-                    .substr($pulseLine, strlen('M '.$formatChartPoint($firstPoint)))
-                    .' L '.$formatChartNumber($lastPoint['x']).','.$formatChartNumber($baseline).' Z';
-            }
-            $pulseChange = (int) ($pulse['change'] ?? 0);
-        @endphp
-
-        <div class="pulse-overview pulse-overview--{{ $pulse['level'] ?? 'empty' }}">
-            <div class="pulse-overview__summary">
-                <span class="pulse-overview__eyebrow">Пульс сейчас</span>
-                <div class="pulse-overview__value-row">
-                    <strong>{{ $pulse['current'] ?? 0 }}</strong>
-                    <span>{{ $pulse['label'] ?? 'нет сигнала' }}</span>
-                </div>
-                <small>
-                    {{ $pulse['trend'] ?? 'ровно' }}
-                    @if($pulseChange !== 0)
-                        {{ $pulseChange > 0 ? '+' : '' }}{{ $pulseChange }}
-                    @endif
-                    за 6 часов
-                </small>
-            </div>
-
-            <div class="pulse-overview__chart" aria-label="График пульса за 24 часа">
-                <svg viewBox="0 0 {{ $chartWidth }} {{ $chartHeight }}" role="img" focusable="false" preserveAspectRatio="none">
-                    <path class="pulse-overview__grid-line" d="M {{ $chartPadding }} {{ $chartPadding + ($chartInnerHeight * 0.34) }} H {{ $chartWidth - $chartPadding }}" />
-                    <path class="pulse-overview__grid-line" d="M {{ $chartPadding }} {{ $chartPadding + ($chartInnerHeight * 0.68) }} H {{ $chartWidth - $chartPadding }}" />
-                    @if($pulseArea)
-                        <path class="pulse-overview__area" d="{{ $pulseArea }}" />
-                        <path class="pulse-overview__line" d="{{ $pulseLine }}" />
-                    @endif
-                </svg>
-                <div class="pulse-overview__axis">
-                    <span>{{ $pulseSeries->first()['label'] ?? '' }}</span>
-                    <span>24 часа</span>
-                    <span>{{ $pulseSeries->last()['label'] ?? '' }}</span>
+    @php
+        $pulseSeries = collect($pulse['series'] ?? []);
+        $pulseSearch = $pulseSearch ?? '';
+        $selectedPulseCourse = $selectedPulseCourse ?? null;
+        $pulseFiltered = request()->filled('course') || request()->filled('type') || $pulseSearch !== '';
+        $pulseContext = $selectedPulseCourse?->name ?? (request()->filled('course') ? 'Курс недоступен' : 'Все мои курсы');
+        $feedTitle = $activityGroups[request('type')]['label'] ?? 'Все события';
+        $pulseChange = (int) ($pulse['change'] ?? 0);
+    @endphp
+    <div class="gc-feed-workspace gc-stack">
+        <div class="gc-page-masthead">
+            <x-gc-page-header title="Пульс" mark="bolt" description="Учёба, достижения и новости ваших курсов.">
+                <a class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex" href="{{ url('/insider/courses') }}">Мои курсы</a>
+            </x-gc-page-header>
+            <div class="gc-pulse-summary">
+                <div class="min-width-0"><span class="gc-help-text">{{ $pulseContext }} · сейчас</span><div class="gc-pulse-summary__value"><strong>{{ $pulse['current'] ?? 0 }}</strong><span>{{ $pulse['label'] ?? 'нет сигнала' }}</span></div><span class="gc-help-text">{{ $pulse['trend'] ?? 'ровно' }}@if($pulseChange !== 0) {{ $pulseChange > 0 ? '+' : '' }}{{ $pulseChange }}@endif за 6 часов</span></div>
+                <div class="gc-pulse-summary__chart">
+                    <x-gc-pulse-chart :pulse="$pulse" :filled="true" :label="'Активность за 24 часа: '.$pulseContext" />
+                    <div class="gc-summary-line gc-help-text"><span>{{ $pulseSeries->first()['label'] ?? '' }}</span><span>24 часа · все типы событий</span><span>{{ $pulseSeries->last()['label'] ?? '' }}</span></div>
                 </div>
             </div>
         </div>
-
+        <x-gc-workspace-toolbar class="mb-0">
+            <form method="GET" class="gc-toolbar w-100" role="search" aria-label="Фильтры событий">
+                <input type="hidden" name="type" value="{{ request('type') }}">
+                <div class="input-group gc-search-box gc-toolbar__search"><span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span><input type="search" class="form-control" name="q" value="{{ $pulseSearch }}" maxlength="200" placeholder="Участник, курс или задание" aria-label="Участник, курс или задание"></div>
+                <label class="gc-workspace-field gc-toolbar__select"><span>Курс</span><select name="course" class="form-select form-select-sm"><option value="">Все мои курсы</option>
+                    @if(request()->filled('course') && !$selectedPulseCourse)
+                        <option value="{{ request('course') }}" selected>Курс недоступен</option>
+                    @endif
+                    @foreach($pulseCourses as $item)<option value="{{ $item->id }}" @selected((string)request('course') === (string)$item->id)>{{ $item->name }}</option>@endforeach</select></label>
+                <button class="btn btn-outline-secondary btn-sm" type="submit">Найти</button>
+                @if($pulseFiltered)<a class="gc-text-action" href="{{ url('/insider/pulse') }}">Сбросить</a>@endif
+            </form>
+            <nav class="gc-filters gc-filters--scroll" aria-label="Виды событий">
+                @foreach(['' => ['label' => 'Все события']] + $activityGroups as $key => $group)
+                    <a class="gc-filter {{ (request('type') ?? '') === $key ? 'is-active' : '' }}" href="{{ url('/insider/pulse').'?'.http_build_query(array_filter(['course' => request('course'), 'q' => $pulseSearch, 'type' => $key], fn ($value) => filled($value))) }}" @if((request('type') ?? '') === $key) aria-current="page" @endif>{{ $group['label'] }}</a>
+                @endforeach
+            </nav>
+        </x-gc-workspace-toolbar>
+        <section class="gc-card pulse-feed" aria-label="Лента событий">
+            <header class="gc-panel-heading"><div><h2>{{ $feedTitle }}</h2><span class="gc-help-text">{{ $activities->total() }} событий@if($pulseSearch !== '') · поиск «{{ $pulseSearch }}»@endif</span></div><x-gc-page-navigation :paginator="$activities" label="Страницы событий" /></header>
         <div class="pulse-feed__list">
             @forelse($activities as $activity)
+                @if($loop->first || $activities[$loop->index - 1]->created_at->toDateString() !== $activity->created_at->toDateString())
+                    <h2 class="gc-feed-day">{{ $activity->created_at->isToday() ? 'Сегодня' : ($activity->created_at->isYesterday() ? 'Вчера' : $activity->created_at->translatedFormat('j F, l')) }}</h2>
+                @endif
                 @php
-                    $activityFrame = $activity->user && method_exists($activity->user, 'activeAvatarFrame')
-                        ? $activity->user->activeAvatarFrame()
-                        : null;
                     $subtitle = $activity->subtitle();
                     $summary = $activity->payload['summary'] ?? ($activity->payload['achievement_description'] ?? null);
                 @endphp
-                <a class="pulse-feed__item {{ $activity->toneClass() }} @if($activityFrame) pulse-feed__item--framed pulse-feed__item--frame-{{ $activityFrame }} @endif"
+                <a class="pulse-feed__item {{ $activity->toneClass() }}"
                    href="{{ $activity->url() }}"
                    title="{{ trim($activity->title().' '.$subtitle) }}">
                     @include('courses.partials.pulse-icon', ['activity' => $activity])
@@ -156,32 +66,30 @@
                                 {{ $activity->title() }}
                             @endif
                         </span>
-                        @if($subtitle)
-                            <span class="pulse-feed__meta">{{ $subtitle }}</span>
+                        @if($subtitle || $activity->course)
+                            <span class="pulse-feed__meta">
+                                @if($activity->course && empty($activity->payload['course_name']))
+                                    <span class="gc-feed-course">{{ $activity->course->name }}</span>
+                                    @if($subtitle)
+                                        <span aria-hidden="true"> · </span>
+                                    @endif
+                                @endif
+                                {{ $subtitle }}
+                            </span>
                         @endif
                         @if($summary)
                             <span class="pulse-feed__news">{{ $summary }}</span>
                         @endif
                     </span>
-                    <span class="pulse-feed__time">
-                        <span>{{ $activity->timeAgo() }}</span>
-                        @if($activity->created_at)
-                            <span>{{ $activity->created_at->format('d.m.Y H:i') }}</span>
-                        @endif
-                    </span>
+                    <time class="pulse-feed__time" @if($activity->created_at) datetime="{{ $activity->created_at->toIso8601String() }}" title="{{ $activity->created_at->format('d.m.Y H:i') }}" @endif>{{ $activity->created_at?->format('H:i') }}</time>
                 </a>
             @empty
-                <div class="pulse-feed__empty">
-                    <span class="pulse-feed__icon is-muted"><i class="fas fa-seedling"></i></span>
-                    <span>Лента оживёт, когда появятся сдачи, проверки и покупки.</span>
-                </div>
+                <p class="gc-help-text p-3 mb-0">{{ $pulseFiltered ? 'Событий по этим фильтрам нет.' : 'Лента оживёт, когда появятся сдачи, проверки и покупки.' }}</p>@if($pulseFiltered)<a class="btn btn-outline-primary btn-sm m-3 mt-0" href="{{ url('/insider/pulse') }}">Сбросить фильтры</a>@endif
             @endforelse
         </div>
 
-        @if($activities->hasPages())
-            <div class="pulse-feed__pagination">
-                {{ $activities->links('pagination::bootstrap-5') }}
-            </div>
-        @endif
-    </section>
+
+            @if($activities->hasPages())<footer class="gc-panel-body gc-summary-line"><span class="gc-help-text">{{ $activities->firstItem() }}–{{ $activities->lastItem() }} из {{ $activities->total() }}</span><x-gc-page-navigation :paginator="$activities" label="Следующие страницы событий" /></footer>@endif
+        </section>
+    </div>
 @endsection

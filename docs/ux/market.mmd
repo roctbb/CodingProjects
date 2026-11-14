@@ -1,0 +1,35 @@
+flowchart TB
+  market["Магазин"]
+  market_create["Добавление товара"]
+  market_edit["Редактирование товара"]
+  orders["Заказы"]
+  credit["Массовое начисление GC"]
+  market_goods["Физические товары"]
+  market_digital["Цифровые товары"]
+  market_auctions["Аукционы"]
+  market_archive["Архив товаров"]
+  market_orders["Заказы внутри магазина"]
+  custom_frame(["Настройка своей рамки"])
+  personal_purchases["Мои покупки"]
+  wallet["История GC в магазине"]
+  profile["Профиль"]
+  profile_room["Комната участника"]
+  market -->|"Физические товары"| market_goods
+  market -->|"Цифровые товары"| market_digital
+  market -->|"Аукционы"| market_auctions
+  market -->|"Архив товаров"| market_archive
+  market -->|"Заказы внутри магазина"| market_orders
+  market -->|"Настройка своей рамки"| custom_frame
+  custom_frame -.->|"Закрыть / отменить"| market
+  market -->|"Добавить товар"| market_create
+  market -->|"Изменить товар"| market_edit
+  market -->|"Начислить GC"| credit
+  market -->|"Управление заказами"| orders
+  orders -->|"Покупатель"| profile
+  market_digital -->|"Купить и экипировать"| profile_room
+  market_create -->|"Сохранить"| market
+  market_edit -->|"Сохранить"| market
+  credit -->|"Сохранить"| market
+  custom_frame -->|"Купить рамку"| profile
+  market -->|"Мои покупки"| personal_purchases
+  market -->|"История GC"| wallet

@@ -79,6 +79,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/settings/ai', 'AiSettingsController@edit')->name('settings.ai.edit');
     Route::get('/settings/system-store', 'SystemStoreSettingsController@edit')->name('settings.system-store.edit');
+    Route::get('/settings/system-store/targets', 'SystemStoreSettingsController@targets')->name('settings.system-store.targets');
     Route::put('/settings/system-store', 'SystemStoreSettingsController@update')->name('settings.system-store.update');
     Route::put('/settings/ai', 'AiSettingsController@update')->name('settings.ai.update');
     Route::delete('/settings/ai', 'AiSettingsController@reset')->name('settings.ai.reset');
@@ -121,6 +122,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/courses/{id}/', 'CoursesController@details');
     Route::get('/courses/{id}/deadlines', 'CoursesController@deadlines')->name('courses.deadlines');
+    Route::get('/courses/{id}/chapter-tasks', 'StudentCourseTasksController@index')->whereNumber('id')->name('courses.chapter-tasks');
     Route::get('/courses/{id}/enroll', 'CoursesController@enroll');
     Route::get('/courses/{id}/report', 'CoursesController@report');
     Route::post('/courses/{id}/report/students/{student_id}/geekpaste-warning/reset', 'CoursesController@resetStudentGeekPasteWarning');
@@ -140,6 +142,9 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/chapters/{chapter_id}/upper', 'CoursesController@makeChapterUpper');
     Route::get('/courses/{course_id}/chapters/{chapter_id}/lower', 'CoursesController@makeChapterLower');
     Route::post('/courses/{course_id}/chapters/{chapter_id}/default', 'CoursesController@setDefaultChapter');
+    Route::get('/courses/{course_id}/lessons/{lesson_id}/statistics', 'CoursesController@lessonStatistics')->name('courses.lesson-statistics');
+    Route::post('/courses/{course_id}/current-lesson', 'CoursesController@setCurrentLesson')->name('courses.current-lesson');
+    Route::post('/rewards/claim', 'RewardNoticesController@claim')->middleware('throttle:60,1')->name('rewards.claim');
     Route::post('/courses/{course_id}/chapters/{chapter_id}/edit', 'CoursesController@editChapter');
 
 
@@ -171,7 +176,9 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/steps/{id}/delete', 'StepsController@delete');
     Route::post('/courses/{course_id}/steps/{id}/edit', 'StepsController@edit');
     Route::post('/courses/{course_id}/steps/{id}/question', 'StepsController@question');
+    Route::get('/courses/{course_id}/steps/{id}/task/create', 'TasksController@createForm')->middleware('teacher');
     Route::post('/courses/{course_id}/steps/{id}/task', 'TasksController@create');
+    Route::post('/authoring/preview', 'AuthoringPreviewController');
 
     Route::get('/courses/{course_id}/questions/{id}/delete', 'StepsController@deleteQuestion');
     Route::get('/courses/{course_id}/tasks/{id}/delete', 'TasksController@delete');
@@ -211,6 +218,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/profile/{id}/edit', 'ProfileController@editView');
     Route::post('/profile/{id}/edit', 'ProfileController@edit');
+    Route::post('/profile/{id}/password', 'ProfileController@updatePassword');
     Route::get('/profile/{id}/telegram-link', 'ProfileController@telegramLink');
     Route::post('/profile/{id}/telegram-unlink', 'ProfileController@telegramUnlink');
     Route::post('/profile/{id}/custom-title', 'ProfileController@buyCustomTitle');

@@ -1,0 +1,143 @@
+{
+  "date": "2026-11-11",
+  "environment": "Isolated 127.0.0.1:8876 with synthetic SQLite fixtures. Production data untouched.",
+  "screenTypes": [
+    "verify",
+    "community",
+    "courses",
+    "course-create",
+    "chapter-edit",
+    "step-create",
+    "lesson-edit",
+    "perform",
+    "planner",
+    "step",
+    "step-edit",
+    "task-edit",
+    "achievement-preview",
+    "review",
+    "course",
+    "assessments",
+    "blocked",
+    "chapter-create",
+    "lesson-create",
+    "deadlines",
+    "course-edit",
+    "report",
+    "market",
+    "market-create",
+    "credit",
+    "orders",
+    "market-edit",
+    "profile",
+    "profile-edit",
+    "pulse",
+    "reviews",
+    "room-debug",
+    "settings-ai",
+    "settings-store",
+    "settings-telegram",
+    "login",
+    "public-step",
+    "password-request",
+    "password-reset",
+    "register"
+  ],
+  "screenTypesCount": 40,
+  "captureCount": 80,
+  "viewports": {
+    "desktop": [
+      1440,
+      1000
+    ],
+    "mobile": [
+      390,
+      844
+    ],
+    "narrow": [
+      320,
+      760
+    ],
+    "medium": [
+      1024,
+      900
+    ]
+  },
+  "allScreens": {
+    "httpStatus": 200,
+    "h1": 1,
+    "documentOverflow": false,
+    "pageErrors": []
+  },
+  "focusedRoles": [
+    "student",
+    "teacher",
+    "profile owner",
+    "peer profile visitor",
+    "admin"
+  ],
+  "narrowAlternatePalette": [
+    "course-student",
+    "course-teacher",
+    "courses-student",
+    "courses-teacher",
+    "profile-long",
+    "reading",
+    "notebook",
+    "login"
+  ],
+  "functional": {
+    "courseContinue": "Actual link opens selected accessible step.",
+    "courseReview": "Card link preserves course=1 in review queue.",
+    "manualIcon": "Chosen rocket is present in the course list query and rendered SVG.",
+    "photoBackground": "Existing random image source applied to auth background.",
+    "profileOrder": [
+      "Контакты",
+      "Обучение",
+      "Комната программиста",
+      "Достижения",
+      "О себе",
+      "Наклейки"
+    ],
+    "profileNestedCards": 0,
+    "ownerStickerPreview": 8,
+    "additionalStickers": 32,
+    "stickerDisclosureInitiallyOpen": false,
+    "completedCourses": 12,
+    "achievementAnchorExpandsDisclosure": true,
+    "roomSettingsOpens": true,
+    "peerEmailVisible": false,
+    "peerTeacherCommentVisible": false,
+    "teacherCommentVisibleToTeacher": true,
+    "codeCopyMatchesTextContent": true,
+    "codeHtmlAndLastLinePreserved": true,
+    "tableKeyboardScroll": true,
+    "tableWidth": 277,
+    "tableScrollWidth": 965,
+    "mobileOutlineNavigatesAndCloses": true,
+    "progressHiddenOnTask": true,
+    "notebookBodyWidth": 277,
+    "notebookContainerWidth": 277,
+    "notebookCodeAndOutputPreserved": true,
+    "notebookLastCellPresent": true,
+    "mathRendered": true,
+    "mediumTextWidth": 727,
+    "touchTabHeight": 44,
+    "touchCopyHeight": 44
+  },
+  "tests": {
+    "php": {
+      "passed": 534,
+      "assertions": 4468
+    },
+    "notebookMarkdown": {
+      "passed": 12
+    }
+  },
+  "artifacts": "output/playwright/ui-iteration-2/",
+  "limits": [
+    "Not every business state or role combination.",
+    "Purchases, awards, real registrations and production settings not submitted.",
+    "Markdown parser rules unchanged; arbitrary raw HTML support not claimed."
+  ]
+}

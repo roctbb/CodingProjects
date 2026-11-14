@@ -72,7 +72,7 @@ class AiSettingsTest extends TestCase
     {
         $this->login();
         config(['ai.providers.gateway.proxy' => 'socks5h://private-user:private-password@proxy.example:1080']);
-        $response = $this->get(self::URL)->assertOk()->assertSee('Настройки ИИ')->assertSee('Исправление опечаток');
+        $response = $this->get(self::URL)->assertOk()->assertSee('Настройки ИИ')->assertSee('Для текста')->assertSee('Для изображений');
         $response->assertDontSee('env-gateway-key')->assertDontSee('env-openai-key')
             ->assertDontSee('private-password')->assertDontSee('private-user')->assertDontSee('proxy.example');
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
@@ -270,5 +270,57 @@ class AiSettingsTest extends TestCase
     {
         Schema::drop('ai_settings');
         $this->assertSame(config('ai'), app(AiSettings::class)->all());
+    }
+
+    public function testCompactSettingsUseOneConnectionAndTwoModelsWithoutOverwritingInactiveSecrets(): void
+    {
+        $this->login();
+        $legacy = $this->payload();
+        $legacy['settings']['commands']['achievement_image']['model'] = 'old-operation-model';
+        $legacy['secrets']['gateway']['key'] = ['action' => 'replace', 'value' => 'inactive-private-key'];
+        $this->put(self::URL, $legacy)->assertSessionHasNoErrors();
+        $client = app(ChatGptService::class);
+        $payload = [
+            'settings' => ['provider' => 'openai', 'shared_models' => true,
+                'providers' => ['openai' => ['base_url' => 'https://routerai.ru/api/v1/', 'image_api' => 'images']],
+                'defaults' => ['text' => ['model' => 'openai/text-test', 'timeout' => 45], 'image' => ['model' => 'openai/image-test', 'timeout' => 120]],
+            ],
+            'secrets' => ['openai' => ['key' => ['action' => 'replace', 'value' => 'routerai-private-key'], 'proxy' => ['action' => 'clear']]],
+        ];
+        $this->put(self::URL, $payload)->assertSessionHasNoErrors();
+        $settings = app(AiSettings::class)->all();
+        $this->assertSame('inactive-private-key', $settings['providers']['gateway']['key']);
+        $this->assertNull($settings['commands']['achievement_image']['model']);
+        $png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
+        Http::fake(fn (Request $request) => Http::response(str_ends_with($request->url(), '/images')
+            ? ['data' => [['b64_json' => $png]]]
+            : ['output' => [['type' => 'message', 'content' => [['type' => 'output_text', 'text' => 'Готово']]]]]));
+        foreach (array_keys(AiSettings::COMMANDS) as $command) {
+            $messages = [['role' => 'user', 'content' => 'Test']];
+            $options = ['command' => $command];
+            if (config('ai.commands.'.$command.'.type') === 'image') $client->generateImage($messages, $options);
+            else $this->assertSame('Готово', $client->generate($messages, $options));
+        }
+        Http::assertSentCount(6);
+        foreach (Http::recorded() as [$request]) {
+            $this->assertTrue($request->hasHeader('Authorization', 'Bearer routerai-private-key'));
+            $this->assertSame(str_ends_with($request->url(), '/images') ? 'openai/image-test' : 'openai/text-test', $request['model']);
+        }
+        $this->get(self::URL)->assertOk()->assertDontSee('routerai-private-key')->assertDontSee('inactive-private-key')
+            ->assertDontSee('name="settings[commands]', false);
+    }
+
+    public function testRouterAiBaseValidationDoesNotSaveOrFlashSecrets(): void
+    {
+        $this->login();
+        foreach (['https://routerai.ru/api/v1/images', 'https://user:pass@routerai.ru/api/v1', 'https://routerai.ru/api/v1?key=secret', 'file:///tmp/private'] as $url) {
+            $payload = $this->payload();
+            $payload['settings']['provider'] = 'openai';
+            $payload['settings']['providers']['openai']['base_url'] = $url;
+            $payload['secrets']['openai']['key'] = ['action' => 'replace', 'value' => 'do-not-flash-routerai'];
+            $this->put(self::URL, $payload)->assertSessionHasErrors('settings.providers.openai.base_url');
+            $this->assertNull(session()->getOldInput('secrets'));
+            $this->assertSame(0, AiSetting::count());
+        }
     }
 }

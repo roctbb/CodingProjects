@@ -1,9 +1,10 @@
 @extends('layouts.left-menu')
-
 @section('title', 'Магазин')
-
 @section('content')
     @php
+        $myPurchases = $myPurchases ?? collect();
+        $coinTransactions = $coinTransactions ?? collect();
+        $ownedDigitalGoods = $ownedDigitalGoods ?? collect();
         $goodsTabActive = $goods->count() > 0 || ($digitalGoods->count() == 0 && $auctions->count() == 0);
         $digitalTabActive = !$goodsTabActive && $digitalGoods->count() > 0;
         $auctionsTabActive = !$goodsTabActive && !$digitalTabActive;
@@ -13,200 +14,71 @@
             'room_items' => ['label' => 'Предметы комнаты', 'icon' => 'fas fa-cube', 'count' => $digitalGoods->filter(fn ($item) => ($item['type'] ?? 'learning_avatar_item') === 'learning_avatar_item' && ($item['slot'] ?? null) !== 'pet_right')->count()],
             'frames' => ['label' => 'Рамки', 'icon' => 'fas fa-user-circle', 'count' => $digitalGoods->filter(fn ($item) => in_array(($item['type'] ?? null), ['avatar_frame', 'custom_avatar_frame'], true))->count()],
             'titles' => ['label' => 'Звания', 'icon' => 'fas fa-certificate', 'count' => $digitalGoods->filter(fn ($item) => ($item['type'] ?? null) === 'custom_title')->count()],
+            'services' => ['label' => 'Услуги', 'icon' => 'fas fa-wand-magic-sparkles', 'count' => $digitalGoods->filter(fn ($item) => ($item['type'] ?? null) === 'room_character')->count()],
         ];
     @endphp
-
-    <div class="gc-card market-hero gc-page-header mb-3">
-        <div class="min-width-0">
-            <h2 class="mb-1">Магазин</h2>
-            <div class="d-flex flex-wrap gap-2 text-muted small">
-                <span>
-                    <i class="fas fa-coins text-warning"></i>
-                    <strong>{{ $user->balance() }}</strong> GC
-                </span>
-                <a href="{{ url('/insider/profile#gc-history') }}" class="text-muted text-decoration-none">История GC</a>
-                <span><strong>{{ $goods->count() }}</strong> товаров</span>
-                <span><strong>{{ $digitalGoods->count() }}</strong> цифровых</span>
-                <span><strong>{{ $auctions->count() }}</strong> аукционов</span>
-            </div>
-        </div>
-        @if ($canManageMarket)
-            <div class="d-flex gap-2 flex-wrap justify-content-end">
-                @if ($user->role == 'admin')
-                    <a class="btn btn-outline-success rounded-3 fw-medium px-3 py-2" href="{{ url('/insider/market/credit') }}"><i class="fas fa-coins me-1"></i>Начислить</a>
-                    <a class="btn btn-success rounded-3 fw-medium px-3 py-2" href="{{ url('/insider/market/create/') }}"><i class="fas fa-plus me-1"></i>Добавить</a>
-                @endif
-            </div>
+    <div class="gc-page-masthead mb-4">
+    <x-gc-page-header title="Магазин" mark="bag-shopping" description="Награды за учебу: предметы для комнаты, цифровые товары и аукционы.">
+        <a class="gc-balance-pill text-decoration-none" href="#market-history" data-market-tab-link><i class="fas fa-coins" aria-hidden="true"></i><strong>{{ $user->balance() }}</strong> GC</a>
+        @if($user->role == 'admin')
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('settings.system-store.edit') }}">Цены и акции</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url('/insider/market/credit') }}">Начислить</a>
+            <a class="btn btn-primary btn-sm" href="{{ url('/insider/market/create/') }}"><i class="fas fa-plus me-1"></i>Добавить товар</a>
         @endif
+    </x-gc-page-header>
+    <x-gc-tab-strip class="mb-4">
+    <ul class="nav gc-page-tabs" id="marketTabs" role="tablist" aria-label="Разделы магазина">
+        @foreach([
+            'goods' => ['Товары', $goodsTabActive], 'digital' => ['Цифровые', $digitalTabActive],
+            'auctions' => ['Аукционы', $auctionsTabActive], 'purchases' => ['Мои покупки', false], 'history' => ['История GC', false],
+        ] as $tab => [$label, $active])
+            <li class="nav-item" role="presentation"><button class="nav-link {{ $active ? 'active' : '' }}" id="market-{{ $tab }}-tab" data-bs-toggle="tab" data-bs-target="#market-{{ $tab }}" type="button" role="tab" aria-controls="market-{{ $tab }}" aria-selected="{{ $active ? 'true' : 'false' }}">{{ $label }}</button></li>
+        @endforeach
+        @if($canManageMarket)
+            @foreach(['archive' => 'Архив', 'orders' => 'Заказы учеников'] as $tab => $label)
+                <li class="nav-item" role="presentation"><button class="nav-link" id="market-{{ $tab }}-tab" data-bs-toggle="tab" data-bs-target="#market-{{ $tab }}" type="button" role="tab" aria-controls="market-{{ $tab }}" aria-selected="false">{{ $label }}</button></li>
+            @endforeach
+        @endif
+    </ul>
+    </x-gc-tab-strip>
     </div>
-
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <ul class="nav nav-pills gc-segmented-tabs" id="marketTabs" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if($goodsTabActive) active @endif" id="market-goods-tab" data-bs-toggle="tab" data-bs-target="#market-goods" type="button" role="tab">
-                    Товары <span class="badge rounded-pill bg-body gc-tab-count">{{ $goods->count() }}</span>
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if($digitalTabActive) active @endif" id="market-digital-tab" data-bs-toggle="tab" data-bs-target="#market-digital" type="button" role="tab">
-                    Цифровые <span class="badge rounded-pill bg-body gc-tab-count">{{ $digitalGoods->count() }}</span>
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if($auctionsTabActive) active @endif" id="market-auctions-tab" data-bs-toggle="tab" data-bs-target="#market-auctions" type="button" role="tab">
-                    Аукционы <span class="badge rounded-pill bg-body gc-tab-count">{{ $auctions->count() }}</span>
-                </button>
-            </li>
-            @if ($canManageMarket)
-                <li class="nav-item">
-                    <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small" id="market-archive-tab" data-bs-toggle="tab" data-bs-target="#market-archive" type="button" role="tab">
-                        Архив <span class="badge rounded-pill bg-body gc-tab-count">{{ $archive->count() }}</span>
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small" id="market-orders-tab" data-bs-toggle="tab" data-bs-target="#market-orders" type="button" role="tab">
-                        Заказы <span class="badge rounded-pill bg-body gc-tab-count">{{ $active_orders->count() }}</span>
-                    </button>
-                </li>
-            @endif
-        </ul>
-    </div>
-
+    @include('market.partials.promotion-banner', ['catalogOnly' => true])
     <div class="tab-content" id="marketTabsContent">
-        <div class="tab-pane fade @if($goodsTabActive) show active @endif" id="market-goods" role="tabpanel" aria-labelledby="market-goods-tab">
-            @if($goods->count())
-                <div class="gc-card gc-toolbar-card market-goods-toolbar">
-                    <div>
-                        <h5 class="mb-1">Товары</h5>
-                        <p class="mb-0 text-muted small">Обычные покупки без ставок.</p>
-                    </div>
-                    <div class="input-group input-group-sm gc-search-box market-search">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="search" class="form-control" placeholder="Найти товар" aria-label="Найти товар" data-market-search data-market-grid="#market-goods-grid">
-                        <button class="btn d-none" type="button" data-market-clear aria-label="Очистить поиск"><i class="fas fa-times"></i></button>
-                        <span class="input-group-text gc-search-box__count" data-market-count>{{ $goods->count() }} из {{ $goods->count() }}</span>
-                    </div>
-                </div>
-            @endif
+        <div class="tab-pane fade {{ $goodsTabActive ? 'show active' : '' }}" id="market-goods" role="tabpanel" aria-labelledby="market-goods-tab">
+            @include('market.partials.search', ['items' => $goods, 'gridId' => 'market-goods-grid', 'placeholder' => 'Найти товар'])
             @include('market.partials.goods_grid', ['items' => $goods, 'isArchive' => false, 'gridId' => 'market-goods-grid'])
         </div>
-
-        <div class="tab-pane fade @if($digitalTabActive) show active @endif" id="market-digital" role="tabpanel" aria-labelledby="market-digital-tab">
-            @if($digitalGoods->count())
-                <div class="gc-card gc-toolbar-card market-goods-toolbar">
-                    <div>
-                        <h5 class="mb-1">Цифровые товары</h5>
-                        <p class="mb-0 text-muted small">Предметы и питомцы для комнаты профиля.</p>
-                    </div>
-                    <div class="input-group input-group-sm gc-search-box market-search">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="search" class="form-control" placeholder="Найти цифровой товар" aria-label="Найти цифровой товар" data-market-search data-market-grid="#market-digital-grid">
-                        <button class="btn d-none" type="button" data-market-clear aria-label="Очистить поиск"><i class="fas fa-times"></i></button>
-                        <span class="input-group-text gc-search-box__count" data-market-count>{{ $digitalGoods->count() }} из {{ $digitalGoods->count() }}</span>
-                    </div>
-                </div>
-                <div class="market-digital-categories" role="group" aria-label="Категории цифровых товаров">
-                    @foreach($digitalCategoryDefinitions as $categoryKey => $category)
-                        @if($category['count'] > 0 || $categoryKey === 'all')
-                            <button type="button"
-                                    class="market-digital-category @if($categoryKey === 'all') is-active @endif"
-                                    data-market-category-filter="{{ $categoryKey }}"
-                                    data-market-grid="#market-digital-grid">
-                                <i class="{{ $category['icon'] }}"></i>
-                                <span>{{ $category['label'] }}</span>
-                                <strong>{{ $category['count'] }}</strong>
-                            </button>
-                        @endif
-                    @endforeach
-                </div>
-            @endif
+        <div class="tab-pane fade {{ $digitalTabActive ? 'show active' : '' }}" id="market-digital" role="tabpanel" aria-labelledby="market-digital-tab">
+            <div class="gc-collection-invitation mb-3">
+                <span class="gc-page-mark" aria-hidden="true"><i class="fas fa-cubes"></i></span>
+                <div><strong>Твоя комната — твой стиль</strong><p class="gc-help-text mb-0">Предметы, питомцы и оформления для профиля.</p></div>
+                <a class="btn btn-outline-secondary btn-sm" href="{{ url('/insider/profile/'.$user->id.'#room-settings') }}">Моя комната</a>
+            </div>
+            @include('market.partials.search', ['items' => $digitalGoods, 'gridId' => 'market-digital-grid', 'placeholder' => 'Найти цифровой товар', 'categories' => $digitalCategoryDefinitions])
             @include('market.partials.digital_goods_grid', ['items' => $digitalGoods, 'gridId' => 'market-digital-grid'])
         </div>
-
-        <div class="tab-pane fade @if($auctionsTabActive) show active @endif" id="market-auctions" role="tabpanel" aria-labelledby="market-auctions-tab">
-            @if($auctions->count())
-                <div class="gc-card gc-toolbar-card market-goods-toolbar">
-                    <div>
-                        <h5 class="mb-1">Аукционы</h5>
-                        <p class="mb-0 text-muted small">Ограниченные призы для верхних ставок.</p>
-                    </div>
-                    <div class="input-group input-group-sm gc-search-box market-search">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="search" class="form-control" placeholder="Найти аукцион" aria-label="Найти аукцион" data-market-search data-market-grid="#market-auctions-grid">
-                        <button class="btn d-none" type="button" data-market-clear aria-label="Очистить поиск"><i class="fas fa-times"></i></button>
-                        <span class="input-group-text gc-search-box__count" data-market-count>{{ $auctions->count() }} из {{ $auctions->count() }}</span>
-                    </div>
-                </div>
-            @endif
+        <div class="tab-pane fade {{ $auctionsTabActive ? 'show active' : '' }}" id="market-auctions" role="tabpanel" aria-labelledby="market-auctions-tab">
+            @include('market.partials.search', ['items' => $auctions, 'gridId' => 'market-auctions-grid', 'placeholder' => 'Найти аукцион'])
             @include('market.partials.goods_grid', ['items' => $auctions, 'isArchive' => false, 'gridId' => 'market-auctions-grid', 'emptyTitle' => 'Нет активных аукционов', 'emptyText' => 'Новые аукционы появятся здесь.'])
         </div>
-
+        <div class="tab-pane fade" id="market-purchases" role="tabpanel" aria-labelledby="market-purchases-tab">
+            @include('market.partials.purchases')
+        </div>
+        <div class="tab-pane fade" id="market-history" role="tabpanel" aria-labelledby="market-history-tab">
+            <x-gc-panel title="История GC">
+                <x-slot:actions><span class="gc-meta-label">Баланс {{ $user->balance() }} GC</span></x-slot:actions>
+                <x-gc-wallet-history :transactions="$coinTransactions" />
+                @if(method_exists($coinTransactions, 'hasPages') && $coinTransactions->hasPages())<div class="mt-4">{{ $coinTransactions->links('pagination::bootstrap-5') }}</div>@endif
+            </x-gc-panel>
+        </div>
         @if ($canManageMarket)
             <div class="tab-pane fade" id="market-archive" role="tabpanel" aria-labelledby="market-archive-tab">
-                @if($archive->count())
-                    <div class="gc-card gc-toolbar-card market-goods-toolbar">
-                        <div>
-                            <h5 class="mb-1">Архив</h5>
-                            <p class="mb-0 text-muted small">Снятые с продажи товары.</p>
-                        </div>
-                        <div class="input-group input-group-sm gc-search-box market-search">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="search" class="form-control" placeholder="Найти в архиве" aria-label="Найти в архиве" data-market-search data-market-grid="#market-archive-grid">
-                            <button class="btn d-none" type="button" data-market-clear aria-label="Очистить поиск"><i class="fas fa-times"></i></button>
-                            <span class="input-group-text gc-search-box__count" data-market-count>{{ $archive->count() }} из {{ $archive->count() }}</span>
-                        </div>
-                    </div>
-                @endif
+                @include('market.partials.search', ['items' => $archive, 'gridId' => 'market-archive-grid', 'placeholder' => 'Найти в архиве'])
                 @include('market.partials.goods_grid', ['items' => $archive, 'isArchive' => true, 'gridId' => 'market-archive-grid'])
             </div>
 
             <div class="tab-pane fade" id="market-orders" role="tabpanel" aria-labelledby="market-orders-tab">
-                <div class="d-grid gap-3">
-                    <div class="gc-card overflow-hidden">
-                        <div class="gc-section-header gc-section-header--inline">
-                            <span class="gc-icon-tile market-orders-icon flex-shrink-0"><i class="fas fa-clock"></i></span>
-                            <div>
-                                <h5 class="mb-1">Активные заказы</h5>
-                                <p class="text-muted mb-0 small">Заказы, ожидающие доставки</p>
-                            </div>
-                        </div>
-                        <div class="table-responsive">
-                            @if($active_orders->count() > 0)
-                                @include('market.partials.orders_table', ['orders' => $active_orders, 'showActions' => true, 'showShippedAt' => false, 'returnUrl' => request()->fullUrl().'#market-orders'])
-                            @else
-                                <div class="gc-empty-inline">
-                                    <span class="gc-empty-icon"><i class="fas fa-inbox"></i></span>
-                                    <p class="mb-0">Нет активных заказов.</p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <div class="gc-card overflow-hidden">
-                        <div class="gc-section-header gc-section-header--inline">
-                            <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-check"></i></span>
-                            <div>
-                                <h5 class="mb-1">Доставленные заказы</h5>
-                                <p class="text-muted mb-0 small">История доставок, по 25 заказов на странице</p>
-                            </div>
-                        </div>
-                        <div class="table-responsive">
-                            @if($shipped_orders->count() > 0)
-                                @include('market.partials.orders_table', ['orders' => $shipped_orders, 'showActions' => false, 'showShippedAt' => true])
-                            @else
-                                <div class="gc-empty-inline">
-                                    <span class="gc-empty-icon"><i class="fas fa-box-open"></i></span>
-                                    <p class="mb-0">Нет доставленных заказов.</p>
-                                </div>
-                            @endif
-                        </div>
-                        @if($shipped_orders->hasPages())
-                            <div class="market-orders-pagination border-top p-3">
-                                {{ $shipped_orders->links('pagination::bootstrap-5') }}
-                            </div>
-                        @endif
-                    </div>
-                </div>
+                @include('market.partials.order-workspace', ['ordersFragment' => 'market-orders'])
             </div>
         @endif
     </div>

@@ -13,6 +13,7 @@
 </head>
 <body>
 
+@php $workspaceNavigation = app(\App\Support\WorkspaceNavigation::class)->forUser(Auth::user(), request()); @endphp
 <div class="gc-layout">
     <aside id="gcSidebar" class="gc-sidebar">
         <a class="gc-sidebar__brand" href="{{ url('/') }}">
@@ -20,36 +21,19 @@
             <span>{{ config('app.name', 'Laravel') }}</span>
         </a>
 
-        <div class="gc-sidebar__scroll">
+        <button class="gc-sidebar__close gc-icon-button btn btn-outline-secondary" type="button" data-sidebar-close aria-label="Закрыть меню"><i class="fas fa-times" aria-hidden="true"></i></button>
+        <nav class="gc-sidebar__scroll" aria-label="Главная навигация">
             <ul class="gc-sidebar__nav">
             @if (Auth::check())
-                <li>
-                    <a class="gc-sidebar__link {{ Request::is('insider/courses*') ? 'active' : '' }}" href="{{ url('/insider/courses') }}">
-                        <i class="fas fa-graduation-cap"></i> Мои курсы
-                    </a>
-                </li>
-                <li>
-                    <a class="gc-sidebar__link {{ Request::is('insider/pulse*') ? 'active' : '' }}" href="{{ url('/insider/pulse') }}">
-                        <i class="fas fa-wave-square"></i> Пульс
-                    </a>
-                </li>
-                @if(Auth::user()->role == 'teacher' || Auth::user()->role == 'admin')
+                @foreach($workspaceNavigation['items'] as $navItem)
+                    @continue($navItem['key'] === 'profile')
+                    @php $navActive = $navItem['shortcutActive'] ?? $navItem['active']; @endphp
                     <li>
-                        <a class="gc-sidebar__link {{ Request::is('insider/reviews*') ? 'active' : '' }}" href="{{ url('/insider/reviews') }}">
-                            <i class="fas fa-code-branch"></i> Проверка
+                        <a class="gc-sidebar__link {{ $navActive ? 'active' : '' }}" href="{{ url($navItem['path']) }}" @if($navActive) aria-current="page" @endif>
+                            <i class="fas fa-{{ $navItem['icon'] }}" aria-hidden="true"></i> {{ $navItem['label'] }}
                         </a>
                     </li>
-                @endif
-                <li>
-                    <a class="gc-sidebar__link {{ Request::is('insider/market*') ? 'active' : '' }}" href="{{ url('insider/market') }}">
-                        <i class="fas fa-store"></i> Магазин
-                    </a>
-                </li>
-                <li>
-                    <a class="gc-sidebar__link {{ Request::is('insider/community*') ? 'active' : '' }}" href="{{ url('insider/community') }}">
-                        <i class="fas fa-users"></i> Сообщество
-                    </a>
-                </li>
+                @endforeach
                 @include('layouts.partials.sidebar-course-links')
             @else
                 <li>
@@ -59,7 +43,7 @@
                 </li>
             @endif
             </ul>
-        </div>
+        </nav>
 
         @if (Auth::check())
             <div class="gc-sidebar__user">
@@ -70,6 +54,7 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{{ url('insider/profile') }}"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                        <li><a class="dropdown-item" href="{{ url('/insider/profile/'.Auth::id().'/edit?section=account') }}"><i class="fas fa-sliders-h" aria-hidden="true"></i> Личные настройки</a></li>
                         @include('layouts.partials.sidebar-settings-link')
                         <li><hr class="dropdown-divider"></li>
                         @include('layouts.partials.sidebar-user-resources')
@@ -87,7 +72,7 @@
 
     <div class="gc-main">
         <div class="gc-topbar">
-            <button id="gcSidebarToggle" class="gc-topbar__toggle" aria-label="Меню">
+            <button id="gcSidebarToggle" class="gc-topbar__toggle" aria-label="Открыть меню" aria-controls="gcSidebar" aria-expanded="false">
                 <i class="fas fa-bars"></i>
             </button>
             <span class="fw-medium">{{ config('app.name', 'Laravel') }}</span>
@@ -99,6 +84,7 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{{ url('insider/profile') }}">Профиль</a></li>
+                        <li><a class="dropdown-item" href="{{ url('/insider/profile/'.Auth::id().'/edit?section=account') }}"><i class="fas fa-sliders-h" aria-hidden="true"></i> Личные настройки</a></li>
                         @include('layouts.partials.sidebar-settings-link')
                         <li>
                             <form method="POST" action="{{ route('logout') }}">
@@ -124,18 +110,12 @@
 
 @if (Auth::check())
     <nav class="gc-bottom-nav" aria-label="Мобильная навигация">
-        <a href="{{ url('/insider/courses') }}" class="gc-bottom-nav__item {{ Request::is('insider/courses*') ? 'active' : '' }}">
-            <i class="fas fa-graduation-cap"></i><span>Курсы</span>
-        </a>
-        <a href="{{ url('/insider/market') }}" class="gc-bottom-nav__item {{ Request::is('insider/market*') ? 'active' : '' }}">
-            <i class="fas fa-store"></i><span>Магазин</span>
-        </a>
-        <a href="{{ url('/insider/community') }}" class="gc-bottom-nav__item {{ Request::is('insider/community*') ? 'active' : '' }}">
-            <i class="fas fa-users"></i><span>Люди</span>
-        </a>
-        <a href="{{ url('/insider/profile') }}" class="gc-bottom-nav__item {{ Request::is('insider/profile*') ? 'active' : '' }}">
-            <i class="fas fa-user"></i><span>Профиль</span>
-        </a>
+        @foreach($workspaceNavigation['items'] as $navItem)
+            @continue($navItem['key'] === 'pulse')
+            <a href="{{ url($navItem['path']) }}" class="gc-bottom-nav__item {{ $navItem['active'] ? 'active' : '' }}" @if($navItem['active']) aria-current="page" @endif>
+                <i class="fas fa-{{ $navItem['icon'] }}" aria-hidden="true"></i><span>{{ $navItem['shortLabel'] }}</span>
+            </a>
+        @endforeach
     </nav>
 @endif
 

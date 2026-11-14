@@ -226,7 +226,8 @@ class LearningAvatarProfileUpdateTest extends TestCase
 
         $this->assertStringContainsString('data-market-frame-modal-open', $html);
         $this->assertStringContainsString('Настроить', $html);
-        $this->assertStringContainsString('data-market-frame-modal hidden', $html);
+        $this->assertStringContainsString('<dialog class="gc-dialog market-digital-frame-modal"', $html);
+        $this->assertStringNotContainsString('data-market-frame-modal open', $html);
         $this->assertStringContainsString('market-digital-frame-modal__footer', $html);
         $this->assertStringContainsString('data-frame-static-cost="' . $user->customAvatarFrameCost(false) . '"', $html);
         $this->assertStringContainsString('data-frame-animated-cost="' . $user->customAvatarFrameCost(true) . '"', $html);

@@ -7,6 +7,7 @@
     $percent = $showProgress && empty($isTeacher) ? min(100, round(optional($progress)->percent ?? 0)) : null;
     $isArchive = $variant === 'archive';
     $isAvailable = $variant === 'available';
+    $courseIcon = \App\Support\CourseIcons::forCourse($course);
     $statusLabel = [
         'draft' => 'Черновик',
         'archive' => 'Архив',
@@ -15,14 +16,14 @@
 @endphp
 
 <div class="col">
+    <article class="course-index-card gc-card">
     @if($isLinked)
-        <a href="{{ $href }}" class="course-index-card gc-card link-dark">
+        <a href="{{ $href }}" class="course-index-card__body gc-card-link">
     @else
-        <div class="course-index-card gc-card">
-    @endif
         <div class="course-index-card__body">
-            <span class="course-index-card__icon"><i class="fas fa-graduation-cap"></i></span>
+    @endif
             <div class="course-index-card__content">
+                <x-gc-course-icon :name="$courseIcon" class="course-index-card__icon course-index-card__icon--{{ $courseIcon }}" />
                 <div class="course-index-card__head">
                     <h6 class="course-index-card__title">{{ $course->name }}</h6>
                     @if($statusLabel)
@@ -31,10 +32,6 @@
                 </div>
                 <p class="course-index-card__description">{{ \Illuminate\Support\Str::limit($course->description, 110) }}</p>
             </div>
-            @if($isLinked)
-                <span class="home-card-arrow course-index-card__arrow"><i class="fas fa-arrow-right"></i></span>
-            @endif
-
             @if ($percent !== null)
                 <div class="course-index-card__progress">
                     <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
@@ -79,10 +76,10 @@
                     @endif
                 </div>
             @endif
-        </div>
     @if($isLinked)
         </a>
     @else
         </div>
     @endif
+    </article>
 </div>

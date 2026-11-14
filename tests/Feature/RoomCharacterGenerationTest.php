@@ -80,12 +80,12 @@ class RoomCharacterGenerationTest extends TestCase
         (require database_path('migrations/2026_11_02_120000_create_system_store_settings_table.php'))->up();
         $settings = app(\App\Services\SystemStoreSettings::class);
         $data = $settings->all();
-        $data['pumpkin_promo'] = ['enabled' => true, 'ends_at' => null];
+        $data['promotion'] = array_replace($data['promotion'], ['enabled' => true, 'name' => 'Неделя открытий', 'discount_percent' => 50, 'items' => ['digital:room_character']]);
         $settings->save($data, 1);
         $generation = $this->purchase($user);
         $this->assertSame(50, $generation->cost);
         $this->assertSame(-50, CoinTransaction::find($generation->charge_transaction_id)->price);
-        $data['pumpkin_promo']['enabled'] = false;
+        $data['promotion']['enabled'] = false;
         $settings->save($data, 1);
         app(RoomCharacterGenerator::class)->fail($generation->id, 'test_failure');
         $this->assertSame(200, (int) $user->balance());

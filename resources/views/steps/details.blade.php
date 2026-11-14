@@ -18,16 +18,34 @@
 @endsection
 
 @section('content')
-    <div class="step-page-shell" data-step-details-page>
+    @php
+        $hasStepNavigation = $step->lesson->steps->count() > 1;
+        $isInsider = \Request::is('insider/*');
+        $isManager = $isInsider && ($course->teachers->contains($user) || $user->role === 'admin');
+        $prevStep = $step->previousStep();
+        $nextStep = $step->nextStep();
+        $stepBaseUrl = $isInsider ? '/insider/courses/'.$course->id.'/steps/' : '/open/steps/';
+        $prevUrl = $prevStep ? url($stepBaseUrl.$prevStep->id) : null;
+        $nextUrl = $nextStep ? url($stepBaseUrl.$nextStep->id) : null;
+    @endphp
+    <div class="step-page-shell gc-workbook" data-step-details-page>
         <div class="step-reading-progress" data-step-reading-progress hidden>
             <span></span>
         </div>
-        @include('steps/partials/nav')
-
-        <main role="main" class="step-main">
-            @include('steps/partials/breadcrumb_widget')
+        <div class="gc-workbook-layout {{ $hasStepNavigation ? 'gc-workbook-layout--with-navigation' : '' }}">
+            <header class="gc-workbook-header">
+                @include('steps/partials/breadcrumb_widget')
+            </header>
+            @if($hasStepNavigation)
+                <aside class="gc-workbook-navigation">@include('steps.partials.nav')</aside>
+            @endif
+        <article class="step-main">
             @include('steps/partials/tabs')
 
+            <details class="gc-reading-outline gc-disclosure gc-disclosure--inline" data-reading-outline hidden>
+                <summary>В этой теме</summary>
+                <nav aria-label="Оглавление конспекта"></nav>
+            </details>
             <div class="step-content-layout" data-step-content-layout>
             <div class="tab-content step-content" id="pills-tabContent">
 
@@ -38,15 +56,8 @@
             </div>
             <aside class="step-reading-toc" data-step-reading-toc hidden></aside>
             </div>
-            @php
-                $isInsider = \Request::is('insider/*');
-                $prevStep  = $step->previousStep();
-                $nextStep  = $step->nextStep();
-                $prevUrl   = $prevStep ? url(($isInsider ? '/insider/courses/'.$course->id.'/steps/' : '/open/steps/').$prevStep->id) : null;
-                $nextUrl   = $nextStep ? url(($isInsider ? '/insider/courses/'.$course->id.'/steps/' : '/open/steps/').$nextStep->id) : null;
-            @endphp
             @if ($prevUrl || $nextUrl)
-                <nav class="step-page-nav mt-4">
+                <nav class="step-page-nav mt-4" aria-label="Переход между ступенями">
                     <div class="step-page-nav__slot">
                         @if ($prevUrl)
                             <a href="{{ $prevUrl }}" class="step-nav-btn step-nav-btn--prev">
@@ -72,15 +83,12 @@
                 </nav>
             @endif
 
-        </main>
+        </article>
+        </div>
 
 
     </div>
 
 
-    @include('steps/partials/modal')
+
 @endsection
-@push('editor')
-<script type="text/javascript" src="{{ asset('build/js/vendor/easymde.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('build/js/easymde-bridge.js') }}"></script>
-@endpush

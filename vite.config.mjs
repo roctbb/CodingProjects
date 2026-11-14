@@ -18,6 +18,7 @@ export default defineConfig({
       input: {
         vendor: path.resolve(__dirname, 'resources/assets/js/vendor.js'),
         courseStats: path.resolve(__dirname, 'resources/assets/js/course-stats.js'),
+        coursePlanner: path.resolve(__dirname, 'resources/assets/js/course-planner/index.js'),
         easymdeBridge: path.resolve(__dirname, 'resources/assets/js/easymde-bridge.js'),
         mathjaxConfig: path.resolve(__dirname, 'resources/assets/js/mathjax-config.js'),
         nbv: path.resolve(__dirname, 'resources/assets/js/nbv.js'),

@@ -12,6 +12,7 @@ use App\Rank;
 use App\RoomCharacterGeneration;
 use App\Services\CoinWallet;
 use App\Jobs\GenerateAchievementTrophy;
+use App\Queries\CommunityDirectory;
 use App\Solution;
 use App\User;
 use Carbon\Carbon;
@@ -45,42 +46,23 @@ class ProfileController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('manual_rank')->orderBy('name')->get();
-        $solutionScores = DB::query()
-            ->fromSub(
-                Solution::query()
-                    ->select('user_id', 'task_id')
-                    ->selectRaw('MAX(COALESCE(mark, 0)) as mark')
-                    ->groupBy('user_id', 'task_id'),
-                'best_marks'
-            )
-            ->select('user_id')
-            ->selectRaw('SUM(mark) as score')
-            ->groupBy('user_id')
-            ->pluck('score', 'user_id');
+        $value = $request->query('q', '');
+        $search = is_string($value) ? mb_substr(trim($value), 0, 120) : '';
+        $value = $request->query('role', 'all');
+        $role = in_array($value, ['all', 'student', 'teacher'], true) ? $value : 'all';
+        $directory = new CommunityDirectory();
+        $users = $directory->paginate($search, $role);
 
-        $ranks = Rank::orderBy('from')->get();
-        $fallbackRank = $ranks->first();
+        if ($users->currentPage() > $users->lastPage()) {
+            return redirect($users->url($users->lastPage()));
+        }
 
-        $users->each(function ($user) use ($solutionScores, $ranks, $fallbackRank) {
-            if ($user->rank_id && $user->manual_rank) {
-                $user->setComputedScore($user->manual_rank->to - 1);
-                $user->setComputedRank($user->manual_rank);
-                return;
-            }
+        $topUserIds = $directory->leaderIds();
+        $profileQuery = \App\Support\CommunityNavigation::profileQuery($search, $role, $users->currentPage());
 
-            $score = (int) ($solutionScores[$user->id] ?? 0);
-            $rank = $ranks->first(function ($rank) use ($score) {
-                return $rank->from <= $score && $rank->to > $score;
-            });
-
-            $user->setComputedScore($score);
-            $user->setComputedRank($rank ?: $fallbackRank);
-        });
-
-        return view('profile.index', compact('users'));
+        return view('profile.index', compact('users', 'search', 'role', 'topUserIds', 'profileQuery'));
     }
 
     public function details($id = null)
@@ -97,7 +79,6 @@ class ProfileController extends Controller
                 'courses.teachers',
                 'completedCourses.course.students',
                 'completedCourses.course.teachers',
-                'orders.good',
                 'achievements.course.teachers',
                 'achievements.task',
             ])->findOrFail($guest->id);
@@ -111,7 +92,6 @@ class ProfileController extends Controller
                 'courses.teachers',
                 'completedCourses.course.students',
                 'completedCourses.course.teachers',
-                'orders.good',
                 'achievements.course.teachers',
                 'achievements.task',
             ])->findOrFail($id);
@@ -119,14 +99,10 @@ class ProfileController extends Controller
 
         $canManageMoney = $this->canManageMoney($guest, $user);
         $canViewMoneyHistory = $guest->id == $user->id || $canManageMoney || $guest->role == 'admin';
-        $coinTransactions = $canViewMoneyHistory
+        $coinTransactions = $canViewMoneyHistory && $guest->id != $user->id
             ? $user->transactions()->latest()->take(20)->get()
             : collect();
         $coinBalance = $user->balance();
-        $avatarFrames = User::avatarFrames();
-        $activeAvatarFrame = $user->activeAvatarFrame();
-        $customAvatarFrameCost = $user->customAvatarFrameCost();
-        $customAvatarFrameDefaults = User::sanitizeCustomAvatarFrameConfig(old('avatar_frame_config', $user->avatar_frame_config ?: User::customAvatarFrameDefaults()));
         $learningAvatarData = $user->learningAvatarRenderData();
         $roomCharacterAvailable = $guest->id == $user->id && Schema::hasTable('room_character_generations');
         $roomCharacterGeneration = $roomCharacterAvailable
@@ -140,7 +116,7 @@ class ProfileController extends Controller
         $stickers = $user->getStickers();
         $sticker_description = $user->getStickerDescriptions();
 
-        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'canManageMoney', 'avatarFrames', 'activeAvatarFrame', 'customAvatarFrameCost', 'customAvatarFrameDefaults', 'learningAvatarData', 'achievements', 'roomCharacterAvailable', 'roomCharacterGeneration'));
+        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'canManageMoney', 'learningAvatarData', 'achievements', 'roomCharacterAvailable', 'roomCharacterGeneration'));
     }
 
     public function updateAchievement($user_id, $achievement_id, Request $request)
@@ -252,6 +228,17 @@ class ProfileController extends Controller
         return view('profile.edit', compact('user', 'guest'));
     }
 
+    public function updatePassword($id, Request $request)
+    {
+        $data = $request->validate(['password' => 'required|string|min:6|max:72|confirmed']);
+        $user = User::findOrFail($id);
+        $user->password = bcrypt($data['password']);
+        $user->save();
+
+        return redirect('/insider/profile/'.$id.'/edit?section=account')
+            ->with('status', 'Пароль сохранён.');
+    }
+
     public function deleteCourse($id)
     {
         $course = CompletedCourse::findOrFail($id);
@@ -327,6 +314,7 @@ class ProfileController extends Controller
 
         $this->validate($request, [
             'custom_title' => 'required|string|max:32',
+            'expected_cost' => 'sometimes|integer|min:1',
         ]);
 
         $title = trim(strip_tags($request->custom_title));
@@ -338,6 +326,10 @@ class ProfileController extends Controller
         }
 
         $cost = $user->customTitleCost();
+        if ($request->has('expected_cost') && $request->integer('expected_cost') !== $cost) {
+            $this->make_error_alert('Цена изменилась', 'Обновите страницу перед покупкой. Монеты не списаны.');
+            return redirect()->back()->withInput();
+        }
         $user = app(CoinWallet::class)->transaction($user->id, function (User $lockedUser) use ($cost, $title) {
             if ($lockedUser->balance() < $cost) {
                 return null;
@@ -369,6 +361,7 @@ class ProfileController extends Controller
 
         $this->validate($request, [
             'avatar_frame' => 'required|string',
+            'expected_cost' => 'sometimes|integer|min:1',
         ]);
 
         $frames = User::avatarFrames();
@@ -390,6 +383,10 @@ class ProfileController extends Controller
             ]
             : $frames[$frameKey];
         $cost = (int) $frame['cost'];
+        if ($request->has('expected_cost') && $request->integer('expected_cost') !== $cost) {
+            $this->make_error_alert('Цена изменилась', 'Обновите страницу перед покупкой. Монеты не списаны.');
+            return redirect()->back()->withInput();
+        }
 
         $user = app(CoinWallet::class)->transaction($user->id, function (User $lockedUser) use ($cost, $frameKey, $customFrameConfig) {
             if ($lockedUser->balance() < $cost) {
@@ -460,8 +457,8 @@ class ProfileController extends Controller
             'gender' => ['nullable', 'string', Rule::in(array_keys(User::learningAvatarGenders()))],
             'git' => 'nullable|string|max:255',
             'telegram' => 'nullable|string|max:255',
-            'hobbies' => 'required|string|max:10000',
-            'interests' => 'required|string|max:10000',
+            'hobbies' => 'nullable|string|max:10000',
+            'interests' => 'nullable|string|max:10000',
             'comments' => 'nullable|string|max:10000',
             'birthday_hidden' => 'nullable|boolean',
             'image' => 'image|max:10240'
@@ -503,7 +500,7 @@ class ProfileController extends Controller
             $user->image = $path;
         }
 
-        if ($guest->role == 'teacher')
+        if (in_array($guest->role, ['teacher', 'admin'], true))
             $user->comments = $request->comments;
         $user->save();
         Cache::forget(User::nearbyBirthdaysCacheKey());

@@ -65,7 +65,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public static function nearbyBirthdaysCacheKey(?Carbon $date = null): string
     {
-        return 'users:nearby_birthdays:' . ($date ?: Carbon::now())->format('Y-m-d');
+        return 'users:nearby_birthdays:week:v2:' . ($date ?: Carbon::now())->format('Y-m-d');
     }
 
     public function imageUrl(): string
@@ -194,7 +194,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function score()
     {
-        if ($this->score != null)
+        if ($this->score !== null)
             return $this->score;
         
         $cacheKey = "user:{$this->id}:score";
@@ -1227,8 +1227,29 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function digitalStoreItems()
     {
+        $pricing = app(\App\Services\SystemStoreSettings::class);
         return $this->profileDigitalStoreItems()
             ->merge($this->learningAvatarDigitalStoreItems())
+            ->push([
+                'key' => 'room_character', 'type' => 'room_character', 'name' => 'Генерация персонажа',
+                'description' => 'Создайте персонажа для комнаты на основе своей аватарки. Настройка и запуск — в вашем профиле.',
+                'icon' => 'fas fa-user-astronaut', 'cost' => $pricing->price('room_character'), 'slot' => 'services',
+                'owned' => false, 'active' => false, 'ability_descriptions' => [],
+            ])
+            ->map(function ($item) use ($pricing) {
+                $key = $item['key'];
+                if ($key === 'avatar_frame_custom') {
+                    $static = $pricing->quoteSystemItem('avatar_frame_custom_static');
+                    $animated = $pricing->quoteSystemItem('avatar_frame_custom_animated');
+                    $quote = $static['price'] <= $animated['price'] ? $static : $animated;
+                    $item['cost'] = $quote['price'];
+                } elseif (array_key_exists($key, config('system_store.items'))) {
+                    $quote = $pricing->quoteSystemItem($key);
+                } else {
+                    $quote = ['base_price' => $item['cost'], 'discount_percent' => 0, 'promotion_name' => null];
+                }
+                return array_merge($item, ['base_cost' => $quote['base_price'], 'discount_percent' => $quote['discount_percent'], 'promotion_name' => $quote['promotion_name']]);
+            })
             ->values();
     }
 

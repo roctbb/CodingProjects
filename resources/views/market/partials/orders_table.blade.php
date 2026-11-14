@@ -1,41 +1,50 @@
 <table class="table table-hover align-middle mb-0 gc-data-table market-orders-table">
     <thead class="text-uppercase small">
     <tr>
-        <th>Дата заказа</th>
+        <th scope="col">Дата заказа</th>
         @if($showShippedAt)
-            <th>Дата доставки</th>
+            <th scope="col">Дата доставки</th>
         @endif
-        <th>Товар</th>
-        <th>Покупатель</th>
-        <th>Цена</th>
+        <th scope="col">Товар</th>
+        <th scope="col">Покупатель</th>
+        <th scope="col">Цена</th>
         @if($showActions)
-            <th>Действия</th>
+            <th scope="col">Действия</th>
         @endif
     </tr>
     </thead>
     <tbody>
     @foreach($orders as $order)
+        @php
+            $orderPrice = $order->price ?? $order->good?->price;
+        @endphp
         <tr>
-            <td data-label="Дата заказа">{{$order->created_at->format('d.m.Y H:i')}}</td>
+            <td class="market-order-date" data-label="Заказан"><time datetime="{{ $order->created_at->toIso8601String() }}">{{ $order->created_at->format('d.m.Y H:i') }}</time><span class="gc-help-text d-block">№{{ $order->id }}</span></td>
             @if($showShippedAt)
-                <td data-label="Дата доставки">{{$order->updated_at->format('d.m.Y H:i')}}</td>
+                <td class="market-order-date market-order-date--shipped" data-label="Доставлен">{{$order->updated_at->format('d.m.Y H:i')}}</td>
             @endif
-            <td data-label="Товар">
-                {{$order->good->name}}
+            <td class="market-order-product">
+                {{ $order->good?->name ?? 'Товар удалён' }}
                 @if($order->source == 'auction')
                     <span class="badge rounded-pill bg-info-subtle text-info-emphasis border border-info-subtle ms-1">Аукцион</span>
                 @endif
             </td>
-            <td data-label="Покупатель"><a class="text-decoration-none fw-medium" href="{{url('/insider/profile/'.$order->user->id)}}">{{$order->user->name}}</a></td>
-            <td data-label="Цена"><strong>{{$order->displayPrice()}}</strong> <i class="fas fa-coins text-warning"></i></td>
+            <td class="market-order-buyer">@if($order->user)<a class="text-decoration-none fw-medium" href="{{url('/insider/profile/'.$order->user->id)}}">{{$order->user->name}}</a>@else Ученик удалён @endif</td>
+            <td class="market-order-price"><strong>{{ $orderPrice ?? '—' }}</strong> <i class="fas fa-coins gc-currency-icon" aria-hidden="true"></i><span class="visually-hidden"> GC</span></td>
             @if($showActions)
-                <td data-label="Действия" class="market-orders-actions">
-                    <a href="{{url('/insider/market/ship/'.$order->id)}}?return_url={{ urlencode($returnUrl ?? request()->fullUrl()) }}" class="btn btn-success btn-sm rounded-3 market-order-action market-order-action--ship">
-                        <i class="fas fa-check"></i> Доставлено
+                <td class="market-orders-actions">
+                    @if($order->user && $orderPrice !== null)
+                    @if($order->good)
+                    <a href="{{url('/insider/market/ship/'.$order->id)}}?return_url={{ urlencode($returnUrl ?? request()->fullUrl()) }}" class="btn btn-primary btn-sm rounded-3 market-order-action market-order-action--ship">
+                        <i class="fas fa-check" aria-hidden="true"></i> Выдать
                     </a>
-                    <a href="{{url('/insider/market/cancel/'.$order->id)}}" class="btn btn-outline-danger btn-sm rounded-3 market-order-action" data-confirm="Отменить заказ?">
-                        <i class="fas fa-times"></i> Отменить
+                    @endif
+                    <a href="{{url('/insider/market/cancel/'.$order->id)}}?return_url={{ urlencode($returnUrl ?? request()->fullUrl()) }}" class="btn btn-outline-danger btn-sm rounded-3 market-order-action" data-confirm="Отменить заказ №{{ $order->id }} и вернуть {{ $orderPrice ?? '—' }} GC покупателю?">
+                        <i class="fas fa-times" aria-hidden="true"></i> Отменить
                     </a>
+                    @else
+                        <span class="gc-help-text">{{ !$order->user ? 'Покупатель удалён' : 'Цена не сохранена' }}</span>
+                    @endif
                 </td>
             @endif
         </tr>

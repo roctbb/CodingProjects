@@ -13,7 +13,7 @@ use App\Program;
 use App\ProgramChapter;
 use App\Solution;
 use App\Services\CoursePosterGenerator;
-use App\TaskDeadline;
+use App\Queries\CourseDeadlineList;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\User;
@@ -43,6 +43,7 @@ class CoursesController extends Controller
         $this->middleware('course')->only(['details', 'deadlines', 'editView', 'start', 'stop', 'edit', 'generatePoster', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
         $this->middleware('teacher')->only(['createView', 'create', 'editView', 'start', 'stop', 'edit', 'generatePoster', 'assessments', 'report', 'resetStudentGeekPasteWarning', 'reviews', 'resetPendingReviews', 'createChapter', 'editChapter', 'setDefaultChapter', 'createChapterView', 'editChapterView', 'exportMarkdown']);
         $this->middleware(['course', 'teacher'])->only('exportChapterPoints');
+        $this->middleware('course')->only(['setCurrentLesson', 'lessonStatistics']);
     }
 
     /**
@@ -56,8 +57,14 @@ class CoursesController extends Controller
 
         $isTeacher = $user->role == 'teacher' || $user->role == 'admin';
         $courseColumns = ['id', 'program_id', 'name', 'description', 'state', 'mode', 'level', 'start_date', 'end_date'];
+        if (Schema::hasColumn('courses', 'icon_key')) {
+            $courseColumns[] = 'icon_key';
+        }
+        if (Schema::hasColumn('courses', 'current_lesson_id')) {
+            $courseColumns[] = 'current_lesson_id';
+        }
         $courseRelations = [
-            'teachers:id,name,image,avatar_frame,avatar_frame_expires_at',
+            'teachers:id,name,image,avatar_frame,avatar_frame_config,avatar_frame_expires_at',
         ];
 
         $startedCoursesQuery = Course::query()
@@ -96,14 +103,7 @@ class CoursesController extends Controller
 
             $open_courses = (clone $availableCoursesQuery)->where('mode', 'open')->get();
             $availableCourses = $open_courses;
-            $completedCourses = $user->completedCourses()
-                ->with('course:id,name')
-                ->orderByDesc('id')
-                ->get(['id', 'name', 'mark', 'course_id', 'user_id']);
-            $linkedCourseIds = $user->courses()->pluck('courses.id');
-            $completedCourses->each(function ($completedCourse) use ($linkedCourseIds) {
-                $completedCourse->setAttribute('is_linked', $linkedCourseIds->contains($completedCourse->course_id));
-            });
+            $completedCourses = app(\App\Queries\StudentCompletedCourses::class)->forStudent($user);
         }
 
         $draftCourses = collect();
@@ -150,21 +150,8 @@ class CoursesController extends Controller
         $pulse = app(\App\Services\CoursePulse::class)->forCourses($activeCourseIds);
 
         if (!($user->role == 'teacher' || $user->role == 'admin')) {
-            $submittedTaskIds = Solution::where('user_id', $user->id)
-                ->whereIn('course_id', $activeCourseIds)
-                ->whereNotNull('mark')
-                ->pluck('task_id');
+            $upcomingDeadlines = app(CourseDeadlineList::class)->forCourses($my_courses, $user)->take(5);
 
-            $upcomingDeadlines = TaskDeadline::with(['task:id,name,is_hidden', 'course:id,name'])
-                ->whereIn('course_id', $activeCourseIds)
-                ->whereDate('expiration', '>=', Carbon::today())
-                ->whereHas('task', function ($query) {
-                    $query->where('is_hidden', false);
-                })
-                ->whereNotIn('task_id', $submittedTaskIds)
-                ->orderBy('expiration')
-                ->take(5)
-                ->get();
         }
 
         if ($user->role == 'teacher' || $user->role == 'admin') {
@@ -175,7 +162,7 @@ class CoursesController extends Controller
                 })->pluck('id');
 
             $pendingSolutionsQuery = Solution::select(['id', 'course_id', 'task_id', 'user_id', 'submitted'])
-                ->with(['course:id,name', 'task:id,name', 'user:id,name,image,custom_title,custom_title_expires_at,avatar_frame,avatar_frame_expires_at'])
+                ->with(['course:id,name', 'task:id,name', 'user:id,name,image,custom_title,custom_title_expires_at,avatar_frame,avatar_frame_config,avatar_frame_expires_at'])
                 ->whereIn('course_id', $managedActiveCourseIds)
                 ->pendingReview()
                 ->orderByDesc('submitted')
@@ -185,8 +172,19 @@ class CoursesController extends Controller
         }
 
         $notifications = collect([]);
-        foreach ($user->unreadNotifications as $notification) {
-            $notifications->push($notification);
+        $unreadNotifications = $user->unreadNotifications;
+        $coinNoticeIds = collect();
+        if ($user->role === 'student' && Schema::hasTable('reward_notices')) {
+            $sources = $unreadNotifications->pluck('data.coin_transaction_id')->filter()->map(fn ($id) => (string) $id);
+            if ($sources->isNotEmpty()) {
+                $coinNoticeIds = \DB::table('reward_notices')->where('user_id', $user->id)->where('kind', 'coins')
+                    ->whereIn('source_key', $sources)->pluck('source_key');
+            }
+        }
+        foreach ($unreadNotifications as $notification) {
+            $shownAsReward = $notification->type === \App\Notifications\NewCoinTransaction::class
+                && $coinNoticeIds->contains((string) ($notification->data['coin_transaction_id'] ?? ''));
+            if (!$shownAsReward) $notifications->push($notification);
             $notification->markAsRead();
         }
 
@@ -194,7 +192,7 @@ class CoursesController extends Controller
         $birthdayUsers = Cache::remember(User::nearbyBirthdaysCacheKey($today), 3600, function () use ($today) {
             return User::where('is_hidden', false)
                 ->withVisibleBirthday()
-                ->get(['id', 'name', 'birthday', 'custom_title', 'custom_title_expires_at'])
+                ->get(['id', 'name', 'birthday', 'image', 'avatar_frame', 'avatar_frame_config', 'avatar_frame_expires_at'])
                 ->map(function ($birthdayUser) use ($today) {
                     $nextBirthday = $birthdayUser->birthday->copy()->year($today->year)->startOfDay();
 
@@ -207,19 +205,16 @@ class CoursesController extends Controller
 
                     return $birthdayUser;
                 })->filter(function ($birthdayUser) {
-                    return $birthdayUser->birthday_distance_days <= 20;
-                })->sortBy('birthday_distance_days')->values();
+                    return $birthdayUser->birthday_distance_days < 7;
+                })->sortBy(fn ($birthdayUser) => [$birthdayUser->birthday_distance_days, $birthdayUser->name])->values();
         });
 
-        $recentRoomCharacters = collect();
-        if (app(\App\Services\SystemStoreSettings::class)->promotionActive() && Schema::hasTable('room_character_generations')) {
-            $recentRoomCharacters = \App\RoomCharacterGeneration::recentForShowcase();
-        }
+        $projectJourney = app(\App\Services\HomeProjectJourney::class)->forStudent($activeCourses, $user);
 
-        return response()->view('home', compact('courses', 'user', 'my_courses', 'open_courses', 'availableCourses', 'completedCourses', 'activeCourses', 'draftCourses', 'archiveCourses', 'birthdayUsers', 'notifications', 'courseProgress', 'upcomingDeadlines', 'pendingSolutionsTotal', 'pulse', 'isTeacher', 'recentRoomCharacters'));
+        return response()->view('home', compact('courses', 'user', 'my_courses', 'open_courses', 'availableCourses', 'completedCourses', 'activeCourses', 'draftCourses', 'archiveCourses', 'birthdayUsers', 'notifications', 'courseProgress', 'upcomingDeadlines', 'pendingSolutionsTotal', 'pulse', 'isTeacher', 'projectJourney'));
     }
 
-    public function pulse()
+    public function pulse(Request $request)
     {
         $user = Auth::user();
         $courses = Course::with(['students:id', 'teachers:id'])->orderBy('id')->get();
@@ -231,6 +226,15 @@ class CoursesController extends Controller
                     || $course->teachers->contains('id', $user->id));
         })->pluck('id');
 
+        $pulseCourses = $courses->whereIn('id', $activeCourseIds)->values();
+        $activityGroups = [
+            'learning' => ['label' => 'Учёба', 'types' => [CourseActivity::TYPE_SOLUTION_SUBMITTED, CourseActivity::TYPE_SOLUTION_CHECKED, CourseActivity::TYPE_TASK_CREATED, CourseActivity::TYPE_LESSON_CREATED, CourseActivity::TYPE_LESSON_OPENED, CourseActivity::TYPE_TASK_STRUGGLE, CourseActivity::TYPE_TASK_AI_SUMMARY, CourseActivity::TYPE_COURSE_DAILY_SUMMARY]],
+            'rewards' => ['label' => 'Достижения', 'types' => [CourseActivity::TYPE_AI_ACHIEVEMENT_EARNED, CourseActivity::TYPE_LESSON_COMPLETED, CourseActivity::TYPE_CHAPTER_COMPLETED, CourseActivity::TYPE_LEARNING_STREAK, CourseActivity::TYPE_XP_MILESTONE, CourseActivity::TYPE_FIRST_SOLUTION]],
+            'store' => ['label' => 'Магазин', 'types' => [CourseActivity::TYPE_MARKET_PURCHASE, CourseActivity::TYPE_MARKET_AUCTION_WON, CourseActivity::TYPE_MARKET_DIGITAL_PURCHASE, CourseActivity::TYPE_AUCTION_LEADING_BID, CourseActivity::TYPE_AUCTION_FINISHED, CourseActivity::TYPE_MARKET_ORDER_SHIPPED]],
+        ];
+        $filters = $request->validate(['course' => 'nullable|integer|min:1', 'type' => 'nullable|in:learning,rewards,store', 'q' => 'nullable|string|max:200']);
+        $pulseSearch = trim($filters['q'] ?? '');
+        $selectedPulseCourse = $pulseCourses->firstWhere('id', $request->integer('course'));
         $activities = CourseActivity::with(['user', 'course', 'lesson', 'task', 'achievement'])
             ->where(function ($query) use ($activeCourseIds) {
                 if ($activeCourseIds->isNotEmpty()) {
@@ -244,55 +248,51 @@ class CoursesController extends Controller
                         ->whereIn('type', CourseActivity::globalPulseTypes());
                 }
             })
-            ->orderBy('created_at', 'desc')
-            ->paginate(40);
-        $pulse = app(\App\Services\CoursePulse::class)->forCourses($activeCourseIds);
+            ->when($request->filled('course'), fn ($query) => $query->where('course_id', $request->integer('course')))
+            ->when(isset($activityGroups[$request->input('type', '')]), fn ($query) => $query->whereIn('type', $activityGroups[$request->input('type')]['types']))
+            ->when($pulseSearch !== '', function ($query) use ($pulseSearch) {
+                $pattern = \App\Support\SqlTextSearch::pattern($pulseSearch);
+                $name = \App\Support\SqlTextSearch::lower('name');
+                $query->where(fn ($query) => $query->whereHas('user', fn ($q) => $q->whereRaw("{$name} LIKE ? ESCAPE '!'", [$pattern]))
+                    ->orWhereHas('course', fn ($q) => $q->whereRaw("{$name} LIKE ? ESCAPE '!'", [$pattern]))
+                    ->orWhereHas('lesson', fn ($q) => $q->whereRaw("{$name} LIKE ? ESCAPE '!'", [$pattern]))
+                    ->orWhereHas('task', fn ($q) => $q->whereRaw("{$name} LIKE ? ESCAPE '!'", [$pattern])));
+            })
+            ->orderBy('created_at', 'desc')->orderByDesc('id')
+            ->paginate(40)->withQueryString();
+        $pulseCourseIds = $request->filled('course') ? $activeCourseIds->filter(fn ($id) => $id === $request->integer('course'))->values() : $activeCourseIds;
+        $pulse = app(\App\Services\CoursePulse::class)->forCourses($pulseCourseIds);
 
-        return view('courses.pulse', compact('user', 'activities', 'pulse'));
+        return view('courses.pulse', compact('user', 'activities', 'pulse', 'pulseCourses', 'activityGroups', 'pulseSearch', 'selectedPulseCourse'));
     }
 
-    public function reviews()
+    public function reviews(Request $request)
     {
         $user = Auth::user();
-        $managedActiveCourseIds = Course::query()
-            ->where('state', 'started')
-            ->when($user->role != 'admin', function ($query) use ($user) {
-                $query->whereHas('teachers', function ($query) use ($user) {
-                    $query->where('users.id', $user->id);
-                });
-            })
-            ->pluck('id');
+        $workspaceService = app(\App\Services\ReviewWorkspace::class);
+        $reviewFilters = $workspaceService->filters($request);
+        $reviewCourses = $workspaceService->courses($user);
+        $pendingSolutions = $workspaceService->queue($user, $request->filled('course') ? $request->integer('course') : null, $reviewFilters)
+            ->paginate(40)->withQueryString();
+        if ($pendingSolutions->currentPage() > $pendingSolutions->lastPage()) {
+            return redirect()->to($request->fullUrlWithQuery(['page' => $pendingSolutions->lastPage()]));
+        }
 
-        $pendingSolutions = Solution::select(['id', 'course_id', 'task_id', 'user_id', 'submitted'])
-            ->with([
-                'course:id,name',
-                'task:id,name',
-                'user:id,name,image,custom_title,custom_title_expires_at,avatar_frame,avatar_frame_expires_at',
-            ])
-            ->whereIn('course_id', $managedActiveCourseIds)
-            ->pendingReview()
-            ->orderByDesc('submitted')
-            ->orderByDesc('id')
-            ->paginate(40);
-
-        return view('courses.reviews', compact('user', 'pendingSolutions'));
+        if ($first = $pendingSolutions->first()) {
+            $workspace = app(\App\Services\ReviewWorkspace::class)->data(
+                Course::findOrFail($first->course_id), \App\Task::findOrFail($first->task_id), \App\User::findOrFail($first->user_id), $pendingSolutions, !$request->filled('course'), $reviewFilters
+            );
+            return view('steps.review', $workspace + compact('user', 'pendingSolutions'));
+        }
+        return view('courses.reviews', compact('user', 'pendingSolutions', 'reviewFilters', 'reviewCourses'));
     }
 
-    public function resetPendingReviews()
+    public function resetPendingReviews(Request $request)
     {
         $user = Auth::user();
-        $managedActiveCourseIds = Course::query()
-            ->where('state', 'started')
-            ->when($user->role != 'admin', function ($query) use ($user) {
-                $query->whereHas('teachers', function ($query) use ($user) {
-                    $query->where('users.id', $user->id);
-                });
-            })
-            ->pluck('id');
-
-        $pendingSolutionIds = Solution::whereIn('course_id', $managedActiveCourseIds)
-            ->pendingReview()
-            ->pluck('id');
+        $workspace = app(\App\Services\ReviewWorkspace::class);
+        $filters = $workspace->filters($request);
+        $pendingSolutionIds = $workspace->queue($user, $request->filled('course') ? $request->integer('course') : null, $filters)->pluck('id');
 
         $updated = 0;
         if ($pendingSolutionIds->isNotEmpty()) {
@@ -329,10 +329,10 @@ class CoursesController extends Controller
         ])->findOrFail($id);
         $students = $course->statsStudents;
 
-            [$lessons, $reportChapterGroups] = $this->buildReportLessonGroups($course);
+            [$lessons, $reportChapterGroups] = \App\Support\CourseReportLessons::groups($course);
 
             $temp_steps = collect([]);
-            foreach ($lessons as $lesson) {
+            foreach ($course->program->lessons->filter(fn ($lesson) => $lesson->isStarted($course)) as $lesson) {
                 $temp_steps = $temp_steps->merge($lesson->steps);
             }
 
@@ -476,7 +476,15 @@ class CoursesController extends Controller
             $steps = $temp_steps;
             $geekPasteIntegrityStats = $this->buildGeekPasteIntegrityReport($students, $lessons);
 
-        return view('courses.report', compact('course', 'user', 'steps', 'students', 'lessons', 'reportChapterGroups', 'pulse_keys', 'pulse_values', 'task_keys', 'task_values', 'lessonStats', 'geekPasteIntegrityStats'));
+        $pendingReviewSolutions = $course->state === 'started'
+            ? Solution::where('course_id', $course->id)->pendingReview()->get(['id', 'user_id', 'task_id']) : collect();
+        $pendingSolutionsCount = $pendingReviewSolutions->count();
+        $pendingReviewPairs = $pendingReviewSolutions->mapWithKeys(fn ($solution) => [$solution->user_id.':'.$solution->task_id => true]);
+        if (request('attention') === '1') {
+            $students = $students->filter(fn ($student) => ($student->max_points > 0 && $student->percent < 50)
+                || in_array($geekPasteIntegrityStats[$student->id]['overall']['risk_level'] ?? 'none', ['high', 'medium'], true))->values();
+        }
+        return view('courses.report', compact('pendingReviewPairs', 'pendingSolutionsCount', 'course', 'user', 'steps', 'students', 'lessons', 'reportChapterGroups', 'pulse_keys', 'pulse_values', 'task_keys', 'task_values', 'lessonStats', 'geekPasteIntegrityStats'));
 
     }
 
@@ -525,53 +533,6 @@ class CoursesController extends Controller
         }
 
         return redirect('/insider/courses/' . $course->id . '/report#student' . $student_id);
-    }
-
-    private function buildReportLessonGroups(Course $course)
-    {
-        $allLessons = $course->program->lessons;
-        $chapters = $course->program->chapters;
-        $groups = collect();
-        $orderedLessons = collect();
-
-        foreach ($chapters as $chapter) {
-            $chapterLessons = $allLessons
-                ->where('chapter_id', $chapter->id)
-                ->sortBy('sort_index')
-                ->filter(function ($lesson) use ($course) {
-                    return $lesson->isStarted($course);
-                })
-                ->values();
-
-            if ($chapterLessons->isEmpty()) {
-                continue;
-            }
-
-            $groups->push([
-                'chapter' => $chapter,
-                'lessons' => $chapterLessons,
-            ]);
-            $orderedLessons = $orderedLessons->merge($chapterLessons);
-        }
-
-        $knownChapterIds = $chapters->pluck('id')->all();
-        $uncategorizedLessons = $allLessons
-            ->filter(function ($lesson) use ($course, $knownChapterIds) {
-                return (!$lesson->chapter_id || !in_array($lesson->chapter_id, $knownChapterIds))
-                    && $lesson->isStarted($course);
-            })
-            ->sortBy('sort_index')
-            ->values();
-
-        if ($uncategorizedLessons->isNotEmpty()) {
-            $groups->push([
-                'chapter' => null,
-                'lessons' => $uncategorizedLessons,
-            ]);
-            $orderedLessons = $orderedLessons->merge($uncategorizedLessons);
-        }
-
-        return [$orderedLessons->values(), $groups];
     }
 
     private function buildGeekPasteIntegrityReport($students, $lessons)
@@ -755,33 +716,7 @@ class CoursesController extends Controller
         $user = Auth::user();
         $course = Course::with('teachers', 'students')->findOrFail($id);
         $isManager = $user->role == 'admin' || $course->teachers->contains($user);
-        $now = Carbon::now();
-
-        $deadlines = TaskDeadline::with([
-            'task.step.lesson.info' => fn ($query) => $query->where('course_id', $id),
-            'task.step.lesson.earlyAccesses' => fn ($query) => $query->where('course_id', $id)->where('user_id', $user->id),
-            'task.solutions' => fn ($query) => $query->where('course_id', $id)->where('user_id', $user->id),
-        ])
-            ->where('course_id', $id)
-            ->whereNotNull('expiration')
-            ->whereHas('task.step.lesson', fn ($query) => $query->where('program_id', $course->program_id))
-            ->orderBy('expiration')
-            ->orderBy('task_id')
-            ->get()
-            ->filter(function ($deadline) use ($course, $user, $isManager) {
-                return $isManager || ($deadline->task->step->lesson->isAvailableForUser($course, $user)
-                    && $deadline->task->isVisible($user, $course));
-            })
-            ->map(function ($deadline) use ($user, $isManager, $now) {
-                $deadline->is_done = !$isManager && $deadline->task->isDone($user->id);
-                $deadline->is_overdue = !$deadline->is_done && $deadline->expiration->copy()->addDay()->lte($now);
-                $deadline->is_today = !$deadline->is_done && $deadline->expiration->isSameDay($now);
-                $deadline->is_soon = !$deadline->is_done && !$deadline->is_overdue
-                    && $deadline->expiration->lt($now->copy()->addDays(3));
-
-                return $deadline;
-            })
-            ->values();
+        $deadlines = app(CourseDeadlineList::class)->forCourses(collect([$course]), $user, includeCompleted: true);
 
         $deadlineMonths = $deadlines->groupBy(fn ($deadline) => $deadline->expiration->format('Y-m'))
             ->map(fn ($month) => $month->groupBy(fn ($deadline) => $deadline->expiration->format('Y-m-d')));
@@ -789,15 +724,31 @@ class CoursesController extends Controller
         return view('courses.deadlines', compact('course', 'user', 'isManager', 'deadlines', 'deadlineMonths'));
     }
 
+    public function lessonStatistics($course_id, $lesson_id, Request $request)
+    {
+        $course = Course::with('teachers')->findOrFail($course_id);
+        abort_unless(Auth::user()->role === 'admin' || $course->teachers->contains('id', Auth::id()), 403);
+        $lesson = $course->lessons()->whereKey($lesson_id)->firstOrFail();
+        $request->validate(['page' => ['sometimes', 'integer', 'min:1']]);
+        $students = $course->statsStudents()->orderBy('name')->orderBy('users.id')->paginate(25, ['users.id', 'users.name']);
+        abort_if($students->currentPage() > $students->lastPage(), 404);
+        $allStats = LessonStudentStats::where('course_id', $course->id)->where('lesson_id', $lesson->id)
+            ->whereIn('student_id', $course->statsStudents()->select('users.id'))->get();
+        $summary = \App\Support\CourseLessonStatistics::summary($allStats, $students->total());
+        $stats = $allStats->whereIn('student_id', $students->pluck('id'))->keyBy('student_id');
+        return response()->json(['html' => view('courses.partials.lesson-statistics', compact('course', 'lesson', 'students', 'stats', 'summary'))->render()]);
+    }
+
     public function details($id, Request $request)
     {
     // Record action
     ActionLog::record(Auth::user()->id, 'course', $id);
     // Load current user with relations
-    $user = Auth::user()->load('solutions', 'solutions.task');
+    $user = Auth::user();
         // Optimized: load only essential relations, defer heavy loading
         $course = Course::with([
             'program.chapters',
+            'program.lessons.info',
             'program.lessons' => function($query) {
                 $query->orderBy('sort_index');
             },
@@ -822,6 +773,9 @@ class CoursesController extends Controller
         }
         $statsTeachers = $course->statsTeachers;
 
+        $currentLesson = $course->currentLessonFor($user);
+        $currentLessonChapter = $course->program->chapters->firstWhere('id', $currentLesson?->chapter_id);
+
             //Made this due to some issues on my local server
             $cstudent = [];
             if ($request->has('chapter')) {
@@ -829,6 +783,8 @@ class CoursesController extends Controller
                 if (!$chapter) {
                     abort(404);
                 }
+            } elseif ($currentLessonChapter) {
+                $chapter = $currentLessonChapter;
             } elseif ($course->default_chapter_id != null && $course->program->chapters->contains('id', $course->default_chapter_id)) {
                 $chapter = $course->program->chapters->where('id', $course->default_chapter_id)->first();
             } else {
@@ -846,19 +802,26 @@ class CoursesController extends Controller
                 }
             }
 
-            // Now load steps and tasks for lessons in the current chapter
-            $course->load([
+            $selectedLessonIds = $course->program->lessons->where('chapter_id', $chapter?->id)->pluck('id');
+            $isManager = $user->role === 'admin' || $course->teachers->contains('id', $user->id);
+            // Material and solution details are needed only for the selected chapter.
+            $materialRelations = [
+                'program.lessons.steps' => fn ($query) => $query->whereIn('lesson_id', $selectedLessonIds),
                 'program.lessons.steps.tasks.deadlines' => function ($query) use ($id) {
                     $query->where('course_id', $id);
                 },
-                'program.lessons.steps.tasks.solutions' => function ($query) use ($id) {
-                    $query->where('course_id', $id);
-                },
+
                 'program.lessons.info',
                 'program.lessons.earlyAccesses' => function ($query) use ($id, $user) {
                     $query->where('course_id', $id)->where('user_id', $user->id);
                 },
-            ]);
+            ];
+
+            if (!$isManager) {
+                $materialRelations['program.lessons.steps.tasks.solutions'] = fn ($query) => $query
+                    ->where('course_id', $id)->where('user_id', $user->id);
+            }
+            $course->load($materialRelations);
 
             $temp_steps = collect([]);
 
@@ -923,37 +886,8 @@ class CoursesController extends Controller
             }
 
             $isManager = $user->role == 'admin' || $course->teachers->contains($user);
-            $chapterTaskIds = $steps->flatMap(function ($step) {
-                return $step->tasks->pluck('id');
-            })->values();
-
-            $courseDeadlines = TaskDeadline::with(['task.step.lesson'])
-                ->where('course_id', $id)
-                ->whereIn('task_id', $chapterTaskIds)
-                ->orderBy('expiration')
-                ->get()
-                ->filter(function ($deadline) use ($course, $user, $isManager) {
-                    if (!$deadline->task) {
-                        return false;
-                    }
-
-                    if ($isManager) {
-                        return true;
-                    }
-
-                    return $deadline->task->isVisible($user, $course) && !$deadline->task->isDone($user->id);
-                })
-                ->map(function ($deadline) {
-                    $expiration = $deadline->expiration->copy();
-                    $deadline->is_overdue = $expiration->copy()->addDay()->lt(Carbon::now());
-                    $deadline->is_soon = !$deadline->is_overdue && Carbon::now()->addDays(3)->gt($expiration);
-
-                    return $deadline;
-                })
-                ->sortBy(function ($deadline) {
-                    return ($deadline->is_overdue ? 0 : 1) . '-' . $deadline->expiration->timestamp;
-                })
-                ->values();
+            $courseDeadlines = app(CourseDeadlineList::class)->forCourses(collect([$course]), $user);
+            $coursePendingCount = $isManager ? Solution::where('course_id', $course->id)->pendingReview()->count() : 0;
 
             // Preload lesson statistics for all students and lessons in this chapter
             $lessonStats = LessonStudentStats::where('course_id', $id)
@@ -965,64 +899,10 @@ class CoursesController extends Controller
                     return $stats->keyBy('student_id');
                 });
 
-            $allLessonStats = LessonStudentStats::where('course_id', $id)
-                ->whereIn('lesson_id', $course->program->lessons->pluck('id'))
-                ->whereIn('student_id', $statsStudentIds)
-                ->get()
-                ->groupBy('lesson_id')
-                ->map(function ($stats) {
-                    return $stats->keyBy('student_id');
-                });
-
-            $chapterProgress = collect();
-            foreach ($course->program->chapters as $programChapter) {
-                $chapterLessonIds = $course->program->lessons
-                    ->where('chapter_id', $programChapter->id)
-                    ->filter(function ($lesson) use ($course) {
-                        return $lesson->isStarted($course);
-                    })
-                    ->pluck('id');
-
-                if ($isManager) {
-                    $doneStudents = 0;
-
-                    foreach ($students as $student) {
-                        if ($chapterLessonIds->isEmpty()) {
-                            continue;
-                        }
-
-                        $lessonPercents = collect();
-
-                        foreach ($chapterLessonIds as $lessonId) {
-                            $stat = $allLessonStats[$lessonId][$student->id] ?? null;
-                            if ($stat) {
-                                $lessonPercents->push((float) $stat->percent);
-                            }
-                        }
-
-                        if ($lessonPercents->count() === $chapterLessonIds->count() && $lessonPercents->min() >= 100) {
-                            $doneStudents++;
-                        }
-                    }
-
-                    $chapterProgress->put($programChapter->id, $students->count() ? $doneStudents * 100 / $students->count() : 0);
-                    continue;
-                }
-
-                $lessonPercents = collect();
-
-                foreach ($chapterLessonIds as $lessonId) {
-                    $stat = isset($cstudent) ? ($allLessonStats[$lessonId][$cstudent->id] ?? null) : null;
-                    if ($stat) {
-                        $lessonPercents->push((float) $stat->percent);
-                    }
-                }
-
-                $chapterProgress->put($programChapter->id, $lessonPercents->isNotEmpty() ? $lessonPercents->avg() : 0);
-            }
-
             // Render view without caching for now (caching causes stale data issues)
-        return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'statsTeachers', 'cstudent', 'lessons', 'lessonStats', 'courseDeadlines', 'chapterProgress'));
+        $projectPathStats = $isManager ? collect() : LessonStudentStats::where('course_id', $id)
+            ->where('student_id', $user->id)->get(['lesson_id', 'max_points', 'percent'])->keyBy('lesson_id');
+        return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'statsTeachers', 'cstudent', 'lessons', 'lessonStats', 'courseDeadlines', 'coursePendingCount', 'currentLesson', 'projectPathStats'));
 
 
     }
@@ -1030,8 +910,9 @@ class CoursesController extends Controller
     public function assessments($id)
     {
         $course = Course::with([
+            'program.chapters',
             'program.lessons.steps.tasks',
-            'statsStudents.submissions',
+            'statsStudents.submissions' => fn ($query) => $query->where('course_id', $id),
         ])->findOrFail($id);
         $course->setRelation('students', $course->statsStudents);
 
@@ -1041,7 +922,17 @@ class CoursesController extends Controller
                 return [$item->user_id . ':' . $item->task_id => true];
             });
 
-        return view('courses.assessments', compact('course', 'blockedTaskMap'));
+        $assessmentChapter = request()->filled('chapter')
+            ? $course->program->chapters->firstWhere('id', request()->integer('chapter'))
+            : ($course->program->chapters->firstWhere('id', $course->default_chapter_id) ?? $course->program->chapters->first());
+        abort_if(request()->filled('chapter') && !$assessmentChapter, 404);
+        $assessmentLessons = $assessmentChapter
+            ? $course->program->lessons->where('chapter_id', $assessmentChapter->id)
+            : collect();
+        $pendingReviewPairs = $course->state === 'started'
+            ? Solution::where('course_id', $course->id)->pendingReview()->get(['user_id', 'task_id'])
+                ->mapWithKeys(fn ($solution) => [$solution->user_id.':'.$solution->task_id => true]) : collect();
+        return view('courses.assessments', compact('course', 'blockedTaskMap', 'assessmentLessons', 'assessmentChapter', 'pendingReviewPairs'));
     }
 
     public function createView()
@@ -1079,13 +970,16 @@ class CoursesController extends Controller
 
     public function createChapterView($course_id)
     {
-        return view('courses.create_chapter');
+        $course = Course::findOrFail($course_id);
+        return view('courses.create_chapter', compact('course'));
     }
 
     public function editChapterView($course_id, $chapter_id)
     {
         $chapter = ProgramChapter::findOrFail($chapter_id);
-        return view('courses.edit_chapter', compact('chapter'));
+        $course = Course::findOrFail($course_id);
+        abort_unless((int)$chapter->program_id === (int)$course->program_id, 404);
+        return view('courses.edit_chapter', compact('chapter', 'course'));
     }
 
     public function editChapter($course_id, $chapter_id, Request $request)
@@ -1124,6 +1018,31 @@ class CoursesController extends Controller
             ->with('alert-destination', 'head')
             ->with('alert-title', 'Глава обновлена')
             ->with('alert-text', 'Теперь эта глава открывается по умолчанию.');
+    }
+
+    public function setCurrentLesson($course_id, Request $request)
+    {
+        $course = Course::with('teachers', 'program.chapters')->findOrFail($course_id);
+        abort_unless(Auth::user()->role === 'admin' || $course->teachers->contains('id', Auth::id()), 403);
+        $input = $request->validate(['lesson_id' => ['nullable', 'integer', 'min:1'], 'chapter' => ['nullable', 'integer']]);
+        $lesson = null;
+        if (isset($input['lesson_id'])) {
+            $lesson = $course->lessons()->whereKey($input['lesson_id'])->whereHas('steps')
+                ->whereHas('chapter', fn ($query) => $query->where('program_id', $course->program_id))->first();
+            if (!$lesson) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'lesson_id' => 'Выберите урок со ступенями из программы этого курса.',
+                ]);
+            }
+        }
+        $chapterId = $course->program->chapters->firstWhere('id', $input['chapter'] ?? null)?->id ?? $lesson?->chapter_id;
+        $course->current_lesson_id = $lesson?->id;
+        $course->save();
+
+        return redirect('/insider/courses/'.$course->id.($chapterId ? '?chapter='.$chapterId : '').($lesson ? '#lesson-'.$lesson->id : ''))
+            ->with('alert-class', 'alert-success')->with('alert-destination', 'head')
+            ->with('alert-title', $lesson ? 'Текущий урок выбран' : 'Автоматический выбор урока')
+            ->with('alert-text', $lesson ? 'Текущий урок курса: '.$lesson->name.'. Доступ к материалам определяется расписанием.' : 'Для ученика выделяется первый незавершённый доступный урок.');
     }
 
     public function createChapter($course_id, Request $request)
@@ -1171,22 +1090,29 @@ class CoursesController extends Controller
 
     public function edit($id, Request $request)
     {
+        $course = Course::findOrFail($id);
+        $inviteChanged = $request->has('invite') && $course->invite !== $request->invite;
         $this->validate($request, [
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:1024',
             'git' => 'nullable|string|max:255',
             'site' => 'nullable|string|max:255',
             'image' => 'nullable|string|max:255',
+            'icon_key' => ['nullable', 'string', \Illuminate\Validation\Rule::in(array_merge(['auto'], array_keys(\App\Support\CourseIcons::options())))],
             'telegram' => 'nullable|string|max:255',
             'weekdays' => 'nullable|string|max:255',
+            'start_date' => 'nullable|date',
+            'invite' => $inviteChanged ? 'required|string|max:253|unique:courses,invite|unique:providers,invite' : 'nullable|string|max:253',
         ]);
 
-        $course = Course::findOrFail($id);
         $course->name = $request->name;
         $course->description = clean($request->description);
         $course->git = $request->git;
         $course->site = $request->site;
         $course->image = $request->image;
+        if ($request->has('icon_key')) {
+            $course->icon_key = $request->icon_key === 'auto' ? null : $request->icon_key;
+        }
         $course->telegram = $request->telegram;
         $course->start_date = $request->start_date;
         $course->weekdays = $request->weekdays ? $request->weekdays : "";
@@ -1232,10 +1158,7 @@ class CoursesController extends Controller
             }
         }
 
-        if ($course->invite != $request->invite) {
-            $this->validate($request, [
-                'invite' => 'required|string|max:253|unique:courses,invite|unique:providers,invite',
-            ]);
+        if ($inviteChanged) {
             $course->invite = $request->invite;
             $course->remote_invite = $request->invite . '-R';
         }
@@ -1297,9 +1220,11 @@ class CoursesController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:1024',
             'image' => 'image|max:10240',
+            'icon_key' => ['nullable', 'string', \Illuminate\Validation\Rule::in(array_merge(['auto'], array_keys(\App\Support\CourseIcons::options())))],
         ]);
 
         $course = new Course();
+        $course->icon_key = $request->icon_key === 'auto' ? null : $request->icon_key;
         if ($request->program >= 0) {
             $this->validate($request, ['program' => 'required|integer|exists:programs,id']);
             $course->program_id = $request->program;

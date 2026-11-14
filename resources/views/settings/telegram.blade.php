@@ -3,17 +3,18 @@
 @section('title', 'Настройки Telegram')
 
 @section('content')
-<div class="container-xl px-0">
-    @include('settings.partials.tabs')
-    <div class="gc-card gc-page-header mb-4">
+<div class="gc-form-layout">
+    <div class="gc-page-masthead mb-4">
+    <div class="gc-page-header">
         <div>
             <span class="gc-eyebrow">Администрирование</span>
-            <h2 class="fw-medium mb-1">Настройки Telegram</h2>
+            <h1 class="mb-1">Настройки Telegram</h1>
             <p class="text-muted mb-0">Бот для привязки профилей и отправки уведомлений.</p>
         </div>
-        <button type="submit" form="telegram-settings-form" class="btn btn-success rounded-3 px-4 flex-shrink-0"><i class="fas fa-check me-1"></i> Сохранить</button>
     </div>
 
+    @include('settings.partials.tabs')
+    </div>
     @if (session('status'))
         <div class="alert alert-success rounded-3" role="status">{{ session('status') }}</div>
     @endif
@@ -33,7 +34,7 @@
         @csrf
         @method('PUT')
         <div class="row g-4 mb-4">
-            <div class="col-12 col-xl-6">
+            <div class="col-12">
                 <section class="gc-card p-3 p-md-4 h-100" aria-labelledby="telegram-bot-heading">
                     <h4 id="telegram-bot-heading" class="mb-3">Бот</h4>
                     <label for="telegram-username" class="form-label">Имя бота</label>
@@ -46,7 +47,7 @@
                     @include('settings.partials.telegram-secret', ['field' => 'bot_token', 'label' => 'Ключ бота', 'hint' => 'Ключ от @BotFather. Если очистить ключ, запросы к боту прекратятся.'])
                 </section>
             </div>
-            <div class="col-12 col-xl-6">
+            <div class="col-12">
                 <section class="gc-card p-3 p-md-4 h-100" aria-labelledby="telegram-proxy-heading">
                     <h4 id="telegram-proxy-heading" class="mb-3">Прокси</h4>
                     <p class="text-muted small">Применяется к отправке уведомлений и получению сообщений ботом.</p>
@@ -55,8 +56,8 @@
             </div>
         </div>
 
-        <details class="gc-card p-3 p-md-4 mb-4" @if($errors->has('settings.api_url') || $errors->has('settings.timeout') || $errors->has('secrets.webhook_secret.*')) open @endif>
-            <summary class="fw-medium">Дополнительные параметры</summary>
+<section class="gc-card p-3 p-md-4 mb-4">
+            <h2 class="gc-section-title">Параметры подключения</h2>
             <div class="row g-3 mt-1">
                 <div class="col-12 col-md-8">
                     <label for="telegram-api-url" class="form-label">Адрес Bot API</label>
@@ -73,11 +74,10 @@
                     @include('settings.partials.telegram-secret', ['field' => 'webhook_secret', 'label' => 'Секрет вебхука', 'hint' => 'Нужен только при подключении через вебхук. Укажите тот же секрет при регистрации вебхука в Telegram. Сохранение этой формы не регистрирует вебхук; пустой секрет отключает его проверку.'])
                 </div>
             </div>
-        </details>
+        </section>
 
         <div class="gc-card p-3 p-md-4 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div class="text-muted small">Изменения применяются к следующим запросам.<br>Ключи и адрес прокси хранятся в зашифрованном виде.</div>
-            <button type="submit" class="btn btn-success rounded-3 px-4"><i class="fas fa-check me-1"></i> Сохранить настройки</button>
         </div>
     </form>
 
@@ -90,6 +90,7 @@
             <button type="submit" class="btn btn-outline-danger rounded-3">Восстановить настройки Telegram</button>
         </form>
     </details>
+    <x-gc-form-actions form="telegram-settings-form" />
 </div>
 <script>
 document.querySelectorAll('[data-secret-action]').forEach(function (select) {

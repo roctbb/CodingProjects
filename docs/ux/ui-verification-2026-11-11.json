@@ -1,0 +1,617 @@
+{
+  "date": "2026-11-11",
+  "environment": "Isolated application with synthetic SQLite data; 127.0.0.1:8876. Production data untouched.",
+  "viewports": {
+    "desktop": [
+      1440,
+      1000
+    ],
+    "mobile": [
+      390,
+      844
+    ],
+    "additional": [
+      320,
+      740
+    ]
+  },
+  "desktop": [
+    {
+      "id": "login",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "register",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "password-request",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "password-reset",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "verify",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "courses",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "course",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "deadlines",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "step",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "public-step",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "pulse",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "course-create",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "course-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "chapter-create",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "chapter-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "lesson-create",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "lesson-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "step-create",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "step-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "task-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "perform",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "reviews",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "review",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "achievement-preview",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "report",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "assessments",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "blocked",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "planner",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "community",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "profile",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "profile-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "market",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "market-create",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "market-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "orders",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "credit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "settings-ai",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "settings-store",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "settings-telegram",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "room-debug",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    }
+  ],
+  "mobile": [
+    {
+      "id": "login",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "register",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "password-request",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "password-reset",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "verify",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "courses",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "course",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "deadlines",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "step",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "public-step",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "pulse",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "course-create",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "course-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "chapter-create",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "chapter-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "lesson-create",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "lesson-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "step-create",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "step-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "task-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "perform",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "reviews",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "review",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "achievement-preview",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "report",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "assessments",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "blocked",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "planner",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "community",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "profile",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "profile-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "market",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "market-create",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "market-edit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "orders",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "credit",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "settings-ai",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "settings-store",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "settings-telegram",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    },
+    {
+      "id": "room-debug",
+      "status": 200,
+      "overflow": false,
+      "h1": 1,
+      "errors": []
+    }
+  ],
+  "functionalChecks": [
+    "Course creation through the shared sticky Save bar returns to the course list.",
+    "Icon catalog is initially collapsed; selecting an icon closes it and preserves the selected form value.",
+    "Achievement choice populates one editor; only one award action is rendered.",
+    "Registration validates the account step, preserves values on Back, and keeps optional profile fields collapsed.",
+    "Community search covers the whole server query and handles no matches.",
+    "Store search and availability filters combine; unavailable cards are hidden by the availability filter.",
+    "Journal sticky student column leaves space for marks at 390 px; a chapter filter is available.",
+    "Planner drag and drop attaches content and persists after reload.",
+    "Planner mobile catalog adds material through its Add button.",
+    "Planner overview places the workload chart before coverage; tabs have no vertical scrollbar.",
+    "Chapter timeline supports preview and commit from keyboard, with 44 px touch height.",
+    "Violet palette applied to courses, course, community and report without overflow or JavaScript errors.",
+    "Course, community, store, journal and planner do not overflow at 320 px.",
+    "Review header and its action menu work at 320, 390 and 1440 px after the overflow fix.",
+    "Sticker preview initializes after DOM readiness without JavaScript errors."
+  ],
+  "tests": {
+    "command": "php artisan test --compact",
+    "passed": 530,
+    "assertions": 4422
+  },
+  "checks": [
+    "npm run build",
+    "npm run styles:check",
+    "npm run ux:check",
+    "php artisan view:cache",
+    "git diff --check"
+  ],
+  "limits": [
+    "All business states and every role combination are not claimed.",
+    "Email verification and achievement preview were rendered through isolated preview routes.",
+    "Purchases, real registration, award publication and production settings were not submitted."
+  ],
+  "artifacts": "output/playwright/ui-implementation/"
+}

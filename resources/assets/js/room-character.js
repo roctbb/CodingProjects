@@ -36,13 +36,17 @@ export default function initRoomCharacters() {
             statusUrl = data.status_url;
             if (!busy && data.next_request_id) token.value = data.next_request_id;
             showMessage(data.message, data.status === 'failed');
-            const preview = document.getElementById(form.dataset.previewTarget);
-            if (data.image_url && preview) {
+            const mainPreview = document.getElementById(form.dataset.previewTarget);
+            const previews = [mainPreview, ...document.querySelectorAll('[data-preview-copy-of]')]
+                .filter(preview => preview && (preview === mainPreview || preview.dataset.previewCopyOf === form.dataset.previewTarget));
+            if (data.image_url) {
                 hasCharacter = true;
-                const layer = preview.querySelector('[data-learning-avatar-layer-slot="character"]');
-                const image = layer?.tagName === 'IMG' ? layer : layer?.querySelector('img');
-                if (image) image.src = data.image_url;
-                preview.dataset.customCharacterUrl = data.image_url;
+                previews.forEach(preview => {
+                    const layer = preview.querySelector('[data-learning-avatar-layer-slot="character"]');
+                    const image = layer?.tagName === 'IMG' ? layer : layer?.querySelector('img');
+                    if (image) image.src = data.image_url;
+                    preview.dataset.customCharacterUrl = data.image_url;
+                });
             }
             renderButton();
             clearTimeout(timer);

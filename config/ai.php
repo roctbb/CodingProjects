@@ -2,8 +2,10 @@
 
 return [
     'provider' => env('AI_PROVIDER', 'gateway'),
+    // Older installations retain per-command overrides until the simplified form is saved.
+    'shared_models' => env('AI_SHARED_MODELS', false),
 
-    // Text uses complete Responses URLs. Images can use a separate Images API.
+    // A compatible API uses one base URL. Explicit old URLs remain supported.
     'providers' => [
         'gateway' => [
             'key' => env('GPT_KEY'),
@@ -12,6 +14,7 @@ return [
         ],
         'openai' => [
             'key' => env('OPENAI_API_KEY'),
+            'base_url' => env('OPENAI_BASE_URL'),
             'endpoint' => env('OPENAI_RESPONSES_URL', 'https://api.openai.com/v1/responses'),
             'proxy' => env('OPENAI_PROXY'),
             'image_api' => env('OPENAI_IMAGE_API', 'responses'),

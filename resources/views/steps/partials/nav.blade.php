@@ -1,43 +1,21 @@
 @php
     $isInsider = \Request::is('insider/*');
-    $isManager = $isInsider && isset($course) && ($course->teachers->contains($user) || $user->role == 'admin');
-    $stepBaseUrl = $isInsider && $course ? '/insider/courses/' . $course->id . '/steps/' : '/open/steps/';
-    $courseBackUrl = $isInsider && $course ? url('/insider/courses/' . $course->id . '?chapter=' . $step->lesson->chapter->id) : null;
+    $stepBaseUrl = $isInsider && $course ? '/insider/courses/'.$course->id.'/steps/' : '/open/steps/';
+    $lessonSteps = $step->lesson->steps;
+    $stepPosition = $lessonSteps->values()->search(fn ($candidate) => $candidate->id === $step->id) + 1;
 @endphp
-
-<nav class="step-sidebar" id="stepsSidebar">
-    <ul class="nav nav-pills flex-column step-sidebar__brand-list">
-        <li class="nav-item">
-            <a class="nav-link step-sidebar__brand" href="{{ $courseBackUrl ?: url('/') }}">
-                <x-brand-logo width="32" height="32" alt="" />
-                <span>{{ config('app.name', 'Laravel') }}</span>
-            </a>
-        </li>
-    </ul>
-
-    <ul class="nav nav-pills flex-column step-sidebar__list">
-        @foreach($step->lesson->steps as $lesson_step)
-            @php
-                $visibleSidebarTasks = $isManager || !$isInsider
-                    ? $lesson_step->tasks
-                    : $lesson_step->tasks->filter(fn ($task) => $task->isVisible($user, $course));
-            @endphp
-            <li class="nav-item">
-                <a class="nav-link @if ($lesson_step->id == $step->id) active @endif"
-                   href="{{ url($stepBaseUrl . $lesson_step->id) }}">
-                    <span class="step-sidebar__link-label">{{ $lesson_step->name }}</span>
-                    @if ($isInsider && $visibleSidebarTasks->count() != 0)
-                        <i class="fas fa-trophy" aria-hidden="true"></i>
-                    @endif
+<details class="gc-workbook-steps" data-workbook-navigation open>
+    <summary class="gc-workbook-steps__toggle"><span>Ступени урока</span><span>{{ $stepPosition }} из {{ $lessonSteps->count() }}</span><i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
+    <div class="gc-workbook-steps__content">
+        <a class="gc-workbook-brand" href="{{ $isInsider && $course ? url('/insider/courses/'.$course->id.'?chapter='.$step->lesson->chapter_id) : url('/') }}"><x-brand-logo width="24" height="24" alt="" /><span>{{ config('app.name', 'Laravel') }}</span></a>
+        <div class="gc-workbook-steps__heading"><h2>Ступени урока</h2><span>{{ $stepPosition }} из {{ $lessonSteps->count() }}</span></div>
+        <nav class="gc-workbook-steps__list" aria-label="Ступени урока">
+            @foreach($lessonSteps as $lessonStep)
+                <a class="gc-workbook-steps__link" href="{{ url($stepBaseUrl.$lessonStep->id) }}" @if($lessonStep->id == $step->id) aria-current="page" @endif>
+                    <span class="gc-workbook-steps__number" aria-hidden="true">{{ $loop->iteration }}</span><span>{{ $lessonStep->name }}</span>
                 </a>
-            </li>
-        @endforeach
-    </ul>
-
-    @if ($isManager)
-        <p class="mt-3 mb-0">
-            <a href="{{ url('/insider/courses/' . $course->id . '/lessons/' . $step->lesson->id . '/create') }}"
-               class="btn btn-success btn-sm rounded-3 fw-medium w-100 step-sidebar__add">Новый этап</a>
-        </p>
-    @endif
-</nav>
+            @endforeach
+        </nav>
+        @include('steps.partials.add_step')
+    </div>
+</details>

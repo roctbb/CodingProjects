@@ -1,0 +1,31 @@
+flowchart TB
+  course_create["Создание курса"]
+  course_edit["Настройки курса"]
+  chapter_create["Добавление главы"]
+  chapter_edit["Редактирование главы"]
+  lesson_create["Добавление урока"]
+  lesson_edit["Редактирование урока"]
+  step_create["Добавление ступени"]
+  step_edit["Редактирование ступени"]
+  task_edit["Редактирование задачи"]
+  perform["Режим показа"]
+  task_create["Создание задания"]
+  text_assist["Помощь ИИ в редакторе"]
+  step["Ступень"]
+  courses["Мои курсы"]
+  course["Страница курса"]
+  task_create -->|"Сохранить / отменить"| step
+  perform -->|"Вернуться"| step
+  perform -->|"Соседняя ступень"| perform
+  course_create -->|"Сохранить"| courses
+  course_edit -->|"Сохранить"| course
+  chapter_create -->|"Сохранить"| course
+  chapter_edit -->|"Сохранить"| course
+  lesson_create -->|"Сохранить"| step
+  lesson_edit -->|"Сохранить"| course
+  step_create -->|"Сохранить"| step
+  step_edit -->|"Сохранить"| step
+  task_edit -->|"Сохранить"| step
+  course_edit -->|"Исправить / улучшить текст"| text_assist
+  step_edit -->|"Исправить / улучшить текст"| text_assist
+  task_edit -->|"Исправить / улучшить текст"| text_assist

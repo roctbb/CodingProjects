@@ -8,18 +8,19 @@
 
 @section('content')
     <div class="container-lg py-4">
-        <div class="gc-card gc-page-header mb-3">
+        <div class="gc-page-header mb-3">
             <div class="min-width-0">
                 <a href="{{ url('/insider/courses/'.$course->id.'/steps/'.$step->id) }}" class="assessment-back-link">
                     <i class="fas fa-arrow-left me-1"></i>{{ $course->name }}
                 </a>
-                <h3 class="fw-medium lh-sm text-truncate mb-1">{{ $step->lesson->name }}</h3>
+                <h1 class="fw-medium lh-sm mb-1">{{ $step->lesson->name }}</h1>
                 <p class="text-muted mb-0 small text-truncate">{{ $step->name }}</p>
             </div>
         </div>
 
         @if (count($tasks) && (!$zero_theory || !$one_tasker))
-            <ul class="nav nav-pills gc-segmented-tabs mb-4" role="tablist">
+            <x-gc-tab-strip class="mb-4">
+            <ul class="nav nav-pills gc-segmented-tabs" role="tablist" aria-label="Теория и задачи">
                 @if (!$zero_theory)
                     <li class="nav-item">
                         <a class="nav-link active fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small" data-bs-toggle="pill" href="#theory" role="tab">Теория</a>
@@ -27,13 +28,14 @@
                 @endif
                 @foreach ($tasks as $key => $task)
                     <li class="nav-item">
-                        <a class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if ($zero_theory && $loop->first) active @endif" data-bs-toggle="pill" href="#task{{ $task->id }}" role="tab">
-                            {{ $key + 1 }}. {{ $task->name }}
+                        <a class="nav-link fw-medium text-nowrap rounded-3 px-2 px-sm-3 py-2 small @if ($zero_theory && $loop->first) active @endif" data-bs-toggle="pill" href="#task{{ $task->id }}" role="tab" title="{{ $task->name }}">
+                            <span class="gc-tab-label">{{ $key + 1 }}. {{ $task->name }}</span>
                             @if($task->is_star)<sup>*</sup>@endif
                         </a>
                     </li>
                 @endforeach
             </ul>
+            </x-gc-tab-strip>
         @endif
 
         <div class="tab-content" data-perform-tabs>

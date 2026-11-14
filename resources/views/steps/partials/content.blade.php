@@ -66,87 +66,8 @@
                             @endif
                         </section>
                     @endif
-                    <div class="gc-card step-task-card step-task-card--{{$taskType}} @if ($task->is_star) is-optional @endif @if ($hasUserSolution) is-submitted @endif overflow-hidden">
-                        <div class="step-task-card__header gc-section-header">
-                            <div class="min-width-0">
-                                <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
-                                    <span class="step-task-type step-task-type--{{$taskType}}">
-                                        <i class="{{$taskTypeIcon}}"></i>{{$taskTypeLabel}}
-                                    </span>
-                                    <h4 class="step-task-card__title fw-medium mb-0">{{$task->name}}</h4>
-                                    <span class="badge rounded-pill bg-body-tertiary">{{$task->max_mark}} XP</span>
-                                    @if($earnedAchievementId)
-                                        <a class="badge rounded-pill step-task-achievement-badge"
-                                           href="{{ url('/insider/profile/'.$user->id.'#achievement-'.$earnedAchievementId) }}"
-                                           title="Достижение получено">
-                                            <i class="fas fa-trophy"></i>Достижение
-                                        </a>
-                                    @endif
-                                    @if ($deadline)
-                                        @php
-                                            $exp = $deadline->expiration;
-                                            $deadlineClass = \Carbon\Carbon::now()->gt($exp)
-                                                ? 'bg-danger-subtle text-danger-emphasis border-danger-subtle'
-                                                : (\Carbon\Carbon::now()->addDays(3)->gt($exp)
-                                                    ? 'bg-warning-subtle text-warning-emphasis border-warning-subtle'
-                                                    : 'bg-body-tertiary text-muted');
-                                        @endphp
-                                        <span class="badge rounded-pill border {{ $deadlineClass }}">
-                                            <i class="fas fa-calendar-alt me-1"></i>{{ $deadline->expiration->format('d.m.Y') }}
-                                        </span>
-                                    @endif
-                                    @if ($task->price > 0)
-                                        <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle">
-                                            <i class="fas fa-coins me-1"></i>{{$task->price}}
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
-                            @if ($isManager)
-                                <div class="step-task-actions d-flex flex-wrap justify-content-lg-end gap-1">
-                                <a class="btn btn-outline-danger btn-sm rounded-3"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"
-                                   title="Удалить задачу"
-                                   data-confirm="Вы уверены?"><i class="fas fa-xmark"></i></a>
-                                <a class="btn btn-outline-secondary btn-sm rounded-3"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}"
-                                   title="Редактировать задачу"><i class="fas fa-pen"></i></a>
-                                @include('steps/partials/deadline_modal')
-                                <button type="button" title="Установить дедлайн" data-bs-toggle="modal"
-                                   data-bs-target="#deadline-modal-{{$task->id}}"
-                                   class="btn btn-outline-secondary btn-sm rounded-3"><i class="fas fa-calendar-days"></i></button>
-                                <a title="Фантомное решение (добавить пустое решение для всех студентов)"
-                                   class="btn btn-outline-secondary btn-sm rounded-3"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"
-                                   data-confirm="Добавить пустое фантомное решение для всех студентов?"><i class="fas fa-wand-magic-sparkles"></i></a>
-                                <button type="button"
-                                        title="Пересказ решений"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#task-ai-summary-modal-{{$task->id}}"
-                                        class="btn btn-outline-secondary btn-sm rounded-3">
-                                    <i class="fas fa-newspaper"></i>
-                                </button>
-                                @if ($task->is_code)
-                                    <a title="Перепроверить все решения (обнулить баллы и отправить последнее решение каждого студента на перепроверку)"
-                                        class="btn btn-outline-secondary btn-sm rounded-3"
-                                        href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/recheck-all')}}"
-                                        data-confirm="Вы уверены? Это обнулит все баллы и отправит последние решения на перепроверку."><i class="fas fa-rotate"></i></a>
-                                @endif
-                                <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть вправо"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i class="fas fa-arrow-right"></i></a>
-                                <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть влево"
-                                   href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i class="fas fa-arrow-left"></i></a>
-                                @if ($step->previousStep() != null)
-                                    <a class="btn btn-outline-secondary btn-sm rounded-3" title="Перенести выше"
-                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i class="fas fa-arrow-up"></i></a>
-                                @endif
-                                @if ($step->nextStep() != null)
-                                    <a class="btn btn-outline-secondary btn-sm rounded-3" title="Перенести ниже"
-                                       href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i class="fas fa-arrow-down"></i></a>
-                                @endif
-                                </div>
-                            @endif
-                        </div>
+                    <div class="gc-section step-task-card step-task-card--{{$taskType}} @if ($task->is_star) is-optional @endif @if ($hasUserSolution) is-submitted @endif overflow-hidden">
+                        @include('steps.partials.task_header')
                         <div class="markdown step-task-card__body">
                             {!! parsedown_math($task->text) !!}
                             @if ($isInsider)
@@ -301,11 +222,11 @@
                         @endphp
                         <div class="row my-3">
                             <div class="col">
-                                <div class="gc-card step-progress-card overflow-hidden">
+                                <div class="gc-section step-progress-card overflow-hidden">
                                     <div class="gc-section-header gc-section-header--between">
                                         <div>
                                             <h6 class="mb-0">Прогресс учеников</h6>
-                                            <p class="text-muted small mb-0">Карточки решений по каждому ученику.</p>
+                                            <p class="text-muted small mb-0">Решения учеников по этой задаче.</p>
                                         </div>
                                         <div class="input-group input-group-sm gc-search-box step-progress-search">
                                             <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -355,13 +276,13 @@
                                                     }
                                                     if ($need_check)
                                                     {
-                                                    $class = 'bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium';
+                                                    $class = 'gc-badge--pending';
                                                     }
                                                 }
                                                 $maxMark = max(1, (int) $task->max_mark);
                                                 $progressPercent = min(100, max(0, round(((int) $mark / $maxMark) * 100)));
                                                 $solutionsCount = $filtered->count();
-                                                $searchTitle = trim($student->name . ' ' . ($student->activeCustomTitle() ?? '') . ' ' . $stateLabel . ' ' . $mark . ' ' . $task->max_mark);
+                                                $searchTitle = trim($student->name . ' ' . $stateLabel . ' ' . $mark . ' ' . $task->max_mark);
                                             @endphp
                                             <a class="step-progress-cardlet {{ $stateClass }}"
                                                href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}"
@@ -370,8 +291,7 @@
                                                data-step-progress-text="{{ $searchTitle }}">
                                                 <span class="step-progress-cardlet__head">
                                                     <span class="step-progress-student">
-                                                        <span class="text-truncate">{{$student->name}}</span>
-                                                        @include('profile.partials.custom_title_badge', ['profileUser' => $student, 'compact' => true])
+                                                        <span>{{$student->name}}</span>
                                                     </span>
                                                     <span class="badge rounded-pill step-progress-mark {{$class}}">{{$mark}} / {{ $task->max_mark }}</span>
                                                 </span>
@@ -404,7 +324,11 @@
                 @endif
 
                 @if (!$task->is_quiz and !$task->is_code)
-                    @include('steps.partials.task_solution_form')
+                    @if($isManager)
+                        <details class="gc-disclosure gc-disclosure--inline mt-3"><summary>Добавить своё решение</summary>@include('steps.partials.task_solution_form')</details>
+                    @else
+                        @include('steps.partials.task_solution_form')
+                    @endif
                 @endif
             @endif
         </div>

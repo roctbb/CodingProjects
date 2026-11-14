@@ -8,6 +8,7 @@ use App\MarketDeal;
 use App\MarketGood;
 use App\Notifications\NewOrder;
 use App\Program;
+use App\Queries\MarketOrders;
 use App\Http\Controllers\Controller;
 use App\User;
 use Illuminate\Http\Request;
@@ -33,7 +34,7 @@ class MarketController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request, MarketOrders $orders)
     {
         $user = User::findOrFail(Auth::User()->id);
         $canManageMarket = $user->role == 'teacher' || $user->role == 'admin';
@@ -43,22 +44,22 @@ class MarketController extends Controller
             $goodsQuery->where('number', '>', 0);
         }
 
-        $activeGoods = $goodsQuery->orderBy('id', 'desc')->get();
+        $activeGoods = $goodsQuery->orderByRaw('CASE WHEN number > 0 THEN 0 ELSE 1 END')->orderBy('id', 'desc')->get();
         $goods = $activeGoods->where('sale_type', '!=', MarketGood::SALE_TYPE_AUCTION)->values();
         $auctions = $activeGoods->where('sale_type', MarketGood::SALE_TYPE_AUCTION)->values();
-        $digitalGoods = $user->digitalStoreItems();
+        $digitalGoods = $user->digitalStoreItems()->sortBy(fn ($item) => ((($item['type'] ?? 'learning_avatar_item') === 'learning_avatar_item' && $item['owned']) || $item['cost'] > $user->balance()) ? 1 : 0)->values();
         $archive = $canManageMarket ? MarketGood::where('in_stock', false)->with(['auctionBids.user', 'deals.user'])->orderBy('id', 'desc')->get() : collect();
-        $active_orders = $canManageMarket ? MarketDeal::where('shipped', false)->with(['user', 'good'])->orderBy('created_at', 'desc')->get() : collect();
-        $shipped_orders = $canManageMarket
-            ? MarketDeal::where('shipped', true)
-                ->with(['user', 'good'])
-                ->orderBy('updated_at', 'desc')
-                ->paginate(25, ['*'], 'shipped_page')
-                ->withQueryString()
-                ->fragment('market-orders')
-            : collect();
+        $ordersSearch = $canManageMarket ? $this->ordersSearch($request) : '';
+        $active_orders = $canManageMarket ? $orders->paginate(false, $ordersSearch, 'market-orders') : collect();
+        $shipped_orders = $canManageMarket ? $orders->paginate(true, $ordersSearch, 'market-orders') : collect();
 
-        return view('market.index', compact('goods', 'auctions', 'digitalGoods', 'user', 'archive', 'active_orders', 'shipped_orders', 'canManageMarket'));
+        $myPurchases = $user->orders()->with('good')->latest()->orderByDesc('id')
+            ->paginate(25, ['*'], 'purchases_page')->withQueryString()->fragment('market-purchases');
+        $coinTransactions = $user->transactions()->latest()->orderByDesc('id')
+            ->paginate(25, ['*'], 'history_page')->withQueryString()->fragment('market-history');
+        $ownedDigitalGoods = $digitalGoods->filter(fn ($item) => ($item['owned'] ?? false) || ($item['active'] ?? false));
+
+        return view('market.index', compact('goods', 'auctions', 'digitalGoods', 'user', 'archive', 'active_orders', 'shipped_orders', 'canManageMarket', 'myPurchases', 'coinTransactions', 'ownedDigitalGoods', 'ordersSearch'));
     }
 
     public function creditView()
@@ -106,18 +107,34 @@ class MarketController extends Controller
         return redirect('/insider/market');
     }
 
-    public function orders()
+    public function orders(Request $request, MarketOrders $orders)
     {
         $user = User::findOrFail(Auth::User()->id);
-        $active_orders = MarketDeal::where('shipped', false)->with(['user', 'good'])->orderBy('created_at', 'desc')->get();
-        $shipped_orders = MarketDeal::where('shipped', true)
-            ->with(['user', 'good'])
-            ->orderBy('updated_at', 'desc')
-            ->paginate(25, ['*'], 'shipped_page')
-            ->withQueryString();
-        return view('market.orders', compact('user', 'active_orders', 'shipped_orders'));
+        $ordersSearch = $this->ordersSearch($request);
+        $active_orders = $orders->paginate(false, $ordersSearch);
+        $shipped_orders = $orders->paginate(true, $ordersSearch);
+        return view('market.orders', compact('user', 'active_orders', 'shipped_orders', 'ordersSearch'));
     }
 
+    private function ordersSearch(Request $request): string
+    {
+        $data = $request->validate(['orders_q' => 'nullable|string|max:200']);
+        return trim($data['orders_q'] ?? '');
+    }
+
+    private function ordersReturnUrl(Request $request): string
+    {
+        $value = $request->input('return_url');
+        if (!is_string($value) || preg_match('/[\\\\\x00-\x20]/', $value)) return url('/insider/market#market-orders');
+        $parts = parse_url($value);
+        if ($parts === false || isset($parts['user']) || isset($parts['pass'])
+            || (isset($parts['host']) && ($parts['host'] !== $request->getHost() || ($parts['scheme'] ?? '') !== $request->getScheme() || ($parts['port'] ?? ($request->isSecure() ? 443 : 80)) !== $request->getPort()))
+            || (!isset($parts['host']) && !str_starts_with($value, '/'))
+            || !in_array($parts['path'] ?? '', ['/insider/market', '/insider/market/', '/insider/market/orders'], true)) {
+            return url('/insider/market#market-orders');
+        }
+        return $value;
+    }
 
     public function createView()
     {
@@ -232,7 +249,14 @@ class MarketController extends Controller
     {
         $user = User::findOrFail(Auth::User()->id);
         $good = MarketGood::findOrFail($id);
-        $deal = $good->buy($user);
+        $request->validate(['expected_price' => 'sometimes|integer|min:0']);
+        try {
+            $deal = $good->buy($user, $request->has('expected_price') ? $request->integer('expected_price') : null);
+        } catch (\RuntimeException $exception) {
+            if ($exception->getMessage() !== 'market_price_changed') throw $exception;
+            $this->make_error_alert('Цена изменилась', 'Обновите цену товара перед покупкой. Монеты не списаны.', $destination = 'head');
+            return redirect('/insider/market/');
+        }
 
         if ($deal) {
             $receiver = User::findOrFail(1);
@@ -245,14 +269,16 @@ class MarketController extends Controller
         return redirect('/insider/market/');
     }
 
-    public function buyDigital($itemKey)
+    public function buyDigital($itemKey, Request $request)
     {
         $user = User::findOrFail(Auth::User()->id);
 
+        $request->validate(['expected_cost' => 'sometimes|integer|min:1']);
         try {
-            $item = app(\App\Services\CoinWallet::class)->transaction($user->id, function (User $lockedUser) use ($itemKey) {
+            $item = app(\App\Services\CoinWallet::class)->transaction($user->id, function (User $lockedUser) use ($itemKey, $request) {
                 $catalog = User::learningAvatarItemCatalog();
                 $itemCost = (int) ($catalog[$itemKey]['cost'] ?? 0);
+                if ($request->has('expected_cost') && $request->integer('expected_cost') !== $itemCost) throw new \RuntimeException('market_price_changed');
 
                 if ($lockedUser->balance() < $itemCost) {
                     throw new \RuntimeException('insufficient_balance');
@@ -274,7 +300,9 @@ class MarketController extends Controller
             $this->make_error_alert('Товар не найден', 'Такого цифрового товара нет в магазине.', $destination = 'head');
             return redirect('/insider/market/#market-digital');
         } catch (\RuntimeException $exception) {
-            if ($exception->getMessage() === 'insufficient_balance') {
+            if ($exception->getMessage() === 'market_price_changed') {
+                $this->make_error_alert('Цена изменилась', 'Обновите страницу перед покупкой. Монеты не списаны.', $destination = 'head');
+            } elseif ($exception->getMessage() === 'insufficient_balance') {
                 $this->make_error_alert('Не хватает GC', 'Для покупки цифрового товара недостаточно монет.', $destination = 'head');
             } elseif ($exception->getMessage() === 'digital_item_already_owned') {
                 $this->make_info_alert('Уже куплено', 'Этот предмет уже доступен в настройках комнаты.', $destination = 'head');
@@ -348,13 +376,7 @@ class MarketController extends Controller
         $order->save();
         CourseActivity::recordMarketOrderShipped($order, $user);
 
-        $returnUrl = $request->input('return_url');
-        $returnPath = $returnUrl ? parse_url($returnUrl, PHP_URL_PATH) : null;
-        if ($returnPath && str_starts_with($returnPath, '/insider/market')) {
-            return redirect()->to($returnUrl);
-        }
-
-        return redirect()->back();
+        return redirect()->to($this->ordersReturnUrl($request));
     }
 
     public function cancel($id, Request $request)
@@ -362,17 +384,14 @@ class MarketController extends Controller
         $user = User::findOrFail(Auth::User()->id);
         $order = MarketDeal::findOrFail($id);
 
-        if ($order->source == 'auction') {
-            CoinTransaction::register($order->user_id, $order->displayPrice(), 'Auction order cancel Good #' . $order->good_id);
-        } else {
-            $transaction = CoinTransaction::where('user_id', $order->user_id)->where('comment', 'like', '%Good #' . $order->good_id . '%')->orderBy('id', 'desc')->first();
-            if ($transaction) {
-                $transaction->delete();
-            }
-        }
-        $order->delete();
+        app(\App\Services\CoinWallet::class)->transaction($order->user_id, function () use ($order) {
+            $lockedOrder = MarketDeal::whereKey($order->id)->lockForUpdate()->first();
+            if (!$lockedOrder) return;
+            CoinTransaction::register($lockedOrder->user_id, $lockedOrder->displayPrice(), 'Market order cancel Deal #'.$lockedOrder->id);
+            $lockedOrder->delete();
+        });
 
-        return redirect('/insider/market/');
+        return redirect()->to($this->ordersReturnUrl($request));
     }
 
 

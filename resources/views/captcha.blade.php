@@ -1,6 +1,9 @@
 @if (config('app.enable_recaptcha'))
-    <div class="gc-captcha mb-3">
-        {!! \NoCaptcha::display() !!}
+    @pushOnce('captcha')
+        {!! \NoCaptcha::renderJs() !!}
+    @endPushOnce
+    <div id="captcha-field" class="gc-captcha mt-4" tabindex="-1">
+        {!! \NoCaptcha::display(['data-size' => 'compact']) !!}
     </div>
     @if ($errors->has('g-recaptcha-response'))
         <span class="text-danger small d-block mt-1">

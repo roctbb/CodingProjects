@@ -19,8 +19,9 @@ return [
         'brr_brr_patapim_pet' => ['label' => 'Брр Брр Потапим', 'price' => 260, 'group' => 'Питомцы'],
         'tralalelo_tralala_pet' => ['label' => 'Тралалело Тралала', 'price' => 300, 'group' => 'Питомцы'],
         'tung_tung_tung_sahur_pet' => ['label' => 'Тунг Тунг Тунг Сахур', 'price' => 240, 'group' => 'Питомцы'],
-        'early_lesson_access' => ['label' => 'Ранний доступ к уроку', 'price' => 10, 'group' => 'Услуги'],
-        'geekpaste_extra_attempt' => ['label' => 'Дополнительная попытка GeekPaste', 'price' => 5, 'group' => 'Услуги'],
-        'xp_booster' => ['label' => 'XP-бустер', 'price' => 10, 'group' => 'Услуги'],
+        'early_lesson_access' => ['label' => 'Ранний доступ к уроку', 'price' => 10, 'group' => 'Услуги', 'storefront' => false],
+        'geekpaste_extra_attempt' => ['label' => 'Дополнительная попытка GeekPaste', 'price' => 5, 'group' => 'Услуги', 'storefront' => false],
+        'code_test_reveal' => ['label' => 'Открытие скрытого теста', 'price' => 5, 'group' => 'Услуги', 'storefront' => false],
+        'xp_booster' => ['label' => 'XP-бустер', 'price' => 10, 'group' => 'Услуги', 'storefront' => false],
     ],
 ];

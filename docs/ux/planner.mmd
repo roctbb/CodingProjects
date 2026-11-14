@@ -1,0 +1,60 @@
+flowchart TB
+  planner["План занятий"]
+  planner_journal["Прошедшие занятия и комментарии"]
+  planner_summary["Обзор покрытия и нагрузки"]
+  planner_catalog(["Каталог провайдера"])
+  planner_schedule(["Расписание курса"])
+  planner_preview(["Предпросмотр новой сетки"])
+  planner_providers(["Подключение провайдеров"])
+  planner_session(["Редактор занятия"])
+  planner_note(["Произвольная запись"])
+  planner_move(["Перенос материала"])
+  planner_split(["Разделение урока по занятиям"])
+  planner_relations(["Связь материала с уроками"])
+  planner_deadline(["Дедлайн работы"])
+  planner_exclude(["Исключение дат"])
+  planner_record(["Комментарий к занятию"])
+  planner_history(["История изменений"])
+  course["Страница курса"]
+  provider_resource["Материал подключённого провайдера"]
+  assessments["Журнал опыта"]
+  report["Отчёт по курсу"]
+  deadlines["Дедлайны курса"]
+  planner -->|"Материалы и комментарии прошедших занятий"| planner_journal
+  planner -->|"Обзор покрытия и нагрузки"| planner_summary
+  planner -->|"Каталог провайдера"| planner_catalog
+  planner -->|"Расписание курса"| planner_schedule
+  planner_schedule -.->|"Закрыть / отменить"| planner
+  planner -->|"Предпросмотр новой сетки"| planner_preview
+  planner_preview -.->|"Закрыть / отменить"| planner
+  planner -->|"Подключение провайдеров"| planner_providers
+  planner_providers -.->|"Закрыть / отменить"| planner
+  planner -->|"Редактор занятия"| planner_session
+  planner_session -.->|"Закрыть / отменить"| planner
+  planner -->|"Произвольная запись"| planner_note
+  planner_note -.->|"Закрыть / отменить"| planner
+  planner -->|"Перенос материала"| planner_move
+  planner_move -.->|"Закрыть / отменить"| planner
+  planner -->|"Разделение урока по занятиям"| planner_split
+  planner_split -.->|"Закрыть / отменить"| planner
+  planner -->|"Связь материала с уроками"| planner_relations
+  planner_relations -.->|"Закрыть / отменить"| planner
+  planner -->|"Дедлайн работы"| planner_deadline
+  planner_deadline -.->|"Закрыть / отменить"| planner
+  planner -->|"Исключение дат"| planner_exclude
+  planner_exclude -.->|"Закрыть / отменить"| planner
+  planner -->|"Комментарий к завершившемуся занятию"| planner_record
+  planner_record -.->|"Закрыть / отменить"| planner
+  planner -->|"История изменений"| planner_history
+  planner_history -.->|"Закрыть / отменить"| planner
+  planner -->|"Программа · общая навигация курса"| course
+  planner_catalog -->|"Открыть материал"| provider_resource
+  planner_catalog -.->|"Добавить выбранные материалы"| planner_session
+  planner_schedule -->|"Рассчитать"| planner_preview
+  planner_preview -->|"Применить сетку"| planner
+  planner_summary -->|"Открыть занятие из сводки"| planner
+  planner_session -->|"Выбрать материалы"| planner_catalog
+  planner_journal -->|"Добавить / изменить комментарий"| planner_record
+  planner -->|"Журнал · общая навигация курса"| assessments
+  planner -->|"Отчёт · общая навигация курса"| report
+  planner -->|"Дедлайны · общая навигация курса"| deadlines

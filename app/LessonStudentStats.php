@@ -3,6 +3,8 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use App\Services\RewardNotices;
 
 class LessonStudentStats extends Model
 {
@@ -64,10 +66,14 @@ class LessonStudentStats extends Model
         $stats = self::calculateLessonStats($course, $lesson, $student);
 
         // Update or create the record
-        return self::updateOrCreate(
+        return DB::transaction(function () use ($course, $lesson, $student, $stats) {
+        $saved = self::updateOrCreate(
             ['course_id' => $course->id, 'lesson_id' => $lesson->id, 'student_id' => $student->id],
             ['points' => $stats['points'], 'max_points' => $stats['max_points'], 'percent' => $stats['percent']]
         );
+        app(RewardNotices::class)->stickers([$saved->getAttributes()]);
+        return $saved;
+        });
     }
 
     protected static function calculateLessonStats(Course $course, Lesson $lesson, User $student)
@@ -160,11 +166,14 @@ class LessonStudentStats extends Model
         }
 
         if (!empty($rows)) {
+            DB::transaction(function () use ($rows) {
             self::upsert(
                 $rows,
                 ['course_id', 'lesson_id', 'student_id'],
                 ['points', 'max_points', 'percent', 'updated_at']
             );
+            app(RewardNotices::class)->stickers($rows);
+            });
         }
     }
 
@@ -216,11 +225,14 @@ class LessonStudentStats extends Model
         }
 
         if (!empty($rows)) {
+            DB::transaction(function () use ($rows) {
             self::upsert(
                 $rows,
                 ['course_id', 'lesson_id', 'student_id'],
                 ['points', 'max_points', 'percent', 'updated_at']
             );
+            app(RewardNotices::class)->stickers($rows);
+            });
         }
 
         return collect($rows);
@@ -264,11 +276,14 @@ class LessonStudentStats extends Model
             ];
         }
 
+        DB::transaction(function () use ($rows) {
         self::upsert(
             $rows,
             ['course_id', 'lesson_id', 'student_id'],
             ['points', 'max_points', 'percent', 'updated_at']
         );
+        app(RewardNotices::class)->stickers($rows);
+        });
 
         return self::where('course_id', $course->id)
             ->where('lesson_id', $lesson->id)

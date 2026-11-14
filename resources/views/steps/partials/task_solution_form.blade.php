@@ -2,7 +2,7 @@
 
 <div class="row my-3">
     <div class="col">
-        <div class="gc-card step-submit-card overflow-hidden">
+        <div class="gc-section step-submit-card overflow-hidden">
             <div class="gc-section-header gc-section-header--inline">
                 <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-paper-plane"></i></span>
                 <div class="min-width-0">
@@ -16,6 +16,7 @@
                           class="step-submit-form">
                         {{ csrf_field() }}
                         <div class="mb-3">
+                            <label for="text{{$task->id}}" class="form-label">Ваше решение</label>
                             <textarea id="text{{$task->id}}" class="form-control rounded-3" name="text" rows="3">{{old('text')}}</textarea>
                             <small class="solution-submit-hint gc-help-note d-block mt-2">Для кода лучше отправить ссылку на <a target="_blank" href="https://paste.geekclass.ru">GeekPaste</a>, <a target="_blank" href="https://pastebin.com">pastebin</a>, <a target="_blank" href="https://gist.github.com">gist</a> или <a target="_blank" href="https://paste.ofcode.org/">paste.ofcode</a>. Файлы и картинки: <a href="https://storage.geekclass.ru/" target="_blank">storage.geekclass.ru</a>.</small>
 
@@ -24,7 +25,7 @@
                             @endif
                         </div>
                         <div class="step-submit-actions">
-                            <button type="submit" class="btn btn-success rounded-3 fw-medium" id="sbtn">Отправить</button>
+                            <button type="submit" class="btn btn-primary fw-medium" id="sbtn">Отправить</button>
                         </div>
                     </form>
                 @else

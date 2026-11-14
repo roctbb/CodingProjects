@@ -12,8 +12,8 @@ class ApiClient
     public function create(array $payload, string $provider, array $settings, int $timeout, ?string $command = null,
         array $attachments = [], string $api = 'responses'): array
     {
-        if (!in_array($provider, ['gateway', 'openai'], true)) {
-            throw new \RuntimeException('Unknown AI provider; expected gateway or openai');
+        if (!array_key_exists($provider, AiSettings::PROVIDERS)) {
+            throw new \RuntimeException('Unknown AI provider');
         }
 
         $key = $settings['key'] ?? null;
@@ -33,7 +33,7 @@ class ApiClient
 
         $request = Http::acceptJson()->timeout($timeout)->connectTimeout(min(10, $timeout))
             ->withoutRedirecting()->withOptions(['proxy' => $settings['proxy'] ?? '']);
-        if ($provider === 'openai') {
+        if ($provider !== 'gateway') {
             $request = $request->withToken($key);
         } else {
             $params = $payload;

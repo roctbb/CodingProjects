@@ -47,7 +47,8 @@ class ImagesClient
         }
 
         $operation = $attachments === [] ? 'generations' : 'edits';
-        $connection['endpoint'] = rtrim($url, '/') . '/' . $operation;
+        $unifiedImages = Connection::usesUnifiedImages($connection);
+        $connection['endpoint'] = rtrim($url, '/') . ($unifiedImages ? '' : '/'.$operation);
         $payload = ['model' => $model, 'prompt' => $text, 'n' => 1];
         foreach (['size', 'quality', 'output_format', 'background'] as $key) {
             if (!empty($options[$key])) {
@@ -55,6 +56,15 @@ class ImagesClient
             }
         }
 
+        if ($unifiedImages) {
+            if ($attachments !== []) {
+                $payload['input_references'] = array_map(fn ($image) => [
+                    'type' => 'image_url',
+                    'image_url' => ['url' => 'data:'.$image['mime'].';base64,'.base64_encode($image['bytes'])],
+                ], $attachments);
+            }
+            return $this->api->create($payload, 'openai', $connection, $timeout, $command, [], 'images');
+        }
         return $this->api->create($payload, 'openai', $connection, $timeout, $command, $attachments, 'images.' . $operation);
     }
 

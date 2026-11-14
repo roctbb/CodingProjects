@@ -42,7 +42,7 @@ class TasksController extends Controller
         $this->middleware('auth');
         $this->middleware('task');
         $this->middleware('teacher')->only('waiveDeadlinePenalty');
-        $this->middleware('teacher')->only(['create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent', 'skipSolutionReview', 'skipStudentReviews', 'showSolutionAchievementPreview', 'previewSolutionAchievement', 'awardSolutionAchievement', 'aiTaskSummary']);
+        $this->middleware('teacher')->only(['createForm', 'create', 'delete', 'editForm', 'edit', 'reviewSolutions', 'estimateSolution', 'phantomSolution', 'blockStudent', 'skipSolutionReview', 'skipStudentReviews', 'showSolutionAchievementPreview', 'previewSolutionAchievement', 'awardSolutionAchievement', 'aiTaskSummary']);
     }
 
     /**
@@ -51,18 +51,36 @@ class TasksController extends Controller
      * @return \Illuminate\Http\Response
      */
 
+    public function createForm($course_id, $id)
+    {
+        $course = Course::findOrFail($course_id);
+        $step = ProgramStep::with('lesson')->findOrFail($id);
+        abort_unless((int) $step->lesson->program_id === (int) $course->program_id, 404);
+        return view('steps.create_task', compact('course', 'step'));
+    }
+
+    private function normalizeAnswerMode(Request $request): void
+    {
+        if (!$request->has('answer_mode')) return;
+        $request->merge(['is_code' => $request->answer_mode === 'code' ? 'on' : '0',
+            'answer' => $request->answer_mode === 'short' ? $request->input('answer') : null]);
+    }
+
     public function create($course_id, $id, Request $request)
     {
         $step = ProgramStep::findOrFail($id);
         $this->validate($request, [
             'text' => 'required|string',
             'name' => 'required|string|max:255',
-            'answer' => 'nullable|string|max:255',
+            'answer_mode' => 'sometimes|required|in:manual,code,short',
+            'answer' => 'required_if:answer_mode,short|nullable|string|max:255',
             'price' => 'nullable|numeric|min:0',
             'max_mark' => 'required|integer|min:0|max:1000',
             'ai_achievement_instruction' => 'nullable|string|max:1000'
         ]);
 
+
+        $this->normalizeAnswerMode($request);
 
         $order = 100;
         if ($step->lesson->steps->count() != 0)
@@ -123,11 +141,14 @@ class TasksController extends Controller
         $this->validate($request, [
             'text' => 'required|string',
             'name' => 'required|string|max:255',
-            'answer' => 'nullable|string|max:255',
+            'answer_mode' => 'sometimes|required|in:manual,code,short',
+            'answer' => 'required_if:answer_mode,short|nullable|string|max:255',
             'price' => 'nullable|numeric|min:0',
             'max_mark' => 'required|integer|min:0|max:1000',
             'ai_achievement_instruction' => 'nullable|string|max:1000'
         ]);
+
+        $this->normalizeAnswerMode($request);
 
         $task->text = $request->text;
         $task->max_mark = $request->max_mark;
@@ -347,19 +368,11 @@ class TasksController extends Controller
         $task = Task::findOrFail($id);
         $student = User::findOrFail($student_id);
         $course = Course::findOrFail($course_id);
-        $solutions = Solution::where('course_id', $course_id)
-            ->where('task_id', $task->id)
-            ->where('user_id', $student->id)
-            ->with('teacher')
-            ->orderByDesc('submitted')
-            ->orderByDesc('id')
-            ->get();
-        $taskAchievement = Achievement::where('course_id', $course_id)
-            ->where('task_id', $task->id)
-            ->where('user_id', $student->id)
-            ->first();
-
-        return view('steps.review', compact('task', 'student', 'solutions', 'course', 'taskAchievement'));
+        $workspace = app(\App\Services\ReviewWorkspace::class);
+        $reviewFilters = $workspace->filters($request);
+        $reviewQueueAll = $request->input('queue') === 'all';
+        $reviewQueue = $workspace->queue($request->user(), $reviewQueueAll ? null : $course->id, $reviewFilters)->paginate(40)->withQueryString();
+        return view('steps.review', $workspace->data($course, $task, $student, $reviewQueue, $reviewQueueAll, $reviewFilters));
     }
 
     public function skipSolutionReview($course_id, $id, $solution_id)
@@ -1148,25 +1161,9 @@ class TasksController extends Controller
 
     public function makeDeadline($course_id, $id, Request $request)
     {
-        if (!$request->deadline)
-        {
-            \App\TaskDeadline::where('course_id', $course_id)->where('task_id', $id)->delete();
-            return back();
-        }
-        $deadline = \App\TaskDeadline::all()->where('course_id', $course_id)->where('task_id', $id)->first();
-        if ($deadline) {
-
-            $deadline->expiration = $request->deadline;
-            $deadline->penalty = $request->penalty;
-            $deadline->save();
-        } else {
-            \App\TaskDeadline::create([
-                "course_id" => $course_id,
-                "task_id" => $id,
-                "expiration" => $request->deadline,
-                "penalty" => $request->penalty
-            ]);
-        }
+        app(\App\Services\CourseDeadlineService::class)->set(
+            Course::findOrFail($course_id), Task::findOrFail($id), $request->deadline ?: null, $request->penalty
+        );
         return back();
     }
 

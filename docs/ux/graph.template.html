@@ -1,0 +1,115 @@
+<div id="codingprojects-ux-map" lang="ru" aria-label="UX-граф CodingProjects">
+  <div class="ux-heading"><h2>Карта CodingProjects</h2><span class="text-small text-muted ux-count"></span></div>
+  <div class="viz-controls">
+    <label class="form-label">Версия пути<select class="form-select" data-mode aria-label="Версия пути"><option value="current">Текущая система</option><option value="proposed">Предлагаемый UX</option></select></label>
+    <label class="form-label">Раздел<select class="form-select" data-domain aria-label="Раздел"></select></label>
+    <label class="form-label">Экран или состояние<select class="form-select" data-node aria-label="Экран или состояние"></select></label>
+  </div>
+  <div class="ux-paths" aria-label="Основные пользовательские пути"></div>
+  <details><summary>Все экраны по разделам</summary><div class="ux-overview" aria-label="Разделы системы"></div></details>
+  <hr>
+  <div class="ux-focus-heading"><h3 data-title></h3><span class="viz-badge" data-kind></span></div>
+  <div class="ux-neighborhood" aria-label="Входящие и исходящие переходы">
+    <svg class="ux-connectors" aria-hidden="true"></svg>
+    <section><h3>Откуда</h3><div data-incoming></div></section>
+    <section class="ux-center"><div data-center></div></section>
+    <section><h3>Дальше</h3><div data-outgoing></div></section>
+  </div>
+  <div class="card ux-selected">
+    <div data-summary></div>
+    <div class="text-small" data-roles></div>
+    <div class="text-small" data-status></div>
+    <div class="ux-action"><button class="btn btn-primary" type="button" data-discuss>Продумать макет этого экрана</button></div>
+  </div>
+  <details><summary>Маршруты, состояния и источники</summary><div class="ux-evidence"></div></details>
+  <div class="sr-only" aria-live="polite" data-live></div>
+</div>
+<style>
+  #codingprojects-ux-map { color:var(--foreground); }
+  #codingprojects-ux-map .ux-heading { display:flex; align-items:baseline; flex-wrap:wrap; gap:calc(var(--font-size-base)*.75); padding-inline-end:calc(var(--font-size-base)*6.5); margin-bottom:calc(var(--font-size-base)*1); }
+  #codingprojects-ux-map .ux-overview { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(var(--font-size-base)*1); margin-block:calc(var(--font-size-base)*1.25); }
+  #codingprojects-ux-map .ux-domain { display:grid; gap:calc(var(--font-size-base)*.5); }
+  #codingprojects-ux-map .ux-domain h3 { margin-bottom:calc(var(--font-size-base)*.25); }
+  #codingprojects-ux-map .ux-domain [data-tooltip] { overflow-wrap:anywhere; }
+  #codingprojects-ux-map .ux-domain ul { padding-inline-start:calc(var(--font-size-base)*1.2); margin:0; display:grid; gap:calc(var(--font-size-base)*.4); }
+  #codingprojects-ux-map .ux-focus-heading { display:flex; align-items:center; gap:calc(var(--font-size-base)*.75); margin-block:calc(var(--font-size-base)*1); }
+  #codingprojects-ux-map .ux-paths { display:grid; gap:calc(var(--font-size-base)*.5); margin-block:calc(var(--font-size-base)*1); }
+  #codingprojects-ux-map .ux-path { display:flex; align-items:center; flex-wrap:wrap; gap:calc(var(--font-size-base)*.25); }
+  #codingprojects-ux-map .ux-neighborhood { position:relative; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.8fr) minmax(0,1fr); gap:calc(var(--font-size-base)*2); }
+  #codingprojects-ux-map .ux-connectors { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; color:var(--border); }
+  #codingprojects-ux-map .ux-center { padding-top:calc(var(--font-size-base)*2); }
+  #codingprojects-ux-map .ux-neighborhood section { min-width:0; }
+  #codingprojects-ux-map .ux-neighborhood h3 { margin-bottom:calc(var(--font-size-base)*.5); }
+  #codingprojects-ux-map .ux-link { position:relative; display:grid; justify-items:start; gap:calc(var(--font-size-base)*.25); margin-bottom:calc(var(--font-size-base)*.75); }
+  #codingprojects-ux-map .ux-link .ux-label { color:var(--muted-foreground); }
+  #codingprojects-ux-map .ux-selected { margin-block:calc(var(--font-size-base)*1); display:grid; gap:calc(var(--font-size-base)*.5); }
+  #codingprojects-ux-map .ux-action { margin-top:calc(var(--font-size-base)*.5); }
+  #codingprojects-ux-map .ux-evidence { display:grid; gap:calc(var(--font-size-base)*.5); padding-top:calc(var(--font-size-base)*.75); overflow-wrap:anywhere; }
+  #codingprojects-ux-map .ux-evidence pre { white-space:pre-wrap; overflow-wrap:anywhere; margin:0; }
+  #codingprojects-ux-map .ux-evidence ul { margin:0; padding-inline-start:calc(var(--font-size-base)*1.25); }
+  @media(max-width:600px) { #codingprojects-ux-map .ux-overview {grid-template-columns:repeat(2,minmax(0,1fr));} #codingprojects-ux-map .ux-neighborhood {grid-template-columns:1fr;} #codingprojects-ux-map .ux-connectors {display:none;} #codingprojects-ux-map .ux-center {padding-top:0;} }
+  @media(max-width:370px) { #codingprojects-ux-map .ux-overview {grid-template-columns:1fr;} }
+</style>
+<script>
+(() => {
+  const root=document.getElementById('codingprojects-ux-map');
+  const data=/* UX_MAP_DATA */;
+  const nodes=new Map([...data.nodes,...data.proposedNodes].map(n=>[n.id,n]));
+  const allNodes=()=>state.mode==='proposed'?[...data.nodes,...data.proposedNodes]:data.nodes;
+  const activeEdges=()=>state.mode==='proposed'?[...data.edges.filter(e=>!data.suppressedEdges.some(pair=>pair[0]===e.from&&pair[1]===e.to)),...data.proposedEdges]:data.edges;
+  const $=s=>root.querySelector(s);
+  const domain=$('[data-domain]'), picker=$('[data-node]');
+  const kinds={page:'Экран',dialog:'Диалог',state:'Состояние',shell:'Навигация',external:'Внешняя система'};
+  let state={domain:'all',node:'profile',mode:'current'};
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  domain.innerHTML='<option value="all">Вся система</option>'+data.domains.map(d=>'<option value="'+d.id+'">'+esc(d.title)+'</option>').join('');
+  $('.ux-count').textContent=data.nodes.filter(n=>n.kind==='page').length+' экранов · '+data.nodes.length+' узлов · '+data.edges.length+' переходов';
+  function restore(saved){const s=saved?.privateContent;if(s&&nodes.has(s.node)&&['all',...data.domains.map(d=>d.id)].includes(s.domain))state={domain:s.domain,node:s.node,mode:s.mode==='proposed'?'proposed':'current'};}
+  restore(window.openai?.widgetState);
+  function save(){window.openai?.setWidgetState?.({modelContent:{selectedScreen:state.node,screenTitle:nodes.get(state.node).title,section:state.domain,pathVersion:state.mode},privateContent:state}).catch(()=>{});}
+  function choose(id){if(!nodes.has(id))return;state.node=id;if(state.domain!=='all'&&nodes.get(id).domain!==state.domain)state.domain=nodes.get(id).domain;render();save();}
+  function fold(text,limit){const lines=[];let line='';for(const word of text.split(' ')){if(line&&line.length+word.length+1>limit){lines.push(line);line=word;}else line+=(line?' ':'')+word;}if(line)lines.push(line);return '<span>'+lines.map(esc).join('<br>')+'</span>';}
+  function selectButton(id,limit=0){const n=nodes.get(id);return '<button type="button" class="btn btn-ghost" data-pick="'+id+'" data-tooltip="'+esc(n.title)+'">'+(limit?fold(n.title,limit):esc(n.title))+'</button>';}
+  function links(list,direction){return list.map(e=>'<div class="ux-link">'+(direction==='in'?selectButton(e.from,22)+'<span class="ux-label text-small">→ '+esc(e.label)+'</span>':(e.label===nodes.get(e.to).title?'':'<span class="ux-label text-small">'+esc(e.label)+' →</span>')+selectButton(e.to,22))+'</div>').join('')||'<span class="text-small text-muted">Отдельных переходов нет</span>';}
+  function render(){
+    domain.value=state.domain; $('[data-mode]').value=state.mode;
+    const available=allNodes().filter(n=>state.domain==='all'||n.domain===state.domain);
+    picker.innerHTML=['page','dialog','state','shell','external'].map(kind=>{const ns=available.filter(n=>n.kind===kind);return ns.length?'<optgroup label="'+kinds[kind]+'">'+ns.map(n=>'<option value="'+n.id+'">'+esc(n.title)+'</option>').join('')+'</optgroup>':'';}).join('');
+    picker.value=state.node;
+    const relevant=data.domains.filter(d=>state.domain==='all'||d.id===state.domain);
+    $('.ux-overview').innerHTML=relevant.map(d=>{
+      let group=allNodes().filter(n=>n.domain===d.id && (n.kind==='page'||n.kind==='shell'||n.kind==='external'));
+      if(state.domain!=='all') group=allNodes().filter(n=>n.domain===d.id);
+      return '<section class="ux-domain"><h3>'+esc(d.title)+'</h3><ul>'+group.map(n=>'<li>'+selectButton(n.id,22)+'</li>').join('')+'</ul></section>';
+    }).join('');
+    const n=nodes.get(state.node);
+    const paths=[['login','courses','course','step'],['course','planner','planner-journal'],['reviews','review','achievement-preview'],['community','profile','market'],['user-menu','settings-ai','settings-store']];
+    $('.ux-paths').innerHTML=paths.map(path=>'<div class="ux-path">'+path.map(selectButton).join('<span class="text-muted" aria-hidden="true">→</span>')+'</div>').join('');
+    $('[data-title]').textContent=n.title;
+    $('[data-kind]').textContent=kinds[n.kind];
+    $('[data-discuss]').textContent=n.kind==='external'?'Обсудить переход':n.kind==='page'?'Продумать макет этого экрана':'Продумать это состояние';
+    const incoming=activeEdges().filter(e=>e.to===n.id && e.kind!=='shell' && e.kind!=='close');
+    const outgoing=activeEdges().filter(e=>e.from===n.id && e.kind!=='shell' && (e.kind!=='close'||n.kind==='dialog'));
+    $('[data-incoming]').innerHTML=links(incoming,'in');
+    $('[data-outgoing]').innerHTML=links(outgoing,'out');
+    $('[data-center]').innerHTML='<button type="button" class="btn btn-primary btn-block" data-pick="'+n.id+'">'+fold(n.title,18)+'</button>';
+    $('[data-summary]').textContent=n.goal;
+    $('[data-roles]').textContent='Роли: '+n.roles.map(r=>data.roles[r]).join(', ');
+    $('[data-status]').textContent=n.review.note;
+    const routes=data.routes.filter(r=>r.node===n.id);
+    $('.ux-evidence').innerHTML=(n.guard?'<div>'+esc(n.guard)+'</div>':'')+(n.checkStates?'<div>Состояния: '+esc(n.checkStates.join(' · '))+'</div>':'')+(routes.length?'<pre>'+esc(routes.map(r=>r.method+' /'+(r.uri==='/'?'':r.uri)+' · '+r.kind).join('\n'))+'</pre>':'')+'<ul>'+n.sources.map(s=>'<li><code>'+esc(s)+'</code></li>').join('')+'</ul>';
+    $('[data-live]').textContent=n.title+'; '+incoming.length+' входящих и '+outgoing.length+' исходящих переходов.';
+    root.querySelectorAll('[data-pick]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.pick===n.id)));
+    requestAnimationFrame(draw);
+  }
+  function draw(){const wrap=$('.ux-neighborhood'),svg=$('.ux-connectors'),center=$('[data-center] button');if(!center)return;const box=wrap.getBoundingClientRect(),c=center.getBoundingClientRect();const paths=[];for(const direction of ['incoming','outgoing']){root.querySelectorAll('[data-'+direction+'] button').forEach(button=>{const b=button.getBoundingClientRect();const x1=(direction==='incoming'?b.right:c.right)-box.left,y1=(direction==='incoming'?b.top+b.height/2:c.top+c.height/2)-box.top;const x2=(direction==='incoming'?c.left:b.left)-box.left,y2=(direction==='incoming'?c.top+c.height/2:b.top+b.height/2)-box.top;const mid=(x1+x2)/2;paths.push('<path d="M '+x1+' '+y1+' C '+mid+' '+y1+' '+mid+' '+y2+' '+x2+' '+y2+'" fill="none" stroke="currentColor" stroke-width="1"/>');});}svg.setAttribute('viewBox','0 0 '+box.width+' '+box.height);svg.innerHTML=paths.join('');}
+  new ResizeObserver(draw).observe($('.ux-neighborhood'));
+  domain.addEventListener('change',()=>{state.domain=domain.value;const first=data.nodes.find(n=>n.domain===state.domain && n.kind==='page')||data.nodes.find(n=>n.domain===state.domain);if(first)state.node=first.id;render();save();});
+  $('[data-mode]').addEventListener('change',()=>{state.mode=$('[data-mode]').value;if(state.mode==='current'&&!data.nodes.some(n=>n.id===state.node))state.node='profile';render();save();});
+  picker.addEventListener('change',()=>choose(picker.value));
+  root.addEventListener('click',e=>{const b=e.target.closest('[data-pick]');if(b)choose(b.dataset.pick);});
+  $('[data-discuss]').addEventListener('click',async()=>{const n=nodes.get(state.node);if(window.openai?.sendFollowUpMessage)await window.openai.sendFollowUpMessage({prompt:'Продумай отдельный макет экрана CodingProjects «'+n.title+'» (UX ID: '+n.id+'). Версия пути: '+state.mode+'. Используй docs/ux/system-map.json и docs/ux/profile-proposal.md, входящие и исходящие переходы, роли и состояния. Ориентир — аккуратный макет плана занятий выше в чате. Сохрани карточки самостоятельных блоков, убери только лишнюю вложенность. Рабочие экраны пока не меняй.',title:'Разобрать экран «'+n.title+'»'});});
+  window.addEventListener('openai:set_globals',e=>{if(e.detail?.globals?.widgetState){restore(e.detail.globals.widgetState);render();}});
+  render();
+})();
+</script>

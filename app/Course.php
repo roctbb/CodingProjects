@@ -14,11 +14,12 @@ class Course extends Model
     protected $table = "courses";
 
     protected $fillable = [
-        'name', 'description', 'image', 'start_date', 'end_date', 'state', 'level', 'invite', 'default_chapter_id',
+        'name', 'description', 'image', 'icon_key', 'start_date', 'end_date', 'state', 'level', 'invite', 'default_chapter_id',
         'learning_avatar_poster', 'learning_avatar_poster_prompt', 'learning_avatar_poster_generated_at'
     ];
 
     protected $casts = [
+        'current_lesson_id' => 'integer',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'learning_avatar_poster_generated_at' => 'datetime',
@@ -52,6 +53,27 @@ class Course extends Model
     public function defaultChapter()
     {
         return $this->belongsTo('App\ProgramChapter', 'default_chapter_id', 'id');
+    }
+
+    public function currentLesson()
+    {
+        return $this->belongsTo(Lesson::class, 'current_lesson_id');
+    }
+
+    public function currentLessonFor(User $viewer): ?Lesson
+    {
+        if (!$this->current_lesson_id || !$this->program) {
+            return null;
+        }
+
+        $lesson = $this->program->lessons->firstWhere('id', $this->current_lesson_id);
+        if (!$lesson || !$this->program->chapters->contains('id', $lesson->chapter_id)
+            || !$lesson->isAvailableForUser($this, $viewer)) {
+            return null;
+        }
+
+        $hasSteps = $lesson->relationLoaded('steps') ? $lesson->steps->isNotEmpty() : $lesson->steps()->exists();
+        return $hasSteps ? $lesson : null;
     }
 
     public function teachers()

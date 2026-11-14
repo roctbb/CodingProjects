@@ -57,6 +57,9 @@ class CoinTransaction extends Authenticatable
         if (preg_match('/^Auction order cancel Good #(\d+)$/', $comment, $matches)) {
             return 'Возврат за отмену заказа #' . $matches[1];
         }
+        if (preg_match('/^Market order cancel Deal #(\d+)$/', $comment, $matches)) {
+            return 'Возврат за отмену заказа #'.$matches[1];
+        }
 
         if (preg_match('/^XP booster Solution #(\d+)$/', $comment, $matches)) {
             return 'XP-бустер решения #' . $matches[1];
@@ -138,15 +141,18 @@ class CoinTransaction extends Authenticatable
 
     public static function register($user_id, $amount, $comment, $notificationText = null, $notificationType = 'success', $notificationIcon = null)
     {
+        return DB::transaction(function () use ($user_id, $amount, $comment, $notificationText, $notificationType, $notificationIcon) {
         $transaction = new CoinTransaction();
         $transaction->user_id = $user_id;
         $transaction->price = $amount;
         $transaction->comment = $comment;
         $transaction->save();
         $transaction->withNotification($notificationText, $notificationType, $notificationIcon);
+        app(\App\Services\RewardNotices::class)->coins($transaction);
         DB::afterCommit(fn () => $transaction->notifyUser());
 
         return $transaction;
+        });
     }
 
     public static function registerOnce($user_id, $amount, $comment, $notificationText = null, $notificationType = 'success', $notificationIcon = null)

@@ -14,10 +14,10 @@
         })->count();
     @endphp
     <div class="container-fluid px-0">
-        <div class="gc-card gc-page-header mb-3">
+        <div class="gc-page-header mb-3">
             <div class="min-width-0">
                 <a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id) }}"><i class="fas fa-chevron-left"></i> К курсу</a>
-                <h2 class="mb-1">Заблокированные задачи</h2>
+                <h1 class="mb-1">Заблокированные задачи</h1>
                 <p class="mb-0 text-muted text-truncate">{{ $course->name }}</p>
             </div>
             <div class="row row-cols-3 g-2 flex-shrink-0 blocked-summary">

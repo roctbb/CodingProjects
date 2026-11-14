@@ -10,349 +10,99 @@
 
 @section('content')
     @php
-        $pendingSolutionsCount = $solutions->filter(fn ($solution) => $solution->isPendingReview())->count();
+        $pendingAttempts = $solutions->filter(fn ($solution) => $solution->isPendingReview());
+        $pendingSolutionsCount = $pendingAttempts->count();
         $checkedSolutionsCount = $solutions->count() - $pendingSolutionsCount;
+        $conditionOpen = $solutions->isEmpty();
+        $reviewFilters = $reviewFilters ?? ['q' => '', 'review_status' => 'all'];
+        $queueParameters = array_filter(['q' => $reviewFilters['q'] ?: null, 'review_status' => $reviewFilters['review_status'] !== 'all' ? $reviewFilters['review_status'] : null, 'queue' => $reviewQueueAll ? 'all' : null, 'page' => $reviewQueue->currentPage() > 1 ? $reviewQueue->currentPage() : null], fn ($value) => $value !== null);
+        $queueQuery = $queueParameters ? '?'.http_build_query($queueParameters) : '';
+        $activeSolutions = $pendingAttempts->take(1);
+        if ($activeSolutions->isEmpty()) $activeSolutions = $solutions->take(1);
+        $historySolutions = $solutions->reject(fn ($solution) => $activeSolutions->contains('id', $solution->id));
+        $attemptNumbers = $solutions->values()->mapWithKeys(fn ($solution, $index) => [$solution->id => $solutions->count() - $index]);
+        $currentQueuedId = $reviewQueue->first(fn ($queued) => $queued->task_id == $task->id && $queued->user_id == $student->id && $queued->course_id == $course->id)?->id;
         $isBlocked = ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin') && $task->isBlocked($student->id, $course->id);
     @endphp
-    <div class="container-fluid px-0 solution-review-page">
-        <div class="gc-card gc-page-header solution-review-header mb-3">
-            <div class="solution-review-header__main min-width-0">
-                <a class="solution-review-header__back"
-                   href="{{ url('/insider/courses/'.$course->id.'/steps/'.$task->step->id.'#task'.$task->id) }}"
-                   title="К задаче"
-                   aria-label="К задаче">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-                <div class="solution-review-header__copy min-width-0">
-                    <h2 class="solution-review-header__title">Проверка решения</h2>
-                    <p class="solution-review-header__meta mt-1">
-                        <span class="text-truncate">{{ $student->name }}</span>
-                        @include('profile.partials.custom_title_badge', ['profileUser' => $student, 'compact' => true])
-                        <span>· {{ $task->name }}</span>
-                    </p>
+    <div class="container-fluid px-0 solution-review-page gc-stack">
+        <div class="gc-page-masthead">
+        <x-gc-page-header title="Проверка" mark="code-branch" :description="$course->name">
+            <x-slot:breadcrumb><a class="assessment-back-link" href="{{ url('/insider/courses/'.$course->id.'/steps/'.$task->step->id.'#task'.$task->id) }}">← К задаче</a></x-slot:breadcrumb>
+            <x-slot:summary>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <a class="gc-quiet-link" href="{{ url('/insider/profile/'.$student->id) }}">{{ $student->name }}</a>
+                    <span class="gc-task-state gc-task-state--pending">К проверке {{ $pendingSolutionsCount }}</span>
+                    <span class="gc-meta-label">Проверено {{ $checkedSolutionsCount }} / {{ $solutions->count() }}</span>
+                </div>
+            </x-slot:summary>
+            <button class="btn btn-outline-secondary btn-sm gc-roster-toggle gc-review-queue-toggle d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#review-queue-picker" aria-controls="review-queue-picker" aria-haspopup="dialog">Очередь <span class="gc-meta-label">{{ $reviewQueue->total() }}</span></button>
+            @if($nextReview ?? null)<a class="btn btn-outline-secondary btn-sm" href="{{ url('/insider/courses/'.$nextReview->course_id.'/tasks/'.$nextReview->task_id.'/student/'.$nextReview->user_id.$queueQuery.'#solution-'.$nextReview->id) }}">Дальше <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i></a>@endif
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm gc-icon-button" type="button" data-bs-toggle="dropdown" aria-label="Другие действия с решением" aria-expanded="false"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></button>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <a class="dropdown-item" href="{{ url('/insider/courses/'.$course->id.'/assessments') }}">Журнал курса</a>
+                    <a class="dropdown-item" href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit') }}">Редактировать задачу</a>
+                    @if ($course->teachers->contains(Auth::user()) || Auth::user()->role == 'admin')
+                        @if($pendingSolutionsCount)
+                            <form method="POST" action="{{ url('insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id.'/skip-review') }}" data-confirm="Пропустить все непроверенные решения этого ученика по задаче?">
+                                @csrf
+                                <button type="submit" class="dropdown-item">Пропустить непроверенные решения</button>
+                            </form>
+                        @endif
+                        @if($isBlocked)
+                            <a class="dropdown-item" href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/unblock/'.$student->id) }}" data-confirm="Разблокировать задачу для этого ученика?">Разблокировать задачу</a>
+                        @else
+                            <a class="dropdown-item text-danger" href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/block/'.$student->id) }}" data-confirm="Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены.">Заблокировать задачу</a>
+                        @endif
+                    @endif
                 </div>
             </div>
-            <div class="solution-review-header__actions solution-header-actions">
-                <span class="solution-review-header__status @if($pendingSolutionsCount) has-pending @endif">
-                    Проверено {{ $checkedSolutionsCount }} / {{ $solutions->count() }} решений
-                </span>
-                <a class="btn btn-sm gc-action-button solution-action solution-action--icon"
-                   href="{{ url('/insider/courses/'.$course->id.'/assessments') }}"
-                   title="Журнал"
-                   aria-label="Журнал">
-                    <i class="fas fa-table"></i>
-                </a>
-                <a class="btn btn-sm gc-action-button solution-action solution-action--icon"
-                   href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit') }}"
-                   title="Редактировать задачу"
-                   aria-label="Редактировать задачу">
-                    <i class="fas fa-pen"></i>
-                </a>
-                @if ($course->teachers->contains(Auth::user()) || Auth::user()->role=='admin')
-                    @if($pendingSolutionsCount)
-                        <form method="post" action="{{ url('insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id.'/skip-review') }}" onsubmit="return confirm('Пропустить все непроверенные решения этого ученика по задаче?');">
-                            {{ csrf_field() }}
-                            <button type="submit"
-                                    class="btn btn-sm gc-action-button solution-action solution-action--icon"
-                                    title="Пропустить все непроверенные решения"
-                                    aria-label="Пропустить все непроверенные решения">
-                                <i class="fas fa-check-double"></i>
-                            </button>
-                        </form>
-                    @endif
-                    @if ($isBlocked)
-                        <a class="btn btn-sm gc-action-button solution-action solution-action--icon"
-                           href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/unblock/'.$student->id) }}"
-                           data-confirm="Разблокировать задачу для этого ученика?"
-                           title="Разблокировать задачу"
-                           aria-label="Разблокировать задачу"><i class="fas fa-unlock"></i></a>
-                    @else
-                        <a class="btn btn-sm gc-action-button solution-action solution-action--icon solution-action--danger"
-                           href="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/block/'.$student->id) }}"
-                           data-confirm="Заблокировать задачу для этого ученика? Все предыдущие баллы будут обнулены."
-                           title="Заблокировать задачу"
-                           aria-label="Заблокировать задачу"><i class="fas fa-ban"></i></a>
-                    @endif
-                @endif
-            </div>
-        </div>
+        </x-gc-page-header>
 
-        <div class="gc-card solution-task-card mb-3">
+        </div>
+        <div class="gc-master-detail gc-roster-workspace">
+            @include('steps.partials.review-queue')
+            <main class="gc-master-detail__content gc-stack" aria-label="Открытая работа">
+        <div class="gc-card solution-task-card">
             <div class="gc-section-header gc-section-header--between">
-                <div class="min-width-0">
-                    <strong class="text-truncate d-block">{{ $task->name }}</strong>
+                <div class="solution-task-card__title">
+                    <strong class="d-block">{{ $task->name }}</strong>
                     <span class="small text-muted">Условие задачи</span>
                 </div>
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
                     <span class="badge rounded-pill bg-body-tertiary text-nowrap">{{ $task->max_mark }} XP</span>
                     <button class="btn btn-sm gc-action-button solution-action solution-task-toggle"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#task-condition-{{ $task->id }}"
-                            aria-expanded="true"
+                            aria-expanded="{{ $conditionOpen ? 'true' : 'false' }}"
+                            aria-label="Условие задачи"
                             aria-controls="task-condition-{{ $task->id }}">
-                        <i class="fas fa-chevron-up"></i>
+                        <i class="fas fa-chevron-up" aria-hidden="true"></i>
                         <span class="solution-task-toggle__expanded">Свернуть</span>
                         <span class="solution-task-toggle__collapsed">Показать</span>
                     </button>
                 </div>
             </div>
-            <div class="collapse show" id="task-condition-{{ $task->id }}">
+            <div class="collapse {{ $conditionOpen ? 'show' : '' }}" id="task-condition-{{ $task->id }}">
                 <div class="markdown step-task-card__body">
                     {!! parsedown_math($task->text) !!}
                 </div>
             </div>
         </div>
 
-        @forelse ($solutions as $key => $solution)
-            @php
-                $solutionScoreBadgeClass = $solution->scoreBadgeClass();
-                $solutionChecked = $solution->mark !== null;
-                $solutionPendingReview = $solution->isPendingReview();
-                $solutionGradeFormId = ($solutionChecked ? 'solution-recheck-form-' : 'solution-grade-form-') . $solution->id;
-                $geekPasteHasData = $solution->hasGeekPasteIntegrityData();
-                $geekPasteRiskLevel = $solution->geekPasteIntegrityRiskLevel();
-                $geekPasteRiskTone = [
-                    'high' => 'report-risk-badge--high',
-                    'medium' => 'report-risk-badge--medium',
-                    'low' => 'report-risk-badge--low',
-                    'none' => 'report-risk-badge--none',
-                ][$geekPasteRiskLevel] ?? 'report-risk-badge--none';
-                $geekPasteRiskLabel = [
-                    'high' => 'высокий риск',
-                    'medium' => 'средний риск',
-                    'low' => 'низкий риск',
-                    'none' => 'нет активного риска',
-                ][$geekPasteRiskLevel] ?? $geekPasteRiskLevel;
-                $geekPasteConfidenceLabel = [
-                    'high' => 'высокая',
-                    'medium' => 'средняя',
-                    'low' => 'низкая',
-                ][$solution->geekpaste_ai_confidence] ?? $solution->geekpaste_ai_confidence;
-                $geekPasteSuspicionKind = $solution->geekPasteIntegritySuspicionKind();
-                $geekPasteRiskIcon = $geekPasteSuspicionKind === 'ai' ? 'fa-robot' : ($geekPasteSuspicionKind === 'similarity' ? 'fa-exclamation-triangle' : 'fa-shield-alt');
-            @endphp
-            <div class="gc-card solution-review-card mb-3 @if($solutionPendingReview) is-pending @else is-checked @endif" id="solution-{{ $solution->id }}">
-                <div class="gc-section-header gc-section-header--between solution-review-card__header">
-                    <div class="solution-review-card__title min-width-0">
-                        <strong class="text-truncate">Решение #{{ $loop->remaining + 1 }}</strong>
-                        <span class="text-muted small">{{ $solution->submitted->format('d.m.Y H:i') }}</span>
-                    </div>
-                    <div class="solution-review-card__meta">
-                        <div class="solution-review-card__quick-actions">
-                            @if($solutionPendingReview)
-                                <button type="submit"
-                                        class="solution-review-card__icon-action"
-                                        form="skip-review-{{ $solution->id }}"
-                                        title="Пропустить решение"
-                                        aria-label="Пропустить решение"
-                                        onclick="return confirm('Пропустить это решение в очереди проверки?');">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                            @endif
-                            @if(!$taskAchievement)
-                                <button type="submit"
-                                        class="solution-review-card__icon-action solution-review-card__icon-action--achievement"
-                                        form="preview-achievement-{{ $solution->id }}"
-                                        title="Сгенерировать достижение"
-                                        aria-label="Сгенерировать достижение">
-                                    <i class="fas fa-award"></i>
-                                </button>
-                            @else
-                                <a class="solution-review-card__icon-action solution-review-card__icon-action--achievement is-issued"
-                                   href="{{ url('/insider/profile/'.$student->id.'#achievement-'.$taskAchievement->id) }}"
-                                   title="Достижение выдано"
-                                   aria-label="Достижение выдано">
-                                    <i class="fas fa-award"></i>
-                                </a>
-                            @endif
-                        </div>
-                        @if ($solution->mark!=null)
-                            @if($solution->hasActiveDeadlinePenalty())
-                                <span class="badge rounded-pill {{ $solutionScoreBadgeClass }}">{{ $solution->mark }} / {{ $task->max_mark }} XP после штрафа</span>
-                            @else
-                                <span class="badge rounded-pill {{ $solutionScoreBadgeClass }}">{{ $solution->mark }} / {{ $task->max_mark }} XP</span>
-                            @endif
-                        @elseif($solution->review_skipped)
-                            <span class="badge rounded-pill bg-body-tertiary text-muted border fw-medium">Пропущено</span>
-                        @else
-                            <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium">На проверке</span>
-                        @endif
-                    </div>
-                </div>
-                <div class="solution-review-card__body">
-                    <div class="solution-review-layout">
-                        <div class="solution-review-layout__answer">
-                            @if($geekPasteHasData)
-                                <div class="solution-integrity-panel @if($solution->geekpaste_integrity_dismissed_at) is-dismissed @endif">
-                                    <div class="solution-integrity-panel__head">
-                                        <span class="solution-block__label mb-0">GeekPaste</span>
-                                        <span class="solution-integrity-icons">
-                                            <span class="report-integrity-icon {{ $geekPasteRiskTone }}"
-                                                  title="{{ $solution->geekpaste_integrity_dismissed_at ? 'Предупреждение снято' : 'Риск: '.$geekPasteRiskLabel }}">
-                                                <i class="fas {{ $solution->geekpaste_integrity_dismissed_at ? 'fa-eye-slash' : $geekPasteRiskIcon }}"></i>
-                                            </span>
-                                        </span>
-                                    </div>
-                                    <div class="solution-integrity-metrics">
-                                        @if($solution->geekpaste_llm_probability !== null)
-                                            <span class="report-integrity-metric" title="Вероятность LLM">
-                                                <i class="fas fa-robot"></i>
-                                                <span>{{ $solution->geekpaste_llm_probability }}%</span>
-                                            </span>
-                                        @endif
-                                        @if($solution->geekpaste_similarity_max_percent !== null)
-                                            <span class="report-integrity-metric" title="Максимальная схожесть">
-                                                <i class="fas fa-copy"></i>
-                                                <span>{{ $solution->geekpaste_similarity_max_percent }}%</span>
-                                            </span>
-                                        @endif
-                                        @if((int) $solution->geekpaste_similarity_matches_count > 0)
-                                            <span class="report-integrity-metric" title="Найдено похожих сдач">
-                                                <i class="fas fa-link"></i>
-                                                <span>{{ $solution->geekpaste_similarity_matches_count }}</span>
-                                            </span>
-                                        @endif
-                                        @if($solution->geekpaste_ai_confidence)
-                                            <span class="report-integrity-metric report-risk-badge--ai" title="AI confidence">
-                                                <i class="fas fa-robot"></i>
-                                                <span>{{ $geekPasteConfidenceLabel }}</span>
-                                            </span>
-                                        @elseif($solution->geekpaste_ai_warning)
-                                            <span class="report-integrity-metric report-risk-badge--ai" title="AI предупреждение">
-                                                <i class="fas fa-robot"></i>
-                                                <span>AI</span>
-                                            </span>
-                                        @endif
-                                        @if($solution->geekpaste_integrity_dismissed_at)
-                                            <span class="report-integrity-metric is-muted" title="Снято {{ $solution->geekpaste_integrity_dismissed_at->format('d.m.Y H:i') }}">
-                                                <i class="fas fa-eye-slash"></i>
-                                                <span>снято</span>
-                                            </span>
-                                        @elseif($solution->geekpaste_integrity_synced_at)
-                                            <span class="report-integrity-metric is-muted" title="Синхронизировано {{ $solution->geekpaste_integrity_synced_at->format('d.m.Y H:i') }}">
-                                                <i class="fas fa-clock"></i>
-                                                <span>{{ $solution->geekpaste_integrity_synced_at->format('d.m') }}</span>
-                                            </span>
-                                        @endif
-                                        @if($solution->geekpaste_code_id)
-                                            <span class="report-integrity-metric is-muted" title="GeekPaste ID">
-                                                <i class="fas fa-code"></i>
-                                                <span>{{ $solution->geekpaste_code_id }}</span>
-                                            </span>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endif
-
-                            <div class="solution-block__label">Ответ ученика</div>
-                            <div class="solution-answer mb-0 @if(trim($solution->text) === '') is-empty @endif" data-linkify>
-                                @if(trim($solution->text) === '')
-                                    <span>Ответ пустой</span>
-                                @else
-                                    {!! nl2br(e(str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', str_replace(' ', '&nbsp;', $solution->text)), false))!!}
-                                @endif
-                            </div>
-
-                            @if($solution->recheck_requested)
-                                <div class="solution-recheck-note">
-                                    <div class="solution-block__label mb-2">Запрос на перепроверку</div>
-                                    @if(trim((string) $solution->recheck_comment) !== '')
-                                        <div class="small" data-linkify>{!! nl2br(e($solution->recheck_comment)) !!}</div>
-                                    @else
-                                        <div class="small text-muted fst-italic">Ученик не оставил комментарий</div>
-                                    @endif
-                                </div>
-                            @endif
-
-                            @if ($solutionChecked)
-                                <div class="solution-feedback" id="solution-feedback-{{ $solution->id }}">
-                                    <div class="solution-feedback__header">
-                                        <div class="min-width-0">
-                                            <div class="solution-block__label mb-2">Комментарий проверки</div>
-                                            <div class="small text-muted mb-1">Проверено: {{ $solution->checked }}@if($solution->teacher), {{ $solution->teacher->name }}@endif</div>
-                                        </div>
-                                        <button type="button"
-                                                class="btn btn-sm gc-action-button solution-feedback__recheck"
-                                                data-solution-recheck-toggle
-                                                data-solution-feedback-id="solution-feedback-{{ $solution->id }}"
-                                                data-solution-form-id="{{ $solutionGradeFormId }}">
-                                            <i class="fas fa-redo-alt"></i>
-                                            <span>Перепроверить</span>
-                                        </button>
-                                    </div>
-                                    @if(trim((string) $solution->comment) !== '')
-                                        <div class="markdown solution-feedback__content" data-linkify>{!! parsedown_math($solution->comment) !!}</div>
-                                    @else
-                                        <div class="small text-muted fst-italic">Комментарий не оставлен</div>
-                                    @endif
-                                </div>
-                            @endif
-
-                            @include('steps.partials.waive_deadline_penalty', ['solution' => $solution, 'course' => $course])
-
-                            <form id="{{ $solutionGradeFormId }}"
-                                  class="solution-grade-form @if($solutionChecked) solution-grade-form--recheck is-hidden @endif"
-                                  method="post"
-                                  action="{{ url('insider/courses/'.$solution->course_id.'/solution/'.$solution->id) }}"
-                                  @if($solutionChecked) hidden @endif>
-                                {{ csrf_field() }}
-                                <div class="solution-grade-form__header">
-                                    <strong class="small text-uppercase text-muted">{{ $solutionChecked ? 'Перепроверка' : 'Оценка' }}</strong>
-                                    @if($solutionChecked)
-                                        <button type="button"
-                                                class="btn btn-link btn-sm text-muted p-0 solution-grade-form__cancel"
-                                                data-solution-recheck-cancel
-                                                data-solution-feedback-id="solution-feedback-{{ $solution->id }}"
-                                                data-solution-form-id="{{ $solutionGradeFormId }}">
-                                            Отмена
-                                        </button>
-                                    @endif
-                                </div>
-                                <div class="solution-grade-grid">
-                                    <div class="solution-grade-field solution-grade-field--comment">
-                                        <label for="comment-{{ $solution->id }}" class="form-label">Комментарий</label>
-                                        <textarea class="form-control rounded-3" id="comment-{{ $solution->id }}" name="comment" rows="2" placeholder="Что поправить">{{ old('comment', $solutionChecked ? '' : $solution->comment) }}</textarea>
-                                    </div>
-                                    <div class="solution-grade-field solution-grade-field--mark">
-                                        <label for="mark-{{ $solution->id }}" class="form-label">XP <span class="text-muted fw-normal">из {{ $task->max_mark }}</span></label>
-                                        <input type="number" class="form-control form-control-sm rounded-3" id="mark-{{ $solution->id }}" name="mark" min="0" max="{{ $task->max_mark }}" value="{{ old('mark', $solution->raw_mark ?: $solution->mark) }}" placeholder="0">
-                                        @if ($errors->has('mark'))
-                                            <span class="text-danger small d-block mt-1"><strong>{{ $errors->first('mark') }}</strong></span>
-                                        @endif
-                                    </div>
-                                    <div class="solution-grade-actions">
-                                        <button type="submit" class="btn btn-success btn-sm rounded-3 fw-medium solution-grade-form__submit">
-                                            {{ $solutionChecked ? 'Обновить оценку' : 'Оценить' }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                        @if($solutionPendingReview)
-                            <form id="skip-review-{{ $solution->id }}" method="post" action="{{ url('insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/skip-review') }}">
-                                {{ csrf_field() }}
-                            </form>
-                        @endif
-                        @if(!$taskAchievement)
-                            <form id="preview-achievement-{{ $solution->id }}"
-                                  method="post"
-                                  action="{{ url('insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/achievement-preview') }}"
-                                  data-confirm="Вы точно хотите сгенерировать достижение для этого решения?"
-                                  data-fullscreen-loading
-                                  data-loading-message="Генерирую варианты достижения">
-                                {{ csrf_field() }}
-                            </form>
-                        @endif
-                    </div>
-                </div>
-            </div>
+        @forelse($activeSolutions as $solution)
+            @include('steps.partials.review-attempt')
         @empty
-            <div class="gc-empty-state">
-                <div class="gc-empty-icon"><i class="fas fa-inbox"></i></div>
-                <h5>Решений пока нет</h5>
-                <p class="mx-auto mb-0">Когда ученик отправит работу, она появится здесь.</p>
-            </div>
+            <div class="gc-empty-state"><h2 class="h6">Решений пока нет</h2><p class="mb-0">Когда ученик отправит работу, она появится здесь.</p></div>
         @endforelse
+        @if($historySolutions->isNotEmpty())
+            <details class="gc-disclosure gc-review-history" @if($historySolutions->contains(fn ($item) => (string) $item->id === (string) old('review_solution_id'))) open @endif>
+                <summary>Предыдущие попытки <span class="gc-meta-label">{{ $historySolutions->count() }}</span></summary>
+                <div class="gc-stack mt-3">@foreach($historySolutions as $solution) @include('steps.partials.review-attempt') @endforeach</div>
+            </details>
+        @endif
+            </main>
+        </div>
     </div>
 @endsection

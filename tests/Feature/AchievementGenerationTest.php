@@ -146,7 +146,9 @@ class AchievementGenerationTest extends TestCase
         $view = app(TasksController::class)->showSolutionAchievementPreview(7, 12, 1);
         Auth::logout();
         $html = $view->render();
-        $this->assertSame(3, substr_count($html, 'class="solution-achievement-variant"'));
+        $this->assertSame(3, substr_count($html, 'data-achievement-choice'));
+        $this->assertSame(1, substr_count($html, 'id="achievement-award-form"'));
+        $this->assertSame(1, substr_count($html, 'name="coin_reward"'));
         $this->assertStringNotContainsString('name="svg_icon"', $html);
         $this->assertStringNotContainsString('name="icon_key"', $html);
         $this->assertStringNotContainsString('name="visual_key"', $html);

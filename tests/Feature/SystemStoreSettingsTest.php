@@ -40,7 +40,7 @@ class SystemStoreSettingsTest extends TestCase
 
     public function test_admin_can_change_prices_used_by_store_and_paid_actions(): void
     {
-        $this->get('/insider/settings/system-store')->assertOk()->assertSee('Цены системных товаров')->assertSee('Тыквенный спас 2026!');
+        $this->get('/insider/settings/system-store')->assertOk()->assertSee('Цены и акции')->assertSee('Акция магазина')->assertDontSee('Тыквенный спас');
         $data = app(SystemStoreSettings::class)->all();
         $data['prices'] = array_fill_keys(array_keys($data['prices']), 42);
         $this->put('/insider/settings/system-store', ['settings' => $data])->assertRedirect();
@@ -84,12 +84,12 @@ class SystemStoreSettingsTest extends TestCase
     {
         $settings = app(SystemStoreSettings::class);
         $data = $settings->all();
-        $data['pumpkin_promo'] = ['enabled' => true, 'ends_at' => '2026-11-08T23:59'];
+        $data['promotion'] = array_replace($data['promotion'], ['enabled' => true, 'name' => 'Неделя открытий', 'discount_percent' => 50, 'items' => ['digital:room_character'], 'ends_at' => '2026-11-08T23:59']);
         $this->put('/insider/settings/system-store', ['settings' => $data])->assertRedirect();
         $this->assertSame(50, $settings->roomCharacterPrice());
-        $this->view('courses.partials.pumpkin_promo')->assertSee('Тыквенный спас 2026!')->assertSee('50 GC');
+        $this->view('market.partials.promotion-banner')->assertSee('Неделя открытий')->assertSee('−50%');
         Carbon::setTestNow(Carbon::parse('2026-11-08 23:59:01', 'Europe/Moscow'));
         $this->assertSame(100, $settings->roomCharacterPrice());
-        $this->view('courses.partials.pumpkin_promo')->assertDontSee('Тыквенный спас 2026!');
+        $this->view('market.partials.promotion-banner')->assertDontSee('Неделя открытий');
     }
 }

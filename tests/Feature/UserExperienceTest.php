@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Http\Controllers\ProfileController;
 use App\Rank;
 use App\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -25,13 +26,13 @@ class UserExperienceTest extends TestCase
         Notification::fake();
 
         DB::unprepared(<<<'SQL'
-            CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, rank_id INTEGER);
+            CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, rank_id INTEGER, role TEXT DEFAULT 'student', is_hidden BOOLEAN DEFAULT 0, is_teacher BOOLEAN DEFAULT 0, is_trainee BOOLEAN DEFAULT 0, custom_title TEXT, custom_title_expires_at TEXT);
             CREATE TABLE ranks (id INTEGER PRIMARY KEY, name TEXT, "from" INTEGER, "to" INTEGER);
             CREATE TABLE solutions (id INTEGER PRIMARY KEY, user_id INTEGER, course_id INTEGER, task_id INTEGER, mark INTEGER);
             CREATE TABLE completed_courses (id INTEGER PRIMARY KEY, user_id INTEGER, course_id INTEGER, mark TEXT);
             CREATE TABLE coin_transactions (id INTEGER PRIMARY KEY, user_id INTEGER, price INTEGER, comment TEXT);
             INSERT INTO ranks VALUES (1, 'First', 0, 100), (2, 'Second', 100, 200), (3, 'Third', 200, 10000);
-            INSERT INTO users VALUES (1, 'Student', NULL), (2, 'Completed only', NULL), (3, 'Manual rank', 2), (4, 'No submissions', NULL);
+            INSERT INTO users (id, name, rank_id) VALUES (1, 'Student', NULL), (2, 'Completed only', NULL), (3, 'Manual rank', 2), (4, 'No submissions', NULL);
             INSERT INTO solutions VALUES (1, 1, 10, 1, 5), (2, 1, 10, 1, 10), (3, 1, 20, 1, 8), (4, 1, 10, 2, 20), (5, 1, 10, 3, NULL), (6, 3, 10, 1, 5);
             INSERT INTO completed_courses VALUES (1, 1, 10, 'A'), (2, 1, 20, 'S'), (3, 2, 10, 'S'), (4, 3, 10, 'S');
             INSERT INTO coin_transactions VALUES (1, 1, 150, 'Award'), (2, 1, -30, 'Purchase');
@@ -61,7 +62,7 @@ class UserExperienceTest extends TestCase
 
     public function testProfileListAndIndividualScoresAndRanksAgree(): void
     {
-        $users = (new ProfileController())->index()->getData()['users'];
+        $users = (new ProfileController())->index(Request::create('/insider/community'))->getData()['users'];
 
         foreach ($users as $user) {
             $individual = User::findOrFail($user->id);

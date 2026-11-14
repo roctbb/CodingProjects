@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use App\Course;
 
@@ -127,7 +128,7 @@ class RegisterController extends Controller
     public function register(Request $request)
     {
         $this->validate($request, [
-            'invite' => 'nullable|string|max:255',
+            'invite' => 'required|string|max:255',
         ]);
 
         $is_teacher = false;
@@ -137,14 +138,9 @@ class RegisterController extends Controller
         if ($provider != null) {
             $is_teacher = true;
         } else {
-            if ($request->invite == null || $request->invite == "") {
-                $this->make_error_alert('Ошибка!', 'Курс с таким приглашением не найден.');
-                return $this->backException();
-            }
             $course = Course::where('invite', $request->invite)->first();
             if ($course == null) {
-                $this->make_error_alert('Ошибка!', 'Курс с таким приглашением не найден.');
-                return $this->backException();
+                throw ValidationException::withMessages(['invite' => 'Курс с таким кодом приглашения не найден. Проверьте код у преподавателя.']);
             }
         }
 

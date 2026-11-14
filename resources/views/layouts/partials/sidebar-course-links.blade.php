@@ -1,41 +1,15 @@
-@if (Auth::check() && in_array(Auth::user()->role, ['teacher', 'admin']))
-    @php
-        $sidebarUser = Auth::user();
-
-        $sidebarUser->loadMissing([
-            'courses' => function ($query) {
-                $query->select('courses.id', 'courses.name', 'courses.state');
-            },
-            'managed_courses' => function ($query) {
-                $query->select('courses.id', 'courses.name', 'courses.state');
-            },
-        ]);
-
-        if ($sidebarUser->role == 'admin') {
-            $sidebarCurrentCourses = \App\Course::where('state', 'started')
-                ->orderBy('name')
-                ->get(['id', 'name', 'state']);
-        } else {
-            $sidebarCurrentCourses = $sidebarUser->courses
-                ->merge($sidebarUser->managed_courses)
-                ->where('state', 'started')
-                ->unique('id')
-                ->sortBy('name')
-                ->values();
-        }
-
-    @endphp
-
-    @if ($sidebarCurrentCourses->count() > 0 && $sidebarCurrentCourses->count() <= 5)
-        <li class="gc-sidebar__section-label gc-sidebar__section-label--compact">Текущие</li>
-        @foreach ($sidebarCurrentCourses as $sidebarCourse)
-            <li>
-                <a class="gc-sidebar__link gc-sidebar__course-link {{ Request::is('insider/courses/'.$sidebarCourse->id.'*') ? 'active' : '' }}" href="{{ url('/insider/courses/'.$sidebarCourse->id) }}">
-                    <i class="fas fa-book-open"></i>
-                    <span>{{ $sidebarCourse->name }}</span>
-                </a>
-            </li>
-        @endforeach
+@if($workspaceNavigation['courses']->isNotEmpty())
+    <li class="gc-sidebar__section-label">Текущие курсы</li>
+    @foreach($workspaceNavigation['courses'] as $sidebarCourse)
+        @php $courseActive = $workspaceNavigation['inCourses'] && $sidebarCourse->id === $workspaceNavigation['currentCourseId']; @endphp
+        <li>
+            <a class="gc-sidebar__link gc-sidebar__course-link {{ $courseActive ? 'active' : '' }}" href="{{ url('/insider/courses/'.$sidebarCourse->id) }}" @if($courseActive) aria-current="page" @endif title="{{ $sidebarCourse->name }}">
+                <x-gc-course-icon :course="$sidebarCourse" />
+                <span>{{ $sidebarCourse->name }}</span>
+            </a>
+        </li>
+    @endforeach
+    @if($workspaceNavigation['hasMoreCourses'])
+        <li><a class="gc-sidebar__link gc-sidebar__all-courses" href="{{ url('/insider/courses') }}">Все мои курсы <i class="fas fa-chevron-right" aria-hidden="true"></i></a></li>
     @endif
-
 @endif

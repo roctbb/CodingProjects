@@ -1,0 +1,14 @@
+flowchart TB
+  silaeder["Личный кабинет Силаэдра"]
+  geekpaste["GeekPaste"]
+  geekexam["GeekExam"]
+  geekbattle["GeekBattle / CodeBattle"]
+  ai_code_battle["AI Code Battle"]
+  storage["Storage"]
+  arena["Arena"]
+  telegram["Telegram"]
+  provider_resource["Материал подключённого провайдера"]
+  courses["Мои курсы"]
+  profile_edit["Личные настройки"]
+  silaeder -->|"Успешный callback"| courses
+  silaeder -->|"Привязка / заполнение профиля"| profile_edit

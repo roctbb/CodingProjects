@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Services\Ai\ApiClient;
 use App\Services\Ai\ImagesClient;
 use App\Services\Ai\AiSettings;
+use App\Services\Ai\Connection;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
@@ -116,6 +117,7 @@ class ChatGptService
         if (isset($settings['type']) && $settings['type'] !== $type) {
             throw new \InvalidArgumentException('AI command does not support ' . $type . ' generation');
         }
+        if (!empty($configuration['shared_models'])) $settings = [];
         $settings = [
             'provider' => ($settings['provider'] ?? null) ?: $configuration['provider'],
             'model' => $options['model'] ?? (($settings['model'] ?? null) ?: $configuration['defaults'][$type]['model']),
@@ -131,7 +133,7 @@ class ChatGptService
             throw new \InvalidArgumentException('AI timeout must be a positive integer');
         }
 
-        $settings['connection'] = $configuration['providers'][$settings['provider']] ?? [];
+        $settings['connection'] = Connection::resolve($settings['provider'], $configuration['providers'][$settings['provider']] ?? []);
 
         return $settings;
     }

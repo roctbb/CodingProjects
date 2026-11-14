@@ -1,0 +1,213 @@
+// Foundation and semantic roles. Runtime branding only overrides palette values.
+:root {
+  --bs-font-sans-serif:
+    "Golos Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  font-family: var(--bs-font-sans-serif);
+  font-synthesis: none;
+}
+
+b,
+strong,
+dt {
+  font-weight: 600;
+}
+th {
+  font-weight: 500;
+}
+
+/* Semantic tokens */
+:root {
+  --gc-photo-shade: #0f172a;
+  --gc-secondary: #eacf72;
+  --gc-accent: #ffa117;
+  --gc-space-1: 4px;
+  --gc-space-2: 8px;
+  --gc-space-3: 12px;
+  --gc-space-4: 16px;
+  --gc-space-6: 24px;
+  --gc-space-8: 32px;
+  --gc-control-height: 36px;
+  --gc-control-height-sm: 32px;
+  --gc-touch-target: 44px;
+  --gc-primary: #345bd1;
+  --gc-primary-hover: #2e4fb8;
+  --gc-primary-light: #edf1fe;
+  --gc-info: #5877cf;
+  --gc-success: #237052;
+  --gc-warning: #976d18;
+  --gc-danger: #ad3547;
+  --gc-surface: #ffffff;
+  --gc-surface-variant: #f3f5f9;
+  --gc-background: #eef1f5;
+  --gc-on-surface: #1d2b40;
+  --gc-on-surface-muted: #56647a;
+  --gc-border: #d5deea;
+  --gc-sidebar-surface: color-mix(in srgb, var(--gc-primary) 12%, color-mix(in srgb, var(--gc-on-surface) 88%, var(--gc-surface)));
+  --gc-sidebar-ink: #f0f4fc;
+  --gc-sidebar-muted: color-mix(in srgb, var(--gc-sidebar-ink) 80%, var(--gc-sidebar-surface));
+  --gc-sidebar-border: color-mix(in srgb, var(--gc-sidebar-ink) 16%, var(--gc-sidebar-surface));
+  --gc-sidebar-hover: color-mix(in srgb, var(--gc-sidebar-ink) 9%, var(--gc-sidebar-surface));
+  --gc-sidebar-active-bg: var(--gc-button-primary, var(--gc-primary));
+  --gc-sidebar-active-ink: var(--gc-button-primary-text, var(--gc-sidebar-ink));
+  --gc-workbook-rail: color-mix(in srgb, var(--gc-primary) 4%, var(--gc-surface-variant));
+  --gc-workbook-current-bg: color-mix(in srgb, var(--gc-primary) 12%, var(--gc-workbook-rail));
+  --gc-workbook-current-ink: color-mix(in srgb, var(--gc-primary) 35%, var(--gc-on-surface));
+  --gc-selection: var(--gc-accent, var(--gc-primary));
+  --gc-completion: var(--gc-primary);
+  --gc-reward-bg: color-mix(in srgb, var(--gc-accent) 11%, var(--gc-surface));
+  --gc-reward-emphasis: color-mix(in srgb, var(--gc-accent) 22%, var(--gc-surface));
+  --gc-reward-border: color-mix(in srgb, var(--gc-accent) 50%, var(--gc-panel-border));
+  --gc-project-track: color-mix(in srgb, var(--gc-primary) 14%, var(--gc-surface));
+  --gc-project-spot: color-mix(in srgb, var(--gc-accent) 15%, var(--gc-surface));
+  --gc-panel-border: var(--gc-border);
+  --gc-nav-active-bg: color-mix(
+    in srgb,
+    var(--gc-primary) 6%,
+    var(--gc-surface)
+  );
+  --gc-border-hover: color-mix(in srgb, var(--gc-on-surface) 18%, var(--gc-surface));
+  --gc-control-surface: var(--gc-surface);
+  --gc-control-border: color-mix(in srgb, var(--gc-on-surface) 26%, var(--gc-surface));
+  --gc-hover-surface: color-mix(in srgb, var(--gc-on-surface) 3%, var(--gc-surface));
+  --gc-selected-surface: color-mix(in srgb, var(--gc-primary) 8%, var(--gc-surface));
+  --gc-pending-bg: var(--gc-selected-surface);
+  --gc-pending-ink: var(--gc-primary);
+  --gc-focus-color: var(--gc-primary);
+  --gc-link-hover: color-mix(in srgb, var(--gc-primary) 55%, var(--gc-on-surface));
+  --bs-border-color: var(--gc-border);
+  --bs-body-bg: var(--gc-background);
+  --bs-body-color: var(--gc-on-surface);
+  --bs-emphasis-color: var(--gc-on-surface);
+  --bs-secondary-color: var(--gc-on-surface-muted);
+  --bs-secondary-bg: var(--gc-surface-variant);
+  --bs-tertiary-bg: var(--gc-surface-variant);
+  --bs-border-color-translucent: rgba(0, 0, 0, 0.1225);
+  --gc-radius-sm: 6px;
+  --gc-radius-md: 8px;
+  --gc-radius-lg: 10px;
+  --gc-radius-xl: 12px;
+  --gc-shadow-xs: none;
+  --gc-shadow-sm: 0 2px 5px rgba(20, 35, 55, 0.03);
+  --gc-shadow-md: 0 4px 12px rgba(20, 35, 55, 0.06);
+  --gc-shadow-lg: 0 8px 24px rgba(20, 35, 55, 0.08);
+  --gc-backdrop: rgba(19, 31, 49, 0.32);
+  --gc-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --gc-sidebar-width: 252px;
+  --gc-course-sidebar-width: 252px;
+  --gc-sidebar-collapsed: 0px;
+  --gc-content-gutter: clamp(0.875rem, 1.5vw, 1.5rem);
+  --gc-content-width: 1440px;
+  --gc-code-font:
+    "JetBrains Mono", "SFMono-Regular", "Cascadia Code", "Roboto Mono", Menlo,
+    Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --gc-font-caption: 0.75rem;
+  --gc-font-meta: 0.75rem;
+  --gc-font-small: 0.8125rem;
+  --gc-font-ui: 0.875rem;
+  --gc-font-body: 0.875rem;
+  --gc-font-subtitle: 1.125rem;
+  --gc-font-heading: 1rem;
+  --gc-font-title: 1.75rem;
+  --gc-font-weight-heading: 600;
+}
+
+@media (max-width: 575.98px) {
+  :root {
+    --gc-font-title: 1.5rem;
+  }
+}
+
+body {
+  font-size: var(--gc-font-body);
+  line-height: 1.42857143;
+}
+
+[data-bs-theme="dark"] {
+  --gc-primary: #a9bdff;
+  --gc-primary-hover: #c0ceff;
+  --gc-primary-light: #293959;
+  --gc-info: #a9bdff;
+  --gc-success: #9bdbbc;
+  --gc-warning: #d5b970;
+  --gc-danger: #ffafbd;
+  --gc-surface: #1c2430;
+  --gc-surface-variant: #26313f;
+  --gc-background: #121820;
+  --gc-on-surface: #eef2f8;
+  --gc-on-surface-muted: #adbacd;
+  --gc-border: #364455;
+  --gc-sidebar-surface: var(--gc-surface);
+  --gc-sidebar-ink: var(--gc-on-surface);
+  --gc-sidebar-muted: var(--gc-on-surface-muted);
+  --gc-sidebar-border: var(--gc-border);
+  --gc-sidebar-hover: var(--gc-surface-variant);
+  --gc-sidebar-active-bg: var(--gc-selected-surface);
+  --gc-sidebar-active-ink: var(--gc-primary);
+  --gc-panel-border: color-mix(in srgb, var(--gc-on-surface) 9%, var(--gc-surface));
+  --gc-nav-active-bg: color-mix(
+    in srgb,
+    var(--gc-primary) 9%,
+    var(--gc-sidebar-surface)
+  );
+  --gc-border-hover: var(--gc-border);
+  --bs-border-color: var(--gc-border);
+  --bs-body-bg: var(--gc-background);
+  --bs-body-color: var(--gc-on-surface);
+  --bs-emphasis-color: var(--gc-on-surface);
+  --bs-secondary-color: var(--gc-on-surface-muted);
+  --bs-secondary-bg: var(--gc-surface-variant);
+  --bs-tertiary-bg: var(--gc-surface-variant);
+  --bs-border-color-translucent: rgba(255, 255, 255, 0.105);
+  --gc-shadow-xs: none;
+  --gc-shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.12);
+  --gc-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.18);
+  --gc-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.24);
+  --gc-backdrop: rgba(4, 10, 18, 0.62);
+}
+
+// Reading and syntax colors keep the established contrast in each theme.
+:root {
+  --gc-code-block-surface: #f8fafc;
+  --gc-code-block-border: rgba(219, 228, 238, 0.7);
+  --gc-code-block-highlight: rgba(255, 255, 255, 0.65);
+  --gc-code-base-text: #1e293b;
+  --gc-code-text: #1e293b;
+  --gc-inline-code-surface: rgba(15, 23, 42, 0.06);
+  --gc-inline-code-border: rgba(15, 23, 42, 0.056);
+  --gc-inline-code-text: #0f172a;
+  --gc-syntax-keyword: #0369a1;
+  --gc-syntax-function: #be123c;
+  --gc-syntax-string: #15803d;
+  --gc-syntax-tag: #0f766e;
+  --gc-syntax-property: #7c3aed;
+  --gc-syntax-meta: #b45309;
+  --gc-syntax-variable: #2563eb;
+  --gc-syntax-number: #9333ea;
+  --gc-syntax-comment: #64748b;
+  --gc-syntax-operator: #475569;
+}
+
+[data-bs-theme="dark"] {
+  --gc-code-block-surface: #020617;
+  --gc-code-block-border: rgba(148, 163, 184, 0.154);
+  --gc-code-block-highlight: rgba(255, 255, 255, 0.04);
+  --gc-code-text: #e2e8f0;
+  --gc-syntax-keyword: #38bdf8;
+  --gc-syntax-function: #fb7185;
+  --gc-syntax-string: #a3e635;
+  --gc-syntax-tag: #5eead4;
+  --gc-syntax-property: #c4b5fd;
+  --gc-syntax-meta: #fbbf24;
+  --gc-syntax-variable: #93c5fd;
+  --gc-syntax-number: #c084fc;
+  --gc-syntax-comment: #94a3b8;
+  --gc-syntax-operator: #cbd5e1;
+}

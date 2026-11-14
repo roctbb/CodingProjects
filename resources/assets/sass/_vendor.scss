@@ -1,0 +1,21 @@
+@import "@fontsource/golos-text/400.css";
+@import "@fontsource/golos-text/500.css";
+@import "@fontsource/golos-text/600.css";
+
+// Override Bootstrap theme colors before importing
+$primary: #345bd1;
+$success: #237052;
+$info: #5877cf;
+$warning: #976d18;
+$danger: #ad3547;
+$font-weight-semibold: 600;
+$font-weight-bold: 600;
+$font-weight-bolder: 600;
+$headings-font-weight: 600;
+
+@import "bootstrap/scss/bootstrap";
+@import "@fortawesome/fontawesome-free/css/all.css";
+@import "easymde/dist/easymde.min.css";
+@import "flatpickr/dist/flatpickr.min.css";
+@import "highlight.js/styles/github-dark.css";
+@import "prismjs/themes/prism.css";

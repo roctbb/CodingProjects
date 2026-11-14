@@ -1,0 +1,45 @@
+flowchart TB
+  community["Сообщество"]
+  profile["Профиль"]
+  profile_edit["Личные настройки"]
+  profile_room["Комната участника"]
+  room_generation["Создание своего персонажа"]
+  profile_history["История GC ученика"]
+  profile_achievements["Достижения и просмотр кубка"]
+  achievement_edit(["Редактирование достижения"])
+  profile_money(["Операция с GC"])
+  completed_course(["Добавление завершённого курса"])
+  telegram_link["Привязка Telegram"]
+  account_preferences["Аккаунт и уведомления"]
+  room_editor(["Настройка комнаты по кнопке"])
+  profile_collections["Коллекции и завершённые курсы"]
+  course["Страница курса"]
+  telegram["Telegram"]
+  wallet["История GC в магазине"]
+  silaeder["Личный кабинет Силаэдра"]
+  profile -->|"Комната и купленные предметы"| profile_room
+  profile -->|"История GC ученика, по правам"| profile_history
+  profile -->|"Достижения и просмотр кубка"| profile_achievements
+  profile -->|"Редактирование достижения"| achievement_edit
+  achievement_edit -.->|"Закрыть / отменить"| profile
+  profile -->|"Операция с GC"| profile_money
+  profile_money -.->|"Закрыть / отменить"| profile
+  profile -->|"Добавление завершённого курса"| completed_course
+  completed_course -.->|"Закрыть / отменить"| profile
+  community -->|"Открыть человека"| profile
+  profile -->|"Редактировать профиль"| profile_edit
+  profile -->|"Текущий / завершённый курс"| course
+  profile_edit -->|"Сохранить / отменить"| profile
+  telegram_link -->|"Открыть личную ссылку"| telegram
+  room_generation -->|"Готово / возврат при ошибке"| profile_room
+  profile_edit -->|"Аккаунт и уведомления"| account_preferences
+  account_preferences -->|"Подключить / отключить Telegram"| telegram_link
+  profile -->|"Настроить комнату"| room_editor
+  room_editor -.->|"Сохранить и вернуться"| profile_room
+  profile -->|"Баланс GC"| wallet
+  room_editor -->|"Создать своего персонажа"| room_generation
+  room_editor -.->|"Отменить настройки"| profile
+  account_preferences -->|"Привязать учётную запись"| silaeder
+  community -->|"Поиск и роль → первая страница"| community
+  community -->|"Следующая / предыдущая страница"| community
+  profile -->|"Коллекции и завершённые курсы"| profile_collections

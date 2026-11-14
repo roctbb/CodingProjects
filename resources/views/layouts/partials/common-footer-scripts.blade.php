@@ -3,3 +3,4 @@
     $vendorScriptVersion = file_exists($vendorScriptPath) ? filemtime($vendorScriptPath) : null;
 @endphp
 <script type="module" src="{{ asset('build/js/vendor.js') }}@if($vendorScriptVersion)?v={{ $vendorScriptVersion }}@endif"></script>
+<x-gc-reward-notices />

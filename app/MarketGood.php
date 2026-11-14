@@ -272,32 +272,32 @@ class MarketGood extends Authenticatable
         });
     }
 
-    public function buy($user)
+    public function purchasePrice(): int
     {
-        if ($this->isAuction()) {
-            return null;
-        }
+        return app(\App\Services\SystemStoreSettings::class)->quoteGood($this)['price'];
+    }
 
-        if ($this->number < 1)
-            return null;
-        if ($user->balance() < $this->price)
-            return null;
-
-        $this->number -= 1;
-        $this->save();
-
-        $deal = new MarketDeal();
-        $deal->user_id = $user->id;
-        $deal->good_id = $this->id;
-        $deal->price = $this->price;
-        $deal->source = 'purchase';
-        $deal->shipped = false;
-        $deal->save();
-
-        CoinTransaction::register($user->id, -1 * $this->price, "Good #".$this->id);
-        CourseActivity::recordMarketPurchaseForActiveCourse($user, $this, (int) $this->price, 'purchase', $deal);
-
-        return $deal;
+    public function buy($user, ?int $expectedPrice = null)
+    {
+        return app(\App\Services\CoinWallet::class)->transaction($user->id, function ($lockedUser) use ($expectedPrice) {
+            $good = self::whereKey($this->id)->lockForUpdate()->firstOrFail();
+            if ($good->isAuction() || !$good->in_stock || $good->number < 1) return null;
+            $price = $good->purchasePrice();
+            if ($expectedPrice !== null && $price !== $expectedPrice) throw new \RuntimeException('market_price_changed');
+            if ($lockedUser->balance() < $price) return null;
+            $good->number--;
+            $good->save();
+            $deal = new MarketDeal();
+            $deal->user_id = $lockedUser->id;
+            $deal->good_id = $good->id;
+            $deal->price = $price;
+            $deal->source = 'purchase';
+            $deal->shipped = false;
+            $deal->save();
+            CoinTransaction::register($lockedUser->id, -$price, 'Good #'.$good->id);
+            CourseActivity::recordMarketPurchaseForActiveCourse($lockedUser, $good, $price, 'purchase', $deal);
+            return $deal;
+        });
     }
 
 }

@@ -22,6 +22,8 @@ function renderNotebooks() {
         }
     });
 
+    if (rendered.length) document.dispatchEvent(new CustomEvent('gc:notebook-rendered'));
+
     // Notebook cells are inserted after MathJax's initial page scan may finish.
     if (rendered.length && window.MathJax && window.MathJax.startup) {
         window.MathJax.startup.promise

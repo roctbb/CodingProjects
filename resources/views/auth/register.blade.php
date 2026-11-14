@@ -1,144 +1,52 @@
 @extends('layouts.empty-dark')
-
 @section('title', 'Регистрация')
-
+@section('auth-shell-class', 'auth-shell--registration')
 @section('auth-background-image', url('/images/bg/'.random_int(1,16).'.jpg'))
-
 @section('content')
-    <div class="text-center text-white mb-3">
-        <a href="{{ url('/') }}" class="auth-brand d-inline-flex align-items-center gap-2 text-decoration-none text-white">
-            <x-brand-logo width="28" height="28" alt="" />
-            <span class="fs-5 fw-medium">{{ config('app.name', 'Laravel') }}</span>
-        </a>
+<form id="registration-form" method="POST" enctype="multipart/form-data" class="auth-card gc-auth-card gc-auth-card--wide" data-registration-flow data-auth-form data-form-page>
+    @csrf
+    <x-gc-auth-heading title="Создать аккаунт" description="Приготовьте код приглашения от преподавателя." />
+    <x-gc-form-errors />
+    <ol class="gc-form-steps" aria-label="Шаги регистрации" data-registration-progress hidden>
+        <li><button type="button" data-registration-go="0" aria-current="step"><span>1</span>Аккаунт</button></li>
+        <li><button type="button" data-registration-go="1"><span>2</span>Профиль</button></li>
+    </ol>
+    <fieldset data-registration-step aria-labelledby="registration-account-title">
+        <legend id="registration-account-title" class="gc-section-title">Данные для входа</legend>
+        <div class="gc-form-stack">
+            <x-gc-field name="invite" label="Код приглашения" hint="Код, который выдал преподаватель."><input id="invite" name="invite" class="form-control" value="{{ old('invite', request('invite')) }}" maxlength="255" autocapitalize="none" spellcheck="false" required></x-gc-field>
+            <x-gc-field name="name" label="Имя и фамилия"><input id="name" name="name" class="form-control" value="{{ old('name') }}" autocomplete="name" maxlength="255" required></x-gc-field>
+            <x-gc-field name="email" label="Email" hint="Этот адрес будет вашим логином."><input id="email" type="email" name="email" class="form-control" value="{{ old('email') }}" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="255" required></x-gc-field>
+            <x-gc-password-field label="Пароль" :hint="$errors->any() ? 'Введите пароль ещё раз: после отправки формы он не сохраняется.' : 'От 6 до 72 символов.'" />
+            <x-gc-password-field name="password_confirmation" id="password-confirm" label="Повторите пароль" confirm="password" />
+        </div>
+    </fieldset>
+    <fieldset data-registration-step aria-labelledby="registration-profile-title">
+        <legend id="registration-profile-title" class="gc-section-title">Профиль участника</legend>
+        <div class="gc-form-stack">
+            <x-gc-field name="birthday" label="Дата рождения"><input id="birthday" type="date" name="birthday" class="form-control" value="{{ old('birthday') }}" autocomplete="bday" required></x-gc-field>
+            <x-gc-field name="gender" label="Пол персонажа" hint="Определяет персонажа в комнате профиля."><select id="gender" name="gender" class="form-select" required><option value="">Выберите</option>@foreach(\App\User::learningAvatarGenders() as $key=>$label)<option value="{{ $key }}" @selected(old('gender')===$key)>{{ $label }}</option>@endforeach</select></x-gc-field>
+            <x-gc-field name="school" label="Место учёбы"><input id="school" name="school" class="form-control" value="{{ old('school') }}" maxlength="255" placeholder="Например, школа № 1576" required></x-gc-field>
+            <x-gc-field name="grade" label="Класс"><select id="grade" name="grade" class="form-select" required><option value="">Выберите класс</option>@for($grade=1;$grade<=11;$grade++)<option value="{{ $grade }}" @selected((string)old('grade')===(string)$grade)>{{ $grade }}</option>@endfor<option value="12" @selected((string)old('grade')==='12')>Выпускник</option></select></x-gc-field>
+        </div>
+        <div class="gc-auth-optional">
+            <h2 class="gc-section-title">О себе и контакты</h2>
+            <p class="gc-help-text">Необязательно. Можно заполнить позже в личных настройках.</p>
+            <div class="gc-form-stack">
+                <x-gc-field name="interests" label="Технические интересы"><textarea id="interests" name="interests" class="form-control" rows="2" maxlength="10000">{{ old('interests') }}</textarea></x-gc-field>
+                <x-gc-field name="hobbies" label="Увлечения"><textarea id="hobbies" name="hobbies" class="form-control" rows="2" maxlength="10000">{{ old('hobbies') }}</textarea></x-gc-field>
+                <x-gc-field name="image" label="Аватар" hint="Изображение до 10 МБ."><input id="image" name="image" type="file" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp,image/bmp"></x-gc-field>
+                <x-gc-field name="telegram" label="Telegram" hint="Контакт для других участников. Уведомления подключаются отдельно в настройках."><input id="telegram" name="telegram" class="form-control" value="{{ old('telegram') }}" maxlength="255" placeholder="@username" autocapitalize="none" spellcheck="false"></x-gc-field>
+                <x-gc-field name="git" label="Git-профиль"><input id="git" name="git" class="form-control" value="{{ old('git') }}" maxlength="255" placeholder="github.com/username" autocapitalize="none" spellcheck="false"></x-gc-field>
+            </div>
+        </div>
+        @include('captcha')
+    </fieldset>
+    <div class="gc-auth-actions">
+        <button type="button" class="btn btn-outline-secondary" data-registration-back hidden>Назад</button>
+        <button type="button" class="btn btn-primary ms-auto" data-registration-next hidden>Далее</button>
+        <button type="submit" class="btn btn-primary ms-auto">Создать аккаунт</button>
     </div>
-
-    <form method="POST" enctype="multipart/form-data" class="auth-card auth-card--wide p-0 overflow-hidden">
-        @csrf
-
-        <div class="gc-section-header gc-section-header--responsive">
-            <div class="d-flex align-items-center gap-3 min-width-0">
-                <span class="gc-icon-tile flex-shrink-0"><i class="fas fa-user-plus"></i></span>
-                <div class="min-width-0">
-                    <span class="gc-eyebrow">аккаунт</span>
-                    <h1 class="h4 fw-medium mb-0">Регистрация</h1>
-                </div>
-            </div>
-            <a href="{{ url('/login') }}" class="btn btn-outline-secondary rounded-3 fw-medium flex-shrink-0">Уже есть аккаунт</a>
-        </div>
-
-        <div class="p-3 p-md-4">
-            @if (!$to_course)
-                <h5 class="auth-section-title">Инвайт</h5>
-                <div class="mb-3">
-                    <label for="invite" class="form-label">Инвайт</label>
-                    <input id="invite" type="text" class="form-control rounded-3" name="invite" value="{{ old('invite') }}" maxlength="255">
-                    <div class="form-text">Если вы получили инвайт преподавателя, укажите его.</div>
-                    @error('invite') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-            @endif
-
-            <h5 class="auth-section-title">Аккаунт</h5>
-            <div class="row g-3 mb-3">
-                <div class="col-12">
-                    <label for="email" class="form-label">E-Mail</label>
-                    <input id="email" type="email" class="form-control rounded-3" name="email" value="{{ old('email') }}" maxlength="255" required>
-                    <div class="form-text">Ваш действующий Email — он будет логином.</div>
-                    @error('email') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-12 col-sm-6">
-                    <label for="password" class="form-label">Пароль</label>
-                    <input id="password" type="password" class="form-control rounded-3" name="password" maxlength="72" required>
-                    @error('password') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-12 col-sm-6">
-                    <label for="password-confirm" class="form-label">Повторите пароль</label>
-                    <input id="password-confirm" type="password" class="form-control rounded-3" name="password_confirmation" maxlength="72" required>
-                </div>
-            </div>
-
-            <h5 class="auth-section-title">Профиль</h5>
-            <div class="row g-3 mb-3">
-                <div class="col-12">
-                    <label for="name" class="form-label">Имя и фамилия</label>
-                    <input id="name" type="text" class="form-control rounded-3" name="name" value="{{ old('name') }}" maxlength="255" required>
-                    @error('name') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-12 col-sm-6">
-                    <label for="birthday" class="form-label">Дата рождения</label>
-                    <input id="birthday" type="text" class="form-control rounded-3 date" name="birthday" value="{{ old('birthday') }}" required>
-                    @error('birthday') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-12 col-sm-6">
-                    <label for="gender" class="form-label">Пол персонажа</label>
-                    <select id="gender" class="form-select rounded-3" name="gender" required>
-                        <option value="" @selected(!old('gender'))>Выберите</option>
-                        @foreach(\App\User::learningAvatarGenders() as $genderKey => $genderLabel)
-                            <option value="{{ $genderKey }}" @selected(old('gender') === $genderKey)>{{ $genderLabel }}</option>
-                        @endforeach
-                    </select>
-                    <div class="form-text">По нему будет выбран персонаж в комнате профиля.</div>
-                    @error('gender') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-12 col-sm-6">
-                    <label for="school" class="form-label">Место учебы</label>
-                    <input id="school" type="text" class="form-control rounded-3" name="school" value="{{ old('school') }}" maxlength="255" required>
-                    <div class="form-text">Например, «Гимназия 1576»</div>
-                    @error('school') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-12 col-sm-6">
-                    <label for="grade" class="form-label">Класс</label>
-                    <select id="grade" class="form-select rounded-3" name="grade" required>
-                        <option value="" @selected(old('grade') === null)>Выберите класс</option>
-                        @for($grade = 1; $grade <= 11; $grade++)
-                            <option value="{{ $grade }}" @selected((string) old('grade') === (string) $grade)>{{ $grade }}</option>
-                        @endfor
-                        <option value="12" @selected((string) old('grade') === '12')>Выпускник</option>
-                    </select>
-                    @error('grade') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-            </div>
-
-            <h5 class="auth-section-title">О себе</h5>
-            <div class="row g-3 mb-3">
-                <div class="col-12">
-                    <label for="interests" class="form-label">Технические интересы</label>
-                    <textarea id="interests" class="form-control rounded-3" name="interests" rows="2" maxlength="10000">{{ old('interests') }}</textarea>
-                    @error('interests') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-12">
-                    <label for="hobbies" class="form-label">Увлечения</label>
-                    <textarea id="hobbies" class="form-control rounded-3" name="hobbies" rows="2" maxlength="10000">{{ old('hobbies') }}</textarea>
-                    @error('hobbies') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-12">
-                    <label for="image" class="form-label">Аватар</label>
-                    <input id="image" type="file" class="form-control rounded-3" name="image">
-                    @error('image') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-            </div>
-
-            <h5 class="auth-section-title">Контакты</h5>
-            <p class="form-text mb-3">Эти данные увидят только другие студенты школы. Заполнять не обязательно.</p>
-            <div class="row g-3">
-                <div class="col-12 col-sm-6">
-                    <label for="telegram" class="form-label">Telegram</label>
-                    <input id="telegram" type="text" class="form-control rounded-3" name="telegram" value="{{ old('telegram') }}" maxlength="255">
-                    @error('telegram') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-12 col-sm-6">
-                    <label for="git" class="form-label">Git</label>
-                    <input id="git" type="text" class="form-control rounded-3" name="git" value="{{ old('git') }}" maxlength="255">
-                    @error('git') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                </div>
-            </div>
-        </div>
-
-        <div class="px-3 px-md-4 pb-3 pb-md-4">
-            @include('captcha')
-        </div>
-
-        <div class="bg-body-tertiary border-top p-3 p-md-4">
-            <button type="submit" class="btn btn-success rounded-3 fw-medium w-100 py-2">Зарегистрироваться</button>
-        </div>
-    </form>
+    <p class="gc-auth-footer gc-help-text">Уже есть аккаунт? <a href="{{ url('/login') }}">Войти</a></p>
+</form>
 @endsection

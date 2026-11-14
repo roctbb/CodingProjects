@@ -28,6 +28,7 @@ class Kernel extends ConsoleKernel
         Commands\DispatchMissingAchievementTrophies::class,
         Commands\RecoverRoomCharacters::class,
         Commands\RepairGeneratedImagePermissions::class,
+        Commands\CheckPlannerProviders::class,
     ];
 
     /**

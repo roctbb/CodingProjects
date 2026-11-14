@@ -8,10 +8,10 @@
     @endphp
 
     <div class="container-xl px-0">
-        <div class="gc-card gc-page-header mb-3">
+        <div class="gc-page-header mb-3">
             <div class="min-width-0">
                 <a class="assessment-back-link" href="{{ url('/insider/market') }}"><i class="fas fa-chevron-left"></i> В магазин</a>
-                <h2 class="mb-1">Массовое начисление GC</h2>
+                <h1 class="mb-1">Массовое начисление GC</h1>
                 <p class="mb-0 text-muted">Указанная сумма будет начислена каждому выбранному получателю.</p>
             </div>
         </div>

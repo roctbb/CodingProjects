@@ -46,6 +46,8 @@ class MarketCreditTest extends TestCase
             $table->string('name');
             $table->string('state');
         });
+        DB::unprepared('CREATE TABLE course_students (course_id INTEGER, user_id INTEGER)');
+        DB::unprepared('CREATE TABLE course_teachers (course_id INTEGER, user_id INTEGER)');
 
         Notification::fake();
     }
@@ -197,7 +199,8 @@ class MarketCreditTest extends TestCase
                 'digitalGoods' => collect(),
                 'auctions' => collect(),
                 'archive' => collect(),
-                'active_orders' => collect(),
+                'active_orders' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 25),
+                'ordersSearch' => '',
                 'shipped_orders' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 25),
                 'canManageMarket' => $role !== 'student',
             ])->render();

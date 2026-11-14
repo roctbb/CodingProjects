@@ -6,7 +6,7 @@
         $isManager = $isInsider && isset($course) && $course && $user && ($course->teachers->contains($user) || $user->role == 'admin');
     @endphp
 
-    <div class="tab-pane fade show active markdown step-reading-card" id="theory" role="tabpanel" aria-labelledby="v-theory-tab">
+    <div class="tab-pane fade show active markdown step-reading-card" id="theory" role="tabpanel" aria-labelledby="theory-tab">
 
         @if ($step->video_url)
             <div class="ratio ratio-16x9 step-reading-video">
@@ -34,18 +34,29 @@
                 </div>
             </div>
 
-	        @endif
+        @endif
 
-	        @if (!$hasTheoryContent && !$hasStepTasks)
-	            <div class="gc-empty-state step-empty-state">
-	                <div class="gc-empty-icon">
-	                    <i class="{{ $isManager ? 'fas fa-file-alt' : 'fas fa-hourglass-half' }}"></i>
-	                </div>
-	                <h5>{{ $isManager ? 'Урок пока пуст' : 'Материалы урока ещё готовятся' }}</h5>
-	                <p class="mx-auto mb-0">
-	                    {{ $isManager ? 'Добавьте теорию или задачу, чтобы урок выглядел завершённым для учеников.' : 'Когда преподаватель откроет материалы, они появятся на этой странице.' }}
-	                </p>
-	            </div>
-	        @endif
-	    </div>
+        @if (!$hasTheoryContent && !$hasStepTasks)
+            <div class="gc-empty-state step-empty-state">
+                <div class="gc-empty-icon">
+                    <i class="{{ $isManager ? 'fas fa-file-alt' : 'fas fa-hourglass-half' }}"></i>
+                </div>
+                <h5>{{ $isManager ? 'Урок пока пуст' : 'Материалы урока ещё готовятся' }}</h5>
+                <p class="mx-auto mb-0">
+                    {{ $isManager ? 'Добавьте теорию или задачу, чтобы урок выглядел завершённым для учеников.' : 'Когда преподаватель откроет материалы, они появятся на этой странице.' }}
+                </p>
+            </div>
+        @endif
+        @if($hasTheoryContent && $hasStepTasks && !$isManager && !$quizer)
+            @php
+                $practiceTask = $isInsider
+                    ? $tasks->first(fn ($task) => !$task->is_star && !$task->isFullDone($user->id)) ?? $tasks->first()
+                    : $tasks->first();
+            @endphp
+            <div class="gc-reading-practice" data-reading-practice>
+                <div><strong>Попробуйте на практике</strong><span class="gc-help-text">{{ $practiceTask->name }}</span></div>
+                <button type="button" class="btn btn-primary btn-sm" data-workbook-tab-target="#task{{ $practiceTask->id }}">К задаче</button>
+            </div>
+        @endif
+    </div>
 @endif

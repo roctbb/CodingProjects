@@ -51,7 +51,7 @@ class AiConfigurationTest extends TestCase
             'AI_ACHIEVEMENT_IMAGE_PROVIDER' => '',
         ]);
         $this->assertSame('openai', $config['provider']);
-        $this->assertSame(['key' => 'direct-key', 'endpoint' => 'https://direct.example/v1/responses', 'proxy' => 'socks5h://proxy.example:1080',
+        $this->assertSame(['key' => 'direct-key', 'base_url' => null, 'endpoint' => 'https://direct.example/v1/responses', 'proxy' => 'socks5h://proxy.example:1080',
             'image_api' => 'responses', 'images_url' => null], $config['providers']['openai']);
         $this->assertSame('gateway-key', $config['providers']['gateway']['key']);
         $this->assertSame('default-model', $config['defaults']['image']['model']);

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 
 class AiSettings
 {
-    public const PROVIDERS = ['gateway' => 'Собственный шлюз', 'openai' => 'OpenAI / совместимый API'];
+    public const PROVIDERS = ['gateway' => 'Встроенный шлюз', 'openai' => 'OpenAI-совместимый API'];
     public const COMMANDS = [
         'text_improvement' => 'Исправление опечаток и стиля',
         'task_summary' => 'Пересказ решений',
@@ -37,7 +37,13 @@ class AiSettings
             ]);
             $record = AiSetting::lockForUpdate()->findOrFail(1);
             $stored = $record->settings;
-            foreach (array_keys(self::PROVIDERS) as $provider) {
+            $settings = array_replace_recursive($stored, $settings);
+            if (!empty($settings['shared_models'])) {
+                foreach (array_keys(self::COMMANDS) as $command) {
+                    $settings['commands'][$command] = ['provider' => null, 'model' => null, 'timeout' => null];
+                }
+            }
+            foreach (array_keys($secrets) as $provider) {
                 foreach (['key', 'proxy'] as $field) {
                     $path = 'providers.' . $provider . '.' . $field;
                     $input = $secrets[$provider][$field];
@@ -53,7 +59,9 @@ class AiSettings
                                 Arr::set($settings, $path, Arr::get($stored, $path));
                             }
                             break;
-                        // "inherit" leaves the field absent, so .env supplies it.
+                        case 'inherit':
+                            Arr::forget($settings, $path);
+                            break;
                     }
                 }
             }
@@ -79,6 +87,8 @@ class AiSettings
             }
         }
 
-        return ['settings' => $settings, 'configured' => $configured];
+        $hasCommandOverrides = empty($settings['shared_models']) && collect($settings['commands'])
+            ->contains(fn ($command) => filled($command['model'] ?? null) || filled($command['provider'] ?? null));
+        return ['settings' => $settings, 'configured' => $configured, 'hasCommandOverrides' => $hasCommandOverrides];
     }
 }

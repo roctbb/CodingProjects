@@ -24,6 +24,7 @@ class AiSettingsController extends Controller
     {
         $data = $request->validated();
         foreach (['defaults', 'commands'] as $group) {
+            if (!isset($data['settings'][$group])) continue;
             foreach ($data['settings'][$group] as &$item) {
                 $item['timeout'] = isset($item['timeout']) ? (int) $item['timeout'] : null;
             }

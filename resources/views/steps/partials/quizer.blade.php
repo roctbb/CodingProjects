@@ -1,6 +1,10 @@
 @if (\Request::is('insider/*') && $quizer)
     @foreach ($tasks as $key => $task)
         @php
+            $isInsider = true;
+            $isManager = $course->teachers->contains($user) || $user->role === 'admin';
+            $deadline = $task->getDeadline($course->id);
+            $blocked = $task->isBlocked($user->id, $course->id);
             $latestUserSolution = Auth::check() ? $task->latestSolutionForUser(Auth::id()) : null;
             $hasUserSolution = $latestUserSolution !== null;
             $taskType = $task->is_code ? 'code' : ($task->is_quiz ? 'quiz' : 'text');
@@ -15,63 +19,16 @@
             }
             $taskScoreBadgeClass = $hasUserSolution ? $latestUserSolution->scoreBadgeClass('bg-body') : 'bg-body';
         @endphp
-        <div class="gc-card step-task-card step-task-card--{{$taskType}} @if ($task->is_star) is-optional @endif @if ($hasUserSolution) is-submitted @endif overflow-hidden mb-3">
-            <div class="step-task-card__header gc-section-header">
-                <div class="min-width-0">
-                    <div class="d-flex align-items-center flex-wrap gap-2">
-                        <span class="step-task-type step-task-type--{{$taskType}}">
-                            <i class="{{$taskTypeIcon}}"></i>{{$taskTypeLabel}}
-                        </span>
-                        <h4 class="step-task-card__title fw-medium mb-0">{{$task->name}}</h4>
-                        <span class="badge rounded-pill bg-body-tertiary">{{$task->max_mark}} XP</span>
-                        @if($earnedAchievementId)
-                            <a class="badge rounded-pill step-task-achievement-badge"
-                               href="{{ url('/insider/profile/'.$user->id.'#achievement-'.$earnedAchievementId) }}"
-                               title="Достижение получено">
-                                <i class="fas fa-trophy"></i>Достижение
-                            </a>
-                        @endif
-                        @if ($task->price > 0)
-                            <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle">
-                                <i class="fas fa-coins me-1"></i>{{$task->price}}
-                            </span>
-                        @endif
-                    </div>
-                </div>
-
-                @if ($course->teachers->contains($user) || $user->role=='admin')
-                    <div class="step-task-actions d-flex flex-wrap justify-content-lg-end gap-1">
-                        <a class="btn btn-outline-danger btn-sm rounded-3"
-                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}"
-                           title="Удалить задачу"
-                           data-confirm="Вы уверены?"><i class="fas fa-xmark"></i></a>
-                        <a class="btn btn-outline-secondary btn-sm rounded-3"
-                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/edit')}}"
-                           title="Редактировать задачу"><i class="fas fa-pen"></i></a>
-                        <a class="btn btn-outline-secondary btn-sm rounded-3"
-                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/phantom')}}"
-                           title="Фантомное решение"
-                           data-confirm="Добавить пустое фантомное решение для всех студентов?"><i class="fas fa-wand-magic-sparkles"></i></a>
-                        <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть вправо"
-                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/right')}}"><i class="fas fa-arrow-right"></i></a>
-                        <a class="btn btn-outline-secondary btn-sm rounded-3" title="Сдвинуть влево"
-                           href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/left')}}"><i class="fas fa-arrow-left"></i></a>
-                        @if ($step->previousStep() != null)
-                            <a class="btn btn-outline-secondary btn-sm rounded-3" title="Перенести выше"
-                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/up')}}"><i class="fas fa-arrow-up"></i></a>
-                        @endif
-                        @if ($step->nextStep() != null)
-                            <a class="btn btn-outline-secondary btn-sm rounded-3" title="Перенести ниже"
-                               href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/down')}}"><i class="fas fa-arrow-down"></i></a>
-                        @endif
-                    </div>
-                @endif
-            </div>
+        <div class="gc-section step-task-card step-task-card--{{$taskType}} @if ($task->is_star) is-optional @endif @if ($hasUserSolution) is-submitted @endif overflow-hidden mb-3">
+            @include('steps.partials.task_header')
 
             <div class="markdown step-task-card__body">
                 {!! parsedown_math($task->text) !!}
 
-                @if ($task->is_quiz)
+                @if($blocked)
+                    <p class="gc-help-note text-danger"><i class="fas fa-lock" aria-hidden="true"></i> Задача заблокирована. Новые сдачи запрещены.</p>
+                @endif
+                @if ($task->is_quiz && !$blocked)
                     <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}" method="POST"
                           class="step-quiz-answer-form"
                           data-check-task data-task-id="{{$task->id}}">

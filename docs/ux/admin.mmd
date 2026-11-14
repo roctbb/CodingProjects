@@ -1,0 +1,14 @@
+flowchart TB
+  settings_ai["Настройки ИИ"]
+  settings_store["Цены и акции"]
+  settings_telegram["Настройки Telegram"]
+  room_debug["Редактор комнаты"]
+  market_promotion_picker(["Выбор товаров акции"])
+  settings_ai -->|"Цены товаров"| settings_store
+  settings_ai -->|"Telegram"| settings_telegram
+  settings_store -->|"ИИ"| settings_ai
+  settings_store -->|"Telegram"| settings_telegram
+  settings_telegram -->|"ИИ"| settings_ai
+  settings_telegram -->|"Цены товаров"| settings_store
+  settings_store -->|"Выбрать товары акции"| market_promotion_picker
+  market_promotion_picker -.->|"Применить выбор / отменить"| settings_store

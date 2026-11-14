@@ -1,0 +1,41 @@
+flowchart TB
+  navigation["Общая навигация"]
+  user_menu["Меню пользователя"]
+  course_navigation["Навигация внутри ступени"]
+  feedback["Ошибки и обратная связь"]
+  reward_notices["Уведомления о наградах"]
+  courses["Мои курсы"]
+  pulse["Пульс"]
+  market["Магазин"]
+  community["Сообщество"]
+  profile["Профиль"]
+  reviews["Очередь проверки"]
+  settings_ai["Настройки ИИ"]
+  geekpaste["GeekPaste"]
+  geekexam["GeekExam"]
+  geekbattle["GeekBattle / CodeBattle"]
+  storage["Storage"]
+  arena["Arena"]
+  login["Вход"]
+  course["Страница курса"]
+  step["Ступень"]
+  account_preferences["Аккаунт и уведомления"]
+  navigation -->|"Открыть раздел"| courses
+  navigation -->|"Открыть раздел"| pulse
+  navigation -->|"Открыть раздел"| market
+  navigation -->|"Открыть раздел"| community
+  navigation -->|"Открыть раздел"| profile
+  navigation -->|"Проверка"| reviews
+  navigation -->|"Меню профиля"| user_menu
+  user_menu -->|"Настройки"| settings_ai
+  user_menu -->|"Мой профиль"| profile
+  user_menu -->|"Открыть ресурс"| geekpaste
+  user_menu -->|"Открыть ресурс"| geekexam
+  user_menu -->|"Открыть ресурс"| geekbattle
+  user_menu -->|"Открыть ресурс"| storage
+  user_menu -->|"Открыть ресурс"| arena
+  user_menu -->|"Выход"| login
+  user_menu -->|"Переключить тему"| user_menu
+  course_navigation -->|"К курсу"| course
+  course_navigation -->|"Другая ступень"| step
+  user_menu -->|"Личные настройки"| account_preferences

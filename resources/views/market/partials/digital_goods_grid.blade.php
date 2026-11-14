@@ -1,5 +1,5 @@
 @if($items->count())
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 row-cols-xxl-4 g-3" @isset($gridId) id="{{ $gridId }}" @endisset data-market-grid>
+    <div class="gc-catalog-grid" @isset($gridId) id="{{ $gridId }}" @endisset data-market-grid>
         @foreach($items as $item)
             @php
                 $type = $item['type'] ?? 'learning_avatar_item';
@@ -14,20 +14,18 @@
                     : null;
                 $categoryKey = $isPet
                     ? 'pets'
-                    : ($isLearningAvatarItem ? 'room_items' : ($type === 'custom_title' ? 'titles' : 'frames'));
+                    : ($isLearningAvatarItem ? 'room_items' : ($type === 'custom_title' ? 'titles' : ($type === 'room_character' ? 'services' : 'frames')));
                 $categoryLabel = $isPet
                     ? 'Питомец'
-                    : ($isLearningAvatarItem ? 'Предмет комнаты' : ($type === 'custom_title' ? 'Звание' : 'Рамка профиля'));
-                $categoryClass = $isPet
-                    ? 'bg-primary-subtle text-primary-emphasis border border-primary-subtle'
-                    : ($isLearningAvatarItem ? 'bg-success-subtle text-success-emphasis border border-success-subtle' : 'bg-info-subtle text-info-emphasis border border-info-subtle');
+                    : ($isLearningAvatarItem ? 'Предмет комнаты' : ($type === 'custom_title' ? 'Звание' : ($type === 'room_character' ? 'Услуга' : 'Рамка профиля')));
+                $categoryClass = 'gc-soft-badge';
             @endphp
-            <div class="col" data-market-good data-market-good-category="{{ $categoryKey }}" data-market-good-text="{{ $item['name'] }} {{ $item['description'] }} {{ implode(' ', $item['ability_descriptions']) }} {{ $categoryLabel }}" @if($type === 'custom_avatar_frame') data-avatar-frame-editor data-frame-balance="{{ $user->balance() }}" @endif>
-                <article class="gc-card market-good-card h-100 overflow-hidden d-flex flex-column">
-                    <div class="ratio ratio-4x3 gc-media-frame market-digital-preview">
+            <div class="col" data-market-good data-market-discounted="{{ ($item['discount_percent'] ?? 0) > 0 ? 'true' : 'false' }}" data-market-available="{{ $canBuy ? 'true' : 'false' }}" data-market-good-category="{{ $categoryKey }}" data-market-good-text="{{ $item['name'] }} {{ $item['description'] }} {{ implode(' ', $item['ability_descriptions']) }} {{ $categoryLabel }}" @if($type === 'custom_avatar_frame') data-avatar-frame-editor data-frame-balance="{{ $user->balance() }}" @endif>
+                <article class="gc-card gc-catalog-card gc-catalog-card--{{ $categoryKey }} {{ ($item['discount_percent'] ?? 0) > 0 ? 'gc-catalog-card--promotion' : '' }} h-100 d-flex flex-column">
+                    <div class="gc-catalog-media market-digital-preview">
                         <div class="market-digital-preview__stage">
                             @if ($previewSrc)
-                                <img src="{{ $previewSrc }}" alt="" class="market-digital-preview__asset {{ $isPet ? 'market-digital-preview__asset--pet' : 'market-digital-preview__asset--item' }}">
+                                <img src="{{ $previewSrc }}" loading="lazy" alt="" class="market-digital-preview__asset {{ $isPet ? 'market-digital-preview__asset--pet' : 'market-digital-preview__asset--item' }}">
                             @elseif ($type === 'avatar_frame')
                                 <span class="gc-avatar-frame gc-avatar-frame--{{ $item['frame_key'] }} gc-avatar-frame--size-xl market-digital-preview__frame" aria-hidden="true">
                                     <img src="{{ $avatarPreviewSrc }}" alt="" class="avatar xl">
@@ -40,9 +38,11 @@
                                     <span class="gc-avatar-frame__avatar-effect" aria-hidden="true"></span>
                                     <span class="gc-avatar-frame__effect" aria-hidden="true"></span>
                                 </span>
+                            @elseif($type === 'custom_title')
+                                <span class="gc-catalog-title-preview" data-market-title-preview>{{ $user->activeCustomTitle() ?: 'Ваше звание' }}</span>
                             @else
-                                <span class="gc-icon-tile fs-3">
-                                    <i class="{{ $item['icon'] }}"></i>
+                                <span class="gc-catalog-preview-symbol" aria-hidden="true">
+                                    <i class="{{ ($item['icon'] ?? '') ?: 'fas fa-laptop-code' }}"></i>
                                 </span>
                             @endif
                             <span class="badge rounded-pill {{ $categoryClass }} fw-medium market-digital-preview__badge">
@@ -51,27 +51,23 @@
                         </div>
                     </div>
 
-                    <div class="p-3 d-flex flex-column flex-grow-1 market-good-card__body">
-                        <div class="market-good-card__header">
-                            <div class="market-good-card__identity min-width-0">
-                                <div class="market-good-card__meta">
+                    <div class="p-3 d-flex flex-column flex-grow-1 gc-catalog-card__body">
+                        <div class="gc-catalog-card__header">
+                            <div class="gc-catalog-card__identity min-width-0">
+                                @if (($item['active'] ?? false) || ($isLearningAvatarItem && $item['owned']))
+                                <div class="gc-catalog-card__meta">
                                     @if ($item['active'] ?? false)
-                                        <span class="badge rounded-pill market-good-status bg-primary-subtle text-primary-emphasis border border-primary-subtle fw-medium">Активно</span>
+                                        <span class="gc-soft-badge">Активно</span>
                                     @elseif ($isLearningAvatarItem && $item['owned'])
-                                        <span class="badge rounded-pill market-good-status bg-success-subtle text-success-emphasis border border-success-subtle fw-medium">Уже куплено</span>
-                                    @else
-                                        <span class="badge rounded-pill market-good-status bg-body-tertiary">
-                                            @if ($type === 'custom_avatar_frame')
-                                                от {{ $item['static_cost'] ?? $item['cost'] }} GC
-                                            @else
-                                                {{ $item['cost'] }} GC
-                                            @endif
-                                        </span>
+                                        <span class="badge rounded-pill  gc-soft-badge fw-medium">Уже куплено</span>
                                     @endif
                                 </div>
+                                @endif
 
-                                <h6 class="market-good-title fw-medium lh-sm mb-0">{{ $item['name'] }}</h6>
-                                <p class="market-good-description text-muted small lh-sm mb-0">{{ $item['description'] }}</p>
+                                <h6 class="gc-catalog-title lh-sm mb-0">{{ $item['name'] }}</h6>
+                                <x-gc-promotion-badge :percent="$item['discount_percent'] ?? 0" :name="$item['promotion_name'] ?? null" />
+                                <x-gc-expandable-text :text="$type === 'custom_avatar_frame' ? 'Выберите цвета, форму и эффекты. Статичная или живая рамка на '.$user->customAvatarFrameDurationDays().' дней.' : $item['description']" class="gc-catalog-description text-muted small" />
+                                @if($isLearningAvatarItem)<p class="gc-meta-label mb-0">Остаётся в коллекции навсегда</p>@endif
                                 @if(!empty($item['active_until']))
                                     <p class="text-muted small lh-sm mb-0">Активно до {{ $item['active_until']->format('d.m.Y') }}</p>
                                 @endif
@@ -79,7 +75,7 @@
                         </div>
 
                         @if (!empty($item['ability_descriptions']))
-                            <div class="market-auction-panel mb-3">
+                            <div class="gc-catalog-benefits">
                                 <div class="market-auction-leaders__title">
                                     <span>Способности</span>
                                     <span>{{ count($item['ability_descriptions']) }}</span>
@@ -87,7 +83,7 @@
                                 <ul class="list-unstyled mb-0 d-grid gap-2 small">
                                     @foreach($item['ability_descriptions'] as $abilityDescription)
                                         <li class="d-flex gap-2">
-                                            <i class="fas fa-bolt text-warning mt-1"></i>
+                                            <i class="fas fa-bolt gc-currency-icon mt-1" aria-hidden="true"></i>
                                             <span>{{ $abilityDescription }}</span>
                                         </li>
                                     @endforeach
@@ -100,53 +96,59 @@
                         @if ($type === 'custom_title')
                             <form method="POST" action="{{ url('/insider/profile/'.$user->id.'/custom-title') }}" class="d-grid gap-2">
                                 {{ csrf_field() }}
+                                <input type="hidden" name="expected_cost" value="{{ $type === 'custom_avatar_frame' ? (!empty($frameConfig['animated']) ? $item['animated_cost'] : $item['static_cost']) : $item['cost'] }}" @if($type === 'custom_avatar_frame') data-frame-expected-cost @endif>
                                 <input type="hidden" name="return_to" value="market">
                                 <input type="text"
-                                       name="custom_title"
+                                       name="custom_title" data-market-title-input
                                        maxlength="32"
                                        class="form-control rounded-3"
+                                       aria-label="Текст звания"
                                        value="{{ old('custom_title', $user->activeCustomTitle() ?: '') }}"
                                        placeholder="Например: Мастер циклов"
                                        @if(!$canBuy) disabled @endif>
-                                <button class="btn btn-success gc-action-button gc-action-button--block" type="submit" data-confirm="Купить кастомное звание на {{ $user->customTitleDurationDays() }} дней за {{ $item['cost'] }} GC?" @if(!$canBuy) disabled @endif>
-                                    Купить за {{ $item['cost'] }} <i class="fas fa-coins"></i>
-                                </button>
+                                <x-gc-purchase-footer :price="$item['cost']" :original-price="$item['base_cost'] ?? null">
+                                    <button class="btn btn-primary btn-sm" type="submit" data-confirm="Купить кастомное звание на {{ $user->customTitleDurationDays() }} дней за {{ $item['cost'] }} GC?" @if(!$canBuy) disabled @endif>{{ $canBuy ? 'Купить' : 'Нужно ещё '.max(0, $item['cost'] - $user->balance()).' GC' }}</button>
+                                </x-gc-purchase-footer>
                             </form>
                         @elseif ($type === 'avatar_frame')
                             <form method="POST" action="{{ url('/insider/profile/'.$user->id.'/avatar-frame') }}">
                                 {{ csrf_field() }}
+                                <input type="hidden" name="expected_cost" value="{{ $type === 'custom_avatar_frame' ? (!empty($frameConfig['animated']) ? $item['animated_cost'] : $item['static_cost']) : $item['cost'] }}" @if($type === 'custom_avatar_frame') data-frame-expected-cost @endif>
                                 <input type="hidden" name="return_to" value="market">
                                 <input type="hidden" name="avatar_frame" value="{{ $item['frame_key'] }}">
-                                <button class="btn btn-success gc-action-button gc-action-button--block" type="submit" data-confirm="{{ ($item['active'] ?? false) ? 'Продлить' : 'Купить' }} {{ $item['name'] }} за {{ $item['cost'] }} GC?" @if(!$canBuy) disabled @endif>
-                                    {{ ($item['active'] ?? false) ? 'Продлить' : 'Купить' }} за {{ $item['cost'] }} <i class="fas fa-coins"></i>
-                                </button>
+                                <x-gc-purchase-footer :price="$item['cost']" :original-price="$item['base_cost'] ?? null">
+                                    <button class="btn btn-primary btn-sm" type="submit" data-confirm="{{ ($item['active'] ?? false) ? 'Продлить' : 'Купить' }} {{ $item['name'] }} за {{ $item['cost'] }} GC?" @if(!$canBuy) disabled @endif>{{ $canBuy ? (($item['active'] ?? false) ? 'Продлить' : 'Купить') : 'Нужно ещё '.max(0, $item['cost'] - $user->balance()).' GC' }}</button>
+                                </x-gc-purchase-footer>
                             </form>
                         @elseif ($type === 'custom_avatar_frame')
-                            <button class="btn gc-action-button gc-action-button--block" type="button" data-market-frame-modal-open>
-                                Настроить
-                            </button>
+                            <x-gc-purchase-footer :price="$item['cost']" :original-price="$item['base_cost'] ?? null" :from="true">
+                                <button class="btn btn-outline-secondary btn-sm" type="button" data-market-frame-modal-open>Настроить</button>
+                            </x-gc-purchase-footer>
+                        @elseif ($type === 'room_character')
+                            <x-gc-purchase-footer :price="$item['cost']" :original-price="$item['base_cost'] ?? null">
+                                <a class="btn btn-primary btn-sm" href="{{ url('/insider/profile/'.$user->id.'#room-settings') }}">Настроить</a>
+                            </x-gc-purchase-footer>
                         @elseif ($isLearningAvatarItem && $item['owned'])
-                            <a href="{{ url('/insider/profile#learning-avatar') }}" class="btn gc-action-button gc-action-button--block">
-                                Выбрать в комнате
-                            </a>
+                            <x-gc-purchase-footer>
+                                <a href="{{ url('/insider/profile/'.$user->id.'#room-settings') }}" class="btn btn-outline-secondary btn-sm">Выбрать в комнате</a>
+                            </x-gc-purchase-footer>
                         @elseif ($isLearningAvatarItem && $canBuy)
                             <form method="POST" action="{{ url('/insider/market/digital/'.$item['key'].'/buy') }}">
                                 {{ csrf_field() }}
-                                <button class="btn btn-success gc-action-button gc-action-button--block" type="submit" data-confirm="Купить цифровой товар «{{ $item['name'] }}» за {{ $item['cost'] }} GC?">
-                                    Купить за {{ $item['cost'] }} <i class="fas fa-coins"></i>
-                                </button>
+                                <input type="hidden" name="expected_cost" value="{{ $type === 'custom_avatar_frame' ? (!empty($frameConfig['animated']) ? $item['animated_cost'] : $item['static_cost']) : $item['cost'] }}" @if($type === 'custom_avatar_frame') data-frame-expected-cost @endif>
+                                <x-gc-purchase-footer :price="$item['cost']" :original-price="$item['base_cost'] ?? null">
+                                    <button class="btn btn-primary btn-sm" type="submit" data-confirm="Купить цифровой товар «{{ $item['name'] }}» за {{ $item['cost'] }} GC?">Купить</button>
+                                </x-gc-purchase-footer>
                             </form>
                         @else
-                            <button class="btn gc-action-button gc-action-button--block market-good-action-disabled" disabled>
-                                Недоступно · {{ $item['cost'] }} <i class="fas fa-coins"></i>
-                            </button>
+                            <x-gc-purchase-footer :price="$item['cost']" :original-price="$item['base_cost'] ?? null">
+                                <button class="btn btn-outline-secondary btn-sm" disabled>Нужно ещё {{ max(0, $item['cost'] - $user->balance()) }} GC</button>
+                            </x-gc-purchase-footer>
                         @endif
                     </div>
                 </article>
                 @if ($type === 'custom_avatar_frame')
-                    <div class="market-digital-frame-modal" data-market-frame-modal hidden>
-                        <div class="market-digital-frame-modal__backdrop" data-market-frame-modal-close></div>
-                        <div class="market-digital-frame-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="market-frame-modal-title-{{ $item['key'] }}">
+                    <dialog class="gc-dialog market-digital-frame-modal" data-market-frame-modal aria-labelledby="market-frame-modal-title-{{ $item['key'] }}">
                             <div class="market-digital-frame-modal__header">
                                 <div>
                                     <p class="gc-eyebrow mb-1">Рамка профиля</p>
@@ -159,6 +161,7 @@
 
                             <form method="POST" action="{{ url('/insider/profile/'.$user->id.'/avatar-frame') }}" class="market-digital-frame-modal__body">
                                 {{ csrf_field() }}
+                                <input type="hidden" name="expected_cost" value="{{ $type === 'custom_avatar_frame' ? (!empty($frameConfig['animated']) ? $item['animated_cost'] : $item['static_cost']) : $item['cost'] }}" @if($type === 'custom_avatar_frame') data-frame-expected-cost @endif>
                                 <input type="hidden" name="return_to" value="market">
                                 <input type="hidden" name="avatar_frame" value="custom">
                                 <input type="hidden" name="avatar_frame_config[animated]" value="0">
@@ -181,35 +184,40 @@
                                 <div class="market-digital-frame-modal__controls">
                                     <div class="row g-2">
                                         <div class="col-6">
-                                            <select class="form-select form-select-sm rounded-3" name="avatar_frame_config[type]">
+                                            <label class="form-label small" for="market-frame-type">Тип линии</label>
+                                            <select id="market-frame-type" class="form-select form-select-sm rounded-3" name="avatar_frame_config[type]">
                                                 @foreach(['linear' => 'Линия', 'conic' => 'Круг', 'radial' => 'Сияние'] as $value => $label)
                                                     <option value="{{ $value }}" @selected(($frameConfig['type'] ?? 'linear') === $value)>{{ $label }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
                                         <div class="col-6">
-                                            <select class="form-select form-select-sm rounded-3" name="avatar_frame_config[shape]">
+                                            <label class="form-label small" for="market-frame-shape">Форма рамки</label>
+                                            <select id="market-frame-shape" class="form-select form-select-sm rounded-3" name="avatar_frame_config[shape]">
                                                 @foreach(['circle' => 'Круг', 'squircle' => 'Сквиркл', 'badge' => 'Жетон', 'soft' => 'Мягкая'] as $value => $label)
                                                     <option value="{{ $value }}" @selected(($frameConfig['shape'] ?? 'circle') === $value)>{{ $label }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
                                         <div class="col-6">
-                                            <select class="form-select form-select-sm rounded-3" name="avatar_frame_config[motion]">
+                                            <label class="form-label small" for="market-frame-motion">Анимация рамки</label>
+                                            <select id="market-frame-motion" class="form-select form-select-sm rounded-3" name="avatar_frame_config[motion]">
                                                 @foreach(['spin' => 'Вращение', 'pulse' => 'Пульс', 'sweep' => 'Блик', 'still' => 'Статика'] as $value => $label)
                                                     <option value="{{ $value }}" @selected(($frameConfig['motion'] ?? 'spin') === $value)>{{ $label }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
                                         <div class="col-6">
-                                            <select class="form-select form-select-sm rounded-3" name="avatar_frame_config[avatar_effect]">
+                                            <label class="form-label small" for="market-frame-avatar_effect">Эффект на аватарке</label>
+                                            <select id="market-frame-avatar_effect" class="form-select form-select-sm rounded-3" name="avatar_frame_config[avatar_effect]">
                                                 @foreach(['sheen' => 'Луч', 'scanner' => 'Сканер', 'spark' => 'Искра', 'none' => 'Нет'] as $value => $label)
                                                     <option value="{{ $value }}" @selected(($frameConfig['avatar_effect'] ?? 'sheen') === $value)>{{ $label }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
                                         <div class="col-6">
-                                            <select class="form-select form-select-sm rounded-3" name="avatar_frame_config[pattern]">
+                                            <label class="form-label small" for="market-frame-pattern">Узор рамки</label>
+                                            <select id="market-frame-pattern" class="form-select form-select-sm rounded-3" name="avatar_frame_config[pattern]">
                                                 @foreach(['sparkles' => 'Искры', 'pixels' => 'Пиксели', 'stripes' => 'Штрихи', 'none' => 'Без узора'] as $value => $label)
                                                     <option value="{{ $value }}" @selected(($frameConfig['pattern'] ?? 'sparkles') === $value)>{{ $label }}</option>
                                                 @endforeach
@@ -254,20 +262,21 @@
                                     </div>
                                     <div class="d-flex gap-2">
                                         @foreach(($frameConfig['colors'] ?? ['#22d3ee', '#8b5cf6', '#f97316', '#22c55e']) as $color)
-                                            <input type="color" class="form-control form-control-color rounded-3 flex-fill" name="avatar_frame_config[colors][]" value="{{ $color }}" aria-label="Цвет рамки">
+                                            <input type="color" class="form-control form-control-color rounded-3 flex-fill" name="avatar_frame_config[colors][]" value="{{ $color }}" aria-label="Цвет рамки {{ $loop->iteration }}">
                                         @endforeach
                                     </div>
                                     <label class="form-check small mb-0">
                                         <input type="checkbox" class="form-check-input" name="avatar_frame_config[animated]" value="1" @checked($frameConfig['animated'] ?? true)>
                                         Живая рамка
                                     </label>
+                                    <p class="gc-help-text mb-0" data-frame-funds-note hidden></p>
                                 </div>
 
                                 <div class="market-digital-frame-modal__footer">
                                     <button class="btn btn-light gc-action-button" type="button" data-market-frame-modal-close>
                                         Отмена
                                     </button>
-                                    <button class="btn btn-success gc-action-button" type="submit"
+                                    <button class="btn btn-primary gc-action-button" type="submit"
                                             data-frame-submit
                                             data-frame-static-cost="{{ $item['static_cost'] ?? $item['cost'] }}"
                                             data-frame-animated-cost="{{ $item['animated_cost'] ?? $item['cost'] }}"
@@ -278,8 +287,7 @@
                                     </button>
                                 </div>
                             </form>
-                        </div>
-                    </div>
+                    </dialog>
                 @endif
             </div>
         @endforeach
