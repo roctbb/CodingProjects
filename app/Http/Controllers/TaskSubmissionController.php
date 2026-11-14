@@ -167,12 +167,26 @@ class TaskSubmissionController extends Controller
         return $artifacts->download($source['artifact'],$source['original_name']??$source['name']);
     }
 
+    public function legacyExports(Request $request)
+    {
+        abort_unless($request->user()->role==='admin',403);
+        return $this->json(['items'=>DB::table('code_legacy_exports')->orderByDesc('created_at')->get()->map(fn($row)=>[
+            'id'=>$row->id,'manifest'=>json_decode($row->manifest,true),'files'=>array_keys(json_decode($row->files,true)),
+            'created_at'=>$row->created_at])->all()]);
+    }
+
     public function exportFile(Request $request,string $export,string $file,Artifacts $artifacts)
     {
         abort_unless($request->user()->role==='admin',403);
         $row=DB::table('code_legacy_exports')->find($export);abort_unless($row,404);
         $artifact=json_decode($row->files,true)[$file]??null;abort_unless($artifact,404);
         return $artifacts->download($artifact,$file);
+    }
+
+    public function archiveArtifact(Request $request,string $artifact,Artifacts $artifacts)
+    {
+        abort_unless($request->user()->role==='admin',403);
+        return $artifacts->download(['blob_id'=>$artifact],$artifact);
     }
 
     public function legacySettings(Request $request, int $course, int $task, Access $access)
@@ -220,6 +234,7 @@ class TaskSubmissionController extends Controller
     public function fixture(Request $request, int $course, int $task, string $artifact, Access $access, Artifacts $artifacts)
     {
         $access->task($request->user(), $course, $task, true);
+        abort_if($request->user()->role!=='admin' && app(\App\Services\CodeChecking\LegacySuites::class)->isBundleArtifact($artifact),403);
         $ids = [];
         $visit = function ($value) use (&$visit, &$ids) {
             if (!is_array($value)) return;

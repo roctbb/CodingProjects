@@ -139,7 +139,7 @@ class Submissions
             'created_at' => $submission->created_at?->toIso8601String(), 'execution_id' => $run->id,
             'state' => $run->state, 'progress' => $run->progress, 'points' => $run->points, 'comment' => $run->comment,
             'awarded_xp' => $awardedXp,
-            'report' => $report ? app(Reports::class)->view($report, $viewer) : (isset($run->legacy_report['suite_diagnostics'])?null:$run->legacy_report),
+            'report' => $report ? app(Reports::class)->view($report, $viewer) : (isset($run->legacy_report['suite_diagnostics'])?null:app(HistoricalReport::class)->view($run->legacy_report)),
             'checker_diagnostics' => $this->access->teacher($viewer,(int)$submission->course_id) ? ($run->legacy_report['suite_diagnostics']??null) : null,
             'teacher_viewed'=>$submission->teacher_viewed, 'is_public'=>$submission->is_public,
             'review_request'=>app(SubmissionReview::class)->status($submission),

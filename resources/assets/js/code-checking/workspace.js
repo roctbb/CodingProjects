@@ -159,6 +159,46 @@ export async function workspace(root) {
             parent.append(detail);
         });
     }
+    function currentTests() {
+        const panel = node('details',{},node('summary',{},'Текущие тесты задачи (для преподавателя)'));
+        let loaded = false;
+        panel.addEventListener('toggle',safe(async () => {
+            if (!panel.open || loaded) return;
+            loaded = true;
+            try {
+                const value = await request(base+'/checker/private');
+                const settings = value.config;
+                panel.append(node('p',{class:'text-muted small'},'Это текущий набор тестов задачи. Он сохранён отдельно от исторических результатов и мог измениться после старой проверки.'));
+                if (settings.check_type !== 'tests' || settings.test_mode !== 'io') {
+                    panel.append(node('p',{},settings.test_mode === 'suite' ? 'Используется специальный проверяющий модуль. Его результаты доступны в отчёте проверки.' : 'Для задачи не настроены тесты ввода и вывода.')); return;
+                }
+                for (const [index,test] of settings.test_config.tests.entries()) {
+                    const detail = node('details',{},node('summary',{},`Тест ${index+1} · ${test.is_public ? 'публичный' : 'скрытый'}`));
+                    let previewed = false;
+                    detail.addEventListener('toggle',safe(async () => {
+                        if (!detail.open || previewed) return;
+                        previewed = true;
+                        for (const [key,label] of Object.entries({input:'Ввод',output:'Ожидаемый ответ'})) {
+                            const data = test[key], field = node('div',{},node('strong',{},label));
+                            detail.append(field);
+                            if (data.type === 'inline') field.append(artifact(data));
+                            else {
+                                const url = base+'/checker/fixtures/'+data.blob_id;
+                                field.append(download(url,`Скачать (${data.bytes} байт)`));
+                                if (data.bytes <= 65536) {
+                                    const response = await fetch(url,{credentials:'same-origin'});
+                                    if (!response.ok) throw new Error('Не удалось загрузить тест');
+                                    field.append(node('pre',{class:'gc-execution-output'},await response.text() || '(пусто)'));
+                                }
+                            }
+                        }
+                    }));
+                    panel.append(detail);
+                }
+            } catch (e) {loaded = false; throw e;}
+        }));
+        return panel;
+    }
     async function show(id) {
         const selected = ++generation;
         stop();
@@ -209,6 +249,8 @@ export async function workspace(root) {
         if (record.repository?.commit) body.append(node('p',{},`GitHub · ${record.repository.commit}`, ' ',download(`/insider/code-submissions/${id}/repository/archive`,'Скачать репозиторий')));
         if (record.comment && !record.report?.legacy) body.append(node('pre',{class:'gc-execution-output'},record.comment));
         renderReport(record.report,body);
+        if (teacher && record.checker_diagnostics) body.append(node('details',{},node('summary',{},'Диагностика проверяющего модуля'),node('pre',{class:'gc-execution-output'},JSON.stringify(record.checker_diagnostics,null,2))));
+        if (teacher && record.legacy) body.append(currentTests());
         if (record.legacy) {
             body.append(node('p',{},download(record.legacy.source_url,'Скачать исходную запись GeekPaste')));
             if (record.legacy.requires_conversion || record.legacy.warnings.length) body.append(node('p',{class:'alert alert-warning'},'Историческая работа. Часть материалов может требовать восстановления или преобразования; сохранена исходная запись.'));

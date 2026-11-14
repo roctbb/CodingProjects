@@ -36,6 +36,16 @@ class Artifacts
         return $this->record($digest, strlen($text));
     }
 
+    /** Explicit DB storage for archived code/tests, including binary test fixtures. */
+    public function putDatabase(string $bytes): array
+    {
+        abort_unless(Schema::hasTable('code_artifact_contents'),503,'Database artifact storage is required.');
+        $digest=hash('sha256',$bytes);
+        $encoded=!mb_check_encoding($bytes,'UTF-8') || str_contains($bytes,"\0");
+        DB::table('code_artifact_contents')->insertOrIgnore(['id'=>$digest,'content'=>$encoded?base64_encode($bytes):$bytes,'encoding'=>$encoded?'base64':'utf8']);
+        return $this->record($digest,strlen($bytes));
+    }
+
     public function putFile(string $path, bool $original = true): array
     {
         if (Schema::hasTable('code_artifact_contents')) {

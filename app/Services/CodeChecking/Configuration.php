@@ -119,6 +119,7 @@ class Configuration
                     $value = $legacyField ? $legacyField($value) : $this->artifacts->descriptor($value, true);
                 }
                 abort_if($value['truncated'], 422, 'Test input and expected output must be complete.');
+                if (!$legacyField && isset($value['blob_id'])) abort_if(app(LegacySuites::class)->isBundleArtifact($value['blob_id']),422,'Internal checker packages cannot be used as test data.');
                 $row[$key] = $value;
                 $total += $value['bytes'];
             }

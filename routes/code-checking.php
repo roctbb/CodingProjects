@@ -10,7 +10,9 @@ Route::middleware(['web', 'auth', 'verified'])->prefix('insider')->where([
     'run' => '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}',
     'test' => '[a-f0-9]{64}',
 ])->group(function () {
-    Route::get('/settings/code-executor/legacy-exports/{export}/files/{file}', [TaskSubmissionController::class, 'exportFile'])->where(['export'=>'[a-f0-9]{64}','file'=>'[a-z.-]+']);
+    Route::get('/settings/code-executor/legacy-exports', [TaskSubmissionController::class, 'legacyExports']);
+    Route::get('/settings/code-executor/legacy-artifacts/{artifact}', [TaskSubmissionController::class, 'archiveArtifact'])->where('artifact','[a-f0-9]{64}');
+    Route::get('/settings/code-executor/legacy-exports/{export}/files/{file}', [TaskSubmissionController::class, 'exportFile'])->where(['export'=>'[a-f0-9]{64}','file'=>'[a-z0-9.-]+']);
     Route::get('/settings/code-executor/status', [CodeCheckingController::class, 'executorStatus']);
     Route::get('/settings/code-executor/login', [CodeCheckingController::class, 'executorLogin'])->name('code-executor.login');
     $base = '/courses/{course}/tasks/{task}';

@@ -30,6 +30,7 @@ class Kernel extends ConsoleKernel
         Commands\CheckPlannerProviders::class,
         Commands\RecoverCodeExecutions::class,
         Commands\ImportGeekPaste::class,
+        Commands\ArchiveGeekPaste::class,
         Commands\MoveCodeOriginals::class,
         Commands\DispatchDeadlineNotifications::class,
     ];
