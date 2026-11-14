@@ -9,11 +9,12 @@ class TelegramBindService
 {
     public function handleUpdate(array $update)
     {
+        if (app(CourseTelegram::class)->handle($update)) return true;
         $message = $update['message'] ?? $update['edited_message'] ?? null;
         $text = trim($message['text'] ?? '');
         $chat = $message['chat'] ?? null;
 
-        if (!$chat || !preg_match('/^\/start\s+bind_([A-Za-z0-9]+)$/', $text, $matches)) {
+        if (!$chat || ($chat['type'] ?? 'private') !== 'private' || (int) ($chat['id'] ?? 0) <= 0 || !preg_match('/^\/start\s+bind_([A-Za-z0-9]+)$/', $text, $matches)) {
             return false;
         }
 
@@ -24,6 +25,7 @@ class TelegramBindService
 
     public function bind($token, array $chat, array $from = [])
     {
+        if (($chat['type'] ?? 'private') !== 'private' || (int) ($chat['id'] ?? 0) <= 0) return null;
         $telegram = app(TelegramBot::class);
         $chatId = $chat['id'] ?? null;
 
@@ -37,6 +39,7 @@ class TelegramBindService
         }
 
         $user->telegram_chat_id = (string) $chatId;
+        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'telegram_user_id')) $user->telegram_user_id = (string) ($from['id'] ?? $chatId);
         $user->telegram_link_token = null;
         $user->telegram_link_token_expires_at = null;
 
@@ -46,7 +49,7 @@ class TelegramBindService
 
         $user->save();
 
-        $telegram->sendMessage($chatId, 'Готово! Telegram подключён к профилю '.config('app.name').'. Теперь уведомления аукционов будут приходить сюда.');
+        $telegram->sendMessage($chatId, 'Готово! Telegram подключён к профилю '.config('app.name').'. Уведомления будут приходить сюда. Напоминания о сроках можно включить на странице курса.');
 
         return $user;
     }

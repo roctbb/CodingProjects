@@ -122,6 +122,14 @@ Route::prefix('insider')->middleware('verified')->group(function () {
 
     Route::get('/courses/{id}/', 'CoursesController@details');
     Route::get('/courses/{id}/deadlines', 'CoursesController@deadlines')->name('courses.deadlines');
+    Route::get('/courses/{id}/notifications', 'CourseNotificationsController@edit')->name('courses.notifications');
+    Route::post('/courses/{id}/notifications', 'CourseNotificationsController@update');
+    Route::post('/courses/{id}/notifications/link', 'CourseNotificationsController@link');
+    Route::post('/courses/{id}/notifications/chats/{chat}', 'CourseNotificationsController@chat');
+    Route::post('/courses/{id}/notifications/deliveries/{delivery}/retry', 'CourseNotificationsController@retry');
+    Route::post('/courses/{id}/notifications/preference', 'CourseNotificationsController@preference');
+    Route::get('/courses/{course_id}/deadline-policies/{type}/{target}', 'CourseDeadlineController@edit');
+    Route::post('/courses/{course_id}/deadline-policies/{type}/{target}', 'CourseDeadlineController@update');
     Route::get('/courses/{id}/chapter-tasks', 'StudentCourseTasksController@index')->whereNumber('id')->name('courses.chapter-tasks');
     Route::get('/courses/{id}/enroll', 'CoursesController@enroll');
     Route::get('/courses/{id}/report', 'CoursesController@report');

@@ -57,7 +57,7 @@ class CourseWorkspaceNavigationTest extends TestCase
             $xpath = $this->navigation('teacher', true, $active);
             $this->assertSame(1, $xpath->query('//header//div[@data-course-actions]')->length);
             $paths = array_map(fn ($link) => parse_url($link->getAttribute('href'), PHP_URL_PATH), iterator_to_array($xpath->query('//*[@data-course-actions]//a')));
-            $this->assertSame(['/insider/courses/133/edit', '/insider/courses/133/export-md', '/insider/courses/133/blocked'], $paths);
+            $this->assertSame(['/insider/courses/133/edit', '/insider/courses/133/notifications', '/insider/courses/133/export-md', '/insider/courses/133/blocked'], $paths);
         }
         foreach ([['student', false], ['student', true], ['teacher', false]] as [$role, $assigned]) {
             $this->assertSame(0, $this->navigation($role, $assigned)->query('//*[@data-course-actions]')->length);

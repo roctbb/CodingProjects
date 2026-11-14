@@ -4,6 +4,7 @@
     </button>
     <div class="dropdown-menu dropdown-menu-end gc-course-actions__menu">
         <a class="dropdown-item" href="{{ url('/insider/courses/'.$course->id.'/edit') }}"><i class="fas fa-pen" aria-hidden="true"></i> Изменить курс</a>
+        <a class="dropdown-item" href="{{ route('courses.notifications', $course->id) }}"><i class="fab fa-telegram" aria-hidden="true"></i> Уведомления курса</a>
         <a class="dropdown-item" href="{{ url('/insider/courses/'.$course->id.'/export-md') }}"><i class="fas fa-file-export" aria-hidden="true"></i> Экспорт в MD</a>
         <a class="dropdown-item" href="{{ url('/insider/courses/'.$course->id.'/blocked') }}"><i class="fas fa-ban" aria-hidden="true"></i> Заблокированные задачи</a>
         @if($course->state === 'draft')

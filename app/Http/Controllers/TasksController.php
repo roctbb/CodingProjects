@@ -1123,8 +1123,10 @@ class TasksController extends Controller
 
     public function makeDeadline($course_id, $id, Request $request)
     {
+        $course = Course::findOrFail($course_id);
+        abort_unless($request->user()->role === 'admin' || $course->teachers()->where('users.id', $request->user()->id)->exists(), 403);
         app(\App\Services\CourseDeadlineService::class)->set(
-            Course::findOrFail($course_id), Task::findOrFail($id), $request->deadline ?: null, $request->penalty
+            $course, Task::findOrFail($id), $request->deadline ?: null, $request->penalty
         );
         return back();
     }

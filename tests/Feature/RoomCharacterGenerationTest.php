@@ -320,7 +320,7 @@ class RoomCharacterGenerationTest extends TestCase
 
     public static function providers(): array
     {
-        return [['gateway'], ['openai']];
+        return [['openai']];
     }
 
     #[DataProvider('providers')]

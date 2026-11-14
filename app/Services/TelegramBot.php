@@ -16,7 +16,7 @@ class TelegramBot
     {
         $payload = [
             'timeout' => $timeout,
-            'allowed_updates' => ['message', 'edited_message'],
+            'allowed_updates' => ['message', 'edited_message', 'my_chat_member'],
         ];
         if ($offset !== null) {
             $payload['offset'] = $offset;
@@ -45,8 +45,21 @@ class TelegramBot
 
     private function request(string $method, array $payload, array $settings): ?array
     {
+        $data = $this->requestResult($method, $payload, $settings);
+        return ($data['ok'] ?? false) ? $data : null;
+    }
+
+    public function deliver(string $chatId, string $text, int $threadId = 0): array
+    {
+        $payload = ['chat_id' => $chatId, 'text' => $text, 'disable_web_page_preview' => true];
+        if ($threadId) $payload['message_thread_id'] = $threadId;
+        return $this->requestResult('sendMessage', $payload, $this->settings->all());
+    }
+
+    private function requestResult(string $method, array $payload, array $settings): array
+    {
         if (empty($settings['bot_token'])) {
-            return null;
+            return ['ok' => false, 'error_code' => 401];
         }
         try {
             $response = Http::asJson()->acceptJson()->withoutRedirecting()
@@ -63,11 +76,13 @@ class TelegramBot
                 'status' => $response->status(),
                 'error_code' => is_int($data['error_code'] ?? null) ? $data['error_code'] : null,
             ]);
+            return ['ok' => false, 'error_code' => (int) ($data['error_code'] ?? $response->status()),
+                'retry_after' => (int) ($data['parameters']['retry_after'] ?? 0),
+                'migrate_to_chat_id' => $data['parameters']['migrate_to_chat_id'] ?? null];
         } catch (Throwable $exception) {
             // URLs and exception messages may contain the bot token or proxy password.
             Log::warning('Telegram request failed', ['method' => $method, 'exception' => get_class($exception)]);
+            return ['ok' => false, 'uncertain' => true];
         }
-
-        return null;
     }
 }

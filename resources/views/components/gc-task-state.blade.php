@@ -6,8 +6,9 @@
     $pending = !$blocked && $task->isOnCheck($viewer->id);
     $complete = !$blocked && !$pending && $task->isFullDone($viewer->id);
     $submitted = $task->isSubmitted($viewer->id);
-    $expiration = $compact && !$submitted ? $task->getDeadline($course->id)?->expiration : null;
-    $overdue = $expiration && $expiration->copy()->addDay()->lte(now());
+    $rule = $compact && !$submitted ? $task->getDeadline($course->id) : null;
+    $expiration = $rule?->expiration;
+    $overdue = $expiration && ($rule instanceof \App\Support\DeadlineRule ? $rule->cutoffAt() : $expiration->copy()->addDay())->lte(now());
     $soon = $expiration && $expiration->lt(now()->addDays(3));
     [$label, $icon, $tone] = match (true) {
         $blocked => ['Заблокировано', 'lock', 'danger'],

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 
 class AiSettings
 {
-    public const PROVIDERS = ['gateway' => 'Встроенный шлюз', 'openai' => 'OpenAI-совместимый API'];
+    public const PROVIDERS = ['openai' => 'OpenAI-совместимый API'];
     public const COMMANDS = [
         'text_improvement' => 'Исправление опечаток и стиля',
         'task_summary' => 'Пересказ решений',
@@ -25,7 +25,14 @@ class AiSettings
         // Until the migration is deployed, existing .env configuration remains usable.
         $stored = Schema::hasTable('ai_settings') ? AiSetting::find(1)?->settings : null;
 
-        return array_replace_recursive(config('ai'), $stored ?? []);
+        $settings = array_replace_recursive(config('ai'), $stored ?? []);
+        $settings['legacy_gateway_disabled'] = ($settings['provider'] ?? '') === 'gateway';
+        if ($settings['legacy_gateway_disabled']) $settings['provider'] = 'openai';
+        unset($settings['providers']['gateway']);
+        foreach ($settings['commands'] as &$command) {
+            if (($command['provider'] ?? null) === 'gateway') $command['provider'] = null;
+        }
+        return $settings;
     }
 
     public function save(array $settings, array $secrets, int $userId): void
@@ -38,6 +45,8 @@ class AiSettings
             $record = AiSetting::lockForUpdate()->findOrFail(1);
             $stored = $record->settings;
             $settings = array_replace_recursive($stored, $settings);
+            $settings['provider'] = 'openai';
+            unset($settings['providers']['gateway']);
             if (!empty($settings['shared_models'])) {
                 foreach (array_keys(self::COMMANDS) as $command) {
                     $settings['commands'][$command] = ['provider' => null, 'model' => null, 'timeout' => null];
@@ -79,6 +88,8 @@ class AiSettings
     public function forForm(): array
     {
         $settings = $this->all();
+        $legacyGatewayDisabled = $settings['legacy_gateway_disabled'];
+        unset($settings['legacy_gateway_disabled']);
         $configured = [];
         foreach (array_keys(self::PROVIDERS) as $provider) {
             foreach (['key', 'proxy'] as $field) {
@@ -89,6 +100,6 @@ class AiSettings
 
         $hasCommandOverrides = empty($settings['shared_models']) && collect($settings['commands'])
             ->contains(fn ($command) => filled($command['model'] ?? null) || filled($command['provider'] ?? null));
-        return ['settings' => $settings, 'configured' => $configured, 'hasCommandOverrides' => $hasCommandOverrides];
+        return ['settings' => $settings, 'configured' => $configured, 'hasCommandOverrides' => $hasCommandOverrides, 'legacyGatewayDisabled' => $legacyGatewayDisabled];
     }
 }

@@ -530,6 +530,8 @@ class ProfileController extends Controller
     {
         $user = User::findOrFail($id);
         $user->telegram_chat_id = null;
+        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'telegram_user_id')) $user->telegram_user_id = null;
+        if (\Illuminate\Support\Facades\Schema::hasTable('course_telegram_tokens')) \Illuminate\Support\Facades\DB::table('course_telegram_tokens')->where('user_id', $user->id)->whereNull('consumed_at')->delete();
         $user->telegram_link_token = null;
         $user->telegram_link_token_expires_at = null;
         $user->save();

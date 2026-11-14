@@ -350,6 +350,7 @@ class LessonsController extends Controller
     public function makeDeadline($course_id, $id, Request $request)
     {
         $course = Course::findOrFail($course_id);
+        abort_unless($request->user()->role === 'admin' || $course->teachers()->where('users.id', $request->user()->id)->exists(), 403);
         $lesson = Lesson::with('steps.tasks')->findOrFail($id);
 
         if ($lesson->program_id !== $course->program_id) {
@@ -360,6 +361,16 @@ class LessonsController extends Controller
             'deadline' => 'nullable|date',
             'penalty' => 'nullable|numeric|min:0|max:1',
         ]);
+
+        $deadlines = app(\App\Services\CourseDeadlineService::class);
+        if ($deadlines->available()) {
+            $editor = $deadlines->editor($course, 'lesson', $lesson->id);
+            $deadlines->savePolicy($course, 'lesson', $lesson->id, ['mode' => $request->deadline ? 'custom' : 'none',
+                'revision' => $editor['revision'], 'timezone' => $editor['timezone'], 'apply_to_tasks' => true,
+                'stages' => $request->deadline ? [['cutoff_at' => \Carbon\Carbon::parse($request->deadline, $editor['timezone'])->addDay()->format('Y-m-d\TH:i'),
+                    'retained_percent' => (int) round(($request->penalty ?? 0) * 100)]] : []], $request->user()->id, true);
+            return back();
+        }
 
         $taskIds = $lesson->tasks()->where('is_star', false)->pluck('id');
 

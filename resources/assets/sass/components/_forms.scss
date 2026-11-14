@@ -1,5 +1,8 @@
 /* Authoring uses one column, open sections and a shared editor surface. */
 .gc-authoring-layout { width:100%; }
+.gc-dialog-form { display:flex; flex-direction:column; flex:1 1 auto; min-height:0; overflow:hidden; }
+.gc-dialog-form > .modal-body { min-height:0; overflow-y:auto; }
+.gc-dialog-form > .modal-footer { flex-shrink:0; }
 .gc-authoring-layout .gc-page-header { margin-bottom:0; }
 .gc-authoring-layout .gc-page-description { -webkit-line-clamp:unset; }
 .gc-field { display:grid; gap:var(--gc-space-2); grid-template-columns:minmax(0,1fr); min-width:0; }

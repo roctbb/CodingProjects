@@ -109,7 +109,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token', 'oidc_issuer', 'oidc_subject',
+        'password', 'remember_token', 'oidc_issuer', 'oidc_subject', 'telegram_user_id',
     ];
 
     public static function roleLabels(): array

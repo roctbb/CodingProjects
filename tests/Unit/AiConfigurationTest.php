@@ -25,14 +25,15 @@ class AiConfigurationTest extends TestCase
         }
     }
 
-    public function testExistingGatewayEnvironmentStillWorksWithoutNewVariables(): void
+    public function testLegacyGatewayVariablesCannotEnableCustomProtocol(): void
     {
         $config = $this->loadConfig([
             'GPT_KEY' => 'old-key', 'GPT_GATEWAY' => 'https://gateway.example/v1/responses',
             'GPT_MODEL' => 'existing-model', 'GPT_ACHIEVEMENT_MODEL' => 'achievement-model',
         ]);
-        $this->assertSame('gateway', $config['provider']);
-        $this->assertSame(['key' => 'old-key', 'endpoint' => 'https://gateway.example/v1/responses', 'proxy' => null], $config['providers']['gateway']);
+        $this->assertSame('openai', $config['provider']);
+        $this->assertArrayNotHasKey('gateway', $config['providers']);
+        $this->assertNull($config['providers']['openai']['key']);
         $this->assertSame('existing-model', $config['defaults']['text']['model']);
         $this->assertSame('existing-model', $config['defaults']['image']['model']);
         $this->assertSame('achievement-model', $config['commands']['achievement_variants']['model']);
@@ -53,7 +54,7 @@ class AiConfigurationTest extends TestCase
         $this->assertSame('openai', $config['provider']);
         $this->assertSame(['key' => 'direct-key', 'base_url' => null, 'endpoint' => 'https://direct.example/v1/responses', 'proxy' => 'socks5h://proxy.example:1080',
             'image_api' => 'responses', 'images_url' => null], $config['providers']['openai']);
-        $this->assertSame('gateway-key', $config['providers']['gateway']['key']);
+        $this->assertArrayNotHasKey('gateway', $config['providers']);
         $this->assertSame('default-model', $config['defaults']['image']['model']);
         $this->assertSame('gateway', $config['commands']['text_improvement']['provider']);
         $this->assertSame('editor-model', $config['commands']['text_improvement']['model']);

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class ApiClient
 {
-    /** One HTTP boundary for Responses, Images and the legacy gateway envelope. */
+    /** One HTTP boundary for the OpenAI-compatible Responses and Images APIs. */
     public function create(array $payload, string $provider, array $settings, int $timeout, ?string $command = null,
         array $attachments = [], string $api = 'responses'): array
     {
@@ -27,26 +27,9 @@ class ApiClient
             || parse_url($endpoint, PHP_URL_FRAGMENT) !== null) {
             throw new \RuntimeException('AI endpoint is invalid for ' . $provider);
         }
-        if ($provider === 'gateway' && $api !== 'responses') {
-            throw new \RuntimeException('The gateway only supports Responses requests');
-        }
-
         $request = Http::acceptJson()->timeout($timeout)->connectTimeout(min(10, $timeout))
             ->withoutRedirecting()->withOptions(['proxy' => $settings['proxy'] ?? '']);
-        if ($provider !== 'gateway') {
-            $request = $request->withToken($key);
-        } else {
-            $params = $payload;
-            unset($params['model'], $params['input']);
-            $payload = [
-                'token' => $key,
-                'model' => $payload['model'],
-                'input' => $payload['input'],
-            ];
-            if ($params !== []) {
-                $payload['params'] = $params;
-            }
-        }
+        $request = $request->withToken($key);
         foreach ($attachments as $attachment) {
             $request = $request->attach($attachment['name'], $attachment['bytes'], $attachment['filename'],
                 ['Content-Type' => $attachment['mime']]);
@@ -92,7 +75,7 @@ class ApiClient
             $this->fail('AI returned an invalid response or an upstream error', $context);
         }
 
-        $result = $provider === 'gateway' ? ($data['result'] ?? null) : $data;
+        $result = $data;
         if (!is_array($result) || !empty($result['error'])) {
             $this->fail('AI returned an invalid response or an upstream error', $context);
         }

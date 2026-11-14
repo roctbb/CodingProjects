@@ -114,7 +114,7 @@ class AchievementGenerationTest extends TestCase
         $this->assertSame($this->variants(),app(SolutionAchievementGenerator::class)->previewForSolution(Solution::findOrFail(1)));
     }
 
-    public function testRealServicesMakeExactlyTwoAiRequestsWithMixedProviders(): void
+    public function testRealServicesMakeExactlyTwoOpenAiCompatibleRequests(): void
     {
         $this->app->forgetInstance(ChatGptService::class);
         Queue::fake();
@@ -126,14 +126,9 @@ class AchievementGenerationTest extends TestCase
             'ai.commands.achievement_image.provider' => 'openai',
         ]);
         Http::preventStrayRequests();
-        Http::fake([
-            'https://gateway.example/v1/responses' => Http::response(['result' => ['output' => [[
-                'type' => 'message', 'content' => [['type' => 'output_text', 'text' => json_encode($this->variants())]],
-            ]]]]),
-            'https://openai.example/v1/responses' => Http::response(['output' => [[
-                'type' => 'image_generation_call', 'result' => self::PNG,
-            ]]]),
-        ]);
+        Http::fakeSequence()
+            ->push(['output' => [['type' => 'message', 'content' => [['type' => 'output_text', 'text' => json_encode($this->variants())]]]]])
+            ->push(['output' => [['type' => 'image_generation_call', 'result' => self::PNG]]]);
 
         $this->post(self::URL . '/achievement-preview')->assertRedirect();
         $this->assertSame($this->variants(), session('achievement_previews.1'));
@@ -142,8 +137,9 @@ class AchievementGenerationTest extends TestCase
 
         Http::assertSentCount(2);
         $requests = Http::recorded()->pluck(0);
-        $this->assertSame('https://gateway.example/v1/responses', $requests[0]->url());
-        $this->assertSame('gateway-key', $requests[0]['token']);
+        $this->assertSame('https://openai.example/v1/responses', $requests[0]->url());
+        $this->assertTrue($requests[0]->hasHeader('Authorization', 'Bearer openai-key'));
+        $this->assertArrayNotHasKey('token', $requests[0]->data());
         $this->assertSame('https://openai.example/v1/responses', $requests[1]->url());
         $this->assertTrue($requests[1]->hasHeader('Authorization', 'Bearer openai-key'));
         $this->assertSame(['type' => 'image_generation'], $requests[1]['tool_choice']);

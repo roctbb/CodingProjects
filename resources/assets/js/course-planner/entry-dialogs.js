@@ -1,4 +1,5 @@
 import { esc, date } from "./format.js";
+import { stageRow, initDeadlineEditor, deadlinePayload } from '../components/deadline-editor.js';
 
 export function createEntryDialogs({ root, getState, request, mutate, dialog, sessionTitle }) {
   const $ = selector => root.querySelector(selector);
@@ -21,6 +22,7 @@ export function createEntryDialogs({ root, getState, request, mutate, dialog, se
     const { data } = getState();
     const native = entry?.resource?.provider_key === "codingprojects";
     const deadline = existing || entry?.deadline;
+    if (native) { nativeDeadlineModal(entry, deadline).catch(error => modal('Не удалось открыть сроки', '<p>' + esc(error.message) + '</p>', null)); return; }
     modal(
       "Дедлайн работы",
       (!entry
@@ -72,6 +74,21 @@ export function createEntryDialogs({ root, getState, request, mutate, dialog, se
         );
       },
     );
+  }
+  async function nativeDeadlineModal(entry, deadline) {
+    const taskId = Number(entry.resource.external_id);
+    const response = await fetch(root.dataset.deadlineApi + '/' + taskId, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    const policy = await response.json();
+    if (!response.ok) throw new Error(policy.message || 'Не удалось загрузить сроки.');
+    modal('Сроки работы', '<p>' + esc(entry.resource.title) + '</p><div data-deadline-editor>' +
+      '<input type="hidden" name="revision" value="' + Number(policy.revision) + '"><input type="hidden" name="timezone" value="' + esc(policy.timezone) + '">' +
+      select('mode', 'Правила сдачи', [['inherit', 'Сроки урока'], ['custom', 'Свои сроки'], ['none', 'Без дедлайна']], policy.mode).replace('name="mode"', 'name="mode" data-deadline-mode') +
+      '<div data-deadline-stages><p class="gc-help-text">До первого срока — 100%. Время: ' + esc(policy.timezone) + '.</p><div class="d-grid gap-3" data-deadline-rows>' +
+      policy.stages.map((stage, index) => stageRow(index, stage)).join('') + '</div><button class="btn btn-outline-secondary btn-sm mt-3" type="button" data-deadline-add>+ Ещё срок</button></div></div>' +
+      '<p class="gc-help-text mt-3">Последний процент действует и дальше. Сдача остаётся открытой, минимум за отправленное решение — 1 балл. Перенос занятия не меняет сроки.</p>', async () => {
+        await mutate('set_deadline', { task_id: taskId, ...deadlinePayload($('#planner-dialog-form')) }, 'Сроки сохранены.');
+      });
+    initDeadlineEditor(root.querySelector('[data-deadline-editor]'));
   }
   function relationsModal(entry) {
     const { data } = getState();

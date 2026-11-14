@@ -226,7 +226,7 @@
                                                 <summary>Сроки сдачи · {{ $lessonDeadlines->count() }}</summary>
                                                 <ul class="gc-lesson-deadlines list-unstyled mb-0">
                                                     @foreach($lessonDeadlines as $deadline)
-                                                        <li><a href="{{ url('/insider/courses/'.$course->id.'/steps/'.$deadline->task->step_id.'#task'.$deadline->task_id) }}">{{ $deadline->task->name }}</a><x-gc-deadline-label :expiration="$deadline->expiration" /></li>
+                                                        <li><a href="{{ url('/insider/courses/'.$course->id.'/steps/'.$deadline->task->step_id.'#task'.$deadline->task_id) }}">{{ $deadline->task->name }}</a><span><x-gc-deadline-label :expiration="$deadline->expiration" :rule="$deadline" /> · {{ (int) round($deadline->penalty * 100) }}%</span></li>
                                                     @endforeach
                                                 </ul>
                                             </details>
@@ -245,7 +245,8 @@
                                     <div class="course-path-meta">
                                         @unless($isCurrent)<span class="course-path-step-count">Ступеней: {{ $lesson->steps->count() }}</span>@endunless
                                         @if ($lessonDeadline && (!$isLearner || $lessonDeadlines->isEmpty()))
-                                            <small class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> Дедлайн: {{$lessonDeadline->expiration->format('d.m.Y')}}</small>
+                                            <small class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-label :expiration="$lessonDeadline->expiration" :rule="$lessonDeadline" /></small>
+                                            <x-gc-deadline-chain :rule="$lessonDeadline" />
                                         @endif
 
                                         @if ($startDate != null && $startDate->isFuture())

@@ -19,6 +19,13 @@
     @endphp
     <div class="container-fluid px-0" data-deadline-workspace>
         <x-gc-course-header :course="$course" active="deadlines" />
+        @if(!$isManager && \Illuminate\Support\Facades\Schema::hasTable('course_notification_preferences'))
+            <form class="gc-card p-3 mb-3 d-flex flex-wrap gap-3 align-items-center" method="POST" action="{{ url('/insider/courses/'.$course->id.'/notifications/preference') }}">@csrf
+                <label class="form-check mb-0"><input class="form-check-input" type="checkbox" name="enabled" value="1" @checked(\Illuminate\Support\Facades\DB::table('course_notification_preferences')->where('course_id',$course->id)->where('user_id',auth()->id())->value('enabled'))><span class="form-check-label">Напоминать мне о сроках в Telegram</span></label>
+                <button class="btn btn-outline-secondary btn-sm">Сохранить</button>
+                @if(!auth()->user()->telegram_chat_id)<a class="small" href="{{ url('/insider/profile/'.auth()->id().'/edit?section=account') }}">Подключить Telegram в личных настройках</a>@endif
+            </form>
+        @endif
         <div class="gc-course-section-heading">
             <div class="min-width-0">
                 <h2 class="mb-1">Дедлайны</h2>
@@ -80,7 +87,7 @@
                                                 @endphp
                                                 <li data-deadline-row data-deadline-state="{{ $state }}" data-deadline-search-text="{{ $deadline->task->name.' '.$deadline->task->step->name.' '.$deadline->task->step->lesson->name }}">
                                                     <a class="gc-deadline-task" href="{{ url('/insider/courses/'.$course->id.'/steps/'.$deadline->task->step->id.'#task'.$deadline->task_id) }}">
-                                                        <span class="gc-deadline-task__body"><strong>{{ $deadline->task->name }}</strong><small>{{ $deadline->task->step->name }}</small></span>
+                                                        <span class="gc-deadline-task__body"><strong>{{ $deadline->task->name }}</strong><small>{{ $deadline->task->step->name }} · @if($deadline instanceof \App\Support\DeadlineRule && !$deadline->legacyBoundary){{ $deadline->cutoffAt()->setTimezone($deadline->ruleTimezone)->format('H:i') }} · @endif{{ (int) round($deadline->penalty * 100) }}% баллов после срока</small></span>
                                                         <span class="gc-deadline-task__state gc-deadline-task__state--{{ $state }}"><i class="fas {{ $stateIcon }}" aria-hidden="true"></i>{{ $stateLabel }}</span>
                                                     </a>
                                                 </li>

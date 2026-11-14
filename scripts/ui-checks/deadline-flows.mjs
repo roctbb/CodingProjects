@@ -1,0 +1,69 @@
+// Isolated fixtures only: these scenarios never send Telegram or paid AI requests.
+export default async function deadlineFlows(page, config) {
+    const results=[], errors=[], browser=page.context().browser();
+    const assert=(ok,message)=>{if(!ok)throw new Error(message);};
+    for(const width of config.widths) {
+        const context=await browser.newContext({viewport:{width,height:950},hasTouch:width<768,isMobile:width<768,reducedMotion:'reduce'});
+        const target=await context.newPage(); target.setDefaultTimeout(7000);
+        target.on('pageerror',error=>errors.push({name:'deadline-flows',width,error:error.message}));
+        const open=async(path,actor='teacher')=>{
+            const url=new URL(path,config.url); url.searchParams.set('actor',actor);url.searchParams.set('scenario','base');
+            const response=await target.goto(url.href); assert(response.ok(),`${path}: HTTP ${response.status()}`);await target.waitForLoadState('networkidle');
+        };
+        try {
+            await open('/insider/courses/1');
+            await target.locator('#lesson-1 .course-path-actions button').first().click();
+            await target.locator('[data-bs-target="#lesson-deadline-modal-1"]').click();
+            const modal=target.locator('#lesson-deadline-modal-1'); await modal.waitFor({state:'visible'});
+            assert(await modal.locator('[data-deadline-row]').count()===2,'lesson chain missing');
+            await modal.locator('[data-deadline-add]').click();
+            const added=modal.locator('[data-deadline-row]').last();
+            await added.locator('input[type="datetime-local"]').fill('2026-11-29T18:00');
+            await added.locator('input[type="number"]').fill('25');
+            for(const theme of ['light','dark']) {
+                await target.evaluate(theme=>document.documentElement.setAttribute('data-bs-theme',theme),theme);
+                assert(await modal.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'deadline modal horizontal overflow');
+                assert(await modal.locator('.modal-footer').evaluate(el=>el.getBoundingClientRect().bottom<=innerHeight && el.getBoundingClientRect().top>=0),'save buttons outside viewport');
+                await target.screenshot({path:`${config.output}/deadline-editor-${width}-${theme}.png`});
+                results.push({name:'deadline-editor',width,theme});
+            }
+            await modal.getByRole('button',{name:'Сохранить',exact:true}).click();await target.waitForLoadState('networkidle');
+            await target.locator('#lesson-1 .course-path-actions button').first().click();
+            await target.locator('[data-bs-target="#lesson-deadline-modal-1"]').click();
+            assert(await modal.locator('[data-deadline-row]').count()===3,'third stage not saved');
+            await modal.locator('[data-deadline-row]').last().locator('[data-deadline-remove]').click();
+            await modal.getByRole('button',{name:'Сохранить',exact:true}).click();await target.waitForLoadState('networkidle');
+            await open('/insider/courses/1/deadlines','student');
+            assert(await target.getByText(/70% баллов после срока/).count()>0,'student percentages missing');
+            assert(await target.locator('form[action$="/notifications/preference"]').count()===1,'student opt-in missing');
+            assert(await target.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'student deadline overflow');
+            results.push({name:'student-deadlines',width});
+            await open('/insider/courses/1/notifications');
+            assert(await target.getByText('Учебная группа Python',{exact:true}).count()===1,'course chat not visible');
+            for(const theme of ['light','dark']) {
+                await target.evaluate(theme=>document.documentElement.setAttribute('data-bs-theme',theme),theme);
+                assert(await target.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'notification page overflow');
+                await target.screenshot({path:`${config.output}/course-notifications-${width}-${theme}.png`,fullPage:true});
+                results.push({name:'course-notifications',width,theme});
+            }
+            await open('/insider/settings/ai','admin');
+            assert(await target.locator('[data-ai-provider]').count()===1,'more than one AI protocol');
+            assert(await target.locator('input[name="settings[provider]"]').inputValue()==='openai','AI protocol incorrect');
+            assert(await target.locator('input[name*="gateway"]').count()===0,'custom gateway still exposed');
+            results.push({name:'ai-openai-only',width});
+            await open('/insider/courses/1/planner');
+            await target.locator('#planner-save-state').filter({hasText:'Сохранено'}).waitFor();
+            const entry=target.locator('.planner-entry').filter({has:target.locator('[data-action="class-bonus"]')}).first();
+            await entry.locator('.planner-entry-menu summary').click();
+            await entry.locator('[data-action="class-bonus"]').click();
+            const dialog=target.locator('#planner-dialog');
+            await dialog.locator('[name="class_bonus_gc"]').fill('8');
+            await dialog.locator('#planner-dialog-submit').click();await dialog.waitFor({state:'hidden'});
+            assert(await target.getByText('+8 GC за задачу на занятии',{exact:true}).count()>0,'bonus not displayed');
+            await target.screenshot({path:`${config.output}/planner-class-bonus-${width}.png`});
+            results.push({name:'planner-class-bonus',width});
+        } catch(error){errors.push({name:'deadline-flows',width,error:error.message});}
+        await context.close();
+    }
+    return {results,errors};
+}

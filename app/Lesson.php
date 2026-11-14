@@ -77,6 +77,7 @@ class Lesson extends Model
 
     public function sharedDeadline($courseId)
     {
+        if ($policy = app(\App\Services\CourseDeadlineService::class)->forLesson($this, (int) $courseId)) return $policy;
         $tasks = $this->tasks()->where('is_star', false);
         $deadlines = $tasks->map(fn ($task) => $task->getDeadline($courseId))->filter();
         $first = $deadlines->first();
@@ -87,6 +88,8 @@ class Lesson extends Model
 
         return $deadlines->every(fn ($deadline) => $deadline->expiration
             && $deadline->expiration->isSameDay($first->expiration)
+            && (!($deadline instanceof \App\Support\DeadlineRule) || !($first instanceof \App\Support\DeadlineRule) ||
+                collect($deadline->series)->map(fn ($s) => [$s['at'], $s['percent']])->all() === collect($first->series)->map(fn ($s) => [$s['at'], $s['percent']])->all())
             && (float) $deadline->penalty === (float) $first->penalty) ? $first : null;
     }
 

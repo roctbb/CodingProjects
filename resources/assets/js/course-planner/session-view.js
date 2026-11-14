@@ -30,6 +30,7 @@ export function createSessionView({ getState }) {
       );
     if (resource?.child_count)
       meta.push("<span>Ступеней: " + resource.child_count + "</span>");
+    if (entry.class_bonus_gc) meta.push('<span class="planner-deadline"><i class="fas fa-coins" aria-hidden="true"></i> +' + entry.class_bonus_gc + ' GC за задачу на занятии</span>');
     if (resource && resource.provider_key !== "codingprojects") {
       const names = entry.lesson_links
         .map((r) => data.lessons.find((l) => l.id === r.lesson_id)?.name)
@@ -74,6 +75,7 @@ export function createSessionView({ getState }) {
     if (resource) {
       actions.push(["relations", "Связать с уроком"]);
       if (entry.layer === "plan") {
+        if (resource.provider_key === 'codingprojects' && ['task','step','lesson'].includes(resource.type)) actions.push(['class-bonus', 'Бонус за решение на занятии']);
         actions.push(["refresh-entry", "Обновить из источника"]);
         if (
           resource.type === "task" ||

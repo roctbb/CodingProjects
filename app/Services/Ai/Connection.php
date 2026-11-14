@@ -13,7 +13,7 @@ final class Connection
 
     public static function resolve(string $provider, array $settings): array
     {
-        if ($provider === 'gateway' || empty($settings['base_url'])) return $settings;
+        if (empty($settings['base_url'])) return $settings;
         $base = self::validateBaseUrl($settings['base_url']);
         $settings['endpoint'] = $base.'/responses';
         $settings['images_url'] = $base.'/images';

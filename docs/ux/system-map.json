@@ -3356,6 +3356,35 @@
         "stage": "implemented",
         "note": "HTML-страница по обычной ссылке; тот же API отдаёт JSON для формы в уроке. AJAX, Socket.IO, тесты и награды проверены в изолированном сценарии."
       }
+    },
+    {
+      "id": "course-notifications",
+      "title": "Уведомления курса",
+      "domain": "courses",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/notifications.blade.php",
+        "app/Http/Controllers/CourseNotificationsController.php",
+        "app/Services/CourseTelegram.php",
+        "app/Services/DeadlineNotifications.php"
+      ],
+      "goal": "Настроить личные напоминания преподавателям и чатам курса, подтвердить подключение группы и проверить доставку.",
+      "review": {
+        "stage": "implemented",
+        "note": "Цепочки сроков: общий стиль, компактные настройки, 390/1440 px, подмена Telegram в проверках."
+      },
+      "layout": "settings",
+      "checkStates": [
+        "группа ожидает подтверждения",
+        "подключённая тема",
+        "отключённый бот",
+        "очередь / ошибка / неизвестный результат",
+        "пустой журнал"
+      ]
     }
   ],
   "edges": [
@@ -5508,6 +5537,17 @@
       "label": "Вернуться к задаче",
       "kind": "navigate",
       "source": "resources/views/steps/native-submission.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "course-notifications",
+      "label": "Уведомления курса · меню действий",
+      "kind": "navigate",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "source": "resources/views/courses/partials/course-actions.blade.php"
     }
   ],
   "routeBindings": {
@@ -6370,6 +6410,38 @@
     "TaskSubmissionController@exportFile": {
       "node": "geekexecutor",
       "kind": "download"
+    },
+    "CourseDeadlineController@edit": {
+      "node": "deadlines",
+      "kind": "api"
+    },
+    "CourseDeadlineController@update": {
+      "node": "deadlines",
+      "kind": "action"
+    },
+    "CourseNotificationsController@edit": {
+      "node": "course-notifications",
+      "kind": "screen"
+    },
+    "CourseNotificationsController@update": {
+      "node": "course-notifications",
+      "kind": "action"
+    },
+    "CourseNotificationsController@chat": {
+      "node": "course-notifications",
+      "kind": "action"
+    },
+    "CourseNotificationsController@link": {
+      "node": "course-notifications",
+      "kind": "action"
+    },
+    "CourseNotificationsController@retry": {
+      "node": "course-notifications",
+      "kind": "action"
+    },
+    "CourseNotificationsController@preference": {
+      "node": "deadlines",
+      "kind": "action"
     }
   },
   "observations": [

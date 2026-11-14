@@ -32,7 +32,10 @@ class Grading
                     'submitted'=>$submission->created_at,'text'=>$url,'teacher_id'=>$course->teachers->first()?->id]);
             }
             abort_unless((int)$solution->user_id===(int)$user->id && (int)$solution->task_id===(int)$task->id && (int)$solution->course_id===(int)$course->id,409);
-            $points=$solution->normalizeSubmittedMark(min($data['points'],$task->max_mark));
+            // Solution applies the minimum point; retain the checker's original score for classroom eligibility.
+            $points=min($data['points'],$task->max_mark);
+            if ($new && $submission->deadline_rule_snapshot !== null) $solution->deadline_rule_snapshot=$submission->deadline_rule_snapshot;
+            if ($new && $submission->class_bonus_snapshot !== null) $solution->class_bonus_snapshot=$submission->class_bonus_snapshot;
             $solution->applyDeadlinePenalty($points,$task->getDeadline($course->id));
             $comment=mb_strcut($data['comment'],0,60000,'UTF-8');
             $solution->comment=$solution->hasActiveDeadlinePenalty() ? trim("Сдано с опозданием. Штраф: -{$solution->deadline_penalty_amount} XP.\n\n".$comment) : $comment;

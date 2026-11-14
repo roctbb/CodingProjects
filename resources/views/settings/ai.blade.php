@@ -7,6 +7,7 @@
         @include('settings.partials.tabs')
     </div>
     @if(session('status'))<div class="alert alert-success" role="status">{{ session('status') }}</div>@endif
+    @if($legacyGatewayDisabled)<div class="alert alert-info">Старый протокол шлюза отключён. Укажите адрес и ключ OpenAI-совместимого API. Старые ключи шлюза не переносятся автоматически.</div>@endif
     @if($errors->any())
         <div class="alert alert-danger" role="alert">
             <strong>Изменения не сохранены. Проверьте поля.</strong>
@@ -19,24 +20,16 @@
         @method('PUT')
         <input type="hidden" name="settings[shared_models]" value="1">
         <x-gc-form-section title="Подключение">
-            <x-gc-field name="settings[provider]" id="ai-provider" label="Тип подключения">
-                <select id="ai-provider" name="settings[provider]" class="form-select" required data-ai-provider-select>
-                    @foreach($providers as $provider => $label)<option value="{{ $provider }}" @selected(old('settings.provider', $settings['provider']) === $provider)>{{ $label }}</option>@endforeach
-                </select>
-            </x-gc-field>
+            <input type="hidden" name="settings[provider]" value="openai" data-ai-provider-select>
+            <p class="gc-help-text mb-0">OpenAI-совместимый API · общий ключ для текста и изображений</p>
             @foreach($providers as $provider => $label)
                 @php
                     $connection = $settings['providers'][$provider];
-                    $base = $connection['base_url'] ?? ($provider === 'openai' ? \App\Services\Ai\Connection::legacyBaseUrl($connection) : '');
+                    $base = $connection['base_url'] ?? \App\Services\Ai\Connection::legacyBaseUrl($connection);
                     $imageApi = old('settings.providers.'.$provider.'.image_api', $connection['image_api'] ?? 'responses');
                 @endphp
-                <fieldset class="gc-stack border-0 p-0 m-0" data-ai-provider="{{ $provider }}" @if(old('settings.provider', $settings['provider']) !== $provider) hidden disabled @endif>
+                <fieldset class="gc-stack border-0 p-0 m-0" data-ai-provider="{{ $provider }}">
                     <legend class="visually-hidden">Параметры {{ $label }}</legend>
-                    @if($provider === 'gateway')
-                        <x-gc-field name="settings[providers][gateway][endpoint]" id="ai-endpoint-gateway" label="Адрес шлюза" hint="Полный адрес собственного шлюза, включая /responses. Шлюз получает token, model, input и params.">
-                            <input id="ai-endpoint-gateway" name="settings[providers][gateway][endpoint]" type="url" class="form-control" maxlength="2048" required value="{{ old('settings.providers.gateway.endpoint', $connection['endpoint']) }}" spellcheck="false">
-                        </x-gc-field>
-                    @else
                         <x-gc-field :name="'settings[providers]['.$provider.'][base_url]'" :id="'ai-base-'.$provider" label="Базовый адрес API" hint="Один адрес для текста и изображений. Пути /responses и /images добавляются автоматически.">
                             <input id="ai-base-{{ $provider }}" name="settings[providers][{{ $provider }}][base_url]" type="url" class="form-control" maxlength="2048" value="{{ old('settings.providers.'.$provider.'.base_url', $base) }}" placeholder="https://api.example.com/v1" spellcheck="false" data-ai-base>
                         </x-gc-field>
@@ -58,7 +51,6 @@
                                 </x-gc-field>
                             </div>
                         @endif
-                    @endif
                     <div class="row g-3">
                         @foreach(['key' => 'API-ключ', 'proxy' => 'Сетевой прокси'] as $field => $fieldLabel)
                             <div class="col-12 col-md-6">

@@ -658,6 +658,30 @@
   },
   {
     "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/deadline-policies/{type}/{target}",
+    "name": null,
+    "action": "CourseDeadlineController@edit",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "deadlines",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/deadline-policies/{type}/{target}",
+    "name": null,
+    "action": "CourseDeadlineController@update",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "deadlines",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
     "uri": "insider/courses/{course_id}/lessons/{id}/create",
     "name": null,
     "action": "StepsController@createView",
@@ -1859,6 +1883,78 @@
     ],
     "node": "course",
     "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{id}/notifications",
+    "name": "courses.notifications",
+    "action": "CourseNotificationsController@edit",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "course-notifications",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{id}/notifications",
+    "name": null,
+    "action": "CourseNotificationsController@update",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "course-notifications",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{id}/notifications/chats/{chat}",
+    "name": null,
+    "action": "CourseNotificationsController@chat",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "course-notifications",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{id}/notifications/deliveries/{delivery}/retry",
+    "name": null,
+    "action": "CourseNotificationsController@retry",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "course-notifications",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{id}/notifications/link",
+    "name": null,
+    "action": "CourseNotificationsController@link",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "course-notifications",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{id}/notifications/preference",
+    "name": null,
+    "action": "CourseNotificationsController@preference",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "deadlines",
+    "kind": "action"
   },
   {
     "method": "POST",

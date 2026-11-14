@@ -24,7 +24,7 @@ class ChatGptServiceTransportTest extends TestCase
         config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
         DB::purge('sqlite');
         config([
-            'ai.provider' => 'gateway',
+            'ai.provider' => 'openai',
             'ai.providers.gateway' => ['endpoint' => self::GATEWAY, 'key' => 'gateway-secret'],
             'ai.providers.openai' => ['endpoint' => self::OPENAI, 'key' => 'openai-secret'],
             'ai.defaults.text' => ['model' => 'text-model', 'timeout' => 90],
@@ -39,7 +39,7 @@ class ChatGptServiceTransportTest extends TestCase
 
     public static function providers(): array
     {
-        return [['gateway'], ['openai']];
+        return [['openai']];
     }
 
     private function textResponse(): array
@@ -164,10 +164,10 @@ class ChatGptServiceTransportTest extends TestCase
     {
         return [
             [['ai.provider' => 'typo'], []],
-            [['ai.providers.gateway.key' => ''], []],
-            [['ai.providers.gateway.endpoint' => 'not-a-url'], []],
-            [['ai.providers.gateway.endpoint' => 'file:///tmp/test'], []],
-            [['ai.providers.gateway.endpoint' => 'https://user:password@gateway.example/v1/responses'], []],
+            [['ai.providers.openai.key' => ''], []],
+            [['ai.providers.openai.endpoint' => 'not-a-url'], []],
+            [['ai.providers.openai.endpoint' => 'file:///tmp/test'], []],
+            [['ai.providers.openai.endpoint' => 'https://user:password@gateway.example/v1/responses'], []],
             [['ai.commands.task_summary.provider' => 'typo'], ['command' => 'task_summary']],
             [['ai.defaults.text.model' => ''], []],
             [[], ['command' => 'unknown']],
@@ -193,16 +193,14 @@ class ChatGptServiceTransportTest extends TestCase
     {
         return [
             ['openai', ['error' => ['message' => 'openai-secret private prompt']], 401, 'HTTP 401'],
-            ['gateway', ['error' => ['message' => 'gateway-secret private prompt']], 429, 'HTTP 429'],
-            ['gateway', ['error' => 'private prompt'], 200, 'upstream error'],
-            ['gateway', ['result' => ['error' => ['message' => 'private prompt']]], 200, 'upstream error'],
+            ['openai', ['error' => ['message' => 'gateway-secret private prompt']], 429, 'HTTP 429'],
+            ['openai', ['error' => 'private prompt'], 200, 'upstream error'],
             ['openai', '<html>openai-secret private prompt</html>', 502, 'HTTP 502'],
             ['openai', '<html>private prompt</html>', 200, 'invalid JSON'],
             ['openai', 'null', 200, 'invalid response'],
-            ['gateway', ['output' => []], 200, 'invalid response'],
             ['openai', ['status' => 'incomplete', 'output' => []], 200, 'did not complete'],
-            ['gateway', ['result' => ['status' => 'failed', 'output' => []]], 200, 'did not complete'],
-            ['gateway', [], 307, 'HTTP 307'],
+            ['openai', ['status' => 'failed', 'output' => []], 200, 'did not complete'],
+            ['openai', [], 307, 'HTTP 307'],
             ['openai', ['output' => 'bad output'], 200, 'invalid output'],
         ];
     }
@@ -244,7 +242,7 @@ class ChatGptServiceTransportTest extends TestCase
             app(ChatGptService::class)->generate(self::MESSAGES);
             $this->fail('Expected connection failure');
         } catch (\RuntimeException $e) {
-            $this->assertSame('AI connection failed (gateway)', $e->getMessage());
+            $this->assertSame('AI connection failed (openai)', $e->getMessage());
             $this->assertNull($e->getPrevious());
         }
         $this->assertSame(1, $calls);
@@ -273,11 +271,11 @@ class ChatGptServiceTransportTest extends TestCase
 
     public function testImageDownloadDoesNotReceiveApiCredentials(): void
     {
-        config(['ai.providers.gateway.proxy' => 'socks5h://user:secret@proxy.example:1080']);
+        config(['ai.providers.openai.proxy' => 'socks5h://user:secret@proxy.example:1080']);
         Http::fake(function (Request $request, array $options) {
             $this->assertSame('socks5h://user:secret@proxy.example:1080', $options['proxy']);
-            if ($request->url() === self::GATEWAY) {
-                return Http::response(['result' => ['data' => [['url' => 'https://images.example/image.png']]]]);
+            if ($request->url() === self::OPENAI) {
+                return Http::response(['data' => [['url' => 'https://images.example/image.png']]]);
             }
             $this->assertGreaterThan(0, $options['timeout']);
             $this->assertLessThan(180, $options['timeout']);
@@ -294,18 +292,18 @@ class ChatGptServiceTransportTest extends TestCase
 
     public function testImageMimeLabelCannotDisguiseInvalidBytes(): void
     {
-        Http::fake([self::GATEWAY => Http::response(['result' => [
+        Http::fake([self::OPENAI => Http::response([
             'output' => [['type' => 'image_generation_call', 'result' => 'data:image/png;base64,' . base64_encode('not an image')]],
-        ]])]);
+        ])]);
         $this->expectExceptionMessage('invalid or unsupported image');
         app(ChatGptService::class)->generateImage(self::MESSAGES);
     }
 
     public function testTextRefusalIsNotReturnedAsSuccessfulText(): void
     {
-        Http::fake([self::GATEWAY => Http::response(['result' => ['output' => [[
+        Http::fake([self::OPENAI => Http::response(['output' => [[
             'type' => 'message', 'content' => [['type' => 'refusal', 'refusal' => 'Cannot comply']],
-        ]]]])]);
+        ]]])]);
         $this->expectExceptionMessage('AI returned no text');
         app(ChatGptService::class)->generate(self::MESSAGES);
     }

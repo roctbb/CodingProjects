@@ -8,6 +8,7 @@ import { promisify } from 'node:util';
 import { randomBytes } from 'node:crypto';
 import suite from './suite.mjs';
 import interactions from './interactions.mjs';
+import deadlineFlows from './deadline-flows.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const directory = mkdtempSync(path.join(tmpdir(), 'codingprojects-ui-'));
@@ -34,7 +35,7 @@ try {
     await cli(['open', 'about:blank', ...(process.env.UI_HEADED === '1' ? ['--headed'] : [])]);
     const config = { url, output, widths: [1440, 390], palette: process.env.UI_PALETTE || '', css: process.env.UI_BASELINE_CSS ? path.resolve(process.env.UI_BASELINE_CSS) : null };
     const report = { results: [], errors: [] };
-    const checks = process.argv.includes('--flows-only') ? [['interactions', interactions]] : [['browser', suite], ['interactions', interactions]];
+    const checks = process.argv.includes('--flows-only') ? [['interactions', interactions], ['deadlines', deadlineFlows]] : [['browser', suite], ['interactions', interactions], ['deadlines', deadlineFlows]];
     for (const [name, check] of checks) {
         const raw = await cli(['run-code', `async(page)=>(${check.toString()})(page,${JSON.stringify(config)})`]);
         writeFileSync(path.join(output, `${name}.log`), raw);

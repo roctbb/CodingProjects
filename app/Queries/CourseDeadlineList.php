@@ -22,15 +22,22 @@ class CourseDeadlineList
         $byId = $courses->keyBy('id');
         $now = Carbon::now();
 
-        return TaskDeadline::with([
+        $relations = [
             'task.step.lesson.info' => fn ($query) => $query->whereIn('course_id', $courseIds),
             'task.step.lesson.earlyAccesses' => fn ($query) => $query->whereIn('course_id', $courseIds)->where('user_id', $viewer->id),
             'task.solutions' => fn ($query) => $query->whereIn('course_id', $courseIds)->where('user_id', $viewer->id),
-        ])
+        ];
+        $service = app(\App\Services\CourseDeadlineService::class);
+        $taskRelations = [];
+        foreach ($relations as $name => $constraint) $taskRelations[preg_replace('/^task\./', '', $name)] = $constraint;
+        $entries = $service->available()
+            ? $courses->flatMap(fn ($course) => $service->entries($course, $taskRelations))->sortBy(fn ($d) => $d->cutoffAt()->timestamp)
+            : TaskDeadline::with($relations)
             ->whereIn('course_id', $courseIds)
             ->whereNotNull('expiration')
             ->orderBy('expiration')->orderBy('course_id')->orderBy('task_id')
-            ->get()
+            ->get();
+        return $entries
             ->filter(function ($deadline) use ($byId, $viewer) {
                 $course = $byId->get($deadline->course_id);
                 $lesson = $deadline->task?->step?->lesson;
@@ -46,7 +53,8 @@ class CourseDeadlineList
                 $minimumMark = $deadline->task->max_mark > 1 ? round($deadline->task->max_mark * 3 / 4) : 1;
                 $deadline->is_done = !$isManager && $deadline->task->solutions
                     ->where('course_id', $course->id)->where('mark', '>=', $minimumMark)->isNotEmpty();
-                $deadline->is_overdue = !$deadline->is_done && $deadline->expiration->copy()->addDay()->lte($now);
+                $cutoff = $deadline instanceof \App\Support\DeadlineRule ? $deadline->cutoffAt() : $deadline->expiration->copy()->addDay();
+                $deadline->is_overdue = !$deadline->is_done && $cutoff->lte($now);
                 $deadline->is_today = !$deadline->is_done && $deadline->expiration->isSameDay($now);
                 $deadline->is_soon = !$deadline->is_done && !$deadline->is_overdue && $deadline->expiration->lt($now->copy()->addDays(3));
                 $deadline->setRelation('course', $course);

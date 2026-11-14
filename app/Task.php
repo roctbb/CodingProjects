@@ -110,11 +110,7 @@ class Task extends Model
 
     public function getDeadline($course_id)
     {
-        if ($this->relationLoaded('deadlines')) {
-            return $this->deadlines->where('course_id', $course_id)->first();
-        }
-
-        return $this->hasMany('App\TaskDeadline', 'task_id', 'id')->where('course_id', $course_id)->get()->first();
+        return app(\App\Services\CourseDeadlineService::class)->forTask($this, (int) $course_id);
 
     }
 

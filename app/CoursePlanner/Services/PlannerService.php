@@ -271,8 +271,14 @@ class PlannerService
     {
         $entry = $this->entry($planner, $input);
         $rules = ['fact_state' => 'sometimes|in:done,partial,not_done,unconfirmed'];
+        $rules['class_bonus_gc'] = 'sometimes|integer|min:0|max:10000';
         $rules[$input['kind'] === 'text' ? 'text' : 'note'] = 'sometimes|nullable|string|max:10000';
         $data = Validator::make($input, $rules)->validate();
+        if (array_key_exists('class_bonus_gc', $data)) {
+            abort_unless($entry instanceof SessionResource && $entry->layer === 'plan' &&
+                ($entry->resource_snapshot['provider_key'] ?? '') === 'codingprojects' &&
+                in_array($entry->resource_snapshot['type'] ?? '', ['task','step','lesson'], true), 422, 'Бонус доступен для задач CodingProjects.');
+        }
         if ($entry->layer !== 'fact') {
             unset($data['fact_state']);
         }
@@ -344,7 +350,7 @@ class PlannerService
             'penalty' => 'nullable|numeric|min:0|max:1', 'title' => 'nullable|string|max:500', 'lesson_id' => 'nullable|integer',
             'deadline_id' => 'nullable|integer', 'task_id' => 'nullable|integer'])->validate();
         if (!empty($data['task_id'])) {
-            app(CourseDeadlineService::class)->set($course, Task::findOrFail($data['task_id']), $data['due_on'] ?? null, $data['penalty'] ?? null);
+            $this->nativeDeadline($course, (int) $data['task_id'], $input, $data);
             return [];
         }
         if (!empty($data['resource_ref_id'])) {
@@ -355,7 +361,7 @@ class PlannerService
             $providerKey = DB::table('planner_providers')->where('id', $ref->provider_id)->value('key');
             if ($providerKey === 'codingprojects') {
                 abort_unless($ref->resource_type === 'task', 422);
-                app(CourseDeadlineService::class)->set($course, Task::findOrFail($ref->external_id), $data['due_on'] ?? null, $data['penalty'] ?? null);
+                $this->nativeDeadline($course, (int) $ref->external_id, $input, $data);
                 return [];
             }
             if (empty($data['due_on'])) {
@@ -384,6 +390,19 @@ class PlannerService
         return $id ? Lesson::where('program_id', $course->program_id)->whereKey($id)->firstOrFail()->id : null;
     }
 
+    private function nativeDeadline(Course $course, int $taskId, array $input, array $legacy): void
+    {
+        $service = app(CourseDeadlineService::class);
+        if (array_key_exists('mode', $input)) {
+            $service->savePolicy($course, 'task', $taskId, [
+                'revision' => $input['policy_revision'] ?? null, 'mode' => $input['mode'],
+                'timezone' => $input['timezone'] ?? $service->timezone($course->id), 'stages' => $input['stages'] ?? [],
+            ], auth()->id());
+        } else {
+            $service->set($course, Task::findOrFail($taskId), $legacy['due_on'] ?? null, $legacy['penalty'] ?? null);
+        }
+    }
+
     private function record(PlannerCourse $planner, array $input): array
     {
         $session = $this->session($planner, $input['session_id'] ?? null);
@@ -407,6 +426,7 @@ class PlannerService
                 $copy->fact_state = $data['status'] === 'confirmed' ? 'done' : 'unconfirmed';
                 $snap = $copy->resource_snapshot;
                 $snap['deadline_snapshot'] = $this->deadlineSnapshot($planner, $plan);
+                $snap['deadline_policy_snapshot'] = $this->deadlineChainSnapshot($planner, $plan);
                 if ($data['status'] === 'confirmed') {
                     $snap['deadline_frozen_at'] = now()->toIso8601String();
                 }
@@ -425,6 +445,7 @@ class PlannerService
             $snapshot = $fact->resource_snapshot;
             if (!array_key_exists('deadline_snapshot', $snapshot) || ($data['status'] === 'confirmed' && empty($snapshot['deadline_frozen_at']))) {
                 $snapshot['deadline_snapshot'] = $this->deadlineSnapshot($planner, $fact);
+                $snapshot['deadline_policy_snapshot'] = $this->deadlineChainSnapshot($planner, $fact);
                 if ($data['status'] === 'confirmed') {
                     $snapshot['deadline_frozen_at'] = now()->toIso8601String();
                 }
@@ -442,10 +463,17 @@ class PlannerService
     {
         $snap = $link->resource_snapshot;
         if (($snap['provider_key'] ?? '') === 'codingprojects' && ($snap['type'] ?? '') === 'task') {
-            $expiration = DB::table('task_deadlines')->where('course_id', $planner->course_id)->where('task_id', $snap['external_id'])->value('expiration');
-            return $expiration ? substr($expiration, 0, 10) : null;
+            return Task::find($snap['external_id'])?->getDeadline($planner->course_id)?->expiration?->format('Y-m-d');
         }
         return PlannerDeadline::where('planner_course_id', $planner->id)->where('resource_ref_id', $link->resource_ref_id)->value('due_on');
+    }
+
+    private function deadlineChainSnapshot(PlannerCourse $planner, SessionResource $link): ?array
+    {
+        $snap = $link->resource_snapshot;
+        if (($snap['provider_key'] ?? '') !== 'codingprojects' || ($snap['type'] ?? '') !== 'task') return null;
+        $rule = Task::find($snap['external_id'])?->getDeadline($planner->course_id);
+        return $rule ? ($rule instanceof \App\Support\DeadlineRule ? $rule : \App\Support\DeadlineRule::fromLegacy($rule))->snapshot() : null;
     }
 
     private function invalidateFact(PlannerSession $session, string $layer): void

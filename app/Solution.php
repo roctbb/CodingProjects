@@ -23,6 +23,8 @@ class Solution extends Model
     protected $appends = ['mark'];
 
     protected $casts = [
+        'deadline_rule_snapshot' => 'array',
+        'class_bonus_snapshot' => 'array',
         'submitted' => 'datetime',
         'checked' => 'datetime',
         'deadline_penalty_paid_at' => 'datetime',
@@ -38,13 +40,35 @@ class Solution extends Model
         'geekpaste_integrity_dismissed_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(fn (self $solution) => $solution->freezeDeadline());
+        static::saving(fn (self $solution) => app(\App\Services\ClassroomBonus::class)->freeze($solution));
+        static::saved(fn (self $solution) => app(\App\Services\ClassroomBonus::class)->award($solution));
+    }
+
+    public function freezeDeadline($deadline = null): void
+    {
+        if (!$this->course_id || !$this->task_id || !$this->user_id || $this->submitted === null || $this->deadline_rule_snapshot !== null ||
+            !\Illuminate\Support\Facades\Schema::hasColumn('solutions', 'deadline_rule_snapshot')) return;
+        $deadline ??= $this->task?->getDeadline($this->course_id);
+        $this->deadline_rule_snapshot = $deadline
+            ? ($deadline instanceof \App\Support\DeadlineRule ? $deadline : \App\Support\DeadlineRule::fromLegacy($deadline))->snapshot()
+            : ['none' => true];
+    }
+
     public function deadline()
     {
+        if ($this->deadline_rule_snapshot !== null) {
+            return !empty($this->deadline_rule_snapshot['none']) ? null
+                : \App\Support\DeadlineRule::fromSnapshot($this->deadline_rule_snapshot)->at($this->submittedAt());
+        }
         if (!$this->task || !$this->course_id) {
             return null;
         }
 
-        return $this->task->getDeadline($this->course_id);
+        $deadline = $this->task->getDeadline($this->course_id);
+        return $deadline instanceof \App\Support\DeadlineRule ? $deadline->at($this->submittedAt()) : $deadline;
     }
 
     public function deadlineCutoff($deadline = null)
@@ -55,7 +79,7 @@ class Solution extends Model
             return null;
         }
 
-        return $deadline->expiration->copy()->addDay();
+        return $deadline instanceof \App\Support\DeadlineRule ? $deadline->at($this->submittedAt())->cutoffAt() : $deadline->expiration->copy()->addDay();
     }
 
     public function submittedAt()
@@ -127,6 +151,12 @@ class Solution extends Model
 
     public function isSubmittedAfterDeadline($deadline = null)
     {
+        $deadline ??= $this->deadline();
+        if ($deadline instanceof \App\Support\DeadlineRule) {
+            $rule = $deadline->at($this->submittedAt());
+            return $rule->penalty < 1 && $rule->cutoffAt() && ($rule->legacyBoundary
+                ? $this->submittedAt()->gt($rule->cutoffAt()) : $this->submittedAt()->gte($rule->cutoffAt()));
+        }
         $cutoff = $this->deadlineCutoff($deadline);
 
         return $cutoff && $this->submittedAt()->gt($cutoff);
@@ -138,13 +168,21 @@ class Solution extends Model
             return 0;
         }
 
-        $secondsLate = $this->submittedAt()->diffInSeconds($this->deadlineCutoff($deadline));
+        $secondsLate = $this->submittedAt()->diffInSeconds($this->deadlineCutoff($deadline), true);
 
         return max(1, (int) ceil($secondsLate / 86400));
     }
 
     public function applyDeadlinePenalty($rawMark, $deadline = null)
     {
+        $this->freezeDeadline($deadline);
+        app(\App\Services\ClassroomBonus::class)->freeze($this);
+        if (($bonus = $this->class_bonus_snapshot) && !$this->hasScoreModifier()) {
+            $bonus['graded_raw'] = $rawMark === null ? null : max(0, (int) $rawMark);
+            $this->class_bonus_snapshot = $bonus;
+        }
+        if ($this->deadline_rule_snapshot !== null) $deadline = $this->deadline();
+        elseif ($deadline instanceof \App\Support\DeadlineRule) $deadline = $deadline->at($this->submittedAt());
         $rawMark = $this->normalizeSubmittedMark($rawMark);
         $this->raw_mark = $rawMark;
         if ($rawMark === null) {
@@ -213,7 +251,7 @@ class Solution extends Model
             return (int) $this->raw_mark;
         }
 
-        return (int) ceil($this->raw_mark * $deadline->penalty);
+        return $this->normalizeSubmittedMark((int) ceil($this->raw_mark * $deadline->penalty));
     }
 
     public function applyXpBoosterToRawMark($rawMark)

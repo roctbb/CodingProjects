@@ -49,7 +49,7 @@ class PlannerReader
                 $data['entries']->push(['kind' => 'resource', 'id' => $link->id, 'resource_ref_id' => $link->resource_ref_id,
                     'layer' => $link->layer, 'sort_index' => $link->sort_index, 'resource' => $snapshot,
                     'lesson_links' => $relations->get($link->id, collect())->map(fn ($r) => ['lesson_id' => $r->lesson_id, 'relation' => $r->relation])->all(),
-                    'fact_state' => $link->fact_state, 'note' => $link->note,
+                    'fact_state' => $link->fact_state, 'note' => $link->note, 'class_bonus_gc' => (int) $link->class_bonus_gc,
                     'deadline' => $link->layer === 'fact' ? ['due_on' => $snapshot['deadline_snapshot'] ?? null] : $currentDeadlines->get($resourceKey)]);
             }
             foreach ($texts->get($session->id, collect()) as $text) {
@@ -122,11 +122,13 @@ class PlannerReader
         foreach ($tasks as $task) {
             $buckets[$task->lesson_id]['task_count']++;
         }
+        $coveredTasks = []; $countedWork = [];
         foreach ($this->deadlines($course, $planner) as $deadline) {
             $lessonId = $deadline['lesson_id'] ?? 0;
             if (isset($buckets[$lessonId])) {
-                if ($deadline['provider_key'] === 'codingprojects' && $eligibleTasks->has($deadline['external_id'])) {
+                if ($deadline['provider_key'] === 'codingprojects' && $eligibleTasks->has($deadline['external_id']) && !isset($coveredTasks[$deadline['external_id']])) {
                     $buckets[$lessonId]['deadline_count']++;
+                    $coveredTasks[$deadline['external_id']] = true;
                 } elseif ($deadline['provider_key'] !== 'codingprojects') {
                     $buckets[$lessonId]['other_deadline_count']++;
                 }
@@ -135,8 +137,10 @@ class PlannerReader
             $weeks[$week] ??= ['week' => $week, 'providers' => [], 'deadlines' => 0, 'points' => []];
             $weeks[$week]['deadlines']++;
             $points = $deadline['points'];
-            if (is_array($points) && is_numeric($points['value'] ?? null) && is_string($points['unit'] ?? null)) {
+            $workKey = $deadline['resource_key'] ?? $deadline['key'];
+            if (!isset($countedWork[$workKey]) && is_array($points) && is_numeric($points['value'] ?? null) && is_string($points['unit'] ?? null)) {
                 $weeks[$week]['points'][$points['unit']] = ($weeks[$week]['points'][$points['unit']] ?? 0) + (float) $points['value'];
+                $countedWork[$workKey] = true;
             }
         }
         foreach ($buckets as &$bucket) {
@@ -155,7 +159,16 @@ class PlannerReader
 
     public function deadlines(Course $course, PlannerCourse $planner): array
     {
-        $result = DB::table('task_deadlines as d')->join('tasks as t', 't.id', '=', 'd.task_id')->join('program_steps as s', 's.id', '=', 't.step_id')
+        $service = app(\App\Services\CourseDeadlineService::class);
+        $result = $service->available() ? $service->entries($course)->map(fn ($d) => [
+            'key' => 'codingprojects:'.$d->task_id.':'.$d->id, 'resource_key' => 'codingprojects:task:'.$d->task_id,
+            'provider_key' => 'codingprojects', 'external_id' => (string) $d->task_id, 'title' => $d->task->name,
+            'due_on' => $d->expiration->format('Y-m-d'), 'due_at' => $d->cutoffAt()->toIso8601String(),
+            'time' => $d->legacyBoundary ? null : $d->cutoffAt()->setTimezone($d->ruleTimezone)->format('H:i'),
+            'penalty' => (float) $d->penalty, 'lesson_id' => (int) $d->task->step->lesson_id,
+            'points' => ['value' => (int) $d->task->max_mark, 'unit' => 'codingprojects.xp'],
+            'open_url' => url('/insider/courses/'.$course->id.'/steps/'.$d->task->step_id.'#task'.$d->task_id),
+        ])->all() : DB::table('task_deadlines as d')->join('tasks as t', 't.id', '=', 'd.task_id')->join('program_steps as s', 's.id', '=', 't.step_id')
             ->join('lessons as l', 'l.id', '=', 's.lesson_id')->where('d.course_id', $course->id)->where('l.program_id', $course->program_id)
             ->get(['d.id', 'd.expiration', 'd.penalty', 't.id as task_id', 't.name', 't.max_mark', 's.id as step_id', 'l.id as lesson_id'])
             ->filter(fn ($d) => filled($d->expiration))->unique('task_id')->map(fn ($d) => ['key' => 'codingprojects:'.$d->id,

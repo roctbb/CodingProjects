@@ -29,12 +29,9 @@ class UpdateAiSettingsRequest extends FormRequest
             'secrets' => ['required', 'array:' . implode(',', $providers)],
         ];
         foreach ($providers as $provider) {
-            $rules['settings.providers.' . $provider] = [$provider === $selected ? 'required' : 'sometimes', match ($provider) {
-                'openai' => 'array:base_url,endpoint,image_api,images_url',
-                default => 'array:endpoint',
-            }];
+            $rules['settings.providers.' . $provider] = [$provider === $selected ? 'required' : 'sometimes', 'array:base_url,endpoint,image_api,images_url'];
             $rules['settings.providers.' . $provider . '.endpoint'] = [
-                'bail', 'nullable', Rule::requiredIf($provider === $selected && ($provider === 'gateway' || !$this->filled('settings.providers.openai.base_url'))), 'string', 'max:2048', 'url:http,https',
+                'bail', 'nullable', Rule::requiredIf($provider === $selected && !$this->filled('settings.providers.openai.base_url')), 'string', 'max:2048', 'url:http,https',
                 function ($attribute, $value, $fail) {
                     if (parse_url($value, PHP_URL_USER) !== null || parse_url($value, PHP_URL_PASS) !== null
                         || parse_url($value, PHP_URL_FRAGMENT) !== null) {
@@ -42,13 +39,11 @@ class UpdateAiSettingsRequest extends FormRequest
                     }
                 },
             ];
-            if ($provider !== 'gateway') {
-                $rules['settings.providers.'.$provider.'.base_url'] = ['bail', 'nullable', 'string', 'max:2048', function ($attribute, $value, $fail) {
-                    try { Connection::validateBaseUrl($value); }
-                    catch (\InvalidArgumentException) { $fail('Укажите базовый HTTP(S)-адрес API без /responses, /images, логина, пароля, параметров и фрагмента.'); }
-                }];
-                $rules['settings.providers.'.$provider.'.image_api'] = ['sometimes', 'required', Rule::in(['responses', 'images'])];
-            }
+            $rules['settings.providers.'.$provider.'.base_url'] = ['bail', 'nullable', 'string', 'max:2048', function ($attribute, $value, $fail) {
+                try { Connection::validateBaseUrl($value); }
+                catch (\InvalidArgumentException) { $fail('Укажите базовый HTTP(S)-адрес API без /responses, /images, логина, пароля, параметров и фрагмента.'); }
+            }];
+            $rules['settings.providers.'.$provider.'.image_api'] = ['sometimes', 'required', Rule::in(['responses', 'images'])];
             $rules['secrets.' . $provider] = [$provider === $selected ? 'required' : 'sometimes', 'array:key,proxy'];
             foreach (['key', 'proxy'] as $field) {
                 $prefix = 'secrets.' . $provider . '.' . $field;

@@ -130,7 +130,9 @@ class AiSettingsTest extends TestCase
         $this->assertSame(77, AiSetting::find(1)->updated_by);
         $this->assertArrayNotHasKey('settings', AiSetting::find(1)->toArray());
         $this->assertSame('Готово', $client->generate([['role' => 'user', 'content' => 'after']], ['command' => 'text_improvement']));
-        $this->assertSame('https://gateway.example/v1/responses', $seen[0][0]->url());
+        $this->assertSame('https://openai.example/v1/responses', $seen[0][0]->url());
+        $this->assertTrue($seen[0][0]->hasHeader('Authorization', 'Bearer env-openai-key'));
+        $this->assertArrayNotHasKey('token', $seen[0][0]->data());
         $this->assertSame('https://custom.example/v1/responses', $seen[1][0]->url());
         $this->assertTrue($seen[1][0]->hasHeader('Authorization', 'Bearer new-api-secret'));
         $this->assertSame('updated-model', $seen[1][0]['model']);
@@ -211,6 +213,9 @@ class AiSettingsTest extends TestCase
     {
         return [
             ['settings.provider', 'yandex'],
+            ['settings.provider', 'gateway'],
+            ['settings.providers.gateway', ['endpoint' => 'https://old.example/responses']],
+            ['settings.commands.task_summary.provider', 'gateway'],
             ['settings.providers.openai.endpoint', 'file:///etc/passwd'],
             ['settings.providers.openai.endpoint', ['malformed']],
             ['settings.providers.openai.endpoint', 'https://user:password@example.com/v1/responses'],
@@ -247,8 +252,8 @@ class AiSettingsTest extends TestCase
     {
         $this->login();
         $payload = $this->payload();
-        $payload['secrets']['gateway']['proxy'] = ['action' => 'replace', 'value' => $value];
-        $this->put(self::URL, $payload)->assertSessionHasErrors('secrets.gateway.proxy.value');
+        $payload['secrets']['openai']['proxy'] = ['action' => 'replace', 'value' => $value];
+        $this->put(self::URL, $payload)->assertSessionHasErrors('secrets.openai.proxy.value');
         $this->assertSame(0, AiSetting::count());
         $this->assertNull(session()->getOldInput('secrets'));
     }
@@ -262,22 +267,23 @@ class AiSettingsTest extends TestCase
         $this->put(self::URL, $payload)->assertSessionHasNoErrors();
         $this->assertSame('openai', $settings->all()['provider']);
         $this->delete(self::URL)->assertRedirect(self::URL);
-        $this->assertSame('gateway', $settings->all()['provider']);
+        $this->assertSame('openai', $settings->all()['provider']);
         $this->assertSame(0, AiSetting::count());
     }
 
     public function testBeforeMigrationAiContinuesUsingServerConfiguration(): void
     {
         Schema::drop('ai_settings');
-        $this->assertSame(config('ai'), app(AiSettings::class)->all());
+        $this->assertSame('openai', app(AiSettings::class)->all()['provider']);
+        $this->assertArrayNotHasKey('gateway', app(AiSettings::class)->all()['providers']);
     }
 
-    public function testCompactSettingsUseOneConnectionAndTwoModelsWithoutOverwritingInactiveSecrets(): void
+    public function testCompactSettingsUseOneConnectionAndTwoModelsAndDropObsoleteGateway(): void
     {
         $this->login();
         $legacy = $this->payload();
         $legacy['settings']['commands']['achievement_image']['model'] = 'old-operation-model';
-        $legacy['secrets']['gateway']['key'] = ['action' => 'replace', 'value' => 'inactive-private-key'];
+        (new AiSetting())->forceFill(['id' => 1, 'settings' => ['providers' => ['gateway' => ['key' => 'inactive-private-key']]]])->save();
         $this->put(self::URL, $legacy)->assertSessionHasNoErrors();
         $client = app(ChatGptService::class);
         $payload = [
@@ -289,7 +295,8 @@ class AiSettingsTest extends TestCase
         ];
         $this->put(self::URL, $payload)->assertSessionHasNoErrors();
         $settings = app(AiSettings::class)->all();
-        $this->assertSame('inactive-private-key', $settings['providers']['gateway']['key']);
+        $this->assertArrayNotHasKey('gateway', $settings['providers']);
+        $this->assertArrayNotHasKey('gateway', AiSetting::find(1)->settings['providers']);
         $this->assertNull($settings['commands']['achievement_image']['model']);
         $png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
         Http::fake(fn (Request $request) => Http::response(str_ends_with($request->url(), '/images')

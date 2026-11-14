@@ -8,6 +8,7 @@ import initInterfaceControls from './components/interface-controls';
 import initWorkbookNavigation from './components/workbook-navigation';
 import initTabStrips from './components/tab-strip';
 import initDeadlineWorkspaces from './components/deadline-workspace';
+import initDeadlineEditors from './components/deadline-editor';
 import initSelectionControls from './components/selection-controls';
 import initAvatarFrameEditor from './components/avatar-frame-editor';
 import initCollectionFilters from './components/collection-filters';
@@ -96,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initWorkbookNavigation();
     initTabStrips();
     initDeadlineWorkspaces();
+    initDeadlineEditors();
 
     if (window.autosize) {
         window.autosize(document.querySelectorAll('textarea'));

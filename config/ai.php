@@ -1,17 +1,12 @@
 <?php
 
 return [
-    'provider' => env('AI_PROVIDER', 'gateway'),
+    'provider' => 'openai',
     // Older installations retain per-command overrides until the simplified form is saved.
     'shared_models' => env('AI_SHARED_MODELS', false),
 
     // A compatible API uses one base URL. Explicit old URLs remain supported.
     'providers' => [
-        'gateway' => [
-            'key' => env('GPT_KEY'),
-            'endpoint' => env('GPT_GATEWAY', 'https://gpt-gateway.ai.medsenger.ru:4443/v1/responses'),
-            'proxy' => env('GPT_PROXY'),
-        ],
         'openai' => [
             'key' => env('OPENAI_API_KEY'),
             'base_url' => env('OPENAI_BASE_URL'),

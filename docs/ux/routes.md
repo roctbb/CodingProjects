@@ -55,6 +55,8 @@
 | GET\|HEAD | `/insider/courses/{course_id}/chapters/{chapter_id}/lower` | action | [Страница курса](screens.md#course) | web, verified, auth |
 | GET\|HEAD | `/insider/courses/{course_id}/chapters/{chapter_id}/upper` | action | [Страница курса](screens.md#course) | web, verified, auth |
 | POST | `/insider/courses/{course_id}/current-lesson` | action | [Текущий урок курса](screens.md#course-current-lesson) | web, verified, auth, course |
+| GET\|HEAD | `/insider/courses/{course_id}/deadline-policies/{type}/{target}` | api | [Дедлайны курса](screens.md#deadlines) | web, verified |
+| POST | `/insider/courses/{course_id}/deadline-policies/{type}/{target}` | action | [Дедлайны курса](screens.md#deadlines) | web, verified |
 | GET\|HEAD | `/insider/courses/{course_id}/lessons/{id}/create` | screen | [Добавление ступени](screens.md#step-create) | web, verified, auth |
 | POST | `/insider/courses/{course_id}/lessons/{id}/create` | action | [Добавление ступени](screens.md#step-create) | web, verified, auth |
 | POST | `/insider/courses/{course_id}/lessons/{id}/deadline` | action | [Дедлайн всего урока](screens.md#lesson-deadline) | web, verified, auth, teacher |
@@ -141,6 +143,12 @@
 | GET\|HEAD | `/insider/courses/{id}/enroll` | action | [Код приглашения / запись на курс](screens.md#join-course) | web, verified, auth |
 | GET\|HEAD | `/insider/courses/{id}/export` | download | [Страница курса](screens.md#course) | web, verified, auth |
 | GET\|HEAD | `/insider/courses/{id}/export-md` | download | [Страница курса](screens.md#course) | web, verified, auth, course, teacher |
+| GET\|HEAD | `/insider/courses/{id}/notifications` | screen | [Уведомления курса](screens.md#course-notifications) | web, verified |
+| POST | `/insider/courses/{id}/notifications` | action | [Уведомления курса](screens.md#course-notifications) | web, verified |
+| POST | `/insider/courses/{id}/notifications/chats/{chat}` | action | [Уведомления курса](screens.md#course-notifications) | web, verified |
+| POST | `/insider/courses/{id}/notifications/deliveries/{delivery}/retry` | action | [Уведомления курса](screens.md#course-notifications) | web, verified |
+| POST | `/insider/courses/{id}/notifications/link` | action | [Уведомления курса](screens.md#course-notifications) | web, verified |
+| POST | `/insider/courses/{id}/notifications/preference` | action | [Дедлайны курса](screens.md#deadlines) | web, verified |
 | POST | `/insider/courses/{id}/poster` | action | [Настройки курса](screens.md#course-edit) | web, verified, auth, course, teacher |
 | GET\|HEAD | `/insider/courses/{id}/report` | screen | [Отчёт по курсу](screens.md#report) | web, verified, auth, course, teacher |
 | POST | `/insider/courses/{id}/report/students/{student_id}/geekpaste-warning/reset` | action | [Отчёт по курсу](screens.md#report) | web, verified, auth, course, teacher |

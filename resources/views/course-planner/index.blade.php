@@ -12,7 +12,7 @@
 
 @section('content')
 <x-gc-course-header :course="$course" active="plan" />
-<div id="course-planner" data-api="{{ url('/insider/courses/'.$course->id.'/planner/api') }}" data-today="{{ now('Europe/Moscow')->toDateString() }}" data-view="calendar">
+<div id="course-planner" data-api="{{ url('/insider/courses/'.$course->id.'/planner/api') }}" data-deadline-api="{{ url('/insider/courses/'.$course->id.'/deadline-policies/task') }}" data-today="{{ now('Europe/Moscow')->toDateString() }}" data-view="calendar">
     <h2 class="visually-hidden">План занятий</h2>
     @if (!$ready)
         <div class="alert alert-info">Для запуска планировщика администратору необходимо применить новые миграции базы данных.</div>

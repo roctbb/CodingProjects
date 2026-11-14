@@ -241,6 +241,7 @@
 - Продолжить обучение → [Ступень](#step) (navigate)
 - Выбрать текущий урок в меню карточки → [Текущий урок курса](#course-current-lesson) (open)
 - Задачи главы → [Задачи главы ученика](#chapter-tasks) (navigate)
+- Уведомления курса · меню действий → [Уведомления курса](#course-notifications) (navigate)
 
 Исходники:
 
@@ -282,7 +283,10 @@
 
 Маршруты:
 
+- `GET|HEAD /insider/courses/{course_id}/deadline-policies/{type}/{target}` — api
+- `POST /insider/courses/{course_id}/deadline-policies/{type}/{target}` — action
 - `GET|HEAD /insider/courses/{id}/deadlines` — screen
+- `POST /insider/courses/{id}/notifications/preference` — action
 
 Переходы:
 
@@ -2832,3 +2836,30 @@ Telegram, почта и Силаэдр в личных настройках; н�
 - [resources/views/steps/native-submission.blade.php](../../resources/views/steps/native-submission.blade.php)
 - [resources/views/steps/partials/native-workspace.blade.php](../../resources/views/steps/partials/native-workspace.blade.php)
 - [resources/assets/js/code-checking/workspace.js](../../resources/assets/js/code-checking/workspace.js)
+
+<a id="course-notifications"></a>
+
+## Уведомления курса
+
+Тип: page. Роли сценария: Преподаватель, Администратор.
+
+Настроить личные напоминания преподавателям и чатам курса, подтвердить подключение группы и проверить доставку.
+
+Проверка: Цепочки сроков: общий стиль, компактные настройки, 390/1440 px, подмена Telegram в проверках.
+
+Состояния для макета и проверки: группа ожидает подтверждения; подключённая тема; отключённый бот; очередь / ошибка / неизвестный результат; пустой журнал.
+
+Маршруты:
+
+- `GET|HEAD /insider/courses/{id}/notifications` — screen
+- `POST /insider/courses/{id}/notifications` — action
+- `POST /insider/courses/{id}/notifications/chats/{chat}` — action
+- `POST /insider/courses/{id}/notifications/deliveries/{delivery}/retry` — action
+- `POST /insider/courses/{id}/notifications/link` — action
+
+Исходники:
+
+- [resources/views/courses/notifications.blade.php](../../resources/views/courses/notifications.blade.php)
+- [app/Http/Controllers/CourseNotificationsController.php](../../app/Http/Controllers/CourseNotificationsController.php)
+- [app/Services/CourseTelegram.php](../../app/Services/CourseTelegram.php)
+- [app/Services/DeadlineNotifications.php](../../app/Services/DeadlineNotifications.php)

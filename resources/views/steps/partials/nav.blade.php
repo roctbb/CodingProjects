@@ -11,8 +11,16 @@
         <div class="gc-workbook-steps__heading"><h2>Ступени урока</h2><span>{{ $stepPosition }} из {{ $lessonSteps->count() }}</span></div>
         <nav class="gc-workbook-steps__list" aria-label="Ступени урока">
             @foreach($lessonSteps as $lessonStep)
+                @php
+                    $hasVisibleTasks = $lessonStep->tasks->contains(fn ($task) => $isInsider
+                        ? $task->isVisible($user, $course)
+                        : !$task->is_hidden);
+                @endphp
                 <a class="gc-workbook-steps__link" href="{{ url($stepBaseUrl.$lessonStep->id) }}" @if($lessonStep->id == $step->id) aria-current="page" @endif>
                     <span class="gc-workbook-steps__number" aria-hidden="true">{{ $loop->iteration }}</span><span>{{ $lessonStep->name }}</span>
+                    @if($hasVisibleTasks)
+                        <span class="gc-workbook-steps__tasks" title="Есть задания"><i class="fas fa-trophy" aria-hidden="true"></i><span class="visually-hidden">Есть задания</span></span>
+                    @endif
                 </a>
             @endforeach
         </nav>

@@ -211,7 +211,8 @@
 .gc-workbook-steps__link:hover { background:color-mix(in srgb,var(--gc-on-surface) 4%,var(--gc-workbook-rail)); color:var(--gc-on-surface); }
 .gc-workbook-steps__link[aria-current="page"] { background:var(--gc-workbook-current-bg); color:var(--gc-workbook-current-ink); font-weight:500; }
 .gc-workbook-steps__number { color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption); font-variant-numeric:tabular-nums; }
-.gc-workbook-steps__link[aria-current="page"] .gc-workbook-steps__number { color:inherit; }
+.gc-workbook-steps__tasks { grid-column:3; justify-self:end; color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption); }
+.gc-workbook-steps__link[aria-current="page"] :is(.gc-workbook-steps__number,.gc-workbook-steps__tasks) { color:inherit; }
 .gc-workbook-add-step { display:inline-flex; align-items:center; gap:var(--gc-space-2); }
 .gc-workbook-steps__content>.gc-workbook-add-step { margin:var(--gc-space-3) var(--gc-space-1) 0; }
 .gc-workbook-heading-actions { flex:0 1 auto; max-width:100%; margin-left:auto; justify-content:flex-end; }

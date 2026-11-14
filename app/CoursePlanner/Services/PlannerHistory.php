@@ -63,7 +63,7 @@ class PlannerHistory
         }
         $order = array_keys($this->snapshot($planner));
         // Restore missing parents first. Created leaf rows are removed before restoring their unique keys.
-        $leaves = ['planner_resource_lesson_links', 'planner_session_resources', 'planner_session_texts', 'planner_session_records', 'planner_deadlines', 'task_deadlines'];
+        $leaves = ['planner_resource_lesson_links', 'planner_session_resources', 'planner_session_texts', 'planner_session_records', 'planner_deadlines', 'task_deadlines', 'deadline_stages'];
         foreach (array_reverse($order) as $table) {
             if (!in_array($table, $leaves, true)) {
                 continue;
@@ -103,6 +103,12 @@ class PlannerHistory
                 }
             }
         }
+        foreach (collect($delta)->where('table', 'deadline_policies') as $row) {
+            if ($row['before']) DB::table('deadline_policies')->where('id', $row['id'])->update([
+                'revision' => max($row['before']['revision'], $row['after']['revision'] ?? 0) + 1, 'updated_at' => now(),
+            ]);
+        }
+        app(\App\Services\CourseDeadlineService::class)->forget($planner->course_id);
         return ['undone_operation_id' => $change->operation_id];
     }
 
@@ -120,6 +126,10 @@ class PlannerHistory
         $queries['planner_resource_lesson_links'] = DB::table('planner_resource_lesson_links')->whereIn('session_resource_id', $linkIds);
         $queries['planner_deadlines'] = DB::table('planner_deadlines')->where('planner_course_id', $planner->id);
         $queries['task_deadlines'] = DB::table('task_deadlines')->where('course_id', $planner->course_id);
+        if (\Illuminate\Support\Facades\Schema::hasTable('deadline_policies')) {
+            $queries['deadline_policies'] = DB::table('deadline_policies')->where('course_id', $planner->course_id);
+            $queries['deadline_stages'] = DB::table('deadline_stages')->whereIn('policy_id', DB::table('deadline_policies')->where('course_id', $planner->course_id)->select('id'));
+        }
         $result = [];
         foreach ($queries as $table => $query) {
             $result[$table] = [];

@@ -29,14 +29,14 @@ config(['app.env' => 'testing', 'app.debug' => false, 'app.url' => getenv('UI_QA
     'session.cookie' => 'ui_qa_session', 'session.expire_on_close' => true, 'session.secure' => false,
     'session.domain' => null, 'session.path' => '/', 'queue.default' => 'sync',
     'branding.colors' => [], 'branding.dark_colors' => [],
-    'ai.provider' => 'gateway', 'ai.shared_models' => true,
+    'ai.provider' => 'openai', 'ai.shared_models' => true,
     'ai.providers' => [
-        'gateway' => ['key' => null, 'endpoint' => 'https://gateway.example.test/v1/responses', 'proxy' => null],
         'openai' => ['key' => null, 'base_url' => 'https://api.example.test/v1', 'endpoint' => 'https://api.example.test/v1/responses',
             'proxy' => null, 'image_api' => 'responses', 'images_url' => null],
     ],
     'ai.defaults' => ['text' => ['model' => 'qa-text', 'timeout' => 90], 'image' => ['model' => 'qa-image', 'timeout' => 180]],
     'ai.commands' => [],
+    'services.telegram' => ['bot_token'=>'123:qa-fake','bot_username'=>'class_test_bot','api_url'=>'https://telegram.example','timeout'=>10,'proxy'=>null,'webhook_secret'=>'qa-secret'],
     'logging.default' => 'single', 'logging.channels.single.path' => $directory.'/server-errors.log']);
 $app->setLocale('ru');
 mt_srand(4);

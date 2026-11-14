@@ -1,7 +1,7 @@
 import { esc, date } from "./format.js";
 
 export function createEntryActions({ getState, mutate, dialog, entryDialogs }) {
-  const { modal, select, values } = dialog;
+  const { modal, select, field, values } = dialog;
   const { deadlineModal, relationsModal, splitModal, targetOptions } = entryDialogs;
   const entryById = (kind, id) => {
     for (const session of getState().data.sessions) {
@@ -12,13 +12,19 @@ export function createEntryActions({ getState, mutate, dialog, entryDialogs }) {
     }
     return null;
   };
-  const names = new Set(["edit-text", "delete-entry", "move-entry", "entry-up", "entry-down", "relations", "refresh-entry", "split", "deadline", "add-deadline", "lesson-deadlines", "calendar-deadline"]);
+  const names = new Set(["class-bonus", "edit-text", "delete-entry", "move-entry", "entry-up", "entry-down", "relations", "refresh-entry", "split", "deadline", "add-deadline", "lesson-deadlines", "calendar-deadline"]);
   async function handle(button) {
     const { data, layer } = getState();
     const name = button.dataset.action;
     const [kind, id] = (button.dataset.entry || "").split(":");
     const context = id ? entryById(kind, id) : null;
     switch (name) {
+      case 'class-bonus':
+        modal('Бонус за решение на занятии', '<p>' + esc(context.entry.resource.title) + '</p>' + field('class_bonus_gc', 'GC за каждую полностью решённую задачу', 'number', context.entry.class_bonus_gc || 0, 'min="0" max="10000" step="1" required') +
+          '<p class="gc-help-text mt-3">0 — без бонуса. Учитывается время сдачи от начала до конца занятия по расписанию. У занятия должно быть задано время. За одну задачу бонус начисляется один раз в курсе, даже если проверка завершилась позже. Для урока и ступени правило охватывает их задачи.</p>', async () => {
+            await mutate('update_entry', { kind, entry_id: Number(id), class_bonus_gc: Number(values().class_bonus_gc) }, 'Бонус сохранён.');
+          });
+        break;
       case "edit-text":
         modal(
           "Изменить запись",

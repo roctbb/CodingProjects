@@ -129,7 +129,7 @@ services:
     networks:
       - app
 
-  queue:
+  queue: &queue-worker
     build:
       context: .
       dockerfile: conf/Dockerfile
@@ -162,6 +162,12 @@ services:
         max-file: "3"
     networks:
       - app
+
+  notifications:
+    <<: *queue-worker
+    container_name: codingprojects-notifications
+    stop_grace_period: 120s
+    command: php artisan queue:work --queue=notifications --sleep=1 --tries=1 --timeout=90
 
   scheduler:
     build:

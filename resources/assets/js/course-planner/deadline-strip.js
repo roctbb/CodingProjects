@@ -7,7 +7,10 @@ export function renderDeadlineStrip(deadlines, {escape, formatDate, lessonName, 
     }
     const pointsLabel = entries => {
         const units = new Map();
-        for (const {points} of entries) {
+        const seen = new Set();
+        for (const {points, resource_key, key} of entries) {
+            if (seen.has(resource_key || key)) continue;
+            seen.add(resource_key || key);
             if (!points?.unit || points.value === null || points.value === undefined || !Number.isFinite(Number(points.value))) continue;
             units.set(points.unit, (units.get(points.unit) || 0) + Number(points.value));
         }
@@ -19,7 +22,8 @@ export function renderDeadlineStrip(deadlines, {escape, formatDate, lessonName, 
         const rows = entries.map(entry => {
             const lesson = lessonName(entry.lesson_id);
             const points = pointsLabel([entry]);
-            return `<button type="button" class="planner-deadline-row" data-action="calendar-deadline" data-deadline="${indexFor(entry)}"><span>${escape(entry.title)}${lesson ? `<small>${escape(lesson)}</small>` : ''}</span>${points ? `<span class="planner-deadline-points">${escape(points)}</span>` : ''}</button>`;
+            const stage = entry.time ? `${entry.time} · ${Math.round(entry.penalty * 100)}%` : '';
+            return `<button type="button" class="planner-deadline-row" data-action="calendar-deadline" data-deadline="${indexFor(entry)}"><span>${escape(entry.title)}${lesson ? `<small>${escape(lesson)}</small>` : ''}${stage ? `<small>${escape(stage)}</small>` : ''}</span>${points ? `<span class="planner-deadline-points">${escape(points)}</span>` : ''}</button>`;
         }).join('');
         return `<details class="planner-deadline-group" data-deadline-date="${escape(day)}" ${openDates.has(day) ? 'open' : ''}><summary><time datetime="${escape(day)}">${escape(formatDate(day))}</time><span class="planner-deadline-preview">${escape(names)}${entries.length > 2 ? ` · ещё ${entries.length - 2}` : ''}</span><span class="planner-deadline-count">Работ: ${entries.length}${totals ? ` · ${escape(totals)}` : ''}</span><i class="fas fa-chevron-down" aria-hidden="true"></i></summary><div class="planner-deadline-items">${rows}</div></details>`;
     }).join('');

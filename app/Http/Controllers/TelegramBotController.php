@@ -24,7 +24,8 @@ class TelegramBotController extends Controller
         $secret = app(TelegramSettings::class)->all()['webhook_secret'] ?? null;
 
         if (!$secret) {
-            return true;
+            // With polling enabled there is no authenticated webhook endpoint.
+            return false;
         }
 
         return hash_equals($secret, (string) $request->header('X-Telegram-Bot-Api-Secret-Token'))
