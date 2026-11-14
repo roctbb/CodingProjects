@@ -477,6 +477,6 @@ class PlannerService
     private function removeException(PlannerCourse $planner, array $input): array
     {
         CalendarException::where('planner_course_id', $planner->id)->whereKey($input['exception_id'] ?? null)->firstOrFail()->delete();
-        return $this->calendar->rebuild($planner, $this->calendar->currentSettings($planner));
+        return $this->calendar->refresh($planner);
     }
 }

@@ -117,7 +117,20 @@ class CalendarService
         foreach ($data['rules'] as $rule) {
             ScheduleRule::updateOrCreate(['planner_course_id' => $planner->id, 'rule_key' => $rule['rule_key']], $rule + ['active' => true]);
         }
-        $candidates = $this->candidates($planner, $data);
+        return $this->synchronizeSlots($planner, $this->candidates($planner, $data));
+    }
+
+    public function refresh(PlannerCourse $planner): array
+    {
+        $settings = $this->currentSettings($planner);
+        // Exceptions also apply to manually added dates before a weekly schedule exists.
+        $candidates = $settings['starts_on'] && $settings['ends_on'] && $settings['rules']
+            ? $this->candidates($planner, $this->settings($settings)) : [];
+        return $this->synchronizeSlots($planner, $candidates);
+    }
+
+    private function synchronizeSlots(PlannerCourse $planner, array $candidates): array
+    {
         $slots = CalendarSlot::where('planner_course_id', $planner->id)->get()->keyBy('occurrence_key');
         $moved = [];
         foreach ($candidates as $key => $slotData) {
@@ -159,7 +172,7 @@ class CalendarService
             throw ValidationException::withMessages(['rule_key' => 'Недельная позиция не найдена.']);
         }
         $exception = CalendarException::create($data + ['planner_course_id' => $planner->id]);
-        return ['exception_id' => $exception->id] + $this->rebuild($planner, $this->currentSettings($planner));
+        return ['exception_id' => $exception->id] + $this->refresh($planner);
     }
 
     public function manualSlot(PlannerCourse $planner, array $input): array

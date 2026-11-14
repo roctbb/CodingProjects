@@ -111,6 +111,69 @@ class CoursePlannerTest extends TestCase
         $this->assertSame(0, DB::table('planner_calendar_exceptions')->count());
     }
 
+    public function test_manual_dates_can_be_excluded_and_restored_without_configuring_a_schedule(): void
+    {
+        $session = $this->command('add_slot', ['date' => '2026-11-09', 'duration_minutes' => 90, 'title' => 'Практика'])
+            ->assertOk()->json('result.session_id');
+        $slot = DB::table('planner_sessions')->where('id', $session)->value('calendar_slot_id');
+        $this->attach($session);
+        $exception = $this->command('add_exception', ['starts_on' => '2026-11-09', 'ends_on' => '2026-11-09', 'reason' => 'Каникулы'])
+            ->assertOk()->assertJsonPath('result.backlog_session_ids', [$session])->json('result.exception_id');
+        $this->assertDatabaseHas('planner_calendar_slots', ['id' => $slot, 'state' => 'excluded', 'reason' => 'Каникулы']);
+        $this->assertNull(DB::table('planner_sessions')->where('id', $session)->value('calendar_slot_id'));
+        $this->assertSame(1, DB::table('planner_session_resources')->where('session_id', $session)->count());
+        $this->assertDatabaseHas('planner_courses', ['course_id' => 1, 'starts_on' => null, 'ends_on' => null]);
+        $this->assertSame(0, DB::table('planner_schedule_rules')->count());
+
+        $this->command('remove_exception', ['exception_id' => $exception])->assertOk();
+        $this->assertDatabaseHas('planner_calendar_slots', ['id' => $slot, 'state' => 'available', 'reason' => null]);
+        $this->assertSame(1, DB::table('planner_session_resources')->where('session_id', $session)->count());
+        $this->assertSame(1, DB::table('planner_calendar_slots')->count());
+        $this->assertSame(0, DB::table('planner_schedule_rules')->count());
+        $this->assertSame('2026-09-01', DB::table('courses')->where('id', 1)->value('start_date'));
+
+        $change = DB::table('planner_changes')->latest('id')->value('id');
+        $this->command('undo', ['change_id' => $change])->assertOk();
+        $this->assertDatabaseHas('planner_calendar_slots', ['id' => $slot, 'state' => 'excluded']);
+        $this->assertDatabaseHas('planner_calendar_exceptions', ['id' => $exception]);
+    }
+
+    public function test_excluding_manual_dates_preserves_pinned_sessions_and_past_comments_and_supports_undo(): void
+    {
+        $sessions = [];
+        foreach (['2026-11-08', '2026-11-09'] as $day) {
+            $sessions[] = $this->command('add_slot', ['date' => $day, 'duration_minutes' => 90])->assertOk()->json('result.session_id');
+        }
+        $this->command('update_session', ['session_id' => $sessions[0], 'pinned' => true])->assertOk();
+        $this->command('comment', ['session_id' => $sessions[1], 'comment' => 'Успели разобрать пример'])->assertOk();
+        $slots = DB::table('planner_sessions')->orderBy('id')->pluck('calendar_slot_id', 'id')->all();
+        $this->command('add_exception', ['starts_on' => '2026-11-08', 'ends_on' => '2026-11-09', 'reason' => 'Выходные'])
+            ->assertOk()->assertJsonPath('result.backlog_session_ids', []);
+        $this->assertSame($slots, DB::table('planner_sessions')->orderBy('id')->pluck('calendar_slot_id', 'id')->all());
+        $this->assertSame('Успели разобрать пример', DB::table('planner_sessions')->where('id', $sessions[1])->value('comment'));
+        $change = DB::table('planner_changes')->latest('id')->value('id');
+        $this->command('undo', ['change_id' => $change])->assertOk();
+        $this->assertSame(0, DB::table('planner_calendar_slots')->where('state', 'excluded')->count());
+        $this->assertSame(0, DB::table('planner_calendar_exceptions')->count());
+    }
+
+    public function test_manual_calendar_exceptions_validate_dates_and_respect_overlapping_exclusions(): void
+    {
+        $this->command('add_slot', ['date' => '2026-11-09', 'duration_minutes' => 90])->assertOk();
+        $revision = DB::table('planner_courses')->value('revision');
+        $this->command('add_exception', ['starts_on' => '2026-11-10', 'ends_on' => '2026-11-09', 'reason' => 'Invalid'])->assertUnprocessable();
+        $this->assertSame($revision, DB::table('planner_courses')->value('revision'));
+        $this->assertSame(0, DB::table('planner_calendar_exceptions')->count());
+        $first = $this->command('add_exception', ['starts_on' => '2026-11-09', 'ends_on' => '2026-11-09', 'reason' => 'Первый'])
+            ->assertOk()->json('result.exception_id');
+        $second = $this->command('add_exception', ['starts_on' => '2026-11-09', 'ends_on' => '2026-11-10', 'reason' => 'Второй'])
+            ->assertOk()->json('result.exception_id');
+        $this->command('remove_exception', ['exception_id' => $first])->assertOk();
+        $this->assertDatabaseHas('planner_calendar_slots', ['state' => 'excluded', 'reason' => 'Второй']);
+        $this->command('remove_exception', ['exception_id' => $second])->assertOk();
+        $this->assertDatabaseHas('planner_calendar_slots', ['state' => 'available', 'reason' => null]);
+    }
+
     public function test_catalog_search_and_pagination_are_bounded_and_course_scoped(): void
     {
         $page = $this->getJson($this->api.'/providers/codingprojects/resources?limit=1&type=step')->assertOk();
