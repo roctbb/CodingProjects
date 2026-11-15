@@ -97,8 +97,9 @@ class StepsController extends Controller
         $nativeTaskProgress=app(\App\Services\CourseAccess::class)->manages($user,$course)
             ? app(\App\Services\CodeChecking\History::class)->ungradedProgress($course->id,$tasks->pluck('id')->all()) : collect();
         $taskReviewContext=app(\App\Services\TaskLocation::class)->context(request(),$user,$course,$tasks);
+        $taskLessonProgress=\App\LessonStudentStats::where('course_id',$course->id)->where('lesson_id',$step->lesson_id)->where('student_id',$user->id)->first();
 
-        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'latestTaskAiSummaries', 'earnedTaskAchievements','nativeTaskProgress','taskReviewContext'));
+        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'latestTaskAiSummaries', 'earnedTaskAchievements','nativeTaskProgress','taskReviewContext','taskLessonProgress'));
     }
 
     public function downloadNotebook($course_id, $id)

@@ -27,6 +27,8 @@ export function resultHeader(record,{sourceOnly=false,showScore=true,showSourceD
     const title=node('h3',{class:'gc-result-verdict__title'},verdict.title);
     const details=node('div',{class:'gc-result-verdict__details'},title,
         sourceOnly && showSourceDate?node('p',{class:'text-muted small mb-0'},`Сохранённая версия решения · ${new Date(record.created_at).toLocaleString('ru-RU')}`):null);
+    if(!sourceOnly && record.kind!=='legacy_attempt' && record.awarded_xp!==null && record.awarded_xp!==undefined)
+        details.append(node('p',{class:'gc-help-text mb-0'},`Зачтено: ${record.awarded_xp} XP`));
     const header=node('header',{class:`gc-result-verdict is-${verdict.tone}`,'aria-label':'Итог проверки'},
         node('i',{class:`fas ${verdict.icon} gc-result-verdict__icon`,'aria-hidden':'true'}),details);
     if(showScore && record.state!=='error' && record.kind!=='legacy_attempt' && record.points!==null && record.points!==undefined)header.append(node('div',{class:'gc-result-score'},

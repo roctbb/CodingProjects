@@ -6442,6 +6442,38 @@
     "CourseNotificationsController@preference": {
       "node": "deadlines",
       "kind": "action"
+    },
+    "ArchivePreviewController@index": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "ArchivePreviewController@source": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "ArchivePreviewController@download": {
+      "node": "code-submission",
+      "kind": "download"
+    },
+    "CodeCheckingController@retry": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "TaskSubmissionController@runTest": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "CodeCheckingController@attempt": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "TaskSubmissionController@archiveArtifact": {
+      "node": "geekexecutor",
+      "kind": "download"
+    },
+    "TaskSubmissionController@legacyExports": {
+      "node": "geekexecutor",
+      "kind": "api"
     }
   },
   "observations": [

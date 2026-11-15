@@ -908,6 +908,16 @@ class CodeCheckingTest extends TestCase
         app(Integrity::class)->check($other);
         $this->assertTrue(app(Integrity::class)->view($other, true)['plagiarism']['warning']);
         $this->assertArrayNotHasKey('matches', app(Integrity::class)->view($other, false)['plagiarism']);
+        $teacherView=app(Integrity::class)->view($other,true,User::findOrFail(1));
+        $this->assertStringContainsString('student=2', $teacherView['plagiarism']['matches'][0]['review_url']);
+        $this->assertStringContainsString('attempt='.$record->id, $teacherView['plagiarism']['matches'][0]['review_url']);
+        $foreign=$record->replicate()->forceFill(['id'=>(string)Str::uuid(),'course_id'=>8,'request_id'=>(string)Str::uuid()]);$foreign->save();
+        $report=DB::table('code_integrity_reports')->where('submission_id',$other->id)->first();
+        $matches=json_decode($report->plagiarism,true);$matches['matches'][]=['submission_id'=>$foreign->id,'percent'=>99];
+        DB::table('code_integrity_reports')->where('submission_id',$other->id)->update(['plagiarism'=>json_encode($matches)]);
+        $teacherView=app(Integrity::class)->view($other,true,User::findOrFail(1));
+        $this->assertArrayNotHasKey('review_url',$teacherView['plagiarism']['matches'][1]);
+        $this->assertArrayNotHasKey('user_name',$teacherView['plagiarism']['matches'][1]);
         $url = '/insider/code-submissions/'.$other->id.'/integrity/review';
         $this->login(3)->putJson($url, ['dismissed' => true])->assertForbidden();
         $this->login(1)->putJson($url, ['dismissed' => true, 'comment' => 'PRIVATE REVIEW'])->assertOk();
@@ -1363,6 +1373,11 @@ class CodeCheckingTest extends TestCase
         $solution=\App\Solution::firstOrFail();$this->assertNull($solution->mark);$this->assertNull($solution->raw_mark);$this->assertNull($solution->checked);
         Notification::assertSentToTimes(User::find(1),\App\Notifications\NewSolution::class,1);
         $this->assertDatabaseCount('coin_transactions',1);
+        $this->getJson('/insider/code-submissions/'.$id.'?test_data=metadata')->assertOk()->assertJsonPath('review',null);
+        $review=$this->login(1)->getJson('/insider/code-submissions/'.$id.'?test_data=metadata')->assertOk()->json('review');
+        $this->assertSame(64,strlen($review['token']));
+        $this->postJson($review['skip_url'],['review_token'=>$review['token']])->assertOk()->assertJsonPath('skipped',true);
+        $this->getJson('/insider/code-submissions/'.$id.'?test_data=metadata')->assertJsonPath('review',null);
     }
 
     public function test_storage_preparation_is_dry_repeatable_and_keeps_the_old_bytes(): void

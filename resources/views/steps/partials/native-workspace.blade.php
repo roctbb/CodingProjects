@@ -4,6 +4,10 @@
     @if($nativeTabWorkspace ?? false) data-execution-tab-workspace @endif
     @if($nativeTeacher && !isset($nativeUser)) data-execution-inline-review hidden @endif
     data-endpoint="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id) }}"
+    @php($nativeStep = $step ?? $task->step)
+    @php($continueTask = isset($tasks) ? $tasks->values()->get(($loop->index ?? 0) + 1) : null)
+    data-continue-url="{{ $continueTask ? url('/insider/courses/'.$course->id.'/steps/'.$nativeStep->id.'#task'.$continueTask->id) : url('/insider/courses/'.$course->id.'?chapter='.$nativeStep->lesson->chapter_id) }}"
+    data-continue-label="{{ $continueTask ? 'Следующая задача' : 'К урокам курса' }}"
     data-task-id="{{ $task->id }}" data-course-id="{{ $course->id }}"
     @if($nativeHistoryOnly ?? false) data-history-only @endif
     data-teacher="{{ $nativeTeacher ? 'true' : 'false' }}"

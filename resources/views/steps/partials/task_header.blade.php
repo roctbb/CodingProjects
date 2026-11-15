@@ -1,5 +1,6 @@
 @php($hasDeadlineChain = $deadline instanceof \App\Support\DeadlineRule && !empty($deadline->series))
 <div class="step-task-card__header gc-section-header">
+    @if(!$isManager)<span class="gc-task-emblem" aria-hidden="true"><i class="{{ $taskTypeIcon }}"></i></span>@endif
     <div class="gc-task-heading min-width-0">
         <h2 class="step-task-card__title mb-0">{{$task->name}}</h2>
         <div class="gc-task-heading__type">
@@ -17,7 +18,7 @@
                 <a class="step-task-achievement-badge" href="{{ url('/insider/profile/'.$user->id.'#achievement-'.$earnedAchievementId) }}"><i class="fas fa-trophy" aria-hidden="true"></i> Достижение получено</a>
             @endif
             @if($task->price > 0)
-                <span><i class="fas fa-coins gc-currency-icon" aria-hidden="true"></i> {{$task->price}} GC</span>
+                <span class="gc-task-reward"><i class="fas fa-coins gc-currency-icon" aria-hidden="true"></i> {{$task->price}} GC</span>
             @endif
         </div>
         @if($hasDeadlineChain)<span class="gc-task-deadline-chain"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-chain :rule="$deadline" /></span>@endif

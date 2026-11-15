@@ -161,7 +161,8 @@ class Submissions
                 && !$this->sourceVersionUnknown($submission)
                 && !($run->snapshot['requires_conversion'] ?? false) && !($submission->source_metadata['requires_conversion'] ?? false)),
             'model' => $model['model'] ?? null,
-            'reason' => $this->sourceVersionUnknown($submission) ? 'Версия кода исторической сдачи не подтверждена. Выберите конкретную работу для ручной оценки.' : null];
+            'reason' => $this->sourceVersionUnknown($submission) ? 'Версия кода исторической сдачи не подтверждена. Выберите конкретную работу для ручной оценки.'
+                : (!$model ? 'Модель для повторной ИИ-проверки не настроена администратором.' : null)];
     }
 
     public function manualReview(CodeSubmission $submission, User $teacher): CodeExecutionRun
@@ -231,6 +232,8 @@ class Submissions
             'report' => $reportView,
             'checker_diagnostics' => $includeTestFields && $this->access->teacher($viewer,(int)$submission->course_id) ? ($run->legacy_report['suite_diagnostics']??null) : null,
             'teacher_viewed'=>$submission->teacher_viewed, 'is_public'=>$submission->is_public,
+            'review'=>$this->access->teacher($viewer,(int)$submission->course_id) ? app(ReviewActions::class)->forSolution($solution) : null,
+            'lesson_progress'=>$this->lessonProgress($submission),
             'review_request'=>app(SubmissionReview::class)->status($submission),
             'legacy'=>isset($submission->source_metadata['legacy_id']) ? [
                 'source_url'=>url('/insider/code-submissions/'.$submission->id.'/legacy-source'),
@@ -241,8 +244,19 @@ class Submissions
             'runs' => CodeExecutionRun::where('submission_id', $submission->id)->orderByDesc('created_at')->get(['id','state','points','created_at'])
                 ->map(fn ($item) => ['id' => $item->id, 'state' => $item->state, 'points' => $item->points,
                     'created_at' => $item->created_at?->toIso8601String()])->all(),
-            'integrity' => app(Integrity::class)->view($submission, $this->access->teacher($viewer, (int) $submission->course_id)),
+            'integrity' => app(Integrity::class)->view($submission, $this->access->teacher($viewer, (int) $submission->course_id), $viewer),
             'subscription' => $run->snapshot['check_type'] === 'manual' ? null : app(RunnerClient::class)->subscription($run->id, (int) $viewer->id)];
+    }
+
+    private function lessonProgress(CodeSubmission $submission): ?array
+    {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('lesson_student_stats')) return null;
+        $stats=DB::table('lesson_student_stats as stats')->join('program_steps as step','step.lesson_id','=','stats.lesson_id')
+            ->join('tasks as task','task.step_id','=','step.id')->where('task.id',$submission->task_id)
+            ->where('stats.course_id',$submission->course_id)->where('stats.student_id',$submission->user_id)
+            ->first(['stats.lesson_id','stats.percent','stats.max_points']);
+        if (!$stats || (int)$stats->max_points <= 0) return null;
+        return ['lesson_id'=>(int)$stats->lesson_id,'percent'=>min(100,max(0,(float)$stats->percent)), 'earned'=>(float)$stats->percent>90];
     }
 
     public function input(CodeExecutionRun $run): array

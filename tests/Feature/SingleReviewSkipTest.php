@@ -9,6 +9,23 @@ use Tests\Support\DeadlineFeatureCase;
 
 class SingleReviewSkipTest extends DeadlineFeatureCase
 {
+    public function test_json_skip_and_student_recheck_preserve_the_grade_and_reject_an_old_queue_token(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        DB::table('tasks')->where('id',11)->update(['is_code'=>true]);
+        $solution=$this->solution(mark:5);
+        DB::table('solutions')->where('id',$solution->id)->update(['recheck_requested'=>true,'recheck_comment'=>'Первый запрос на проверку решения.']);
+        $solution=$solution->fresh();
+        $token=$solution->reviewToken();
+        $this->actingAs(User::findOrFail(2))->postJson($this->endpoint($solution),['review_token'=>$token])->assertOk()->assertJsonPath('skipped',true);
+        $url='/insider/courses/1/tasks/11/solution/'.$solution->id.'/recheck';
+        $this->actingAs(User::findOrFail(1))->postJson($url,['recheck_comment'=>'Проверьте, пожалуйста, мой разбор решения.'])->assertOk()->assertJsonPath('requested',true);
+        $this->postJson($url,['recheck_comment'=>'Повторный запрос не меняет предыдущий.'])->assertOk()->assertJsonPath('requested',true);
+        $this->assertSame(5,$solution->fresh()->mark);
+        $this->actingAs(User::findOrFail(2))->postJson($this->endpoint($solution),['review_token'=>$token])->assertConflict();
+        $this->assertTrue((bool)$solution->fresh()->recheck_requested);
+    }
+
     private function endpoint(Solution $solution, ?int $course = null): string
     {
         return '/insider/courses/'.($course ?? $solution->course_id).'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/skip-review';

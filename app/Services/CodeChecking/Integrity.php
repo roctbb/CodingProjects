@@ -150,7 +150,7 @@ class Integrity
         }
     }
 
-    public function view(CodeSubmission $submission, bool $teacher): ?array
+    public function view(CodeSubmission $submission, bool $teacher, ?\App\User $viewer = null): ?array
     {
         $record = DB::table('code_integrity_reports')->where('submission_id', $submission->id)->first();
         if (!$record) return null;
@@ -161,6 +161,21 @@ class Integrity
         if ($submission->solution_id) $dismissed = $dismissed || DB::table('solutions')->where('id', $submission->solution_id)->whereNotNull('geekpaste_integrity_dismissed_at')->exists();
         $value = ['state' => $record->state, 'plagiarism' => $plagiarism, 'ai' => $record->ai ? json_decode($record->ai, true) : null, 'dismissed' => $dismissed];
         if ($teacher) $value['review'] = ['by' => $record->dismissed_by, 'comment' => $record->review_comment, 'at' => $record->dismissed_at];
+        if ($teacher && $viewer && !empty($value['plagiarism']['matches'])) {
+            $records=CodeSubmission::whereIn('id',array_column($value['plagiarism']['matches'],'submission_id'))->whereIn('course_id',DB::table('courses')->select('id'))->with('author:id,name')->get()->keyBy('id');
+            $access=app(Access::class);$courses=[];
+            $task=\App\Task::find($submission->task_id);
+            foreach ($value['plagiarism']['matches'] as &$match) {
+                $other=$records->get($match['submission_id']);
+                if (!$other || !$task || (int)$other->task_id!==(int)$task->id) continue;
+                $allowed=$courses[$other->course_id]??= $access->teacher($viewer,(int)$other->course_id);
+                if (!$allowed) continue;
+                $match['user_name']=$other->author?->name;
+                $match['review_url']=app(\App\Services\TaskLocation::class)->task((int)$other->course_id,$task,(int)$other->user_id,$other->id);
+            }
+            unset($match);
+        }
+
         return $value;
     }
 

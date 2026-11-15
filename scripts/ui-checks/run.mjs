@@ -9,11 +9,12 @@ import { randomBytes } from 'node:crypto';
 import suite from './suite.mjs';
 import interactions from './interactions.mjs';
 import deadlineFlows from './deadline-flows.mjs';
+import taskWorkspace from './task-workspace.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const directory = mkdtempSync(path.join(tmpdir(), 'codingprojects-ui-'));
 const mode = process.argv.includes('--baseline') ? 'baseline' : 'current';
-if (process.argv.includes('--flows-only') && (mode === 'baseline' || process.argv.includes('--compare'))) {
+if ((process.argv.includes('--flows-only') || process.argv.includes('--workspace-only')) && (mode === 'baseline' || process.argv.includes('--compare'))) {
     throw new Error('Baseline and comparison require the complete screen suite.');
 }
 if (process.env.UI_BASELINE_CSS && mode !== 'baseline') throw new Error('UI_BASELINE_CSS is only allowed for a baseline.');
@@ -35,7 +36,7 @@ try {
     await cli(['open', 'about:blank', ...(process.env.UI_HEADED === '1' ? ['--headed'] : [])]);
     const config = { url, output, widths: [1440, 390], palette: process.env.UI_PALETTE || '', css: process.env.UI_BASELINE_CSS ? path.resolve(process.env.UI_BASELINE_CSS) : null };
     const report = { results: [], errors: [] };
-    const checks = process.argv.includes('--flows-only') ? [['interactions', interactions], ['deadlines', deadlineFlows]] : [['browser', suite], ['interactions', interactions], ['deadlines', deadlineFlows]];
+    const checks = process.argv.includes('--workspace-only') ? [['task-workspace', taskWorkspace]] : process.argv.includes('--flows-only') ? [['interactions', interactions], ['deadlines', deadlineFlows], ['task-workspace', taskWorkspace]] : [['browser', suite], ['interactions', interactions], ['deadlines', deadlineFlows], ['task-workspace', taskWorkspace]];
     for (const [name, check] of checks) {
         const raw = await cli(['run-code', `async(page)=>(${check.toString()})(page,${JSON.stringify(config)})`]);
         writeFileSync(path.join(output, `${name}.log`), raw);

@@ -25,7 +25,7 @@ export default function initCodeChecking() {
     document.querySelectorAll('[data-execution-workspace]').forEach(root => {
         if (root.dataset.initialized) return;
         root.dataset.initialized = 'true';
-        let ready, pendingIntent, listScroll=0;
+        let ready, pendingIntent, listScroll=0, openSequence=0;
         const list=root.closest('[data-execution-review-navigation]')?.querySelector('[data-execution-student-list]');
         const load = () => ready ||= import('../code-checking/workspace').then(module => module.workspace(root)).catch(error => {
             ready = null;
@@ -36,29 +36,34 @@ export default function initCodeChecking() {
             throw error;
         });
         const open = async intent => {
-            pendingIntent = intent;
+            pendingIntent = intent;const sequence=++openSequence;
             root.hidden = false;
             if(list && !list.hidden){listScroll=window.scrollY;list.hidden=true;}
             try {
                 const controller = await load();
-                if (!pendingIntent || root.hidden) return;
-                const selected = pendingIntent; pendingIntent = null;
+                if (sequence!==openSequence || root.hidden) return;
+                const selected = intent;
                 if (selected.own) await controller.startOwnSubmission();
                 else await controller.selectStudent(selected,{attempt:selected.attempt});
-                if(!root.hidden)root.scrollIntoView({block:'start',behavior:'instant'});
+
             } catch { /* The workspace displays its retry action. */ }
         };
         root.addEventListener('gc:execution-open',event => open(event.detail));
+        root.addEventListener('gc:execution-navigate',event=>{
+            const links=[...document.querySelectorAll('[data-execution-student]')].filter(link=>link.dataset.executionStudent==='#'+root.id);
+            const index=links.findIndex(link=>link.getAttribute('aria-current')==='true');
+            if(links.length>1)links[(index+(event.detail.direction<0?links.length-1:1))%links.length].click();
+        });
         root.addEventListener('gc:execution-activate',() => {
             if(root.hasAttribute('data-execution-inline-review') && root.hidden)return;
             load().then(controller=>controller.activate()).catch(()=>{});
         });
         root.addEventListener('gc:execution-context',event=>load().then(async controller=>{
             await controller.context(event.detail.attempt);
-            if(event.detail.attempt)root.querySelector('.gc-execution-result')?.scrollIntoView({block:'start',behavior:'instant'});
+
         }).catch(()=>{}));
         root.addEventListener('gc:execution-close',() => {
-            root.hidden = true;
+            openSequence++;root.hidden = true;
             const url=new URL(location.href);for(const key of ['student','attempt','task'])url.searchParams.delete(key);
             if(globalThis.history.state?.gcTaskReview)globalThis.history.back();else globalThis.history.replaceState(null,'',url);
             if(list){list.hidden=false;requestAnimationFrame(()=>window.scrollTo({top:listScroll,behavior:'instant'}));}
@@ -124,7 +129,7 @@ export default function initCodeChecking() {
                 globalThis.history.pushState({gcTaskReview:true},'',url);
             }
             root.dispatchEvent(new CustomEvent('gc:execution-open',{detail:action.dataset.executionOwnSubmission ? {own:true} : {id:action.dataset.studentId,name:action.dataset.studentName}}));
-            requestAnimationFrame(() => root.scrollIntoView({block:'nearest',behavior:'instant'}));
+
         });
     }
     document.querySelectorAll('[data-checker-editor]').forEach(root => {

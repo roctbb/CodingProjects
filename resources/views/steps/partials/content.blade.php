@@ -24,8 +24,15 @@
                 }
                 $taskScoreBadgeClass = $hasUserSolution ? $latestUserSolution->scoreBadgeClass('bg-body') : 'bg-body';
             @endphp
-            <div class="row">
-                <div class="col">
+            <div class="gc-task-intro {{ $isManager ? 'is-teacher' : 'is-student' }}">
+                @include('steps.partials.task_header')
+                @if($isInsider && !$isManager && !$task->is_quiz)
+                    @include('steps.partials.task-goal')
+                @endif
+            </div>
+            <div class="gc-task-layout {{ $isManager ? 'is-teacher' : 'is-student' }} @if($task->is_quiz) is-quiz @endif">
+                <div class="gc-task-context">
+                    @if($isManager)<details class="gc-task-condition-disclosure"><summary>Условие и материалы задачи</summary>@endif
                     @if ($task->is_star)
                         <div class="step-task-note step-task-note--optional" role="note">
                             <span class="text-warning-emphasis flex-shrink-0"><i class="fas fa-star"></i></span>
@@ -60,7 +67,6 @@
                         </section>
                     @endif
                     <div class="gc-section step-task-card step-task-card--{{$taskType}} @if ($task->is_star) is-optional @endif @if ($hasUserSolution) is-submitted @endif">
-                        @include('steps.partials.task_header')
                         <div class="markdown step-task-card__body">
                             {!! parsedown_math($task->text) !!}
                             @if ($isInsider)
@@ -183,8 +189,9 @@
                             </div>
                         </div>
                     @endif
+                    @if($isManager)</details>@endif
                 </div>
-            </div>
+                <div class="gc-task-answer">
             @if (\Request::is('insider/*'))
 
                 @if (!$task->is_quiz)
@@ -193,7 +200,7 @@
                             $stepProgressStudents = $course->relationLoaded('statsStudents') ? $course->statsStudents : $course->students;
                             $ownTabActive = $errors->has('text');
                         @endphp
-                        <div class="gc-task-workspaces mt-3">
+                        <div class="gc-task-workspaces">
                             <div class="nav gc-segmented-tabs" role="tablist" aria-label="Работа с задачей">
                                 <button class="nav-link @if(!$ownTabActive) active @endif" id="student-solutions-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#student-solutions-{{ $task->id }}" data-execution-tab-target="#execution-workspace-{{ $task->id }}" aria-controls="student-solutions-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'false' : 'true' }}">Решения учеников</button>
                                 <button class="nav-link @if($ownTabActive) active @endif" id="own-solution-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#own-solution-{{ $task->id }}" data-execution-tab-target="#execution-own-workspace-{{ $task->id }}" aria-controls="own-solution-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'true' : 'false' }}">Моё решение</button>
@@ -347,6 +354,8 @@
                     @endif
                 @endif
             @endif
+                </div>
+            </div>
         </div>
     @endforeach
     <div data-step-content-tabs data-zero-theory="{{ $zero_theory ? 'true' : 'false' }}" hidden></div>

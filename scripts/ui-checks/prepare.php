@@ -59,3 +59,4 @@ foreach (['catalog-desktop', 'catalog-phone'] as $variant) {
 }
 require __DIR__.'/prepare-code-checking.php';
 require __DIR__.'/prepare-deadlines.php';
+require __DIR__.'/prepare-task-workspace.php';

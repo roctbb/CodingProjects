@@ -29,10 +29,10 @@ export function download(url, label) {
         return node('a', {href:target.href, target:'_blank', rel:'noopener'}, label);
     } catch { return node('span',{},label); }
 }
-export async function request(url, method = 'GET', body) {
+export async function request(url, method = 'GET', body, options = {}) {
     const multipart = body instanceof FormData;
     if (multipart && method === 'PUT') {body.set('_method','PUT'); method = 'POST';}
-    const response = await fetch(url, {method, credentials:'same-origin', headers:{Accept:'application/json',
+    const response = await fetch(url, {signal:options.signal, method, credentials:'same-origin', headers:{Accept:'application/json',
         'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]')?.content || '', ...(!multipart && body ? {'Content-Type':'application/json'} : {})},
     ...(body ? {body:multipart ? body : JSON.stringify(body)} : {})});
     const data = await response.json().catch(() => ({}));

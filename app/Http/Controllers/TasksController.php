@@ -395,7 +395,8 @@ class TasksController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        app(\App\Services\SolutionRecheck::class)->request($solution, trim($request->input('recheck_comment')));
+        $status = app(\App\Services\SolutionRecheck::class)->request($solution, trim($request->input('recheck_comment')));
+        if ($request->expectsJson()) return response()->json($status);
 
         return redirect()->back();
     }
@@ -418,7 +419,9 @@ class TasksController extends Controller
             ->where('task_id', $id)
             ->findOrFail($solution_id);
 
-        if ($solution->skipPendingReview($request->input('review_token'))) {
+        $skipped = $solution->skipPendingReview($request->input('review_token'));
+        if ($request->expectsJson()) return response()->json(['skipped'=>$skipped]);
+        if ($skipped) {
             $this->make_success_alert('Решение пропущено', 'Оно больше не будет висеть в очереди проверки.');
         } else {
             $this->make_info_alert('Без изменений', 'Это решение уже проверено, пропущено или ещё не отправлено.');

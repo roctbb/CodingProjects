@@ -51,6 +51,7 @@ class History
                 if($source)$represented[$source->id]=true;
                 $canonical=$source && $source->legacy_id===null && (int)$source->solution_id===(int)$event->id;
                 $row=$canonical?$this->submission($source):$this->legacy($event,$source);
+                $row['needs_review']=(!(bool)($event->review_skipped??false) && $event->mark===null) || (bool)($event->recheck_requested??false);
                 if($canonical){$row['awarded_xp']=$event->mark===null?null:(int)$event->mark;$row['solution_id']=(int)$event->id;}
                 $attempts++;
                 $items[]=$row;
@@ -84,6 +85,7 @@ class History
         abort_unless($event,404);
         $teacher=$this->access->teacher($viewer,$course);
         abort_unless($teacher || (int)$event->user_id===(int)$viewer->id,403);
+        $solution=\App\Solution::findOrFail($id);
         $sources=$this->sources($course,$task->id,(int)$event->user_id);
         $source=$this->sourceFor($event,$sources->keyBy('id'),$sources->filter(fn($r)=>$r->legacy_id!==null)->keyBy('legacy_id'),$sources->filter(fn($r)=>$r->solution_id!==null)->keyBy('solution_id'));
         $row=$this->legacy($event,$source);unset($row['_order']);
@@ -103,6 +105,9 @@ class History
         $checkType??='manual';
         $visibleComment=$checkType==='tests' && !$teacherFeedback?'':$comment;
         return $row+['checked_at'=>$this->date($saved->checked??null),'check_type'=>$checkType,'comment_available'=>trim($comment)!=='','comment'=>$visibleComment,
+            'review'=>$teacher ? app(ReviewActions::class)->forSolution($solution) : null,
+            'review_request'=>app(\App\Services\SolutionRecheck::class)->status($solution),
+            'review_request_url'=>url('/insider/courses/'.$course.'/tasks/'.$task->id.'/solution/'.$id.'/recheck'),
             'teacher_feedback'=>$teacherFeedback,
             'text'=>$source?null:$answer,'original_reference'=>$isLink?$answer:null,'files'=>[],'report'=>null,
             'award_breakdown'=>['evaluated_points'=>$row['evaluated_points'],'deadline_penalty'=>$penalty,'xp_booster'=>(int)($saved->xp_booster_amount??0)],
@@ -143,7 +148,7 @@ class History
     private function solutions(int $course,int $task,?int $author)
     {
         $columns=['solutions.id','solutions.user_id','solutions.submitted','solutions.mark','u.name as user_name',DB::raw('substr(solutions.text,1,2048) as source_reference')];
-        foreach(['raw_mark','evaluated_mark','geekpaste_code_id','checked'] as $field)$columns[]=Schema::hasColumn('solutions',$field)?'solutions.'.$field:DB::raw('NULL as '.$field);
+        foreach(['raw_mark','evaluated_mark','geekpaste_code_id','checked','recheck_requested','review_skipped'] as $field)$columns[]=Schema::hasColumn('solutions',$field)?'solutions.'.$field:DB::raw('NULL as '.$field);
         return DB::table('solutions')->leftJoin('users as u','u.id','=','solutions.user_id')
             ->where('solutions.course_id',$course)->where('solutions.task_id',$task)->whereNotNull('solutions.submitted')
             ->when($author!==null,fn($q)=>$q->where('solutions.user_id',$author))->select($columns);

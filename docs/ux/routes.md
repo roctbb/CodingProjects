@@ -29,6 +29,9 @@
 | GET\|HEAD | `/insider/code-submissions/{submission}` | screen | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/compare` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/files/{file}` | download | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
+| GET\|HEAD | `/insider/code-submissions/{submission}/files/{file}/archive` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
+| GET\|HEAD | `/insider/code-submissions/{submission}/files/{file}/archive/entries/{entry}` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
+| GET\|HEAD | `/insider/code-submissions/{submission}/files/{file}/archive/entries/{entry}/download` | download | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | PUT | `/insider/code-submissions/{submission}/flags` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | PUT | `/insider/code-submissions/{submission}/grade` | api | [Проверка решений ученика](screens.md#review) | web, auth, verified |
 | PUT | `/insider/code-submissions/{submission}/integrity/review` | api | [Проверка решений ученика](screens.md#review) | web, auth, verified |
@@ -36,9 +39,11 @@
 | POST | `/insider/code-submissions/{submission}/manual-review` | api | [Проверка решений ученика](screens.md#review) | web, auth, verified |
 | POST | `/insider/code-submissions/{submission}/recheck` | api | [Проверка решений ученика](screens.md#review) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/repository/archive` | download | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
+| POST | `/insider/code-submissions/{submission}/retry` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | POST | `/insider/code-submissions/{submission}/review-request` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/runs/{run}` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/runs/{run}/files/{file}` | download | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
+| GET\|HEAD | `/insider/code-submissions/{submission}/runs/{run}/tests/{number}` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/subscription` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/task-files/{file}` | download | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-test-reports/{run}` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
@@ -125,6 +130,7 @@
 | GET\|HEAD | `/insider/courses/{course}/tasks/{task}/checker/fixtures/{artifact}` | download | [Редактирование задачи](screens.md#task-edit) | web, auth, verified |
 | GET\|HEAD | `/insider/courses/{course}/tasks/{task}/checker/legacy` | api | [Редактирование задачи](screens.md#task-edit) | web, auth, verified |
 | GET\|PUT\|HEAD | `/insider/courses/{course}/tasks/{task}/checker/private` | api | [Редактирование задачи](screens.md#task-edit) | web, auth, verified |
+| GET\|HEAD | `/insider/courses/{course}/tasks/{task}/code-attempts/{solution}` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|PUT\|DELETE\|HEAD | `/insider/courses/{course}/tasks/{task}/code-draft` | api | [Ступень](screens.md#step) | web, auth, verified |
 | GET\|HEAD | `/insider/courses/{course}/tasks/{task}/code-draft/files/{file}` | download | [Ступень](screens.md#step) | web, auth, verified |
 | GET\|POST\|HEAD | `/insider/courses/{course}/tasks/{task}/code-submissions` | api | [Ступень](screens.md#step) | web, auth, verified |
@@ -198,6 +204,8 @@
 | GET\|HEAD | `/insider/settings/ai` | screen | [Настройки ИИ](screens.md#settings-ai) | web, verified, auth, admin |
 | PUT | `/insider/settings/ai` | action | [Настройки ИИ](screens.md#settings-ai) | web, verified, auth, admin |
 | DELETE | `/insider/settings/ai` | action | [Настройки ИИ](screens.md#settings-ai) | web, verified, auth, admin |
+| GET\|HEAD | `/insider/settings/code-executor/legacy-artifacts/{artifact}` | download | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | web, auth, verified |
+| GET\|HEAD | `/insider/settings/code-executor/legacy-exports` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | web, auth, verified |
 | GET\|HEAD | `/insider/settings/code-executor/legacy-exports/{export}/files/{file}` | download | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | web, auth, verified |
 | GET\|HEAD | `/insider/settings/code-executor/login` | redirect | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | web, auth, verified |
 | GET\|HEAD | `/insider/settings/code-executor/status` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | web, auth, verified |

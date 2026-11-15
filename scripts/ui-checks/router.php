@@ -13,7 +13,7 @@ $app->instance('request', $request);
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $kernel->bootstrap();
 $variant = $_GET['scenario'] ?? $_COOKIE['ui_qa_scenario'] ?? 'base';
-if (!in_array($variant, ['base', 'reading', 'notebook', 'catalog-desktop', 'catalog-phone', 'submissions'], true)) $variant = 'base';
+if (!in_array($variant, ['base', 'reading', 'notebook', 'catalog-desktop', 'catalog-phone', 'submissions', 'submissions-desktop', 'submissions-phone'], true)) $variant = 'base';
 $actor = $_GET['actor'] ?? $_COOKIE['ui_qa_actor'] ?? 'student';
 if (isset($_GET['actor'])) setcookie('ui_qa_actor', $actor, ['path' => '/']);
 if (isset($_GET['scenario'])) setcookie('ui_qa_scenario', $variant, ['path' => '/']);
@@ -34,7 +34,8 @@ config(['app.env' => 'testing', 'app.debug' => false, 'app.url' => getenv('UI_QA
         'openai' => ['key' => null, 'base_url' => 'https://api.example.test/v1', 'endpoint' => 'https://api.example.test/v1/responses',
             'proxy' => null, 'image_api' => 'responses', 'images_url' => null],
     ],
-    'ai.defaults' => ['text' => ['model' => 'qa-text', 'timeout' => 90], 'image' => ['model' => 'qa-image', 'timeout' => 180]],
+    'ai.defaults' => ['text' => ['model' => 'qa-text', 'timeout' => 90], 'image' => ['model' => 'qa-image', 'timeout' => 180],
+        'recheck'=>['model'=>'qa-strong','timeout'=>150]],
     'ai.commands' => [],
     'services.telegram' => ['bot_token'=>'123:qa-fake','bot_username'=>'class_test_bot','api_url'=>'https://telegram.example','timeout'=>10,'proxy'=>null,'webhook_secret'=>'qa-secret'],
     'logging.default' => 'single', 'logging.channels.single.path' => $directory.'/server-errors.log']);

@@ -2,6 +2,26 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {request} from '../../resources/assets/js/code-checking/ui.js';
 import {subscribe} from '../../resources/assets/js/code-checking/progress.js';
+import {detailCache} from '../../resources/assets/js/code-checking/detail-cache.js';
+
+test('attempt switching cancels the old request, caches only terminal data and invalidates after changes', async () => {
+    const calls=[];let clock=0;
+    const cache=detailCache((key,signal)=>new Promise((resolve,reject)=>{
+        signal.addEventListener('abort',()=>reject(new DOMException('cancelled','AbortError')));
+        calls.push({key,signal,resolve});
+    }),{limit:2,ttl:100,now:()=>clock});
+    const first=cache.get('first');const cancelled=assert.rejects(first,{name:'AbortError'});
+    const second=cache.get('second');calls[1].resolve({id:'second',state:'completed'});
+    await cancelled;assert.equal((await second).id,'second');
+    assert.equal((await cache.get('second')).id,'second');assert.equal(calls.length,2);
+    cache.clear();const refreshed=cache.get('second');calls[2].resolve({id:'second',state:'testing'});await refreshed;
+    const live=cache.get('second');calls[3].resolve({id:'second',state:'completed'});await live;
+    clock=101;const expired=cache.get('second');calls[4].resolve({id:'second',state:'completed'});await expired;
+    assert.equal(calls.length,5);
+    const stale=cache.get('third');const invalidated=assert.rejects(stale,{name:'AbortError'});cache.clear();await invalidated;
+    const updated=cache.get('third');calls[6].resolve({id:'third',state:'completed'});await updated;
+    assert.equal(calls.length,7);
+});
 
 test('native request preserves source and uploads multipart using PHP method override and CSRF', async () => {
     const oldFetch = globalThis.fetch, oldDocument = globalThis.document;
