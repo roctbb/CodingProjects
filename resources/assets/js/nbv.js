@@ -42,6 +42,7 @@ var nbv = (function() {
         template.innerHTML = String(html || '');
 
         Array.from(template.content.querySelectorAll('*')).forEach(function (node) {
+            if (['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED'].includes(node.tagName)) { node.remove(); return; }
             if (!allowedHtmlTags.has(node.tagName)) {
                 node.replaceWith(d.createTextNode(node.textContent || ''));
                 return;

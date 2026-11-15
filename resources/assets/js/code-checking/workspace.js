@@ -1,4 +1,4 @@
-import {node, button, field, input, textarea, select, actions, phases, verdicts, request as httpRequest, download} from './ui';
+import {node, button, iconButton, field, input, textarea, select, actions, phases, verdicts, request as httpRequest, download} from './ui';
 import {subscribe} from './progress';
 import {detailCache} from './detail-cache';
 import {gradingPanel,authorshipPanel} from './review-panels';
@@ -15,7 +15,7 @@ export async function workspace(root) {
     let attemptItems = [], activeAttempt = null, attemptList, composerVisible=true;
     const submittedOrder=[];
     const rewardedRuns=new Set();
-    const gradingDrafts=new Map(),reviewDrafts=new Map(),expandedTests=new Map();
+    const gradingDrafts=new Map(),reviewDrafts=new Map(),expandedTests=new Map(),testPages=new Map();
     const details=detailCache((url,signal)=>httpRequest(url,'GET',undefined,{signal}));
     async function request(url,method='GET',body,options){
         const value=await httpRequest(url,method,body,options);
@@ -84,10 +84,10 @@ export async function workspace(root) {
         const title = selectedUser?.name || 'Сдачи ученика';
         const authorHeading = node('div',{},node('h3',{class:'h6 mb-0',tabIndex:-1},title));
         toolbar.replaceChildren(authorHeading);
-        if (inlineReview) toolbar.prepend(button('К списку учеников',() => {
+        if (inlineReview) toolbar.prepend(iconButton('К списку учеников','fa-arrow-left',() => {
             root.dispatchEvent(new CustomEvent('gc:execution-close'));
         }));
-        if(canNavigate())toolbar.append(actions(button('Предыдущий',()=>root.dispatchEvent(new CustomEvent('gc:execution-navigate',{detail:{direction:-1}}))),button('Следующий',nextStudent)));
+        if(canNavigate())toolbar.append(actions(iconButton('Предыдущий','fa-chevron-left',()=>root.dispatchEvent(new CustomEvent('gc:execution-navigate',{detail:{direction:-1}}))),iconButton('Следующий','fa-chevron-right',nextStudent)));
     }
     async function attachments() {
         if (attachmentsArea.dataset.loaded) return;
@@ -299,9 +299,15 @@ export async function workspace(root) {
         const sequence = ++reportSequence;
         const expansionKey=submissionId+'/'+report.run_id;
         if(!expandedTests.has(expansionKey))expandedTests.set(expansionKey,new Set());
-        const expanded=expandedTests.get(expansionKey),allTests=report.tests || [];let position=0;
-        function appendTests(){
-        const batch=allTests.slice(position,position+25);position+=batch.length;
+        const expanded=expandedTests.get(expansionKey),allTests=report.tests || [];
+        const pageCount=Math.max(1,Math.ceil(allTests.length/10)),pageNodes=new Map();
+        let testPage=Math.min(pageCount,testPages.get(expansionKey)||1);
+        const pagination=node('nav',{class:'gc-test-pages','aria-label':'Страницы тестов'});
+        const tableViewport=node('div',{class:'gc-test-table-scroll'},table);let pageHeight=0;
+        function renderTests(){
+        if(pageNodes.has(testPage)){rows.replaceChildren(...pageNodes.get(testPage));renderPages();return;}
+        rows.replaceChildren();
+        const batch=allTests.slice((testPage-1)*10,testPage*10);
         for (const test of batch) {
             const passed = test.verdict === 'passed';
             const detailsId = `${root.id || 'execution'}-report-${sequence}-test-${test.number}`;
@@ -360,10 +366,30 @@ export async function workspace(root) {
             rows.append(node('tr',{},node('th',{scope:'row'},`№ ${test.number}`),node('td',{},verdict,node('small',{class:'gc-test-access-mobile text-muted'},visibility)),
                 node('td',{class:'gc-test-access'},node('span',{class:'gc-test-visibility'},test.is_public ? 'Публичный' : 'Скрытый'),!teacher && test.unlocked && !test.is_public ? node('small',{class:'d-block text-muted'},'Открыт вам') : null),node('td',{},toggle)),detailRow);
         }
+        pageNodes.set(testPage,[...rows.children]);while(pageNodes.size>3)pageNodes.delete(pageNodes.keys().next().value);renderPages();
         }
-        appendTests();
-        section.append(node('div',{class:'gc-test-table-scroll'},table));
-        if(position<allTests.length){const more=button('Показать ещё тесты',()=>{appendTests();more.hidden=position>=allTests.length;});more.classList.add('btn-sm');section.append(more);}
+        function renderPages(){
+            pagination.hidden=pageCount<=1;
+            if(pageCount<=1)return;
+            const controls=node('div',{class:'gc-test-pages__controls'});
+            const change=value=>{
+                const height=table.querySelector('thead').getBoundingClientRect().height+[...rows.children].filter(row=>!row.classList.contains('gc-test-detail')).reduce((sum,row)=>sum+row.getBoundingClientRect().height,0);
+                pageHeight=Math.max(pageHeight,height);tableViewport.style.minHeight=Math.ceil(pageHeight)+'px';
+                testPage=value;testPages.set(expansionKey,value);renderTests();pagination.querySelector('[aria-current="page"]')?.focus({preventScroll:true});
+            };
+            const previous=iconButton('Предыдущая страница тестов','fa-chevron-left',()=>change(testPage-1));previous.disabled=testPage===1;controls.append(previous);
+            let previousNumber=0;
+            for(const number of [...new Set([1,testPage-1,testPage,testPage+1,pageCount])].filter(n=>n>0&&n<=pageCount).sort((a,b)=>a-b)){
+                if(previousNumber&&number>previousNumber+1)controls.append(node('span',{'aria-hidden':'true'},'…'));
+                const choice=button(String(number),()=>change(number),number===testPage?'primary':'outline-secondary');choice.setAttribute('aria-label','Страница тестов '+number);
+                if(number===testPage)choice.setAttribute('aria-current','page');controls.append(choice);previousNumber=number;
+            }
+            const next=iconButton('Следующая страница тестов','fa-chevron-right',()=>change(testPage+1));next.disabled=testPage===pageCount;controls.append(next);
+            pagination.replaceChildren(node('span',{class:'gc-help-text',role:'status'},`${(testPage-1)*10+1}–${Math.min(testPage*10,allTests.length)} из ${allTests.length}`),controls);
+        }
+        renderTests();
+        section.append(tableViewport);
+        section.append(pagination);
         parent.append(section);
     }
     function textReport(record) {
@@ -637,7 +663,7 @@ export async function workspace(root) {
         })));
         if (teacher && !ownMode && !sourceOnly) {
             if (record.review_request?.requested) body.append(node('p',{class:'gc-review-request-note'},'Запрос ученика: '+record.review_request.comment));
-            const viewed=button(record.teacher_viewed ? 'Отметить непросмотренным' : 'Отметить просмотренным',safe(async () => {await request(`/insider/code-submissions/${id}/flags`,'PUT',{teacher_viewed:!record.teacher_viewed}); await show(id); await loadHistory();}));
+            const viewed=iconButton(record.teacher_viewed ? 'Отметить непросмотренным' : 'Отметить просмотренным',record.teacher_viewed?'fa-eye-slash':'fa-eye',safe(async () => {await request(`/insider/code-submissions/${id}/flags`,'PUT',{teacher_viewed:!record.teacher_viewed}); await show(id); await loadHistory();}));
             if(record.teacher_viewed)menu.add(viewed);else{viewed.classList.add('btn-sm');contextBar.prepend(viewed);}
             const latest = node('input',{type:'checkbox',class:'form-check-input'});
             const recheckStatus=node('p',{class:'gc-help-text',role:'status'});
@@ -657,10 +683,10 @@ export async function workspace(root) {
             const ordinary=node('details',{},node('summary',{},'Обычная перепроверка'),field('По текущим настройкам задачи',latest),button('Запустить перепроверку',()=>runRecheck(false)));
             recheck.append(ordinary,recheckStatus);
             if(terminal && record.state!=='error')body.append(recheck);
-            body.append(authorshipPanel(record,async dismissed=>{await request(`/insider/code-submissions/${id}/integrity/review`,'PUT',{dismissed});await show(id,options);}));
+            contextBar.prepend(authorshipPanel(record,async dismissed=>{await request(`/insider/code-submissions/${id}/integrity/review`,'PUT',{dismissed});await show(id,options);root.querySelector('[data-authorship-trigger]')?.focus({preventScroll:true});}));
 
         }
-        if(teacher && !ownMode && sourceOnly)body.append(authorshipPanel(record,null));
+        if(teacher && !ownMode && sourceOnly)contextBar.prepend(authorshipPanel(record,null));
         if(options.snapshotOf?.text && options.snapshotOf.text!==record.text)body.append(submittedWork({...options.snapshotOf,mode:'text'}));
         const target=options.snapshotOf || record;
         const comment=target.teacher_feedback ? target.review_comment ?? target.comment ?? '' : target.review_comment || target.comment || (target.check_type!=='tests' && record.state!=='error'?record.comment:'') || '';

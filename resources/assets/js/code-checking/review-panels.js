@@ -1,4 +1,4 @@
-import {node, button, field, input, textarea, actions, download} from './ui';
+import {node, button, iconButton, field, input, textarea, actions, download} from './ui';
 
 export function gradingPanel({key, comment = '', mark = '', maximum, hint, onSave, onNext, onSkip, drafts}) {
     let value = drafts.get(key) || {mark:mark ?? '', comment};
@@ -21,28 +21,27 @@ export function gradingPanel({key, comment = '', mark = '', maximum, hint, onSav
         } catch (error) {status.textContent = error.message;}
         finally {form.removeAttribute('inert');}
     };
-    const primary = button(onNext ? 'Сохранить и далее' : 'Сохранить оценку', save(!!onNext), 'primary');
+    const primary = iconButton(onNext ? 'Сохранить и далее' : 'Сохранить оценку', onNext ? ['fa-check','fa-arrow-right'] : 'fa-check', save(!!onNext), 'primary');
     const controls = actions(primary);
-    if (onNext) controls.append(button('Сохранить', save(false)));
-    if (onSkip) controls.append(button('Пропустить работу', async () => {
+    if (onNext) controls.append(iconButton('Сохранить','fa-floppy-disk', save(false)));
+    if (onSkip) controls.append(iconButton('Пропустить работу','fa-forward-step', async () => {
         form.setAttribute('inert','');
         try {await onSkip();} catch(error) {status.textContent = error.message;}
         finally {form.removeAttribute('inert');}
     }));
-    const reset = button('Отменить изменения', () => {
+    const reset = iconButton('Отменить изменения','fa-rotate-left', () => {
         value = {mark:mark ?? '', comment}; grade.value = value.mark; feedback.value = comment;
         drafts.delete(key); status.textContent = '';
     });
-    reset.classList.add('btn-sm');
-    form.append(controls, reset, status);
+    controls.append(reset);form.append(controls, status);
     return node('section', {class:'gc-inline-grade', 'aria-label':'Оценка и комментарий'},
         node('h4', {class:'h6'}, 'Оценка и обратная связь'), form);
 }
 
 export function authorshipPanel(record, onDismiss) {
     const integrity = record.integrity;
-    const panel = node('section', {class:'gc-authorship-panel', 'aria-label':'Антиплагиат и анализ авторства'}, node('h4', {class:'h6'}, 'Анализ авторства'));
-    if (!integrity) {panel.append(node('p', {class:'gc-help-text'}, 'Результат анализа пока отсутствует.')); return panel;}
+    const panel = node('div', {class:'gc-authorship-report'});
+    if (!integrity) {panel.append(node('p', {class:'gc-help-text'}, 'Результат анализа пока отсутствует.')); return authorshipDialog(panel,record);}
     const plagiarism = integrity.plagiarism || {}, ai = integrity.ai || {};
     const matches = plagiarism.matches || [];
     const warning = !integrity.dismissed && (plagiarism.warning || ai.warning);
@@ -51,14 +50,15 @@ export function authorshipPanel(record, onDismiss) {
     panel.append(node('p', {class:'gc-authorship-state'+(warning ? ' is-warning' : '')},
         node('i', {class:'fas '+(warning ? 'fa-magnifying-glass' : 'fa-shield-halved'), 'aria-hidden':'true'}),
         integrity.dismissed ? 'Предупреждение снято преподавателем' : warning ? 'Есть результаты для разбора' : pending ? 'Анализ выполняется…' : unavailable ? 'Часть анализа недоступна' : 'Предупреждений нет'));
-    const similarity = node('details', {}, node('summary', {}, 'Сходство исходников',
+    const similarity = node('details', {open:!!plagiarism.warning}, node('summary', {}, 'Сходство исходников',
         plagiarism.warning && matches.length ? ` · до ${Math.max(...matches.map(m => m.percent))}%` : ''));
     similarity.append(node('p', {class:'gc-help-text'}, plagiarism.state !== 'done' ? 'Сравнение исходников не проводилось.'
         : plagiarism.warning ? `Найдены похожие работы: ${matches.length}.` : 'Значимых совпадений не найдено.'));
+    if(plagiarism.method==='token_shingles_v1')similarity.append(node('p',{class:'gc-help-text'},'Система сравнивает последовательности элементов кода. Пробелы и переносы строк не влияют на результат. Ниже указан процент сходства с каждой найденной работой.'));
     for (const match of matches) similarity.append(node('p', {class:'gc-authorship-match'},
         match.review_url ? download(match.review_url, match.user_name || 'Открыть похожую работу') : node('span', {}, 'Работа вне доступных вам курсов'),
         ` · ${match.percent}%`));
-    const assistance = node('details', {}, node('summary', {}, 'Анализ помощи ИИ'));
+    const assistance = node('details', {open:!!ai.warning}, node('summary', {}, 'Анализ помощи ИИ'));
     assistance.append(node('p', {class:'gc-help-text'}, integrity.state === 'running' ? 'Анализ выполняется…' : ai.state === 'error' ? 'Анализ временно недоступен.'
         : !['done','imported'].includes(ai.state) ? 'Анализ не проводился.' : ai.warning ? 'Есть признаки возможной помощи ИИ.' : 'Предупреждений об использовании ИИ нет.'));
     if (ai.reasons?.length) assistance.append(node('ul', {}, ai.reasons.map(reason => node('li', {}, reason))));
@@ -72,5 +72,21 @@ export function authorshipPanel(record, onDismiss) {
         });
         toggle.classList.add('btn-sm'); panel.append(toggle, status);
     }
-    return panel;
+    return authorshipDialog(panel,record);
+}
+
+let reportId=0;
+function authorshipDialog(panel,record){
+    const integrity=record.integrity;
+    const warning=integrity&&!integrity.dismissed&&(integrity.plagiarism?.warning||integrity.ai?.warning);
+    const pending=integrity?.state==='running';
+    const unavailable=!integrity||integrity.state==='error'||integrity.ai?.state==='error';
+    const state=warning?'есть предупреждения':pending?'анализ выполняется':unavailable?'анализ недоступен':integrity.dismissed?'предупреждение снято':'предупреждений нет';
+    const dialog=node('dialog',{class:'gc-dialog gc-authorship-dialog','aria-labelledby':'gc-authorship-report-'+(++reportId)});
+    const trigger=iconButton('Антиплагиат и помощь ИИ: '+state,warning?'fa-triangle-exclamation':pending?'fa-hourglass-half':unavailable?'fa-circle-question':'fa-shield-halved',()=>dialog.showModal());
+    trigger.dataset.authorshipTrigger='';trigger.setAttribute('aria-haspopup','dialog');trigger.classList.toggle('is-warning',!!warning);
+    const close=iconButton('Закрыть отчёт','fa-xmark',()=>dialog.close());
+    dialog.append(node('header',{},node('h3',{class:'h5 mb-0',id:dialog.getAttribute('aria-labelledby')},'Анализ авторства'),close),panel);
+    dialog.addEventListener('close',()=>{if(trigger.isConnected)trigger.focus({preventScroll:true});});
+    return node('div',{class:'gc-authorship-panel'},trigger,dialog);
 }

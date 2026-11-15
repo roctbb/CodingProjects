@@ -1,4 +1,4 @@
-import {node,button,download,request} from './ui';
+import {node,button,iconButton,download,request} from './ui';
 
 const terminal=['completed','error','awaiting_review','imported_pending'];
 
@@ -56,6 +56,15 @@ export function submittedWork(record) {
             selected=file;const version=++sequence;
             tabs.querySelectorAll('[role="tab"]').forEach(tab=>{const active=tab.dataset.file===file.name;tab.classList.toggle('is-active',active);tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;});
             preview.setAttribute('aria-label',file.name);
+            if(/\.ipynb$/i.test(file.name)){
+                preview.replaceChildren(node('p',{class:'gc-help-text',role:'status'},'Открываем тетрадку…'));
+                try{
+                    const {notebookPreview}=await import('./submission-notebook');
+                    if(version!==sequence)return;
+                    const notebook=await notebookPreview(file);if(version!==sequence)return;preview.replaceChildren(notebook);
+                }catch(error){if(version===sequence)preview.replaceChildren(node('p',{class:'gc-help-text'},'Не удалось показать тетрадку. '+error.message),download(file.download_url,'Скачать исходную тетрадку'),button('Повторить загрузку тетрадки',()=>show(file)));}
+                return;
+            }
             if(file.source!==undefined){preview.replaceChildren(renderSource(file,file.source,{showFilename:files.length===1}));return;}
             if(/\.(png|jpe?g|gif|webp)$/i.test(file.name)){
                 const url=new URL(file.download_url,location.origin);url.searchParams.set('proxy','1');
@@ -99,7 +108,7 @@ export function submittedWork(record) {
 
 export function resultActions() {
     const menu=node('div',{class:'dropdown-menu dropdown-menu-end'});
-    const toggle=button('Действия',()=>{});toggle.classList.add('btn-sm');toggle.setAttribute('data-bs-toggle','dropdown');toggle.setAttribute('aria-expanded','false');
+    const toggle=iconButton('Действия','fa-ellipsis',()=>{});toggle.setAttribute('data-bs-toggle','dropdown');toggle.setAttribute('aria-expanded','false');
     const root=node('div',{class:'dropdown gc-result-actions'},toggle,menu);
     return {root,add:action=>{action.className='dropdown-item';menu.append(action);}};
 }

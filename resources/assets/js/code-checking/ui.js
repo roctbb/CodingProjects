@@ -12,6 +12,12 @@ export function node(tag, attrs = {}, ...children) {
     return el;
 }
 export const button = (label, action, tone = 'outline-secondary') => node('button', {type:'button', class:`btn btn-${tone}`, onclick:action}, label);
+export function iconButton(label, icons, action, tone = 'outline-secondary') {
+    const control=button('',action,tone);
+    control.classList.add('gc-execution-icon-button');control.title=label;control.setAttribute('aria-label',label);
+    control.append(...(Array.isArray(icons)?icons:[icons]).map(icon=>node('i',{class:'fas '+icon,'aria-hidden':'true'})));
+    return control;
+}
 export const field = (label, input, hint) => node('label', {class:'gc-execution-field'}, node('span', {}, label), input, hint ? node('small', {class:'text-muted'}, hint) : null);
 export const input = (value, change, attrs = {}) => node('input', {class:'form-control', value:value ?? '', oninput:event => change(event.target.value), ...attrs});
 export const textarea = (value, change, attrs = {}) => node('textarea', {class:'form-control', rows:4, value:value ?? '', oninput:event => change(event.target.value), ...attrs});
