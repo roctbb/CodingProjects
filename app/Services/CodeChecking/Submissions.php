@@ -93,6 +93,21 @@ class Submissions
                 || (($submission->source_metadata['requires_conversion'] ?? false) && $snapshot['check_type'] !== 'manual'),
                 409, 'Convert the legacy checker/source or select a converted configuration.');
             $snapshot['legacy']=false;
+            if (!$strongerAi && !$latestConfiguration && isset($snapshot['ai_review'])) {
+                // The ordinary action restores the frozen original model, even after several stronger checks.
+                $baseRun = $previous;
+                $seen = [$baseRun->id => true];
+                while ($source = $baseRun->snapshot['ai_review']['source_run_id'] ?? null) {
+                    $baseRun = CodeExecutionRun::where('submission_id', $locked->id)->find($source);
+                    abort_unless($baseRun && !isset($seen[$baseRun->id]), 409, 'Не удалось восстановить настройки обычной модели.');
+                    $seen[$baseRun->id] = true;
+                }
+                foreach (['gpt_model', 'gpt_timeout'] as $key) {
+                    if (array_key_exists($key, $baseRun->snapshot)) $snapshot[$key] = $baseRun->snapshot[$key];
+                    else unset($snapshot[$key]);
+                }
+                unset($snapshot['ai_review']);
+            }
             // Replace a prior reviewer note when checking the same immutable work again.
             if (isset($snapshot['review_instructions_original'])) $snapshot['private_instructions'] = $snapshot['review_instructions_original'];
             unset($snapshot['review_comment'], $snapshot['review_instructions_original']);

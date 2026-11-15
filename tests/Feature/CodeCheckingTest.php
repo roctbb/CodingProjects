@@ -1065,6 +1065,15 @@ class CodeCheckingTest extends TestCase
         $this->assertSame('PRIVATE FROZEN RUBRIC', $input['task']['private_instructions']);
         Queue::assertPushed(\App\Jobs\DispatchCodeExecution::class, 1);
         $this->assertSame(1, CodeSubmission::count());
+        $run->update(['state'=>'completed', 'finished_at'=>now()]);
+        $again = $this->postJson($url.'/recheck', ['stronger_ai'=>true])->assertStatus(202)->json();
+        $strongAgain = CodeExecutionRun::findOrFail($again['execution_id']);
+        $strongAgain->update(['state'=>'completed', 'finished_at'=>now()]);
+        $normal = $this->postJson($url.'/recheck')->assertStatus(202)->json();
+        $ordinary = CodeExecutionRun::findOrFail($normal['execution_id']);
+        $this->assertSame(array_replace($snapshot, ['legacy'=>false]), $ordinary->snapshot);
+        $this->assertSame($expected, $run->fresh()->snapshot);
+        $this->assertSame($before, $record->fresh()->only(array_keys($before)));
     }
 
     public function test_recheck_comment_reaches_ai_without_overwriting_the_frozen_rubric_or_previous_note(): void
