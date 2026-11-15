@@ -25,6 +25,9 @@ class CourseLessonStatisticsTest extends CourseCurrentLessonTest
         $this->assertSame(25, substr_count($html, 'class="course-stat-row small"'));
         $this->assertStringContainsString('1–25 из 70', $html);
         $this->assertStringContainsString('1 / 70', $html);
+        $this->assertStringContainsString('/insider/courses/1/report?chapter=1&amp;student=3&amp;lesson=1#student3', $html);
+        $this->assertStringContainsString('отчёт по уроку', $html);
+        $this->assertStringContainsString('course-stat-track', $html);
         $last = $this->getJson('/insider/courses/1/lessons/1/statistics?page=3')->assertOk()->json('html');
         $this->assertSame(20, substr_count($last, 'class="course-stat-row small"'));
         $this->assertStringContainsString('51–70 из 70', $last);

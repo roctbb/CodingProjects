@@ -13,7 +13,7 @@ $app->instance('request', $request);
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $kernel->bootstrap();
 $variant = $_GET['scenario'] ?? $_COOKIE['ui_qa_scenario'] ?? 'base';
-if (!in_array($variant, ['base', 'reading', 'notebook', 'catalog-desktop', 'catalog-phone', 'submissions', 'submissions-desktop', 'submissions-phone'], true)) $variant = 'base';
+if (!in_array($variant, ['base', 'reading', 'notebook', 'catalog-desktop', 'catalog-phone', 'submissions', 'submissions-desktop', 'submissions-phone', 'statistics-desktop', 'statistics-phone'], true)) $variant = 'base';
 $actor = $_GET['actor'] ?? $_COOKIE['ui_qa_actor'] ?? 'student';
 if (isset($_GET['actor'])) setcookie('ui_qa_actor', $actor, ['path' => '/']);
 if (isset($_GET['scenario'])) setcookie('ui_qa_scenario', $variant, ['path' => '/']);
@@ -28,7 +28,8 @@ config(['app.env' => 'testing', 'app.debug' => false, 'app.url' => getenv('UI_QA
     'cache.default' => 'array', 'session.driver' => 'file', 'session.files' => $directory.'/sessions',
     'session.cookie' => 'ui_qa_session', 'session.expire_on_close' => true, 'session.secure' => false,
     'session.domain' => null, 'session.path' => '/', 'queue.default' => 'sync',
-    'branding.colors' => [], 'branding.dark_colors' => [],
+    'branding.colors' => ['primary' => '#345bd1', 'accent' => '#ffa117'],
+    'branding.dark_colors' => ['primary' => '#91aaff', 'accent' => '#ffb64a'],
     'ai.provider' => 'openai', 'ai.shared_models' => true,
     'ai.providers' => [
         'openai' => ['key' => null, 'base_url' => 'https://api.example.test/v1', 'endpoint' => 'https://api.example.test/v1/responses',

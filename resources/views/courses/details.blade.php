@@ -248,7 +248,7 @@
                                     <div class="course-path-meta">
                                         @if ($lessonDeadline && (!$isLearner || $lessonDeadlines->isEmpty()))
                                             @if($lessonDeadline instanceof \App\Support\DeadlineRule && !empty($lessonDeadline->series))
-                                                <span class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-chain :rule="$lessonDeadline" :show-time="false" /></span>
+                                                <div class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-chain :rule="$lessonDeadline" :show-time="false" /></div>
                                             @else
                                                 <small class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-label :expiration="$lessonDeadline->expiration" :rule="$lessonDeadline" :personal="$isLearner" :show-time="false" /></small>
                                             @endif

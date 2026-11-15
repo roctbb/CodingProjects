@@ -278,7 +278,7 @@
                                             $lessonState = $lessonPendingCount ? 'review' : ($lessonMaxPoints > 0 && $lessonPoints >= $lessonMaxPoints ? 'complete' : ($lessonMaxPoints > 0 ? 'incomplete' : 'unscored'));
                                         @endphp
 
-                                        <div class="report-lesson-row" data-report-lesson-state-value="{{ $lessonState }}" data-report-lesson-name="{{ $lesson->name }}">
+                                        <div class="report-lesson-row" data-report-lesson-id="{{ $lesson->id }}" data-report-lesson-state-value="{{ $lessonState }}" data-report-lesson-name="{{ $lesson->name }}">
                                             <button type="button" class="report-lesson-main report-lesson-link" data-bs-toggle="collapse" data-bs-target="#student{{$student->id}}marks{{$lesson->id}}" aria-expanded="false" aria-controls="student{{$student->id}}marks{{$lesson->id}}">
                                                 <span class="report-lesson-info min-width-0">
                                                     <span class="report-lesson-title">

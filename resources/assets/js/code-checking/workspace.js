@@ -545,12 +545,15 @@ export async function workspace(root) {
     }
     function arrangeResult(body){
         if(!teacher || ownMode)return;
-        const main=node('div',{class:'gc-result-main'}),side=node('aside',{class:'gc-result-review','aria-label':'Проверка и оценивание'});
+        const overview=node('div',{class:'gc-result-overview'}),main=node('div',{class:'gc-result-main'}),side=node('aside',{class:'gc-result-review','aria-label':'Проверка и оценивание'});
         for(const child of [...body.children]){
-            (child.matches('.gc-inline-grade,.gc-authorship-panel,.gc-recheck-tools,.gc-review-request-note')?side:main).append(child);
+            const target=child.matches('.gc-inline-grade,.gc-authorship-panel,.gc-recheck-tools,.gc-review-request-note')?side
+                :child.matches('header,.gc-result-context-bar,.gc-submitted-work')?overview:main;
+            target.append(child);
         }
         [...side.querySelectorAll(':scope > .gc-inline-grade')].reverse().forEach(el=>side.prepend(el));
-        body.classList.add('gc-execution-result--review');body.append(main,side);
+        body.classList.add('gc-execution-result--review');
+        body.append(overview,node('div',{class:`gc-result-assessment${main.children.length?'':' is-grading-only'}`},main,side));
     }
     function reviewRequest(record,reload){
         const status=record.review_request;

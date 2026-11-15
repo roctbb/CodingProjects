@@ -189,13 +189,19 @@
 .gc-inline-grade__display > .btn {margin-top:var(--gc-space-2);}
 .gc-saved-source-info {white-space:nowrap;}
 
-// One task surface; condition and submission are separate working areas.
-.gc-workbook .step-content-layout:has(.tab-pane.active > .gc-task-intro) {max-width:82rem;}
+// A single worksheet follows the same paper, ink and branding as the course.
+.gc-workbook .step-content-layout:has(.tab-pane.active > .gc-task-sheet) {max-width:82rem;}
+.gc-workbook:has(.tab-pane.active > .gc-task-sheet) :is(.gc-workbook-header,.step-main) {background:var(--gc-background);}
+.gc-task-sheet {min-width:0; max-width:100%; padding:var(--gc-space-6); background:var(--gc-surface); border:1px solid var(--gc-control-border); border-radius:var(--gc-radius-md);}
+.gc-workbook .step-top-tabs .nav-link.active {position:relative;}
+.gc-workbook .step-top-tabs .nav-link.active::after {content:""; position:absolute; inset:auto 0 0; height:3px; background:var(--gc-accent); border-radius:0 0 var(--gc-radius-sm) var(--gc-radius-sm); pointer-events:none;}
 .gc-task-intro {display:flex; align-items:center; justify-content:space-between; gap:var(--gc-space-4); margin-bottom:var(--gc-space-4);}
 .gc-task-intro > .step-task-card__header {flex:1; min-width:0; padding:0; border:0; margin:0;}
 .gc-task-intro .gc-task-heading {flex:1;}
 .gc-task-emblem {display:grid; place-items:center; flex-shrink:0; width:2.75rem; height:2.75rem; border-radius:var(--gc-radius-md); background:var(--gc-selected-surface); color:var(--gc-primary); font-size:var(--gc-font-subtitle); transform:rotate(-4deg);}
 .gc-task-reward {background:var(--gc-reward-bg); color:var(--gc-on-surface); padding:var(--gc-space-1) var(--gc-space-2); border-radius:var(--gc-radius-sm);}
+.gc-task-reward .gc-currency-icon {color:var(--gc-accent);}
+.gc-task-sheet .step-task-card__title {color:var(--gc-on-surface); font-size:var(--gc-font-subtitle);}
 .gc-task-goal {display:flex; align-items:center; gap:var(--gc-space-2); flex:0 1 18rem; min-width:0;}
 .gc-task-goal .gc-lesson-reward {width:3rem; height:3rem; flex-basis:3rem; padding:0;}
 .gc-task-goal > div {min-width:0; flex:1;}
@@ -206,18 +212,19 @@
 .gc-task-goal progress::-moz-progress-bar {background:var(--gc-primary);}
 .gc-task-layout {display:grid; grid-template-columns:minmax(0,1fr); gap:var(--gc-space-4); align-items:start;}
 .gc-task-layout > * {min-width:0;}
-.gc-task-layout.is-student:not(.is-quiz) {grid-template-columns:minmax(15rem, .34fr) minmax(0, .66fr);}
 .gc-task-layout.is-quiz .gc-task-answer:empty {display:none;}
-.gc-task-context .step-task-card {margin:0;}
-.gc-task-context .step-task-card__body {padding:var(--gc-space-4);}
-.gc-task-condition-disclosure > summary {font-size:var(--gc-font-small); font-weight:500; cursor:pointer; padding-block:var(--gc-space-2); color:var(--gc-on-surface-muted);}
+.gc-task-context .step-task-card {margin:0; border:0; border-radius:0; background:transparent;}
+.gc-task-context .step-task-card__body {padding:0;}
+.gc-task-condition-disclosure > summary {font-size:var(--gc-font-small); font-weight:500; cursor:pointer; padding-block:var(--gc-space-2); color:var(--gc-on-surface);}
 .gc-task-condition-disclosure[open] > summary {margin-bottom:var(--gc-space-3);}
 .gc-task-answer {container-type:inline-size; container-name:task-answer;}
 .gc-task-answer .gc-execution-workspace {margin:0 !important;}
 .gc-task-answer .gc-task-workspaces > .nav {margin-bottom:var(--gc-space-4);}
 .gc-task-answer .gc-section.step-progress-card {margin:0;}
-.gc-submission-surface {background:var(--gc-surface); border:1px solid var(--gc-border); border-radius:var(--gc-radius-md); overflow:visible;}
-.gc-submission-heading {display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--gc-space-2); padding:var(--gc-space-4); border-bottom:1px solid var(--gc-border);}
+.gc-submission-surface {background:var(--gc-surface); border:1px solid var(--gc-control-border); border-radius:var(--gc-radius-md); overflow:visible;}
+.gc-task-sheet .gc-submission-surface {border-inline:0; border-bottom:0; border-radius:0;}
+.gc-submission-heading {display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--gc-space-2); padding:var(--gc-space-4); border-bottom:1px solid var(--gc-border); background:var(--gc-surface-variant);}
+.gc-submission-heading h3 {font-size:var(--gc-font-heading); color:var(--gc-on-surface);}
 .gc-draft-state {color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption);}
 .gc-submission-heading:has(+ .gc-submission-history:not(:empty)) {border-bottom:0;}
 .gc-submission-history {border-bottom:1px solid var(--gc-border); padding:0 var(--gc-space-4) var(--gc-space-3);}
@@ -234,10 +241,15 @@
 .gc-submission-loading {position:absolute; top:var(--gc-space-3); right:var(--gc-space-3); padding:var(--gc-space-2) var(--gc-space-3); background:var(--gc-surface); color:var(--gc-on-surface-muted); border:1px solid var(--gc-border); border-radius:var(--gc-radius-sm); font-size:var(--gc-font-small); z-index:1;}
 .gc-submission-editor[hidden], .gc-submission-result[hidden] {display:none;}
 .gc-submission-surface .gc-composer-heading {padding-block:var(--gc-space-3);}
-.gc-submission-surface .gc-composer-heading h3 {font-size:var(--gc-font-small); color:var(--gc-on-surface-muted); font-weight:500;}
+.gc-submission-surface .gc-composer-heading h3 {font-size:var(--gc-font-ui); color:var(--gc-on-surface); font-weight:500;}
 .gc-submission-surface .gc-execution-attachments {padding:var(--gc-space-3) var(--gc-space-4); margin:0; border-bottom:1px solid var(--gc-border); font-size:var(--gc-font-small);}
 .gc-submission-surface .gc-execution-attachments h3 {font-size:var(--gc-font-small);}
-.gc-execution-result--review {display:grid; grid-template-columns:minmax(0,1fr) 19rem; padding:0; gap:0; align-items:start;}
+.gc-execution-result--review {padding:0;}
+.gc-result-overview {min-width:0; padding:var(--gc-space-4);}
+.gc-result-assessment {display:grid; grid-template-columns:minmax(0,1fr) minmax(17rem,.6fr); border-top:1px solid var(--gc-border); align-items:start;}
+.gc-result-assessment.is-grading-only {grid-template-columns:minmax(0,1fr);}
+.gc-result-assessment.is-grading-only > .gc-result-main {display:none;}
+.gc-result-assessment.is-grading-only > .gc-result-review {border-left:0;}
 .gc-result-main {min-width:0; padding:var(--gc-space-4);}
 .gc-result-review {min-width:0; padding:var(--gc-space-4); border-left:1px solid var(--gc-border); display:grid; gap:var(--gc-space-6); align-self:stretch;}
 .gc-result-review > section + section {border-top:1px solid var(--gc-border); padding-top:var(--gc-space-4);}
@@ -256,19 +268,19 @@
 .gc-result-verdict.is-partial .gc-result-verdict__icon {color:var(--gc-accent);}
 .gc-result-review .gc-inline-grade h4 {margin-bottom:0;}
 @container task-answer (max-width:56rem) {
-    .gc-execution-result--review {grid-template-columns:minmax(0,1fr);}
+    .gc-result-assessment {grid-template-columns:minmax(0,1fr);}
     .gc-result-review {border-left:0; border-top:1px solid var(--gc-border);}
 }
 @media (max-width:991.98px) {
-    .gc-task-layout.is-student:not(.is-quiz) {grid-template-columns:minmax(0,1fr);}
     .gc-task-intro {flex-wrap:wrap;}
     .gc-task-goal {flex-basis:100%;}
 }
 @media (max-width:575.98px) {
+    .gc-task-sheet {padding:var(--gc-space-3);}
     .gc-execution-icon-button, .gc-test-pages__controls > .btn {min-width:var(--gc-touch-target); min-height:var(--gc-touch-target);}
     .gc-task-intro .step-task-card__header {align-items:start;}
     .gc-task-emblem {width:2.25rem; height:2.25rem;}
-    .gc-submission-heading, .gc-result-main, .gc-result-review, .gc-execution-result:not(.gc-execution-result--review) {padding:var(--gc-space-3);}
+    .gc-submission-heading, .gc-result-overview, .gc-result-main, .gc-result-review, .gc-execution-result:not(.gc-execution-result--review) {padding:var(--gc-space-3);}
     .gc-submission-history {padding-inline:var(--gc-space-3);}
     .gc-submission-history .gc-attempt-history__heading {flex-wrap:wrap;}
     .gc-submission-history .gc-attempt-history__heading > select {flex-basis:100%;}

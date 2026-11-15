@@ -17,6 +17,13 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await page.setViewportSize({width,height:1000});
             await visit('student',12);
             const root=page.locator('#execution-workspace-12');
+            const worksheet=await root.evaluate(el=>{
+                const sheet=el.closest('.gc-task-sheet'),context=sheet.querySelector('.gc-task-context');
+                return {conditionAbove:context.getBoundingClientRect().bottom<=el.getBoundingClientRect().top+1,
+                    reward:getComputedStyle(sheet.querySelector('.gc-task-reward i')).color,
+                    paper:getComputedStyle(sheet).backgroundColor,ground:getComputedStyle(sheet.closest('.step-main')).backgroundColor};
+            });
+            check('task-worksheet-layout-and-two-colors',worksheet.conditionAbove && worksheet.paper!==worksheet.ground && (palette || worksheet.reward==='rgb(255, 161, 23)'),width,worksheet);
             await root.getByRole('button',{name:'Код',exact:true}).click();
             const code=root.locator('.cm-content');await code.fill('def largest(values):\n    return max(values)\n# saved draft');
             await root.locator('.gc-draft-state').filter({hasText:'Черновик сохранён'}).waitFor();

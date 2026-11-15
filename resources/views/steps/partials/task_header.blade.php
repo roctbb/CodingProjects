@@ -21,7 +21,7 @@
                 <span class="gc-task-reward"><i class="fas fa-coins gc-currency-icon" aria-hidden="true"></i> {{$task->price}} GC</span>
             @endif
         </div>
-        @if($hasDeadlineChain)<span class="gc-task-deadline-chain"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-chain :rule="$deadline" /></span>@endif
+        @if($hasDeadlineChain)<div class="gc-task-deadline-chain"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-chain :rule="$deadline" /></div>@endif
         @if($isInsider && !$isManager)
             @php($classBonus = app(\App\Services\ClassroomBonus::class)->at($task, $course->id, $user->id, now()))
             @if(!empty($classBonus['amount']))<p class="gc-help-note mt-2 mb-0"><i class="fas fa-coins gc-currency-icon" aria-hidden="true"></i> Решите полностью на занятии: +{{ $classBonus['amount'] }} GC. Сдайте до {{ \Carbon\Carbon::parse($classBonus['ends_at'])->setTimezone(config('app.timezone'))->format('H:i') }}.</p>@endif

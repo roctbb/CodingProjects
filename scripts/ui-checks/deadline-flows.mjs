@@ -62,6 +62,21 @@ export default async function deadlineFlows(page, config) {
             assert(await target.getByText('+8 GC за задачу на занятии',{exact:true}).count()>0,'bonus not displayed');
             await target.screenshot({path:`${config.output}/planner-class-bonus-${width}.png`});
             results.push({name:'planner-class-bonus',width});
+            await target.clock.install();
+            await open('/insider/courses/1');
+            const summary=target.locator('#lesson-1 [data-deadline-summary]');
+            const schedule=await summary.evaluate(root=>({now:Number(root.dataset.serverNow),cutoffs:[...root.querySelectorAll('[data-deadline-stage]')].map(row=>Number(row.dataset.cutoff))}));
+            assert((await summary.locator('summary').innerText()).includes('Без штрафа'),'initial penalty missing');
+            assert(await summary.locator('[data-deadline-stage]:visible').count()===0,'full schedule must be collapsed');
+            await target.clock.fastForward(schedule.cutoffs[0]-schedule.now+10);
+            assert((await summary.locator('[data-deadline-current]').innerText())==='Сейчас −30%','current penalty did not advance automatically');
+            assert(await summary.locator('[data-deadline-next-penalty]').innerText()==='−100%','next deadline did not advance');
+            await target.clock.fastForward(schedule.cutoffs.at(-1)-schedule.cutoffs[0]+10);
+            assert(await summary.locator('[data-deadline-current]').innerText()==='Сейчас −100%','last penalty missing');
+            assert(await summary.locator('[data-deadline-next]').isHidden(),'expired last deadline remains visible');
+            await summary.locator('summary').click();
+            assert(await summary.locator('[data-deadline-stage]:visible').count()===2,'complete schedule missing');
+            results.push({name:'deadline-current-penalty-and-live-rollover',width});
         } catch(error){errors.push({name:'deadline-flows',width,error:error.message});}
         await context.close();
     }

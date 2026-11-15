@@ -24,6 +24,7 @@
                 }
                 $taskScoreBadgeClass = $hasUserSolution ? $latestUserSolution->scoreBadgeClass('bg-body') : 'bg-body';
             @endphp
+            <div class="gc-task-sheet">
             <div class="gc-task-intro {{ $isManager ? 'is-teacher' : 'is-student' }}">
                 @include('steps.partials.task_header')
                 @if($isInsider && !$isManager && !$task->is_quiz)
@@ -355,6 +356,7 @@
                 @endif
             @endif
                 </div>
+            </div>
             </div>
         </div>
     @endforeach

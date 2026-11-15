@@ -1,6 +1,6 @@
 <div class="course-lesson-stats__summary">
     <div><span>Средний прогресс</span><strong>{{ $summary['average'] }}%</strong></div>
-    <div><span>Наклейку получили</span><strong>{{ $summary['rewarded'] }} / {{ $summary['total'] }}</strong></div>
+    <div><span>Наклейку получили</span><strong><i class="fas fa-award course-stat-reward" aria-hidden="true"></i> {{ $summary['rewarded'] }} / {{ $summary['total'] }}</strong></div>
     <div><span>Участников</span><strong>{{ $summary['total'] }}</strong></div>
 </div>
 <div class="course-lesson-stats__rows">
@@ -9,10 +9,14 @@
             $row = $stats->get($student->id);
             $percent = min(100, max(0, (float) ($row->percent ?? 0)));
         @endphp
-        <div class="course-stat-row small">
-            <span class="course-stat-name">{{ $student->name }}</span>
-            <span class="course-stat-mini"><span class="course-stat-mini__bar" data-progress-width="{{ $percent }}%"></span><span class="course-stat-mini__value">{{ $row->points ?? 0 }} / {{ $row->max_points ?? 0 }} XP</span></span>
-        </div>
+        <a class="course-stat-row small"
+           href="{{ url('/insider/courses/'.$course->id.'/report').'?'.http_build_query(['chapter' => $lesson->chapter_id, 'student' => $student->id, 'lesson' => $lesson->id]).'#student'.$student->id }}"
+           aria-label="{{ $student->name }}: отчёт по уроку «{{ $lesson->name }}»">
+            <span class="course-stat-name">{{ $student->name }}@if($percent > 90)<i class="fas fa-award course-stat-reward" aria-label="Наклейка получена"></i>@endif</span>
+            <span class="course-stat-score">{{ $row->points ?? 0 }} / {{ $row->max_points ?? 0 }} XP</span>
+            <span class="course-stat-track" aria-hidden="true"><span data-progress-width="{{ $percent }}%"></span></span>
+            <span class="course-stat-percent">{{ round($percent) }}%</span>
+        </a>
     @endforeach
 </div>
 <div class="gc-course-stats-navigation">

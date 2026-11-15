@@ -66,7 +66,17 @@ export default function initReportWorkspaces() {
             const index = visible.indexOf(activeLink()) + (direction === 'previous' ? -1 : 1);
             if (visible[index]) bootstrap.Tab.getOrCreateInstance(visible[index]).show();
         }));
-        list.addEventListener('shown.bs.tab', sync);
+        list.addEventListener('shown.bs.tab', event => {
+            sync();
+            const url = new URL(location.href);
+            if (url.searchParams.has('student')) {
+                const student = /^student(\d+)-tab$/.exec(event.target.id)?.[1];
+                if (student) {
+                    url.searchParams.set('student', student);
+                    history.replaceState(null, '', url);
+                }
+            }
+        });
         list.addEventListener('click', event => {
             if (event.target.closest('[data-report-student-name]') && window.matchMedia('(max-width: 767.98px)').matches) bootstrap.Offcanvas.getInstance(roster)?.hide();
         });
@@ -143,5 +153,38 @@ export default function initReportWorkspaces() {
         });
         filterLessons(false);
         filter();
+        // Course statistics link to one authorized student and one lesson.
+        const studentId = parameters.get('student');
+        const lessonId = parameters.get('lesson');
+        const targetLink = links.find(link => link.id === `student${studentId}-tab`);
+        const targetPane = targetLink && root.querySelector(targetLink.getAttribute('href'));
+        const targetRow = targetPane && [...targetPane.querySelectorAll('[data-report-lesson-id]')]
+            .find(row => row.dataset.reportLessonId === lessonId);
+        if (targetLink) {
+            const openLesson = () => {
+                if (!targetRow) return;
+                const group = targetRow.closest('[data-report-chapter]');
+                if (group && chapterIds.includes(group.dataset.reportChapter)) chapter.value = group.dataset.reportChapter;
+                lessonState.value = 'all';
+                lessonSearch.value = '';
+                filterLessons(false);
+                const details = targetRow.querySelector('.report-lesson-details');
+                const trigger = targetRow.querySelector('.report-lesson-link');
+                const reveal = () => {
+                    targetRow.scrollIntoView({ block: 'center', behavior: 'instant' });
+                    trigger?.focus({ preventScroll: true });
+                };
+                if (details?.classList.contains('show')) reveal();
+                else if (details) {
+                    details.addEventListener('shown.bs.collapse', reveal, { once: true });
+                    bootstrap.Collapse.getOrCreateInstance(details, { toggle: false }).show();
+                }
+            };
+            if (targetLink.classList.contains('active')) openLesson();
+            else {
+                targetLink.addEventListener('shown.bs.tab', openLesson, { once: true });
+                bootstrap.Tab.getOrCreateInstance(targetLink).show();
+            }
+        }
     });
 }
