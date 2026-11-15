@@ -110,7 +110,7 @@ class History
             'review_request_url'=>url('/insider/courses/'.$course.'/tasks/'.$task->id.'/solution/'.$id.'/recheck'),
             'teacher_feedback'=>$teacherFeedback,
             'text'=>$source?null:$answer,'original_reference'=>$isLink?$answer:null,'files'=>[],'report'=>null,
-            'award_breakdown'=>['evaluated_points'=>$row['evaluated_points'],'deadline_penalty'=>$penalty,'xp_booster'=>(int)($saved->xp_booster_amount??0)],
+            'award_breakdown'=>app(SolutionAward::class)->view($solution, $viewer),
             'source_url'=>$source?url('/insider/code-submissions/'.$source->id):null,
             'source_notice'=>$source
                 ? ($source->legacy_id!==null?'Точная версия кода этой сдачи не зафиксирована. Доступную сохранённую версию и её отчёт можно посмотреть отдельно.':'Исходный код сохранён отдельно. Отчёт текущей проверки не подставляется в историческую запись сдачи.')

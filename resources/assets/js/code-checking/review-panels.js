@@ -1,41 +1,42 @@
 import {node, button, iconButton, field, input, textarea, actions, download} from './ui';
+import {markdownContent} from './feedback';
 
 export function gradingPanel({key, comment = '', mark = '', maximum, hint, onSave, onNext, onSkip, drafts}) {
-    let value = drafts.get(key) || {mark:mark ?? '', comment};
-    const status = node('p', {class:'gc-help-text', role:'status'});
-    const remember = () => {drafts.set(key, {...value}); status.textContent = 'Изменения ещё не отправлены ученику';};
+    const value = drafts.get(key) || {mark:mark ?? '', comment};
+    const status = node('p', {class:'gc-help-text', role:'status'},'Сохраните, чтобы опубликовать оценку и комментарий.');
+    const remember = () => {drafts.set(key, {...value}); status.textContent = 'Есть изменения · ученик их ещё не видит';};
     const grade = input(value.mark, v => {value.mark = v; remember();}, {type:'number', min:0, max:maximum});
-    const feedback = textarea(value.comment, v => {value.comment = v; remember();}, {rows:5, placeholder:'Что получилось и что стоит исправить'});
-    const form = node('div', {class:'gc-inline-grade__editor'},
-        field('Баллы, из '+maximum, grade), field('Комментарий ученику', feedback),
-        node('p', {class:'gc-help-text'}, hint || 'Правила срока применяются к этой сдаче при сохранении.'));
-    const save = next => async () => {
+    const resize = () => {feedback.style.height='auto';feedback.style.height=Math.max(190,feedback.scrollHeight+2)+'px';};
+    const feedback = textarea(value.comment, v => {value.comment = v; remember();resize();}, {rows:7, placeholder:'Что получилось и что стоит исправить','aria-label':'Комментарий ученику'});
+    const preview=node('div',{class:'gc-comment-preview',hidden:true});
+    const writeTab=button('Текст',()=>setMode(false)),previewTab=button('Предпросмотр',()=>setMode(true));
+    const tabs=node('div',{class:'gc-comment-tabs',role:'tablist','aria-label':'Режим комментария'},writeTab,previewTab);
+    for(const [index,tab] of [writeTab,previewTab].entries()){tab.setAttribute('role','tab');tab.setAttribute('aria-selected',String(index===0));}
+    function setMode(showPreview){feedback.hidden=showPreview;preview.hidden=!showPreview;writeTab.setAttribute('aria-selected',String(!showPreview));previewTab.setAttribute('aria-selected',String(showPreview));if(showPreview)preview.replaceChildren(markdownContent(value.comment));else{resize();feedback.focus({preventScroll:true});}}
+    const editor=node('div',{class:'gc-comment-editor'},node('div',{class:'gc-help-text'},'Комментарий ученику'),tabs,feedback,preview,node('p',{class:'gc-help-text mb-0'},'Markdown: заголовки, списки, код и таблицы'));
+    const form = node('div', {class:'gc-inline-grade__editor'}, field('Баллы, из '+maximum, grade), editor);
+    let saving=false;
+    const save = async () => {
+        if(saving)return;
         if (value.mark === '' || !Number.isFinite(Number(value.mark)) || Number(value.mark) < 0 || Number(value.mark) > maximum) {
             status.textContent = `Укажите баллы от 0 до ${maximum}.`; grade.focus(); return;
         }
-        form.setAttribute('inert',''); status.textContent = 'Сохраняем…';
+        saving=true;form.setAttribute('inert',''); status.textContent = 'Сохраняем…';
         try {
             const saved = await onSave(Number(value.mark), value.comment);
-            drafts.delete(key);
-            if (saved !== false && next) onNext?.();
+            if(saved!==false)drafts.delete(key);
         } catch (error) {status.textContent = error.message;}
-        finally {form.removeAttribute('inert');}
+        finally {saving=false;form.removeAttribute('inert');}
     };
-    const primary = iconButton(onNext ? 'Сохранить и далее' : 'Сохранить оценку', onNext ? ['fa-check','fa-arrow-right'] : 'fa-check', save(!!onNext), 'primary');
+    const primary = button('Сохранить оценку',save,'primary');primary.classList.add('gc-grade-save');primary.setAttribute('aria-keyshortcuts','Control+Enter Meta+Enter');
     const controls = actions(primary);
-    if (onNext) controls.append(iconButton('Сохранить','fa-floppy-disk', save(false)));
-    if (onSkip) controls.append(iconButton('Пропустить работу','fa-forward-step', async () => {
-        form.setAttribute('inert','');
-        try {await onSkip();} catch(error) {status.textContent = error.message;}
-        finally {form.removeAttribute('inert');}
-    }));
-    const reset = iconButton('Отменить изменения','fa-rotate-left', () => {
-        value = {mark:mark ?? '', comment}; grade.value = value.mark; feedback.value = comment;
-        drafts.delete(key); status.textContent = '';
-    });
-    controls.append(reset);form.append(controls, status);
-    return node('section', {class:'gc-inline-grade', 'aria-label':'Оценка и комментарий'},
-        node('h4', {class:'h6'}, 'Оценка и обратная связь'), form);
+    form.append(controls, status);
+    const setWidth=expanded=>{panel.closest('.gc-result-assessment')?.classList.toggle('is-wide-editor',expanded);wide.setAttribute('aria-label',expanded?'Узкий комментарий':'Широкий комментарий');wide.title=wide.getAttribute('aria-label');wide.querySelector('i').className='fas '+(expanded?'fa-compress':'fa-expand');resize();};
+    const wide=iconButton('Широкий комментарий','fa-expand',()=>{value.wide=!value.wide;drafts.set(key,{...value});setWidth(value.wide);});
+    const panel=node('section', {class:'gc-inline-grade', 'aria-label':'Оценка и комментарий'},node('header',{class:'gc-grade-heading'},node('h4',{class:'h6 mb-0'},'Оценка ученику'),wide),form);
+    panel.addEventListener('keydown',event=>{if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)&&!event.isComposing){event.preventDefault();save();}});
+    requestAnimationFrame(()=>{setWidth(!!value.wide);});
+    return panel;
 }
 
 export function authorshipPanel(record, onDismiss) {

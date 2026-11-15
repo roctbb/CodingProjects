@@ -157,6 +157,7 @@ class TaskSubmissionController extends Controller
         if($report){$report['run_id']=$run;if(!$fields)$report=app(\App\Services\CodeChecking\Reports::class)->metadata($report);}
         $value = ['id' => $item->id, 'state' => $item->state, 'points' => $item->points,
             'check_type' => $item->snapshot['check_type'] ?? null,
+            'review_comment' => $access->teacher($request->user(), $record->course_id) ? ($item->snapshot['review_comment'] ?? null) : null,
             'execution_error' => app(\App\Services\CodeChecking\Submissions::class)->executionError($record, $item),
             'ai_recheck' => app(\App\Services\CodeChecking\Submissions::class)->aiRecheck($record, $item, $request->user()),
             'comment' => $item->state === 'error' || (!$fields&&($report || ($item->snapshot['check_type']??null)==='tests'))?'':$item->comment, 'progress' => $item->progress,

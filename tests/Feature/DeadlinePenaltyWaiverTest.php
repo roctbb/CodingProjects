@@ -68,6 +68,54 @@ class DeadlinePenaltyWaiverTest extends TestCase
             ->post('/insider/courses/' . $course . '/tasks/' . $task . '/solution/1/waive-deadline-penalty');
     }
 
+    public function testWorksheetPurchasesUseSavedXpRulesAndCannotChargeTwice(): void
+    {
+        DB::statement('ALTER TABLE tasks ADD COLUMN xp_booster_enabled BOOLEAN DEFAULT 1');
+        DB::table('coin_transactions')->insert(['user_id'=>2,'price'=>100,'comment'=>'Initial']);
+        $viewer=User::findOrFail(2);
+        $award=app(\App\Services\CodeChecking\SolutionAward::class)->view(Solution::findOrFail(1),$viewer);
+        $this->assertSame(16,$award['evaluated_points']);
+        $this->assertSame(12,$award['actions']['penalty']['cost']);
+        $this->assertSame(10,$award['actions']['booster']['preview_xp']);
+        $this->actingAs($viewer)->postJson($award['actions']['booster']['url'],['expected_price'=>0])->assertConflict();
+        $this->assertEquals(100,$viewer->balance());
+        $this->actingAs($viewer)->postJson($award['actions']['booster']['url'])->assertOk()
+            ->assertJsonPath('awarded_xp',10)->assertJsonPath('award_breakdown.xp_booster',4);
+        $this->postJson($award['actions']['booster']['url'])->assertOk();
+        $this->assertEquals(90,$viewer->balance());
+        $this->postJson($award['actions']['penalty']['url'])->assertOk()->assertJsonPath('awarded_xp',20)
+            ->assertJsonPath('award_breakdown.penalty_removed','paid');
+        $this->postJson($award['actions']['penalty']['url'])->assertOk();
+        $this->assertEquals(78,$viewer->balance());
+        $this->assertDatabaseCount('coin_transactions',3);
+        $this->assertSame(16,Solution::findOrFail(1)->raw_mark);
+        $this->actingAs(User::findOrFail(3))->postJson($award['actions']['booster']['url'])->assertForbidden();
+    }
+
+    public function testWorksheetTeacherWaiverIsFreeAndInsufficientGcDoesNotChangeGrade(): void
+    {
+        DB::statement('ALTER TABLE tasks ADD COLUMN xp_booster_enabled BOOLEAN DEFAULT 1');
+        $solution=Solution::findOrFail(1);
+        $student=User::findOrFail(2);
+        $award=app(\App\Services\CodeChecking\SolutionAward::class)->view($solution,$student);
+        $this->assertFalse($award['actions']['penalty']['available']);
+        $this->actingAs($student)->postJson($award['actions']['penalty']['url'])->assertConflict();
+        $this->postJson($award['actions']['booster']['url'])->assertConflict();
+        $this->assertSame(8,$solution->fresh()->mark);
+        $this->assertDatabaseCount('coin_transactions',0);
+        $teacher=User::findOrFail(1);
+        $award=app(\App\Services\CodeChecking\SolutionAward::class)->view($solution,$teacher);
+        $this->assertSame(0,$award['actions']['penalty']['cost']);
+        $this->assertArrayNotHasKey('booster',$award['actions']);
+        $this->actingAs($teacher)->postJson($award['actions']['penalty']['url'])->assertOk()
+            ->assertJsonPath('awarded_xp',16)->assertJsonPath('award_breakdown.penalty_removed','teacher');
+        $this->assertDatabaseCount('coin_transactions',0);
+        DB::table('solutions')->where('id',$solution->id)->update(['mark'=>null,'raw_mark'=>null]);
+        $pending=app(\App\Services\CodeChecking\SolutionAward::class)->view($solution->fresh(),$student);
+        $this->assertNull($pending['evaluated_points']);
+        $this->assertSame([],$pending['actions']);
+    }
+
     public function testTeacherRestoresXpWithoutChargingAndRecalculatesCachedStats(): void
     {
         $this->waive()->assertRedirect('/insider/courses/1/tasks/1/student/2#solution-1');

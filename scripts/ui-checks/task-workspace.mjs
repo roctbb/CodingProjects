@@ -15,7 +15,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
         };
         try{
             await page.setViewportSize({width,height:1000});
-            await visit('student',12);
+            await visit('student',12,id(1));
             const root=page.locator('#execution-workspace-12');
             const worksheet=await root.evaluate(el=>{
                 const sheet=el.closest('.gc-task-sheet'),context=sheet.querySelector('.gc-task-context');
@@ -23,33 +23,34 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                     reward:getComputedStyle(sheet.querySelector('.gc-task-reward i')).color,
                     paper:getComputedStyle(sheet).backgroundColor,ground:getComputedStyle(sheet.closest('.step-main')).backgroundColor};
             });
-            check('task-worksheet-layout-and-two-colors',worksheet.conditionAbove && worksheet.paper!==worksheet.ground && (palette || worksheet.reward==='rgb(255, 161, 23)'),width,worksheet);
+            check('task-worksheet-layout-and-two-colors',worksheet.conditionAbove && worksheet.paper===worksheet.ground && (palette || worksheet.reward==='rgb(255, 161, 23)'),width,worksheet);
+            await root.getByRole('button',{name:'Исправить решение',exact:true}).click();
             await root.getByRole('button',{name:'Код',exact:true}).click();
             const code=root.locator('.cm-content');await code.fill('def largest(values):\n    return max(values)\n# saved draft');
             await root.locator('.gc-draft-state').filter({hasText:'Черновик сохранён'}).waitFor();
             const draft=await (await page.request.get(url+'/insider/courses/1/tasks/12/code-draft')).json();
             check('task-draft-autosave',draft.files[0].content.includes('# saved draft'),width);
-            await root.getByRole('combobox',{name:'Выбрать попытку',exact:true}).selectOption(id(1));
+            await root.getByRole('button',{name:'Вернуться к результату',exact:true}).click();
             await root.locator('.gc-execution-result').waitFor();
             await root.getByRole('button',{name:'Исправить решение',exact:true}).click();
             check('task-draft-survives-history',(await code.innerText()).includes('# saved draft'),width);
-            await root.getByRole('combobox',{name:'Выбрать попытку',exact:true}).selectOption(id(1));
+            await root.getByRole('button',{name:'Вернуться к результату',exact:true}).click();
             await root.getByRole('button',{name:'Данные теста 2',exact:true}).click();
             const purchase=root.getByRole('button',{name:'Открыть за 5 GC',exact:true});await purchase.waitFor();
             page.once('dialog',dialog=>dialog.accept());await purchase.click();
             await root.locator('.gc-test-detail:not([hidden]) .gc-test-data').filter({hasText:'-8 -2 -5'}).waitFor();
             check('task-purchased-test-stays-open',await root.getByRole('button',{name:'Данные теста 2',exact:true}).getAttribute('aria-expanded')==='true',width);
-            await root.locator('.gc-review-request summary').click();
-            await root.getByRole('textbox',{name:'Вопрос преподавателю',exact:true}).fill('Проверьте, пожалуйста, второй тест и моё объяснение.');
-            await root.getByRole('button',{name:'Отправить запрос',exact:true}).click();
-            await root.getByText('Запрос на перепроверку отправлен преподавателю.',{exact:true}).waitFor();
+            await root.getByRole('button',{name:'Попросить перепроверку',exact:true}).click();
+            await page.getByRole('textbox',{name:'Что преподавателю нужно проверить?',exact:true}).fill('Проверьте, пожалуйста, второй тест и моё объяснение.');
+            await page.getByRole('button',{name:'Отправить запрос',exact:true}).click();
+            await root.getByText('Запрос на перепроверку отправлен',{exact:true}).waitFor();
             check('task-student-recheck-request',true,width);
             const picker=root.getByRole('combobox',{name:'Выбрать попытку',exact:true});
             const before=(await picker.boundingBox()).y;
             await page.route('**/code-submissions/*?test_data=metadata',async route=>{await new Promise(resolve=>setTimeout(resolve,300));await route.continue().catch(()=>{});});
-            await picker.selectOption(id(31));await root.locator('[aria-busy="true"]').waitFor();
+            await picker.selectOption(id(31));await root.locator('.gc-submission-stage[aria-busy="true"]').waitFor();
             const during=(await picker.boundingBox()).y;
-            await picker.selectOption(id(1));await root.locator('[aria-busy="true"]').waitFor({state:'hidden'});
+            await picker.selectOption(id(1));await root.locator('.gc-submission-stage[aria-busy="true"]').waitFor({state:'hidden'});
             check('task-attempt-no-scroll-jump',Math.abs(before-during)<1,width,{before,during});
             check('task-latest-selection-wins',(await picker.inputValue())===id(1),width);
             await page.unroute('**/code-submissions/*?test_data=metadata');
@@ -59,10 +60,11 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             const archive=page.locator('#execution-workspace-15');
             await archive.getByRole('tab',{name:'src/helper.py',exact:true}).click();
             await archive.locator('pre').filter({hasText:'def answer()'}).waitFor();
-            check('task-legacy-zip-source-and-xp',(await archive.getByRole('combobox',{name:'Выбрать попытку',exact:true}).inputValue())==='solution-115' && (await archive.locator('.gc-result-score').innerText()).replace(/\s/g,'')==='6XP',width);
+            check('task-legacy-zip-source-and-xp',(await archive.getByRole('combobox',{name:'Выбрать попытку',exact:true}).inputValue())==='solution-115' && (await archive.locator('.gc-result-score > strong').innerText())==='6',width);
 
             await visit('student',14);
             const uploadRoot=page.locator('#execution-workspace-14');
+            await uploadRoot.getByRole('button',{name:'Исправить решение',exact:true}).click();
             await uploadRoot.getByRole('textbox',{name:'Ответ',exact:true}).fill('Объясняю решение и прикладываю файлы.');
             await uploadRoot.locator('input[type="file"]').setInputFiles([
                 {name:'a.bin',mimeType:'application/octet-stream',buffer:Buffer.from([0,255,1])},
@@ -96,6 +98,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             check('task-last-test-page',await testRows.count()===3 && await paged.getByRole('button',{name:'Следующая страница тестов',exact:true}).isDisabled(),width);
             await paged.getByRole('button',{name:'Страница тестов 2',exact:true}).click();
             check('task-test-page-keeps-details',await paged.getByRole('button',{name:'Данные теста 11',exact:true}).getAttribute('aria-expanded')==='true',width);
+            await paged.getByRole('button',{name:'Действия',exact:true}).click();
             await paged.getByRole('button',{name:'Отметить просмотренным',exact:true}).click();
             await paged.getByRole('button',{name:'Страница тестов 2',exact:true}).waitFor();
             check('task-test-page-survives-refresh',await paged.getByRole('button',{name:'Страница тестов 2',exact:true}).getAttribute('aria-current')==='page',width);
@@ -129,16 +132,18 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             const feedback=ai.getByRole('textbox',{name:'Комментарий ученику',exact:true});await feedback.fill('Нужно пояснить начальное значение.');
             await ai.getByRole('button',{name:'Следующий',exact:true}).click();
             await ai.getByRole('heading',{name:'Ученик 3',exact:true}).waitFor();
-            await ai.locator('[aria-busy="true"]').waitFor({state:'hidden'});
+            await ai.locator('.gc-submission-stage[aria-busy="true"]').waitFor({state:'hidden'});
             await ai.getByRole('button',{name:'Предыдущий',exact:true}).click();
             await ai.getByRole('heading',{name:'Ученик 1',exact:true}).waitFor();
-            await ai.locator('[aria-busy="true"]').waitFor({state:'hidden'});
+            await ai.locator('.gc-submission-stage[aria-busy="true"]').waitFor({state:'hidden'});
             await ai.getByRole('textbox',{name:'Комментарий ученику',exact:true}).waitFor();
             check('task-review-draft-survives-student-switch',(await ai.getByRole('textbox',{name:'Комментарий ученику',exact:true}).inputValue())==='Нужно пояснить начальное значение.',width);
             await page.screenshot({path:`${output}/task-teacher-ai-${width}.png`,fullPage:true});
-            page.once('dialog',dialog=>dialog.accept());
             const recheckResponse=page.waitForResponse(response=>response.url().endsWith('/'+id(13)+'/recheck') && response.request().method()==='POST');
-            await ai.getByRole('button',{name:'Перепроверить усиленной ИИ-моделью',exact:true}).click();
+            await ai.getByRole('button',{name:'Действия',exact:true}).click();
+            await ai.getByRole('button',{name:'Перепроверить усиленной моделью',exact:true}).click();
+            await page.getByRole('textbox',{name:'Комментарий к перепроверке',exact:true}).fill('Проверьте второй критерий подробнее.');
+            await page.getByRole('button',{name:'Запустить перепроверку',exact:true}).click();
             const enhanced=await recheckResponse;
             check('task-enhanced-ai-recheck',enhanced.status()===202 && JSON.parse(enhanced.request().postData()).stronger_ai===true,width);
 
@@ -146,12 +151,15 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             const manual=page.locator('#execution-workspace-14');
             await manual.getByRole('spinbutton',{name:'Баллы, из 20',exact:true}).fill('17');
             await manual.getByRole('textbox',{name:'Комментарий ученику',exact:true}).fill('Объяснение верное, добавьте пример.');
-            await manual.getByRole('button',{name:'Сохранить и далее',exact:true}).click();
-            await manual.getByRole('heading',{name:'Ученик 3',exact:true}).waitFor();
-            check('task-grade-and-next',true,width);
-            await manual.getByRole('button',{name:'Пропустить работу',exact:true}).click();
+            await manual.getByRole('button',{name:'Сохранить оценку',exact:true}).click();
             await manual.getByRole('heading',{name:'Ученик 1',exact:true}).waitFor();
-            check('task-skip-one-review',true,width);
+            await manual.getByRole('button',{name:'Следующий',exact:true}).click();
+            await manual.getByRole('heading',{name:'Ученик 3',exact:true}).waitFor();
+            check('task-grade-then-next',true,width);
+            check('task-skip-button-removed',await manual.getByRole('button',{name:'Пропустить работу',exact:true}).count()===0,width);
+            await manual.getByRole('button',{name:'Следующий',exact:true}).click();
+            await manual.getByRole('heading',{name:'Ученик 1',exact:true}).waitFor();
+            check('task-arrow-navigation',true,width);
             await page.getByRole('tab',{name:'Моё решение',exact:true}).click();
             const own=page.locator('#execution-own-workspace-14');
             await own.getByRole('textbox',{name:'Ответ',exact:true}).fill('Собственная сдача преподавателя.');

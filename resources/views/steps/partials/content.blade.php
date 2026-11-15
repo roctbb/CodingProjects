@@ -25,15 +25,14 @@
                 $taskScoreBadgeClass = $hasUserSolution ? $latestUserSolution->scoreBadgeClass('bg-body') : 'bg-body';
             @endphp
             <div class="gc-task-sheet">
-            <div class="gc-task-intro {{ $isManager ? 'is-teacher' : 'is-student' }}">
+            <details class="gc-task-condition-disclosure" open>
+            <summary><div class="gc-task-intro {{ $isManager ? 'is-teacher' : 'is-student' }}">
                 @include('steps.partials.task_header')
                 @if($isInsider && !$isManager && !$task->is_quiz)
                     @include('steps.partials.task-goal')
                 @endif
-            </div>
-            <div class="gc-task-layout {{ $isManager ? 'is-teacher' : 'is-student' }} @if($task->is_quiz) is-quiz @endif">
+            </div><i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
                 <div class="gc-task-context">
-                    @if($isManager)<details class="gc-task-condition-disclosure"><summary>Условие и материалы задачи</summary>@endif
                     @if ($task->is_star)
                         <div class="step-task-note step-task-note--optional" role="note">
                             <span class="text-warning-emphasis flex-shrink-0"><i class="fas fa-star"></i></span>
@@ -67,7 +66,7 @@
                             @endif
                         </section>
                     @endif
-                    <div class="gc-section step-task-card step-task-card--{{$taskType}} @if ($task->is_star) is-optional @endif @if ($hasUserSolution) is-submitted @endif">
+                    <div class="gc-task-condition-content">
                         <div class="markdown step-task-card__body">
                             {!! parsedown_math($task->text) !!}
                             @if ($isInsider)
@@ -190,8 +189,9 @@
                             </div>
                         </div>
                     @endif
-                    @if($isManager)</details>@endif
                 </div>
+            </details>
+            <div class="gc-task-layout {{ $isManager ? 'is-teacher' : 'is-student' }} @if($task->is_quiz) is-quiz @endif">
                 <div class="gc-task-answer">
             @if (\Request::is('insider/*'))
 

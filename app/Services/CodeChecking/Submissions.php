@@ -77,10 +77,10 @@ class Submissions
         return $run;
     }
 
-    public function recheck(CodeSubmission $submission, User $teacher, bool $latestConfiguration = false, bool $strongerAi = false): CodeExecutionRun
+    public function recheck(CodeSubmission $submission, User $teacher, bool $latestConfiguration = false, bool $strongerAi = false, string $comment = ''): CodeExecutionRun
     {
         $task = $this->access->task($teacher, $submission->course_id, $submission->task_id, true);
-        return DB::transaction(function () use ($submission, $task, $teacher, $latestConfiguration, $strongerAi) {
+        return DB::transaction(function () use ($submission, $task, $teacher, $latestConfiguration, $strongerAi, $comment) {
             $locked = CodeSubmission::lockForUpdate()->findOrFail($submission->id);
             $previous = $locked->currentRun;
             abort_unless($previous->finished_at || $previous->state === 'awaiting_review', 409, 'A check is already running.');
@@ -93,6 +93,16 @@ class Submissions
                 || (($submission->source_metadata['requires_conversion'] ?? false) && $snapshot['check_type'] !== 'manual'),
                 409, 'Convert the legacy checker/source or select a converted configuration.');
             $snapshot['legacy']=false;
+            // Replace a prior reviewer note when checking the same immutable work again.
+            if (isset($snapshot['review_instructions_original'])) $snapshot['private_instructions'] = $snapshot['review_instructions_original'];
+            unset($snapshot['review_comment'], $snapshot['review_instructions_original']);
+            if (trim($comment) !== '') {
+                $snapshot['review_comment'] = trim($comment);
+                if (($snapshot['check_type'] ?? null) === 'gpt') {
+                    $snapshot['review_instructions_original'] = $snapshot['private_instructions'] ?? '';
+                    $snapshot['private_instructions'] = trim(($snapshot['private_instructions'] ?? '')."\n\nКомментарий преподавателя к перепроверке:\n".trim($comment));
+                }
+            }
             if ($strongerAi) {
                 $model = app(\App\Services\Ai\AiSettings::class)->recheck();
                 abort_unless($model, 409, 'Модель для повторной ИИ-проверки не настроена администратором.');
@@ -226,9 +236,7 @@ class Submissions
             'text_report_available'=>$run->state !== 'error' && !$includeTestFields && !$reportView && ($run->snapshot['check_type']??null)==='tests' && (bool)($run->comment || isset($run->legacy_report['suite_diagnostics'])),
             'text_report_url'=>url('/insider/code-submissions/'.$submission->id.'/runs/'.$run->id).'?test_data=full',
             'awarded_xp' => $awardedXp,
-            'award_breakdown'=>$solution ? ['evaluated_points'=>$solution->evaluatedMark(),
-                'deadline_penalty'=>(int)($solution->hasActiveDeadlinePenalty()?$solution->deadline_penalty_amount:0),
-                'xp_booster'=>(int)($solution->xp_booster_amount??0)] : null,
+            'award_breakdown'=>$solution ? app(SolutionAward::class)->view($solution, $viewer) : null,
             'report' => $reportView,
             'checker_diagnostics' => $includeTestFields && $this->access->teacher($viewer,(int)$submission->course_id) ? ($run->legacy_report['suite_diagnostics']??null) : null,
             'teacher_viewed'=>$submission->teacher_viewed, 'is_public'=>$submission->is_public,

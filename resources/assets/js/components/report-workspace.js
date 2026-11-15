@@ -90,7 +90,7 @@ export default function initReportWorkspaces() {
             lessonClear.classList.toggle('d-none', !query);
             const counts = { all: 0, incomplete: 0, review: 0, complete: 0 };
             root.querySelectorAll('#v-pills-tabContent > .tab-pane.active').forEach(pane => {
-                let total = 0, shown = 0;
+                let total = 0, shown = 0, points=0, maximum=0;
                 pane.querySelectorAll('[data-report-chapter]').forEach(group => {
                     const inChapter = chapter.value === 'all' || group.dataset.reportChapter === chapter.value;
                     let groupCount = 0;
@@ -98,7 +98,7 @@ export default function initReportWorkspaces() {
                         const state = row.dataset.reportLessonStateValue;
                         const incomplete = state === 'incomplete' || state === 'review';
                         const matchesName = normalize(row.dataset.reportLessonName).includes(query);
-                        if (inChapter) total++;
+                        if (inChapter) {total++; points+=Number(row.dataset.reportPoints || 0);maximum+=Number(row.dataset.reportMaximum || 0);}
                         if (pane.classList.contains('active') && inChapter && matchesName) {
                             counts.all++;
                             if (incomplete) counts.incomplete++;
@@ -113,6 +113,9 @@ export default function initReportWorkspaces() {
                 const form = plurals.select(total);
                 pane.querySelector('[data-report-lesson-count]').textContent = `${shown === total ? total : `${shown} из ${total}`} ${{ one: 'урок', few: 'урока', many: 'уроков', other: 'урока' }[form]}`;
                 pane.querySelector('[data-report-lessons-empty]').hidden = shown > 0;
+                const summary=pane.querySelector('[data-report-summary-value]');
+                if(summary)summary.textContent=maximum>0?`${points} / ${maximum} XP · ${Math.min(100,Math.round(points/maximum*100))}%`:'Без оценки';
+                const label=pane.querySelector('[data-report-summary-label]');if(label)label.textContent=chapter.value==='all'?'Во всех главах':'В этой главе';
             });
             [...lessonState.options].forEach(option => {
                 option.textContent = window.matchMedia('(max-width: 575.98px)').matches ? option.dataset.label : `${option.dataset.label} (${counts[option.value] || 0})`;

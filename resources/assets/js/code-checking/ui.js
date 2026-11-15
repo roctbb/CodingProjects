@@ -27,6 +27,16 @@ export function select(value, options, change) {
 }
 export const check = (label, value, change) => field(label, node('input', {type:'checkbox', class:'form-check-input', checked:!!value, onchange:event => change(event.target.checked)}));
 export const actions = (...children) => node('div', {class:'gc-execution-actions'}, children);
+export function openDialog(title, content, controls = []) {
+    const trigger = document.activeElement;
+    const dialog = node('dialog', {class:'gc-dialog gc-review-dialog', 'aria-label':title});
+    dialog.append(node('header', {}, node('h3', {class:'h5 mb-0'}, title), iconButton('Закрыть', 'fa-xmark', () => dialog.close())), content);
+    if (controls.length) dialog.append(actions(...controls));
+    document.body.append(dialog);
+    dialog.addEventListener('close', () => {dialog.remove(); if (trigger?.isConnected) trigger.focus({preventScroll:true});}, {once:true});
+    dialog.showModal();
+    return dialog;
+}
 export const modes = {files:'Загрузить файлы', code:'Вставить код', text:'Ответ текстом', project:'Несколько файлов кода', repository:'GitHub-репозиторий'};
 export const phases = {queued:'В очереди', preparing:'Подготовка', compiling:'Компиляция', testing:'Проверка тестов', grading:'Оценка решения', publishing:'Сохранение результата', completed:'Проверка завершена', error:'Не удалось проверить', awaiting_review:'Ожидает преподавателя', imported_pending:'Историческая проверка'};
 export const verdicts = {passed:'Пройден', wrong_answer:'Неверный ответ', runtime_error:'Ошибка выполнения', compilation_error:'Ошибка компиляции', time_limit_exceeded:'Превышено время', output_limit_exceeded:'Превышен вывод', error:'Ошибка проверки'};

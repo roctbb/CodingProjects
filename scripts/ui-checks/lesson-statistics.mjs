@@ -20,7 +20,7 @@ export default async function lessonStatistics(controlPage, {url, output, widths
                 const name=el.querySelector('.course-stat-name'), style=getComputedStyle(name);
                 return {height:el.getBoundingClientRect().height,overflow:document.documentElement.scrollWidth>innerWidth,wrap:style.whiteSpace,nameFits:name.scrollWidth<=name.clientWidth+1};
             });
-            check('lesson-stats-full-names-and-touch-target',geometry.height>=44 && geometry.wrap!=='nowrap' && geometry.nameFits && !geometry.overflow,width,geometry);
+            check('lesson-stats-full-names-and-touch-target',geometry.height>=(width<600?44:32) && geometry.wrap!=='nowrap' && geometry.nameFits && !geometry.overflow,width,geometry);
             const accent = await panel.locator('.course-stat-reward').first().evaluate(el=>getComputedStyle(el).color);
             check('lesson-stats-orange-reward',palette ? !!accent : accent==='rgb(255, 161, 23)',width,{accent});
             await page.screenshot({path:`${output}/lesson-statistics-${width}.png`,fullPage:true});

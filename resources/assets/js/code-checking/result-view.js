@@ -27,19 +27,23 @@ export function resultHeader(record,{sourceOnly=false,showScore=true,showSourceD
     const title=node('h3',{class:'gc-result-verdict__title'},verdict.title);
     const details=node('div',{class:'gc-result-verdict__details'},title,
         sourceOnly && showSourceDate?node('p',{class:'text-muted small mb-0'},`Сохранённая версия решения · ${new Date(record.created_at).toLocaleString('ru-RU')}`):null);
-    if(!sourceOnly && record.kind!=='legacy_attempt' && record.awarded_xp!==null && record.awarded_xp!==undefined)
-        details.append(node('p',{class:'gc-help-text mb-0'},`Зачтено: ${record.awarded_xp} XP`));
+    const raw=record.award_breakdown?.evaluated_points ?? record.evaluated_points ?? record.points;
+    const maximum=record.maximum_points ?? record.grading_maximum_points;
+    const credited=!sourceOnly && record.awarded_xp!==null && record.awarded_xp!==undefined;
+    if(raw!==null && raw!==undefined && record.state!=='error')details.append(node('p',{class:'gc-help-text mb-0'},`Оценка за работу: ${raw}${maximum?' из '+maximum:''} баллов${record.check_type==='gpt'?' · проверка ИИ':''}`));
     const header=node('header',{class:`gc-result-verdict is-${verdict.tone}`,'aria-label':'Итог проверки'},
         node('i',{class:`fas ${verdict.icon} gc-result-verdict__icon`,'aria-hidden':'true'}),details);
-    if(showScore && record.state!=='error' && record.kind!=='legacy_attempt' && record.points!==null && record.points!==undefined)header.append(node('div',{class:'gc-result-score'},
-        node('strong',{},String(record.points)),node('span',{},sourceOnly?' баллов':` / ${record.maximum_points} баллов`)));
-    else if(showScore && record.kind==='legacy_attempt' && record.awarded_xp!==null)header.append(node('div',{class:'gc-result-score'},node('strong',{},String(record.awarded_xp)),node('span',{},' XP')));
+    if(showScore && record.state!=='error' && (credited || record.points!==null && record.points!==undefined))header.append(node('div',{class:'gc-result-score'},
+        node('strong',{},String(credited?record.awarded_xp:record.points)),node('span',{},record.kind==='legacy_attempt'?' XP':` / ${maximum} ${credited?'XP':'баллов'}`),credited?node('small',{},'Зачтено за эту сдачу'):null));
     return {header,terminal:terminal.includes(record.state)};
 }
 
 export function submittedWork(record) {
     const files=record.files || [];
-    const section=node('section',{class:'gc-submitted-work','aria-label':'Отправленная работа'});
+    const section=node('details',{class:'gc-submitted-work',open:true,'aria-label':'Отправленная работа'});
+    const heading=node('summary',{},node('i',{class:'fas fa-chevron-down','aria-hidden':'true'}),node('span',{class:'gc-submitted-work__title'},files.length===1?files[0].name:'Исходная работа'));
+    const tools=node('div',{class:'gc-submitted-work__tools'});heading.append(tools);
+    section.append(heading);
     if(files.length){
         const tabs=node('div',{class:'gc-source-tabs',role:'tablist','aria-label':'Файлы решения'});
         const preview=node('div',{class:'gc-submitted-preview',role:files.length>1?'tabpanel':'region'});
@@ -49,11 +53,13 @@ export function submittedWork(record) {
             const ext=file.name.split('.').pop().toLowerCase(),language=({py:'python',cc:'cpp',c:'cpp',h:'cpp',hpp:'cpp',js:'javascript',html:'xml',cs:'csharp'})[ext] || ext;
             code.className=globalThis.hljs?.getLanguage(language)?'language-'+language:'language-plaintext';
             if(globalThis.hljs?.getLanguage(language))globalThis.hljs.highlightElement(code);
-            const copy=button('Копировать',async()=>{try{await navigator.clipboard.writeText(source);copy.textContent='Скопировано';}catch{pre.focus();const selection=getSelection(),range=document.createRange();range.selectNodeContents(code);selection.removeAllRanges();selection.addRange(range);}});copy.classList.add('btn-sm');
-            return node('div',{class:'gc-submitted-code'},node('div',{class:'gc-submitted-code__toolbar'},showFilename?node('strong',{},file.name):null,node('div',{class:'gc-submitted-code__actions'+(showFilename?'':' ms-auto')},file.download_url?download(file.download_url,file.download_label || 'Скачать'):null,extraAction,copy)),pre);
+            const copy=iconButton('Копировать код','fa-copy',async()=>{try{await navigator.clipboard.writeText(source);copy.setAttribute('aria-label','Скопировано');copy.title='Скопировано';}catch{pre.focus();const selection=getSelection(),range=document.createRange();range.selectNodeContents(code);selection.removeAllRanges();selection.addRange(range);}});
+            const link=file.download_url?download(file.download_url,''):null;if(link){link.append(node('i',{class:'fas fa-download','aria-hidden':'true'}));link.setAttribute('aria-label','Скачать исходную работу');link.title='Скачать исходную работу';link.className='btn btn-outline-secondary gc-execution-icon-button';}
+            tools.replaceChildren(...[link,extraAction,copy].filter(Boolean));
+            return node('div',{class:'gc-submitted-code'},pre);
         };
         const show=async file=>{
-            selected=file;const version=++sequence;
+            selected=file;const version=++sequence;tools.replaceChildren();
             tabs.querySelectorAll('[role="tab"]').forEach(tab=>{const active=tab.dataset.file===file.name;tab.classList.toggle('is-active',active);tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;});
             preview.setAttribute('aria-label',file.name);
             if(/\.ipynb$/i.test(file.name)){
@@ -61,7 +67,12 @@ export function submittedWork(record) {
                 try{
                     const {notebookPreview}=await import('./submission-notebook');
                     if(version!==sequence)return;
-                    const notebook=await notebookPreview(file);if(version!==sequence)return;preview.replaceChildren(notebook);
+                    const notebook=await notebookPreview(file);if(version!==sequence)return;
+                    const toolbar=notebook.querySelector(':scope > .gc-submitted-code__toolbar'),name=toolbar?.querySelector('.gc-submitted-notebook__name');
+                    name?.querySelector('strong')?.remove();
+                    if(name)notebook.prepend(node('p',{class:'gc-notebook-summary gc-help-text'},name.textContent));
+                    if(toolbar){tools.replaceChildren(...[...toolbar.children].filter(child=>child!==name));toolbar.remove();}
+                    preview.replaceChildren(notebook);
                 }catch(error){if(version===sequence)preview.replaceChildren(node('p',{class:'gc-help-text'},'Не удалось показать тетрадку. '+error.message),download(file.download_url,'Скачать исходную тетрадку'),button('Повторить загрузку тетрадки',()=>show(file)));}
                 return;
             }
@@ -99,7 +110,7 @@ export function submittedWork(record) {
         };
         for(const file of files){const tab=button(file.name,()=>show(file));tab.className='gc-source-tab';tab.setAttribute('role','tab');tab.dataset.file=file.name;tabs.append(tab);}
         tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();const index=files.indexOf(selected),next=files[(index+(event.key==='ArrowRight'?1:files.length-1))%files.length];show(next);tabs.querySelector('[aria-selected="true"]')?.focus();});
-        if(files.length>1)section.append(tabs);section.append(preview);show(files.find(file=>file.source!==undefined) || files[0]);
+        if(files.length>1){heading.querySelector('.gc-submitted-work__title').remove();tools.before(tabs);}section.append(preview);show(files.find(file=>file.source!==undefined) || files[0]);
     }
     if(record.text && (record.mode==='text' || record.mode==='files'))section.append(node('h4',{class:'h6 mt-3'},'Ответ'),node('pre',{class:'gc-execution-output'},record.text));
     if(!files.length && !record.text)section.append(node('p',{class:'text-muted'},'Отправленная работа не сохранилась отдельно.'));

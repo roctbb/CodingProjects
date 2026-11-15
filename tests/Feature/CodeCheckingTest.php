@@ -1067,6 +1067,33 @@ class CodeCheckingTest extends TestCase
         $this->assertSame(1, CodeSubmission::count());
     }
 
+    public function test_recheck_comment_reaches_ai_without_overwriting_the_frozen_rubric_or_previous_note(): void
+    {
+        $base='/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private',['language'=>'python','check_type'=>'gpt','private_instructions'=>'Frozen rubric'])->assertOk();
+        $created=$this->login()->postJson($base.'/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'print(5)'])->assertCreated()->json();
+        $old=CodeExecutionRun::findOrFail($created['execution_id']);
+        $old->update(['state'=>'completed','finished_at'=>now()]);
+        $snapshot=$old->snapshot;
+        $url='/insider/code-submissions/'.$created['id'].'/recheck';
+        $this->postJson($url,['comment'=>'Student cannot trigger a recheck'])->assertForbidden();
+        $this->login(1)->postJson($url,['comment'=>str_repeat('x',4001)])->assertUnprocessable();
+        $first=$this->postJson($url,['comment'=>'Check the shadow ray'])->assertStatus(202)->json();
+        $run=CodeExecutionRun::findOrFail($first['execution_id']);
+        $this->assertSame('Check the shadow ray',$run->snapshot['review_comment']);
+        $this->assertStringContainsString('Check the shadow ray',$run->snapshot['private_instructions']);
+        $this->assertSame('Frozen rubric',$run->snapshot['review_instructions_original']);
+        $this->assertSame($snapshot,$old->fresh()->snapshot);
+        $this->getJson('/insider/code-submissions/'.$created['id'].'/runs/'.$run->id.'?test_data=metadata')->assertOk()->assertJsonPath('review_comment','Check the shadow ray');
+        $run->update(['state'=>'completed','finished_at'=>now()]);
+        $second=$this->postJson($url,['comment'=>'Check the second criterion'])->assertStatus(202)->json();
+        $next=CodeExecutionRun::findOrFail($second['execution_id']);
+        $this->assertStringNotContainsString('Check the shadow ray',$next->snapshot['private_instructions']);
+        $this->assertStringContainsString('Frozen rubric',$next->snapshot['private_instructions']);
+        $this->assertStringContainsString('Check the second criterion',$next->snapshot['private_instructions']);
+        $this->assertSame(1,CodeSubmission::count());
+    }
+
     public function test_stronger_ai_never_converts_a_frozen_test_check_and_requires_a_configured_model(): void
     {
         config(['ai.defaults.recheck'=>['model'=>'strong-model', 'timeout'=>180]]);

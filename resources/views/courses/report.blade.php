@@ -164,7 +164,7 @@
                                     @php
                                         $studentDisplayPercent = $student->max_points > 0 ? $displayPercent($student->percent) : 0;
                                     @endphp
-                                    <strong class="report-student-percent">{{ $student->max_points > 0 ? round($studentDisplayPercent).'%' : '—' }}</strong>
+                                    <div class="report-chapter-score"><span class="gc-help-text" data-report-summary-label>В выбранной главе</span><strong data-report-summary-value>{{ $student->points }} / {{ $student->max_points }} XP</strong></div>
                                 </div>
                             </div>
                             <div class="report-student-card__body">
@@ -178,15 +178,12 @@
                                         }
                                     }
                                 @endphp
-                                @if($student->max_points > 0)
-                                    <x-gc-progress :percent="$studentDisplayPercent" height="6px" class="mb-3" />
-                                @endif
                                 @if ($overallIntegrity && $overallIntegrity['synced'] > 0)
                                     @php
                                         $overallRiskTone = $riskToneClasses[$overallIntegrity['risk_level']] ?? $riskToneClasses['none'];
                                         $overallRiskLabel = $riskLabels[$overallIntegrity['risk_level']] ?? $overallIntegrity['risk_level'];
                                     @endphp
-                                    <div class="report-integrity-strip mb-3">
+                                    <details class="report-integrity-summary {{ in_array($overallIntegrity['risk_level'], ['high', 'medium']) ? 'is-warning' : '' }}"><summary>Анализ авторства · {{ in_array($overallIntegrity['risk_level'], ['high', 'medium']) ? 'есть предупреждения' : 'нет активных предупреждений' }}</summary><div class="report-integrity-strip mb-3">
                                         <span class="text-muted small fw-medium">Академическая честность</span>
                                         <span class="report-integrity-icon {{ $overallRiskTone }}" title="Риск: {{ $overallRiskLabel }}">
                                             <i class="fas fa-shield-alt"></i>
@@ -233,7 +230,7 @@
                                                 </button>
                                             </form>
                                         @endif
-                                    </div>
+                                    </div></details>
                                 @endif
 
 
@@ -262,6 +259,7 @@
                                             </span>
                                         @endif
                                     </div>
+                                    <div class="report-column-head" aria-hidden="true"><span>Урок / задание</span><span>Зачтено XP</span><span>Прогресс</span></div>
                                     @foreach($groupLessons as $lesson)
                                         @php
                                             $lessonStat = $lessonStats[$lesson->id][$student->id] ?? null;
@@ -278,7 +276,7 @@
                                             $lessonState = $lessonPendingCount ? 'review' : ($lessonMaxPoints > 0 && $lessonPoints >= $lessonMaxPoints ? 'complete' : ($lessonMaxPoints > 0 ? 'incomplete' : 'unscored'));
                                         @endphp
 
-                                        <div class="report-lesson-row" data-report-lesson-id="{{ $lesson->id }}" data-report-lesson-state-value="{{ $lessonState }}" data-report-lesson-name="{{ $lesson->name }}">
+                                        <div class="report-lesson-row" data-report-points="{{ $lessonPoints }}" data-report-maximum="{{ $lessonMaxPoints }}" data-report-lesson-id="{{ $lesson->id }}" data-report-lesson-state-value="{{ $lessonState }}" data-report-lesson-name="{{ $lesson->name }}">
                                             <button type="button" class="report-lesson-main report-lesson-link" data-bs-toggle="collapse" data-bs-target="#student{{$student->id}}marks{{$lesson->id}}" aria-expanded="false" aria-controls="student{{$student->id}}marks{{$lesson->id}}">
                                                 <span class="report-lesson-info min-width-0">
                                                     <span class="report-lesson-title">
@@ -292,9 +290,6 @@
                                                             <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle report-lesson-lock">закрыт</span>
                                                             @if($lessonStartDate)<span class="report-lesson-date">до {{ $lessonStartDate->format('d.m.Y') }}</span>@endif
                                                         @endif
-                                                    </span>
-                                                </span>
-                                                <span class="report-lesson-metrics">
                                                     @if ($lessonHasIntegrityRisk)
                                                         <span class="report-lesson-risk-slot">
                                                             @php
@@ -307,6 +302,9 @@
                                                             </span>
                                                         </span>
                                                     @endif
+                                                    </span>
+                                                </span>
+                                                <span class="report-lesson-metrics">
                                                     <span class="report-lesson-score">
                                                         @if($lessonMaxPoints > 0)
                                                             {{$lessonPoints}} / {{$lessonMaxPoints}} XP
@@ -343,14 +341,23 @@
                                                             });
                                                             $bestSolution = \App\Solution::bestScoredIn($filtered);
                                                             $mark = $bestSolution ? $bestSolution->mark : 0;
-                                                            $markClass = $bestSolution ? $bestSolution->scoreBadgeClass('bg-body-tertiary') : 'bg-body-tertiary';
+                                                            $latestSolution = $filtered->whereNotNull('submitted')->sortByDesc('submitted')->first();
+                                                            $scoreNotes = [];
+                                                            if ($latestSolution?->hasActiveDeadlinePenalty() && $latestSolution->id !== $bestSolution?->id) {
+                                                                $scoreNotes[] = 'Последняя сдача: '.$latestSolution->mark.' XP, штраф −'.$latestSolution->deadline_penalty_amount.' XP. Зачтена лучшая сдача';
+                                                            } elseif ($bestSolution?->hasActiveDeadlinePenalty()) {
+                                                                $scoreNotes[] = 'Применён штраф: −'.$bestSolution->deadline_penalty_amount.' XP';
+                                                            } elseif ($bestSolution?->isDeadlinePenaltyRemoved()) {
+                                                                $scoreNotes[] = 'Штраф снят';
+                                                            }
+                                                            if (($bestSolution?->xp_booster_amount ?? 0) > 0) $scoreNotes[] = 'Бустер: +'.$bestSolution->xp_booster_amount.' баллов до штрафа';
                                                             $should_check = isset($pendingReviewPairs[$student->id.':'.$task->id]);
                                                             $taskIntegrity = $studentIntegrity['tasks'][$task->id] ?? null;
                                                         @endphp
                                                         <li class="report-task-row">
-                                                            <a class="report-task-link text-decoration-none" title="{{ $task->name }}"
-                                                               target="_blank" rel="noopener"
+                                                            <div class="report-task-name"><i class="fas {{ $task->is_code ? 'fa-code' : ($task->is_quiz ? 'fa-circle-question' : 'fa-pen') }}" aria-hidden="true"></i><div><a class="report-task-link text-decoration-none" title="{{ $task->name }}"
                                                                href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}">{{$task->name}}</a>
+                                                            </div></div>
 
                                                             <span class="report-task-meta">
                                                                 @php $blocked = $task->isBlocked($student->id, $course->id); @endphp
@@ -365,19 +372,21 @@
                                                                             $taskIntegrity['similarity_warnings'] > 0 ? 'списывание '.$taskIntegrity['similarity_warnings'] : null,
                                                                         ])));
                                                                     @endphp
-                                                                    <span class="report-task-suspicion-dot {{ $taskRiskTone }}"
-                                                                          title="{{ $taskSuspicionLabel }}{{ $taskRiskTitle ? ': '.$taskRiskTitle : '' }}">
-                                                                        <i class="fas {{ $taskSuspicionLabel === 'AI' ? 'fa-robot' : 'fa-exclamation-triangle' }}"></i>
-                                                                    </span>
+                                                                    <a class="report-task-suspicion-dot {{ $taskRiskTone }}" href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}"
+                                                                          aria-label="Анализ авторства: {{ $task->name }}" title="{{ $taskSuspicionLabel }}{{ $taskRiskTitle ? ': '.$taskRiskTitle : '' }}">
+                                                                        <i class="fas {{ $taskSuspicionLabel === 'AI' ? 'fa-robot' : 'fa-exclamation-triangle' }}" aria-hidden="true"></i>
+                                                                    </a>
                                                                 @endif
                                                                 @if ($blocked)
-                                                                    <span class="badge rounded-pill report-task-mark report-task-mark--blocked" title="Заблокировано"><i class="fas fa-lock me-1" aria-hidden="true"></i>0 / {{$task->max_mark}}<span class="visually-hidden"> · Заблокировано</span></span>
+                                                                    <span class="report-task-mark report-task-mark--blocked" title="Заблокировано"><i class="fas fa-lock me-1" aria-hidden="true"></i>0 / {{$task->max_mark}}<span class="visually-hidden"> · Заблокировано</span></span>
                                                                 @elseif ($should_check)
-                                                                    <span class="badge rounded-pill report-task-mark report-task-mark--review" title="На проверке"><i class="fas fa-hourglass-half me-1" aria-hidden="true"></i>{{$mark}} / {{$task->max_mark}}<span class="visually-hidden"> · На проверке</span></span>
+                                                                    <span class="report-task-mark report-task-mark--review" title="На проверке"><i class="fas fa-hourglass-half me-1" aria-hidden="true"></i>{{$mark}} / {{$task->max_mark}}<span class="visually-hidden"> · На проверке</span></span>
                                                                 @else
-                                                                    <span class="badge rounded-pill {{ $markClass }} report-task-mark">{{$mark}} / {{$task->max_mark}}</span>
+                                                                    <span class="report-task-mark {{ $scoreNotes ? 'report-task-mark--modified' : '' }}">{{$mark}} / {{$task->max_mark}}</span>
                                                                 @endif
                                                             </span>
+                                                            <a class="report-task-open" href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}" aria-label="Открыть решение: {{ $task->name }}"><span>Открыть</span> <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                                                            @if($scoreNotes)<span class="report-task-adjustment {{ $latestSolution?->hasActiveDeadlinePenalty() || $bestSolution?->hasActiveDeadlinePenalty() ? 'is-penalty' : '' }}">{{ implode(' · ', $scoreNotes) }}</span>@endif
                                                         </li>
                                                     @endforeach
                                                 @endforeach

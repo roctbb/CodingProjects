@@ -1005,14 +1005,21 @@ class TasksController extends Controller
             $this->make_info_alert('Без изменений', 'У этого решения нет активного штрафа за дедлайн.');
         }
 
+        if (request()->expectsJson()) return $this->solutionAwardResponse($solution);
         return redirect('/insider/courses/' . $course_id . '/tasks/' . $id . '/student/' . $solution->user_id . '#solution-' . $solution->id);
     }
 
     public function payDeadlinePenalty($course_id, $id, $solution_id)
     {
+        return app(\App\Services\CoinWallet::class)->transaction(Auth::id(),
+            fn () => $this->payDeadlinePenaltyLocked($course_id, $id, $solution_id));
+    }
+
+    private function payDeadlinePenaltyLocked($course_id, $id, $solution_id)
+    {
         $solution = Solution::where('id', $solution_id)
             ->where('task_id', $id)
-            ->where('course_id', $course_id)
+            ->where('course_id', $course_id)->lockForUpdate()
             ->firstOrFail();
         $user = Auth::user();
 
@@ -1021,13 +1028,16 @@ class TasksController extends Controller
         }
 
         if (!$solution->hasActiveDeadlinePenalty()) {
+            if (request()->expectsJson()) return $this->solutionAwardResponse($solution);
             $this->make_info_alert('Штраф уже снят', 'У этого решения нет активного штрафа за дедлайн.');
             return redirect()->back();
         }
 
         $cost = $solution->deadlinePenaltyCost();
+        $this->checkExpectedAwardPrice($cost);
 
         if ($user->balance() < $cost) {
+            abort_if(request()->expectsJson(), 409, 'Недостаточно GC для снятия штрафа.');
             $this->make_error_alert('Не хватает GC', 'Чтобы снять штраф, нужно ' . $cost . ' GC.');
             return redirect()->back();
         }
@@ -1059,14 +1069,21 @@ class TasksController extends Controller
 
         $this->make_success_alert('Штраф снят', 'XP за решение пересчитан, со счета списано ' . $cost . ' GC.');
 
+        if (request()->expectsJson()) return $this->solutionAwardResponse($solution);
         return redirect()->back();
     }
 
     public function useXpBooster($course_id, $id, $solution_id)
     {
+        return app(\App\Services\CoinWallet::class)->transaction(Auth::id(),
+            fn () => $this->useXpBoosterLocked($course_id, $id, $solution_id));
+    }
+
+    private function useXpBoosterLocked($course_id, $id, $solution_id)
+    {
         $solution = Solution::where('id', $solution_id)
             ->where('task_id', $id)
-            ->where('course_id', $course_id)
+            ->where('course_id', $course_id)->lockForUpdate()
             ->firstOrFail();
         $user = Auth::user();
 
@@ -1075,23 +1092,28 @@ class TasksController extends Controller
         }
 
         if (!$solution->task->xp_booster_enabled) {
+            abort_if(request()->expectsJson(), 409, 'Бустер недоступен для этой задачи.');
             $this->make_info_alert('Бустер недоступен', 'Для этой задачи нельзя применить XP-бустер.');
             return redirect()->back();
         }
 
         if ($solution->hasXpBooster()) {
+            if (request()->expectsJson()) return $this->solutionAwardResponse($solution);
             $this->make_info_alert('Бустер уже применен', 'К этому решению уже применяли XP-бустер.');
             return redirect()->back();
         }
 
         if ($solution->mark === null || $solution->mark >= $solution->task->max_mark) {
+            abort_if(request()->expectsJson(), 409, 'Бустер не увеличит результат этой сдачи.');
             $this->make_info_alert('Бустер не нужен', 'Это решение уже набрало максимум XP или еще не проверено.');
             return redirect()->back();
         }
 
         $cost = $solution->xpBoosterCost($user);
+        $this->checkExpectedAwardPrice($cost);
 
         if ($cost > 0 && $user->balance() < $cost) {
+            abort_if(request()->expectsJson(), 409, 'Недостаточно GC для бустера.');
             $this->make_error_alert('Не хватает GC', 'Чтобы применить бустер, нужно ' . $cost . ' GC.');
             return redirect()->back();
         }
@@ -1103,6 +1125,7 @@ class TasksController extends Controller
         $solution->applyDeadlinePenalty($solution->raw_mark === null ? $solution->mark : $solution->raw_mark, $solution->task->getDeadline($course_id));
 
         if ($solution->mark <= $markBeforeBooster) {
+            abort_if(request()->expectsJson(), 409, 'Бустер применяется до штрафа и не увеличит зачтённый XP.');
             $solution->xp_booster_used_at = null;
             $solution->xp_booster_amount = 0;
             $this->make_info_alert('Бустер не сработает', 'Бустер применяется до штрафа за дедлайн и не увеличит итоговый XP для этого решения.');
@@ -1127,7 +1150,22 @@ class TasksController extends Controller
 
         $this->make_success_alert('Бустер применен', 'Решение получило +' . ($solution->mark - $markBeforeBooster) . ' XP.' . ($cost > 0 ? ' Со счета списано ' . $cost . ' GC.' : ' Использован бесплатный бустер от питомца.'));
 
+        if (request()->expectsJson()) return $this->solutionAwardResponse($solution);
         return redirect()->back();
+    }
+
+    private function solutionAwardResponse(Solution $solution)
+    {
+        $solution->refresh();
+        return response()->json(['awarded_xp' => $solution->mark,
+            'award_breakdown' => app(\App\Services\CodeChecking\SolutionAward::class)->view($solution, Auth::user())])->header('Cache-Control', 'private, no-store');
+    }
+
+    private function checkExpectedAwardPrice(int $cost): void
+    {
+        if (!request()->expectsJson()) return;
+        request()->validate(['expected_price' => 'sometimes|integer|min:0']);
+        abort_if(request()->has('expected_price') && request()->integer('expected_price') !== $cost, 409, 'Цена изменилась. Обновите страницу перед покупкой.');
     }
 
     public function buyGeekPasteExtraAttempt($course_id, $id)
