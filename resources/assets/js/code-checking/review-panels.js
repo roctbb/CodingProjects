@@ -1,5 +1,4 @@
 import {node, button, iconButton, field, input, textarea, actions, download} from './ui';
-import {markdownContent} from './feedback';
 
 export function gradingPanel({key, comment = '', mark = '', maximum, hint, onSave, onNext, onSkip, drafts}) {
     const value = drafts.get(key) || {mark:mark ?? '', comment};
@@ -8,12 +7,7 @@ export function gradingPanel({key, comment = '', mark = '', maximum, hint, onSav
     const grade = input(value.mark, v => {value.mark = v; remember();}, {type:'number', min:0, max:maximum});
     const resize = () => {feedback.style.height='auto';feedback.style.height=Math.max(190,feedback.scrollHeight+2)+'px';};
     const feedback = textarea(value.comment, v => {value.comment = v; remember();resize();}, {rows:7, placeholder:'Что получилось и что стоит исправить','aria-label':'Комментарий ученику'});
-    const preview=node('div',{class:'gc-comment-preview',hidden:true});
-    const writeTab=button('Текст',()=>setMode(false)),previewTab=button('Предпросмотр',()=>setMode(true));
-    const tabs=node('div',{class:'gc-comment-tabs',role:'tablist','aria-label':'Режим комментария'},writeTab,previewTab);
-    for(const [index,tab] of [writeTab,previewTab].entries()){tab.setAttribute('role','tab');tab.setAttribute('aria-selected',String(index===0));}
-    function setMode(showPreview){feedback.hidden=showPreview;preview.hidden=!showPreview;writeTab.setAttribute('aria-selected',String(!showPreview));previewTab.setAttribute('aria-selected',String(showPreview));if(showPreview)preview.replaceChildren(markdownContent(value.comment));else{resize();feedback.focus({preventScroll:true});}}
-    const editor=node('div',{class:'gc-comment-editor'},node('div',{class:'gc-help-text'},'Комментарий ученику'),tabs,feedback,preview,node('p',{class:'gc-help-text mb-0'},'Markdown: заголовки, списки, код и таблицы'));
+    const editor=node('label',{class:'gc-comment-editor'},node('span',{class:'gc-help-text'},'Комментарий ученику'),feedback,node('span',{class:'gc-help-text'},'Поддерживает Markdown: списки, код и таблицы'));
     const form = node('div', {class:'gc-inline-grade__editor'}, field('Баллы, из '+maximum, grade), editor);
     let saving=false;
     const save = async () => {

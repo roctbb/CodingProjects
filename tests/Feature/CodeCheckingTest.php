@@ -791,7 +791,8 @@ class CodeCheckingTest extends TestCase
         $payload['tests'][]=['number'=>2,'test_id'=>str_repeat('c',64),'is_public'=>true,'verdict'=>'passed',
             'input'=>$this->field('PUBLIC SECOND INPUT'),'expected'=>$this->field('PUBLIC SECOND EXPECTED'),
             'actual'=>$this->field('PUBLIC SECOND ACTUAL'),'error'=>$this->field('PUBLIC SECOND ERROR'),'comparison'=>['equal'=>true],'limits'=>['time'=>1]];
-        $testArtifact=app(Artifacts::class)->put('TEST ARTIFACT THAT MUST NOT BE READ BY METADATA');
+        $artifacts=app(Artifacts::class);
+        $testArtifact=$artifacts->put('TEST ARTIFACT THAT MUST NOT BE READ BY METADATA');
         $payload['tests'][1]['error']=$testArtifact;
         app(Reports::class)->accept($payload);
         $this->partialMock(Artifacts::class,function($mock)use($testArtifact){
@@ -810,7 +811,10 @@ class CodeCheckingTest extends TestCase
                 $this->assertArrayNotHasKey('configuration',$response);
             }
         }
-        $this->login()->getJson($base.'/runs/'.$run.'/tests/2')->assertOk()->assertJsonPath('input.text','PUBLIC SECOND INPUT')->assertDontSee('SECRET');
+        app()->instance(Artifacts::class,$artifacts);
+        $detail=$this->login()->getJson($base.'/runs/'.$run.'/tests/2')->assertOk()->assertJsonPath('input.text','PUBLIC SECOND INPUT')
+            ->assertJsonPath('error.type','inline')->assertJsonPath('error.text','TEST ARTIFACT THAT MUST NOT BE READ BY METADATA')->assertDontSee('SECRET');
+        $this->assertArrayNotHasKey('download_url',$detail->json('error'));
         $this->getJson($base.'/runs/'.$run.'/tests/1')->assertForbidden();
         $this->assertDatabaseCount('code_test_purchases',0);$this->assertSame(20,(int)User::find(2)->balance());
         $this->login(3)->getJson($base.'/runs/'.$run.'/tests/2')->assertForbidden();
@@ -843,6 +847,81 @@ class CodeCheckingTest extends TestCase
         $this->login()->getJson($base.'/runs/'.$run.'/tests/1')->assertOk()->assertJsonPath('input.text','SAVED PUBLIC INPUT')->assertJsonPath('actual.text','SAVED PUBLIC OUTPUT');
         $this->getJson($base.'/runs/'.$run.'/tests/2')->assertForbidden();
         $this->login(1)->getJson($base.'/runs/'.$run.'/tests/2')->assertOk()->assertJsonPath('data_unavailable',true)->assertJsonMissingPath('input')->assertJsonMissingPath('actual');
+        $this->assertDatabaseCount('code_test_purchases',0);$this->assertSame(20,(int)User::find(2)->balance());
+    }
+
+    private function archivedIoRun(): CodeExecutionRun
+    {
+        $root=$this->legacyExport('tests');
+        $task=json_decode(trim(file_get_contents($root.'/tasks.jsonl')),true);
+        $task['test_mode']='io';$task['test_config']=['tests'=>[
+            ['is_public'=>true,'input'=>'PUBLIC ARCHIVED INPUT','output'=>'PUBLIC ARCHIVED EXPECTED'],
+            ['is_public'=>false,'input'=>"  ARCHIVED SECRET INPUT\n",'output'=>'ARCHIVED SECRET EXPECTED'],
+            ['is_public'=>false,'input'=>'PASSED SECRET INPUT','output'=>'PASSED SECRET EXPECTED'],
+        ]];
+        file_put_contents($root.'/tasks.jsonl',json_encode($task)."\n");
+        $this->rewriteLegacy($root,['check_comments'=>"Пройдено тестов: 2 из 3.\n\nТест 1 (публичный): пройден.\n\nТест 2 (приватный): неверный ответ.\n\nТест 3 (приватный): пройден."]);
+        app(\App\Services\CodeChecking\LegacyImport::class)->run($root,['tasks'=>['12'=>12]],true,4);
+        return CodeSubmission::first()->currentRun;
+    }
+
+    public function test_archived_test_data_is_scoped_lazy_and_never_borrowed_from_current_definitions(): void
+    {
+        $run=$this->archivedIoRun();$base='/insider/code-submissions/'.$run->submission_id.'/runs/'.$run->id;
+        CodeTaskChecker::whereKey(12)->update(['config'=>['check_type'=>'tests','test_mode'=>'io','test_config'=>['tests'=>[['input'=>'WRONG CURRENT DATA','output'=>'WRONG CURRENT ANSWER']]]]]);
+        foreach([1,2] as $user)$this->login($user)->getJson($base.'?test_data=metadata')->assertOk()->assertDontSee('ARCHIVED SECRET')->assertDontSee('PUBLIC ARCHIVED INPUT')->assertDontSee('WRONG CURRENT')->assertJsonPath('report.tests.1.data_source','geekpaste_archive');
+        $this->getJson($base.'/tests/1')->assertOk()->assertJsonPath('input.text','PUBLIC ARCHIVED INPUT')->assertJsonPath('expected.text','PUBLIC ARCHIVED EXPECTED');
+        $this->getJson($base.'/tests/2')->assertForbidden();
+        $this->get($base.'/tests/2/input')->assertForbidden();
+        $this->login(3)->getJson($base.'/tests/1')->assertForbidden();
+        $teacher=$this->login(1)->getJson($base.'/tests/2')->assertOk()->assertJsonPath('input.text',"  ARCHIVED SECRET INPUT\n")->assertJsonPath('expected.text','ARCHIVED SECRET EXPECTED')->assertJsonMissingPath('actual')->assertDontSee('WRONG CURRENT')->json();
+        $this->get($teacher['input']['download_url'])->assertOk()->assertStreamedContent("  ARCHIVED SECRET INPUT\n");
+        $this->postJson($base.'/tests/2/purchase',['expected_price'=>5])->assertForbidden();
+        $this->assertDatabaseCount('code_test_purchases',0);$this->assertSame(20,(int)User::find(2)->balance());
+    }
+
+    public function test_archived_test_purchase_preserves_grades_checks_price_and_reuses_access_between_runs(): void
+    {
+        $run=$this->archivedIoRun();$base='/insider/code-submissions/'.$run->submission_id.'/runs/'.$run->id;
+        $before=$run->only(['points','snapshot','legacy_report','comment']);
+        $this->login()->postJson($base.'/tests/2/purchase',['expected_price'=>99])->assertConflict();
+        $this->assertSame(20,(int)User::find(2)->balance());
+        $this->postJson($base.'/tests/3/purchase',['expected_price'=>5])->assertConflict();
+        $this->postJson($base.'/tests/2/purchase',['expected_price'=>5])->assertOk()->assertJsonPath('charged',5)->assertJsonPath('balance',15)->assertDontSee('ARCHIVED SECRET');
+        $this->postJson($base.'/tests/2/purchase',['expected_price'=>99])->assertOk()->assertJsonPath('charged',0);
+        $copy=$run->replicate(['id']);$copy->id=(string)Str::uuid();$copy->save();
+        $other='/insider/code-submissions/'.$run->submission_id.'/runs/'.$copy->id;
+        $this->getJson($other.'/tests/2')->assertOk()->assertJsonPath('input.text',"  ARCHIVED SECRET INPUT\n")->assertJsonMissingPath('actual');
+        $this->postJson($other.'/tests/2/purchase',['expected_price'=>5])->assertOk()->assertJsonPath('charged',0);
+        $this->assertDatabaseCount('code_test_purchases',1);$this->assertSame(15,(int)User::find(2)->balance());
+        $this->assertSame($before,$run->fresh()->only(array_keys($before)));
+    }
+
+    public function test_archived_test_purchase_never_charges_for_missing_files_disabled_reveals_or_insufficient_balance(): void
+    {
+        $run=$this->archivedIoRun();$url='/insider/code-submissions/'.$run->submission_id.'/runs/'.$run->id.'/tests/2/purchase';
+        CodeTaskChecker::whereKey(12)->update(['allows_test_reveals'=>false]);
+        $this->login()->postJson($url,['expected_price'=>5])->assertConflict();
+        CodeTaskChecker::whereKey(12)->update(['allows_test_reveals'=>true]);
+        DB::table('blocked_tasks')->insert(['task_id'=>12,'course_id'=>7,'user_id'=>2]);
+        $this->postJson($url,['expected_price'=>5])->assertConflict();DB::table('blocked_tasks')->delete();
+        DB::table('coin_transactions')->insert(['user_id'=>2,'price'=>-20,'comment'=>'Spend']);
+        $this->postJson($url,['expected_price'=>5])->assertConflict();
+        DB::table('coin_transactions')->insert(['user_id'=>2,'price'=>20,'comment'=>'Restore']);
+        $artifact=$run->snapshot['test_config']['tests'][1]['input']['blob_id'];DB::table('code_artifacts')->where('id',$artifact)->delete();DB::table('code_artifact_contents')->where('id',$artifact)->delete();
+        $this->postJson($url,['expected_price'=>5])->assertNotFound();
+        $this->assertDatabaseCount('code_test_purchases',0);$this->assertSame(20,(int)User::find(2)->balance());
+    }
+
+    public function test_incompatible_archived_sets_are_not_matched_by_test_number_or_sold(): void
+    {
+        $run=$this->archivedIoRun();$base='/insider/code-submissions/'.$run->submission_id.'/runs/'.$run->id;
+        $snapshot=$run->snapshot;$snapshot['test_config']['tests'][1]['is_public']=true;
+        $run->update(['snapshot'=>$snapshot]);
+        $this->login(1)->getJson($base.'/tests/2')->assertOk()->assertJsonPath('data_unavailable',true)->assertJsonMissingPath('input');
+        $this->login()->postJson($base.'/tests/2/purchase',['expected_price'=>5])->assertNotFound();
+        $snapshot['test_config']['tests']=array_slice($snapshot['test_config']['tests'],0,2);$run->update(['snapshot'=>$snapshot]);
+        $this->getJson($base.'?test_data=metadata')->assertOk()->assertJsonPath('report.tests.1.can_purchase',false)->assertJsonMissingPath('report.tests.1.purchase_url');
         $this->assertDatabaseCount('code_test_purchases',0);$this->assertSame(20,(int)User::find(2)->balance());
     }
 

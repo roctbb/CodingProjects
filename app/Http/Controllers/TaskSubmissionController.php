@@ -153,7 +153,7 @@ class TaskSubmissionController extends Controller
         $request->validate(['test_data'=>'sometimes|in:metadata,full']);$fields=$request->input('test_data')!=='metadata';
         $native=\App\CodeTestReport::find($run);
         $report=$native?app(\App\Services\CodeChecking\Reports::class)->view($native,$request->user(),$fields)
-            :(isset($item->legacy_report['suite_diagnostics'])?null:app(\App\Services\CodeChecking\HistoricalReport::class)->view($item->legacy_report,$access->teacher($request->user(),$record->course_id)));
+            :(isset($item->legacy_report['suite_diagnostics'])?null:app(\App\Services\CodeChecking\ArchivedTests::class)->view($item,$request->user(),$fields));
         if($report){$report['run_id']=$run;if(!$fields)$report=app(\App\Services\CodeChecking\Reports::class)->metadata($report);}
         $value = ['id' => $item->id, 'state' => $item->state, 'points' => $item->points,
             'check_type' => $item->snapshot['check_type'] ?? null,
@@ -176,11 +176,22 @@ class TaskSubmissionController extends Controller
         $record=CodeSubmission::findOrFail($submission);$access->authorOrTeacher($request->user(),$record);
         $item=CodeExecutionRun::where('submission_id',$submission)->findOrFail($run);
         if($native=\App\CodeTestReport::find($run))return $this->json(app(\App\Services\CodeChecking\Reports::class)->test($native,$number,$request->user()));
-        $report=app(\App\Services\CodeChecking\HistoricalReport::class)->view($item->legacy_report,$access->teacher($request->user(),$record->course_id));
-        $test=collect($report['tests']??[])->firstWhere('number',$number);abort_unless($test,404);
-        abort_unless(($test['unlocked']??false)||$access->teacher($request->user(),$record->course_id),403);
-        if(!array_intersect(['input','expected','actual','error'],array_keys($test)))$test+=['data_unavailable'=>true,'notice'=>\App\Services\CodeChecking\HistoricalReport::NOTICE];
-        return $this->json($test);
+        return $this->json(app(\App\Services\CodeChecking\ArchivedTests::class)->test($item,$number,$request->user()));
+    }
+
+    public function buyArchivedTest(Request $request,string $submission,string $run,int $number,Access $access)
+    {
+        $record=CodeSubmission::findOrFail($submission);$access->authorOrTeacher($request->user(),$record);
+        $item=CodeExecutionRun::where('submission_id',$submission)->findOrFail($run);
+        $data=$request->validate(['expected_price'=>'required|integer|min:0']);
+        return $this->json(app(\App\Services\CodeChecking\ArchivedTests::class)->buy($item,$number,$request->user(),$data['expected_price']));
+    }
+
+    public function archivedTestFile(Request $request,string $submission,string $run,int $number,string $field,Access $access)
+    {
+        $record=CodeSubmission::findOrFail($submission);$access->authorOrTeacher($request->user(),$record);
+        $item=CodeExecutionRun::where('submission_id',$submission)->findOrFail($run);
+        return app(\App\Services\CodeChecking\ArchivedTests::class)->download($item,$number,$field,$request->user());
     }
 
     public function runFile(Request $request,string $submission,string $run,int $file,Access $access,Artifacts $artifacts)

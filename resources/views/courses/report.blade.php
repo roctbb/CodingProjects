@@ -178,13 +178,13 @@
                                         }
                                     }
                                 @endphp
-                                @if ($overallIntegrity && $overallIntegrity['synced'] > 0)
+                                @if ($overallIntegrity && $overallIntegrity['synced'] > 0 && (in_array($overallIntegrity['risk_level'], ['high','medium']) || ($overallIntegrity['dismissed'] ?? 0) > 0))
                                     @php
                                         $overallRiskTone = $riskToneClasses[$overallIntegrity['risk_level']] ?? $riskToneClasses['none'];
                                         $overallRiskLabel = $riskLabels[$overallIntegrity['risk_level']] ?? $overallIntegrity['risk_level'];
                                     @endphp
-                                    <details class="report-integrity-summary {{ in_array($overallIntegrity['risk_level'], ['high', 'medium']) ? 'is-warning' : '' }}"><summary>Анализ авторства · {{ in_array($overallIntegrity['risk_level'], ['high', 'medium']) ? 'есть предупреждения' : 'нет активных предупреждений' }}</summary><div class="report-integrity-strip mb-3">
-                                        <span class="text-muted small fw-medium">Академическая честность</span>
+                                    <div class="report-integrity-strip mb-3">
+                                        <span class="text-muted small fw-medium">{{ in_array($overallIntegrity['risk_level'], ['high','medium']) ? 'Предупреждения об авторстве' : 'Предупреждения сняты' }}</span>
                                         <span class="report-integrity-icon {{ $overallRiskTone }}" title="Риск: {{ $overallRiskLabel }}">
                                             <i class="fas fa-shield-alt"></i>
                                         </span>
@@ -230,7 +230,7 @@
                                                 </button>
                                             </form>
                                         @endif
-                                    </div></details>
+                                    </div>
                                 @endif
 
 
@@ -247,7 +247,7 @@
                                     @endphp
                                     <section class="report-chapter-group" data-report-chapter="{{ $groupChapter?->id ?? 0 }}">
                                     <div class="report-chapter-heading">
-                                        <h6 class="mb-0">{{ $groupChapter ? $groupChapter->name : 'Без главы' }}</h6>
+                                        <div class="report-chapter-name"><i class="fas fa-book-open" aria-hidden="true"></i><div><span class="report-chapter-label">Глава</span><h6 class="mb-0">{{ $groupChapter ? $groupChapter->name : 'Без главы' }}</h6></div></div>
                                         @if ($chapterIntegrity && $chapterIntegrity['synced'] > 0 && $chapterIntegrity['risk_level'] !== 'low')
                                             @php
                                                 $chapterRiskTone = $riskToneClasses[$chapterIntegrity['risk_level']] ?? $riskToneClasses['none'];
@@ -259,7 +259,6 @@
                                             </span>
                                         @endif
                                     </div>
-                                    <div class="report-column-head" aria-hidden="true"><span>Урок / задание</span><span>Зачтено XP</span><span>Прогресс</span></div>
                                     @foreach($groupLessons as $lesson)
                                         @php
                                             $lessonStat = $lessonStats[$lesson->id][$student->id] ?? null;
@@ -283,6 +282,7 @@
                                                         <span class="report-lesson-link__name">{{$lesson->name}}</span>
                                                     </span>
                                                     <span class="report-lesson-meta">
+                                                        <span class="report-lesson-kind">Урок</span>
                                                         @if($lessonState === 'review')<span class="gc-lesson-state gc-lesson-state--review"><i class="fas fa-hourglass-half" aria-hidden="true"></i> На проверке: {{ $lessonPendingCount }}</span>
                                                         @elseif($lessonState === 'complete')<span class="gc-lesson-state"><i class="fas fa-check" aria-hidden="true"></i> Завершено</span>
                                                         @elseif($lessonState === 'incomplete')<span class="gc-lesson-state">{{ $lessonPoints > 0 ? 'В работе' : 'Без баллов' }}</span>@endif
@@ -327,13 +327,16 @@
                                             </button>
 
                                             <div class="collapse report-lesson-details" id="student{{$student->id}}marks{{$lesson->id}}">
+                                                <div class="report-task-columns" aria-hidden="true"><span>Задания</span><span>Зачтено XP</span><span></span></div>
                                                 <template data-report-task-template><ul class="report-task-list list-unstyled mb-0">
                                                 @php $stepsWithTasks = $lesson->steps->filter(fn ($step) => $step->tasks->isNotEmpty()); @endphp
                                                 @foreach($stepsWithTasks as $step)
                                                     @php
                                                         $tasks = $step->tasks;
                                                     @endphp
-                                                    @if($stepsWithTasks->count() > 1)<li class="report-task-step">{{ $step->name }}</li>@endif
+                                                    <li class="report-task-group">
+                                                    @if($stepsWithTasks->count() > 1)<h6 class="report-task-step"><span>Ступень {{ $loop->iteration }}</span>{{ $step->name }}</h6>@endif
+                                                    <ul class="report-group-tasks list-unstyled mb-0">
                                                     @foreach($tasks as $task)
                                                         @php
                                                             $filtered = $task->solutions->filter(function ($value) use ($student) {
@@ -385,10 +388,11 @@
                                                                     <span class="report-task-mark {{ $scoreNotes ? 'report-task-mark--modified' : '' }}">{{$mark}} / {{$task->max_mark}}</span>
                                                                 @endif
                                                             </span>
-                                                            <a class="report-task-open" href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}" aria-label="Открыть решение: {{ $task->name }}"><span>Открыть</span> <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                                                            <a class="report-task-open" href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/student/'.$student->id)}}" aria-label="Открыть решение: {{ $task->name }}" title="Открыть решение: {{ $task->name }}"><i class="fas fa-arrow-right" aria-hidden="true"></i></a>
                                                             @if($scoreNotes)<span class="report-task-adjustment {{ $latestSolution?->hasActiveDeadlinePenalty() || $bestSolution?->hasActiveDeadlinePenalty() ? 'is-penalty' : '' }}">{{ implode(' · ', $scoreNotes) }}</span>@endif
                                                         </li>
                                                     @endforeach
+                                                    </ul></li>
                                                 @endforeach
                                                 </ul></template>
                                             </div>

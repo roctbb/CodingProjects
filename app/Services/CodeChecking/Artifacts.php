@@ -9,6 +9,22 @@ use Illuminate\Support\Facades\Schema;
 class Artifacts
 {
     public const MAX_TEST_BYTES = 33554432;
+    public const MAX_TEST_PREVIEW_BYTES = 65536;
+
+    /** Small authorized test bodies are text; larger or binary bodies remain downloads. */
+    public function testField(array $value, string $downloadUrl): array
+    {
+        if ($value['type'] === 'inline') return $value;
+        if ($value['bytes'] <= self::MAX_TEST_PREVIEW_BYTES) {
+            $text = $this->get($value['blob_id']);
+            if (mb_check_encoding($text, 'UTF-8') && !str_contains($text, "\0")) {
+                return ['type'=>'inline', 'text'=>$text, 'bytes'=>strlen($text), 'truncated'=>$value['truncated'] ?? false];
+            }
+        }
+        unset($value['blob_id'], $value['sha256']);
+        $value['download_url'] = $downloadUrl;
+        return $value;
+    }
 
     public function disk()
     {

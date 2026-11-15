@@ -222,9 +222,9 @@ export async function workspace(root) {
         editing?.destroy(); editing = null;
         const kind=composerKind(),groups=submissionGroups(config),allowed=config.submission_modes;
         content.hidden=!composerVisible;
-        const composerHeading=node('div',{class:'gc-composer-heading'},node('h3',{class:'h6 mb-0'},'Новое решение'),draftState);
+        const composerHeading=node('div',{class:'gc-composer-heading'},node('h3',{class:'h6 mb-0'},teacher?'Пробное решение':'Ваше решение'));
         if(lastResultAttempt)composerHeading.append(button('Вернуться к результату',safe(()=>openAttemptById(lastResultAttempt))));
-        const body=node('section',{class:'gc-execution-composer','aria-label':'Новое решение'},composerHeading);
+        const body=node('section',{class:'gc-execution-composer'+(kind==='code'?' is-code-composer':''),'aria-label':'Форма сдачи решения'},composerHeading);
         if(composerVisible)summary.hidden=true;
         const form=node('div',{class:'gc-composer-body'});body.append(form);
         if(kind!=='text' && groups.length>1){
@@ -241,7 +241,7 @@ export async function workspace(root) {
             const languageNames={cpp:'C++',python:'Python',py:'Python',javascript:'JavaScript',text:'Текст'};
             const languages=config.allowed_languages.filter(value=>value!=='text');
             if(languages.length>1)form.append(field('Язык',select(draft.language,Object.fromEntries(languages.map(value=>[value,languageNames[value] || value])),value=>{draft.language=value;markDirty();renderComposer();})));
-            else if(languages.length)composerHeading.append(node('span',{class:'gc-composer-language text-muted small'},node('i',{class:'fas fa-code','aria-hidden':'true'}),' '+(languageNames[languages[0]] || languages[0])));
+            else if(languages.length)composerHeading.append(node('span',{class:'gc-composer-language text-muted small'},node('i',{class:'fas fa-code','aria-hidden':'true'}),' '+(kind==='code'?(files[0]?.path || config.entrypoint || (draft.language==='cpp'?'main.cpp':'main.py'))+' · ':'')+(languageNames[languages[0]] || languages[0])));
         }
         if(kind==='repository'){
             draft.repository ||= {};
@@ -285,7 +285,7 @@ export async function workspace(root) {
                 if(files.length || uploads.length)form.append(node('ul',{class:'gc-upload-list'},files.map(file=>node('li',{},file.download_url?download(file.download_url,file.path):file.path,' ',button('Убрать',()=>{files=files.filter(value=>value!==file);markDirty();renderComposer();}))),uploads.map(file=>node('li',{},file.name,' ',button('Убрать',()=>{uploads=uploads.filter(value=>value!==file);files=files.filter(value=>value.path!==file.name);markDirty();renderComposer();})))));
             }
         }
-        form.append(actions(button('Отправить решение',safe(submit),'primary')));content.replaceChildren(body);
+        const footer=actions(button('Отправить решение',safe(submit),'primary'),draftState);footer.classList.add('gc-composer-footer');form.append(footer);content.replaceChildren(body);
     }
     function artifact(value) {
         if (!value) return node('span',{class:'text-muted'},'Нет данных');
@@ -331,7 +331,7 @@ export async function workspace(root) {
                     for(const [key,label] of Object.entries({input:'Ввод',expected:'Ожидаемый ответ',actual:'Вывод программы',error:'Ошибка'})) {
                         if(data[key])details.append(node('div',{},node('strong',{},label),artifact(data[key])));
                     }
-                    if(data.notice)details.append(node('p',{class:'text-muted mb-0'},data.notice));
+                    if(data.notice)details.append(node('p',{class:'gc-help-text gc-test-source-note mb-0'},data.notice));
                     if(!details.children.length)details.append(node('p',{class:'text-muted mb-0'},'В этой проверке подробные данные теста не сохранялись.'));
                     loaded=true;
                 }).catch(e => {
@@ -351,21 +351,23 @@ export async function workspace(root) {
             toggle.classList.add('btn-sm');toggle.textContent=detailRow.hidden?'Данные':'Свернуть';toggle.setAttribute('aria-expanded',String(!detailRow.hidden));toggle.setAttribute('aria-controls',detailsId);toggle.setAttribute('aria-label',`Данные теста ${test.number}`);
             if (test.unlocked) {
                 // Authorized test contents are fetched only when this row is expanded.
+                if(test.has_details===false){toggle.disabled=true;toggle.textContent='Нет данных';toggle.title='Подробные данные этой проверки не сохранились.';}
             } else if (test.can_purchase) {
                 details.append(node('p',{class:'text-muted'},'После открытия данные этого теста будут доступны и в следующих попытках. Оценка этой работы сохранится.'));
                 const purchase = button(`Открыть за ${report.price} GC`,safe(async () => {
                     await settings();
-                    if (!confirm(`Открыть тест ${test.number} за ${report.price} GC?\nБаланс: ${config.balance} GC.`)) return;
+                    const provenance=test.data_source==='geekpaste_archive'?'\nВвод и эталон — из снимка GeekPaste при переносе; набор мог меняться после отправки. Вывод программы не сохранился.':'';
+                    if (!confirm(`Открыть тест ${test.number} за ${report.price} GC?\nБаланс: ${config.balance} GC.${provenance}`)) return;
                     purchase.disabled = true;
                     try {
-                        const value = await request(`/insider/code-test-reports/${report.run_id}/tests/${test.test_id}/purchase?test_data=metadata`,'POST',{expected_price:report.price});
+                        const value = await request(test.purchase_url || `/insider/code-test-reports/${report.run_id}/tests/${test.test_id}/purchase?test_data=metadata`,'POST',{expected_price:report.price});
                         notice.className = 'text-muted small';notice.textContent = `Списано ${value.charged} GC. Баланс: ${value.balance} GC.`;config.balance = value.balance;
                         await show(current.id,current.snapshotOf?{snapshotOf:current.snapshotOf}:{});
                     } finally {purchase.disabled = false;}
                 }));
                 details.append(purchase);
             } else details.append(node('p',{class:'text-muted mb-0'},report.legacy
-                ? 'В старом отчёте сохранён результат, но ввод и вывод скрытого теста не записывались. Текущие тесты преподаватель может посмотреть отдельно.'
+                ? 'Для этого теста подробные данные недоступны.'
                 : 'Данные этого теста скрыты. Результат проверки доступен в таблице.'));
             if(!detailRow.hidden && test.unlocked)loadDetails();
             const verdict = node('span',{class:`gc-test-verdict ${passed ? 'is-passed' : 'is-failed'}`},
@@ -418,46 +420,6 @@ export async function workspace(root) {
         panel.addEventListener('toggle',() => {if(panel.open)load();});
         return panel;
     }
-    function currentTests() {
-        const panel = node('details',{},node('summary',{},'Текущие тесты задачи (для преподавателя)'));
-        let loaded = false;
-        panel.addEventListener('toggle',safe(async () => {
-            if (!panel.open || loaded) return;
-            loaded = true;
-            try {
-                const value = await request(base+'/checker/private');
-                const settings = value.config;
-                panel.append(node('p',{class:'text-muted small'},'Это текущий набор тестов задачи. Он сохранён отдельно от исторических результатов и мог измениться после старой проверки.'));
-                if (settings.check_type !== 'tests' || settings.test_mode !== 'io') {
-                    panel.append(node('p',{},settings.test_mode === 'suite' ? 'Используется специальный проверяющий модуль. Его результаты доступны в отчёте проверки.' : 'Для задачи не настроены тесты ввода и вывода.')); return;
-                }
-                for (const [index,test] of settings.test_config.tests.entries()) {
-                    const detail = node('details',{},node('summary',{},`Тест ${index+1} · ${test.is_public ? 'публичный' : 'скрытый'}`));
-                    let previewed = false;
-                    detail.addEventListener('toggle',safe(async () => {
-                        if (!detail.open || previewed) return;
-                        previewed = true;
-                        for (const [key,label] of Object.entries({input:'Ввод',output:'Ожидаемый ответ'})) {
-                            const data = test[key], field = node('div',{},node('strong',{},label));
-                            detail.append(field);
-                            if (data.type === 'inline') field.append(artifact(data));
-                            else {
-                                const url = base+'/checker/fixtures/'+data.blob_id;
-                                field.append(download(url,`Скачать (${data.bytes} байт)`));
-                                if (data.bytes <= 65536) {
-                                    const response = await fetch(url,{credentials:'same-origin'});
-                                    if (!response.ok) throw new Error('Не удалось загрузить тест');
-                                    field.append(node('pre',{class:'gc-execution-output'},await response.text() || '(пусто)'));
-                                }
-                            }
-                        }
-                    }));
-                    panel.append(detail);
-                }
-            } catch (e) {loaded = false; throw e;}
-        }));
-        return panel;
-    }
     function markSelectedAttempt(id) {
         activeAttempt=id;writeContext(id);
         history.querySelectorAll('[data-attempt-id]').forEach(item=>{
@@ -491,7 +453,7 @@ export async function workspace(root) {
     }
     function attemptLabel(record){
         const score=record.awarded_xp!==null&&record.awarded_xp!==undefined?`${record.awarded_xp}${record.maximum_points?' / '+record.maximum_points:''} XP`:record.state==='error'?'Ошибка проверки':record.points!==null&&record.points!==undefined?`${record.points} баллов`:phases[record.state];
-        return [record.created_at?new Date(record.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):null,record.is_best?'лучшая':null,record.counts_as_attempt===false?'сохранённый код':null,score].filter(Boolean).join(' · ');
+        return [record.created_at?new Date(record.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):null,record.is_best?'лучшая':null,record.counts_as_attempt===false?'материалы':null,score].filter(Boolean).join(' · ');
     }
     function writeContext(id){
         if(root.dataset.taskId && location.pathname.includes('/steps/') && root.getClientRects().length){
@@ -605,7 +567,7 @@ export async function workspace(root) {
         [...side.querySelectorAll(':scope > .gc-inline-grade')].reverse().forEach(el=>side.prepend(el));
         const grade=side.querySelector('.gc-inline-grade'),question=side.querySelector(':scope > .gc-review-request-note');if(grade&&question)grade.querySelector('header').after(question);
         body.classList.add('gc-execution-result--review');
-        body.append(overview,node('div',{class:`gc-result-assessment${main.children.length?'':' is-grading-only'}`},main,side));
+        body.append(overview,node('div',{class:`gc-result-assessment${main.children.length?'':' is-grading-only'}${side.children.length?'':' is-results-only'}`},main,side));
     }
     function reviewRequest(record,reload){
         const status=record.review_request;
@@ -668,7 +630,6 @@ export async function workspace(root) {
         if(!terminal){header.hidden=record.awarded_xp===null || record.awarded_xp===undefined;body.append(status);}
         if(options.snapshotOf)renderAward(options.snapshotOf,body,{label:false});
         else if(!sourceOnly && record.state!=='error')renderAward(record,body,{label:false});
-        if(sourceOnly)header.append(node('span',{class:'text-muted small gc-saved-source-info',title:'Это доступная сохранённая версия кода; её точная связь с этой сдачей не зафиксирована. Сохранена '+new Date(record.created_at).toLocaleString('ru-RU')},node('i',{class:'fas fa-circle-info','aria-hidden':'true'}),' Сохранённый код'));
         body.append(contextBar);
         if(record.state==='error'){
             body.append(node('p',{class:'gc-execution-error',role:'alert'},record.execution_error?.message || 'Проверяющий сервис не смог завершить работу. Решение сохранено.'));
@@ -679,7 +640,6 @@ export async function workspace(root) {
         renderReport(record.report,body,id,{savedSource:!!options.snapshotOf});
         if(record.text_report_available)body.append(textReport(record));
         if (teacher && record.checker_diagnostics) body.append(node('details',{},node('summary',{},'Диагностика проверяющего модуля'),node('pre',{class:'gc-execution-output'},JSON.stringify(record.checker_diagnostics,null,2))));
-        if (teacher && record.legacy && record.check_type==='tests') body.append(currentTests());
         if (record.legacy) {
             if (record.legacy.requires_conversion || record.legacy.warnings.length) body.append(node('details',{class:'gc-report-provenance'},node('summary',{},'О материалах работы'),node('p',{},'Некоторые материалы этой сдачи нельзя показать в текущем формате. Доступные материалы приведены выше.')));
             if (record.legacy.commit_unknown) body.append(node('p',{class:'text-muted small'},'Коммит этой версии GitHub и оригинальный архив не сохранены.'));

@@ -44,6 +44,8 @@ Route::middleware(['web', 'auth', 'verified'])->prefix('insider')->where([
     Route::get('/code-submissions/{submission}/runs/{run}/files/{file}', [TaskSubmissionController::class, 'runFile'])->whereNumber('file');
     Route::get('/code-submissions/{submission}/runs/{run}', [TaskSubmissionController::class, 'run']);
     Route::get('/code-submissions/{submission}/runs/{run}/tests/{number}', [TaskSubmissionController::class,'runTest'])->whereNumber('number');
+    Route::post('/code-submissions/{submission}/runs/{run}/tests/{number}/purchase', [TaskSubmissionController::class,'buyArchivedTest'])->whereNumber('number');
+    Route::get('/code-submissions/{submission}/runs/{run}/tests/{number}/{field}', [TaskSubmissionController::class,'archivedTestFile'])->whereNumber('number')->where('field','input|expected');
     Route::get('/code-submissions/{submission}/subscription', [CodeCheckingController::class, 'subscription']);
     Route::get('/code-submissions/{submission}/files/{file}', [CodeCheckingController::class, 'file'])->whereNumber('file')->name('code-submissions.file');
     Route::get('/code-submissions/{submission}/files/{file}/archive', [ArchivePreviewController::class, 'index'])->whereNumber('file')->name('code-submissions.archive');

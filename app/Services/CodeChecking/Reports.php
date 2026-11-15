@@ -85,10 +85,7 @@ class Reports
             if ($unlocked && $includeFields) {
                 foreach (['input', 'expected', 'actual', 'error'] as $key) {
                     $field = $test[$key];
-                    if ($field && $field['type'] === 'blob') {
-                        unset($field['blob_id'], $field['sha256']);
-                        $field['download_url'] = route('code-reports.download', ['run' => $record->id, 'test' => $test['test_id'], 'field' => $key]);
-                    }
+                    if ($field) $field = $this->artifacts->testField($field, route('code-reports.download', ['run'=>$record->id, 'test'=>$test['test_id'], 'field'=>$key]));
                     $row[$key] = $field;
                 }
                 $row['comparison'] = $test['comparison'];
@@ -109,10 +106,7 @@ class Reports
         $stored=collect($record->report['tests'])->firstWhere('number',$number);
         foreach(['input','expected','actual','error'] as $key){
             $field=$stored[$key]??null;
-            if($field && $field['type']==='blob'){
-                unset($field['blob_id'],$field['sha256']);
-                $field['download_url']=route('code-reports.download',['run'=>$record->id,'test'=>$stored['test_id'],'field'=>$key]);
-            }
+            if($field)$field=$this->artifacts->testField($field,route('code-reports.download',['run'=>$record->id,'test'=>$stored['test_id'],'field'=>$key]));
             $row[$key]=$field;
         }
         $row['comparison']=$stored['comparison'];$row['limits']=$stored['limits'];

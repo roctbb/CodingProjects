@@ -47,6 +47,17 @@ reconstruction, every database blob, and the verified S3 original inventory.
 Neither this command nor successful verification authorizes deleting GeekPaste.
 
 Historical reports are preserved exactly as saved. The old IO checker stored
-only verdicts for hidden tests, without their input, expected answer or actual
-output. Current task tests are retained separately. Do not attribute a current
-test definition to an old execution or manufacture its actual output.
+only verdicts for hidden tests. The submission's imported IO definition also
+retains the GP inputs and expected answers; these are now available directly in
+the corresponding test rows, with explicit archive provenance. They are never
+read from the current task configuration. Matching requires the complete test
+count and every public/private flag to agree. The export does not establish the
+test-set version at the original execution time, and actual hidden-test output
+cannot be reconstructed. Both limitations remain visible in the report.
+
+Teachers may inspect the archived fixture. Students may reveal a failed hidden
+fixture under the existing task, price and balance rules. The purchase is scoped
+to the author, task and immutable input/expected hashes, is reusable between runs,
+and never changes historical grades. Missing fixtures and incompatible archived
+sets cannot be purchased. Metadata remains body-free; test contents and downloads
+require a separate authorized request.

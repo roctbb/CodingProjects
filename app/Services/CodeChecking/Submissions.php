@@ -225,7 +225,7 @@ class Submissions
         }
         $report = CodeTestReport::find($run->id);
         $reportView=$report?app(Reports::class)->view($report,$viewer,$includeTestFields)
-            :(isset($run->legacy_report['suite_diagnostics'])?null:app(HistoricalReport::class)->view($run->legacy_report,$this->access->teacher($viewer,(int)$submission->course_id)));
+            :(isset($run->legacy_report['suite_diagnostics'])?null:app(ArchivedTests::class)->view($run,$viewer,$includeTestFields));
         if($reportView){
             $reportView['run_id']=$run->id;
             if(!$includeTestFields)$reportView=app(Reports::class)->metadata($reportView);
