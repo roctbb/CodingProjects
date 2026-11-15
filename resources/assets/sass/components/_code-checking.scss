@@ -219,6 +219,9 @@
 .gc-comment-editor > .gc-help-text:first-child {margin-bottom:var(--gc-space-2);}
 .gc-comment-editor > .gc-help-text:last-child {margin-top:var(--gc-space-2);}
 .gc-comment-editor > textarea {border-radius:var(--gc-radius-sm); min-height:190px; resize:vertical; font:var(--gc-font-ui)/1.65 var(--bs-body-font-family);}
+.gc-comment-editor .EasyMDEContainer {min-width:0; max-width:100%;}
+.gc-comment-editor .EasyMDEContainer .CodeMirror {min-width:0; font-family:var(--bs-body-font-family);}
+.gc-comment-editor .EasyMDEContainer .CodeMirror-scroll {max-height:32rem;}
 .gc-inline-grade__display > .btn {margin-top:var(--gc-space-2);}
 
 // A single worksheet follows the same paper, ink and branding as the course.
@@ -356,7 +359,7 @@
     .gc-grade-heading > .btn,.gc-execution-toolbar > div:not(.gc-execution-actions) > .btn {display:none;}
     .is-wide-editor .gc-grade-save {width:100%;}
 }
-@media (pointer:coarse) {.gc-comment-editor > textarea {font-size:1rem;}}
+@media (pointer:coarse) {.gc-comment-editor > textarea,.gc-comment-editor .EasyMDEContainer .CodeMirror {font-size:1rem;}}
 .gc-authorship-state {font-size:var(--gc-font-small); display:flex; gap:var(--gc-space-2); align-items:center; margin-block:var(--gc-space-3); color:var(--gc-on-surface-muted);}
 .gc-authorship-state.is-warning {color:var(--gc-accent);}
 .gc-authorship-match {font-size:var(--gc-font-small); overflow-wrap:anywhere;}

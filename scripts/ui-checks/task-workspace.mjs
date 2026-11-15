@@ -13,6 +13,12 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             if(attempt){query.set('student','1');query.set('attempt',attempt);}
             await page.goto(`${url}/insider/courses/1/steps/1?${query}#task${task}`);
         };
+        const writeComment=async(root,text)=>{
+            await root.locator('.gc-comment-editor .CodeMirror').waitFor();
+            const field=root.getByRole('textbox',{name:'Комментарий ученику',exact:true});
+            await field.click();await field.press('ControlOrMeta+A');await page.keyboard.insertText(text);
+            await page.waitForFunction(({id,text})=>document.querySelector('#'+id+' .gc-comment-editor .CodeMirror')?.CodeMirror.getValue()===text,{id:await root.getAttribute('id'),text});
+        };
         try{
             await page.setViewportSize({width,height:1000});
             await visit('student',12,id(1));
@@ -129,7 +135,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await page.screenshot({path:`${output}/task-authorship-report-${width}.png`,fullPage:true});
             await page.keyboard.press('Escape');
             check('task-authorship-report-restores-focus',await warning.evaluate(el=>el===document.activeElement),width);
-            const feedback=ai.getByRole('textbox',{name:'Комментарий ученику',exact:true});await feedback.fill('Нужно пояснить начальное значение.');
+            await writeComment(ai,'Нужно пояснить начальное значение.');
             await ai.getByRole('button',{name:'Следующий',exact:true}).click();
             await ai.getByRole('heading',{name:'Ученик 3',exact:true}).waitFor();
             await ai.locator('.gc-submission-stage[aria-busy="true"]').waitFor({state:'hidden'});
@@ -137,7 +143,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await ai.getByRole('heading',{name:'Ученик 1',exact:true}).waitFor();
             await ai.locator('.gc-submission-stage[aria-busy="true"]').waitFor({state:'hidden'});
             await ai.getByRole('textbox',{name:'Комментарий ученику',exact:true}).waitFor();
-            check('task-review-draft-survives-student-switch',(await ai.getByRole('textbox',{name:'Комментарий ученику',exact:true}).inputValue())==='Нужно пояснить начальное значение.',width);
+            check('task-review-draft-survives-student-switch',(await ai.getByRole('textbox',{name:'Комментарий ученику',exact:true}).evaluate(el=>el.closest('.CodeMirror')?.CodeMirror.getValue() ?? el.value))==='Нужно пояснить начальное значение.',width);
             await page.screenshot({path:`${output}/task-teacher-ai-${width}.png`,fullPage:true});
             const recheckResponse=page.waitForResponse(response=>response.url().endsWith('/'+id(13)+'/recheck') && response.request().method()==='POST');
             await ai.getByRole('button',{name:'Действия',exact:true}).click();
@@ -150,7 +156,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await visit('teacher',14,id(14));
             const manual=page.locator('#execution-workspace-14');
             await manual.getByRole('spinbutton',{name:'Баллы, из 20',exact:true}).fill('17');
-            await manual.getByRole('textbox',{name:'Комментарий ученику',exact:true}).fill('Объяснение верное, добавьте пример.');
+            await writeComment(manual,'Объяснение верное, добавьте пример.');
             await manual.getByRole('button',{name:'Сохранить оценку',exact:true}).click();
             await manual.getByRole('heading',{name:'Ученик 1',exact:true}).waitFor();
             await manual.getByRole('button',{name:'Следующий',exact:true}).click();

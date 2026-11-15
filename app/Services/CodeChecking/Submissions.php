@@ -77,25 +77,32 @@ class Submissions
         return $run;
     }
 
-    public function recheck(CodeSubmission $submission, User $teacher, bool $latestConfiguration = false, bool $strongerAi = false, string $comment = ''): CodeExecutionRun
+    public function recheck(CodeSubmission $submission, User $teacher, bool $latestConfiguration = false, bool $strongerAi = false, string $comment = '',?int $reviewSolution=null): CodeExecutionRun
     {
         $task = $this->access->task($teacher, $submission->course_id, $submission->task_id, true);
-        return DB::transaction(function () use ($submission, $task, $teacher, $latestConfiguration, $strongerAi, $comment) {
+        return DB::transaction(function () use ($submission, $task, $teacher, $latestConfiguration, $strongerAi, $comment,$reviewSolution) {
             $locked = CodeSubmission::lockForUpdate()->findOrFail($submission->id);
             $previous = $locked->currentRun;
+            $automatic=$this->automaticRun($locked,$previous);
             abort_unless($previous->finished_at || $previous->state === 'awaiting_review', 409, 'A check is already running.');
             abort_if($strongerAi && $latestConfiguration, 422, 'Для усиленной ИИ-проверки используются настройки исходной проверки.');
-            abort_if($strongerAi && ($previous->snapshot['check_type'] ?? null) !== 'gpt', 409, 'Исходное решение проверялось без ИИ.');
-            abort_if($strongerAi && $this->sourceVersionUnknown($locked), 409, 'Версия кода исторической сдачи не подтверждена. Выберите конкретную работу для ручной оценки.');
+            abort_if($strongerAi && ($automatic->snapshot['check_type'] ?? null) !== 'gpt', 409, 'Исходное решение проверялось без ИИ.');
+            abort_if($strongerAi && $this->sourceVersionUnknown($locked) && $reviewSolution===null, 409, 'Для перепроверки сохранённых файлов выберите конкретную сдачу ученика.');
+            if($reviewSolution!==null){
+                $event=app(History::class)->event($teacher,$locked->course_id,$task,$reviewSolution);
+                abort_unless(($event['source_submission_id']??null)===$locked->id,409,'Сдача относится к другим исходникам. Обновите страницу.');
+            }
             $snapshot = $latestConfiguration
-                ? $this->configuration->snapshot($task, CodeTaskChecker::findOrFail($task->id)) : $previous->snapshot;
+                ? $this->configuration->snapshot($task, CodeTaskChecker::findOrFail($task->id)) : $automatic->snapshot;
             abort_if(($snapshot['requires_conversion'] ?? false)
                 || (($submission->source_metadata['requires_conversion'] ?? false) && $snapshot['check_type'] !== 'manual'),
                 409, 'Convert the legacy checker/source or select a converted configuration.');
             $snapshot['legacy']=false;
+            unset($snapshot['review_solution_id']);
+            if($reviewSolution!==null)$snapshot['review_solution_id']=$reviewSolution;
             if (!$strongerAi && !$latestConfiguration && isset($snapshot['ai_review'])) {
                 // The ordinary action restores the frozen original model, even after several stronger checks.
-                $baseRun = $previous;
+                $baseRun = $automatic;
                 $seen = [$baseRun->id => true];
                 while ($source = $baseRun->snapshot['ai_review']['source_run_id'] ?? null) {
                     $baseRun = CodeExecutionRun::where('submission_id', $locked->id)->find($source);
@@ -123,8 +130,8 @@ class Submissions
                 abort_unless($model, 409, 'Модель для повторной ИИ-проверки не настроена администратором.');
                 $snapshot['gpt_model'] = $model['model'];
                 $snapshot['gpt_timeout'] = $model['timeout'];
-                $snapshot['ai_review'] = ['source_run_id' => $previous->id, 'requested_by' => (int) $teacher->id,
-                    'previous_model' => $previous->snapshot['gpt_model'] ?? null,
+                $snapshot['ai_review'] = ['source_run_id' => $automatic->id, 'requested_by' => (int) $teacher->id,
+                    'previous_model' => $automatic->snapshot['gpt_model'] ?? null,
                     'model' => $model['model'], 'timeout' => $model['timeout']];
             }
             $id = (string) Str::uuid();
@@ -166,6 +173,17 @@ class Submissions
         return $submission->legacy_id !== null || isset($submission->source_metadata['legacy_id']);
     }
 
+    private function automaticRun(CodeSubmission $submission,CodeExecutionRun $run):CodeExecutionRun
+    {
+        $seen=[$run->id=>true];
+        while(($run->snapshot['check_type']??null)==='manual' && isset($run->snapshot['manual_override_of'])){
+            $previous=CodeExecutionRun::where('submission_id',$submission->id)->find($run->snapshot['manual_override_of']);
+            if(!$previous || isset($seen[$previous->id]))break;
+            $seen[$previous->id]=true;$run=$previous;
+        }
+        return $run;
+    }
+
     public function executionError(CodeSubmission $submission, CodeExecutionRun $run): ?array
     {
         if ($run->state !== 'error') return null;
@@ -180,14 +198,15 @@ class Submissions
 
     public function aiRecheck(CodeSubmission $submission, CodeExecutionRun $run, User $viewer): ?array
     {
-        if (($run->snapshot['check_type'] ?? null) !== 'gpt' || !$this->access->teacher($viewer, (int) $submission->course_id)) return null;
+        $automatic=$this->automaticRun($submission,$run);
+        if (($automatic->snapshot['check_type'] ?? null) !== 'gpt' || !$this->access->teacher($viewer, (int) $submission->course_id)) return null;
         $model = app(\App\Services\Ai\AiSettings::class)->recheck();
         return ['available' => (bool) ($model && $run->finished_at && (string) $submission->current_run_id === (string) $run->id
-                && !$this->sourceVersionUnknown($submission)
-                && !($run->snapshot['requires_conversion'] ?? false) && !($submission->source_metadata['requires_conversion'] ?? false)),
+                && !($automatic->snapshot['requires_conversion'] ?? false) && !($submission->source_metadata['requires_conversion'] ?? false)),
             'model' => $model['model'] ?? null,
-            'reason' => $this->sourceVersionUnknown($submission) ? 'Версия кода исторической сдачи не подтверждена. Выберите конкретную работу для ручной оценки.'
-                : (!$model ? 'Модель для повторной ИИ-проверки не настроена администратором.' : null)];
+            'requires_review_solution'=>$this->sourceVersionUnknown($submission),
+            'reason' => !$model ? 'Модель для повторной ИИ-проверки не настроена администратором.'
+                : (($automatic->snapshot['requires_conversion']??false)||($submission->source_metadata['requires_conversion']??false)?'Сначала настройте проверку этой задачи.':null)];
     }
 
     public function manualReview(CodeSubmission $submission, User $teacher): CodeExecutionRun
@@ -217,9 +236,9 @@ class Submissions
             if (app(ArchivePreview::class)->available($submission, $index)) {
                 $item['archive_url'] = route('code-submissions.archive', ['submission' => $submission->id, 'file' => $index]);
             }
-            if ($file['artifact']['bytes'] <= $sourceBudget && preg_match('/\.(py|cpp|cc|c|h|hpp|txt|json|js|html|css|php|sql|java|cs|swift|xml|ipynb)$/iD', $file['name'])) {
+            if ($file['artifact']['bytes'] <= $sourceBudget && preg_match('/\.(py|cpp|cc|c|h|hpp|txt|json|js|html|css|php|sql|java|cs|swift|xml|ipynb|md|markdown|csv|tsv|yml|yaml|toml|ini|log|rst)$/iD', $file['name'])) {
                 $text = $this->artifacts->get($file['artifact']['blob_id']);
-                if (mb_check_encoding($text, 'UTF-8')) { $item['source'] = $text; $sourceBudget -= strlen($text); }
+                if (mb_check_encoding($text, 'UTF-8') && !str_contains($text,"\0")) { $item['source'] = $text; $sourceBudget -= strlen($text); }
             }
             $files[] = $item;
         }
@@ -237,9 +256,11 @@ class Submissions
         return ['id' => $submission->id, 'user_id' => (int) $submission->user_id, 'course_id' => (int) $submission->course_id,
             'task_id' => (int) $submission->task_id, 'language' => $submission->language, 'files' => $files,
             'mode' => $submission->mode, 'text' => $includeSource ? $submission->answer_text : null,
+            'bundle_url'=>count($files)>1?route('code-submissions.bundle',['submission'=>$submission->id]):null,
             'user_name' => $submission->author?->name,
             'maximum_points' => $run->snapshot['points'],
             'check_type'=>$run->snapshot['check_type']??null,
+            'recheck_type'=>$this->automaticRun($submission,$run)->snapshot['check_type']??null,
             'repository' => array_intersect_key($submission->source_metadata ?? [], array_flip(['provider', 'url', 'ref', 'commit'])),
             'preparation_state' => $submission->preparation_state,
             'created_at' => $submission->created_at?->toIso8601String(), 'execution_id' => $run->id,

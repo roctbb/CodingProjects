@@ -145,6 +145,12 @@ class TaskSubmissionController extends Controller
         return $this->download($record->source_metadata['archive'], 'repository.zip', $artifacts);
     }
 
+    public function bundle(Request $request,string $submission,Access $access,\App\Services\CodeChecking\SubmissionBundle $bundle)
+    {
+        $record=CodeSubmission::findOrFail($submission);$access->authorOrTeacher($request->user(),$record);
+        return $bundle->download($record);
+    }
+
     public function run(Request $request, string $submission, string $run, Access $access)
     {
         $record = CodeSubmission::findOrFail($submission);

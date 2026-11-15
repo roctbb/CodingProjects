@@ -67,7 +67,9 @@ class Results
                     $user->rescore();
                     $before = (int) $user->score();
                 }
-                $this->grading->apply($submission, $data);
+                $gradedSource=clone $submission;
+                if(isset($run->snapshot['review_solution_id']))$gradedSource->solution_id=(int)$run->snapshot['review_solution_id'];
+                $this->grading->apply($gradedSource, $data);
                 if ($user) app(\App\Services\RewardNotices::class)->experience($user, $before, $run->id, $run->snapshot['name'] ?? 'За решение задачи');
                 $gradedSubmission = $submission->fresh();
                 $awarded = $gradedSubmission->solution_id ? \App\Solution::find($gradedSubmission->solution_id)?->mark : null;

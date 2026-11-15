@@ -1,13 +1,19 @@
 import {node, button, iconButton, field, input, textarea, actions, download} from './ui';
+import {commentEditor} from './comment-editor';
+
+let commentFieldId=0;
 
 export function gradingPanel({key, comment = '', mark = '', maximum, hint, onSave, onNext, onSkip, drafts}) {
     const value = drafts.get(key) || {mark:mark ?? '', comment};
     const status = node('p', {class:'gc-help-text', role:'status'},'Сохраните, чтобы опубликовать оценку и комментарий.');
     const remember = () => {drafts.set(key, {...value}); status.textContent = 'Есть изменения · ученик их ещё не видит';};
     const grade = input(value.mark, v => {value.mark = v; remember();}, {type:'number', min:0, max:maximum});
-    const resize = () => {feedback.style.height='auto';feedback.style.height=Math.max(190,feedback.scrollHeight+2)+'px';};
-    const feedback = textarea(value.comment, v => {value.comment = v; remember();resize();}, {rows:7, placeholder:'Что получилось и что стоит исправить','aria-label':'Комментарий ученику'});
-    const editor=node('label',{class:'gc-comment-editor'},node('span',{class:'gc-help-text'},'Комментарий ученику'),feedback,node('span',{class:'gc-help-text'},'Поддерживает Markdown: списки, код и таблицы'));
+    let richEditor;
+    const resize = () => {if(richEditor?.ready){richEditor.refresh();return;}feedback.style.height='auto';feedback.style.height=Math.max(190,feedback.scrollHeight+2)+'px';};
+    const feedbackId='gc-review-comment-'+(++commentFieldId);
+    const feedback = textarea(value.comment, v => {value.comment = v; remember();if(!richEditor?.ready)resize();}, {id:feedbackId,rows:7, placeholder:'Что получилось и что стоит исправить','aria-label':'Комментарий ученику'});
+    const label=node('label',{class:'gc-help-text',htmlFor:feedbackId,onclick:event=>{if(richEditor?.ready){event.preventDefault();richEditor.focus();}}},'Комментарий ученику');
+    const editor=node('div',{class:'gc-comment-editor'},label,feedback,node('span',{id:feedbackId+'-help',class:'gc-help-text'},'Поддерживает Markdown: списки, код и таблицы'));
     const form = node('div', {class:'gc-inline-grade__editor'}, field('Баллы, из '+maximum, grade), editor);
     let saving=false;
     const save = async () => {
@@ -29,7 +35,8 @@ export function gradingPanel({key, comment = '', mark = '', maximum, hint, onSav
     const wide=iconButton('Широкий комментарий','fa-expand',()=>{value.wide=!value.wide;drafts.set(key,{...value});setWidth(value.wide);});
     const panel=node('section', {class:'gc-inline-grade', 'aria-label':'Оценка и комментарий'},node('header',{class:'gc-grade-heading'},node('h4',{class:'h6 mb-0'},'Оценка ученику'),wide),form);
     panel.addEventListener('keydown',event=>{if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)&&!event.isComposing){event.preventDefault();save();}});
-    requestAnimationFrame(()=>{setWidth(!!value.wide);});
+    panel.addEventListener('gc:grading-dispose',()=>richEditor?.destroy(),{once:true});
+    requestAnimationFrame(()=>{if(!panel.isConnected)return;setWidth(!!value.wide);richEditor=commentEditor(feedback);});
     return panel;
 }
 

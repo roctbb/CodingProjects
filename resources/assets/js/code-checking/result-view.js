@@ -43,6 +43,8 @@ export function submittedWork(record) {
     const section=node('details',{class:'gc-submitted-work',open:true,'aria-label':'Отправленная работа'});
     const heading=node('summary',{},node('i',{class:'fas fa-chevron-down','aria-hidden':'true'}),node('span',{class:'gc-submitted-work__title'},files.length===1?files[0].name:!files.length && record.text?'Текст ответа':'Исходная работа'));
     const tools=node('div',{class:'gc-submitted-work__tools'});heading.append(tools);
+    const bundle=files.length>1 && record.bundle_url?download(record.bundle_url,'ZIP'):null;
+    if(bundle){bundle.prepend(node('i',{class:'fas fa-file-zipper','aria-hidden':'true'}),' ');bundle.className='btn btn-outline-secondary';bundle.title='Скачать все файлы ZIP-архивом';bundle.setAttribute('aria-label',bundle.title);heading.append(bundle);}
     section.append(heading);
     if(files.length){
         const tabs=node('div',{class:'gc-source-tabs',role:'tablist','aria-label':'Файлы решения'});

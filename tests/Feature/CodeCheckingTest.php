@@ -1199,6 +1199,71 @@ class CodeCheckingTest extends TestCase
         $this->assertSame(1, CodeExecutionRun::count());
     }
 
+    public function test_saved_markdown_is_readable_and_bundle_contains_only_exact_authorized_files():void
+    {
+        $created=$this->createSubmission();$record=CodeSubmission::findOrFail($created['id']);$artifacts=app(Artifacts::class);
+        $readme="# Проект\n\nЗапуск: `python main.py`\n";$binary="\x89PNG\0original";
+        $files=[['name'=>'project/README.md','artifact'=>$artifacts->put($readme)],['name'=>'project/picture.png','artifact'=>$artifacts->put($binary)]];
+        $record->update(['files'=>$files]);$base='/insider/code-submissions/'.$record->id;
+        $detail=$this->getJson($base)->assertOk()->assertJsonPath('files.0.source',$readme)->json();
+        $this->assertArrayNotHasKey('source',$detail['files'][1]);
+        $url=$detail['bundle_url'];$this->login(3)->get($url)->assertForbidden();
+        foreach([2,1] as $viewer){
+            $response=$this->login($viewer)->get($url)->assertOk()->assertHeader('Content-Type','application/zip');
+            $path=$response->baseResponse->getFile()->getPathname();$zip=new \ZipArchive();$this->assertTrue($zip->open($path));
+            $this->assertSame(2,$zip->numFiles);$this->assertSame($readme,$zip->getFromName('project/README.md'));
+            $this->assertSame($binary,$zip->getFromName('project/picture.png'));$zip->close();unlink($path);
+        }
+        $record->update(['files'=>[['name'=>'../escape.txt','artifact'=>$artifacts->put('unsafe path')],$files[1]]]);
+        $this->get($url)->assertUnprocessable();
+        $this->assertSame($readme,$artifacts->get($files[0]['artifact']['blob_id']));
+    }
+
+    public function test_historical_ai_recheck_binds_the_selected_attempt_and_rejects_other_sources():void
+    {
+        config(['ai.defaults.recheck'=>['model'=>'strong-model','timeout'=>180]]);
+        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY,user_id INTEGER,course_id INTEGER,task_id INTEGER,text TEXT,mark INTEGER,raw_mark INTEGER,comment TEXT,submitted TEXT,checked TEXT)');
+        $created=$this->createSubmission();$record=CodeSubmission::findOrFail($created['id']);
+        $record->update(['legacy_id'=>'SAVED','source_metadata'=>['legacy_id'=>'SAVED'],'solution_id'=>502]);
+        $url='/insider/code-submissions/'.$record->id;
+        foreach([[501,2,5],[502,2,6],[503,3,9]] as [$id,$user,$points])DB::table('solutions')->insert(['id'=>$id,'user_id'=>$user,'course_id'=>7,'task_id'=>12,
+            'text'=>url($url),'mark'=>$points,'raw_mark'=>$points,'comment'=>'Original '.$id,'submitted'=>'2026-11-10 12:00:00','checked'=>'2026-11-10 12:01:00']);
+        $old=$record->currentRun;$snapshot=array_replace($old->snapshot,['check_type'=>'gpt','gpt_model'=>'original-model']);
+        $old->update(['state'=>'completed','points'=>6,'finished_at'=>now(),'snapshot'=>$snapshot]);
+        $before=$record->only(['files','answer_text','source_metadata','solution_id']);
+        $this->postJson($url.'/recheck',['stronger_ai'=>true,'review_solution_id'=>501])->assertForbidden();
+        $this->login(1)->postJson($url.'/recheck',['stronger_ai'=>true])->assertConflict();
+        $this->postJson($url.'/recheck',['stronger_ai'=>true,'review_solution_id'=>503])->assertConflict();
+        $response=$this->postJson($url.'/recheck',['stronger_ai'=>true,'review_solution_id'=>501,'comment'=>'Проверьте запуск'])->assertStatus(202)->json();
+        $run=CodeExecutionRun::findOrFail($response['execution_id']);
+        $this->assertSame(501,$run->snapshot['review_solution_id']);$this->assertSame('strong-model',$run->snapshot['gpt_model']);
+        $this->assertSame($before,$record->fresh()->only(array_keys($before)));$this->assertSame($snapshot,$old->fresh()->snapshot);
+        $this->mock(Grading::class)->shouldReceive('apply')->once()->withArgs(fn($submission,$data)=>(int)$submission->solution_id===501 && $submission->id===$record->id && $data['points']===8);
+        $data=['execution_id'=>$run->id,'state'=>'done','points'=>8,'comment'=>'New review'];
+        app(\App\Services\CodeChecking\Results::class)->accept($run,$data,hash('sha256',json_encode($data)));
+        $this->assertSame('Original 502',DB::table('solutions')->where('id',502)->value('comment'));
+        $normal=$this->postJson($url.'/recheck',['review_solution_id'=>501])->assertStatus(202)->json();
+        $restored=CodeExecutionRun::findOrFail($normal['execution_id']);
+        $this->assertSame('original-model',$restored->snapshot['gpt_model']);$this->assertSame(501,$restored->snapshot['review_solution_id']);
+    }
+
+    public function test_manual_grade_does_not_remove_original_ai_models_from_recheck():void
+    {
+        config(['ai.defaults.recheck'=>['model'=>'strong-model','timeout'=>180]]);
+        $this->login(1)->putJson('/insider/courses/7/tasks/12/checker/private',['language'=>'python','check_type'=>'gpt','private_instructions'=>'Original rubric','gpt_model'=>'original-model'])->assertOk();
+        $created=$this->login()->postJson('/insider/courses/7/tasks/12/code-submissions',['request_id'=>(string)Str::uuid(),'code'=>'print(5)'])->assertCreated()->json();
+        $old=CodeExecutionRun::findOrFail($created['execution_id']);$old->update(['state'=>'completed','points'=>6,'finished_at'=>now()]);
+        $url='/insider/code-submissions/'.$created['id'];$this->login(1)->postJson($url.'/manual-review')->assertCreated();
+        $manual=CodeSubmission::findOrFail($created['id'])->currentRun;$manual->update(['state'=>'completed','points'=>7,'finished_at'=>now()]);
+        $this->getJson($url.'?test_data=metadata')->assertOk()->assertJsonPath('check_type','manual')->assertJsonPath('recheck_type','gpt')->assertJsonPath('ai_recheck.available',true);
+        $next=$this->postJson($url.'/recheck',['stronger_ai'=>true])->assertStatus(202)->json();$strong=CodeExecutionRun::findOrFail($next['execution_id']);
+        $this->assertSame('gpt',$strong->snapshot['check_type']);$this->assertSame('strong-model',$strong->snapshot['gpt_model']);
+        $this->assertSame($old->id,$strong->snapshot['ai_review']['source_run_id']);$this->assertSame('Original rubric',$strong->snapshot['private_instructions']);
+        $strong->update(['state'=>'completed','finished_at'=>now()]);$normal=$this->postJson($url.'/recheck')->assertStatus(202)->json();
+        $restored=CodeExecutionRun::findOrFail($normal['execution_id']);$this->assertSame($old->snapshot['gpt_model']??null,$restored->snapshot['gpt_model']??null);
+        $this->assertSame('manual',$manual->fresh()->snapshot['check_type']);$this->assertSame(7,$manual->fresh()->points);
+    }
+
     public function test_new_retry_and_stronger_ai_actions_cannot_overwrite_an_ambiguous_historical_grade(): void
     {
         config(['ai.defaults.recheck'=>['model'=>'strong-model', 'timeout'=>180]]);
@@ -1215,8 +1280,8 @@ class CodeCheckingTest extends TestCase
         $url = '/insider/code-submissions/'.$record->id;
         $this->getJson($url.'?test_data=metadata')->assertJsonPath('execution_error.can_retry',false)->assertJsonPath('execution_error.retry_url',null);
         $this->postJson($url.'/retry')->assertConflict();
-        $this->login(1)->getJson($url.'?test_data=metadata')->assertJsonPath('ai_recheck.available',false)
-            ->assertJsonPath('ai_recheck.reason','Версия кода исторической сдачи не подтверждена. Выберите конкретную работу для ручной оценки.');
+        $this->login(1)->getJson($url.'?test_data=metadata')->assertJsonPath('ai_recheck.available',true)
+            ->assertJsonPath('ai_recheck.requires_review_solution',true);
         $this->postJson($url.'/retry')->assertConflict();
         $this->postJson($url.'/recheck',['stronger_ai'=>true])->assertConflict();
         $this->assertSame($run->id,$record->fresh()->current_run_id);

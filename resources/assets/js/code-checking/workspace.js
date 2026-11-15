@@ -49,7 +49,7 @@ export async function workspace(root) {
                 goal.querySelector('.gc-lesson-reward')?.classList.toggle('is-preview',!value.earned);
             });
         }
-        if(panel){results.replaceChildren(panel);results.hidden=false;content.hidden=true;composerVisible=false;history.hidden=false;summary.hidden=false;}
+        if(panel){results.querySelectorAll('.gc-inline-grade').forEach(grade=>grade.dispatchEvent(new Event('gc:grading-dispose')));results.replaceChildren(panel);results.hidden=false;content.hidden=true;composerVisible=false;history.hidden=false;summary.hidden=false;}
         summary.removeAttribute('aria-busy');summary.querySelectorAll('[inert]').forEach(el=>el.removeAttribute('inert'));
         busy.remove();stage.removeAttribute('inert');stage.removeAttribute('aria-busy');
     }
@@ -514,15 +514,16 @@ export async function workspace(root) {
         return gradingPanel({...options,drafts:gradingDrafts,onNext:canNavigate()?nextStudent:null});
     }
     function recheckDialog(record,options,stronger=false){
-        const ai=record.check_type==='gpt';
+        const ai=(record.recheck_type || record.check_type)==='gpt';
+        const reviewSolution=options.snapshotOf?.solution_id;
         const model=select(stronger?'strong':'normal',{'normal':ai?'Обычная модель':'Автотесты',...(record.ai_recheck?.available?{'strong':'Усиленная модель'}:{})},()=>{});
         const note=textarea('',()=>{},{rows:4,maxLength:4000,placeholder:'Что нужно проверить внимательнее?'});
         const latest=node('input',{type:'checkbox',class:'form-check-input'});
         const status=node('p',{class:'gc-help-text',role:'status'});
-        const content=node('div',{},ai?field('Модель',model):null,field('Комментарий к перепроверке',note),node('p',{class:'gc-help-text'},'Будет проверена сохранённая работа. Предыдущие проверки останутся в журнале этой сдачи.'),node('details',{},node('summary',{},'Настройки проверки'),field('Использовать текущие настройки задачи',latest)),status);
+        const content=node('div',{},ai?field('Модель',model):null,field('Комментарий к перепроверке',note),node('p',{class:'gc-help-text'},reviewSolution?'Будут проверены сохранённые файлы, показанные на экране. Результат обновит оценку выбранной сдачи; предыдущие проверки останутся в журнале.':'Будет проверена сохранённая работа. Предыдущие проверки останутся в журнале этой сдачи.'),node('details',{},node('summary',{},'Настройки проверки'),field('Использовать текущие настройки задачи',latest)),status);
         model.addEventListener('change',()=>{latest.disabled=model.value==='strong';if(latest.disabled)latest.checked=false;});latest.disabled=stronger;
         let dialog;
-        const run=button('Запустить перепроверку',async()=>{run.disabled=true;try{await request(`/insider/code-submissions/${record.id}/recheck`,'POST',{stronger_ai:model.value==='strong',latest_configuration:latest.checked,comment:note.value});dialog.close();await show(record.id,options);await loadHistory();}catch(error){status.textContent=error.message;run.disabled=false;}},'primary');
+        const run=button('Запустить перепроверку',async()=>{run.disabled=true;try{await request(`/insider/code-submissions/${record.id}/recheck`,'POST',{stronger_ai:model.value==='strong',latest_configuration:latest.checked,comment:note.value,...(reviewSolution?{review_solution_id:reviewSolution}:{})});dialog.close();await show(record.id,{...options,refreshReviewSolution:reviewSolution});await loadHistory();}catch(error){status.textContent=error.message;run.disabled=false;}},'primary');
         dialog=openDialog(ai?'Перепроверить решение':'Повторить автотесты',content,[button('Отмена',()=>dialog.close()),run]);
     }
     function compareDialog(record){
@@ -619,6 +620,10 @@ export async function workspace(root) {
             failResult(e.message,()=>show(id,options));return;
         }
         if (selected !== generation) return;
+        if(options.refreshReviewSolution && ['completed','error'].includes(record.state)){
+            options={...options,snapshotOf:await details.get(base+'/code-attempts/'+options.refreshReviewSolution)};
+            if(selected!==generation)return;
+        }
         const expectedUser=teacher && !ownMode ? selectedUser.id : root.dataset.viewerId;
         if((root.dataset.taskId && Number(record.task_id)!==Number(root.dataset.taskId)) || (root.dataset.courseId && Number(record.course_id)!==Number(root.dataset.courseId)) || Number(record.user_id)!==Number(expectedUser)){
             failResult('Эта сдача относится к другой задаче или ученику.',()=>show(id,options));return;
@@ -627,7 +632,8 @@ export async function workspace(root) {
         if(!options.snapshotOf)ensureAttemptCard(record);
         current = {...record,snapshotOf:options.snapshotOf};
         const status = node('div',{role:'status','aria-live':'polite',class:'gc-execution-status'}, phases[record.progress?.phase || record.state] || record.state);
-        const {header,terminal}=resultHeader(options.snapshotOf || record,{sourceOnly:sourceOnly&&!options.snapshotOf,showSourceDate:false});
+        const {header}=resultHeader(options.snapshotOf || record,{sourceOnly:sourceOnly&&!options.snapshotOf,showSourceDate:false});
+        const terminal=['completed','error','awaiting_review','imported_pending'].includes(record.state);
         const menu=resultActions();menu.add(button('Обновить результат',safe(() => show(id,options))));
         const body = node('section',{class:'gc-execution-result'},header);
         const contextBar=node('div',{class:'gc-result-context-bar'},menu.root);
@@ -646,7 +652,6 @@ export async function workspace(root) {
         if (teacher && record.checker_diagnostics) body.append(node('details',{},node('summary',{},'Диагностика проверяющего модуля'),node('pre',{class:'gc-execution-output'},JSON.stringify(record.checker_diagnostics,null,2))));
         if (record.legacy) {
             if (record.legacy.requires_conversion || record.legacy.warnings.length) body.append(node('details',{class:'gc-report-provenance'},node('summary',{},'О материалах работы'),node('p',{},'Некоторые материалы этой сдачи нельзя показать в текущем формате. Доступные материалы приведены выше.')));
-            if (record.legacy.commit_unknown) body.append(node('p',{class:'text-muted small'},'Коммит этой версии GitHub и оригинальный архив не сохранены.'));
         }
         if (!teacher || ownMode) {
             menu.add(button(record.is_public ? 'Закрыть публичный доступ' : 'Поделиться решением',safe(async () => {
@@ -661,12 +666,17 @@ export async function workspace(root) {
             if (record.review_request?.requested) body.append(node('p',{class:'gc-review-request-note'},'Запрос ученика: '+record.review_request.comment));
             const viewed=button(record.teacher_viewed ? 'Отметить непросмотренным' : 'Отметить просмотренным',safe(async () => {await request(`/insider/code-submissions/${id}/flags`,'PUT',{teacher_viewed:!record.teacher_viewed}); await show(id); await loadHistory();}));
             menu.add(viewed);
-            if(terminal && record.state!=='error' && record.check_type!=='manual')menu.add(button(record.check_type==='gpt'?'Перепроверить обычной моделью':'Повторить автотесты',()=>recheckDialog(record,options)));
-            if(record.ai_recheck){const strong=button('Перепроверить усиленной моделью',()=>recheckDialog(record,options,true));strong.disabled=!record.ai_recheck.available;if(record.ai_recheck.reason)strong.title=record.ai_recheck.reason;menu.add(strong);}
             contextBar.prepend(authorshipPanel(record,async dismissed=>{await request(`/insider/code-submissions/${id}/integrity/review`,'PUT',{dismissed});await show(id,options);root.querySelector('[data-authorship-trigger]')?.focus({preventScroll:true});}));
 
         }
         if(teacher && !ownMode && sourceOnly)contextBar.prepend(authorshipPanel(record,null));
+        const recheckType=record.recheck_type || record.check_type;
+        if(teacher && !ownMode && terminal && record.state!=='error' && recheckType!=='manual'){
+            const needsSelection=record.source_version_unknown && !options.snapshotOf?.solution_id;
+            const normal=button(recheckType==='gpt'?'Перепроверить обычной моделью':'Повторить автотесты',()=>recheckDialog(record,options));
+            normal.disabled=needsSelection;if(needsSelection)normal.title='Выберите сдачу ученика в списке.';menu.add(normal);
+            if(record.ai_recheck){const strong=button('Перепроверить усиленной моделью',()=>recheckDialog(record,options,true));strong.disabled=needsSelection || !record.ai_recheck.available;strong.title=needsSelection?'Выберите сдачу ученика в списке.':record.ai_recheck.reason || '';menu.add(strong);}
+        }
         if(options.snapshotOf?.text && options.snapshotOf.text!==record.text)body.append(submittedWork({...options.snapshotOf,mode:'text'}));
         const target=options.snapshotOf || record;
         const comment=target.teacher_feedback ? target.review_comment ?? target.comment ?? '' : target.review_comment || target.comment || (target.check_type!=='tests' && record.state!=='error'?record.comment:'') || '';
