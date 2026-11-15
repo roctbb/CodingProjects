@@ -567,7 +567,11 @@ export async function workspace(root) {
         [...side.querySelectorAll(':scope > .gc-inline-grade')].reverse().forEach(el=>side.prepend(el));
         const grade=side.querySelector('.gc-inline-grade'),question=side.querySelector(':scope > .gc-review-request-note');if(grade&&question)grade.querySelector('header').after(question);
         body.classList.add('gc-execution-result--review');
-        body.append(overview,node('div',{class:`gc-result-assessment${main.children.length?'':' is-grading-only'}${side.children.length?'':' is-results-only'}`},main,side));
+        const gradingOnly=!main.children.length && side.children.length>0;
+        const assessment=node('div',{class:`gc-result-assessment${gradingOnly?' is-grading-only':''}${side.children.length?'':' is-results-only'}`},main,side);
+        // Without a separate review, the submitted work and grading form share one sheet.
+        if(gradingOnly)assessment.prepend(overview);else body.append(overview);
+        if(main.children.length || side.children.length)body.append(assessment);
     }
     function reviewRequest(record,reload){
         const status=record.review_request;

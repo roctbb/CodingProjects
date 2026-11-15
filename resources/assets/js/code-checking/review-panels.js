@@ -25,7 +25,7 @@ export function gradingPanel({key, comment = '', mark = '', maximum, hint, onSav
     const primary = button('Сохранить оценку',save,'primary');primary.classList.add('gc-grade-save');primary.setAttribute('aria-keyshortcuts','Control+Enter Meta+Enter');
     const controls = actions(primary);
     form.append(controls, status);
-    const setWidth=expanded=>{panel.closest('.gc-result-assessment')?.classList.toggle('is-wide-editor',expanded);wide.setAttribute('aria-label',expanded?'Узкий комментарий':'Широкий комментарий');wide.title=wide.getAttribute('aria-label');wide.querySelector('i').className='fas '+(expanded?'fa-compress':'fa-expand');resize();};
+    const setWidth=expanded=>{const layout=panel.closest('.gc-result-assessment');expanded=expanded&&!layout?.classList.contains('is-grading-only');layout?.classList.toggle('is-wide-editor',expanded);wide.setAttribute('aria-label',expanded?'Узкий комментарий':'Широкий комментарий');wide.title=wide.getAttribute('aria-label');wide.querySelector('i').className='fas '+(expanded?'fa-compress':'fa-expand');resize();};
     const wide=iconButton('Широкий комментарий','fa-expand',()=>{value.wide=!value.wide;drafts.set(key,{...value});setWidth(value.wide);});
     const panel=node('section', {class:'gc-inline-grade', 'aria-label':'Оценка и комментарий'},node('header',{class:'gc-grade-heading'},node('h4',{class:'h6 mb-0'},'Оценка ученику'),wide),form);
     panel.addEventListener('keydown',event=>{if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)&&!event.isComposing){event.preventDefault();save();}});
