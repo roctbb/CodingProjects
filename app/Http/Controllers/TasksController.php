@@ -411,13 +411,14 @@ class TasksController extends Controller
         return redirect()->to($solution?$location->solution($solution):$location->task((int)$course_id,$task,(int)$student->id));
     }
 
-    public function skipSolutionReview($course_id, $id, $solution_id)
+    public function skipSolutionReview($course_id, $id, $solution_id, Request $request)
     {
+        $request->validate(['review_token' => ['sometimes', 'string', 'regex:/^[a-f0-9]{64}$/D']]);
         $solution = Solution::where('course_id', $course_id)
             ->where('task_id', $id)
             ->findOrFail($solution_id);
 
-        if ($solution->skipPendingReview()) {
+        if ($solution->skipPendingReview($request->input('review_token'))) {
             $this->make_success_alert('Решение пропущено', 'Оно больше не будет висеть в очереди проверки.');
         } else {
             $this->make_info_alert('Без изменений', 'Это решение уже проверено, пропущено или ещё не отправлено.');
@@ -710,7 +711,8 @@ class TasksController extends Controller
     {
         $solution = Solution::findOrFail($id);
         $this->validate($request, [
-            'mark' => 'required|integer|min:0|max:' . $solution->task->max_mark
+            'mark' => 'required|integer|min:0|max:' . $solution->task->max_mark,
+            'comment' => 'nullable|string|max:20000',
         ]);
 
         $old_rank = $solution->user->rank();
@@ -718,7 +720,8 @@ class TasksController extends Controller
 
         $solution->setEvaluatedMark($request->mark);
         $solution->applyDeadlinePenalty($request->mark, $deadline);
-        $comment = $request->comment;
+        $editableComment = (string) ($request->input('comment') ?? '');
+        $comment = $editableComment;
         if ($solution->hasActiveDeadlinePenalty()) {
             $comment = trim("Сдано с опозданием. Штраф: -{$solution->deadline_penalty_amount} XP.\n\n" . $comment);
         }
@@ -734,7 +737,16 @@ class TasksController extends Controller
         $solution->checked = Carbon::now();
         $solution->recheck_requested = false;
         $solution->save();
-        CourseActivity::recordSolutionChecked($solution);
+        $feedback = CourseActivity::recordSolutionChecked($solution);
+        if ($feedback) {
+            // Explicit provenance: legacy automatic checks also had teacher_id.
+            $feedback->payload = array_replace($feedback->payload ?? [], [
+                'feedback_source' => 'teacher',
+                'feedback_sha256' => hash('sha256', (string) $solution->comment),
+                'editable_comment' => $editableComment,
+            ]);
+            $feedback->save();
+        }
         if ($autoXpBoosterDelta > 0) {
             CourseActivity::recordXpBoosterUsed(
                 $solution,

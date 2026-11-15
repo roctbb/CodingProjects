@@ -273,6 +273,13 @@
 .gc-feed-workspace .gc-toolbar__search, .solution-review-page .gc-toolbar__search { flex:1 1 14rem; max-width:none; }
 .gc-feed-workspace .gc-toolbar, .solution-review-page .gc-toolbar { align-items:end; }
 .gc-feed-workspace .gc-workspace-field, .solution-review-page .gc-workspace-field { flex:1 1 12rem; max-width:22rem; }
+.gc-review-filter-form {--gc-review-field-height:var(--gc-control-height);}
+.gc-review-filter-form .gc-toolbar__search {flex:2 1 16rem; max-width:none;}
+.gc-review-filter-form .gc-search-box, .gc-review-filter-form .form-select, .gc-review-filter-form > .btn {height:var(--gc-review-field-height); min-height:var(--gc-review-field-height);}
+.gc-review-filter-form .gc-search-box > .form-control {height:100%; min-height:0; padding-block:0;}
+.gc-review-filter-form .gc-search-box > .input-group-text {padding-block:0;}
+.gc-review-queue-actions {display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:var(--gc-space-2);}
+@media (pointer:coarse) {.gc-review-filter-form {--gc-review-field-height:var(--gc-touch-target);}}
 .solution-review-page > .gc-page-masthead .gc-page-header { margin-bottom:0; }
 .solution-review-page .solution-review-card { overflow:visible; margin-bottom:0 !important; }
 .solution-review-page .solution-review-card:has(.dropdown-menu.show) { z-index:2; }

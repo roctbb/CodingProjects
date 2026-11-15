@@ -93,14 +93,17 @@ class History
         $row['source_available']=$source!==null || (!$isLink && trim($answer)!=='');
         $penalty=(empty($saved->deadline_penalty_paid_at) && empty($saved->deadline_penalty_waived_at))?(int)($saved->deadline_penalty_amount??0):0;
         $comment=(string)($saved->comment??'');
+        $editableComment=$this->teacherComment($saved,$comment);
+        $teacherFeedback=$editableComment!==null;
         $checkType=$source?->check_type;
         if(!$checkType && Schema::hasTable('code_task_checkers'))$checkType=DB::table('code_task_checkers')->where('task_id',$task->id)->value('config->check_type');
         // Some old exports contain a test report despite an unrelated current
         // checker. Its raw IO must not escape through the generic comment field.
-        if(app(HistoricalReport::class)->parse($comment)!==null)$checkType='tests';
+        if(!$teacherFeedback && app(HistoricalReport::class)->parse($comment)!==null)$checkType='tests';
         $checkType??='manual';
-        $visibleComment=$checkType==='tests'?'':$comment;
+        $visibleComment=$checkType==='tests' && !$teacherFeedback?'':$comment;
         return $row+['checked_at'=>$this->date($saved->checked??null),'check_type'=>$checkType,'comment_available'=>trim($comment)!=='','comment'=>$visibleComment,
+            'teacher_feedback'=>$teacherFeedback,
             'text'=>$source?null:$answer,'original_reference'=>$isLink?$answer:null,'files'=>[],'report'=>null,
             'award_breakdown'=>['evaluated_points'=>$row['evaluated_points'],'deadline_penalty'=>$penalty,'xp_booster'=>(int)($saved->xp_booster_amount??0)],
             'source_url'=>$source?url('/insider/code-submissions/'.$source->id):null,
@@ -110,7 +113,21 @@ class History
             'review_url'=>$teacher?app(\App\Services\TaskLocation::class)->task($course,$task,(int)$event->user_id,'solution-'.$id):null,
             'can_grade'=>$teacher,'grade_url'=>$teacher?url('/insider/courses/'.$course.'/solution/'.$id):null,
             'grading_maximum_points'=>(int)$task->max_mark,'review_mark'=>$saved->evaluated_mark??$saved->raw_mark??$saved->mark,
-            'review_comment'=>$visibleComment];
+            'review_comment'=>$teacherFeedback?$editableComment:$visibleComment];
+    }
+
+    /** Detail-only lookup; history summaries never load feedback or audit payloads. */
+    private function teacherComment(object $solution,string $comment):?string
+    {
+        if(!Schema::hasTable('course_activities'))return null;
+        $activity=\App\CourseActivity::where('solution_id',$solution->id)->where('course_id',$solution->course_id)
+            ->where('task_id',$solution->task_id)->where('user_id',$solution->user_id)
+            ->where('type',\App\CourseActivity::TYPE_SOLUTION_CHECKED)->orderByDesc('id')->first(['payload']);
+        $payload=$activity?->payload ?? [];
+        if(($payload['feedback_source']??null)!=='teacher' || !is_string($payload['feedback_sha256']??null)
+            || !hash_equals(hash('sha256',$comment),$payload['feedback_sha256'])
+            || !is_string($payload['editable_comment']??null) || mb_strlen($payload['editable_comment'])>20000)return null;
+        return $payload['editable_comment'];
     }
 
     private function sources(int $course,int $task,?int $author)

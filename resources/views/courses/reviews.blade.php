@@ -11,14 +11,21 @@
             <section class="gc-card" aria-labelledby="pending-review-heading">
                 <div class="gc-panel-heading"><h2 class="h6 mb-0" id="pending-review-heading">Нужно проверить</h2><span class="gc-meta-label ms-auto">{{ $pendingSolutions->total() }}</span></div>
                 <div class="table-responsive"><table class="table align-middle mb-0">
-                    <thead><tr><th>Ученик</th><th>Задача</th><th>Курс</th><th>Сдано</th><th><span class="visually-hidden">Действие</span></th></tr></thead>
+                    <thead><tr><th>Ученик</th><th>Задача</th><th>Курс</th><th>Сдано</th><th>Действия</th></tr></thead>
                     <tbody>@foreach($pendingSolutions as $pending)
                         @php($taskUrl = app(\App\Services\TaskLocation::class)->solution($pending))
                         <tr data-review-queue-solution="{{ $pending->id }}">
                             <td><a href="{{ $taskUrl }}">{{ $pending->user->name }}</a></td>
                             <td><a href="{{ $taskUrl }}">{{ $pending->task->name }}</a>@if($pending->recheck_requested)<span class="gc-task-state gc-task-state--pending ms-2">Перепроверка</span>@endif</td>
                             <td>{{ $pending->course->name }}</td><td class="text-nowrap">{{ $pending->submitted?->format('d.m.Y H:i') }}</td>
-                            <td><a class="btn btn-outline-primary btn-sm text-nowrap" href="{{ $taskUrl }}">Открыть работу</a></td>
+                            <td><div class="gc-review-queue-actions">
+                                <a class="btn btn-outline-primary btn-sm text-nowrap" href="{{ $taskUrl }}">Открыть работу</a>
+                                <form method="post" action="{{ url('/insider/courses/'.$pending->course_id.'/tasks/'.$pending->task_id.'/solution/'.$pending->id.'/skip-review') }}" class="m-0">
+                                    @csrf
+                                    <input type="hidden" name="review_token" value="{{ $pending->reviewToken() }}">
+                                    <button class="btn btn-outline-secondary btn-sm text-nowrap" type="submit">Пропустить</button>
+                                </form>
+                            </div></td>
                         </tr>
                     @endforeach</tbody>
                 </table></div>

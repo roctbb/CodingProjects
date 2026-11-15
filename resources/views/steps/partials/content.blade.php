@@ -279,12 +279,17 @@
                                                 $solutionsCount = $filtered->count() + ($nativeProgress['attempts'] ?? 0);
                                                 $searchTitle = trim($student->name . ' ' . $stateLabel . ' ' . $mark . ' ' . $task->max_mark);
                                             @endphp
+                                            @if($solutionsCount > 0)
                                             <a class="step-progress-cardlet {{ $stateClass }}"
                                                href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id).'?student='.$student->id.'&task='.$task->id.'#task'.$task->id}}"
                                                    data-execution-student="#execution-workspace-{{ $task->id }}"
                                                    data-student-id="{{ $student->id }}" data-student-name="{{ $student->name }}"
                                                data-step-progress-card
                                                data-step-progress-text="{{ $searchTitle }}">
+                                            @else
+                                            <div class="step-progress-cardlet {{ $stateClass }}" aria-disabled="true"
+                                                 data-step-progress-card data-step-progress-text="{{ $searchTitle }}">
+                                            @endif
                                                 <span class="step-progress-cardlet__head">
                                                     <span class="step-progress-student">
                                                         <span>{{$student->name}}</span>
@@ -303,11 +308,11 @@
                                                                 · {{ $latestSubmittedAt->format('d.m H:i') }}
                                                             @endif
                                                         @else
-                                                            перейти к ученику
+                                                            Сдач пока нет
                                                         @endif
                                                     </span>
                                                 </span>
-                                            </a>
+                                            @if($solutionsCount > 0)</a>@else</div>@endif
                                         @endforeach
                                         </div>
                                         <div class="step-progress-empty text-muted small text-center d-none" data-step-progress-empty>Ничего не найдено</div>

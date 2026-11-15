@@ -33,7 +33,8 @@ class ReviewWorkspace
         $courseIds = Course::where('state', 'started')
             ->when($actor->role !== 'admin', fn ($query) => $query->whereHas('teachers', fn ($teachers) => $teachers->where('users.id', $actor->id)))
             ->select('id');
-        $query = Solution::select(['id', 'course_id', 'task_id', 'user_id', 'submitted', 'recheck_requested'])
+        $query = Solution::select(['id', 'course_id', 'task_id', 'user_id', 'submitted', 'mark', 'review_skipped', 'recheck_requested', 'recheck_comment', 'updated_at'])
+            ->withReviewVersion()
             ->with(['course:id,name', 'task:id,name,step_id', 'user:id,name,image,custom_title,custom_title_expires_at,avatar_frame,avatar_frame_config,avatar_frame_expires_at'])
             ->has('user')->has('task')->whereIn('course_id', $courseIds)->when($courseId !== null, fn ($query) => $query->where('course_id', $courseId))
             ->pendingReview()->orderByDesc('submitted')->orderByDesc('id');

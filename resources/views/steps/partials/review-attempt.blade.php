@@ -197,6 +197,7 @@
                         @if($solutionPendingReview)
                             <form id="skip-review-{{ $solution->id }}" method="post" action="{{ url('insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/skip-review') }}">
                                 {{ csrf_field() }}
+                                <input type="hidden" name="review_token" value="{{ $solution->reviewToken() }}">
                             </form>
                         @endif
                         @if(!$taskAchievement)

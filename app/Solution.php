@@ -223,7 +223,40 @@ class Solution extends Model
             });
     }
 
-    public function skipPendingReview()
+    public function scopeWithReviewVersion($query)
+    {
+        if ($query->getConnection()->getDriverName() === 'pgsql') {
+            if ($query->getQuery()->columns === null) $query->select('solutions.*');
+            $query->selectRaw('solutions.xmin::text as review_row_version');
+        }
+        return $query;
+    }
+
+    public function reviewToken(): string
+    {
+        $version = $this->getRawOriginal('review_row_version');
+        if ($version === null && $this->exists && $this->getConnection()->getDriverName() === 'pgsql') {
+            $version = $this->getConnection()->table($this->getTable())->where('id', $this->id)
+                ->selectRaw('xmin::text as row_version')->first()?->row_version;
+        }
+        $state = $version !== null ? ['pgsql', (string) $version] : array_map(
+            fn ($field) => $this->getRawOriginal($field),
+            ['submitted', 'mark', 'review_skipped', 'recheck_requested', 'recheck_comment', 'updated_at']
+        );
+        return hash_hmac('sha256', json_encode([$this->id, $state], JSON_THROW_ON_ERROR), (string) config('app.key'));
+    }
+
+    public function skipPendingReview(?string $expectedReviewToken = null)
+    {
+        return DB::transaction(function () use ($expectedReviewToken) {
+            $locked = self::whereKey($this->id)->withReviewVersion()->lockForUpdate()->firstOrFail();
+            $skipped = $locked->skipLockedReview($expectedReviewToken);
+            $this->refresh();
+            return $skipped;
+        });
+    }
+
+    private function skipLockedReview(?string $expectedReviewToken): bool
     {
         if (\Illuminate\Support\Facades\Schema::hasColumn('solutions', 'evaluated_mark')
             && \Illuminate\Support\Facades\Schema::hasColumn('solutions', 'class_bonus_snapshot')) {
@@ -233,12 +266,13 @@ class Solution extends Model
         if (!$this->isPendingReview()) {
             return false;
         }
-
-        $this->review_skipped = true;
-        $this->recheck_requested = false;
-        $this->recheck_comment = null;
-
-        return $this->save();
+        abort_unless($expectedReviewToken !== null && hash_equals($this->reviewToken(), $expectedReviewToken), 409,
+            'Очередь изменилась. Обновите страницу и выберите работу заново.');
+        // Queue dismissal must not run grading/reward observers or change another solution.
+        return (bool) DB::table($this->getTable())->where('id', $this->id)->update([
+            'review_skipped' => true, 'recheck_requested' => false, 'recheck_comment' => null,
+            'updated_at' => $this->freshTimestampString(),
+        ]);
     }
 
     public function isPendingReview()

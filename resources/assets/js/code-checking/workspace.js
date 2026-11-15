@@ -32,7 +32,7 @@ export async function workspace(root) {
         }))));
     };
     const safe = action => async event => {event?.preventDefault(); try {await action(event);} catch (e) {error(e);} };
-    const markDirty = () => {dirty = true; requestId = null; notice.className = 'text-muted small'; notice.textContent = 'Есть несохранённые изменения';};
+    const markDirty = () => {dirty = true; requestId = null; notice.className = 'text-muted small'; notice.textContent = 'Решение ещё не отправлено';};
     window.addEventListener('beforeunload', event => {if (dirty) {event.preventDefault(); event.returnValue = '';}});
     window.addEventListener('pagehide', () => {stop(); editing?.destroy();}, {once:true});
     root.addEventListener('gc:execution-close',()=>{generation++;historyGeneration++;stop();current=null;});
@@ -129,7 +129,7 @@ export async function workspace(root) {
         saving = true; content.setAttribute('inert','');
         try {
             const value = await request(base+'/code-draft','PUT',payload());
-            setDraft(value); renderComposer(); notice.className = 'text-muted small'; notice.textContent = 'Черновик сохранён';
+            setDraft(value); renderComposer(); notice.className = 'text-muted small'; notice.textContent = 'Решение сохранено, но ещё не отправлено';
         } finally {saving = false; content.removeAttribute('inert');}
     }
     async function submit() {
@@ -159,8 +159,8 @@ export async function workspace(root) {
         editing?.destroy(); editing = null;
         const kind=composerKind(),groups=submissionGroups(config),allowed=config.submission_modes;
         content.hidden=!composerVisible;
-        const body=node('section',{class:'gc-execution-composer gc-attempt-card','aria-label':'Новое решение'},
-            node('div',{class:'gc-composer-heading'},node('h3',{class:'h6 mb-0'},'Новое решение')));
+        const composerHeading=node('div',{class:'gc-composer-heading'},node('h3',{class:'h6 mb-0'},'Новое решение'));
+        const body=node('section',{class:'gc-execution-composer gc-attempt-card','aria-label':'Новое решение'},composerHeading);
         const form=node('div',{class:'gc-composer-body'});body.append(form);
         if(kind!=='text' && groups.length>1){
             const labels={files:['fa-file-arrow-up','Файлы'],code:['fa-code','Код'],repository:['fa-code-branch','Репозиторий']};
@@ -176,7 +176,7 @@ export async function workspace(root) {
             const languageNames={cpp:'C++',python:'Python',py:'Python',javascript:'JavaScript',text:'Текст'};
             const languages=config.allowed_languages.filter(value=>value!=='text');
             if(languages.length>1)form.append(field('Язык',select(draft.language,Object.fromEntries(languages.map(value=>[value,languageNames[value] || value])),value=>{draft.language=value;markDirty();renderComposer();})));
-            else if(languages.length)form.append(node('p',{class:'gc-composer-language text-muted small'},node('i',{class:'fas fa-code','aria-hidden':'true'}),' '+(languageNames[languages[0]] || languages[0])));
+            else if(languages.length)composerHeading.append(node('span',{class:'gc-composer-language text-muted small'},node('i',{class:'fas fa-code','aria-hidden':'true'}),' '+(languageNames[languages[0]] || languages[0])));
         }
         if(kind==='repository'){
             draft.repository ||= {};
@@ -191,7 +191,7 @@ export async function workspace(root) {
             const activate=file=>{selected=file;for(const entry of panes){entry.pane.hidden=entry.file!==file;entry.tab.setAttribute('aria-selected',String(entry.file===file));entry.tab.tabIndex=entry.file===file?0:-1;entry.tab.classList.toggle('is-active',entry.file===file);}};
             tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key)||event.target.getAttribute('role')!=='tab')return;event.preventDefault();activate(editable[(editable.indexOf(selected)+(event.key==='ArrowRight'?1:editable.length-1))%editable.length]);tabs.querySelector('[aria-selected="true"]')?.focus();});
             for(const file of editable){
-                const host=node('div',{class:'gc-code-editor'}),pane=node('div',{role:'tabpanel'});
+                const host=node('div',{class:'gc-code-editor'}),pane=node('div',editable.length>1?{role:'tabpanel'}:{});
                 const name=input(file.path,value=>{file.path=value;file.changed=true;tab.textContent=value || 'Новый файл';markDirty();},{placeholder:'main.py','aria-label':'Имя файла кода'});
                 const controls=actions(field('Имя файла',name));
                 if(editable.length>1)controls.append(button('Удалить файл',()=>{files=files.filter(value=>value!==file);markDirty();renderComposer();}));
@@ -199,13 +199,13 @@ export async function workspace(root) {
                     if(editable.length>1)pane.append(button('Удалить файл',()=>{files=files.filter(value=>value!==file);markDirty();renderComposer();}));
                     pane.append(node('p',{class:'text-muted small'},'Исходник сохранён и будет отправлен без изменений. Для редактирования большого файла используйте свой редактор.'),file.download_url?download(file.download_url,'Скачать '+file.path):null,
                         actions(button('Заменить код',()=>{if(!confirm('Заменить сохранённый исходник новым кодом? Сначала скачайте файл, если он нужен.'))return;file.content='';file.changed=true;markDirty();renderComposer();})));
-                }else pane.append(controls,host);
-                const tab=button(file.path || 'Новый файл',()=>activate(file));tab.className='gc-source-tab';tab.setAttribute('role','tab');tab.id=root.id+'-source-tab-'+editable.indexOf(file);pane.id=tab.id+'-panel';tab.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',tab.id);
+                }else{if(editable.length>1)pane.append(controls);pane.append(host);}
+                const tab=button(file.path || 'Новый файл',()=>activate(file));tab.className='gc-source-tab';tab.setAttribute('role','tab');if(editable.length>1){tab.id=root.id+'-source-tab-'+editable.indexOf(file);pane.id=tab.id+'-panel';tab.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',tab.id);}
                 tabs.append(tab);panes.push({file,pane,tab});editors.append(pane);
                 if(file.content!==undefined)import('./editor').then(({editor})=>{if(!host.isConnected)return;const view=editor(host,file.content,draft.language,value=>{file.content=value;file.changed=true;markDirty();});const previous=editing;editing={destroy:()=>{previous?.destroy();view.destroy();}};}).catch(error);
             }
-            if(allowed.includes('project') && editable.length<config.max_files){const add=button('+ Файл',()=>{files.push({path:`file${editable.length+1}.${draft.language==='cpp'?'cpp':'py'}`,content:''});markDirty();renderComposer();const buttons=content.querySelectorAll('.gc-source-tab');buttons[buttons.length-1]?.click();});add.classList.add('btn-sm');tabs.append(add);}
-            form.append(tabs,editors);activate(selected);
+            if(allowed.includes('project') && editable.length<config.max_files){const add=button('+ Файл',()=>{files.push({path:`file${editable.length+1}.${draft.language==='cpp'?'cpp':'py'}`,content:''});markDirty();renderComposer();const buttons=content.querySelectorAll('.gc-source-tab');buttons[buttons.length-1]?.click();});add.classList.add('btn-sm');if(editable.length>1)tabs.append(add);else composerHeading.append(add);}
+            if(editable.length>1)form.append(tabs);form.append(editors);activate(selected);
         }else{
             if(kind==='text' || kind==='files' && allowed.includes('text'))form.append(field('Ответ',textarea(draft.text,value=>{draft.text=value;markDirty();},{rows:8})));
             if(allowed.includes('files')){
@@ -220,8 +220,7 @@ export async function workspace(root) {
                 if(files.length || uploads.length)form.append(node('ul',{class:'gc-upload-list'},files.map(file=>node('li',{},file.download_url?download(file.download_url,file.path):file.path,' ',button('Убрать',()=>{files=files.filter(value=>value!==file);markDirty();renderComposer();}))),uploads.map(file=>node('li',{},file.name,' ',button('Убрать',()=>{uploads=uploads.filter(value=>value!==file);markDirty();renderComposer();})))));
             }
         }
-        const menu=resultActions();menu.add(button('Сохранить черновик',safe(save)));menu.add(button('Восстановить шаблон',safe(async()=>{if(!confirm('Восстановить шаблон? Текущий черновик будет заменён.'))return;setDraft(await request(base+'/code-draft','DELETE',{revision:draft.revision}));renderComposer();})));
-        form.append(actions(button('Отправить решение',safe(submit),'primary'),menu.root));content.replaceChildren(body);
+        form.append(actions(button('Отправить решение',safe(submit),'primary')));content.replaceChildren(body);
     }
     function artifact(value) {
         if (!value) return node('span',{class:'text-muted'},'Нет данных');
@@ -370,7 +369,8 @@ export async function workspace(root) {
     }
     function attemptHeader(record){
         const label=record.kind==='legacy_attempt'?'Сдача':record.counts_as_attempt===false?'Сохранённая версия решения':'Решение';
-        const score=record.state==='error'?'Ошибка проверки · без оценки':record.kind==='legacy_attempt'?record.awarded_xp!==null&&record.awarded_xp!==undefined?`${record.awarded_xp} XP`:'Ожидает оценки':record.points!==null&&record.points!==undefined?`${record.points}${record.maximum_points&&!record.source_version_unknown?' / '+record.maximum_points:''} баллов`:phases[record.state] || 'Загружаем результат…';
+        let score=record.state==='error'?'Ошибка проверки · без оценки':record.kind==='legacy_attempt'?record.awarded_xp!==null&&record.awarded_xp!==undefined?`${record.awarded_xp} XP`:'Ожидает оценки':record.points!==null&&record.points!==undefined?`${record.points}${record.maximum_points&&!record.source_version_unknown?' / '+record.maximum_points:''} баллов`:phases[record.state] || 'Загружаем результат…';
+        if(record.kind!=='legacy_attempt' && record.state!=='error' && record.awarded_xp!==null && record.awarded_xp!==undefined && record.awarded_xp!==record.points)score+=` · ${record.awarded_xp} XP`;
         return [node('span',{},node('strong',{},record.created_at?new Date(record.created_at).toLocaleString('ru-RU'):label,record.is_best?node('small',{class:'gc-attempt-best ms-2'},'Лучшая'):null),node('small',{class:'text-muted'},record.created_at?label:'',teacher&&record.kind==='submission'&&!record.source_version_unknown&&record.teacher_viewed===false?' · Не просмотрено':'')),node('span',{class:'gc-attempt-list__score'},score),node('i',{class:'fas fa-chevron-down','aria-hidden':'true'})];
     }
     function attemptCard(record){
@@ -432,13 +432,13 @@ export async function workspace(root) {
             if(Number(record.user_id)!==Number(teacher && !ownMode ? selectedUser.id : root.dataset.viewerId))throw new Error('Эта сдача принадлежит другому ученику. Выберите его в списке.');
             ensureAttemptCard(record);
             if(record.source_submission_id){await show(record.source_submission_id,{snapshotOf:record});return;}
-            const {header}=resultHeader(record);
+            const {header}=resultHeader(record,{showScore:false,showSourceDate:false});
             const panel=node('section',{class:'gc-execution-result'},header);
             renderAward(record,panel,{label:false});
             if(record.text)panel.append(submittedWork({...record,mode:'text'}));
-            if(record.comment && record.check_type!=='tests')panel.append(node('pre',{class:'gc-execution-output'},record.comment));
             if(!record.text)panel.append(node('p',{class:'text-muted small'},'Код этой сдачи не сохранился отдельно.'));
             if(record.can_grade)panel.append(legacyGrading(record));
+            else if(record.comment)panel.append(feedbackDisplay(record.comment));
             if(!teacher || ownMode)panel.append(button('Ещё одно решение',showComposer,'primary'));
             results.replaceChildren(panel);
         } catch(e) {
@@ -446,24 +446,42 @@ export async function workspace(root) {
             results.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить загрузку сдачи',safe(() => showLegacyAttempt(item))));
         }
     }
-    function legacyGrading(record){
-        const panel=node('details',{class:'gc-inline-grading',open:record.awarded_xp===null},node('summary',{},record.awarded_xp===null?'Оценить работу':'Изменить оценку и комментарий'));
-        let mark=record.review_mark ?? '',comment=record.review_comment || '';
-        const feedback=node('p',{role:'status',class:'text-danger small'});
-        const save=button('Сохранить оценку',safe(async ()=>{
-            if(mark===''){feedback.textContent='Укажите оценку.';return;}
-            save.disabled=true;feedback.textContent='';
-            try{
-                await request(record.grade_url,'POST',{mark:Number(mark),comment,review_solution_id:record.solution_id});
-                await showLegacyAttempt(record);await loadHistory();
-                notice.className='text-muted small';notice.textContent='Оценка и комментарий сохранены';
-            }catch(e){feedback.textContent=e.message;}
-            finally{save.disabled=false;}
-        }),'primary');
-        panel.append(node('div',{class:'gc-inline-grading__form'},
-            field('Оценка, XP',input(mark,value=>mark=value,{type:'number',min:0,max:record.grading_maximum_points}),`Максимум ${record.grading_maximum_points}. Правила срока применяются при сохранении.`),
-            field('Комментарий ученику',textarea(comment,value=>comment=value,{rows:3})),save,feedback));
+    function feedbackDisplay(comment){
+        return node('div',{class:'gc-grading-feedback'},node('h4',{class:'h6'},'Комментарий'),node('pre',{class:'gc-execution-output'},comment));
+    }
+    function inlineGrading({comment='',mark='',maximum,ungraded=false,hint,onSave}){
+        const display=node('div',{class:'gc-inline-grade__display'});
+        if(comment)display.append(feedbackDisplay(comment));
+        const editor=node('div',{class:'gc-inline-grade__editor',hidden:true});
+        const panel=node('section',{class:'gc-inline-grade','aria-label':'Оценка и комментарий'},display,editor);
+        const edit=button(ungraded?'Оценить работу':'Изменить оценку',()=>{
+            let editedMark=mark ?? '',editedComment=comment;
+            const feedback=node('p',{role:'status',class:'text-danger small mb-0'});
+            const save=button('Сохранить оценку',safe(async()=>{
+                if(editedMark===''){feedback.textContent='Укажите оценку.';return;}
+                save.disabled=true;editor.setAttribute('inert','');feedback.textContent='';
+                try{await onSave(Number(editedMark),editedComment);}
+                catch(e){feedback.textContent=e.message;}
+                finally{save.disabled=false;editor.removeAttribute('inert');}
+            }),'primary');
+            const cancel=button('Отмена',()=>{editor.hidden=true;editor.replaceChildren();display.hidden=false;edit.focus({preventScroll:true});});
+            editor.replaceChildren(field('Оценка',input(editedMark,value=>editedMark=value,{type:'number',min:0,max:maximum}),hint || `Максимум ${maximum} баллов.`),
+                field('Комментарий ученику',textarea(editedComment,value=>editedComment=value,{rows:5})),actions(save,cancel),feedback);
+            display.hidden=true;editor.hidden=false;editor.querySelector('input')?.focus({preventScroll:true});
+        });
+        edit.classList.add('btn-sm');display.append(edit);
         return panel;
+    }
+    function legacyGrading(record,{comment=record.teacher_feedback ? record.review_comment ?? '' : record.review_comment || record.comment || ''}={}){
+        return inlineGrading({comment,mark:record.review_mark,maximum:record.grading_maximum_points,ungraded:record.awarded_xp===null,
+            hint:`Максимум ${record.grading_maximum_points} XP. Правила срока применяются при сохранении.`,
+            onSave:async(mark,comment)=>{
+                const savedGeneration=generation;
+                await request(record.grade_url,'POST',{mark,comment,review_solution_id:record.solution_id});
+                if(savedGeneration!==generation)return;
+                await showLegacyAttempt(record);if(activeAttempt!==String(record.id))return;await loadHistory();
+                notice.className='text-muted small';notice.textContent='Оценка и комментарий сохранены';
+            }});
     }
     async function openAttempt(item) {
         if(!teacher || ownMode){composerVisible=false;content.hidden=true;}
@@ -511,13 +529,14 @@ export async function workspace(root) {
         }
         current = record;current.snapshotOf=options.snapshotOf;
         const status = node('div',{role:'status','aria-live':'polite',class:'gc-execution-status'}, phases[record.progress?.phase || record.state] || record.state);
-        const {header,terminal}=resultHeader(options.snapshotOf || record,{sourceOnly:sourceOnly&&!options.snapshotOf});
+        const {header,terminal}=resultHeader(options.snapshotOf || record,{sourceOnly:sourceOnly&&!options.snapshotOf,showScore:false,showSourceDate:false});
         const menu=resultActions();menu.add(button('Обновить результат',safe(() => show(id,options))));
         const body = node('section',{class:'gc-execution-result'},header);
         const contextBar=node('div',{class:'gc-result-context-bar'},menu.root);
         if(!terminal){header.hidden=true;body.append(status);}
-        if(options.snapshotOf){renderAward(options.snapshotOf,body,{label:false});body.append(node('p',{class:'text-muted small'},`Код сохранён ${new Date(record.created_at).toLocaleString('ru-RU')}`));}
-        else if (!sourceOnly && record.state!=='error')renderAward(record,body);
+        if(options.snapshotOf)renderAward(options.snapshotOf,body,{label:false});
+        else if(!sourceOnly && record.state!=='error')renderAward(record,body,{label:false});
+        if(sourceOnly)header.append(node('span',{class:'text-muted small gc-saved-source-info',title:'Это доступная сохранённая версия кода; её точная связь с этой сдачей не зафиксирована. Сохранена '+new Date(record.created_at).toLocaleString('ru-RU')},node('i',{class:'fas fa-circle-info','aria-hidden':'true'}),' Сохранённый код'));
         body.append(contextBar);
         if(record.state==='error'){
             body.append(node('p',{class:'gc-execution-error',role:'alert'},record.execution_error?.message || 'Проверяющий сервис не смог завершить работу. Решение сохранено.'));
@@ -525,11 +544,10 @@ export async function workspace(root) {
         }
         body.append(submittedWork(record));
         if (record.repository?.commit) body.append(node('p',{},`GitHub · ${record.repository.commit}`, ' ',download(`/insider/code-submissions/${id}/repository/archive`,'Скачать репозиторий')));
-        if (record.comment && record.check_type!=='tests' && !record.report?.legacy && record.state!=='error') body.append(node('pre',{class:'gc-execution-output'},record.comment));
         renderReport(record.report,body,id,{savedSource:!!options.snapshotOf});
         if(record.text_report_available)body.append(textReport(record));
         if (teacher && record.checker_diagnostics) body.append(node('details',{},node('summary',{},'Диагностика проверяющего модуля'),node('pre',{class:'gc-execution-output'},JSON.stringify(record.checker_diagnostics,null,2))));
-        if (teacher && record.legacy) body.append(currentTests());
+        if (teacher && record.legacy && record.check_type==='tests') body.append(currentTests());
         if (record.legacy) {
             if (record.legacy.requires_conversion || record.legacy.warnings.length) body.append(node('details',{class:'gc-report-provenance'},node('summary',{},'О материалах работы'),node('p',{},'Некоторые материалы этой сдачи нельзя показать в текущем формате. Доступные материалы приведены выше.')));
             if (record.legacy.commit_unknown) body.append(node('p',{class:'text-muted small'},'Коммит этой версии GitHub и оригинальный архив не сохранены.'));
@@ -556,18 +574,10 @@ export async function workspace(root) {
             if (record.review_request?.requested) body.append(node('p',{class:'alert alert-info'},'Запрос ученика: '+record.review_request.comment));
             const viewed=button(record.teacher_viewed ? 'Отметить непросмотренным' : 'Отметить просмотренным',safe(async () => {await request(`/insider/code-submissions/${id}/flags`,'PUT',{teacher_viewed:!record.teacher_viewed}); await show(id); await loadHistory();}));
             if(record.teacher_viewed)menu.add(viewed);else{viewed.classList.add('btn-sm');contextBar.prepend(viewed);}
-            if (['completed','error','imported_pending'].includes(record.state)) menu.add(button('Оценить вручную',safe(async () => {await request(`/insider/code-submissions/${id}/manual-review`,'POST',{}); await show(id);await loadHistory();})));
             const latest = node('input',{type:'checkbox',class:'form-check-input'});
             const recheck=node('section',{class:'gc-inline-grading',hidden:true},node('h4',{class:'h6'},'Перепроверка решения'),field('По текущим настройкам задачи',latest),actions(button('Запустить перепроверку',safe(async () => {await request(`/insider/code-submissions/${id}/recheck`,'POST',{latest_configuration:latest.checked}); await show(id);await loadHistory();}),'primary'),button('Отмена',()=>recheck.hidden=true)));
             if(terminal && record.state!=='error'){body.append(recheck);menu.add(button('Перепроверить решение',()=>{recheck.hidden=false;recheck.scrollIntoView({block:'nearest',behavior:'instant'});}));}
             if(record.ai_recheck?.available)recheck.append(button('Перепроверить усиленной ИИ-моделью',safe(async()=>{if(!confirm('Запустить повторную проверку усиленной ИИ-моделью?'))return;await request(`/insider/code-submissions/${id}/recheck`,'POST',{stronger_ai:true});await show(id,options);await loadHistory();})));
-            if (record.state === 'awaiting_review') {
-                let points = '', comment = '';
-                body.append(field('Баллы',input('',value => {points = value;},{type:'number',min:0,max:record.maximum_points})),field('Комментарий ученику',textarea('',value => {comment = value;})),button('Поставить оценку',safe(async () => {
-                    if (points === '') throw new Error('Укажите оценку.');
-                    await request(`/insider/code-submissions/${id}/grade`,'PUT',{points:Number(points),comment}); await show(id);await loadHistory();
-                }),'primary'));
-            }
             if (record.integrity) {
                 const review = node('details',{},node('summary',{},record.integrity.dismissed ? 'Анализ авторства · предупреждение снято' : 'Анализ авторства'));
                 const plagiarism = record.integrity.plagiarism || {};
@@ -583,8 +593,16 @@ export async function workspace(root) {
             }
         }
         if(options.snapshotOf?.text && options.snapshotOf.text!==record.text)body.append(submittedWork({...options.snapshotOf,mode:'text'}));
-        if(options.snapshotOf?.comment && options.snapshotOf.check_type!=='tests' && options.snapshotOf.comment!==record.comment)body.append(node('h4',{class:'h6'},'Обратная связь'),node('pre',{class:'gc-execution-output'},options.snapshotOf.comment));
-        if(options.snapshotOf?.can_grade)body.append(legacyGrading(options.snapshotOf));
+        const target=options.snapshotOf || record;
+        const comment=target.teacher_feedback ? target.review_comment ?? target.comment ?? '' : target.review_comment || target.comment || (target.check_type!=='tests' && record.state!=='error'?record.comment:'') || '';
+        if(options.snapshotOf?.can_grade)body.append(legacyGrading(options.snapshotOf,{comment}));
+        else if(teacher && !sourceOnly && terminal)body.append(inlineGrading({comment,mark:record.points,maximum:record.maximum_points,ungraded:record.state==='awaiting_review',onSave:async(points,comment)=>{
+            const savedGeneration=generation;
+            if(record.state!=='awaiting_review' || record.check_type!=='manual')await request(`/insider/code-submissions/${id}/manual-review`,'POST',{});
+            await request(`/insider/code-submissions/${id}/grade`,'PUT',{points,comment});if(savedGeneration!==generation)return;await show(id,options);if(current?.id!==id)return;await loadHistory();
+            notice.className='text-muted small';notice.textContent='Оценка и комментарий сохранены';
+        }}));
+        else if(comment)body.append(feedbackDisplay(comment));
         if (record.runs.length > 1) {
             const runs = node('details',{},node('summary',{},'История проверок'));
             record.runs.forEach(run => {
@@ -661,10 +679,10 @@ export async function workspace(root) {
         if(selectedSummary&&!attemptItems.some(item=>String(item.id)===String(activeAttempt)))attemptItems.push(selectedSummary);
         attemptItems.sort((a,b)=>{const first=submittedOrder.indexOf(String(a.id)),second=submittedOrder.indexOf(String(b.id));return first>=0&&second>=0?first-second:first>=0?1:second>=0?-1:(Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0);});
         if(teacher && !ownMode && !selectedUser?.name && value.items[0]?.user_name){selectedUser.name=value.items[0].user_name;renderToolbar();}
+        if(!attemptItems.length && (!teacher || ownMode) && !root.hasAttribute('data-history-only')){results.remove();results.replaceChildren();history.replaceChildren();attemptList=null;browser.append(results);return value.items;}
         const heading=node('div',{class:'gc-attempt-history__heading'});
         if(value.total_attempts!==undefined)heading.append(node('span',{class:'text-muted small'},`Всего сдач: ${value.total_attempts}`));
         if(value.best_attempt)heading.append(button('Лучшая сдача',safe(() => openAttempt(value.best_attempt))));
-        heading.append(button('Обновить список',safe(() => loadHistory())));
         const list=node('ol',{class:'gc-attempt-list'},attemptItems.map(attemptCard));
         const footer=node('div',{class:'gc-attempt-history__footer'});
         if(!attemptItems.length)footer.append(node('p',{class:'text-muted mb-0'},ownMode ? 'Ваших решений пока нет.' : 'Сохранённых сдач пока нет.'));
