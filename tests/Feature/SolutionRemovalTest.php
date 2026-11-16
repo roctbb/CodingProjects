@@ -18,6 +18,8 @@ class SolutionRemovalTest extends DeadlineFeatureCase
     protected function setUp(): void
     {
         parent::setUp();
+        (require database_path('migrations/2026_11_16_230000_link_solution_coin_rewards.php'))->up();
+        DB::table('achievements')->delete();
         DB::statement('CREATE UNIQUE INDEX removal_lesson_stats ON lesson_student_stats(course_id,lesson_id,student_id)');
     }
 
@@ -110,21 +112,30 @@ class SolutionRemovalTest extends DeadlineFeatureCase
         $solution=$this->solution(mark:8);$source=$this->native($solution,'running');
         $this->remove($source->id)->assertConflict();$this->assertDatabaseHas('solutions',['id'=>$solution->id]);
         DB::table('code_execution_runs')->where('id',$source->current_run_id)->update(['state'=>'completed']);
+        $credit=\App\CoinTransaction::register(1,10,'Reward',solutionId:$solution->id);
+        $achievement=\App\Achievement::create(['user_id'=>1,'course_id'=>1,'task_id'=>11,'solution_id'=>$solution->id,'title'=>'Награда','description'=>'За решение']);
         CourseStudentPoints::recalculate(1,1);
         DB::unprepared("CREATE TRIGGER reject_progress_update BEFORE UPDATE ON course_student_points BEGIN SELECT RAISE(ABORT, 'TEST ROLLBACK'); END");
         $this->withoutExceptionHandling();
         try{$this->remove($source->id);$this->fail('Expected a failed recalculation');}catch(\Illuminate\Database\QueryException $e){$this->assertStringContainsString('TEST ROLLBACK',$e->getMessage());}
         $this->assertDatabaseHas('solutions',['id'=>$solution->id]);$this->assertDatabaseHas('code_submissions',['id'=>$source->id]);
         $this->assertDatabaseHas('code_execution_runs',['id'=>$source->current_run_id]);
+        $this->assertDatabaseHas('achievements',['id'=>$achievement->id]);
+        $this->assertDatabaseMissing('coin_transactions',['reversal_of_id'=>$credit->id]);
     }
 
-    public function test_coin_receipts_survive_and_prevent_a_second_task_reward_after_removal(): void
+    public function test_old_task_reward_is_revoked_and_a_new_legitimate_solution_can_earn_it_again(): void
     {
         $solution=$this->solution(mark:10);
         $coin=DB::table('coin_transactions')->insertGetId(['user_id'=>1,'price'=>10,'comment'=>'Task #11','created_at'=>now(),'updated_at'=>now()]);
         $this->remove('solution-'.$solution->id)->assertOk();
         $this->assertDatabaseHas('coin_transactions',['id'=>$coin,'price'=>10]);
-        $this->assertTrue(Task::find(11)->hasRewardableFullSolution(1));
+        $this->assertDatabaseHas('coin_transactions',['reversal_of_id'=>$coin,'price'=>-10]);
+        $this->assertFalse(Task::find(11)->hasRewardableFullSolution(1));
+        DB::table('tasks')->where('id',11)->update(['price'=>10]);
+        $next=$this->solution();
+        $this->actingAs(User::find(2))->postJson('/insider/courses/1/solution/'.$next->id,['mark'=>10,'comment'=>'Повторное решение'])->assertOk();
+        $this->assertDatabaseHas('coin_transactions',['user_id'=>1,'comment'=>'Task #11','solution_id'=>$next->id]);
     }
 
     public function test_late_result_and_achievement_jobs_cannot_restore_a_deleted_solution(): void
@@ -140,5 +151,97 @@ class SolutionRemovalTest extends DeadlineFeatureCase
         $generator=new \App\Services\SolutionAchievementGenerator(\Mockery::mock(\App\Services\ChatGptService::class));
         $this->assertNull($generator->createForSolution($solution,['title'=>'Хорошая работа','description'=>'Удалённая попытка не получает награду.']));
         $this->assertSame(0,Solution::count());
+    }
+
+    public function test_removal_revokes_all_linked_rewards_and_deletes_only_its_achievement_and_trophy(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake();
+        $solution=$this->solution(mark:10);$other=$this->solution(mark:8,task:12);
+        $credits=collect([10,20,30])->map(fn($amount)=>\App\CoinTransaction::register(1,$amount,'Reward '.$amount,solutionId:$solution->id));
+        $unrelated=\App\CoinTransaction::register(1,99,'Other solution',solutionId:$other->id);
+        $achievement=\App\Achievement::create(['user_id'=>1,'course_id'=>1,'task_id'=>11,'solution_id'=>$solution->id,'title'=>'Награда','description'=>'За решение','payload'=>['coin_reward'=>30]]);
+        $path='achievement-trophies/achievement-'.$achievement->id.'-'.Str::uuid().'.png';
+        \Illuminate\Support\Facades\Storage::put($path,'image');$achievement->update(['payload'=>['coin_reward'=>30,'trophy_image'=>$path]]);
+        $otherAchievement=\App\Achievement::create(['user_id'=>1,'course_id'=>1,'task_id'=>12,'solution_id'=>$other->id,'title'=>'Другая награда','description'=>'За другую задачу']);
+        app(\App\Services\RewardNotices::class)->achievement($achievement);
+        \App\CourseActivity::recordAchievementEarned($achievement);
+        DB::table('classroom_bonus_awards')->insert(['user_id'=>1,'course_id'=>1,'task_id'=>11,'solution_id'=>$solution->id,'session_id'=>1,
+            'amount'=>20,'coin_transaction_id'=>$credits[1]->id,'created_at'=>now(),'updated_at'=>now()]);
+        $before=User::find(1)->balance();
+        $this->remove('solution-'.$solution->id)->assertOk();
+        $this->assertSame((int)$before-60,(int)User::find(1)->balance());
+        $this->assertDatabaseMissing('achievements',['id'=>$achievement->id]);$this->assertDatabaseHas('achievements',['id'=>$otherAchievement->id]);
+        \Illuminate\Support\Facades\Storage::assertMissing($path);
+        $this->assertDatabaseMissing('classroom_bonus_awards',['solution_id'=>$solution->id]);
+        $this->assertDatabaseMissing('course_activities',['solution_id'=>$solution->id]);
+        foreach($credits as $credit){
+            $this->assertDatabaseHas('coin_transactions',['id'=>$credit->id,'price'=>$credit->price]);
+            $this->assertDatabaseHas('coin_transactions',['reversal_of_id'=>$credit->id,'price'=>-$credit->price]);
+            $this->assertDatabaseMissing('reward_notices',['kind'=>'coins','source_key'=>(string)$credit->id]);
+        }
+        $this->assertDatabaseMissing('reward_notices',['kind'=>'achievement','source_key'=>(string)$achievement->id]);
+        $this->assertDatabaseMissing('coin_transactions',['reversal_of_id'=>$unrelated->id]);
+        $this->remove('solution-'.$solution->id)->assertNotFound();
+        $this->assertSame(3,DB::table('coin_transactions')->whereNotNull('reversal_of_id')->count());
+    }
+
+    public function test_spent_coins_are_still_revoked_in_full_and_other_solution_receipts_stay_untouched(): void
+    {
+        DB::table('coin_transactions')->where('user_id',1)->delete();
+        $solution=$this->solution(mark:10);$other=$this->solution(mark:10);
+        $credit=\App\CoinTransaction::register(1,10,'Task #11',solutionId:$solution->id);
+        $otherCredit=\App\CoinTransaction::register(1,5,'Other reward',solutionId:$other->id);
+        \App\CoinTransaction::register(1,-30,'Purchase');
+        $this->remove('solution-'.$solution->id)->assertOk();
+        $this->assertSame(-25,(int)User::find(1)->balance());
+        $this->assertDatabaseHas('coin_transactions',['reversal_of_id'=>$credit->id,'price'=>-10]);
+        $this->assertDatabaseMissing('coin_transactions',['reversal_of_id'=>$otherCredit->id]);
+    }
+
+    public function test_historical_manual_achievement_and_classroom_receipts_are_revoked_once(): void
+    {
+        $solution=$this->solution(mark:10);
+        $achievement=\App\Achievement::create(['user_id'=>1,'course_id'=>1,'task_id'=>11,'solution_id'=>$solution->id,'title'=>'Старое достижение','description'=>'За решение','payload'=>['manual'=>true,'coin_reward'=>15]]);
+        $coin=\App\CoinTransaction::register(1,15,'Achievement Task #11 User #1');
+        $bonus=\App\CoinTransaction::register(1,20,'Classroom task #11 / course #1');
+        DB::table('classroom_bonus_awards')->insert(['user_id'=>1,'course_id'=>1,'task_id'=>11,'solution_id'=>$solution->id,'session_id'=>1,
+            'amount'=>20,'coin_transaction_id'=>$bonus->id,'created_at'=>now(),'updated_at'=>now()]);
+        $this->remove('solution-'.$solution->id)->assertOk();
+        $this->assertDatabaseHas('coin_transactions',['reversal_of_id'=>$coin->id,'price'=>-15]);
+        $this->assertDatabaseHas('coin_transactions',['reversal_of_id'=>$bonus->id,'price'=>-20]);
+        $this->assertDatabaseMissing('achievements',['id'=>$achievement->id]);
+    }
+
+    public function test_a_reward_for_another_submission_of_the_same_task_is_preserved(): void
+    {
+        $removed=$this->solution(mark:6);$other=$this->solution(mark:10);
+        $credit=\App\CoinTransaction::register(1,10,'Task #11',solutionId:$other->id);
+        $this->remove('solution-'.$removed->id)->assertOk();
+        $this->assertDatabaseMissing('coin_transactions',['reversal_of_id'=>$credit->id]);
+    }
+
+    public function test_historical_audit_identifies_the_reward_after_a_later_recheck(): void
+    {
+        $first=$this->solution(mark:10);$other=$this->solution(mark:10);
+        DB::table('solutions')->where('id',$first->id)->update(['checked'=>now()]);
+        $coin=\App\CoinTransaction::register(1,10,'Task #11');$coin->created_at=now()->subDays(2);$coin->save();
+        $event=\App\CourseActivity::recordSolutionChecked($first);$event->created_at=$coin->created_at;$event->save();
+        $this->remove('solution-'.$first->id)->assertOk();
+        $this->assertDatabaseHas('coin_transactions',['reversal_of_id'=>$coin->id,'price'=>-10]);
+        $this->assertDatabaseHas('solutions',['id'=>$other->id,'mark'=>10]);
+    }
+
+    public function test_new_native_and_quiz_rewards_are_bound_to_the_actual_submission(): void
+    {
+        DB::table('tasks')->where('id',11)->update(['price'=>10]);
+        $source=$this->native(state:'awaiting_review');
+        app(\App\Services\CodeChecking\Grading::class)->apply($source,['points'=>10,'comment'=>'Верно']);
+        $nativeSolution=$source->fresh()->solution_id;
+        $this->assertDatabaseHas('coin_transactions',['comment'=>'Task #11','solution_id'=>$nativeSolution]);
+        $this->remove($source->id)->assertOk();
+        DB::table('tasks')->where('id',11)->update(['is_quiz'=>true,'is_code'=>false,'answer'=>'42']);
+        $this->actingAs(User::find(1))->postJson('/insider/courses/1/tasks/11/solution',['text'=>'42'])->assertOk();
+        $quiz=Solution::where('task_id',11)->firstOrFail();
+        $this->assertDatabaseHas('coin_transactions',['comment'=>'Task #11','solution_id'=>$quiz->id]);
     }
 }

@@ -1,6 +1,7 @@
 /* Sidebar */
 .gc-sidebar {
   background: var(--gc-sidebar-surface);
+  background-image: linear-gradient(var(--gc-sidebar-pattern-overlay), var(--gc-sidebar-pattern-overlay)), url('/images/sidebar-pattern.svg');
   border-right: 1px solid var(--gc-sidebar-border);
   bottom: 0;
   display: flex;

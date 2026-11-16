@@ -11,11 +11,19 @@ export default async function solutionRemoval(controlPage, { url, output, widths
         try {
             await visit(14,id(14));
             let root=page.locator('#execution-workspace-14');
+            for (const viewport of [...new Set([width,933])]) {
+                await page.setViewportSize({width:viewport,height:1000});
+                const toolbar=root.locator('.gc-execution-toolbar');
+                await toolbar.getByRole('button',{name:'Действия',exact:true}).waitFor();
+                const bounds=await toolbar.boundingBox(),button=await toolbar.getByRole('button',{name:'Действия',exact:true}).boundingBox();
+                check('review-action-stays-at-the-right-edge-'+viewport,Math.abs(bounds.x+bounds.width-button.x-button.width)<=1,width);
+            }
+            await page.setViewportSize({width,height:1000});
             const open = async () => {await root.getByRole('button',{name:'Действия',exact:true}).click();await root.getByRole('button',{name:'Удалить решение…',exact:true}).click();};
             let deleted=0;page.on('request',request=>{if(request.method()==='DELETE'&&request.url().includes('/attempts/'))deleted++;});
             await open();
             let dialog=page.getByRole('dialog',{name:'Удалить решение?',exact:true});
-            check('removal-confirmation-identifies-author-and-consequences',(await dialog.innerText()).includes('Ученик 1') && (await dialog.innerText()).includes('без возможности восстановления'),width);
+            check('removal-confirmation-identifies-author-and-consequences',(await dialog.innerText()).includes('Ученик 1') && (await dialog.innerText()).includes('без возможности восстановления') && (await dialog.innerText()).includes('связанные достижения') && (await dialog.innerText()).includes('GC будут списаны'),width);
             for(const theme of ['light','dark']) {
                 await page.evaluate(theme=>document.documentElement.dataset.bsTheme=theme,theme);
                 check('removal-confirmation-no-overflow-'+theme,await dialog.evaluate(el=>{const box=el.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth+1;}),width);

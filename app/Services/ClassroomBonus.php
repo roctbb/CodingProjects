@@ -76,7 +76,7 @@ class ClassroomBonus
                 'amount'=>$bonus['amount'],'created_at'=>now(),'updated_at'=>now()]);
             if (!$created) return;
             $coin = CoinTransaction::register($userId, $bonus['amount'], 'Classroom task #'.$taskId.' / course #'.$courseId,
-                'Задача решена на занятии! +'.$bonus['amount'].' GC', 'success', 'fas fa-coins');
+                'Задача решена на занятии! +'.$bonus['amount'].' GC', 'success', 'fas fa-coins', solutionId: $first->id);
             DB::table('classroom_bonus_awards')->where('course_id', $courseId)->where('user_id', $userId)->where('task_id', $taskId)
                 ->update(['coin_transaction_id'=>$coin->id]);
         });

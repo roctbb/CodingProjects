@@ -528,8 +528,8 @@ export async function workspace(root) {
             },'danger');
             dialog=openDialog('Удалить решение?',node('div',{},
                 node('p',{},selectedUser?.name || record.user_name || 'Ученик',record.created_at?' · '+new Date(record.created_at).toLocaleString('ru-RU'):''),
-                node('p',{},'Эта сдача и её проверки будут удалены без возможности восстановления. Баллы и прогресс пересчитаются по оставшимся решениям.'),
-                node('p',{class:'gc-help-text'},'Операции с GC сохранятся.'),status),
+                node('p',{},'Эта сдача, её проверки и связанные достижения будут удалены без возможности восстановления. Баллы и прогресс пересчитаются по оставшимся решениям.'),
+                node('p',{class:'gc-help-text'},'Начисленные за эту сдачу GC будут списаны с баланса.'),status),
                 [button('Отмена',()=>dialog.close()),remove]);
         });
         return control;
@@ -573,10 +573,9 @@ export async function workspace(root) {
     function arrangeResult(body){
         const header=body.querySelector(':scope > header.gc-result-verdict'),tools=body.querySelector(':scope > .gc-result-context-bar');
         toolbar.querySelector(':scope > .gc-result-context-bar')?.remove();
-        if(header?.hidden && teacher && !ownMode && tools)toolbar.append(tools);
-        else if(header&&tools)header.append(tools);
+        if(header && !header.hidden && tools)header.append(tools);
         const award=body.querySelector(':scope > .gc-award'),status=body.querySelector(':scope > .gc-execution-status');
-        if(teacher&&!ownMode){const navigation=toolbar.querySelector('.gc-execution-actions');if(navigation)navigation.before(history);else toolbar.append(history);summary.replaceChildren(toolbar,...[header,award,status].filter(Boolean));}
+        if(teacher&&!ownMode){const navigation=toolbar.querySelector('.gc-execution-actions');if(navigation)navigation.before(history);else toolbar.append(history);if(header?.hidden&&tools)toolbar.append(tools);summary.replaceChildren(toolbar,...[header,award,status].filter(Boolean));}
         else summary.replaceChildren(history,...[header,award,status].filter(Boolean));
         summary.classList.toggle('is-toolbar-only',teacher&&!ownMode && !!header?.hidden && !award && !status);
         summary.classList.toggle('is-student',!teacher||ownMode);

@@ -48,9 +48,8 @@ final class SolutionRemoval
                     409, 'Сейчас идёт проверка этой работы. Дождитесь её завершения и повторите удаление.');
             }
             if ($ids) {
+                app(SolutionRewardRemoval::class)->remove($user, $task, $course->id, $ids);
                 if (Schema::hasTable('course_activities')) DB::table('course_activities')->where('course_id', $course->id)->whereIn('solution_id', $ids)->delete();
-                // Already issued coin receipts remain immutable and prevent duplicate classroom rewards.
-                // Published achievements are independent awards; their FK becomes null on deletion.
                 Solution::where('course_id', $course->id)->where('task_id', $task->id)->where('user_id', $user->id)->whereIn('id', $ids)->delete();
             }
             if ($source) {

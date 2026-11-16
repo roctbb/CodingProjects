@@ -54,9 +54,11 @@ class Grading
             $solution->geekpaste_similarity_max_percent=$similarity['max_percent'];
             $solution->geekpaste_similarity_matches_count=$similarity['matches_count'];
             $solution->geekpaste_integrity_synced_at=now();
+            $taskReward=null;
             if($task->price>0 && $solution->qualifiesForTaskPriceReward() && !$task->hasRewardableFullSolution($user->id))
-                CoinTransaction::register($user->id,$user->taskCoinReward($task->price),'Task #'.$task->id);
+                $taskReward=CoinTransaction::register($user->id,$user->taskCoinReward($task->price),'Task #'.$task->id,solutionId:$solution->id);
             $solution->save();
+            if($taskReward && \Illuminate\Support\Facades\Schema::hasColumn('coin_transactions','solution_id')) $taskReward->forceFill(['solution_id'=>$solution->id])->save();
             $submission->update(['solution_id'=>$solution->id]);
             if($new)CourseActivity::recordSolutionSubmitted($solution);
             CourseActivity::recordSolutionChecked($solution);

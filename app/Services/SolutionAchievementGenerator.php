@@ -111,7 +111,8 @@ class SolutionAchievementGenerator
             'Achievement Task #' . $achievement->task_id . ' User #' . $achievement->user_id,
             '🏅 За достижение «' . $achievement->title . '» начислено ' . $coinReward . ' GC.',
             'success',
-            'fas fa-award'
+            'fas fa-award',
+            solutionId: $achievement->solution_id
         );
     }
 

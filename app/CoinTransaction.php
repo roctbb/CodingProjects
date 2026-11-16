@@ -146,14 +146,23 @@ class CoinTransaction extends Authenticatable
         ))->delay($when));
     }
 
-    public static function register($user_id, $amount, $comment, $notificationText = null, $notificationType = 'success', $notificationIcon = null)
+    public function scopeUnreversed($query)
     {
-        return DB::transaction(function () use ($user_id, $amount, $comment, $notificationText, $notificationType, $notificationIcon) {
+        if (\Illuminate\Support\Facades\Schema::hasColumn('coin_transactions', 'reversal_of_id')) $query->whereNotExists(fn ($reversals) => $reversals
+            ->selectRaw('1')->from('coin_transactions as reversals')->whereColumn('reversals.reversal_of_id', 'coin_transactions.id'));
+        return $query;
+    }
+
+    public static function register($user_id, $amount, $comment, $notificationText = null, $notificationType = 'success', $notificationIcon = null, ?int $solutionId = null, ?int $reversalOfId = null)
+    {
+        return DB::transaction(function () use ($user_id, $amount, $comment, $notificationText, $notificationType, $notificationIcon, $solutionId, $reversalOfId) {
         User::whereKey($user_id)->lockForUpdate()->firstOrFail();
         $transaction = new CoinTransaction();
         $transaction->user_id = $user_id;
         $transaction->price = $amount;
         $transaction->comment = $comment;
+        if ($solutionId !== null && \Illuminate\Support\Facades\Schema::hasColumn('coin_transactions', 'solution_id')) $transaction->solution_id = $solutionId;
+        if ($reversalOfId !== null) $transaction->reversal_of_id = $reversalOfId;
         $transaction->save();
         $transaction->withNotification($notificationText, $notificationType, $notificationIcon);
         app(\App\Services\RewardNotices::class)->coins($transaction);
@@ -163,19 +172,20 @@ class CoinTransaction extends Authenticatable
         });
     }
 
-    public static function registerOnce($user_id, $amount, $comment, $notificationText = null, $notificationType = 'success', $notificationIcon = null)
+    public static function registerOnce($user_id, $amount, $comment, $notificationText = null, $notificationType = 'success', $notificationIcon = null, ?int $solutionId = null)
     {
-        return DB::transaction(function () use ($user_id, $amount, $comment, $notificationText, $notificationType, $notificationIcon) {
+        return DB::transaction(function () use ($user_id, $amount, $comment, $notificationText, $notificationType, $notificationIcon, $solutionId) {
         User::whereKey($user_id)->lockForUpdate()->firstOrFail();
         $transaction = CoinTransaction::where('user_id', $user_id)
             ->where('comment', $comment)
+            ->when($solutionId !== null, fn ($query) => $query->unreversed())
             ->first();
 
         if ($transaction) {
             return $transaction;
         }
 
-        return static::register($user_id, $amount, $comment, $notificationText, $notificationType, $notificationIcon);
+        return static::register($user_id, $amount, $comment, $notificationText, $notificationType, $notificationIcon, $solutionId);
         });
     }
 

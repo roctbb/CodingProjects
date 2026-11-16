@@ -294,6 +294,7 @@ class TasksController extends Controller
 
         $course = Course::findOrFail($course_id);
 
+        $taskReward = null;
         $solution = new Solution();
         $solution->task_id = $id;
         $solution->user_id = Auth::User()->id;
@@ -311,7 +312,7 @@ class TasksController extends Controller
                     : "Правильно.";
 
                 if ($task->price > 0 && $solution->qualifiesForTaskPriceReward() && !$task->hasRewardableFullSolution($user->id)) {
-                    CoinTransaction::register($user->id, $user->taskCoinReward($task->price), "Task #" . $task->id);
+                    $taskReward = CoinTransaction::register($user->id, $user->taskCoinReward($task->price), "Task #" . $task->id);
                 }
 
             } else {
@@ -333,6 +334,7 @@ class TasksController extends Controller
         }
 
         $solution->save();
+        if ($taskReward && \Illuminate\Support\Facades\Schema::hasColumn('coin_transactions', 'solution_id')) $taskReward->forceFill(['solution_id'=>$solution->id])->save();
         CourseActivity::recordSolutionSubmitted($solution);
         if ($autoXpBoosterDelta > 0) {
             CourseActivity::recordXpBoosterUsed(
@@ -731,7 +733,7 @@ class TasksController extends Controller
         $solution->comment = $comment;
 
         if ($solution->task->price > 0 && $solution->qualifiesForTaskPriceReward() && !$solution->task->hasRewardableFullSolution($solution->user_id)) {
-            CoinTransaction::register($solution->user_id, $solution->user->taskCoinReward($solution->task->price), "Task #" . $solution->task->id);
+            CoinTransaction::register($solution->user_id, $solution->user->taskCoinReward($solution->task->price), "Task #" . $solution->task->id, solutionId: $solution->id);
         }
 
         $autoXpBoosterDelta = $this->applyDailyPetXpBoosterIfPossible($solution, $solution->user, $solution->task);
@@ -988,7 +990,7 @@ class TasksController extends Controller
             CourseActivity::recordDeadlinePenaltyWaived($solution, $teacher);
 
             if ($shouldReward) {
-                CoinTransaction::registerOnce($student->id, $student->taskCoinReward($solution->task->price), 'Task #' . $solution->task_id);
+                CoinTransaction::registerOnce($student->id, $student->taskCoinReward($solution->task->price), 'Task #' . $solution->task_id, solutionId: $solution->id);
             }
 
             return [$solution, true, $oldRank];
@@ -1057,7 +1059,7 @@ class TasksController extends Controller
         $this->dispatchAiAchievementGeneration($solution);
 
         if ($shouldRewardTaskPrice) {
-            CoinTransaction::register($solution->user_id, $user->taskCoinReward($solution->task->price), "Task #" . $solution->task->id);
+            CoinTransaction::register($solution->user_id, $user->taskCoinReward($solution->task->price), "Task #" . $solution->task->id, solutionId: $solution->id);
         }
 
         CourseStudentPoints::recalculate($course_id, $user->id);
