@@ -126,6 +126,27 @@ class DeadlineNotificationsTest extends DeadlineFeatureCase
         $this->assertSame('reached',$event->kind);
         $this->assertDatabaseHas('deadline_notification_events',['kind'=>'reminder','status'=>'expired']);
     }
+    public function test_teacher_receives_reached_notification_at_the_cutoff_once(): void
+    {
+        $this->teacher();$this->policy();app(DeadlineNotifications::class)->reconcile();
+        $event=DB::table('deadline_notification_events')->where('kind','reached')->orderBy('scheduled_at')->first();
+        $cutoff=Carbon::parse($event->scheduled_at,'UTC');
+        Carbon::setTestNow($cutoff->copy()->subSecond());
+        app(DeadlineNotifications::class)->dispatchDue();
+        $reached=fn()=>DB::table('deadline_notification_deliveries')->where('recipient_type','teacher')->get()
+            ->filter(fn($delivery)=>in_array($event->id,json_decode($delivery->event_ids,true),true));
+        $this->assertCount(0,$reached());
+        Carbon::setTestNow($cutoff);
+        app(DeadlineNotifications::class)->dispatchDue();
+        $this->assertCount(1,$reached());
+        Http::fake(['*'=>Http::response(['ok'=>true,'result'=>['message_id'=>777]])]);
+        $delivery=$reached()->first();app(DeadlineNotificationSender::class)->send($delivery->id);
+        app(DeadlineNotifications::class)->dispatchDue();app(DeadlineNotificationSender::class)->send($delivery->id);
+        Http::assertSentCount(1);
+        Http::assertSent(fn($request)=>$request['chat_id']==='202' && str_contains($request['text'],'Наступил срок сдачи')
+            && str_contains($request['text'],'До 15.11.2026 23:59 (Europe/Moscow)'));
+        $this->assertDatabaseHas('deadline_notification_deliveries',['id'=>$delivery->id,'status'=>'sent','message_id'=>'777']);
+    }
     public function test_hidden_work_never_leaks_to_group_or_student_and_pending_review_is_quiet(): void
     {
         $this->teacher(); $this->chat(); $this->policy();

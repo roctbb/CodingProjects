@@ -84,7 +84,7 @@ final class SolutionRemoval
     private function removeSource(CodeSubmission $source): void
     {
         if (Schema::hasTable('reward_notices')) DB::table('reward_notices')->where('user_id', $source->user_id)->where('kind', 'xp')
-            ->whereIn('source_key', CodeExecutionRun::where('submission_id', $source->id)->select('id'))->delete();
+            ->whereIn('source_key', CodeExecutionRun::where('submission_id', $source->id)->selectRaw('CAST(id AS TEXT)'))->delete();
         foreach (['code_execution_alerts','code_fingerprints','code_integrity_reports','code_attempt_credits','code_execution_runs'] as $table) {
             if (Schema::hasTable($table)) DB::table($table)->where('submission_id', $source->id)->delete();
         }
