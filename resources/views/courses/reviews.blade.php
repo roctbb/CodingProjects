@@ -2,13 +2,21 @@
 @section('title', 'Проверка')
 @section('content')
     @php
-        $reviewFiltered = request()->filled('course') || $reviewFilters['q'] !== '' || $reviewFilters['review_status'] !== 'all' || !empty($reviewFilters['lesson']);
+        $reviewView = $reviewView ?? 'queue';
+        $reviewFiltered = request()->filled('course') || $reviewFilters['q'] !== '' || ($reviewView === 'recent' ? ($activityStatus ?? 'all') !== 'all' : $reviewFilters['review_status'] !== 'all') || !empty($reviewFilters['lesson']);
         $reviewLinkContext = array_filter(['lesson' => $reviewFilters['lesson'] ?? null, 'q' => $reviewFilters['q'] ?: null,
             'review_status' => $reviewFilters['review_status'] !== 'all' ? $reviewFilters['review_status'] : null], fn ($value) => $value !== null);
     @endphp
     <div class="solution-review-page gc-stack">
-        <div class="gc-page-masthead"><x-gc-page-header title="Проверка" mark="code-branch" description="Сдачи учеников и запросы на перепроверку."><a class="btn btn-outline-secondary btn-sm" href="{{ url('/insider/courses') }}">Мои курсы</a></x-gc-page-header></div>
+        <div class="gc-page-masthead"><x-gc-page-header title="Проверка" mark="code-branch" description="Очередь ручной проверки и последние сдачи по вашим курсам."><a class="btn btn-outline-secondary btn-sm" href="{{ url('/insider/courses') }}">Мои курсы</a></x-gc-page-header></div>
+        <nav class="gc-review-view-switch" aria-label="Режим проверки">
+            <a class="gc-filter-toggle" @if($reviewView === 'queue') aria-current="page" @endif href="{{ request()->fullUrlWithQuery(['view' => null, 'activity_status' => null, 'review_status' => null, 'page' => null]) }}">Нужно проверить <span class="gc-help-text">{{ $pendingReviewCount ?? $pendingSolutions->total() }}</span></a>
+            <a class="gc-filter-toggle" @if($reviewView === 'recent') aria-current="page" @endif href="{{ request()->fullUrlWithQuery(['view' => 'recent', 'review_status' => null, 'activity_status' => null, 'page' => null]) }}">Последние сдачи</a>
+        </nav>
         @include('steps.partials.review-filters')
+        @if($reviewView === 'recent')
+            @include('courses.partials.recent-reviews')
+        @else
         @if($pendingSolutions->isNotEmpty())
             <section class="gc-card" aria-labelledby="pending-review-heading">
                 <div class="gc-panel-heading"><h2 class="h6 mb-0" id="pending-review-heading">Нужно проверить</h2><span class="gc-meta-label ms-auto">{{ $pendingSolutions->total() }}</span></div>
@@ -49,6 +57,7 @@
             <p class="mb-3">{{ $reviewFiltered ? 'Измените запрос или выберите другой курс.' : 'Новые сдачи и запросы на перепроверку появятся здесь.' }}</p>
             @if($reviewFiltered)<a class="btn btn-outline-primary btn-sm" href="{{ url('/insider/reviews') }}">Сбросить фильтры</a>@endif
         </section>
+        @endif
         @endif
     </div>
 @endsection

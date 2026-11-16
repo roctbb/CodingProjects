@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\Schema;
 
 class ReviewWorkspace
 {
-    public function courses(User $actor)
+    public function courses(User $actor, bool $includeArchived = false)
     {
-        return Course::where('state', 'started')
+        return Course::query()->when(!$includeArchived, fn ($query) => $query->where('state', 'started'))
             ->when($actor->role !== 'admin', fn ($query) => $query->whereHas('teachers', fn ($teachers) => $teachers->where('users.id', $actor->id)))
             ->orderBy('name')->get(['id', 'name']);
     }

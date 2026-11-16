@@ -273,8 +273,21 @@ class CoursesController extends Controller
     {
         $user = Auth::user();
         $workspaceService = app(\App\Services\ReviewWorkspace::class);
+        $request->validate(['view' => 'nullable|in:queue,recent', 'activity_status' => 'nullable|in:all,pending,checking,graded,error,skipped']);
+        $reviewView = $request->query('view', 'queue');
+        $activityStatus = $request->query('activity_status', 'all');
         $reviewFilters = $workspaceService->filters($request);
-        $reviewCourses = $workspaceService->courses($user);
+        $reviewCourses = $workspaceService->courses($user, $reviewView === 'recent');
+        if ($reviewView === 'recent') {
+            $reviewFilters['review_status'] = 'all';
+            $recentReviews = app(\App\Services\RecentReviews::class)->forTeacher($user, $request->filled('course') ? $request->integer('course') : null,
+                $reviewFilters + ['activity_status' => $activityStatus]);
+            if ($recentReviews->currentPage() > $recentReviews->lastPage()) return redirect()->to($request->fullUrlWithQuery(['page' => $recentReviews->lastPage()]));
+            $pendingReviewCount = $workspaceService->queue($user, $request->filled('course') ? $request->integer('course') : null, $reviewFilters)->count();
+            $reviewQueueAll = !$request->filled('course');
+            $reviewLessonName = !empty($reviewFilters['lesson']) ? $recentReviews->first()?->lesson_name : null;
+            return view('courses.reviews', compact('user', 'reviewView', 'activityStatus', 'reviewFilters', 'reviewCourses', 'recentReviews', 'pendingReviewCount', 'reviewQueueAll', 'reviewLessonName'));
+        }
         $pendingSolutions = $workspaceService->queue($user, $request->filled('course') ? $request->integer('course') : null, $reviewFilters)
             ->paginate(40)->withQueryString();
         if ($pendingSolutions->currentPage() > $pendingSolutions->lastPage()) {
@@ -283,7 +296,8 @@ class CoursesController extends Controller
 
         $reviewQueue=$pendingSolutions;$reviewQueueAll=!$request->filled('course');
         $reviewLessonName = !empty($reviewFilters['lesson']) ? $pendingSolutions->first()?->task?->step?->lesson?->name : null;
-        return view('courses.reviews', compact('user', 'pendingSolutions', 'reviewQueue','reviewQueueAll','reviewFilters', 'reviewCourses', 'reviewLessonName'));
+        $pendingReviewCount = $pendingSolutions->total();
+        return view('courses.reviews', compact('user', 'pendingSolutions', 'reviewQueue','reviewQueueAll','reviewFilters', 'reviewCourses', 'reviewLessonName', 'reviewView', 'activityStatus', 'pendingReviewCount'));
     }
 
     public function resetPendingReviews(Request $request)
