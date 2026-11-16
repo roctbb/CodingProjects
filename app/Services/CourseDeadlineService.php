@@ -18,6 +18,7 @@ class CourseDeadlineService
 {
     private array $policies = [];
     private ?bool $available = null;
+    private array $timezones = [];
 
     public function available(): bool
     {
@@ -79,17 +80,19 @@ class CourseDeadlineService
 
     public function timezone(int $courseId): string
     {
-        return Schema::hasTable('planner_courses') ? (DB::table('planner_courses')->where('course_id', $courseId)->value('timezone') ?: config('app.timezone')) : config('app.timezone');
+        return $this->timezones[$courseId] ??= Schema::hasTable('planner_courses')
+            ? (DB::table('planner_courses')->where('course_id', $courseId)->value('timezone') ?: config('app.timezone')) : config('app.timezone');
     }
 
-    public function editor(Course $course, string $type, int $id): array
+    public function editor(Course $course, string $type, int $id, Lesson|Task|null $target = null): array
     {
         $policy = $this->available() ? $this->policies($course->id)->get($type.':'.$id) : null;
         $timezone = $policy?->timezone ?: $this->timezone($course->id);
         $rule = $policy?->mode === 'custom' ? DeadlineRule::fromPolicy($policy) : null;
         $stages = [];
         if (!$policy) {
-            $legacy = $type === 'task' ? TaskDeadline::where('course_id', $course->id)->where('task_id', $id)->first() : Lesson::find($id)?->sharedDeadline($course->id);
+            $legacy = $type === 'task' ? TaskDeadline::where('course_id', $course->id)->where('task_id', $id)->first()
+                : ($target instanceof Lesson && $target->id === $id ? $target : Lesson::find($id))?->sharedDeadline($course->id);
             if ($legacy?->expiration) $rule = $legacy instanceof DeadlineRule ? $legacy : DeadlineRule::fromLegacy($legacy);
         }
         if ($rule) {

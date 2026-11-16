@@ -22,4 +22,5 @@ foreach (['statistics-desktop', 'statistics-phone'] as $variant) {
             $stats->execute([$lesson,$id,$points,20,$points*5]);
         }
     }
+    $db->exec("INSERT INTO action_log (user_id,type,object_id,created_at) VALUES (1,'course',1,'2026-11-10 12:00:00')");
 }

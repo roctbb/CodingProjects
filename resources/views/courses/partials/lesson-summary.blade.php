@@ -65,12 +65,12 @@
         @endif
         <div class="course-lesson-compact__access">@include('courses.partials.lesson-access')</div>
     </div>
-    @if($showLessonSticker)
-        <x-gc-lesson-reward :lesson="$lesson" :course="$course" sticker :status="$rewardStatus" class="course-lesson-compact__reward" />
-    @endif
     <div class="course-lesson-compact__controls">
         <div class="course-path-meta">@include('courses.partials.lesson-deadline')</div>
         @include('courses.partials.lesson-utilities')
         @include('courses.partials.lesson-actions')
     </div>
+    @if($showLessonSticker)
+        <x-gc-lesson-reward :lesson="$lesson" :course="$course" sticker :status="$rewardStatus" class="course-lesson-compact__reward" />
+    @endif
 </div>

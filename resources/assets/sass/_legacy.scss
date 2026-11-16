@@ -239,7 +239,7 @@
 .course-rank-summary:focus { background: var(--gc-border); color: var(--gc-on-surface); }
 .course-rank-summary i { font-size: 0.7rem; }
 .course-section-label { color: var(--gc-on-surface); font-size: var(--gc-font-ui); font-weight: 500; letter-spacing: 0; }
-.course-lessons-toolbar { align-items: center; background: transparent; border: 0; border-radius: 0; box-shadow: none; display: flex; gap: 0.75rem; justify-content: space-between; margin-bottom: 0.7rem !important; padding: 0 0.08rem 0.1rem; }
+.course-lessons-toolbar { align-items: center; background: transparent; border: 0; border-radius: 0; box-shadow: none; display: flex; gap: var(--gc-space-3); justify-content: space-between; margin: 0; padding: 0; }
 .course-lessons-toolbar__title { align-items: baseline; display: flex; gap: 0.45rem; min-width: 0; }
 .course-lessons-toolbar__count { color: var(--gc-on-surface-muted); font-size: 0.875rem; font-weight: 500; }
 .course-layout-row { margin-left: -0.6rem; margin-right: -0.6rem; }

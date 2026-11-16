@@ -11,11 +11,12 @@ import interactions from './interactions.mjs';
 import deadlineFlows from './deadline-flows.mjs';
 import taskWorkspace from './task-workspace.mjs';
 import lessonStatistics from './lesson-statistics.mjs';
+import reportWorkspace from './report-workspace.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const directory = mkdtempSync(path.join(tmpdir(), 'codingprojects-ui-'));
 const mode = process.argv.includes('--baseline') ? 'baseline' : 'current';
-if ((process.argv.includes('--flows-only') || process.argv.includes('--workspace-only') || process.argv.includes('--stats-only')) && (mode === 'baseline' || process.argv.includes('--compare'))) {
+if ((process.argv.includes('--flows-only') || process.argv.includes('--workspace-only') || process.argv.includes('--stats-only') || process.argv.includes('--report-only')) && (mode === 'baseline' || process.argv.includes('--compare'))) {
     throw new Error('Baseline and comparison require the complete screen suite.');
 }
 if (process.env.UI_BASELINE_CSS && mode !== 'baseline') throw new Error('UI_BASELINE_CSS is only allowed for a baseline.');
@@ -35,10 +36,10 @@ try {
         try { await fetch(`${url}/login`); break; } catch { if (attempt === 39) throw new Error('UI fixture server did not start'); await new Promise(resolve => setTimeout(resolve, 100)); }
     }
     await cli(['open', 'about:blank', ...(process.env.UI_HEADED === '1' ? ['--headed'] : [])]);
-    const config = { url, output, widths: [1440, 390], palette: process.env.UI_PALETTE || '', css: process.env.UI_BASELINE_CSS ? path.resolve(process.env.UI_BASELINE_CSS) : null };
+    const config = { url, output, widths: process.argv.includes('--report-only') ? [1440, 768, 390, 320] : [1440, 390], palette: process.env.UI_PALETTE || '', css: process.env.UI_BASELINE_CSS ? path.resolve(process.env.UI_BASELINE_CSS) : null };
     const report = { results: [], errors: [] };
-    const flows = [['interactions', interactions], ['deadlines', deadlineFlows], ['task-workspace', taskWorkspace], ['lesson-statistics', lessonStatistics]];
-    const checks = process.argv.includes('--workspace-only') ? [['task-workspace', taskWorkspace]] : process.argv.includes('--stats-only') ? [['lesson-statistics', lessonStatistics]] : process.argv.includes('--flows-only') ? flows : [['browser', suite], ...flows];
+    const flows = [['interactions', interactions], ['deadlines', deadlineFlows], ['task-workspace', taskWorkspace], ['lesson-statistics', lessonStatistics], ['report-workspace', reportWorkspace]];
+    const checks = process.argv.includes('--report-only') ? [['report-workspace', reportWorkspace]] : process.argv.includes('--workspace-only') ? [['task-workspace', taskWorkspace]] : process.argv.includes('--stats-only') ? [['lesson-statistics', lessonStatistics]] : process.argv.includes('--flows-only') ? flows : [['browser', suite], ...flows];
     for (const [name, check] of checks) {
         const raw = await cli(['run-code', `async(page)=>(${check.toString()})(page,${JSON.stringify(config)})`]);
         writeFileSync(path.join(output, `${name}.log`), raw);

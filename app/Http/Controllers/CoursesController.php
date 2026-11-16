@@ -309,182 +309,23 @@ class CoursesController extends Controller
 
     public function report($id)
     {
-        $user = User::with('solutions', 'solutions.task')->findOrFail(Auth::User()->id);
-        $course = Course::with([
-            'program.chapters',
-            'program.lessons.info',
-            'program.lessons.steps.tasks.solutions' => function ($query) use ($id) {
-                $query->where('course_id', $id);
-            },
-            'program.lessons.steps.tasks.blockedTasks' => function ($query) use ($id) {
-                $query->where('course_id', $id);
-            },
-            'students',
-            'statsStudents.submissions' => function ($query) use ($id) {
-                $query->where('course_id', $id)
-                    ->select('id', 'task_id', 'course_id', 'user_id', 'mark', 'submitted', 'review_skipped', 'recheck_requested')->withEvaluation();
-            },
-            'teachers',
-        ])->findOrFail($id);
-        $students = $course->statsStudents;
-
-            [$lessons, $reportChapterGroups] = \App\Support\CourseReportLessons::groups($course);
-
-            $temp_steps = collect([]);
-            foreach ($course->program->lessons->filter(fn ($lesson) => $lesson->isStarted($course)) as $lesson) {
-                $temp_steps = $temp_steps->merge($lesson->steps);
-            }
-
-            /* count pulse */
-            $ids = $students->pluck('id');
-            $steps_ids = $temp_steps->pluck('id');
-            $twoWeeksAgo = Carbon::now()->addWeeks(-2);
-
-
-            $use_records = ActionLog::where('created_at', '>', $twoWeeksAgo)
-                ->whereIn('user_id', $ids)
-                ->where(function ($query) use ($steps_ids, $course) {
-                    $query->where(function ($query) use ($course) {
-                        $query->where('type', 'course')->where('object_id', $course->id);
-                    })->orWhere(function ($query) use ($steps_ids) {
-                        $query->where('type', 'step')->whereIn('object_id', $steps_ids);
-                    });
-                })
-                ->get()
-                ->groupBy('user_id')
-                ->map(function ($item) {
-                return $item->groupBy(function ($item) {
-                    return $item->created_at->format('Y-m-d');
-                })->map(function ($item) {
-                    return $item->count();
-                });
-            });
-
-            $pulse_keys = collect([]);
-            $pulse_values = collect([]);
-
-
-            foreach ($use_records as $student_id => $value) {
-                $first_hour = Carbon::createFromFormat('Y-m-d', $value->keys()[0]);
-
-                while ($first_hour->lt(Carbon::now())) {
-                    $first_hour->addHour();
-                    if (!$value->has($first_hour->format('Y-m-d'))) {
-                        $use_records[$student_id][$first_hour->format('Y-m-d')] = 0;
-                    }
-                }
-
-                $use_records[$student_id] = $use_records[$student_id]->sortBy(function ($item, $key) {
-                    return Carbon::createFromFormat('Y-m-d', $key);
-                });
-
-                $pulse_keys[$student_id] = $use_records[$student_id]->keys()->values()->toJson();
-                $pulse_values[$student_id] = $use_records[$student_id]->values()->toJson();
-            }
-
-            $task_records = Solution::where('course_id', $course->id)
-                ->where('created_at', '>', $twoWeeksAgo)
-                ->whereIn('user_id', $ids)
-                ->get()
-                ->groupBy('user_id')
-                ->map(function ($item) {
-                    return $item->groupBy(function ($item) {
-                    return $item->created_at->format('Y-m-d');
-                })->map(function ($item) {
-                    return $item->sum('mark');
-                });
-            });
-
-            $task_keys = collect([]);
-            $task_values = collect([]);
-
-
-            foreach ($task_records as $student_id => $value) {
-                $first_hour = Carbon::now()->addWeeks(-2);
-
-                while ($first_hour->lt(Carbon::now())) {
-                    $first_hour->addDay();
-                    if (!$value->has($first_hour->format('Y-m-d'))) {
-                        $task_records[$student_id][$first_hour->format('Y-m-d')] = 0;
-                    }
-                }
-
-                $task_records[$student_id] = $task_records[$student_id]->sortBy(function ($item, $key) {
-                    return Carbon::createFromFormat('Y-m-d', $key);
-                });
-
-                $task_keys[$student_id] = $task_records[$student_id]->keys()->values()->toJson();
-                $task_values[$student_id] = $task_records[$student_id]->values()->toJson();
-            }
-
-
-            // Get cached points from database
-            $cachedPoints = CourseStudentPoints::where('course_id', $id)
-                ->whereIn('student_id', $students->pluck('id'))
-                ->get()
-                ->keyBy('student_id');
-
-            $studentsNeedingRecalculate = collect();
-
-            foreach ($students as $key => $value) {
-                if (isset($cachedPoints[$value->id])) {
-                    $students[$key]->percent = $cachedPoints[$value->id]->percent;
-                    $students[$key]->max_points = $cachedPoints[$value->id]->max_points;
-                    $students[$key]->points = $cachedPoints[$value->id]->points;
-                } else {
-                    $studentsNeedingRecalculate->push($value->id);
-                    $students[$key]->percent = 0;
-                    $students[$key]->max_points = 0;
-                    $students[$key]->points = 0;
-                }
-            }
-
-            $lessonStats = LessonStudentStats::where('course_id', $id)
-                ->whereIn('lesson_id', $lessons->pluck('id'))
-                ->whereIn('student_id', $students->pluck('id'))
-                ->get()
-                ->groupBy('lesson_id')
-                ->map(function ($stats) {
-                    return $stats->keyBy('student_id');
-                });
-
-            foreach ($lessons as $lesson) {
-                if (!isset($lessonStats[$lesson->id])) {
-                    $lessonStats[$lesson->id] = collect();
-                }
-
-                foreach ($students as $student) {
-                    if (!isset($lessonStats[$lesson->id][$student->id])) {
-                        $studentsNeedingRecalculate->push($student->id);
-                        $lessonStats[$lesson->id]->put($student->id, new LessonStudentStats([
-                            'course_id' => $id,
-                            'lesson_id' => $lesson->id,
-                            'student_id' => $student->id,
-                            'points' => 0,
-                            'max_points' => 0,
-                            'percent' => 0,
-                        ]));
-                    }
-                }
-            }
-
-            if ($studentsNeedingRecalculate->isNotEmpty()) {
-                RecalculateCoursePoints::dispatch($id, $studentsNeedingRecalculate->unique()->values()->all());
-            }
-
-            $steps = $temp_steps;
-            $geekPasteIntegrityStats = $this->buildGeekPasteIntegrityReport($students, $lessons);
-
-        $pendingReviewSolutions = $course->state === 'started'
-            ? Solution::where('course_id', $course->id)->pendingReview()->get(['id', 'user_id', 'task_id']) : collect();
-        $pendingSolutionsCount = $pendingReviewSolutions->count();
-        $pendingReviewPairs = $pendingReviewSolutions->mapWithKeys(fn ($solution) => [$solution->user_id.':'.$solution->task_id => true]);
-        if (request('attention') === '1') {
-            $students = $students->filter(fn ($student) => ($student->max_points > 0 && $student->percent < 50)
-                || in_array($geekPasteIntegrityStats[$student->id]['overall']['risk_level'] ?? 'none', ['high', 'medium'], true))->values();
+        $request = request();
+        $request->validate([
+            'student' => 'sometimes|integer|min:1', 'lesson' => 'sometimes|integer|min:1',
+            'chapter' => ['sometimes', 'regex:/^(?:all|[0-9]+)$/D'],
+            'lesson_state' => 'sometimes|in:all,incomplete,review,complete',
+            'lesson_q' => 'sometimes|string|max:120', 'attention' => 'sometimes|in:0,1',
+            'report_detail' => 'sometimes|boolean',
+        ]);
+        $data = app(\App\Services\CourseReportWorkspace::class)->data((int) $id, Auth::user(), $request);
+        if ($request->boolean('report_detail')) {
+            abort_unless($data['selectedStudent'], 404);
+            return response()->json([
+                'student' => $data['selectedStudent']->id,
+                'html' => view('courses.partials.report-student', $data + ['student' => $data['selectedStudent']])->render(),
+            ]);
         }
-        return view('courses.report', compact('pendingReviewPairs', 'pendingSolutionsCount', 'course', 'user', 'steps', 'students', 'lessons', 'reportChapterGroups', 'pulse_keys', 'pulse_values', 'task_keys', 'task_values', 'lessonStats', 'geekPasteIntegrityStats'));
-
+        return view('courses.report', $data);
     }
 
     public function resetStudentGeekPasteWarning($id, $student_id)
@@ -531,166 +372,7 @@ class CoursesController extends Controller
             $this->make_info_alert('Без изменений', 'У ученика не было активных предупреждений анализа авторства.');
         }
 
-        return redirect('/insider/courses/' . $course->id . '/report#student' . $student_id);
-    }
-
-    private function buildGeekPasteIntegrityReport($students, $lessons)
-    {
-        $stats = [];
-
-        foreach ($students as $student) {
-            $stats[$student->id] = [
-                'overall' => $this->emptyGeekPasteIntegrityBucket(),
-                'chapters' => [],
-                'lessons' => [],
-                'tasks' => [],
-            ];
-        }
-
-        foreach ($lessons as $lesson) {
-            $chapterId = $lesson->chapter_id ?: 0;
-
-            foreach ($lesson->steps as $step) {
-                foreach ($step->tasks as $task) {
-                    foreach ($task->solutions as $solution) {
-                        if (!isset($stats[$solution->user_id])) {
-                            continue;
-                        }
-
-                        if (!isset($stats[$solution->user_id]['chapters'][$chapterId])) {
-                            $stats[$solution->user_id]['chapters'][$chapterId] = $this->emptyGeekPasteIntegrityBucket();
-                        }
-
-                        if (!isset($stats[$solution->user_id]['lessons'][$lesson->id])) {
-                            $stats[$solution->user_id]['lessons'][$lesson->id] = $this->emptyGeekPasteIntegrityBucket();
-                        }
-
-                        if (!isset($stats[$solution->user_id]['tasks'][$task->id])) {
-                            $stats[$solution->user_id]['tasks'][$task->id] = $this->emptyGeekPasteIntegrityBucket();
-                        }
-
-                        $stats[$solution->user_id]['overall'] = $this->addSolutionToGeekPasteIntegrityBucket($stats[$solution->user_id]['overall'], $solution);
-                        $stats[$solution->user_id]['chapters'][$chapterId] = $this->addSolutionToGeekPasteIntegrityBucket($stats[$solution->user_id]['chapters'][$chapterId], $solution);
-                        $stats[$solution->user_id]['lessons'][$lesson->id] = $this->addSolutionToGeekPasteIntegrityBucket($stats[$solution->user_id]['lessons'][$lesson->id], $solution);
-                        $stats[$solution->user_id]['tasks'][$task->id] = $this->addSolutionToGeekPasteIntegrityBucket($stats[$solution->user_id]['tasks'][$task->id], $solution);
-                    }
-                }
-            }
-        }
-
-        foreach ($stats as $studentId => $studentStats) {
-            $stats[$studentId]['overall'] = $this->finalizeGeekPasteIntegrityBucket($studentStats['overall']);
-
-            foreach ($studentStats['chapters'] as $chapterId => $bucket) {
-                $stats[$studentId]['chapters'][$chapterId] = $this->finalizeGeekPasteIntegrityBucket($bucket);
-            }
-
-            foreach ($studentStats['lessons'] as $lessonId => $bucket) {
-                $stats[$studentId]['lessons'][$lessonId] = $this->finalizeGeekPasteIntegrityBucket($bucket);
-            }
-
-            foreach ($studentStats['tasks'] as $taskId => $bucket) {
-                $stats[$studentId]['tasks'][$taskId] = $this->finalizeGeekPasteIntegrityBucket($bucket);
-            }
-        }
-
-        return $stats;
-    }
-
-    private function emptyGeekPasteIntegrityBucket()
-    {
-        return [
-            'submissions' => 0,
-            'synced' => 0,
-            'ai_warnings' => 0,
-            'similarity_warnings' => 0,
-            'similarity_critical' => 0,
-            'similarity_matches_count' => 0,
-            'max_llm_probability' => null,
-            'max_similarity_percent' => null,
-            'has_high_ai_confidence' => false,
-            'has_medium_ai_confidence' => false,
-            'dismissed' => 0,
-            'risk_level' => 'none',
-        ];
-    }
-
-    private function addSolutionToGeekPasteIntegrityBucket(array $bucket, Solution $solution)
-    {
-        if (!$solution->hasGeekPasteIntegrityData()) {
-            return $bucket;
-        }
-
-        $bucket['submissions']++;
-
-        if ($solution->geekpaste_integrity_synced_at || $solution->geekpaste_code_id) {
-            $bucket['synced']++;
-        }
-
-        if ($solution->geekpaste_integrity_dismissed_at) {
-            $bucket['dismissed']++;
-
-            return $bucket;
-        }
-
-        if ($solution->geekpaste_ai_warning) {
-            $bucket['ai_warnings']++;
-        }
-
-        if ($solution->geekpaste_similarity_warning) {
-            $bucket['similarity_warnings']++;
-        }
-
-        if ($solution->geekpaste_similarity_critical) {
-            $bucket['similarity_critical']++;
-        }
-
-        $bucket['similarity_matches_count'] += (int) $solution->geekpaste_similarity_matches_count;
-
-        if ($solution->geekpaste_llm_probability !== null) {
-            $bucket['max_llm_probability'] = max((int) $solution->geekpaste_llm_probability, (int) ($bucket['max_llm_probability'] ?? 0));
-        }
-
-        if ($solution->geekpaste_similarity_max_percent !== null) {
-            $bucket['max_similarity_percent'] = max((int) $solution->geekpaste_similarity_max_percent, (int) ($bucket['max_similarity_percent'] ?? 0));
-        }
-
-        if ($solution->geekpaste_ai_confidence === 'high') {
-            $bucket['has_high_ai_confidence'] = true;
-        }
-
-        if ($solution->geekpaste_ai_confidence === 'medium') {
-            $bucket['has_medium_ai_confidence'] = true;
-        }
-
-        return $bucket;
-    }
-
-    private function finalizeGeekPasteIntegrityBucket(array $bucket)
-    {
-        $maxLlm = $bucket['max_llm_probability'];
-        $maxSimilarity = $bucket['max_similarity_percent'];
-
-        if (
-            $bucket['similarity_critical'] > 0 ||
-            $bucket['has_high_ai_confidence'] ||
-            ($maxLlm !== null && $maxLlm >= 80) ||
-            ($maxSimilarity !== null && $maxSimilarity >= 95)
-        ) {
-            $bucket['risk_level'] = 'high';
-        } elseif (
-            $bucket['ai_warnings'] > 0 ||
-            $bucket['similarity_warnings'] > 0 ||
-            $bucket['has_medium_ai_confidence'] ||
-            ($maxLlm !== null && $maxLlm >= 60) ||
-            ($maxSimilarity !== null && $maxSimilarity >= 75)
-        ) {
-            $bucket['risk_level'] = 'medium';
-        } elseif ($bucket['synced'] > 0) {
-            $bucket['risk_level'] = 'low';
-        }
-
-        return $bucket;
+        return redirect('/insider/courses/' . $course->id . '/report?student=' . $student_id . '#student' . $student_id);
     }
 
     public function blocked($id)
@@ -821,6 +503,12 @@ class CoursesController extends Controller
                     ->where('course_id', $id)->where('user_id', $user->id);
             }
             $course->load($materialRelations);
+            foreach ($course->program->lessons as $lesson) {
+                foreach ($lesson->steps as $step) {
+                    $step->setRelation('lesson', $lesson);
+                    foreach ($step->tasks as $task) $task->setRelation('step', $step);
+                }
+            }
 
             $temp_steps = collect([]);
 

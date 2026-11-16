@@ -23,6 +23,62 @@ export default function initReportWorkspaces() {
         const number = (link, key) => Number.isFinite(Number(link.dataset[key])) ? Number(link.dataset[key]) : -1;
         let visible = [];
         const activeLink = () => links.find(link => link.classList.contains('active'));
+        const paneFor = link => link && root.querySelector(link.dataset.bsTarget);
+        let pendingRequest;
+        let navigation = 0;
+        let restoringHistory = false;
+        const openLinkedLesson = pane => {
+            const lessonId = new URL(location.href).searchParams.get('lesson');
+            const row = [...pane.querySelectorAll('[data-report-lesson-id]')].find(row => row.dataset.reportLessonId === lessonId);
+            if (!row) return;
+            const group = row.closest('[data-report-chapter]');
+            if (group) chapter.value = group.dataset.reportChapter;
+            lessonState.value = 'all';
+            lessonSearch.value = '';
+            filterLessons(false);
+            const details = row.querySelector('.report-lesson-details');
+            bootstrap.Collapse.getOrCreateInstance(details, { toggle: false }).show();
+        };
+        const loadStudent = async (link, remember = true) => {
+            const pane = paneFor(link);
+            if (!pane) return;
+            const generation = ++navigation;
+            pendingRequest?.abort();
+            if (remember) {
+                const url = new URL(location.href);
+                url.searchParams.set('student', pane.dataset.reportStudentId);
+                url.hash = pane.id;
+                if (url.href !== location.href) history.pushState(null, '', url);
+            }
+            sync();
+            if (pane.dataset.reportLoaded === 'true') { openLinkedLesson(pane); return; }
+            const controller = new AbortController();
+            pendingRequest = controller;
+            pane.setAttribute('aria-busy', 'true');
+            pane.innerHTML = '<div class="gc-card report-detail-status" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Загружаем отчёт ученика…</div>';
+            try {
+                const url = new URL(root.dataset.reportDetailUrl, location.origin);
+                url.searchParams.set('student', pane.dataset.reportStudentId);
+                url.searchParams.set('report_detail', '1');
+                const response = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!response.ok) throw new Error('Report request failed');
+                const data = await response.json();
+                if (generation !== navigation) return;
+                if (String(data.student) !== pane.dataset.reportStudentId || typeof data.html !== 'string') throw new Error('Unexpected student');
+                pane.innerHTML = data.html;
+                pane.querySelectorAll('[data-progress-width]').forEach(bar => {
+                    const width = Number.parseFloat(bar.dataset.progressWidth);
+                    if (Number.isFinite(width)) bar.style.width = `${Math.max(0, Math.min(100, width))}%`;
+                });
+                pane.dataset.reportLoaded = 'true';
+                sync();
+                openLinkedLesson(pane);
+                document.dispatchEvent(new CustomEvent('gc:report-student-loaded'));
+            } catch (error) {
+                if (error.name === 'AbortError' || generation !== navigation) return;
+                pane.innerHTML = '<div class="gc-card report-detail-status" role="alert"><p class="mb-0">Не удалось загрузить отчёт ученика.</p><button class="btn btn-outline-secondary btn-sm" type="button" data-report-retry>Повторить</button></div>';
+            } finally { pane.removeAttribute('aria-busy'); }
+        };
         const sync = () => {
             const active = activeLink();
             root.querySelector('[data-report-selected-name]').textContent = visible.length ? active?.dataset.reportStudentLabel || 'Выберите ученика' : 'Ученики не найдены';
@@ -34,14 +90,14 @@ export default function initReportWorkspaces() {
         const filter = () => {
             const query = normalize(search.value);
             const mode = sort.value;
-            const metric = { percent: 'reportStudentSortPercent', similarity: 'reportStudentSortSimilarity', llm: 'reportStudentSortLlm' }[mode];
+            const metric = { percent: 'reportStudentSortPercent', pending: 'reportStudentSortPending', similarity: 'reportStudentSortSimilarity', llm: 'reportStudentSortLlm' }[mode];
             links.sort((a, b) => (metric ? number(b, metric) - number(a, metric) : 0)
                 || (['similarity', 'llm'].includes(mode) ? number(b, 'reportStudentSortRisk') - number(a, 'reportStudentSortRisk') : 0)
                 || collator.compare(a.dataset.reportStudentSortName, b.dataset.reportStudentSortName));
             visible = links.filter(link => {
                 link.hidden = !normalize(link.dataset.reportStudentName).includes(query);
                 list.appendChild(link);
-                link.querySelectorAll('[data-report-sort-value]').forEach(label => label.classList.toggle('d-none', label.dataset.reportSortValue !== (mode === 'name' ? 'percent' : mode)));
+                link.querySelectorAll('[data-report-sort-value]').forEach(label => label.classList.toggle('d-none', label.dataset.reportSortValue !== (['name', 'pending'].includes(mode) ? 'percent' : mode)));
                 return !link.hidden;
             });
             content.hidden = !visible.length;
@@ -67,15 +123,8 @@ export default function initReportWorkspaces() {
             if (visible[index]) bootstrap.Tab.getOrCreateInstance(visible[index]).show();
         }));
         list.addEventListener('shown.bs.tab', event => {
-            sync();
-            const url = new URL(location.href);
-            if (url.searchParams.has('student')) {
-                const student = /^student(\d+)-tab$/.exec(event.target.id)?.[1];
-                if (student) {
-                    url.searchParams.set('student', student);
-                    history.replaceState(null, '', url);
-                }
-            }
+            loadStudent(event.target, !restoringHistory);
+            restoringHistory = false;
         });
         list.addEventListener('click', event => {
             if (event.target.closest('[data-report-student-name]') && window.matchMedia('(max-width: 767.98px)').matches) bootstrap.Offcanvas.getInstance(roster)?.hide();
@@ -111,8 +160,10 @@ export default function initReportWorkspaces() {
                     group.hidden = !groupCount;
                 });
                 const form = plurals.select(total);
-                pane.querySelector('[data-report-lesson-count]').textContent = `${shown === total ? total : `${shown} из ${total}`} ${{ one: 'урок', few: 'урока', many: 'уроков', other: 'урока' }[form]}`;
-                pane.querySelector('[data-report-lessons-empty]').hidden = shown > 0;
+                const lessonCount = pane.querySelector('[data-report-lesson-count]');
+                if (lessonCount) lessonCount.textContent = `${shown === total ? total : `${shown} из ${total}`} ${{ one: 'урок', few: 'урока', many: 'уроков', other: 'урока' }[form]}`;
+                const lessonsEmpty = pane.querySelector('[data-report-lessons-empty]');
+                if (lessonsEmpty) lessonsEmpty.hidden = shown > 0;
                 const summary=pane.querySelector('[data-report-summary-value]');
                 if(summary)summary.textContent=maximum>0?`${points} / ${maximum} XP · ${Math.min(100,Math.round(points/maximum*100))}%`:'Без оценки';
                 const label=pane.querySelector('[data-report-summary-label]');if(label)label.textContent=chapter.value==='all'?'Во всех главах':'В этой главе';
@@ -144,50 +195,30 @@ export default function initReportWorkspaces() {
         lessonSearch.addEventListener('input', () => filterLessons());
         window.addEventListener('resize', () => filterLessons(false));
         lessonClear.addEventListener('click', () => { lessonSearch.value = ''; filterLessons(); lessonSearch.focus(); });
-        root.querySelectorAll('[data-report-reset-lessons]').forEach(button => button.addEventListener('click', () => {
+        root.addEventListener('click', event => {
+            if (event.target.closest('[data-report-retry]')) { loadStudent(activeLink(), false); return; }
+            if (!event.target.closest('[data-report-reset-lessons]')) return;
             lessonSearch.value = '';
             lessonState.value = 'all';
             filterLessons();
             lessonSearch.focus();
-        }));
+        });
         root.addEventListener('show.bs.collapse', event => {
             const template = event.target.querySelector('[data-report-task-template]');
             if (template) { template.replaceWith(template.content.cloneNode(true)); }
         });
         filterLessons(false);
         filter();
-        // Course statistics link to one authorized student and one lesson.
-        const studentId = parameters.get('student');
-        const lessonId = parameters.get('lesson');
-        const targetLink = links.find(link => link.id === `student${studentId}-tab`);
-        const targetPane = targetLink && root.querySelector(targetLink.getAttribute('href'));
-        const targetRow = targetPane && [...targetPane.querySelectorAll('[data-report-lesson-id]')]
-            .find(row => row.dataset.reportLessonId === lessonId);
-        if (targetLink) {
-            const openLesson = () => {
-                if (!targetRow) return;
-                const group = targetRow.closest('[data-report-chapter]');
-                if (group && chapterIds.includes(group.dataset.reportChapter)) chapter.value = group.dataset.reportChapter;
-                lessonState.value = 'all';
-                lessonSearch.value = '';
-                filterLessons(false);
-                const details = targetRow.querySelector('.report-lesson-details');
-                const trigger = targetRow.querySelector('.report-lesson-link');
-                const reveal = () => {
-                    targetRow.scrollIntoView({ block: 'center', behavior: 'instant' });
-                    trigger?.focus({ preventScroll: true });
-                };
-                if (details?.classList.contains('show')) reveal();
-                else if (details) {
-                    details.addEventListener('shown.bs.collapse', reveal, { once: true });
-                    bootstrap.Collapse.getOrCreateInstance(details, { toggle: false }).show();
-                }
-            };
-            if (targetLink.classList.contains('active')) openLesson();
-            else {
-                targetLink.addEventListener('shown.bs.tab', openLesson, { once: true });
-                bootstrap.Tab.getOrCreateInstance(targetLink).show();
-            }
-        }
+        loadStudent(activeLink(), false);
+        window.addEventListener('popstate', () => {
+            const saved = new URL(location.href).searchParams;
+            chapter.value = chapterIds.includes(saved.get('chapter')) ? saved.get('chapter') : root.dataset.reportDefaultChapter;
+            lessonState.value = ['all', 'incomplete', 'review', 'complete'].includes(saved.get('lesson_state')) ? saved.get('lesson_state') : 'all';
+            lessonSearch.value = (saved.get('lesson_q') || '').slice(0, 120);
+            const link = links.find(item => item.id === `student${saved.get('student')}-tab`) || visible[0];
+            if (!link) return;
+            if (link === activeLink()) loadStudent(link, false);
+            else { restoringHistory = true; bootstrap.Tab.getOrCreateInstance(link).show(); }
+        });
     });
 }

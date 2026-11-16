@@ -122,6 +122,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await page.screenshot({path:`${output}/task-notebook-${width}.png`,fullPage:true});
             await notebook.getByRole('combobox',{name:'Выбрать попытку',exact:true}).selectOption(id(18));
             await notebook.getByText('large-notebook.ipynb',{exact:true}).waitFor();
+            await notebook.locator('.gc-notebook__input').nth(1).waitFor();
             check('task-large-notebook-preview',await notebook.locator('.gc-notebook__input').count()===2,width);
 
             await visit('teacher',13,id(13));

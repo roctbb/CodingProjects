@@ -256,6 +256,9 @@
 .gc-course-context .gc-page-header { align-items:flex-start; flex-wrap:nowrap; margin-bottom:var(--gc-space-4); }
 .gc-course-context .gc-page-header__title { flex:1; min-width:0; }
 .gc-course-context .gc-page-header > .gc-actions { flex:none; }
+.gc-course-context .gc-breadcrumb { margin-bottom:var(--gc-space-2); }
+.gc-course-context .gc-page-heading-summary { margin-top:var(--gc-space-2); }
+.gc-course-context :is(.gc-page-description,.gc-page-heading-summary) { margin-left:calc(36px + var(--gc-space-3)); }
 .gc-course-actions__menu { min-width:min(17rem,calc(100vw - var(--gc-space-6))); max-width:calc(100vw - var(--gc-space-6)); }
 .gc-course-context .gc-page-description {
   display: -webkit-box;

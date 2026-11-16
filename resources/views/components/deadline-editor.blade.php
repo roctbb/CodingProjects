@@ -1,5 +1,5 @@
 @php
-    $editor = app(\App\Services\CourseDeadlineService::class)->editor($course, $targetType, $targetId);
+    $editor = app(\App\Services\CourseDeadlineService::class)->editor($course, $targetType, $targetId, $targetType === 'lesson' ? ($lesson ?? null) : ($task ?? null));
     $prefix = 'deadline-'.$targetType.'-'.$targetId;
 @endphp
 <div data-deadline-editor>

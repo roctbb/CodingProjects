@@ -16,8 +16,8 @@ function loadPlotly() {
 }
 
 export default function initCharts() {
-    const chartElements = [...document.querySelectorAll('[data-plotly-histogram], [data-plotly-report-chart]')];
-    if (!chartElements.length) return;
+    const chartElements = () => [...document.querySelectorAll('[data-plotly-histogram], [data-plotly-report-chart]')];
+    if (!chartElements().length && !document.querySelector('[data-report-workspace]')) return;
     const started = new WeakSet();
     const visible = element => element.getClientRects().length > 0 && (!element.closest('[data-report-activity]') || element.closest('[data-report-activity]').open);
     const render = async element => {
@@ -99,10 +99,11 @@ export default function initCharts() {
             showlegend: false
         }, { displayModeBar: false, responsive: true });
     };
-    const renderVisible = () => chartElements.forEach(element => render(element));
-    document.querySelectorAll('[data-report-activity]').forEach(details => details.addEventListener('toggle', () => {
-        if (details.open) requestAnimationFrame(renderVisible);
-    }));
+    const renderVisible = () => chartElements().forEach(element => render(element));
+    document.addEventListener('toggle', event => {
+        if (event.target.matches('[data-report-activity]') && event.target.open) requestAnimationFrame(renderVisible);
+    }, true);
+    document.addEventListener('gc:report-student-loaded', renderVisible);
     document.addEventListener('shown.bs.collapse', () => requestAnimationFrame(renderVisible));
     document.addEventListener('shown.bs.tab', () => requestAnimationFrame(renderVisible));
     renderVisible();

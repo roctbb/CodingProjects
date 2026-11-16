@@ -8,7 +8,7 @@ export default function initContentTabs({ onChange = () => {} } = {}) {
         if (!hash || hash === '#') return null;
 
         return Array.from(document.querySelectorAll('[data-bs-toggle="tab"], [data-bs-toggle="pill"]')).find(function (el) {
-            return (el.getAttribute('href') || el.getAttribute('data-bs-target')) === hash;
+            return (el.getAttribute('data-bs-target') || el.getAttribute('href')) === hash;
         });
     };
 
@@ -58,7 +58,7 @@ export default function initContentTabs({ onChange = () => {} } = {}) {
 
     document.querySelectorAll('.nav-tabs a, [data-bs-toggle="tab"], [data-bs-toggle="pill"]').forEach(function (el) {
         el.addEventListener('shown.bs.tab', function (event) {
-            var hash = event.target.getAttribute('href') || event.target.getAttribute('data-bs-target');
+            var hash = event.target.getAttribute('data-bs-target') || event.target.getAttribute('href');
             var targetPane = null;
 
             if (hash && hash !== '#') {

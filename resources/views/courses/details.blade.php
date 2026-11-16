@@ -79,7 +79,7 @@
                     <x-gc-chapter-timeline :course="$course" :chapter="$chapter" :viewer="$user" :project-path="$coursePath" embedded>
                         <x-slot:actions>@include('courses.partials.program-actions')</x-slot:actions>
                     </x-gc-chapter-timeline>
-                    @if($isManager && !$course->current_lesson_id)
+                    @if($isManager && !$courseEnded && !$course->current_lesson_id)
                         <p class="gc-help-text gc-current-lesson-help mb-0">Отметьте текущий урок в его меню. Доступ к материалам задаётся расписанием.</p>
                     @endif
                 </div>
@@ -88,7 +88,7 @@
                 @endif
                 @include('courses.partials.study-outcome')
                 <div class="gc-course-program-lessons">
-                <div class="course-lessons-toolbar {{ $course->program->chapters->count() === 1 ? 'course-lessons-toolbar--single' : '' }} mb-2">
+                <div class="course-lessons-toolbar {{ $course->program->chapters->count() === 1 ? 'course-lessons-toolbar--single' : '' }}">
                     <div class="course-lessons-toolbar__title">
                         <h2 class="course-section-label mb-0">Уроки</h2>
                         <span class="course-lessons-toolbar__count">· {{ $pathLessons->count() }}</span>
@@ -155,7 +155,7 @@
 
                         <article id="lesson-{{ $lesson->id }}" class="course-path-item @if ($isDone) is-done @endif @if ($isCurrent) is-current @endif @if (!$isAvailable) is-locked @endif @if (!$isDone && ($hasEarlyAccess || $canBuyEarlyAccess)) is-early-access @endif">
                             @php
-                                $showLessonSticker = $lessonTaskCount > 0 && filled($lesson->sticker);
+                                $showLessonSticker = $isLearner && $lessonTaskCount > 0 && filled($lesson->sticker);
                                 $rewardStatus = $isManager ? 'catalog' : ($cpercent > 90 ? 'earned' : 'preview');
                                 $hasLessonStatistics = $isManager && $lessonTaskCount > 0 && $students->isNotEmpty();
                                 $hasPersonalStatistics = $isLearner && $isAvailable && ($lessonView['rows']->isNotEmpty() ?? false);
