@@ -137,6 +137,11 @@
   padding: 0.65rem 0.8rem;
 }
 
+.gc-sidebar__user .dropdown-menu {
+  min-width: 0;
+  width: 100%;
+}
+
 .gc-sidebar__user-btn {
   align-items: center;
   background: none;
@@ -212,7 +217,7 @@
 .gc-bottom-nav:has(> .gc-bottom-nav__item:nth-child(5)) .gc-bottom-nav__item { font-size:var(--gc-font-small); }
 @media (max-width: 991.98px) {
   .gc-sidebar__brand { padding-right: 3.75rem; }
-  .gc-sidebar__close { display: inline-flex; position: absolute; right: var(--gc-space-2); top: var(--gc-space-2); }
+  .gc-sidebar__close { display: inline-flex; position: absolute; right: var(--gc-space-2); top: calc(1.05rem + 14px); transform: translateY(-50%); }
 }
 
 /* Mobile topbar */
