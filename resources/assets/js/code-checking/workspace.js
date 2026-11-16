@@ -37,7 +37,7 @@ export async function workspace(root) {
     const browser = node('section',{class:'gc-execution-browser gc-submission-surface'},summary,attachmentsArea,stage);
     root.replaceChildren(notice,browser);
     const busy=node('span',{class:'gc-submission-loading',role:'status'},node('i',{class:'fas fa-spinner fa-spin','aria-hidden':'true'}),' Загружаем работу…');
-    function beginResult(){summary.hidden=false;summary.setAttribute('aria-busy','true');summary.querySelectorAll(':scope > header,:scope > .gc-award').forEach(el=>el.setAttribute('inert',''));stage.setAttribute('aria-busy','true');stage.setAttribute('inert','');stage.append(busy);}
+    function beginResult(){const jump=toolbar.querySelector('.gc-review-jump');if(jump)jump.disabled=true;stage.hidden=false;summary.hidden=false;summary.setAttribute('aria-busy','true');summary.querySelectorAll(':scope > header,:scope > .gc-award').forEach(el=>el.setAttribute('inert',''));stage.setAttribute('aria-busy','true');stage.setAttribute('inert','');stage.append(busy);}
     function finishResult(panel,record){
         if(record?.lesson_progress && Number(record.user_id)===Number(root.dataset.viewerId)){
             const value=record.lesson_progress;
@@ -52,12 +52,24 @@ export async function workspace(root) {
         if(panel){results.querySelectorAll('.gc-inline-grade').forEach(grade=>grade.dispatchEvent(new Event('gc:grading-dispose')));results.replaceChildren(panel);results.hidden=false;content.hidden=true;composerVisible=false;history.hidden=false;summary.hidden=false;}
         summary.removeAttribute('aria-busy');summary.querySelectorAll('[inert]').forEach(el=>el.removeAttribute('inert'));
         busy.remove();stage.removeAttribute('inert');stage.removeAttribute('aria-busy');
+        const jump=toolbar.querySelector('.gc-review-jump');if(jump)jump.disabled=!results.querySelector('.gc-inline-grade');
     }
     function failResult(message,retry){
         finishResult();
+        clearResult();stage.hidden=true;content.hidden=true;composerVisible=false;
+        summary.replaceChildren(toolbar,history);history.hidden=!attemptItems.length;
+        if(!attemptItems.length)history.replaceChildren();
+        const jump=toolbar.querySelector('.gc-review-jump');if(jump)jump.disabled=true;
         notice.replaceChildren(node('p',{},message),button('Повторить загрузку',safe(retry)));notice.className='alert alert-danger';
     }
-    const studentLinks=()=>[...document.querySelectorAll('[data-execution-student]')].filter(link=>link.dataset.executionStudent==='#'+root.id);
+    function clearResult(){
+        current=null;
+        results.querySelectorAll('.gc-inline-grade').forEach(grade=>grade.dispatchEvent(new Event('gc:grading-dispose')));
+        results.replaceChildren();results.hidden=true;
+        summary.querySelectorAll(':scope > header,:scope > .gc-award,:scope > .gc-execution-status').forEach(el=>el.remove());
+        toolbar.querySelector(':scope > .gc-result-context-bar')?.remove();
+    }
+    const studentLinks=()=>[...document.querySelectorAll('[data-execution-student]')].filter(link=>link.dataset.executionStudent==='#'+root.id && !link.classList.contains('d-none'));
     const canNavigate=()=>inlineReview && studentLinks().length>1;
     const nextStudent=()=>root.dispatchEvent(new CustomEvent('gc:execution-navigate',{detail:{direction:1}}));
     const error = e => {
@@ -74,7 +86,7 @@ export async function workspace(root) {
     const markDirty = () => {dirty = true;editVersion++; requestId = null;draftState.textContent='Изменения не сохранены';clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=>save().catch(e=>{draftState.textContent='Не удалось сохранить черновик';if(e.status===409)error(e);}),900);};
     window.addEventListener('beforeunload', event => {if (dirty) {event.preventDefault(); event.returnValue = '';}});
     window.addEventListener('pagehide', () => {stop();details.cancel();clearTimeout(autoSaveTimer); editing?.destroy();}, {once:true});
-    root.addEventListener('gc:execution-close',()=>{generation++;historyGeneration++;stop();details.cancel();finishResult();current=null;});
+    root.addEventListener('gc:execution-close',()=>{generation++;historyGeneration++;stop();details.cancel();finishResult();current=null;selectedUser=null;activeAttempt=null;});
 
     async function settings() {
         if (config) return config;
@@ -88,10 +100,10 @@ export async function workspace(root) {
         const title = selectedUser?.name || 'Сдачи ученика';
         const authorHeading = node('div',{},node('h3',{class:'h6 mb-0',tabIndex:-1},title));
         toolbar.replaceChildren(authorHeading);
-        if (inlineReview) toolbar.prepend(iconButton('К списку учеников','fa-arrow-left',() => {
+        if (inlineReview) toolbar.prepend(iconButton('К списку работ','fa-arrow-left',() => {
             root.dispatchEvent(new CustomEvent('gc:execution-close'));
         }));
-        if(canNavigate())toolbar.append(actions(iconButton('Предыдущий','fa-chevron-left',()=>root.dispatchEvent(new CustomEvent('gc:execution-navigate',{detail:{direction:-1}}))),iconButton('Следующий','fa-chevron-right',nextStudent)));
+        if(canNavigate())toolbar.append(actions(iconButton('Предыдущая работа','fa-chevron-left',()=>root.dispatchEvent(new CustomEvent('gc:execution-navigate',{detail:{direction:-1}}))),iconButton('Следующая работа','fa-chevron-right',nextStudent)));
         if(teacher&&!ownMode){const jump=button('К оценке ↓',()=>{const grade=results.querySelector('.gc-inline-grade');grade?.querySelector('input')?.focus({preventScroll:true});grade?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});});jump.classList.add('gc-review-jump');const navigation=toolbar.querySelector('.gc-execution-actions');if(navigation)navigation.prepend(jump);else toolbar.append(actions(jump));}
     }
     async function attachments() {
@@ -102,6 +114,7 @@ export async function workspace(root) {
     }
     async function selectStudent(student,{attempt=null}={}) {
         generation++;historyGeneration++;stop();current=null;activeAttempt=null;
+        clearResult();
         selectedUser=student;ownMode=false;attemptItems=[];attemptList=null;
         content.hidden=true;attachmentsArea.hidden=true;notice.replaceChildren();renderToolbar();beginResult();
         try {
@@ -219,6 +232,7 @@ export async function workspace(root) {
         } finally {submitting=false;content.removeAttribute('inert');}
     }
     function renderComposer() {
+        stage.hidden=false;
         editing?.destroy(); editing = null;
         const kind=composerKind(),groups=submissionGroups(config),allowed=config.submission_modes;
         content.hidden=!composerVisible;

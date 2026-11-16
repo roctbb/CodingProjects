@@ -164,10 +164,10 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await page.keyboard.press('Escape');
             check('task-authorship-report-restores-focus',await warning.evaluate(el=>el===document.activeElement),width);
             await writeComment(ai,'Нужно пояснить начальное значение.');
-            await ai.getByRole('button',{name:'Следующий',exact:true}).click();
+            await ai.getByRole('button',{name:'Следующая работа',exact:true}).click();
             await ai.getByRole('heading',{name:'Ученик 3',exact:true}).waitFor();
             await ai.locator('.gc-submission-stage[aria-busy="true"]').waitFor({state:'hidden'});
-            await ai.getByRole('button',{name:'Предыдущий',exact:true}).click();
+            await ai.getByRole('button',{name:'Предыдущая работа',exact:true}).click();
             await ai.getByRole('heading',{name:'Ученик 1',exact:true}).waitFor();
             await ai.locator('.gc-submission-stage[aria-busy="true"]').waitFor({state:'hidden'});
             await ai.getByRole('textbox',{name:'Комментарий ученику',exact:true}).waitFor();
@@ -187,11 +187,11 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await writeComment(manual,'Объяснение верное, добавьте пример.');
             await manual.getByRole('button',{name:'Сохранить оценку',exact:true}).click();
             await manual.getByRole('heading',{name:'Ученик 1',exact:true}).waitFor();
-            await manual.getByRole('button',{name:'Следующий',exact:true}).click();
+            await manual.getByRole('button',{name:'Следующая работа',exact:true}).click();
             await manual.getByRole('heading',{name:'Ученик 3',exact:true}).waitFor();
             check('task-grade-then-next',true,width);
             check('task-skip-button-removed',await manual.getByRole('button',{name:'Пропустить работу',exact:true}).count()===0,width);
-            await manual.getByRole('button',{name:'Следующий',exact:true}).click();
+            await manual.getByRole('button',{name:'Следующая работа',exact:true}).click();
             await manual.getByRole('heading',{name:'Ученик 1',exact:true}).waitFor();
             check('task-arrow-navigation',true,width);
             await page.getByRole('tab',{name:'Моё решение',exact:true}).click();
