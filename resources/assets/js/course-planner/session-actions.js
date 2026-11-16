@@ -10,12 +10,24 @@ export function createSessionActions({ root, getState, setTarget, setRange, load
       '<div class="planner-field"><label for="planner-session-comment">Комментарий к занятию</label><textarea id="planner-session-comment" class="form-control" name="comment" rows="5" maxlength="10000" placeholder="Что успели, что изменилось, что нужно продолжить">' + esc(session.comment ?? session.record?.note ?? "") + '</textarea></div>',
       async () => { await mutate("comment", {session_id: session.id, comment: values().comment}, "Комментарий сохранён."); });
   }
-  const names = new Set(["add-session", "add-text", "record", "edit-session", "add-slot", "exclude", "remove-exception"]);
+  const names = new Set(["add-session", "add-text", "record", "edit-session", "session-bonus", "add-slot", "exclude", "remove-exception"]);
   async function handle(button) {
     const { data } = getState();
     const name = button.dataset.action;
     const session = data.sessions.find(s => s.id === Number(button.dataset.session));
     switch (name) {
+      case "session-bonus": {
+        const entries = session.entries.filter(entry => entry.kind === 'resource' && entry.layer === 'plan'
+          && entry.resource.provider_key === 'codingprojects' && ['task', 'step', 'lesson'].includes(entry.resource.type));
+        const amounts = new Set(entries.map(entry => entry.class_bonus_gc || 0));
+        modal("Бонус всем задачам занятия", '<p>' + esc(session.title || 'Занятие') + '</p>'
+          + field('class_bonus_gc', 'GC за каждую полностью решённую задачу', 'number', amounts.size === 1 ? [...amounts][0] : '', 'min="0" max="10000" step="1" required')
+          + '<p class="gc-help-text mt-3">Применится ко всем материалам, которые сейчас добавлены в занятие. Уроки и ступени включают все свои задачи. Индивидуальные суммы будут заменены; 0 — убрать бонус.</p>'
+          + '<p class="gc-help-text">За каждую задачу бонус начисляется один раз в курсе, если первое полное решение отправлено во время занятия по расписанию. У занятия должно быть задано время.</p>', async () => {
+            await mutate('session_bonus', {session_id: session.id, class_bonus_gc: Number(values().class_bonus_gc)}, 'Бонус применён ко всем задачам занятия.');
+          }, 'Сохранить', 'coin');
+        break;
+      }
       case "add-session": {
         const result = await mutate("add_session", {
           title: "Занятие без даты",

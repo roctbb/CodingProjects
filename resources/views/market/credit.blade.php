@@ -64,7 +64,7 @@
 
                         <div class="gc-form-footer flex-column-reverse flex-sm-row justify-content-end gap-2">
                             <a class="btn btn-outline-secondary rounded-3" href="{{ url('/insider/market') }}">Отмена</a>
-                            <button type="submit" class="btn btn-success rounded-3 px-3 fw-medium"><i class="fas fa-coins me-1"></i>Начислить</button>
+                            <button type="submit" class="btn btn-coin rounded-3 px-3 fw-medium"><i class="fas fa-coins me-1"></i>Начислить</button>
                         </div>
                     </form>
                 </div>

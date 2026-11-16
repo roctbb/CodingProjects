@@ -402,7 +402,10 @@ class CoursesController extends Controller
         $deadlineMonths = $deadlines->groupBy(fn ($deadline) => $deadline->expiration->format('Y-m'))
             ->map(fn ($month) => $month->groupBy(fn ($deadline) => $deadline->expiration->format('Y-m-d')));
 
-        return view('courses.deadlines', compact('course', 'user', 'isManager', 'deadlines', 'deadlineMonths'));
+        $deadlineItems = \App\Support\CourseDeadlineWorkspace::items($deadlines);
+        $deadlineChapters = $course->program->chapters->whereIn('id', $deadlineItems->pluck('chapter'));
+
+        return view('courses.deadlines', compact('course', 'user', 'isManager', 'deadlines', 'deadlineMonths', 'deadlineItems', 'deadlineChapters'));
     }
 
     public function lessonStatistics($course_id, $lesson_id, Request $request)

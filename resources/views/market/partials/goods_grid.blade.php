@@ -157,7 +157,7 @@
                                             {{ csrf_field() }}
                                             <div class="input-group input-group-sm">
                                                 <input type="number" min="{{ $minBid }}" name="amount" value="{{ $minBid }}" class="form-control rounded-start-3" aria-label="Ставка" @if($availableForBid < $minBid) disabled @endif>
-                                                <button class="btn btn-primary fw-medium" type="submit" @if($availableForBid < $minBid) disabled @endif>
+                                                <button class="btn btn-coin fw-medium" type="submit" @if($availableForBid < $minBid) disabled @endif>
                                                     <i class="fas fa-gavel" aria-hidden="true"></i> Ставка
                                                 </button>
                                             </div>
@@ -175,7 +175,7 @@
                             @else
                                 <x-gc-purchase-footer :price="$marketPrice" :original-price="$priceQuote['base_price']">
                                     @if ($good->number > 0 && $marketPrice <= $user->balance())
-                                        <form method="POST" action="{{ url('/insider/market/'.$good->id.'/buy') }}" class="d-inline" data-confirm="Купить «{{ $good->name }}» за {{ $marketPrice }} GC? Заказ появится в разделе «Мои покупки».">@csrf<input type="hidden" name="purchase_key" value="{{ (string) \Illuminate\Support\Str::uuid() }}"><input type="hidden" name="expected_price" value="{{ $marketPrice }}"><button type="submit" class="btn btn-primary btn-sm" aria-label="Купить {{ $good->name }} за {{ $marketPrice }} GC">Купить</button></form>
+                                        <form method="POST" action="{{ url('/insider/market/'.$good->id.'/buy') }}" class="d-inline" data-confirm="Купить «{{ $good->name }}» за {{ $marketPrice }} GC? Заказ появится в разделе «Мои покупки».">@csrf<input type="hidden" name="purchase_key" value="{{ (string) \Illuminate\Support\Str::uuid() }}"><input type="hidden" name="expected_price" value="{{ $marketPrice }}"><button type="submit" class="btn btn-coin btn-sm" aria-label="Купить {{ $good->name }} за {{ $marketPrice }} GC">Купить</button></form>
                                     @else
                                         <button class="btn btn-outline-secondary btn-sm" disabled>{{ $good->number > 0 ? 'Нужно ещё '.($marketPrice - $user->balance()).' GC' : 'Нет в наличии' }}</button>
                                     @endif

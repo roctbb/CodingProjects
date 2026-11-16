@@ -168,7 +168,7 @@ class DeadlinePoliciesTest extends DeadlineFeatureCase
         $this->assertEquals(10,collect($summary['weeks'])->sum(fn($week)=>$week['points']['codingprojects.xp']??0));
         $this->assertSame('2026-11-15', $reader->deadlines(Course::find(1),$planner)[0]['due_on']);
         $this->assertSame('23:59', $reader->deadlines(Course::find(1),$planner)[0]['time']);
-        $this->actingAs(User::find(1))->get('/insider/courses/1/deadlines')->assertOk()->assertSee('70%')->assertSee('0%')->assertSee('23:59');
+        $this->actingAs(User::find(1))->get('/insider/courses/1/deadlines')->assertOk()->assertSee('штраф 30%')->assertSee('штраф 100%')->assertSee('23:59');
     }
 
     public function test_legacy_migration_freezes_old_boundaries_and_marks_and_absent_rules(): void

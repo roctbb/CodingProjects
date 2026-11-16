@@ -109,6 +109,7 @@
 .planner-entry>.planner-handle { width:8px; margin-left:-8px; opacity:0; }
 .planner-entry:hover>.planner-handle,.planner-entry:focus-within>.planner-handle,.is-dragging .planner-handle { opacity:1; }
 .planner-session-footer { display:flex; flex-wrap:wrap; align-items:center; gap:var(--gc-space-3); margin-top:var(--gc-space-3); }
+.planner-menu :is([data-action="session-bonus"],[data-action="class-bonus"]) {color:var(--gc-coin);}
 .planner-session.is-empty .planner-session-footer > .flex-grow-1 { display:none; }
 .planner-session-note { color:var(--gc-on-surface-muted); font-size:var(--gc-font-small); margin:var(--gc-space-3) 0 0; white-space:pre-wrap; overflow-wrap:anywhere; }
 .planner-session-note i { color:var(--gc-primary); margin-right:var(--gc-space-1); }
@@ -168,7 +169,15 @@
 .planner-catalog-card small { color:var(--gc-on-surface-muted); font-size:var(--gc-font-small); }
 .planner-added { color:var(--gc-primary); font-size:var(--gc-font-caption); white-space:nowrap; }
 .planner-browse { background:none; border:0; color:var(--gc-primary); font-size:var(--gc-font-small); margin:var(--gc-space-2) 0 0 1.75rem; padding:0; }
-.planner-pagination { justify-content:space-between; margin-top:var(--gc-space-3); color:var(--gc-on-surface-muted); font-size:var(--gc-font-small); }
+.planner-pagination { justify-content:space-between; flex-wrap:wrap; margin-top:var(--gc-space-3); color:var(--gc-on-surface-muted); font-size:var(--gc-font-small); }
+.planner-pagination[hidden], .planner-pagination [hidden] {display:none !important;}
+.planner-pagination button:disabled {opacity:.45; cursor:default;}
+@media(max-width:575.98px) {
+ .planner-pagination #planner-page {order:-1; flex-basis:100%; text-align:center;}
+ .planner-pagination button {flex:1; min-width:0; white-space:normal;}
+ .planner-pagination button:first-child {text-align:left;}
+ .planner-pagination button:last-child {text-align:right;}
+}
 .planner-overview { background:var(--gc-surface); border:1px solid var(--gc-border); border-radius:var(--gc-radius-lg); padding:var(--gc-space-4); margin-bottom:var(--gc-space-4); }
 .planner-section-heading { display:flex; flex-wrap:wrap; justify-content:space-between; gap:var(--gc-space-3); margin-bottom:var(--gc-space-3); }
 .planner-section-heading p,.planner-overview-help { color:var(--gc-on-surface-muted); font-size:var(--gc-font-small); margin:var(--gc-space-2) 0 0; }

@@ -164,6 +164,9 @@ export function createSessionView({ getState }) {
     let menu = action("edit-session", "Настройки занятия") + action("add-text", "Текстовая запись")
       + (session.can_comment ? action("record", "Комментарий к занятию") : "")
       + (slot ? `<button type="button" data-action="exclude" data-slot="${slot.id}">Исключить дату</button>` : "");
+    const hasBonusTasks = entries.some(entry => entry.kind === 'resource' && entry.layer === 'plan'
+      && entry.resource.provider_key === 'codingprojects' && ['task', 'step', 'lesson'].includes(entry.resource.type));
+    if (hasBonusTasks) menu += action('session-bonus', 'Бонус всем задачам занятия');
     const lessonIds = new Set(entries.flatMap(e => (e.lesson_links || []).filter(r => r.relation === "study").map(r => r.lesson_id)));
     const labels = data.summary.rows.filter(r => lessonIds.has(r.lesson_id)).map(r => `<button type="button" class="planner-inline-button" data-action="highlight-lesson" data-lesson="${r.lesson_id}">${esc(r.name)} · ${r.session_count} зан.</button>`).join("");
     if (labels) menu += `<div class="planner-menu-label">Уроки программы</div>${labels}`;
@@ -175,7 +178,7 @@ export function createSessionView({ getState }) {
       <div class="planner-drop-hint">Добавить материал в это занятие</div>
       ${session.plan_note ? `<p class="planner-session-note">${esc(session.plan_note)}</p>` : ""}
       ${comment ? `<div class="planner-session-comment"><span><i class="fas fa-comment" aria-hidden="true"></i> Как прошло занятие</span><p>${esc(comment)}</p></div>` : ""}
-      <footer class="planner-session-footer">${action("session-materials", entries.length ? "+ Материал" : "Добавить материалы", "planner-inline-button")}${session.can_comment ? action("record", comment ? "Изменить комментарий" : "Как прошло занятие", "planner-quiet-button planner-comment-action") : ""}</footer></section>`;
+      <footer class="planner-session-footer">${action("session-materials", entries.length ? "+ Материал" : "Добавить материалы", "planner-inline-button")}${hasBonusTasks ? action('session-bonus', 'Бонус всем задачам', 'btn btn-coin btn-sm') : ''}${session.can_comment ? action("record", comment ? "Изменить комментарий" : "Как прошло занятие", "planner-quiet-button planner-comment-action") : ""}</footer></section>`;
   }
   return { sessionTitle, sessionMarkup };
 }

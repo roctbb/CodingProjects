@@ -1,4 +1,4 @@
-import {node,button,actions,request,openDialog} from './ui';
+import {node,button,request,openDialog} from './ui';
 
 export function awardPanel(record, {student=false,onChange=()=>{}}={}) {
     if (record.awarded_xp === null || record.awarded_xp === undefined) return null;
@@ -18,7 +18,7 @@ export function awardPanel(record, {student=false,onChange=()=>{}}={}) {
             commit.disabled=true;
             try {const value=await request(action.url,'POST',{expected_price:action.cost});dialog.close();await onChange(value);}
             catch(error) {status.textContent=error.message;commit.disabled=false;}
-        },'primary');
+        },action.teacher?'primary':'coin');
         commit.disabled=!action.available;
         if (!action.available) status.textContent='Недостаточно GC. Монетки не списаны.';
         dialog = openDialog(booster?'Применить бустер':'Снять штраф за опоздание',details,[button('Отмена',()=>dialog.close()),commit]);
@@ -27,23 +27,22 @@ export function awardPanel(record, {student=false,onChange=()=>{}}={}) {
         const note = node('div',{class:'gc-award__penalty'},node('i',{class:'fas fa-calendar-days','aria-hidden':'true'}),node('div',{},
             node('strong',{},`Применён штраф${award.penalty_percent!==null&&award.penalty_percent!==undefined?' −'+award.penalty_percent+'%':''}: −${penalty} XP`),
             node('span',{},`Сдача ${new Date(record.created_at).toLocaleString('ru-RU')} · опоздание ${award.late_days || 1} дн.`)));
-        if (award.actions?.penalty) note.append(button(award.actions.penalty.teacher?'Снять штраф':`Снять штраф · ${award.actions.penalty.cost} GC`,()=>confirm('penalty')));
+        if (award.actions?.penalty?.available) note.append(button(award.actions.penalty.teacher?'Снять штраф':`Снять штраф · ${award.actions.penalty.cost} GC`,()=>confirm('penalty'),award.actions.penalty.teacher?'outline-secondary':'coin'));
         panel.append(note);
     } else if (award.penalty_removed) panel.append(node('p',{class:'gc-help-text mb-0'},node('i',{class:'fas fa-circle-check me-1','aria-hidden':'true'}),award.penalty_removed==='teacher'?'Штраф снят преподавателем · GC ученика не списывались.':'Штраф снят за GC. Баллы за работу не менялись.'));
     if (student) {
         const foot = node('div',{class:'gc-award__foot'});
         if (award.reward>0) foot.append(node('span',{class:award.reward_eligible?'gc-award__reward':'gc-help-text'},award.reward_eligible?node('i',{class:'fas fa-coins','aria-hidden':'true'}):null,award.booster_used?'Бустер применён · награда GC за эту сдачу не начисляется':award.reward_eligible?`Награда за полное решение: +${award.reward} GC`:`Награда ${award.reward} GC — за полное решение без бустера`));
-        if (award.balance!==null && award.balance!==undefined) {
-            const shop = button(`${award.balance} GC · возможности`,()=>{
-                let dialog;
-                const items = node('div',{},node('p',{class:'gc-award-wallet'},node('i',{class:'fas fa-coins','aria-hidden':'true'}),` Баланс: ${award.balance} GC`));
-                if (award.actions?.penalty) items.append(node('section',{class:'gc-coin-option'},node('h4',{class:'h6'},'Снять штраф'),node('p',{},`Вернётся ${penalty} XP.`),button(`Снять штраф · ${award.actions.penalty.cost} GC`,()=>{dialog.close();confirm('penalty');})));
-                const boost=award.actions?.booster;
-                items.append(node('section',{class:'gc-coin-option'},node('h4',{class:'h6'},'Бустер до +5 баллов'),node('p',{},award.booster_used?'Уже применён для этой сдачи.':boost?`${record.awarded_xp} → ${boost.preview_xp} XP после штрафа. Максимум задачи не превышается.`:'Для этой сдачи бустер недоступен или не увеличит зачтённый XP.'),boost?button(boost.cost===0?'Бесплатный бустер от питомца':`Применить · ${boost.cost} GC`,()=>{dialog.close();confirm('booster');}):null));
-                dialog=openDialog('Возможности за GC',items);
-            });shop.classList.add('gc-award-shop');foot.append(shop);
+        const boost = award.actions?.booster;
+        if (boost?.available) {
+            const booster = button(`Бустер · ${boost.cost} GC`, () => confirm('booster'), 'coin');
+            booster.classList.add('gc-award__action');
+            foot.append(booster);
         }
-        panel.append(foot);
+        if ((boost?.available || award.actions?.penalty?.available) && award.balance !== null && award.balance !== undefined) {
+            foot.append(node('span', {class: 'gc-help-text'}, `Баланс: ${award.balance} GC`));
+        }
+        if (foot.children.length) panel.append(foot);
     }
     return panel.children.length?panel:null;
 }

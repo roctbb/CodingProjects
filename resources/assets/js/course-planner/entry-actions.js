@@ -23,7 +23,7 @@ export function createEntryActions({ getState, mutate, dialog, entryDialogs }) {
         modal('Бонус за решение на занятии', '<p>' + esc(context.entry.resource.title) + '</p>' + field('class_bonus_gc', 'GC за каждую полностью решённую задачу', 'number', context.entry.class_bonus_gc || 0, 'min="0" max="10000" step="1" required') +
           '<p class="gc-help-text mt-3">0 — без бонуса. Учитывается время сдачи от начала до конца занятия по расписанию. У занятия должно быть задано время. За одну задачу бонус начисляется один раз в курсе, даже если проверка завершилась позже. Для урока и ступени правило охватывает их задачи.</p>', async () => {
             await mutate('update_entry', { kind, entry_id: Number(id), class_bonus_gc: Number(values().class_bonus_gc) }, 'Бонус сохранён.');
-          });
+          }, 'Сохранить', 'coin');
         break;
       case "edit-text":
         modal(

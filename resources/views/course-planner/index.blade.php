@@ -85,7 +85,7 @@
                 </div>
                 <div id="planner-catalog-status" class="planner-catalog-status" aria-live="polite"></div>
                 <div id="planner-catalog-list" class="planner-catalog-list"></div>
-                <div class="planner-pagination"><button type="button" class="planner-quiet-button" data-action="catalog-prev" disabled aria-label="Предыдущая страница материалов">← Назад</button><span id="planner-page">Страница 1</span><button type="button" class="planner-quiet-button" data-action="catalog-next" disabled aria-label="Следующая страница материалов">Далее →</button></div>
+                <div class="planner-pagination"><button type="button" class="planner-quiet-button" data-action="catalog-prev" disabled aria-label="Предыдущая страница материалов">← Предыдущая страница</button><span id="planner-page">Страница 1</span><button type="button" class="planner-quiet-button" data-action="catalog-next" disabled aria-label="Следующая страница материалов">Следующая страница →</button></div>
                 <div class="gc-dialog-actions"><span id="planner-catalog-selected" class="gc-help-text" aria-live="polite">Ничего не выбрано</span><button type="button" class="btn btn-outline-secondary btn-sm" data-action="close-catalog">Закрыть</button><button type="button" class="btn btn-primary btn-sm" data-action="catalog-attach-selected" aria-label="Добавить выбранные материалы на занятие" disabled>Добавить</button></div>
                 <p id="planner-catalog-error" class="text-danger small mb-0" role="alert"></p>
             </dialog>

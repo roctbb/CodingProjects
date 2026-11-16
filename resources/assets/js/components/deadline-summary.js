@@ -91,9 +91,19 @@ export default function initDeadlineSummaries() {
                 date.dateTime = displayed.datetime;
             }
             if (next) {
+                const nextPenaltyAmount = Math.round((100-next.percent)*100)/100;
                 const nextPenalty = root.querySelector('[data-deadline-next-penalty]');
-                if (nextPenalty) nextPenalty.textContent = `−${Math.round((100-next.percent)*100)/100}%`;
+                if (nextPenalty) nextPenalty.textContent = nextPenaltyAmount ? `−${nextPenaltyAmount}%` : 'без штрафа';
+                const prefix = root.querySelector('[data-deadline-next-prefix]');
+                if (prefix) prefix.textContent = nextPenaltyAmount === penalty ? 'Срок' : 'После';
+                const effect = root.querySelector('[data-deadline-next-effect]');
+                if (effect) effect.hidden = nextPenaltyAmount === penalty;
                 delay = Math.min(delay, Math.max(1, next.cutoff - now + (legacy ? 1 : 0)));
+            }
+            const state = `${penalty}:${next?.cutoff ?? ''}`;
+            if (root.dataset.deadlineState !== state) {
+                root.dataset.deadlineState = state;
+                root.dispatchEvent(new CustomEvent('gc:deadline-change', { bubbles: true, detail: { penalty, next } }));
             }
         }
         for (const {root, rules, serverNow} of alerts) {

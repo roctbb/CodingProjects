@@ -732,10 +732,10 @@
 
 .solution-special-action {
   align-items: center;
-  background: var(--gc-primary-light);
-  border: 1px solid color-mix(in srgb, var(--gc-primary) 22%, var(--gc-border));
+  background: color-mix(in srgb, var(--gc-coin) 8%, var(--gc-surface));
+  border: 1px solid color-mix(in srgb, var(--gc-coin) 22%, var(--gc-border));
   border-radius: 0.5rem;
-  color: var(--gc-primary);
+  color: var(--gc-coin);
   display: inline-flex;
   font-weight: 500;
   gap: 0.42rem;
@@ -746,9 +746,9 @@
 
 .solution-special-action:hover,
 .solution-special-action:focus {
-  background: color-mix(in srgb, var(--gc-primary) 12%, var(--gc-surface));
-  border-color: var(--gc-primary);
-  color: var(--gc-primary);
+  background: color-mix(in srgb, var(--gc-coin) 12%, var(--gc-surface));
+  border-color: var(--gc-coin);
+  color: var(--gc-coin);
 }
 
 .solution-block__label {

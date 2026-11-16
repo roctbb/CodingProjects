@@ -1,4 +1,19 @@
 // Brand-aware shared components. Values come from tokens and runtime palette.
+.btn-coin {
+  --bs-btn-color:var(--gc-coin);
+  --bs-btn-bg:color-mix(in srgb,var(--gc-coin) 8%,var(--gc-surface));
+  --bs-btn-border-color:color-mix(in srgb,var(--gc-coin) 40%,var(--gc-border));
+  --bs-btn-hover-color:var(--gc-coin);
+  --bs-btn-hover-bg:color-mix(in srgb,var(--gc-coin) 16%,var(--gc-surface));
+  --bs-btn-hover-border-color:var(--gc-coin);
+  --bs-btn-active-color:var(--gc-coin);
+  --bs-btn-active-bg:color-mix(in srgb,var(--gc-coin) 20%,var(--gc-surface));
+  --bs-btn-active-border-color:var(--gc-coin);
+  --bs-btn-disabled-color:var(--gc-coin);
+  --bs-btn-disabled-bg:color-mix(in srgb,var(--gc-coin) 6%,var(--gc-surface));
+  --bs-btn-disabled-border-color:var(--gc-border);
+  --bs-btn-focus-box-shadow:0 0 0 .2rem color-mix(in srgb,var(--gc-coin) 25%,transparent);
+}
 .btn-primary {
   --bs-btn-bg: var(--gc-button-primary);
   --bs-btn-border-color: var(--gc-button-primary);

@@ -37,7 +37,7 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
   function catalogSelection() {
     const count = catalog.selection.size;
     $("#planner-catalog-selected").textContent = count ? `Выбрано: ${count}` : "Ничего не выбрано";
-    root.querySelector('[data-action="catalog-attach-selected"]').disabled = !count || getState().busy;
+    root.querySelector('[data-action="catalog-attach-selected"]').disabled = !count || getState().busy || catalog.loading;
   }
   function renderTarget() {
     const { selected, selectedSlot, layer } = getState();
@@ -63,6 +63,27 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
     catalog.cursor = null;
     catalog.previous = [];
     catalog.next = null;
+  }
+  function syncNavigation() {
+    const previous = root.querySelector('[data-action="catalog-prev"]');
+    const next = root.querySelector('[data-action="catalog-next"]');
+    const up = !catalog.previous.length && catalog.parent.length > 0;
+    previous.textContent = up ? '← На уровень выше' : '← Предыдущая страница';
+    previous.setAttribute('aria-label', up ? 'На уровень выше в каталоге материалов' : 'Предыдущая страница материалов');
+    previous.disabled = catalog.loading || (!catalog.previous.length && !up);
+    next.disabled = catalog.loading || !catalog.next;
+    const paged = catalog.previous.length > 0 || !!catalog.next;
+    $("#planner-page").hidden = !paged;
+    next.hidden = !paged;
+    previous.closest('.planner-pagination').hidden = !paged && !up;
+    catalogSelection();
+  }
+  async function parentCatalog() {
+    const parent = catalog.parent.pop();
+    if (!parent) return;
+    Object.assign(catalog, parent.browse || {type: 'lesson', query: '', cursor: null, previous: [], next: null});
+    $("#planner-search").value = catalog.query;
+    await loadCatalog();
   }
   async function loadCatalog(force = false) {
     const number = ++requestNumber;
@@ -118,10 +139,7 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
       if (number === requestNumber) {
         catalog.loading = false;
         node.removeAttribute("aria-busy");
-        root.querySelector("[data-action=catalog-prev]").disabled =
-          !catalog.previous.length;
-        root.querySelector("[data-action=catalog-next]").disabled =
-          !catalog.next;
+        syncNavigation();
       }
     }
   }
@@ -144,7 +162,7 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
       const unavailableLabel = added ? 'Добавлено' : overlap ? (r.type === 'lesson' ? 'Ступени уже добавлены' : 'Урок уже добавлен') : '';
       return `<div class="planner-catalog-card"><label class="planner-catalog-choice"><input type="checkbox" class="form-check-input" data-catalog-select="${i}" ${added ? "checked disabled" : overlap ? "disabled" : catalog.selection.has(key) ? "checked" : ""} aria-label="Выбрать ${esc(r.title)}"><span class="planner-catalog-card-body"><strong>${esc(r.title)}</strong><small>${esc(r.type_label || r.type)}${points ? ` · ${esc(points.value)} ${esc(points.unit)}` : ""}${r.public_metadata?.is_hidden ? " · скрыто" : ""}${unavailableLabel ? ` · ${unavailableLabel}` : ''}</small></span>${added ? '<span class="planner-added"><i class="fas fa-check" aria-hidden="true"></i></span>' : ""}</label>${children ? `<button type="button" class="planner-browse" data-action="catalog-children" data-index="${i}">Открыть материалы →</button>` : ""}</div>`;
     }).join("");
-    catalogSelection();
+    syncNavigation();
   }
   function syncProviders(providers) {
     const options = providers
@@ -217,22 +235,17 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
         if (catalog.previous.length) {
           catalog.cursor = catalog.previous.pop();
           await loadCatalog();
-        }
+        } else if (catalog.parent.length) await parentCatalog();
         break;
       case "catalog-retry":
         await loadCatalog(true);
         break;
       case "catalog-parent":
-        catalog.parent.pop();
-        catalog.type = "";
-        catalog.query = "";
-        $("#planner-search").value = "";
-        resetCatalog();
-        await loadCatalog();
+        await parentCatalog();
         break;
       case "catalog-children": {
         const r = catalog.items[Number(button.dataset.index)];
-        catalog.parent.push(r);
+        catalog.parent.push({...r, browse: {type: catalog.type, query: catalog.query, cursor: catalog.cursor, previous: [...catalog.previous], next: catalog.next}});
         catalog.type = "";
         catalog.query = "";
         $("#planner-search").value = "";

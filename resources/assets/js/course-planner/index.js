@@ -39,6 +39,7 @@ if (root && root.querySelector("#planner-calendar")) {
     add_session: "Добавлено занятие без даты",
     move_session: "Перенесено занятие",
     update_session: "Изменено занятие",
+    session_bonus: "Бонус всем задачам занятия",
     attach: "Добавлен материал",
     attach_many: "Добавлены материалы",
     comment: "Комментарий к занятию",

@@ -19,6 +19,8 @@ class CourseDeadlinesTest extends TestCase
         DB::unprepared(<<<'SQL'
             CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, role TEXT, email_verified_at TEXT);
             CREATE TABLE courses (id INTEGER PRIMARY KEY, name TEXT, program_id INTEGER);
+            CREATE TABLE programs (id INTEGER PRIMARY KEY, name TEXT);
+            CREATE TABLE program_chapters (id INTEGER PRIMARY KEY, program_id INTEGER, name TEXT, sort_index INTEGER);
             CREATE TABLE course_students (course_id INTEGER, user_id INTEGER, is_remote INTEGER DEFAULT 0, hidden_from_stats INTEGER DEFAULT 0);
             CREATE TABLE course_teachers (course_id INTEGER, user_id INTEGER, hidden_from_stats INTEGER DEFAULT 0);
             CREATE TABLE lessons (id INTEGER PRIMARY KEY, name TEXT, program_id INTEGER, chapter_id INTEGER);
@@ -30,6 +32,8 @@ class CourseDeadlinesTest extends TestCase
             CREATE TABLE solutions (id INTEGER PRIMARY KEY, task_id INTEGER, course_id INTEGER, user_id INTEGER, mark INTEGER);
             INSERT INTO users VALUES (1, 'Student', 'student', '2026-01-01'), (2, 'Teacher', 'teacher', '2026-01-01'), (3, 'Outsider', 'student', '2026-01-01');
             INSERT INTO courses VALUES (1, 'Course', 1), (2, 'Other course', 2);
+            INSERT INTO programs VALUES (1, 'Program'), (2, 'Other program');
+            INSERT INTO program_chapters VALUES (1, 1, 'First chapter', 1), (2, 1, 'Second chapter', 2), (3, 2, 'Other chapter', 1);
             INSERT INTO course_students (course_id, user_id) VALUES (1, 1);
             INSERT INTO course_teachers (course_id, user_id) VALUES (1, 2);
             INSERT INTO lessons VALUES (1, 'First chapter lesson', 1, 1), (2, 'Second chapter lesson', 1, 2), (3, 'Unopened lesson', 1, 2), (4, 'Other program', 2, 3);
@@ -154,11 +158,14 @@ class CourseDeadlinesTest extends TestCase
         $this->getJson('/insider/courses/1/deadlines')->assertUnauthorized();
     }
 
-    public function test_page_renders_months_days_and_task_links(): void
+    public function test_page_renders_current_conditions_and_task_links(): void
     {
         $this->actingAs(User::findOrFail(1))->get('/insider/courses/1/deadlines')
             ->assertOk()
-            ->assertSeeInOrder(['id="month-2026-09"', 'id="day-2026-09-17"', 'id="month-2026-10"', 'id="month-2027-01"'], false)
+            ->assertSee('data-deadline-agenda', false)
+            ->assertSee('data-deadline-summary', false)
+            ->assertSee('Все главы')
+            ->assertDontSee('Срок прошёл')
             ->assertSee('/insider/courses/1/steps/2#task7', false)
             ->assertDontSee('Task 8')
             ->assertDontSee('Task 9');

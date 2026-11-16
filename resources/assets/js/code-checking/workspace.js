@@ -213,7 +213,7 @@ export async function workspace(root) {
                     if (!confirm(`Приобрести дополнительную попытку за ${root.dataset.attemptPrice || '5'} GC?`)) return;
                     const value = await request(base+'/checker/extra-attempt','POST',{});
                     notice.textContent = `Попытка доступна. Списано ${value.charged} GC. Нажмите «Отправить решение».`;
-                })));
+                }), 'coin'));
                 notice.className = 'alert alert-warning';
             } else throw e;
         } finally {submitting=false;content.removeAttribute('inert');}
@@ -364,7 +364,7 @@ export async function workspace(root) {
                         notice.className = 'text-muted small';notice.textContent = `Списано ${value.charged} GC. Баланс: ${value.balance} GC.`;config.balance = value.balance;
                         await show(current.id,current.snapshotOf?{snapshotOf:current.snapshotOf}:{});
                     } finally {purchase.disabled = false;}
-                }));
+                }), 'coin');
                 details.append(purchase);
             } else details.append(node('p',{class:'text-muted mb-0'},report.legacy
                 ? 'Для этого теста подробные данные недоступны.'

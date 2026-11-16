@@ -26,7 +26,7 @@
         <a href="{{ url('/insider/profile/'.$user->id.'/edit') }}" class="small d-block mb-2">Сначала загрузите аватарку в профиле</a>
     @endif
     <div class="small text-muted mb-2">Баланс: <span data-room-character-balance>{{ $coinBalance }}</span> GC</div>
-    <button type="submit" class="btn btn-primary w-100 justify-content-center"
+    <button type="submit" class="btn btn-coin w-100 justify-content-center"
             data-room-character-submit @disabled($characterBusy || !$characterHasAvatar || $coinBalance < $characterCost)>
         <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>
         <span data-room-character-button-text>{{ $characterBusy ? 'Создаём персонажа…' : ($characterIsCustom ? 'Перегенерировать — ' : 'Создать по аватарке — ').$characterCost.' GC' }}</span>

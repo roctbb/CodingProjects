@@ -47,6 +47,7 @@ class PlannerService
                 'add_session' => $this->addSession($planner, $input),
                 'move_session' => $this->moveSession($planner, $input),
                 'update_session' => $this->updateSession($planner, $input),
+                'session_bonus' => $this->sessionBonus($planner, $input),
                 'attach' => $this->attach($planner, $course, $actor, $input),
                 'attach_many' => $this->attachMany($planner, $course, $actor, $input),
                 'comment' => $this->comment($planner, $input),
@@ -265,6 +266,18 @@ class PlannerService
         Validator::make($input, ['kind' => 'required|in:resource,text', 'entry_id' => 'required|integer|min:1'])->validate();
         $model = $input['kind'] === 'resource' ? SessionResource::class : SessionText::class;
         return $model::whereIn('session_id', PlannerSession::where('planner_course_id', $planner->id)->select('id'))->whereKey($input['entry_id'])->firstOrFail();
+    }
+
+    private function sessionBonus(PlannerCourse $planner, array $input): array
+    {
+        $data = Validator::make($input, ['session_id' => 'required|integer|min:1', 'class_bonus_gc' => 'required|integer|min:0|max:10000'])->validate();
+        $session = $this->session($planner, $data['session_id']);
+        $entries = SessionResource::where('session_id', $session->id)->where('layer', 'plan')->get()
+            ->filter(fn ($entry) => ($entry->resource_snapshot['provider_key'] ?? '') === 'codingprojects'
+                && in_array($entry->resource_snapshot['type'] ?? '', ['task', 'step', 'lesson'], true));
+        if ($entries->isEmpty()) throw ValidationException::withMessages(['session_id' => 'Сначала добавьте в занятие урок, ступень или задачи курса.']);
+        foreach ($entries as $entry) $entry->update(['class_bonus_gc' => $data['class_bonus_gc']]);
+        return ['updated_entries' => $entries->count()];
     }
 
     private function updateEntry(PlannerCourse $planner, array $input): array

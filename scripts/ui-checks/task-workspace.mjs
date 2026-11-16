@@ -67,6 +67,33 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await archive.getByRole('tab',{name:'src/helper.py',exact:true}).click();
             await archive.locator('pre').filter({hasText:'def answer()'}).waitFor();
             check('task-legacy-zip-source-and-xp',(await archive.getByRole('combobox',{name:'Выбрать попытку',exact:true}).inputValue())==='solution-115' && (await archive.locator('.gc-result-score > strong').innerText())==='6',width);
+            check('task-no-coin-button-without-an-action',await archive.locator('.gc-award .btn-coin').count()===0,width);
+
+            await visit('student',13,id(13));
+            const award=page.locator('#execution-workspace-13 .gc-award');
+            const booster=award.getByRole('button',{name:/^Бустер · \d+ GC$/});
+            await booster.waitFor();
+            check('task-coin-action-is-a-direct-button',!(await award.innerText()).includes('возможности') && await booster.evaluate(el=>el.classList.contains('btn-coin')),width);
+            for(const theme of ['light','dark']) {
+                await page.evaluate(theme=>document.documentElement.dataset.bsTheme=theme,theme);
+                const colors=await booster.evaluate(el=>{const probe=document.createElement('span');probe.style.color='var(--gc-coin)';document.body.append(probe);const value={actual:getComputedStyle(el).color,expected:getComputedStyle(probe).color};probe.remove();return value;});
+                await page.waitForFunction(expected=>getComputedStyle(document.querySelector('#execution-workspace-13 .gc-award__action')).color===expected,colors.expected);
+                colors.actual=await booster.evaluate(el=>getComputedStyle(el).color);
+                check('task-coin-action-is-purple',colors.actual===colors.expected,width,{theme,...colors});
+            }
+            await booster.click();
+            const boostDialog=page.getByRole('dialog',{name:'Применить бустер',exact:true});
+            await boostDialog.waitFor();
+            check('task-coin-action-keeps-price-and-confirmation',await boostDialog.getByText(/К списанию:|Подарок питомца/).count()===1 && await boostDialog.locator('button.btn-coin').count()===1,width);
+            await boostDialog.getByRole('button',{name:'Отмена',exact:true}).click();
+            check('task-coin-action-cancel-restores-focus',await booster.evaluate(el=>document.activeElement===el),width);
+            await page.screenshot({path:`${output}/task-purple-coin-action-${width}.png`,fullPage:true});
+            const unavailablePattern=`**/code-submissions/${id(13)}?test_data=metadata`;
+            await page.route(unavailablePattern,async route=>{const response=await route.fetch();const value=await response.json();if(value.award_breakdown?.actions?.booster)value.award_breakdown.actions.booster.available=false;await route.fulfill({response,json:value});});
+            await page.reload();
+            await page.locator('#execution-workspace-13 .gc-result-score > strong').waitFor();
+            check('task-unavailable-coin-action-is-hidden',await page.locator('#execution-workspace-13 .gc-award button.btn-coin').count()===0,width);
+            await page.unroute(unavailablePattern);
 
             await visit('student',14);
             const uploadRoot=page.locator('#execution-workspace-14');

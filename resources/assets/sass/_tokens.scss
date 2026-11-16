@@ -62,7 +62,8 @@ th {
   --gc-workbook-current-ink: color-mix(in srgb, var(--gc-primary) 35%, var(--gc-on-surface));
   --gc-selection: var(--gc-accent, var(--gc-primary));
   --gc-completion: var(--gc-primary);
-  --gc-early-access: #8053c5;
+  --gc-coin: #8053c5;
+  --gc-early-access: var(--gc-coin);
   --gc-reward-bg: color-mix(in srgb, var(--gc-accent) 11%, var(--gc-surface));
   --gc-reward-emphasis: color-mix(in srgb, var(--gc-accent) 22%, var(--gc-surface));
   --gc-reward-border: color-mix(in srgb, var(--gc-accent) 50%, var(--gc-panel-border));
@@ -139,7 +140,7 @@ body {
   --gc-success: #9bdbbc;
   --gc-warning: #d5b970;
   --gc-danger: #ffafbd;
-  --gc-early-access: #c4a0ff;
+  --gc-coin: #c4a0ff;
   --gc-surface: #1c2430;
   --gc-surface-variant: #26313f;
   --gc-background: #121820;
