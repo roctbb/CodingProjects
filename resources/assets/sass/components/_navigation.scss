@@ -14,6 +14,16 @@
   z-index: 1040;
 }
 
+.gc-sidebar-pattern-light {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  color: var(--gc-sidebar-pattern-light);
+  pointer-events: none;
+  z-index: -1;
+}
+
 .gc-sidebar__brand,
 .gc-workbook-brand {
   align-items: center;

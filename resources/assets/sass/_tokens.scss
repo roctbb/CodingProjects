@@ -53,6 +53,7 @@ th {
   --gc-sidebar-surface: color-mix(in srgb, var(--gc-primary) 12%, color-mix(in srgb, var(--gc-on-surface) 88%, var(--gc-surface)));
   --gc-sidebar-ink: #f0f4fc;
   --gc-sidebar-pattern-overlay: color-mix(in srgb, var(--gc-sidebar-surface) 40%, transparent);
+  --gc-sidebar-pattern-light: #e8be69;
   --gc-sidebar-muted: color-mix(in srgb, var(--gc-sidebar-ink) 80%, var(--gc-sidebar-surface));
   --gc-sidebar-border: color-mix(in srgb, var(--gc-sidebar-ink) 16%, var(--gc-sidebar-surface));
   --gc-sidebar-hover: color-mix(in srgb, var(--gc-sidebar-ink) 9%, var(--gc-sidebar-surface));
@@ -150,6 +151,7 @@ body {
   --gc-border: #364455;
   --gc-sidebar-surface: var(--gc-surface);
   --gc-sidebar-pattern-overlay: color-mix(in srgb, var(--gc-sidebar-surface) 60%, transparent);
+  --gc-sidebar-pattern-light: #f0ce83;
   --gc-sidebar-ink: var(--gc-on-surface);
   --gc-sidebar-muted: var(--gc-on-surface-muted);
   --gc-sidebar-border: var(--gc-border);
