@@ -14,9 +14,9 @@
   z-index: 1040;
 }
 
-.gc-sidebar__brand {
+.gc-sidebar__brand,
+.gc-workbook-brand {
   align-items: center;
-  color: var(--gc-sidebar-ink);
   display: flex;
   font-size: var(--gc-font-body);
   font-weight: 500;
@@ -25,11 +25,14 @@
   text-decoration: none;
 }
 
+.gc-sidebar__brand { color: var(--gc-sidebar-ink); }
 .gc-sidebar__brand:hover { color: var(--gc-sidebar-ink); }
 
-.gc-sidebar__brand img {
+.gc-sidebar__brand img,
+.gc-workbook-brand img {
   background: var(--gc-surface);
   border-radius:50%;
+  flex: 0 0 28px;
   padding:2px;
   height:28px;
   width:28px;

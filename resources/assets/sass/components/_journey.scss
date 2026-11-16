@@ -209,16 +209,17 @@
 .step-page-header__heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--gc-space-3) var(--gc-space-6); }
 .step-page-header__heading>.step-page-header__title { flex:1 1 22rem; min-width:0; overflow-wrap:anywhere; }
 .step-main { grid-area:main; min-width:0; width:100%; margin:0; padding:0 var(--gc-space-8) var(--gc-space-8); background:var(--gc-surface); }
-.gc-workbook-navigation { grid-area:navigation; min-width:0; min-height:100dvh; align-self:stretch; background:var(--gc-workbook-rail); padding:var(--gc-space-6) var(--gc-space-3); }
-.gc-workbook-steps { position:sticky; top:var(--gc-space-6); }
+.gc-workbook-navigation { grid-area:navigation; min-width:0; min-height:100dvh; align-self:stretch; background:var(--gc-workbook-rail); padding:0 var(--gc-space-3) var(--gc-space-6); }
+.gc-workbook-steps { position:sticky; top:0; }
 .gc-workbook-steps__content { padding:0; }
-.gc-workbook-brand { display:flex; align-items:center; gap:var(--gc-space-2); color:var(--gc-on-surface); font-size:var(--gc-font-ui); font-weight:500; text-decoration:none; margin:0 var(--gc-space-2) var(--gc-space-6); min-height:var(--gc-control-height); }
+.gc-workbook-brand { color:var(--gc-on-surface); margin:0 calc(-1 * var(--gc-space-3)) var(--gc-space-6); }
+.gc-workbook-brand:hover { color:var(--gc-on-surface); }
 .gc-workbook-steps__toggle { display:none; }
-.gc-workbook-steps__heading { display:flex; align-items:center; justify-content:space-between; gap:var(--gc-space-2); margin-bottom:var(--gc-space-3); padding-inline:var(--gc-space-2); }
+.gc-workbook-steps__heading { display:flex; align-items:center; justify-content:space-between; gap:var(--gc-space-2); margin-bottom:var(--gc-space-3); padding-inline:var(--gc-space-4); }
 .gc-workbook-steps__heading h2 { font-size:var(--gc-font-ui); font-weight:500; margin:0; }
 .gc-workbook-steps__heading>span { color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption); white-space:nowrap; }
 .gc-workbook-steps__list { display:grid; gap:var(--gc-space-1); max-height:calc(100dvh - 12rem); overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; padding:var(--gc-space-1); }
-.gc-workbook-steps__link { display:grid; grid-template-columns:1.25rem minmax(0,1fr); align-items:baseline; gap:var(--gc-space-2); padding:var(--gc-space-3) var(--gc-space-2); border-radius:var(--gc-radius-sm); color:var(--gc-on-surface); font-size:var(--gc-font-ui); line-height:1.4; text-decoration:none; overflow-wrap:anywhere; }
+.gc-workbook-steps__link { display:grid; grid-template-columns:1rem minmax(0,1fr) auto; align-items:baseline; gap:var(--gc-space-2); padding:var(--gc-space-3); border-radius:var(--gc-radius-md); color:var(--gc-on-surface); font-size:var(--gc-font-ui); line-height:1.4; text-decoration:none; overflow-wrap:anywhere; }
 .gc-workbook-steps__link:hover { background:color-mix(in srgb,var(--gc-on-surface) 4%,var(--gc-workbook-rail)); color:var(--gc-on-surface); }
 .gc-workbook-steps__link[aria-current="page"] { background:var(--gc-workbook-current-bg); color:var(--gc-workbook-current-ink); font-weight:500; }
 .gc-workbook-steps__number { color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption); font-variant-numeric:tabular-nums; }
