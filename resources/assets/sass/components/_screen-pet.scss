@@ -1,0 +1,34 @@
+.gc-screen-pet {
+  bottom: var(--screen-pet-bottom, 0px);
+  height: var(--screen-pet-height, 160px);
+  left: 0;
+  pointer-events: none;
+  position: fixed;
+  width: var(--screen-pet-size, 96px);
+  z-index: 1020;
+}
+
+.gc-screen-pet canvas {
+  display: block;
+  height: 100%;
+  pointer-events: none;
+  width: 100%;
+}
+
+.gc-screen-pet.is-arriving canvas { animation: gc-screen-pet-arrive 450ms ease-out both; }
+.gc-screen-pet.is-leaving canvas { transform: translateY(110%); transition: transform 350ms ease-in; }
+@keyframes gc-screen-pet-arrive { from { transform: translateY(110%); } to { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .gc-screen-pet.is-arriving canvas { animation: none; }
+  .gc-screen-pet.is-leaving canvas { transition: none; }
+}
+
+.gc-sidebar-ray {
+  color: var(--gc-accent);
+  height: 100%;
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  width: 100%;
+  z-index: 1080;
+}

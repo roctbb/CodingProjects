@@ -1,6 +1,8 @@
 const PATTERN_URL = '/images/sidebar-pattern.svg';
 let geometryPromise;
 
+export { loadGeometry as loadSidebarPatternGeometry };
+
 function loadGeometry() {
     if (!geometryPromise) {
         geometryPromise = fetch(PATTERN_URL).then(response => {

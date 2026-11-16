@@ -5,3 +5,4 @@
 @endphp
 <script type="module" src="{{ asset('build/'.$vendorScript) }}"></script>
 <x-gc-reward-notices />
+<x-gc-screen-pet />

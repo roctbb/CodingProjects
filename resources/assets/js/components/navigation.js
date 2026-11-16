@@ -1,10 +1,12 @@
 import initSidebarPatternLight from './sidebar-pattern-light';
+import initSidebarRay from './sidebar-ray';
 
 export default function initNavigation() {
     const sidebar = document.getElementById('gcSidebar');
     const sidebarToggle = document.getElementById('gcSidebarToggle');
     const backdrop = document.getElementById('gcBackdrop');
     initSidebarPatternLight(sidebar);
+    initSidebarRay(sidebar);
 
     if (sidebar && sidebarToggle && backdrop) {
         let previousOverflow = '';

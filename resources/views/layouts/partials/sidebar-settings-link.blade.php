@@ -5,3 +5,4 @@
         </a>
     </li>
 @endif
+@include('layouts.partials.screen-pet-toggle')
