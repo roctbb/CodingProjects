@@ -28,6 +28,7 @@
     $compactProgressHint = $showGroupProgress && $hasLessonStatistics && $lessonCard['assessed']
         ? 'Завершили урок: '.$lessonCard['completed'].' из '.$lessonCard['total'].'. Все обязательные задачи зачтены. Наклейку получили: '.$lessonSummary['rewarded']
         : ($compactProgress !== null ? $cpoints.' / '.$cmaxPoints.' XP · '.$compactProgress.'%' : 'Урок '.($pathIndex + 1));
+    if ($compactLocked) $compactProgressHint = 'Урок '.($pathIndex + 1).'. '.$compactLockHint.($compactProgress !== null ? '. '.$compactProgressHint : '');
     if ($hasEarlyAccess) $compactProgressHint = 'Вы открыли урок раньше остальных. '.$compactProgressHint;
 @endphp
 <div class="course-lesson-compact">
@@ -43,7 +44,7 @@
                 <circle class="course-lesson-compact__ring-value" cx="22" cy="22" r="19" pathLength="100" stroke-dasharray="{{ $compactProgress }} 100" />
             @endif
         </svg>
-        <span aria-hidden="true">{{ $pathIndex + 1 }}</span>
+        <span aria-hidden="true">@if($compactLocked)<i class="fas fa-lock course-lesson-compact__state @if($compactEarlyUnlock) course-lesson-compact__state--early-access @endif"></i>@else{{ $pathIndex + 1 }}@endif</span>
     </span>
     <div class="course-lesson-compact__body">
         <h3 class="course-lesson-compact__title" data-filter-by="text">
@@ -53,12 +54,9 @@
                 {{ $lesson->name }}
             @endif
         </h3>
-        @if($compactMeta || $compactLocked || ($isManager && $lessonCard['pending']))
+        @if($compactMeta || ($isManager && $lessonCard['pending']))
             <div class="course-lesson-compact__meta">
                 @if($compactMeta)<span>{{ implode(' · ', $compactMeta) }}</span>@endif
-                @if($compactLocked)
-                    <span class="course-lesson-compact__state @if($compactEarlyUnlock) course-lesson-compact__state--early-access @endif" role="img" aria-label="{{ $compactLockHint }}" title="{{ $compactLockHint }}"><i class="fas fa-lock" aria-hidden="true"></i></span>
-                @endif
                 @if($isManager && $lessonCard['pending'])<a class="course-lesson-review-link" href="{{ $lessonCard['reviewUrl'] }}" data-lesson-review-link>На проверке: {{ $lessonCard['pending'] }}</a>@endif
                 @if($isLearner && $isAvailable && $cmaxPoints > 0)<span class="course-lesson-compact__xp">{{ $cpoints }} / {{ $cmaxPoints }} XP</span>@endif
             </div>

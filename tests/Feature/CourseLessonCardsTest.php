@@ -40,7 +40,7 @@ class CourseLessonCardsTest extends DeadlineFeatureCase
         $this->assertSame(1, $xpath->query('//*[@id="lesson-2"]//button[@aria-label="Действия с уроком Выбор и условия"]')->length);
         $this->assertSame(1, $xpath->query('//*[@id="lesson-2"]//*[@data-course-stats-toggle]')->length);
         $this->assertSame(0, $xpath->query('//*[@id="lesson-2"]//*[@role="progressbar"]')->length);
-        $this->assertSame(1, $xpath->query('//*[@id="lesson-2"]//*[@role="img" and @aria-label="Урок 2"]')->length);
+        $this->assertSame(1, $xpath->query('//*[@id="lesson-2"]//*[@role="img" and @aria-label="Урок 2. Урок не открыт"]')->length);
     }
 
     public function test_student_ring_shows_their_own_progress_and_the_title_opens_the_lesson(): void
