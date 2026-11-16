@@ -82,11 +82,21 @@ final class Branding
     {
         $palette = self::palette($mode);
         $success = $palette['success'];
+        $primary = $palette['primary'];
+        $primaryHover = $palette['primary_hover'];
+        if ($mode === 'dark') {
+            // A filled action needs more separation from dark panels than a link.
+            for ($white = 25; $white <= 100; $white += 5) {
+                $primary = self::mix($palette['primary'], '#ffffff', $white);
+                if ((self::luminance($primary) + 0.05) / (self::luminance('#26313f') + 0.05) >= 3) break;
+            }
+            $primaryHover = self::mix($primary, '#ffffff', 14);
+        }
 
         return [
-            'primary' => $palette['primary'],
-            'primary_hover' => $palette['primary_hover'],
-            'primary_text' => self::contrastColor($palette['primary']),
+            'primary' => $primary,
+            'primary_hover' => $primaryHover,
+            'primary_text' => self::contrastColor($primary),
             'secondary' => $palette['secondary'],
             'secondary_hover' => self::mix($palette['secondary'], '#000000', 14),
             'secondary_text' => self::contrastColor($palette['secondary']),

@@ -15,11 +15,12 @@ class History
     public function __construct(private Access $access) {}
 
     /** New native attempts exist before a graded Solution row; load the whole step once. */
-    public function ungradedProgress(int $course,array $tasks)
+    public function ungradedProgress(int $course,array $tasks,?int $author=null)
     {
-        if(!$tasks || !Schema::hasTable('code_submissions'))return collect();
+        if(!$tasks || !Schema::hasTable('code_submissions') || !Schema::hasTable('code_execution_runs'))return collect();
         $rows=DB::table('code_submissions as s')->leftJoin('code_execution_runs as r','r.id','=','s.current_run_id')
             ->where('s.course_id',$course)->whereIn('s.task_id',$tasks)->whereNull('s.legacy_id')->whereNull('s.solution_id')
+            ->when($author!==null,fn($query)=>$query->where('s.user_id',$author))
             ->whereExists(fn($q)=>$q->selectRaw('1')->from('course_students')
                 ->whereColumn('course_students.user_id','s.user_id')->where('course_students.course_id',$course))
             ->whereNotExists(fn($q)=>$q->selectRaw('1')->from('course_teachers')

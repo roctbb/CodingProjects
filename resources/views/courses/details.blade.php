@@ -54,10 +54,10 @@
         $leaderboardExtraStudents = $sortedStudents->whereNotIn('id', $leaderboardPreviewStudents->pluck('id'))->values();
         $availablePathLessons = $pathLessons->filter(fn($lesson) => $lesson->isAvailableForUser($course, $user));
         $courseEnded = $course->state === 'ended';
-        $lessonViews = $isLearner ? $availablePathLessons->mapWithKeys(fn ($lesson) => [$lesson->id => \App\Support\CourseLessonView::forStudent($lesson, $course, $user, $lessonStats[$lesson->id][$user->id] ?? null)]) : collect();
+        $lessonViews = $isLearner ? $availablePathLessons->mapWithKeys(fn ($lesson) => [$lesson->id => \App\Support\CourseLessonView::forStudent($lesson, $course, $user, $lessonStats[$lesson->id][$user->id] ?? null, $lessonCards->get($lesson->id)['rows'])]) : collect();
         $studyOutcome = $isLearner ? \App\Support\CourseStudyOutcome::forChapter($course, $chapter, $user, $availablePathLessons, $lessonViews) : null;
-        $nextLesson = $isLearner && !$courseEnded ? $availablePathLessons->first(function ($lesson) use ($lessonStats, $user) {
-            return ($lessonStats[$lesson->id][$user->id]->percent ?? 0) <= 90;
+        $nextLesson = $isLearner && !$courseEnded ? $availablePathLessons->first(function ($lesson) use ($lessonViews) {
+            return !($lessonViews->get($lesson->id)['completed'] ?? false);
         }) : null;
         $focusLesson = $isLearner && $courseEnded ? null : ($currentLesson ? $pathLessons->firstWhere('id', $currentLesson->id) : $nextLesson);
         $currentPathLessonId = $focusLesson?->id;
@@ -82,7 +82,6 @@
                     @if($isManager && !$course->current_lesson_id)
                         <p class="gc-help-text gc-current-lesson-help mb-0">Отметьте текущий урок в его меню. Доступ к материалам задаётся расписанием.</p>
                     @endif
-                    @include('courses.partials.due-summary')
                 </div>
                 @elseif($courseDeadlines->isNotEmpty())
                     <div class="gc-course-single-due gc-card">@include('courses.partials.due-summary')</div>
@@ -125,8 +124,9 @@
                     @foreach($pathLessons as $pathIndex => $lesson)
                         @php
                             $lessonView = $lessonViews->get($lesson->id);
+                            $lessonCard = $lessonCards->get($lesson->id);
                             $isLessonStarted = $lesson->isStarted($course);
-                            $hasEarlyAccess = $isLearner && $lesson->hasEarlyAccess($course, $user);
+                            $hasEarlyAccess = $isLearner && !$isLessonStarted && $lesson->hasEarlyAccess($course, $user);
                             $canBuyEarlyAccess = $isLearner && $lesson->canBuyEarlyAccess($course, $user);
                             $earlyAccessCost = $isLearner ? $user->earlyLessonAccessCost($lesson) : $lesson->earlyAccessCost();
                             $canAffordEarlyAccess = $canBuyEarlyAccess && ($earlyAccessCost <= 0 || $userBalance >= $earlyAccessCost);
@@ -134,173 +134,58 @@
                             $showTeacherLock = $isManager && !$isLessonStarted;
                             $startDate = $lesson->getStartDate($course);
                             $cstats = $isLearner ? ($lessonStats[$lesson->id][$cstudent->id] ?? null) : null;
-                            $cpercent = $cstats ? $cstats->percent : 0;
+                            $hasScoredStats = $cstats && $cstats->max_points > 0;
+                            $cmaxPoints = $hasScoredStats ? $cstats->max_points : ($lessonCard['maximum'] ?? 0);
+                            $cpoints = $hasScoredStats ? $cstats->points : ($lessonCard['points'] ?? 0);
+                            $cpercent = $hasScoredStats ? $cstats->percent : ($cmaxPoints ? $cpoints * 100 / $cmaxPoints : 0);
                             $cdisplayPercent = $displayPercent($cpercent);
                             $cprogressWidth = (int) round($cdisplayPercent);
-                            $cpoints = $cstats ? $cstats->points : 0;
-	                            $cmaxPoints = $cstats ? $cstats->max_points : 0;
-	                            $isDone = $isLearner && $cmaxPoints != 0 && $cpercent > 90;
+	                            $isDone = $isLearner && ($lessonView['completed'] ?? false);
 	                            $isCurrent = $currentPathLessonId == $lesson->id;
+                                $lessonTargetStep = $isCurrent ? $nextLearningStep : ($lessonView['nextStep'] ?? null);
+                                $lessonUrl = $lessonView['targetUrl'] ?? url('/insider/courses/'.$course->id.'/steps/'.($lessonTargetStep?->id ?? $lesson->steps->first()->id));
 	                            $lessonTaskCount = $lesson->steps->sum(function ($step) {
 	                                return $step->tasks->count();
 	                            });
 	                            $lessonDeadline = $lesson->sharedDeadline($course->id);
-	                            $lessonStateLabel = null;
-	                            if ($isCurrent) {
-                                $lessonStateLabel = $courseEnded ? 'Выбранный урок' : ($showTeacherLock ? 'Текущий урок · не открыт' : 'Текущий урок');
-	                            } elseif ($showTeacherLock) {
-	                                $lessonStateLabel = 'Не открыт';
-	                            } elseif ($lessonView && $lessonView['status']) {
-	                                $lessonStateLabel = $lessonView['status'];
-	                            } elseif ($hasEarlyAccess) {
-	                                $lessonStateLabel = 'Ранний доступ';
-	                            } elseif ($canBuyEarlyAccess) {
-	                                $lessonStateLabel = 'Можно открыть раньше';
-	                            } elseif (!$isAvailable) {
-	                                $lessonStateLabel = 'Закрыто';
-	                            }
+                                $lessonDeadlines = $lessonCardDeadlines->filter(fn ($deadline) => $deadline->task->step->lesson_id == $lesson->id);
+                                $lessonCalendarDeadline = $lessonDeadlines->first(fn ($deadline) => ($deadline instanceof \App\Support\DeadlineRule
+                                    ? $deadline->cutoffAt() : $deadline->expiration->copy()->addDay())->isFuture()) ?? $lessonDeadlines->last();
 	                        @endphp
 
                         <article id="lesson-{{ $lesson->id }}" class="course-path-item @if ($isDone) is-done @endif @if ($isCurrent) is-current @endif @if (!$isAvailable) is-locked @endif @if (!$isDone && ($hasEarlyAccess || $canBuyEarlyAccess)) is-early-access @endif">
                             @php
                                 $showLessonSticker = $lessonTaskCount > 0 && filled($lesson->sticker);
                                 $rewardStatus = $isManager ? 'catalog' : ($cpercent > 90 ? 'earned' : 'preview');
+                                $hasLessonStatistics = $isManager && $lessonTaskCount > 0 && $students->isNotEmpty();
+                                $hasPersonalStatistics = $isLearner && $isAvailable && ($lessonView['rows']->isNotEmpty() ?? false);
+                                $lessonDisplayStats = $hasLessonStatistics
+                                    ? \App\Support\CourseLessonStatistics::forStudents($lessonStats->get($lesson->id, collect()), $students) : collect();
+                                $lessonSummary = \App\Support\CourseLessonStatistics::summary($lessonDisplayStats, $students->count());
                             @endphp
 
-                            <div class="gc-card course-path-card course-lesson-panel">
-                                <div class="course-path-card__main">
-                                    <div class="course-path-card__heading @if($showLessonSticker || $isCurrent) has-visual @endif">
-                                        <div class="course-path-eyebrow">
-                                            <span>Урок {{ $pathIndex + 1 }}</span>
-                                            @if($lessonStateLabel)<span class="course-path-status">{{ $lessonStateLabel }}</span>@endif
-                                        </div>
-                                        <h3 class="course-path-title" data-filter-by="text">
-                                            @if($isAvailable)
-                                                <a href="{{ url('/insider/courses/'.$course->id.'/steps/'.($isCurrent && $nextLearningStep ? $nextLearningStep->id : $lesson->steps->first()->id)) }}">{{ $lesson->name }}</a>
-                                            @else
-                                                <span>{{ $lesson->name }}</span>
-                                            @endif
-                                        </h3>
-                                        @if ($isManager)
-                                            <div class="course-lesson-actions course-path-actions">
-                                                <div class="dropdown">
-                                                    <button class="btn btn-sm btn-options" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Действия с уроком {{ $lesson->name }}">
-                                                        <i class="fas fa-ellipsis-h" aria-hidden="true"></i>
-                                                    </button>
-
-                                                    <div class="dropdown-menu dropdown-menu-end">
-                                                            <form method="POST" action="{{ route('courses.current-lesson', $course->id) }}">
-                                                                @csrf
-                                                                <input type="hidden" name="lesson_id" value="{{ $course->current_lesson_id == $lesson->id ? '' : $lesson->id }}">
-                                                                <input type="hidden" name="chapter" value="{{ $chapter->id }}">
-                                                                <button type="submit" class="dropdown-item"><i class="fas fa-thumbtack" aria-hidden="true"></i> {{ $course->current_lesson_id == $lesson->id ? 'Снять отметку текущего урока' : 'Сделать текущим уроком' }}</button>
-                                                            </form>
-                                                                <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/edit')}}" class="dropdown-item"><i class="fas fa-pen" aria-hidden="true"></i> Изменить</a>
-                                                                @if ($lessonTaskCount > 0)
-                                                                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#lesson-deadline-modal-{{$lesson->id}}"><i class="fas fa-calendar-days" aria-hidden="true"></i> Дедлайн задач</button>
-                                                                @endif
-                                                                <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export')}}" class="dropdown-item"><i class="fas fa-download" aria-hidden="true"></i> Экспорт</a>
-                                                                <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export-points')}}" class="dropdown-item"><i class="fas fa-chart-column" aria-hidden="true"></i> Экспорт баллов</a>
-                                                            <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/export-md')}}" class="dropdown-item"><i class="fas fa-file-export" aria-hidden="true"></i> Экспорт в MD</a>
-                                                            <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/lower?chapter='.$chapter->id)}}" class="dropdown-item"><i class="fas fa-arrow-up" aria-hidden="true"></i> Выше</a>
-                                                            <a href="{{url('insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/upper?chapter='.$chapter->id)}}" class="dropdown-item"><i class="fas fa-arrow-down" aria-hidden="true"></i> Ниже</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endif
+                            <div class="gc-card course-path-card course-lesson-panel {{ $isCurrent ? 'course-path-card--expanded' : 'course-path-card--compact' }}">
+                                @include('courses.partials.lesson-summary')
+                                @if($isCurrent)
+                                    <div class="course-path-card__details">
                                         @if(filled($lesson->description))
                                             <div class="course-path-description" data-filter-by="text">@parsedown($lesson->description)</div>
                                         @endif
-                                        @if($showLessonSticker || $isCurrent)
-                                            <x-gc-lesson-reward :lesson="$lesson" :course="$course" :sticker="$showLessonSticker" :status="$rewardStatus" />
-                                        @endif
-                                        @if($isAvailable && $isCurrent)
-                                            <x-gc-lesson-outline :course="$course" :lesson="$lesson" expanded :next-step="$nextLearningStep" :next-label="$focusView['hint'] ?? 'Продолжить'" />
+                                        @if($isAvailable)
+                                            <x-gc-lesson-outline :course="$course" :lesson="$lesson" :next-step="$lessonTargetStep" :next-label="$lessonView['hint'] ?? 'Продолжить'" />
                                         @endif
                                     </div>
-
-                                    @if($isLearner)
-                                        @php $lessonDeadlines = $courseDeadlines->filter(fn ($deadline) => $deadline->task->step->lesson_id == $lesson->id); @endphp
-                                        @if($lessonDeadlines->isNotEmpty())
-                                            <details class="gc-disclosure gc-disclosure--inline mt-3" @if($isCurrent || $lessonDeadlines->contains('is_overdue', true) || $lessonDeadlines->contains('is_today', true)) open @endif>
-                                                <summary>Сроки сдачи · {{ $lessonDeadlines->count() }}</summary>
-                                                <ul class="gc-lesson-deadlines list-unstyled mb-0">
-                                                    @foreach($lessonDeadlines as $deadline)
-                                                        <li><a href="{{ url('/insider/courses/'.$course->id.'/steps/'.$deadline->task->step_id.'#task'.$deadline->task_id) }}">{{ $deadline->task->name }}</a><span><x-gc-deadline-label :expiration="$deadline->expiration" :rule="$deadline" /> · {{ (int) round($deadline->penalty * 100) }}%</span></li>
-                                                    @endforeach
-                                                </ul>
-                                            </details>
-                                        @endif
+                                    @if($isAvailable)
+                                        <div class="course-path-card__footer">
+                                            <a class="btn btn-primary btn-sm course-continue" href="{{ $isManager && $lessonCard['pending'] ? $lessonCard['reviewUrl'] : $lessonUrl }}">{{ $isManager ? ($lessonCard['pending'] ? 'Проверить работы · '.$lessonCard['pending'] : 'Открыть материалы') : ($lessonView['action'] ?? 'Открыть урок') }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                                        </div>
                                     @endif
-                                    @if ($isManager && $lessonTaskCount > 0 && $students->isNotEmpty())
-                                        @php
-                                            $lessonDisplayStats = \App\Support\CourseLessonStatistics::forStudents($lessonStats->get($lesson->id, collect()), $students);
-                                            $lessonSummary = \App\Support\CourseLessonStatistics::summary($lessonDisplayStats, $students->count());
-                                        @endphp
-                                        @include('courses.partials.lesson-statistics-panel', ['stats' => $lessonDisplayStats])
-                                    @endif
-                                </div>
-
-                                <div class="course-path-card__footer">
-                                    @if($isCurrent && $isAvailable)
-                                        <a class="btn btn-primary btn-sm course-continue" href="{{ url('/insider/courses/'.$course->id.'/steps/'.($nextLearningStep?->id ?? $lesson->steps->first()->id)) }}">{{ $isManager ? ($courseEnded ? 'Открыть материалы' : 'Открыть урок') : $focusView['action'] }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
-                                    @endif
-                                    <div class="course-path-meta">
-                                        @if ($lessonDeadline && (!$isLearner || $lessonDeadlines->isEmpty()))
-                                            @if($lessonDeadline instanceof \App\Support\DeadlineRule && !empty($lessonDeadline->series))
-                                                <div class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-chain :rule="$lessonDeadline" :show-time="false" /></div>
-                                            @else
-                                                <small class="course-lesson-date"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-label :expiration="$lessonDeadline->expiration" :rule="$lessonDeadline" :personal="$isLearner" :show-time="false" /></small>
-                                            @endif
-                                        @endif
-
-                                        @if ($startDate != null && $startDate->isFuture())
-                                            <small class="course-lesson-date"><i class="fas fa-clock" aria-hidden="true"></i> Доступно с {{$startDate->translatedFormat('j F Y')}}</small>
-                                        @endif
-
-                                        @if ($lesson->is_open && $isManager)
-                                            <a class="btn btn-outline-secondary btn-sm rounded-3 course-secondary-action course-open-url-action" href="{{ url('/open/steps/'.$lesson->steps->first()->id) }}" target="_blank" rel="noopener"><i class="fas fa-users" aria-hidden="true"></i> Открытый URL</a>
-                                        @endif
-
-                                        @if ($canBuyEarlyAccess)
-                                            @if ($canAffordEarlyAccess)
-                                                <form method="POST" action="{{ url('/insider/courses/'.$course->id.'/lessons/'.$lesson->id.'/early-access') }}" class="m-0">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm solution-special-action course-early-access-action"
-                                                            data-confirm="{{ $earlyAccessCost > 0 ? 'Купить ранний доступ к этому уроку за '.$earlyAccessCost.' GC?' : 'Открыть этот урок бесплатно с помощью Брр Брр Потапим?' }}">
-                                                        <i class="fas fa-key" aria-hidden="true"></i>
-                                                        @if ($earlyAccessCost > 0)
-                                                            Открыть раньше за {{ $earlyAccessCost }} GC
-                                                        @else
-                                                            Открыть раньше бесплатно
-                                                        @endif
-                                                    </button>
-                                                </form>
-                                            @else
-                                                <small class="course-early-access-note"><i class="fas fa-key" aria-hidden="true"></i> Ранний доступ: {{ $earlyAccessCost }} GC</small>
-                                            @endif
-                                        @endif
-                                    </div>
-
-                                    <div class="course-path-progress">
-                                        @if ($isLearner && $lessonTaskCount > 0 && $lesson->isAvailable($course) && $cmaxPoints != 0)
-                                            <span class="course-path-progress__label">{{$cpoints}} / {{$cmaxPoints}} XP</span>
-                                            <div class="progress">
-                                                <div class="progress-bar progress-width-{{$cprogressWidth}}" role="progressbar" data-progress-width="{{$cdisplayPercent}}%" aria-valuenow="{{$cprogressWidth}}" aria-valuemin="0" aria-valuemax="100"></div>
-                                            </div>
-                                        @endif
-
-                                        @if ($isManager && $lessonTaskCount > 0 && $students->isNotEmpty())
-                                            <div class="course-lesson-progress-summary" data-course-stats-summary="#marks{{$lesson->id}}" title="Средний прогресс: {{ $lessonSummary['average'] }}%">
-                                                <span>Наклейка: {{ $lessonSummary['rewarded'] }} из {{ $lessonSummary['total'] }}</span>
-                                                <span class="course-lesson-progress-summary__track" aria-hidden="true">
-                                                    <span data-progress-width="{{ $lessonSummary['average'] }}%"></span>
-                                                </span>
-                                            </div>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm course-secondary-action course-stats-toggle course-lesson-stat-action" data-course-stats-toggle data-course-stats-target="#marks{{$lesson->id}}" aria-expanded="false" aria-controls="marks{{$lesson->id}}"><i class="fas fa-chart-bar" aria-hidden="true"></i> <span data-course-stats-label>Статистика</span></button>
-                                        @endif
-                                    </div>
-                                </div>
+                                @endif
+                                @if($hasLessonStatistics)
+                                    @include('courses.partials.lesson-statistics-panel', ['stats' => $lessonDisplayStats, 'compact' => true])
+                                @elseif($hasPersonalStatistics)
+                                    @include('courses.partials.lesson-personal-statistics')
+                                @endif
                             </div>
 		                        </article>
 		                        @if ($isManager && $lessonTaskCount > 0)

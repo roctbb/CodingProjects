@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 
 class CourseDeadlineList
 {
-    public function forCourses(Collection $courses, User $viewer, bool $includeCompleted = false): Collection
+    public function forCourses(Collection $courses, User $viewer, bool $includeCompleted = false, bool $upcomingOnly = false): Collection
     {
         if ($courses->isEmpty()) {
             return collect();
@@ -52,8 +52,8 @@ class CourseDeadlineList
                 $isManager = $viewer->role === 'admin' || $course->teachers->contains('id', $viewer->id);
                 $minimumMark = $deadline->task->max_mark > 1 ? round($deadline->task->max_mark * 3 / 4) : 1;
                 $deadline->is_done = !$isManager && $deadline->task->solutions
-                    ->where('course_id', $course->id)->where('mark', '>=', $minimumMark)
-                    ->contains(fn ($s) => $s->evaluatedMark() > 0);
+                    ->where('course_id', $course->id)->whereNotNull('mark')
+                    ->contains(fn ($s) => $s->evaluatedMark() >= $minimumMark);
                 $cutoff = $deadline instanceof \App\Support\DeadlineRule ? $deadline->cutoffAt() : $deadline->expiration->copy()->addDay();
                 $deadline->is_overdue = !$deadline->is_done && $cutoff->lte($now);
                 $deadline->is_today = !$deadline->is_done && $deadline->expiration->isSameDay($now);
@@ -63,6 +63,12 @@ class CourseDeadlineList
                 return $deadline;
             })
             ->filter(fn ($deadline) => $includeCompleted || !$deadline->is_done)
+            ->filter(function ($deadline) use ($upcomingOnly, $now) {
+                $cutoff = $deadline instanceof \App\Support\DeadlineRule
+                    ? $deadline->cutoffAt() : $deadline->expiration->copy()->addDay();
+
+                return !$upcomingOnly || $cutoff->gt($now);
+            })
             ->values();
     }
 }

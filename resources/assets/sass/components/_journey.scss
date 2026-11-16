@@ -109,11 +109,21 @@
 .gc-project-label i { color:var(--gc-accent); }
 .gc-project-path { min-width:0; }
 .gc-course-program-controls > .gc-project-path { grid-column:1 / -1; }
-.gc-chapter-timeline--journey { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"chapter actions" "route route"; gap:var(--gc-space-3) var(--gc-space-4); align-items:center; }
-.gc-chapter-timeline--journey:not(:has(> .gc-course-program-actions)) { grid-template-columns:minmax(0,1fr); grid-template-areas:"chapter" "route"; }
+.gc-chapter-timeline--journey { display:grid; grid-template-columns:minmax(0,1fr) auto auto; grid-template-areas:"chapter route actions"; gap:var(--gc-space-3) var(--gc-space-4); align-items:center; }
+.gc-chapter-timeline--journey:not(:has(> .gc-course-program-actions)) { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"chapter route"; }
 .gc-chapter-timeline--journey > .gc-chapter-timeline__picker { grid-area:chapter; }
 .gc-chapter-timeline--journey > .gc-course-program-actions { grid-area:actions; }
 .gc-chapter-timeline--journey > .gc-project-path { grid-area:route; }
+.gc-chapter-timeline--journey .gc-chapter-timeline__choose { min-height:var(--gc-control-height); }
+.gc-chapter-timeline--journey .gc-chapter-timeline__title { font-size:var(--gc-font-ui); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gc-chapter-timeline--journey .gc-project-path li { flex:0 0 var(--gc-control-height); }
+.gc-chapter-timeline--journey .gc-project-path :is(a,.gc-project-path__closed) { min-height:var(--gc-control-height); padding:var(--gc-space-1); justify-content:center; }
+.gc-chapter-timeline--journey .gc-project-path__point { height:24px; width:24px; }
+@container course-chapter (max-width:42rem) {
+ .gc-chapter-timeline--journey { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"chapter actions"; }
+ .gc-chapter-timeline--journey:not(:has(> .gc-course-program-actions)) { grid-template-columns:minmax(0,1fr); grid-template-areas:"chapter"; }
+ .gc-chapter-timeline--journey > .gc-project-path { display:none; }
+}
 .gc-project-path ol { display:flex; list-style:none; margin:0; padding:0; }
 .gc-project-path li { flex:1; min-width:0; position:relative; }
 .gc-project-path li:not(:last-child)::before { background:var(--gc-project-track); content:""; height:2px; left:50%; pointer-events:none; position:absolute; right:-50%; top:22px; }
@@ -128,6 +138,7 @@
 .gc-project-path .is-locked .gc-project-path__point { background:var(--gc-surface-variant); }
 .gc-project-path__name { display:none; }
 .gc-project-path a:hover .gc-project-path__point { transform:translateY(-2px); }
+.gc-chapter-timeline--journey .gc-project-path li::before { top:calc(var(--gc-control-height) / 2); }
 .gc-project-journey { display:grid; gap:var(--gc-space-4); padding:var(--gc-space-4); }
 .gc-project-journey__heading { align-items:start; display:flex; flex-wrap:wrap; gap:var(--gc-space-2) var(--gc-space-4); justify-content:space-between; }
 .gc-project-journey__heading > :first-child { flex:1 1 15rem; }
@@ -312,8 +323,11 @@
 }
 @media(pointer:coarse) { .solution-grade-form__submit, .solution-grade-form__cancel { min-height:var(--gc-touch-target); } }
 
-.gc-pulse-chart .pulse-overview__line { fill:none; stroke:var(--gc-primary); stroke-linecap:round; stroke-linejoin:round; stroke-width:2; vector-effect:non-scaling-stroke; }
-.gc-pulse-chart .pulse-overview__area { fill:color-mix(in srgb,var(--gc-primary) 8%,transparent); }
+.gc-pulse-chart { --gc-pulse-color:var(--gc-primary); }
+.home-pulse-card--hot .gc-pulse-chart { --gc-pulse-color:var(--gc-accent); }
+.gc-pulse-chart :is(.pulse-overview__line,.home-pulse-card__line) { fill:none; stroke:var(--gc-pulse-color); stroke-linecap:round; stroke-linejoin:round; stroke-width:3; vector-effect:non-scaling-stroke; }
+.gc-pulse-chart :is(.pulse-overview__area,.home-pulse-card__area) { fill:color-mix(in srgb,var(--gc-pulse-color) 18%,transparent); }
+.gc-pulse-chart__current { fill:var(--gc-pulse-color); stroke:var(--gc-surface); stroke-width:1.5; vector-effect:non-scaling-stroke; }
 a.gc-filter { text-decoration:none; }
 .gc-review-filters { padding:0 var(--gc-space-3) var(--gc-space-3); }
 .gc-review-filters .gc-toolbar { align-items:stretch; display:grid; grid-template-columns:minmax(0,1fr); gap:var(--gc-space-2); }

@@ -27,6 +27,7 @@
 | POST | `/insider/authoring/preview` | api | [Редактирование ступени](screens.md#step-edit) | web, verified, auth, teacher |
 | POST | `/insider/chatgpt/improve-text` | api | [Помощь ИИ в редакторе](screens.md#text-assist) | web, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}` | screen | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
+| GET\|HEAD | `/insider/code-submissions/{submission}/bundle` | download | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/compare` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/files/{file}` | download | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/files/{file}/archive` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
@@ -44,6 +45,8 @@
 | GET\|HEAD | `/insider/code-submissions/{submission}/runs/{run}` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/runs/{run}/files/{file}` | download | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/runs/{run}/tests/{number}` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
+| POST | `/insider/code-submissions/{submission}/runs/{run}/tests/{number}/purchase` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
+| GET\|HEAD | `/insider/code-submissions/{submission}/runs/{run}/tests/{number}/{field}` | download | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/subscription` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-submissions/{submission}/task-files/{file}` | download | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
 | GET\|HEAD | `/insider/code-test-reports/{run}` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |

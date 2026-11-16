@@ -8,7 +8,7 @@
     <a class="gc-header-pulse {{ $maxPulseValue === 0 ? 'gc-header-pulse--empty' : '' }}" href="{{ url('/insider/pulse') }}" aria-label="Пульс курсов: {{ $homePulse['label'] ?? 'нет сигнала' }}" title="Пульс курсов · {{ $homePulse['label'] ?? 'нет сигнала' }}">
         @if($maxPulseValue > 0)
             <span class="gc-header-pulse__label">Пульс<span>{{ $homePulse['current'] ?? 0 }}</span></span>
-            <x-gc-pulse-chart :pulse="$homePulse" :chart-width="220" :chart-height="58" :chart-padding="4" />
+            <x-gc-pulse-chart :pulse="$homePulse" :chart-width="220" :chart-height="58" :chart-padding="4" :filled="true" />
         @else
             <span class="gc-header-pulse__empty">
                 <span class="gc-header-pulse__label">Пульс<span>{{ $homePulse['current'] ?? 0 }}</span></span>

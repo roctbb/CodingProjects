@@ -153,7 +153,7 @@ class CoursesController extends Controller
         $pulse = app(\App\Services\CoursePulse::class)->forCourses($activeCourseIds);
 
         if (!($user->role == 'teacher' || $user->role == 'admin')) {
-            $upcomingDeadlines = app(CourseDeadlineList::class)->forCourses($my_courses, $user)->take(5);
+            $upcomingDeadlines = app(CourseDeadlineList::class)->forCourses($my_courses, $user, upcomingOnly: true)->take(5);
 
         }
 
@@ -282,7 +282,8 @@ class CoursesController extends Controller
         }
 
         $reviewQueue=$pendingSolutions;$reviewQueueAll=!$request->filled('course');
-        return view('courses.reviews', compact('user', 'pendingSolutions', 'reviewQueue','reviewQueueAll','reviewFilters', 'reviewCourses'));
+        $reviewLessonName = !empty($reviewFilters['lesson']) ? $pendingSolutions->first()?->task?->step?->lesson?->name : null;
+        return view('courses.reviews', compact('user', 'pendingSolutions', 'reviewQueue','reviewQueueAll','reviewFilters', 'reviewCourses', 'reviewLessonName'));
     }
 
     public function resetPendingReviews(Request $request)
@@ -884,7 +885,10 @@ class CoursesController extends Controller
             }
 
             $isManager = $user->role == 'admin' || $course->teachers->contains($user);
-            $courseDeadlines = app(CourseDeadlineList::class)->forCourses(collect([$course]), $user);
+            $lessonCardDeadlines = app(CourseDeadlineList::class)->forCourses(collect([$course]), $user);
+            $deadlineNow = now();
+            $courseDeadlines = $lessonCardDeadlines->filter(fn ($deadline) => ($deadline instanceof \App\Support\DeadlineRule
+                ? $deadline->cutoffAt() : $deadline->expiration->copy()->addDay())->gt($deadlineNow))->values();
             $coursePendingCount = $isManager ? Solution::where('course_id', $course->id)->pendingReview()->count() : 0;
 
             // Preload lesson statistics for all students and lessons in this chapter
@@ -900,7 +904,8 @@ class CoursesController extends Controller
             // Render view without caching for now (caching causes stale data issues)
         $projectPathStats = $isManager ? collect() : LessonStudentStats::where('course_id', $id)
             ->where('student_id', $user->id)->get(['lesson_id', 'max_points', 'percent'])->keyBy('lesson_id');
-        return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'statsTeachers', 'cstudent', 'lessons', 'lessonStats', 'courseDeadlines', 'coursePendingCount', 'currentLesson', 'projectPathStats'));
+        $lessonCards = app(\App\Services\LessonCards::class)->forLessons($course, $lessons, $user, $students);
+        return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'statsTeachers', 'cstudent', 'lessons', 'lessonStats', 'lessonCards', 'courseDeadlines', 'lessonCardDeadlines', 'coursePendingCount', 'currentLesson', 'projectPathStats'));
 
 
     }

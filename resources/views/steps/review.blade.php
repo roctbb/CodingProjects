@@ -15,7 +15,7 @@
         $checkedSolutionsCount = $solutions->count() - $pendingSolutionsCount;
         $conditionOpen = true;
         $reviewFilters = $reviewFilters ?? ['q' => '', 'review_status' => 'all'];
-        $queueParameters = array_filter(['q' => $reviewFilters['q'] ?: null, 'review_status' => $reviewFilters['review_status'] !== 'all' ? $reviewFilters['review_status'] : null, 'queue' => $reviewQueueAll ? 'all' : null, 'page' => $reviewQueue->currentPage() > 1 ? $reviewQueue->currentPage() : null], fn ($value) => $value !== null);
+        $queueParameters = array_filter(['lesson' => $reviewFilters['lesson'] ?? null, 'q' => $reviewFilters['q'] ?: null, 'review_status' => $reviewFilters['review_status'] !== 'all' ? $reviewFilters['review_status'] : null, 'queue' => $reviewQueueAll ? 'all' : null, 'page' => $reviewQueue->currentPage() > 1 ? $reviewQueue->currentPage() : null], fn ($value) => $value !== null);
         $queueQuery = $queueParameters ? '?'.http_build_query($queueParameters) : '';
         $activeSolutions = $pendingAttempts->take(1);
         if ($activeSolutions->isEmpty()) $activeSolutions = $solutions->take(1);

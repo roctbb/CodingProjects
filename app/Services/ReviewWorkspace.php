@@ -24,8 +24,10 @@ class ReviewWorkspace
 
     public function filters(Request $request): array
     {
-        $data = $request->validate(['q' => 'nullable|string|max:200', 'review_status' => 'nullable|in:all,new,recheck', 'course' => 'nullable|integer|min:1']);
-        return ['q' => trim($data['q'] ?? ''), 'review_status' => $data['review_status'] ?? 'all'];
+        $data = $request->validate(['q' => 'nullable|string|max:200', 'review_status' => 'nullable|in:all,new,recheck', 'course' => 'nullable|integer|min:1', 'lesson' => 'nullable|integer|min:1']);
+        $filters = ['q' => trim($data['q'] ?? ''), 'review_status' => $data['review_status'] ?? 'all'];
+        if (!empty($data['lesson'])) $filters['lesson'] = (int) $data['lesson'];
+        return $filters;
     }
 
     public function queue(User $actor, ?int $courseId = null, array $filters = []): Builder
@@ -42,6 +44,7 @@ class ReviewWorkspace
             ->whereColumn('solution_id','solutions.id')->whereColumn('user_id','solutions.user_id')
             ->whereColumn('course_id','solutions.course_id')->whereColumn('task_id','solutions.task_id')->limit(1)]);
         else $query->selectRaw('NULL as native_submission_id');
+        if (!empty($filters['lesson'])) $query->whereHas('task.step', fn ($step) => $step->where('lesson_id', $filters['lesson']));
         if (($filters['review_status'] ?? '') === 'recheck') $query->where('recheck_requested', true);
         if (($filters['review_status'] ?? '') === 'new') $query->where(fn ($q) => $q->where('recheck_requested', false)->orWhereNull('recheck_requested'));
         if (filled($filters['q'] ?? '')) {

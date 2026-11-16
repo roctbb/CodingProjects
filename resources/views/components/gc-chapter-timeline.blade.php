@@ -11,7 +11,7 @@
 @endphp
 <section class="{{ $embedded ? 'gc-chapter-timeline--embedded' : 'gc-card' }} gc-chapter-timeline {{ $projectPath ? 'gc-chapter-timeline--journey' : '' }} {{ $count === 1 ? 'gc-chapter-timeline--single' : '' }} mb-3" data-chapter-timeline aria-label="Выбор главы" style="--gc-timeline-position: {{ $position }}%; --gc-timeline-count: {{ $count }};">
     <div class="dropdown gc-chapter-timeline__picker" data-chapter-picker>
-        <button type="button" class="gc-chapter-timeline__choose" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-controls="{{ $pickerId }}">
+        <button type="button" class="gc-chapter-timeline__choose" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-controls="{{ $pickerId }}" title="Глава {{ $selected + 1 }} из {{ $count }}: {{ $chapter->name }}">
             <span class="gc-chapter-timeline__text">
                 <span class="gc-help-text gc-chapter-timeline__counter" data-chapter-counter>Глава {{ $selected + 1 }} из {{ $count }}</span>
                 <span class="gc-chapter-timeline__title" data-chapter-title>{{ $chapter->name }}</span>
@@ -42,7 +42,6 @@
             <p class="gc-help-text gc-chapter-picker__empty" data-chapter-empty role="status" hidden>Главы не найдены.</p>
         </div>
     </div>
-    @isset($actions) {{ $actions }} @endisset
     @if($projectPath)
         <x-gc-project-path :path="$projectPath" />
     @elseif($count > 1)
@@ -68,5 +67,6 @@
             </form>
         </noscript>
     @endif
+    @isset($actions) {{ $actions }} @endisset
     <script type="application/json" data-chapter-options>@json(['items' => $items, 'selected' => $selected], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)</script>
 </section>

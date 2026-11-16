@@ -23,7 +23,7 @@ class DeadlineSummaryTest extends TestCase
             ['at'=>'2026-11-22 21:00:00','percent'=>0],
         ]]);
         $html = Blade::render('<x-gc-deadline-chain :rule="$rule" />', compact('rule'));
-        preg_match('/<summary[^>]*>(.*?)<\/summary>/s', $html, $matches);
+        preg_match('/<button[^>]*class="gc-deadline-popover__trigger"[^>]*>(.*?)<\/button>/s', $html, $matches);
         return preg_replace('/\s+/u', ' ', strip_tags($matches[1]));
     }
 
@@ -47,5 +47,27 @@ class DeadlineSummaryTest extends TestCase
     {
         $this->assertStringContainsString('Без штрафа', $this->summary('2026-11-15 21:00:00', true));
         $this->assertStringContainsString('Сейчас −30%', $this->summary('2026-11-15 21:00:01', true));
+    }
+
+    public function test_compact_calendar_shows_only_next_date_and_keeps_all_penalties_in_popup(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-16 12:00:00', 'UTC'));
+        $rule = DeadlineRule::fromSnapshot(['timezone' => 'Europe/Moscow', 'stages' => [
+            ['at' => '2026-11-15 21:00:00', 'percent' => 70],
+            ['at' => '2026-11-22 21:00:00', 'percent' => 0],
+        ]]);
+        $html = Blade::render('<x-gc-deadline-chain :rule="$rule" :show-time="false" compact />', compact('rule'));
+        preg_match('/<button[^>]*class="gc-deadline-popover__trigger"[^>]*>(.*?)<\/button>/s', $html, $matches);
+        $this->assertStringContainsString('fa-calendar-days', $matches[1]);
+        $this->assertStringContainsString('22.11', strip_tags($matches[1]));
+        $this->assertStringNotContainsString('15.11', strip_tags($matches[1]));
+        $this->assertStringContainsString('Сейчас −30%', $html);
+        $this->assertStringContainsString('штраф 30%', $html);
+        $this->assertStringContainsString('штраф 100%', $html);
+        Carbon::setTestNow(Carbon::parse('2026-11-23 12:00:00', 'UTC'));
+        $html = Blade::render('<x-gc-deadline-chain :rule="$rule" :show-time="false" compact />', compact('rule'));
+        preg_match('/<button[^>]*class="gc-deadline-popover__trigger"[^>]*>(.*?)<\/button>/s', $html, $matches);
+        $this->assertStringContainsString('22.11', strip_tags($matches[1]));
+        $this->assertStringNotContainsString('Сроки прошли', $html);
     }
 }

@@ -2,16 +2,11 @@
 
 @if($items->isNotEmpty())
     @php
-        $overdueItems = $items->where('is_overdue', true);
-        $futureItems = $items->where('is_overdue', false);
-        $previewItems = $futureItems->isEmpty()
-            ? $overdueItems->sortByDesc('expiration')->take($limit)
-            : $overdueItems->sortByDesc('expiration')->take(1)->concat($futureItems->take($overdueItems->isEmpty() ? $limit : $limit - 1));
+        $previewItems = $items->take($limit);
     @endphp
-    <x-gc-panel title="Сроки сдачи" icon="fas fa-flag" :embedded="$embedded" {{ $attributes }}>
+    <x-gc-panel title="Ближайшие сроки" icon="fas fa-flag" :embedded="$embedded" {{ $attributes }}>
         <x-slot:actions>
-            @if($personal && $overdueItems->count())<span class="gc-help-text text-danger">Просрочено: {{ $overdueItems->count() }}</span>@endif
-            @if($allUrl)<a class="gc-quiet-link small" href="{{ $allUrl }}">Все сроки · {{ $items->count() }}</a>@endif
+            @if($allUrl)<a class="gc-quiet-link small" href="{{ $allUrl }}">Все сроки</a>@endif
         </x-slot:actions>
         <ul class="list-unstyled gc-rows mb-0">
             @foreach($previewItems as $deadline)

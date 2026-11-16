@@ -1,5 +1,5 @@
 <div class="course-lesson-stats__summary">
-    <div><span>Средний прогресс</span><strong>{{ $summary['average'] }}%</strong></div>
+    <div><span>Средний результат</span><strong>{{ $summary['average'] }}%</strong></div>
     <div><span>Наклейку получили</span><strong><i class="fas fa-award course-stat-reward" aria-hidden="true"></i> {{ $summary['rewarded'] }} / {{ $summary['total'] }}</strong></div>
     <div><span>Участников</span><strong>{{ $summary['total'] }}</strong></div>
 </div>

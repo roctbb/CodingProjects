@@ -283,6 +283,19 @@
   },
   {
     "method": "GET|HEAD",
+    "uri": "insider/code-submissions/{submission}/bundle",
+    "name": "code-submissions.bundle",
+    "action": "TaskSubmissionController@bundle",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "download"
+  },
+  {
+    "method": "GET|HEAD",
     "uri": "insider/code-submissions/{submission}/compare",
     "name": null,
     "action": "TaskSubmissionController@compare",
@@ -501,6 +514,32 @@
     ],
     "node": "code-submission",
     "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/code-submissions/{submission}/runs/{run}/tests/{number}/purchase",
+    "name": null,
+    "action": "TaskSubmissionController@buyArchivedTest",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/code-submissions/{submission}/runs/{run}/tests/{number}/{field}",
+    "name": null,
+    "action": "TaskSubmissionController@archivedTestFile",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "code-submission",
+    "kind": "download"
   },
   {
     "method": "GET|HEAD",

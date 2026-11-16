@@ -6471,6 +6471,18 @@
       "node": "geekexecutor",
       "kind": "download"
     },
+    "TaskSubmissionController@bundle": {
+      "node": "code-submission",
+      "kind": "download"
+    },
+    "TaskSubmissionController@buyArchivedTest": {
+      "node": "code-submission",
+      "kind": "api"
+    },
+    "TaskSubmissionController@archivedTestFile": {
+      "node": "code-submission",
+      "kind": "download"
+    },
     "TaskSubmissionController@legacyExports": {
       "node": "geekexecutor",
       "kind": "api"

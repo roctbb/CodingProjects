@@ -9,12 +9,17 @@ config(['app.env'=>'testing', 'database.default'=>'sqlite',
     'database.connections.sqlite.database'=>$directory.'/submissions.sqlite',
     'filesystems.disks.code_checking'=>['driver'=>'local','root'=>$directory.'/code-checking','throw'=>true],
     'cache.default'=>'array', 'code_checking.ai_detection_enabled'=>false]);
-Illuminate\Support\Facades\DB::purge('sqlite');
-Illuminate\Support\Facades\DB::statement('CREATE UNIQUE INDEX native_qa_lesson_stats ON lesson_student_stats(course_id, lesson_id, student_id)');
 Illuminate\Support\Facades\Queue::fake();
 Illuminate\Support\Facades\Notification::fake();
-foreach (['2026_11_14_120000_create_code_checking_tables.php','2026_11_14_130000_expand_task_submissions.php','2026_11_14_140000_complete_native_submission_storage.php',
-    '2026_11_13_180000_create_reward_notices_table.php'] as $migration) (require $root.'/database/migrations/'.$migration)->up();
+foreach (glob($directory.'/*.sqlite') as $fixture) {
+    config(['database.connections.sqlite.database' => $fixture]);
+    Illuminate\Support\Facades\DB::purge('sqlite');
+    Illuminate\Support\Facades\DB::statement('CREATE UNIQUE INDEX native_qa_lesson_stats ON lesson_student_stats(course_id, lesson_id, student_id)');
+    foreach (['2026_11_14_120000_create_code_checking_tables.php','2026_11_14_130000_expand_task_submissions.php','2026_11_14_140000_complete_native_submission_storage.php',
+        '2026_11_13_180000_create_reward_notices_table.php'] as $migration) (require $root.'/database/migrations/'.$migration)->up();
+}
+config(['database.connections.sqlite.database' => $directory.'/submissions.sqlite']);
+Illuminate\Support\Facades\DB::purge('sqlite');
 $task = App\Task::findOrFail(12);
 $task->forceFill(['name'=>'Максимум последовательности','text'=>'Напишите функцию largest(values), которая находит наибольшее число в списке. Среди чисел могут быть отрицательные.', 'max_mark'=>20, 'price'=>5])->save();
 Illuminate\Support\Facades\DB::table('ranks')->where('id',1)->update(['to'=>10]);

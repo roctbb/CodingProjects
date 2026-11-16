@@ -84,6 +84,28 @@ class BrandingTest extends TestCase
         $this->assertSame(url('images/custom-brand.png'), Branding::logoUrl());
     }
 
+    public function test_dark_primary_action_has_contrast_against_panels_and_readable_text_for_custom_brands(): void
+    {
+        $luminance = function (string $hex): float {
+            $channels = array_map(function ($channel) {
+                $value = hexdec($channel) / 255;
+                return $value <= 0.04045 ? $value / 12.92 : (($value + 0.055) / 1.055) ** 2.4;
+            }, str_split(ltrim($hex, '#'), 2));
+            return $channels[0] * 0.2126 + $channels[1] * 0.7152 + $channels[2] * 0.0722;
+        };
+        $contrast = fn ($a, $b) => (max($luminance($a), $luminance($b)) + 0.05) / (min($luminance($a), $luminance($b)) + 0.05);
+        foreach (['#345bd1', '#397698', '#705782', '#000000', '#ffffaa'] as $brand) {
+            config(['branding.colors' => ['primary' => $brand], 'branding.dark_colors' => []]);
+            $before = \App\Support\Branding::palette('dark');
+            $buttons = \App\Support\Branding::buttons('dark');
+            $this->assertGreaterThanOrEqual(3, $contrast($buttons['primary'], '#26313f'), $brand);
+            $this->assertGreaterThanOrEqual(4.5, $contrast($buttons['primary'], $buttons['primary_text']), $brand);
+            $this->assertGreaterThanOrEqual(4.5, $contrast($buttons['primary_hover'], $buttons['primary_text']), $brand);
+            $this->assertSame($before, \App\Support\Branding::palette('dark'));
+            $this->assertSame($brand, \App\Support\Branding::buttons()['primary']);
+        }
+    }
+
     public function test_custom_palette_chooses_readable_button_text_in_both_modes(): void
     {
         config(['branding.colors' => ['primary' => '#705782'], 'branding.dark_colors' => []]);

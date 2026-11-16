@@ -101,6 +101,7 @@
 .gc-result-summary {padding:var(--gc-space-4); border:1px solid var(--gc-border); border-radius:var(--gc-radius-md); background:var(--gc-surface); margin-bottom:var(--gc-space-4); min-width:0;}
 .gc-result-summary.is-student {border-top:3px solid var(--gc-accent);}
 .gc-result-summary > .gc-execution-toolbar:empty {display:none;}
+.gc-result-summary.is-toolbar-only > .gc-execution-toolbar {border-bottom:0; margin:0; padding-bottom:0;}
 .gc-result-summary > .gc-submission-history {padding-top:0;}
 .gc-result-summary > .gc-result-verdict {margin:0;}
 .gc-result-summary[aria-busy="true"] > :is(header,.gc-award) {opacity:.55;}
@@ -228,8 +229,10 @@
 .gc-workbook .step-content-layout:has(.tab-pane.active > .gc-task-sheet) {max-width:82rem;}
 
 .gc-task-sheet {min-width:0; max-width:100%; background:var(--gc-surface);}
-.gc-workbook .step-top-tabs .nav-link.active {position:relative;}
-.gc-workbook .step-top-tabs .nav-link.active::after {content:""; position:absolute; inset:auto 0 0; height:3px; background:var(--gc-accent); border-radius:0 0 var(--gc-radius-sm) var(--gc-radius-sm); pointer-events:none;}
+.gc-workbook .step-top-tabs {background:var(--gc-surface-variant); border-radius:var(--gc-radius-md); padding:var(--gc-space-1);}
+.gc-workbook .step-top-tabs .nav-link {border:1px solid transparent;}
+.gc-workbook .step-top-tabs .nav-link.active {background:var(--gc-surface)!important; border-color:var(--gc-control-border); color:var(--gc-on-surface)!important;}
+.gc-workbook .step-top-tabs .nav-link.active:focus-visible {outline-color:var(--gc-focus-color);}
 .gc-task-intro {display:flex; align-items:center; justify-content:space-between; gap:var(--gc-space-4); flex:1; min-width:0;}
 .gc-task-intro > .step-task-card__header {flex:1; min-width:0; padding:0; border:0; margin:0;}
 .gc-task-intro .gc-task-heading {flex:1;}

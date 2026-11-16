@@ -107,6 +107,31 @@ class CourseDeadlinesTest extends TestCase
         $this->assertEqualsCanonicalizing(range(1, 9), $this->deadlineData(2)['deadlines']->pluck('task_id')->all());
     }
 
+    public function test_upcoming_list_excludes_past_before_limiting_and_keeps_today(): void
+    {
+        $viewer = User::findOrFail(1);
+        $query = app(\App\Queries\CourseDeadlineList::class);
+        $courses = \App\Course::all();
+        $items = $query->forCourses($courses, $viewer, upcomingOnly: true);
+        $this->assertSame([2, 3, 4, 5, 6, 7], $items->pluck('task_id')->all());
+        $this->assertTrue($items->first()->is_today);
+
+        DB::table('task_deadlines')->where('task_id', '<', 7)->update(['expiration' => '2026-09-17']);
+        $this->assertSame([7], $query->forCourses($courses, $viewer, upcomingOnly: true)->take(5)->pluck('task_id')->all());
+        $this->assertCount(7, $query->forCourses($courses, $viewer, includeCompleted: true));
+    }
+
+    public function test_upcoming_list_is_empty_after_last_cutoff_but_full_list_keeps_history(): void
+    {
+        Carbon::setTestNow('2027-01-16 00:00:00');
+        $viewer = User::findOrFail(1);
+        $query = app(\App\Queries\CourseDeadlineList::class);
+        $courses = \App\Course::all();
+
+        $this->assertEmpty($query->forCourses($courses, $viewer, upcomingOnly: true));
+        $this->assertCount(7, $query->forCourses($courses, $viewer, includeCompleted: true));
+    }
+
     public function test_early_access_makes_lesson_deadlines_visible(): void
     {
         DB::table('lesson_early_accesses')->insert(['course_id' => 1, 'lesson_id' => 3, 'user_id' => 1]);

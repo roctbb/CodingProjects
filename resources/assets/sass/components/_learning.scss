@@ -278,6 +278,8 @@
   margin: 0;
 }
 .gc-course-navigation .nav-link { flex: 0 0 auto; }
+.gc-course-navigation .nav-link.active { background:var(--gc-selected-surface)!important; color:var(--gc-primary)!important; }
+.gc-course-navigation .nav-link.active:focus-visible { outline-color:var(--gc-focus-color); }
 .gc-course-navigation i { font-size: var(--gc-font-small); }
 .gc-page-header--panel {
   background: var(--gc-surface);

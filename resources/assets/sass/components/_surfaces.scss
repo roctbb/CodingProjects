@@ -399,18 +399,18 @@
 .step-progress-cardlet.is-pending .step-progress-cardlet__meta span:first-child { color:var(--gc-pending-ink); font-weight:500; }
 .step-progress-grid {
   grid-template-columns: 1fr;
-  gap: 0;
+  gap: var(--gc-space-1);
 }
 .step-progress-cardlet {
   background: transparent;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--gc-radius-md);
   box-shadow: none;
   display: grid;
   grid-template-columns: minmax(8rem, 1fr) minmax(4rem, 8rem) minmax(7rem, 1fr);
   align-items: center;
   gap: var(--gc-space-4);
-  padding: var(--gc-space-3) 0;
+  padding: var(--gc-space-3);
 }
 .step-quiz-answer-form {
   background: transparent;
@@ -557,7 +557,6 @@
 .gc-header-pulse--empty .gc-header-pulse__label { align-items: baseline; display: flex; gap: var(--gc-space-2); }
 .gc-header-pulse--empty .gc-help-text { font-size: var(--gc-font-caption); }
 .gc-header-pulse svg { flex: 1; height: 48px; min-width: 0; }
-.gc-header-pulse path { fill: none; stroke: var(--gc-primary); stroke-width: 2; vector-effect: non-scaling-stroke; }
 @media (min-width: 1200px) {
   .gc-page-header--with-middle { grid-template-areas: "title middle actions"; grid-template-columns: minmax(0, 1fr) minmax(12rem, 18rem) auto; }
   .gc-page-header--with-middle:has(> .gc-page-header__middle > .gc-header-pulse--empty) { grid-template-columns: minmax(0, 1fr) max-content auto; }

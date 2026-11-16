@@ -12,7 +12,7 @@ export default async function deadlineFlows(page, config) {
         };
         try {
             await open('/insider/courses/1');
-            await target.locator('#lesson-1 .course-path-actions button').first().click();
+            await target.locator('#lesson-1 .course-path-actions [data-bs-toggle="dropdown"]').click();
             await target.locator('[data-bs-target="#lesson-deadline-modal-1"]').click();
             const modal=target.locator('#lesson-deadline-modal-1'); await modal.waitFor({state:'visible'});
             assert(await modal.locator('[data-deadline-row]').count()===2,'lesson chain missing');
@@ -28,7 +28,7 @@ export default async function deadlineFlows(page, config) {
                 results.push({name:'deadline-editor',width,theme});
             }
             await modal.getByRole('button',{name:'Сохранить',exact:true}).click();await target.waitForLoadState('networkidle');
-            await target.locator('#lesson-1 .course-path-actions button').first().click();
+            await target.locator('#lesson-1 .course-path-actions [data-bs-toggle="dropdown"]').click();
             await target.locator('[data-bs-target="#lesson-deadline-modal-1"]').click();
             assert(await modal.locator('[data-deadline-row]').count()===3,'third stage not saved');
             await modal.locator('[data-deadline-row]').last().locator('[data-deadline-remove]').click();

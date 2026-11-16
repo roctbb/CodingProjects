@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function closePanel(panel) { panel.classList.add('d-none'); setSummaryState('#' + panel.id, false); }
     function setButtonState(button, isOpen) {
         button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        button.setAttribute('aria-label', isOpen ? 'Скрыть статистику урока' : 'Статистика урока');
+        button.title = isOpen ? 'Скрыть статистику урока' : 'Статистика урока';
         var label = button.querySelector('[data-course-stats-label]');
         if (label) label.textContent = isOpen ? 'Скрыть статистику' : 'Статистика';
     }

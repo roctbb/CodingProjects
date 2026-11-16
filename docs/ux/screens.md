@@ -2812,6 +2812,7 @@ Telegram, почта и Силаэдр в личных настройках; н�
 Маршруты:
 
 - `GET|HEAD /insider/code-submissions/{submission}` — screen
+- `GET|HEAD /insider/code-submissions/{submission}/bundle` — download
 - `GET|HEAD /insider/code-submissions/{submission}/compare` — api
 - `GET|HEAD /insider/code-submissions/{submission}/files/{file}` — download
 - `GET|HEAD /insider/code-submissions/{submission}/files/{file}/archive` — api
@@ -2825,6 +2826,8 @@ Telegram, почта и Силаэдр в личных настройках; н�
 - `GET|HEAD /insider/code-submissions/{submission}/runs/{run}` — api
 - `GET|HEAD /insider/code-submissions/{submission}/runs/{run}/files/{file}` — download
 - `GET|HEAD /insider/code-submissions/{submission}/runs/{run}/tests/{number}` — api
+- `POST /insider/code-submissions/{submission}/runs/{run}/tests/{number}/purchase` — api
+- `GET|HEAD /insider/code-submissions/{submission}/runs/{run}/tests/{number}/{field}` — download
 - `GET|HEAD /insider/code-submissions/{submission}/subscription` — api
 - `GET|HEAD /insider/code-submissions/{submission}/task-files/{file}` — download
 - `GET|HEAD /insider/code-test-reports/{run}` — api

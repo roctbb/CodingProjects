@@ -4,6 +4,6 @@
     $statisticsUrl = route('courses.lesson-statistics', [$course->id, $lesson->id]);
     $initialStudents = \App\Support\CourseLessonStatistics::firstPage($students, $statisticsUrl);
 @endphp
-<div class="course-lesson-stats d-none mt-3" id="marks{{ $lesson->id }}" data-course-stats-panel data-course-stats-loaded="true" data-course-stats-url="{{ $statisticsUrl }}" aria-live="polite">
+<div class="course-lesson-stats d-none {{ ($compact ?? false) ? 'course-lesson-compact-stats' : 'mt-3' }}" id="marks{{ $lesson->id }}" data-course-stats-panel data-course-stats-loaded="true" data-course-stats-url="{{ $statisticsUrl }}" aria-live="polite">
     @include('courses.partials.lesson-statistics', ['students' => $initialStudents])
 </div>

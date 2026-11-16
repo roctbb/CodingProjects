@@ -31,8 +31,8 @@ export default function initInterfaceForms() {
                     if (status) status.textContent = '';
                 }, 2000);
             } catch {
-                if (status) status.textContent = 'Не удалось скопировать. Выделите код и скопируйте его вручную.';
-                button.setAttribute('title', 'Выделите код и скопируйте его вручную');
+                if (status) status.textContent = 'Не удалось скопировать. Попробуйте ещё раз.';
+                button.setAttribute('title', 'Не удалось скопировать. Попробуйте ещё раз.');
             }
         });
     });

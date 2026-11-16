@@ -2,7 +2,9 @@
 @section('title', 'Проверка')
 @section('content')
     @php
-        $reviewFiltered = request()->filled('course') || $reviewFilters['q'] !== '' || $reviewFilters['review_status'] !== 'all';
+        $reviewFiltered = request()->filled('course') || $reviewFilters['q'] !== '' || $reviewFilters['review_status'] !== 'all' || !empty($reviewFilters['lesson']);
+        $reviewLinkContext = array_filter(['lesson' => $reviewFilters['lesson'] ?? null, 'q' => $reviewFilters['q'] ?: null,
+            'review_status' => $reviewFilters['review_status'] !== 'all' ? $reviewFilters['review_status'] : null], fn ($value) => $value !== null);
     @endphp
     <div class="solution-review-page gc-stack">
         <div class="gc-page-masthead"><x-gc-page-header title="Проверка" mark="code-branch" description="Сдачи учеников и запросы на перепроверку."><a class="btn btn-outline-secondary btn-sm" href="{{ url('/insider/courses') }}">Мои курсы</a></x-gc-page-header></div>
@@ -13,7 +15,7 @@
                 <div class="table-responsive"><table class="table align-middle mb-0">
                     <thead><tr><th>Ученик</th><th>Задача</th><th>Курс</th><th>Сдано</th><th>Действия</th></tr></thead>
                     <tbody>@foreach($pendingSolutions as $pending)
-                        @php($taskUrl = app(\App\Services\TaskLocation::class)->solution($pending))
+                        @php($taskUrl = app(\App\Services\TaskLocation::class)->solution($pending, $reviewLinkContext))
                         <tr data-review-queue-solution="{{ $pending->id }}">
                             <td><a href="{{ $taskUrl }}">{{ $pending->user->name }}</a></td>
                             <td><a href="{{ $taskUrl }}">{{ $pending->task->name }}</a>@if($pending->recheck_requested)<span class="gc-task-state gc-task-state--pending ms-2">Перепроверка</span>@endif</td>
@@ -34,6 +36,7 @@
                     <form method="post" action="{{ url('/insider/reviews/reset-pending') }}" data-confirm="Пропустить все {{ $pendingSolutions->total() }} непроверенных решений, соответствующих фильтрам?">
                         @csrf
                         @if(request()->filled('course'))<input type="hidden" name="course" value="{{ request()->integer('course') }}">@endif
+                        @if(!empty($reviewFilters['lesson']))<input type="hidden" name="lesson" value="{{ $reviewFilters['lesson'] }}">@endif
                         <input type="hidden" name="q" value="{{ $reviewFilters['q'] }}"><input type="hidden" name="review_status" value="{{ $reviewFilters['review_status'] }}">
                         <button class="btn btn-outline-secondary btn-sm" type="submit">Пропустить список · {{ $pendingSolutions->total() }}</button>
                     </form>

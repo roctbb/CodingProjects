@@ -22,16 +22,17 @@ final class CourseStudyOutcome
             fn ($lesson) => $lesson->steps->isNotEmpty() && !$lesson->isAvailableForUser($course, $viewer)
         )) return null;
         $assessed = $states->filter(fn ($state) => $state['hasTasks']);
-        if ($assessed->isEmpty() || !$assessed->every(fn ($state) => $state['rewardEarned'])) return null;
+        if ($assessed->isEmpty()) return null;
+        $complete = $assessed->every(fn ($state) => $state['completed'] ?? $state['allTasksDone'] ?? false);
+        if (!$complete && !$assessed->every(fn ($state) => $state['rewardEarned'])) return null;
 
-        $complete = $assessed->every(fn ($state) => $state['allTasksDone']);
         $navigation = CourseChapterNavigation::forCourse($course, $chapter, $viewer);
         $next = $navigation['next'];
         $hasLater = $navigation['selected'] < count($navigation['items']) - 1;
-        $text = $complete ? 'Все обязательные задачи решены.' : 'Наклейки главы получены. Ответы ещё можно улучшить.';
+        $text = $complete ? 'Все обязательные задачи зачтены.' : 'Наклейки главы получены. Ответы ещё можно улучшить.';
         if (!$next && $hasLater) $text .= ' Следующая глава пока не открыта.';
         elseif (!$next) $text .= ' Это последняя глава программы; материалы остаются доступны для повторения.';
-        $improve = $assessed->first(fn ($state) => $state['needsImprovement']);
+        $improve = $assessed->first(fn ($state) => $state['canImprove'] ?? $state['needsImprovement']);
         $fallbackUrl = $improve ? url('/insider/courses/'.$course->id.'/steps/'.$improve['nextStep']->id) : $repeatUrl;
         return [
             'title' => $complete ? 'Глава пройдена' : 'Наклейки главы получены',

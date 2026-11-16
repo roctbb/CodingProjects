@@ -62,6 +62,15 @@ class CourseStudyOutcomeTest extends TestCase
         $this->assertNull($this->outcome([['hasTasks' => true, 'rewardEarned' => true, 'allTasksDone' => true, 'needsImprovement' => false]], lockedLesson: true));
     }
 
+    public function test_accepted_tasks_can_finish_a_chapter_without_earning_a_sticker():void
+    {
+        $state=['hasTasks'=>true,'rewardEarned'=>false,'allTasksDone'=>false,'completed'=>true,'canImprove'=>true];
+        $outcome=$this->outcome([$state]);
+        $this->assertSame('Глава пройдена',$outcome['title']);
+        $this->assertSame('Следующая глава',$outcome['action']);
+        $this->assertSame('Улучшить результат',$this->outcome([$state],[true,false])['action']);
+    }
+
     public function test_rewarded_but_incomplete_answers_offer_improvement_when_next_is_locked(): void
     {
         $outcome = $this->outcome([['hasTasks' => true, 'rewardEarned' => true, 'allTasksDone' => false, 'needsImprovement' => true]], [true, false]);

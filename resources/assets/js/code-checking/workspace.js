@@ -492,7 +492,7 @@ export async function workspace(root) {
             if(Number(record.user_id)!==Number(teacher && !ownMode ? selectedUser.id : root.dataset.viewerId))throw new Error('Эта сдача принадлежит другому ученику. Выберите его в списке.');
             ensureAttemptCard(record);
             if(record.source_submission_id){await show(record.source_submission_id,{snapshotOf:record});return;}
-            const {header}=resultHeader(record,{showSourceDate:false});
+            const {header}=resultHeader(record,{showSourceDate:false,reviewing:teacher&&!ownMode});
             const panel=node('section',{class:'gc-execution-result'},header);
             renderAward(record,panel,{label:false});
             if(record.text)panel.append(submittedWork({...record,mode:'text'}));
@@ -550,10 +550,14 @@ export async function workspace(root) {
         dialog=openDialog('Сравнить сдачи',node('div',{},field('Было',before),field('Стало',after),status),[run]);
     }
     function arrangeResult(body){
-        const header=body.querySelector(':scope > header.gc-result-verdict'),tools=body.querySelector(':scope > .gc-result-context-bar');if(header&&tools)header.append(tools);
+        const header=body.querySelector(':scope > header.gc-result-verdict'),tools=body.querySelector(':scope > .gc-result-context-bar');
+        toolbar.querySelector(':scope > .gc-result-context-bar')?.remove();
+        if(header?.hidden && teacher && !ownMode && tools)toolbar.append(tools);
+        else if(header&&tools)header.append(tools);
         const award=body.querySelector(':scope > .gc-award'),status=body.querySelector(':scope > .gc-execution-status');
         if(teacher&&!ownMode){const navigation=toolbar.querySelector('.gc-execution-actions');if(navigation)navigation.before(history);else toolbar.append(history);summary.replaceChildren(toolbar,...[header,award,status].filter(Boolean));}
         else summary.replaceChildren(history,...[header,award,status].filter(Boolean));
+        summary.classList.toggle('is-toolbar-only',teacher&&!ownMode && !!header?.hidden && !award && !status);
         summary.classList.toggle('is-student',!teacher||ownMode);
         if(!teacher || ownMode){
             const source=[...body.children].filter(child=>child.matches('.gc-submitted-work'));
@@ -632,7 +636,7 @@ export async function workspace(root) {
         if(!options.snapshotOf)ensureAttemptCard(record);
         current = {...record,snapshotOf:options.snapshotOf};
         const status = node('div',{role:'status','aria-live':'polite',class:'gc-execution-status'}, phases[record.progress?.phase || record.state] || record.state);
-        const {header}=resultHeader(options.snapshotOf || record,{sourceOnly:sourceOnly&&!options.snapshotOf,showSourceDate:false});
+        const {header}=resultHeader(options.snapshotOf || record,{sourceOnly:sourceOnly&&!options.snapshotOf,showSourceDate:false,reviewing:teacher&&!ownMode});
         const terminal=['completed','error','awaiting_review','imported_pending'].includes(record.state);
         const menu=resultActions();menu.add(button('Обновить результат',safe(() => show(id,options))));
         const body = node('section',{class:'gc-execution-result'},header);

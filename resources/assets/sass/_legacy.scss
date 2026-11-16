@@ -263,13 +263,6 @@
 .course-row-between { align-items: center; display: flex; gap: 0.5rem; justify-content: space-between; }
 .course-secondary-action { align-items: center; border-radius: var(--gc-radius-md); color: var(--gc-on-surface-muted) !important; display: inline-flex; gap: 0.35rem; justify-content: center; font-size: 0.95rem; }
 .course-secondary-action:hover { color: var(--gc-primary) !important; }
-.course-stats-toggle { white-space: nowrap; }
-.course-lesson-stat-action,
-.course-open-url-action { align-items: center; background: transparent !important; border: 0 !important; border-radius: 999px !important; color: var(--gc-on-surface-muted) !important; display: inline-flex !important; flex: 0 0 auto; font-size: 0.875rem !important; font-weight: 500 !important; gap: 0.32rem; line-height: 1; padding: 0.3rem 0.12rem !important; text-decoration: none; }
-.course-lesson-stat-action i,
-.course-open-url-action i { font-size: 0.95rem; }
-.course-lesson-stat-action:hover,
-.course-open-url-action:hover { background: var(--gc-surface-variant) !important; color: var(--gc-on-surface) !important; }
 .course-lesson-actions, .course-chapter-action { opacity: 0; transition: opacity var(--gc-transition); }
 .course-lesson-actions.show, .list-group-item:hover .course-chapter-action, .course-chapters__item:hover .course-chapter-action, .course-chapter-action.show { opacity: 1; }
 .course-support-card { background: var(--gc-surface); border: 1px solid var(--gc-border); border-radius: var(--gc-radius-lg); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.025); padding: 1rem; }
@@ -3333,19 +3326,6 @@
   width: 100%;
 }
 
-.home-pulse-card__area {
-  fill: color-mix(in srgb, var(--home-pulse-accent) 15%, transparent);
-}
-
-.home-pulse-card__line {
-  fill: none;
-  stroke: var(--home-pulse-accent);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 3.5;
-  vector-effect: non-scaling-stroke;
-}
-
 @media (max-width: 575.98px) {
   .home-pulse-card {
     grid-template-columns: minmax(0, 1fr) auto auto;
@@ -3388,19 +3368,6 @@
   gap: 1rem;
   grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
   padding: 0.85rem 1rem 0.95rem;
-}
-
-.pulse-overview__area {
-  fill: color-mix(in srgb, var(--pulse-accent) 15%, transparent);
-}
-
-.pulse-overview__line {
-  fill: none;
-  stroke: var(--pulse-accent);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 4;
-  vector-effect: non-scaling-stroke;
 }
 
 .pulse-feed__icon i {

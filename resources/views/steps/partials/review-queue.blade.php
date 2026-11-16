@@ -10,6 +10,7 @@
                     <form method="post" action="{{ url('/insider/reviews/reset-pending') }}" data-confirm="Пропустить все {{ $reviewQueue->total() }} непроверенных решений, соответствующих фильтрам?">
                         @csrf
                         @if(!$reviewQueueAll)<input type="hidden" name="course" value="{{ $course->id }}">@endif
+                        @if(!empty($reviewFilters['lesson']))<input type="hidden" name="lesson" value="{{ $reviewFilters['lesson'] }}">@endif
                         <input type="hidden" name="q" value="{{ $reviewFilters['q'] }}"><input type="hidden" name="review_status" value="{{ $reviewFilters['review_status'] }}">
                         <button class="dropdown-item" type="submit">Пропустить список · {{ $reviewQueue->total() }}</button>
                     </form>
@@ -21,7 +22,7 @@
     <nav class="gc-review-queue__items" aria-label="Непроверенные решения">
     @forelse($reviewQueue as $queued)
         @php
-            $queuedUrl = app(\App\Services\TaskLocation::class)->solution($queued);
+            $queuedUrl = app(\App\Services\TaskLocation::class)->solution($queued, $queueParameters ?? []);
         @endphp
         <a class="gc-review-queue__item @if($queued->id === $currentQueuedId) is-current @endif" href="{{ $queuedUrl }}" data-review-queue-solution="{{ $queued->id }}" @if($queued->id === $currentQueuedId) aria-current="true" @endif>
             <x-gc-avatar :frame="false" :user="$queued->user" size="sm" alt="" /><span class="min-width-0"><strong>{{ $queued->user->name }}</strong><span>{{ $queued->task->name ?? 'Задача' }}</span>@if(isset($queued->course))<small>{{ $queued->course->name }}</small>@endif<small>@if($queued->recheck_requested)<span class="gc-task-state gc-task-state--pending">Перепроверка</span> · @endif{{ $queued->submitted?->format('d.m H:i') }}</small></span>

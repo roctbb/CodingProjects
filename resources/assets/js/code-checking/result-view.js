@@ -22,7 +22,7 @@ export function resultVerdict(record) {
     return {tone:'review',icon:'fa-file-circle-check',title:'Результат проверки сохранён'};
 }
 
-export function resultHeader(record,{sourceOnly=false,showScore=true,showSourceDate=true}={}) {
+export function resultHeader(record,{sourceOnly=false,showScore=true,showSourceDate=true,reviewing=false}={}) {
     const verdict=resultVerdict(record);
     const title=node('h3',{class:'gc-result-verdict__title'},verdict.title);
     const details=node('div',{class:'gc-result-verdict__details'},title,
@@ -33,6 +33,7 @@ export function resultHeader(record,{sourceOnly=false,showScore=true,showSourceD
     if(raw!==null && raw!==undefined && record.state!=='error')details.append(node('p',{class:'gc-help-text mb-0'},`Оценка за работу: ${raw}${maximum?' из '+maximum:''} баллов${record.check_type==='gpt'?' · проверка ИИ':''}`));
     const header=node('header',{class:`gc-result-verdict is-${verdict.tone}`,'aria-label':'Итог проверки'},
         node('i',{class:`fas ${verdict.icon} gc-result-verdict__icon`,'aria-hidden':'true'}),details);
+    header.hidden=reviewing && (record.state==='awaiting_review' || record.kind==='legacy_attempt' && record.awarded_xp===null);
     if(showScore && record.state!=='error' && (credited || record.points!==null && record.points!==undefined))header.append(node('div',{class:'gc-result-score'},
         node('strong',{},String(credited?record.awarded_xp:record.points)),node('span',{},record.kind==='legacy_attempt'?' XP':` / ${maximum} ${credited?'XP':'баллов'}`),credited?node('small',{},'Зачтено за эту сдачу'):null));
     return {header,terminal:terminal.includes(record.state)};

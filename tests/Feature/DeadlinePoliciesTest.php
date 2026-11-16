@@ -16,6 +16,24 @@ use Tests\Support\DeadlineFeatureCase;
 
 class DeadlinePoliciesTest extends DeadlineFeatureCase
 {
+    public function test_upcoming_preview_keeps_only_future_stages_and_full_list_keeps_every_stage(): void
+    {
+        $this->policy();
+        $query = app(\App\Queries\CourseDeadlineList::class);
+        $courses = Course::whereKey(1)->get();
+        $viewer = User::findOrFail(1);
+
+        Carbon::setTestNow('2026-11-16 00:00:00 Europe/Moscow');
+        $upcoming = $query->forCourses($courses, $viewer, upcomingOnly: true);
+        $this->assertCount(1, $upcoming);
+        $this->assertSame('2026-11-22', $upcoming->first()->expiration->format('Y-m-d'));
+        $this->assertCount(2, $query->forCourses($courses, $viewer, includeCompleted: true));
+
+        Carbon::setTestNow('2026-11-23 00:00:00 Europe/Moscow');
+        $this->assertEmpty($query->forCourses($courses, $viewer, upcomingOnly: true));
+        $this->assertCount(2, $query->forCourses($courses, $viewer, includeCompleted: true));
+    }
+
     public function test_unlimited_stages_exact_boundaries_arbitrary_final_percentage_and_minimum_one(): void
     {
         $this->policy(stages: [

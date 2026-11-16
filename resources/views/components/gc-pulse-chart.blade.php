@@ -76,5 +76,6 @@
     @if($pulseLine)
         @if($filled)<path class="{{ $areaClass }}" d="{{ $pulseArea }}" />@endif
         <path class="{{ $lineClass }}" d="{{ $pulseLine }}" />
+        <circle class="gc-pulse-chart__current" cx="{{ $formatChartNumber($lastPoint['x']) }}" cy="{{ $formatChartNumber($lastPoint['y']) }}" r="3" />
     @endif
 </svg>

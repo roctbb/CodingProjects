@@ -26,12 +26,16 @@ class TaskLocation
         return $this->task((int)$submission->course_id,Task::findOrFail($submission->task_id),(int)$submission->user_id,$submission->id);
     }
 
-    public function solution(Solution $solution):string
+    public function solution(Solution $solution, array $reviewContext = []):string
     {
         $native=array_key_exists('native_submission_id',$solution->getAttributes())?$solution->getAttribute('native_submission_id')
             :(Schema::hasTable('code_submissions')?CodeSubmission::where('solution_id',$solution->id)->whereNull('legacy_id')
                 ->where('course_id',$solution->course_id)->where('task_id',$solution->task_id)->where('user_id',$solution->user_id)->value('id'):null);
-        return $this->task((int)$solution->course_id,$solution->task,(int)$solution->user_id,$native?:'solution-'.$solution->id);
+        $url = $this->task((int)$solution->course_id,$solution->task,(int)$solution->user_id,$native?:'solution-'.$solution->id);
+        $reviewContext = array_intersect_key($reviewContext, array_flip(['lesson', 'q', 'review_status', 'queue', 'page']));
+        if (!$reviewContext) return $url;
+        [$path, $anchor] = explode('#', $url, 2);
+        return $path.'&'.http_build_query($reviewContext).'#'.$anchor;
     }
 
     /** Resolve a deep link before rendering: an attempt never changes its task or author. */
