@@ -494,6 +494,7 @@ export async function workspace(root) {
             if(record.source_submission_id){await show(record.source_submission_id,{snapshotOf:record});return;}
             const {header}=resultHeader(record,{showSourceDate:false,reviewing:teacher&&!ownMode});
             const panel=node('section',{class:'gc-execution-result'},header);
+            if(teacher && !ownMode){const menu=resultActions();const remove=removeAttemptAction(record);menu.add(remove);remove.classList.add('text-danger');panel.append(node('div',{class:'gc-result-context-bar'},menu.root));}
             renderAward(record,panel,{label:false});
             if(record.text)panel.append(submittedWork({...record,mode:'text'}));
             if(!record.text)panel.append(node('p',{class:'text-muted small'},'Код этой сдачи не сохранился отдельно.'));
@@ -512,6 +513,26 @@ export async function workspace(root) {
     }
     function inlineGrading(options){
         return gradingPanel({...options,drafts:gradingDrafts,onNext:canNavigate()?nextStudent:null});
+    }
+    function removeAttemptAction(record) {
+        const control=button('Удалить решение…',()=>{
+            const status=node('p',{class:'text-danger',role:'alert'});
+            let dialog;
+            const remove=button('Удалить решение',async()=>{
+                remove.disabled=true;
+                try {
+                    const attempt=record.kind==='legacy_attempt'?'solution-'+record.solution_id:record.id;
+                    const value=await request(base+'/attempts/'+attempt,'DELETE',{confirm:true});
+                    dialog.close();location.assign(value.redirect_url);
+                } catch(error) {status.textContent=error.message;remove.disabled=false;}
+            },'danger');
+            dialog=openDialog('Удалить решение?',node('div',{},
+                node('p',{},selectedUser?.name || record.user_name || 'Ученик',record.created_at?' · '+new Date(record.created_at).toLocaleString('ru-RU'):''),
+                node('p',{},'Эта сдача и её проверки будут удалены без возможности восстановления. Баллы и прогресс пересчитаются по оставшимся решениям.'),
+                node('p',{class:'gc-help-text'},'Операции с GC сохранятся.'),status),
+                [button('Отмена',()=>dialog.close()),remove]);
+        });
+        return control;
     }
     function recheckDialog(record,options,stronger=false){
         const ai=(record.recheck_type || record.check_type)==='gpt';
@@ -641,6 +662,9 @@ export async function workspace(root) {
         const menu=resultActions();menu.add(button('Обновить результат',safe(() => show(id,options))));
         const body = node('section',{class:'gc-execution-result'},header);
         const contextBar=node('div',{class:'gc-result-context-bar'},menu.root);
+        if(teacher && !ownMode && (options.snapshotOf || !record.source_version_unknown)) {
+            const remove=removeAttemptAction(options.snapshotOf || record);menu.add(remove);remove.classList.add('text-danger');
+        }
         if(!terminal){header.hidden=record.awarded_xp===null || record.awarded_xp===undefined;body.append(status);}
         if(options.snapshotOf)renderAward(options.snapshotOf,body,{label:false});
         else if(!sourceOnly && record.state!=='error')renderAward(record,body,{label:false});

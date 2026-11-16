@@ -1668,7 +1668,7 @@
 
 Тип: state. Роли сценария: Преподаватель, Администратор.
 
-Оценка, комментарий, пропуск и блокировка
+Оценка, комментарий, пропуск и блокировка Удаление конкретной сдачи с подтверждением и пересчётом прогресса.
 
 Проверка: Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён.
 
@@ -1680,10 +1680,14 @@
 - `POST /insider/courses/{course_id}/tasks/{id}/solution/{solution_id}/waive-deadline-penalty` — action
 - `POST /insider/courses/{course_id}/tasks/{id}/student/{student_id}/skip-review` — action
 - `POST /insider/courses/{course_id}/tasks/{id}/unblock/{student_id}` — action
+- `DELETE /insider/courses/{course}/tasks/{task}/attempts/{attempt}` — action
 
 Исходники:
 
 - [resources/views/steps/review.blade.php](../../resources/views/steps/review.blade.php)
+- [app/Http/Controllers/SolutionRemovalController.php](../../app/Http/Controllers/SolutionRemovalController.php)
+- [app/Services/SolutionRemoval.php](../../app/Services/SolutionRemoval.php)
+- [resources/views/components/gc-remove-attempt.blade.php](../../resources/views/components/gc-remove-attempt.blade.php)
 
 <a id="planner-journal"></a>
 

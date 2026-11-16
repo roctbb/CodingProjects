@@ -107,6 +107,9 @@ class Task extends Model
 
     public function hasRewardableFullSolution($user_id)
     {
+        // Removing an old submission must not issue the same task's GC reward again.
+        if (\Illuminate\Support\Facades\Schema::hasTable('coin_transactions') && CoinTransaction::where('user_id', $user_id)
+            ->where('comment', 'Task #'.$this->id)->where('price', '>', 0)->exists()) return true;
         return $this->scoredSolutionsForUser($user_id)
                 ->where('mark', '=', $this->max_mark)
                 ->where('xp_booster_used_at', null)

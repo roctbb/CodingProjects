@@ -35,6 +35,7 @@
                                     <input type="hidden" name="review_token" value="{{ $pending->reviewToken() }}">
                                     <button class="btn btn-outline-secondary btn-sm text-nowrap" type="submit">Пропустить</button>
                                 </form>
+                                <x-gc-remove-attempt :course="$pending->course_id" :task="$pending->task_id" :attempt="'solution-'.$pending->id" :student="$pending->user->name" :task-name="$pending->task->name" />
                             </div></td>
                         </tr>
                     @endforeach</tbody>

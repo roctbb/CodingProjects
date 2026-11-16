@@ -31,6 +31,8 @@ Route::middleware(['web', 'auth', 'verified'])->prefix('insider')->where([
     Route::post($base.'/checker/extra-attempt', [CodeCheckingController::class, 'extraAttempt']);
     Route::match(['get', 'post'], $base.'/code-submissions', [CodeCheckingController::class, 'index']);
     Route::get($base.'/code-attempts/{solution}', [CodeCheckingController::class,'attempt'])->whereNumber('solution');
+    Route::delete($base.'/attempts/{attempt}', [\App\Http\Controllers\SolutionRemovalController::class,'destroy'])
+        ->where('attempt', '(?:solution-[1-9][0-9]*|[0-9a-fA-F-]{36})')->name('solutions.destroy');
     Route::get('/code-submissions/{submission}', [CodeCheckingController::class, 'show'])->name('code-submissions.show');
     Route::post('/code-submissions/{submission}/manual-review', [TaskSubmissionController::class, 'manualReview']);
     Route::post('/code-submissions/{submission}/review-request', [TaskSubmissionController::class, 'reviewRequest']);

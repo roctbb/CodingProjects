@@ -84,28 +84,33 @@ class Integrity
             $baseline = $this->artifacts->get($starter['artifact']['blob_id']);
             if (mb_check_encoding($baseline, 'UTF-8')) $fingerprints = array_values(array_diff($fingerprints, $this->fingerprints($baseline)));
         }
-        $matches = [];
-        if ($fingerprints) {
-            foreach (array_chunk($fingerprints, 200) as $batch) {
-                DB::table('code_fingerprints')->insertOrIgnore(array_map(fn ($fingerprint) => ['submission_id' => $submission->id,
-                    'task_id' => $submission->task_id, 'user_id' => $submission->user_id, 'fingerprint' => $fingerprint], $batch));
+        $plagiarism = DB::transaction(function () use ($submission, $fingerprints, $source) {
+            if (!CodeSubmission::whereKey($submission->id)->lockForUpdate()->exists()) return null;
+            $matches = [];
+            if ($fingerprints) {
+                foreach (array_chunk($fingerprints, 200) as $batch) {
+                    DB::table('code_fingerprints')->insertOrIgnore(array_map(fn ($fingerprint) => ['submission_id' => $submission->id,
+                        'task_id' => $submission->task_id, 'user_id' => $submission->user_id, 'fingerprint' => $fingerprint], $batch));
+                }
+                $candidateIds = [];
+                foreach (array_chunk($fingerprints, 200) as $batch) {
+                    $ids = DB::table('code_fingerprints')->where('task_id', $submission->task_id)->where('user_id', '!=', $submission->user_id)
+                        ->whereIn('fingerprint', $batch)->distinct()->limit(100)->pluck('submission_id')->all();
+                    $candidateIds = array_slice(array_unique(array_merge($candidateIds, $ids)), 0, 100);
+                }
+                foreach ($candidateIds as $id) {
+                    $other = DB::table('code_fingerprints')->where('submission_id', $id)->pluck('fingerprint')->all();
+                    $percent = (int) round(200 * count(array_intersect($fingerprints, $other)) / (count($fingerprints) + count($other)));
+                    if ($percent >= config('code_checking.similarity_threshold')) $matches[] = ['submission_id' => $id, 'percent' => $percent];
+                }
             }
-            $candidateIds = [];
-            foreach (array_chunk($fingerprints, 200) as $batch) {
-                $ids = DB::table('code_fingerprints')->where('task_id', $submission->task_id)->where('user_id', '!=', $submission->user_id)
-                    ->whereIn('fingerprint', $batch)->distinct()->limit(100)->pluck('submission_id')->all();
-                $candidateIds = array_slice(array_unique(array_merge($candidateIds, $ids)), 0, 100);
-            }
-            foreach ($candidateIds as $id) {
-                $other = DB::table('code_fingerprints')->where('submission_id', $id)->pluck('fingerprint')->all();
-                $percent = (int) round(200 * count(array_intersect($fingerprints, $other)) / (count($fingerprints) + count($other)));
-                if ($percent >= config('code_checking.similarity_threshold')) $matches[] = ['submission_id' => $id, 'percent' => $percent];
-            }
-        }
-        $plagiarism = ['state' => $source ? 'done' : 'skipped', 'warning' => count($matches) > 0, 'matches' => $matches,
-            'method' => 'token_shingles_v1'];
-        DB::table('code_integrity_reports')->updateOrInsert(['submission_id' => $submission->id],
-            ['state' => 'running', 'plagiarism' => json_encode($plagiarism, JSON_THROW_ON_ERROR), 'updated_at' => now(), 'created_at' => now()]);
+            $plagiarism = ['state' => $source ? 'done' : 'skipped', 'warning' => count($matches) > 0, 'matches' => $matches,
+                'method' => 'token_shingles_v1'];
+            DB::table('code_integrity_reports')->updateOrInsert(['submission_id' => $submission->id],
+                ['state' => 'running', 'plagiarism' => json_encode($plagiarism, JSON_THROW_ON_ERROR), 'updated_at' => now(), 'created_at' => now()]);
+            return $plagiarism;
+        });
+        if ($plagiarism === null) return;
         $ai = ['state' => 'skipped', 'warning' => false, 'confidence' => 'low', 'reasons' => []];
         if ($source && config('code_checking.ai_detection_enabled') && ($settings['ai_authorship_check'] ?? true)) {
             try {
@@ -125,29 +130,33 @@ class Integrity
                 report($exception);
             }
         }
-        DB::table('code_integrity_reports')->where('submission_id', $submission->id)->update([
-            'state' => 'completed', 'ai' => json_encode($ai, JSON_THROW_ON_ERROR), 'updated_at' => now(),
-        ]);
-        $submission->refresh();
-        if ($submission->solution_id) {
-            $payload = $this->legacyPayload($submission);
-            DB::table('solutions')->where('id', $submission->solution_id)->whereNull('geekpaste_integrity_dismissed_at')->update([
-                'geekpaste_ai_warning' => (bool) ($payload['ai']['warning'] ?? false),
-                'geekpaste_ai_confidence' => $payload['ai']['confidence'] ?? null,
-                'geekpaste_ai_reasons' => $payload['ai']['reasons'] ?? null,
-                'geekpaste_similarity_checked' => $payload['similarity']['checked'],
-                'geekpaste_similarity_warning' => $payload['similarity']['warning'],
-                'geekpaste_similarity_critical' => $payload['similarity']['critical'],
-                'geekpaste_similarity_max_percent' => $payload['similarity']['max_percent'],
-                'geekpaste_similarity_matches_count' => $payload['similarity']['matches_count'],
-                'geekpaste_integrity_synced_at' => now(),
+        DB::transaction(function () use ($submission, $ai, $analysisRunId) {
+            $submission = CodeSubmission::whereKey($submission->id)->lockForUpdate()->first();
+            if (!$submission) return;
+            DB::table('code_integrity_reports')->where('submission_id', $submission->id)->update([
+                'state' => 'completed', 'ai' => json_encode($ai, JSON_THROW_ON_ERROR), 'updated_at' => now(),
             ]);
-        }
-        // Rechecking cannot change this submission's source. Keep the analysis event
-        // attached to its original run even when grading advanced while AI analysis ran.
-        if ($run = \App\CodeExecutionRun::where('submission_id', $submission->id)->find($analysisRunId)) {
-            app(ExecutionAlerts::class)->plagiarism($run);
-        }
+            $submission->refresh();
+            if ($submission->solution_id) {
+                $payload = $this->legacyPayload($submission);
+                DB::table('solutions')->where('id', $submission->solution_id)->whereNull('geekpaste_integrity_dismissed_at')->update([
+                    'geekpaste_ai_warning' => (bool) ($payload['ai']['warning'] ?? false),
+                    'geekpaste_ai_confidence' => $payload['ai']['confidence'] ?? null,
+                    'geekpaste_ai_reasons' => $payload['ai']['reasons'] ?? null,
+                    'geekpaste_similarity_checked' => $payload['similarity']['checked'],
+                    'geekpaste_similarity_warning' => $payload['similarity']['warning'],
+                    'geekpaste_similarity_critical' => $payload['similarity']['critical'],
+                    'geekpaste_similarity_max_percent' => $payload['similarity']['max_percent'],
+                    'geekpaste_similarity_matches_count' => $payload['similarity']['matches_count'],
+                    'geekpaste_integrity_synced_at' => now(),
+                ]);
+            }
+            // Rechecking cannot change this submission's source. Keep the analysis event
+            // attached to its original run even when grading advanced while AI analysis ran.
+            if ($run = \App\CodeExecutionRun::where('submission_id', $submission->id)->find($analysisRunId)) {
+                app(ExecutionAlerts::class)->plagiarism($run);
+            }
+        });
     }
 
     public function view(CodeSubmission $submission, bool $teacher, ?\App\User $viewer = null): ?array

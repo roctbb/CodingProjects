@@ -1640,6 +1640,19 @@
     "kind": "action"
   },
   {
+    "method": "DELETE",
+    "uri": "insider/courses/{course}/tasks/{task}/attempts/{attempt}",
+    "name": "solutions.destroy",
+    "action": "SolutionRemovalController@destroy",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "review-tools",
+    "kind": "action"
+  },
+  {
     "method": "GET|HEAD",
     "uri": "insider/courses/{course}/tasks/{task}/checker",
     "name": null,

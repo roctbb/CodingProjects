@@ -2146,9 +2146,12 @@
         "admin"
       ],
       "sources": [
-        "resources/views/steps/review.blade.php"
+        "resources/views/steps/review.blade.php",
+        "app/Http/Controllers/SolutionRemovalController.php",
+        "app/Services/SolutionRemoval.php",
+        "resources/views/components/gc-remove-attempt.blade.php"
       ],
-      "goal": "Оценка, комментарий, пропуск и блокировка",
+      "goal": "Оценка, комментарий, пропуск и блокировка Удаление конкретной сдачи с подтверждением и пересчётом прогресса.",
       "review": {
         "stage": "mapped",
         "note": "Изучены маршруты и шаблоны; новый визуальный проход ещё не проведён."
@@ -6486,6 +6489,10 @@
     "TaskSubmissionController@legacyExports": {
       "node": "geekexecutor",
       "kind": "api"
+    },
+    "SolutionRemovalController@destroy": {
+      "node": "review-tools",
+      "kind": "action"
     }
   },
   "observations": [

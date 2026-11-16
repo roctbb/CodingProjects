@@ -61,6 +61,7 @@ class SolutionAchievementGenerator
 
         try {
             return DB::transaction(function () use ($solution, $text, $coinReward, $manual) {
+                if (!Solution::whereKey($solution->id)->lockForUpdate()->exists()) return null;
                 if (Achievement::where('user_id', $solution->user_id)->where('task_id', $solution->task_id)->exists()) {
                     return null;
                 }
@@ -87,7 +88,7 @@ class SolutionAchievementGenerator
                 GenerateAchievementTrophy::dispatch($achievement->id)->afterCommit();
 
                 return $achievement;
-            });
+            }, 5);
         } catch (UniqueConstraintViolationException $e) {
             // Only an existing award is a harmless duplicate. Other failures must be retried.
             if (Achievement::where('user_id', $solution->user_id)->where('task_id', $solution->task_id)->exists()) {

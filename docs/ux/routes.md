@@ -124,6 +124,7 @@
 | POST | `/insider/courses/{course_id}/tasks/{id}/student/{student_id}/skip-review` | action | [Оценка, комментарий, пропуск и блокировка](screens.md#review-tools) | web, verified, auth, task, teacher |
 | POST | `/insider/courses/{course_id}/tasks/{id}/unblock/{student_id}` | action | [Оценка, комментарий, пропуск и блокировка](screens.md#review-tools) | web, verified, auth, task |
 | GET\|HEAD | `/insider/courses/{course_id}/tasks/{id}/up` | action | [Задача: текст, код или квиз](screens.md#step-task) | web, verified, auth, task |
+| DELETE | `/insider/courses/{course}/tasks/{task}/attempts/{attempt}` | action | [Оценка, комментарий, пропуск и блокировка](screens.md#review-tools) | web, auth, verified |
 | GET\|HEAD | `/insider/courses/{course}/tasks/{task}/checker` | api | [Ступень](screens.md#step) | web, auth, verified |
 | POST | `/insider/courses/{course}/tasks/{task}/checker/extra-attempt` | api | [Ступень](screens.md#step) | web, auth, verified |
 | GET\|POST\|HEAD | `/insider/courses/{course}/tasks/{task}/checker/files` | api | [Редактирование задачи](screens.md#task-edit) | web, auth, verified |

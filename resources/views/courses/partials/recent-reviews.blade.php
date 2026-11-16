@@ -12,7 +12,7 @@
                         default => [$item->run_state === 'queued' ? 'В очереди автопроверки' : 'Проверяется', 'fa-rotate'],
                     };
                 @endphp
-                <li data-review-activity="{{ $item->kind }}-{{ $item->item_id }}">
+                <li class="gc-review-activity__item" data-review-activity="{{ $item->kind }}-{{ $item->item_id }}">
                     <a href="{{ $item->url }}" class="gc-review-activity__row">
                         <span class="gc-review-activity__body"><strong>{{ $item->student_name }}</strong><span>{{ $item->task_name }}</span><small>{{ $item->course_name }} · {{ $item->lesson_name }}</small></span>
                         <span class="gc-review-activity__result">
@@ -22,6 +22,7 @@
                             <time datetime="{{ $item->sent_at->toIso8601String() }}">{{ $item->sent_at->format($item->sent_at->year === now()->year ? 'd.m H:i' : 'd.m.Y H:i') }}</time>
                         </span>
                     </a>
+                    <x-gc-remove-attempt :course="$item->course_id" :task="$item->task_id" :attempt="$item->kind === 'submission' ? $item->item_id : 'solution-'.$item->item_id" :student="$item->student_name" :task-name="$item->task_name" />
                 </li>
             @endforeach
         </ul>
