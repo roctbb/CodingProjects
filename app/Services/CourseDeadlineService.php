@@ -131,17 +131,29 @@ class CourseDeadlineService
             $policy = DeadlinePolicy::where('course_id', $course->id)->where('target_type', $type)->where('target_id', $id)->lockForUpdate()->first();
             if (($policy?->revision ?? 0) !== (int) $data['revision']) throw new ConflictHttpException('Сроки изменены в другом окне. Обновите страницу.');
             $policy ??= new DeadlinePolicy(['course_id' => $course->id, 'target_type' => $type, 'target_id' => $id]);
+            $policyAudience = (int) ($policy->audience_id ?? 0);
+            $taskIds = $type === 'lesson' && !empty($data['apply_to_tasks'])
+                ? Task::whereHas('step', fn ($q) => $q->where('lesson_id', $id))->where('is_star', false)->pluck('id') : collect();
+            $hasOverrides = $taskIds->isNotEmpty() && (DeadlinePolicy::where('course_id', $course->id)
+                ->where('target_type', 'task')->whereIn('target_id', $taskIds)->where('mode', '!=', 'inherit')
+                ->when(Schema::hasColumn('deadline_policies', 'audience_id'), fn ($q) => $q->where('audience_id', $policyAudience))->exists()
+                || (!$policyAudience && TaskDeadline::where('course_id', $course->id)->whereIn('task_id', $taskIds)->exists()));
+            if ($policy->exists && $policy->mode === $data['mode'] && $policy->timezone === $data['timezone'] && $policy->legacy === $legacy
+                && $policy->stages->map(fn ($s) => ['cutoff_at' => $s->cutoff_at, 'retained_percent' => (float) $s->retained_percent])->all() === $normalized->all()
+                && !$hasOverrides) return $policy;
+            $created = $policy->mode !== 'custom';
             $policy->fill(['mode' => $data['mode'], 'timezone' => $data['timezone'], 'revision' => ($policy->revision ?? 0) + 1, 'updated_by' => $actorId, 'legacy' => $legacy])->save();
             $policy->stages()->delete();
             foreach ($normalized as $position => $stage) $policy->stages()->create($stage + ['position' => $position]);
             if ($type === 'lesson' && !empty($data['apply_to_tasks'])) {
-                $taskIds = Task::whereHas('step', fn ($q) => $q->where('lesson_id', $id))->where('is_star', false)->pluck('id');
                 DeadlinePolicy::where('course_id', $course->id)->where('target_type', 'task')->whereIn('target_id', $taskIds)->update(['mode' => 'inherit', 'revision' => DB::raw('revision + 1')]);
                 TaskDeadline::where('course_id', $course->id)->whereIn('task_id', $taskIds)->delete();
             }
             if ($type === 'task') TaskDeadline::where('course_id', $course->id)->where('task_id', $id)->delete();
             $this->forget($course->id);
-            return $policy->load('stages');
+            $policy->load('stages');
+            app(DeadlineNotifications::class)->policyChanged($policy, $created);
+            return $policy;
         });
     }
 

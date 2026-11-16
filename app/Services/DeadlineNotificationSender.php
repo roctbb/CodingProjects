@@ -37,15 +37,27 @@ class DeadlineNotificationSender
         $tasks = $tasks->unique('id'); $event = $activeEvents->first();
         $stage = DB::table('deadline_stages')->find($event->stage_id);
         if (!$stage) { $this->finish($id, 'cancelled'); return; }
-        $zone = DB::table('deadline_policies')->where('id', $event->policy_id)->value('timezone');
-        $rule = \App\Support\DeadlineRule::fromSnapshot(['timezone' => $zone,
-            'stages' => [['at' => $stage->cutoff_at, 'percent' => $stage->retained_percent]]]);
-        $date = $rule->deadlineAt()->format('d.m.Y H:i');
-        $minutes = max(1, (int) ceil(now()->diffInSeconds($rule->cutoffAt(), false) / 60));
-        $remaining = $minutes >= 60 ? intdiv($minutes, 60).' ч '.($minutes % 60).' мин' : $minutes.' мин';
-        $text = ($event->kind === 'reminder' ? '⏳ До срока сдачи: '.$remaining : '🏁 Наступил срок сдачи')."\n".
-            mb_substr($course->name, 0, 200)."\n".mb_substr($tasks->first()->step->lesson->name, 0, 200)."\n".
-            'До '.$date.' ('.$zone.'); после срока — '.($stage->retained_percent + 0)."% баллов\n";
+        $policy = \App\DeadlinePolicy::with('stages')->find($event->policy_id);
+        $zone = $policy->timezone;
+        $changed = in_array($event->kind, ['created', 'updated'], true);
+        if ($changed) {
+            $rule = \App\Support\DeadlineRule::fromPolicy($policy);
+            $text = ($event->kind === 'created' ? '📅 Установлены сроки сдачи' : '📅 Изменены сроки сдачи')."\n".
+                mb_substr($course->name, 0, 200)."\n".mb_substr($tasks->first()->step->lesson->name, 0, 200)."\n";
+            foreach (array_slice($rule->series, 0, 20) as $deadline) {
+                $text .= 'До '.$rule->deadlineAt($deadline)->format('d.m.Y H:i').' ('.$zone.'); после срока — '.($deadline['percent'] + 0)."% баллов\n";
+            }
+            if (count($rule->series) > 20) $text .= 'И ещё '.(count($rule->series) - 20)." сроков — полный список по ссылке ниже.\n";
+        } else {
+            $rule = \App\Support\DeadlineRule::fromSnapshot(['timezone' => $zone,
+                'stages' => [['at' => $stage->cutoff_at, 'percent' => $stage->retained_percent]]]);
+            $date = $rule->deadlineAt()->format('d.m.Y H:i');
+            $minutes = max(1, (int) ceil(now()->diffInSeconds($rule->cutoffAt(), false) / 60));
+            $remaining = $minutes >= 60 ? intdiv($minutes, 60).' ч '.($minutes % 60).' мин' : $minutes.' мин';
+            $text = ($event->kind === 'reminder' ? '⏳ До срока сдачи: '.$remaining : '🏁 Наступил срок сдачи')."\n".
+                mb_substr($course->name, 0, 200)."\n".mb_substr($tasks->first()->step->lesson->name, 0, 200)."\n".
+                'До '.$date.' ('.$zone.'); после срока — '.($stage->retained_percent + 0)."% баллов\n";
+        }
         foreach ($tasks->take(5) as $task) $text .= '• '.mb_substr($task->name, 0, 150)."\n";
         if ($tasks->count() > 5) $text .= 'И ещё '.($tasks->count() - 5)." задач\n";
         $text .= "Сдача остаётся открытой. Уже заработанные баллы сохраняются.\n".url('/insider/courses/'.$course->id.'/deadlines');

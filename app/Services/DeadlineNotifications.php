@@ -12,6 +12,23 @@ use Illuminate\Support\Facades\Schema;
 /** Durable schedule/outbox. All notification timestamps are UTC. */
 class DeadlineNotifications
 {
+    public function policyChanged(DeadlinePolicy $policy, bool $created): void
+    {
+        if (!Schema::hasTable('deadline_notification_events') || $policy->mode !== 'custom' || ($policy->audience_id ?? 0)) return;
+        $stage = $policy->stages->first();
+        if (!$stage) return;
+        $now = now()->utc();
+        $kind = $created ? 'created' : 'updated';
+        $id = DB::table('deadline_notification_events')->insertGetId([
+            'event_key' => hash('sha256', "$policy->id:$policy->revision:$kind"),
+            'course_id' => $policy->course_id, 'policy_id' => $policy->id, 'revision' => $policy->revision,
+            'stage_id' => $stage->id, 'kind' => $kind, 'scheduled_at' => $now, 'expires_at' => $now->copy()->addDay(),
+            'status' => 'pending', 'created_at' => $now, 'updated_at' => $now,
+        ]);
+        // Keep the event in the same transaction as the deadline, and publish only after the outermost commit.
+        DB::afterCommit(fn () => $this->dispatchEvents($id));
+    }
+
     public function reconcile(?int $courseId = null): void
     {
         if (!Schema::hasTable('deadline_notification_events')) return;
@@ -40,12 +57,18 @@ class DeadlineNotifications
     public function dispatchDue(): int
     {
         $this->reconcile();
+        return $this->dispatchEvents();
+    }
+
+    private function dispatchEvents(?int $eventId = null): int
+    {
         if (!Schema::hasTable('deadline_notification_events')) return 0;
         app(CourseDeadlineService::class)->forget();
-        DB::transaction(function () {
+        DB::transaction(function () use ($eventId) {
             $now = now()->utc();
             DB::table('deadline_notification_events')->where('status', 'pending')->where('expires_at', '<=', $now)->update(['status' => 'expired']);
             $events = DB::table('deadline_notification_events')->where('status', 'pending')->where('scheduled_at', '<=', $now)
+                ->when($eventId !== null, fn ($q) => $q->where('id', $eventId))
                 ->orderBy('id')->lockForUpdate()->get();
             $groups = [];
             foreach ($events as $event) {
@@ -57,19 +80,21 @@ class DeadlineNotifications
                 }
                 $settings = DB::table('course_notification_settings')->where('course_id', $course->id)->first();
                 $recipients = [];
-                if ($settings?->teachers_enabled ?? true) foreach ($course->teachers as $teacher) {
+                $changed = in_array($event->kind, ['created', 'updated'], true);
+                if (!$changed && ($settings?->teachers_enabled ?? true)) foreach ($course->teachers as $teacher) {
                     if ((int) $teacher->telegram_chat_id > 0) $recipients[] = ['teacher', $teacher->id, $teacher->telegram_chat_id, 0];
                 }
                 if ($settings?->chat_enabled ?? true) foreach (DB::table('course_telegram_chats')->where('course_id', $course->id)->where('bot_key', app(CourseTelegram::class)->botKey())->where('status', 'active')->get() as $chat) {
                     if ($this->tasks($event, null, true)->isNotEmpty()) $recipients[] = ['chat', $chat->id, $chat->chat_id, $chat->thread_id];
                 }
-                $subscribers = DB::table('course_notification_preferences')->where('course_id', $course->id)->where('enabled', true)->pluck('user_id');
+                $subscribers = $changed ? collect() : DB::table('course_notification_preferences')->where('course_id', $course->id)->where('enabled', true)->pluck('user_id');
                 foreach ($course->students()->whereIn('users.id', $subscribers)->get() as $student) {
                     if ((int) $student->telegram_chat_id > 0 && $this->tasks($event, $student)->isNotEmpty()) $recipients[] = ['student', $student->id, $student->telegram_chat_id, 0];
                 }
                 $stage = DB::table('deadline_stages')->find($event->stage_id);
                 foreach ($recipients as [$type, $id, $chatId, $thread]) {
-                    $group = implode(':', [$course->id, $tasks->first()->step->lesson_id, $event->kind, $event->scheduled_at, $stage->retained_percent, $type, $id]);
+                    $scope = $changed ? 'policy:'.$policy->id : $tasks->first()->step->lesson_id;
+                    $group = implode(':', [$course->id, $scope, $event->kind, $event->scheduled_at, $stage->retained_percent, $type, $id]);
                     $groups[$group] ??= ['course_id' => $course->id, 'recipient_type' => $type, 'recipient_id' => $id, 'chat_id' => (string) $chatId, 'thread_id' => $thread, 'event_ids' => []];
                     $groups[$group]['event_ids'][] = $event->id;
                 }

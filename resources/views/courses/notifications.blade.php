@@ -3,7 +3,7 @@
 @section('content')
 <div class="container-fluid px-0">
     <x-gc-course-header :course="$course" active="notifications" />
-    <div class="gc-course-section-heading"><div><h2 class="mb-1">Уведомления курса</h2><p class="gc-help-text mb-0">За сутки до каждого срока и при его наступлении</p></div></div>
+    <div class="gc-course-section-heading"><div><h2 class="mb-1">Уведомления курса</h2><p class="gc-help-text mb-0">В чаты — при установке и изменении сроков. Напоминания — за сутки до каждого срока и при его наступлении.</p></div></div>
     @if(session('status'))<div class="alert alert-info">{{ session('status') }}</div>@endif
     @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
     <div class="row g-3 mb-3">

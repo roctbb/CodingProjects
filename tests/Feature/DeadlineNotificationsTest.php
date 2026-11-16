@@ -73,7 +73,7 @@ class DeadlineNotificationsTest extends DeadlineFeatureCase
     }
     public function test_delivery_is_idempotent_topics_and_opted_in_students_are_supported(): void
     {
-        $this->teacher(); $this->chat(); $this->policy();
+        $this->teacher(); $this->policy(); $this->chat();
         User::find(1)->forceFill(['telegram_chat_id'=>'101'])->save();
         DB::table('course_notification_preferences')->insert(['course_id'=>1,'user_id'=>1,'enabled'=>true]);
         $this->assertSame(3,app(DeadlineNotifications::class)->dispatchDue());
@@ -89,7 +89,7 @@ class DeadlineNotificationsTest extends DeadlineFeatureCase
     }
     public function test_shared_lesson_and_legacy_task_policies_aggregate_in_one_group_message(): void
     {
-        $this->teacher(); $this->chat(); $this->policy('task',11); $this->policy('task',12);
+        $this->teacher(); $this->policy('task',11); $this->policy('task',12); $this->chat();
         app(DeadlineNotifications::class)->dispatchDue();
         $this->assertDatabaseCount('deadline_notification_deliveries',2);
         foreach(DB::table('deadline_notification_deliveries')->get() as $delivery) $this->assertCount(2,json_decode($delivery->event_ids,true));
@@ -97,7 +97,7 @@ class DeadlineNotificationsTest extends DeadlineFeatureCase
     }
     public function test_edit_membership_and_unlinked_chat_cancel_queued_messages(): void
     {
-        $this->teacher(); $chat=$this->chat(); $this->policy(); app(DeadlineNotifications::class)->dispatchDue();
+        $this->teacher(); $this->policy(); $chat=$this->chat(); app(DeadlineNotifications::class)->dispatchDue();
         $this->policy(extra:['mode'=>'none','stages'=>[]]); app(DeadlineNotifications::class)->reconcile();
         $this->deliverAll(); Http::assertNothingSent();
         $this->assertEquals(2,DB::table('deadline_notification_deliveries')->where('status','cancelled')->count());
@@ -149,7 +149,7 @@ class DeadlineNotificationsTest extends DeadlineFeatureCase
     }
     public function test_hidden_work_never_leaks_to_group_or_student_and_pending_review_is_quiet(): void
     {
-        $this->teacher(); $this->chat(); $this->policy();
+        $this->teacher(); $this->policy(); $this->chat();
         User::find(1)->forceFill(['telegram_chat_id'=>'101'])->save();
         DB::table('course_notification_preferences')->insert(['course_id'=>1,'user_id'=>1,'enabled'=>true]);
         DB::table('tasks')->where('id',11)->update(['is_hidden'=>true]);
@@ -173,7 +173,7 @@ class DeadlineNotificationsTest extends DeadlineFeatureCase
 
     public function test_network_unknown_result_requires_manual_retry_and_forbidden_disables_group(): void
     {
-        $this->teacher(); $this->chat(); $this->policy(); app(DeadlineNotifications::class)->dispatchDue();
+        $this->teacher(); $this->policy(); $this->chat(); app(DeadlineNotifications::class)->dispatchDue();
         $calls=0;
         Http::fake(function () use (&$calls) {
             if (++$calls === 1) throw new \Illuminate\Http\Client\ConnectionException('do-not-log-bot-token');
@@ -193,7 +193,7 @@ class DeadlineNotificationsTest extends DeadlineFeatureCase
 
     public function test_group_migration_retries_new_destination_and_removed_bot_stops_future_sends(): void
     {
-        $this->teacher(); $chat=$this->chat(); $this->policy(); app(DeadlineNotifications::class)->dispatchDue();
+        $this->teacher(); $this->policy(); $chat=$this->chat(); app(DeadlineNotifications::class)->dispatchDue();
         $delivery=DB::table('deadline_notification_deliveries')->where('recipient_type','chat')->first();
         Http::fakeSequence()->push(['ok'=>false,'error_code'=>400,'parameters'=>['migrate_to_chat_id'=>-10012345]],400)
             ->push(['ok'=>true,'result'=>['message_id'=>22]]);
