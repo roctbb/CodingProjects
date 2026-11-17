@@ -34,6 +34,7 @@ class Kernel extends ConsoleKernel
         Commands\MoveCodeOriginals::class,
         Commands\DispatchDeadlineNotifications::class,
         Commands\DispatchCodeExecutionAlerts::class,
+        Commands\SyncGuardIdentities::class,
     ];
 
     /**
@@ -44,6 +45,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $schedule->command('guard:sync-identities')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('birthdays')->daily();
         $schedule->command('coins:random-drop')->daily();
         $schedule->command('pets:daily-actions')->daily();
