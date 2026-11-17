@@ -63,4 +63,16 @@ class GuardIdentitySyncTest extends TestCase
         app(GuardIdentitySync::class)->send([['id' => 42, 'name' => 'Novice', 'role' => 'novice']]);
         Http::assertSent(fn ($request) => $request->data()['users'][0]['role'] === 'student');
     }
+
+    public function test_legacy_names_cannot_poison_a_whole_sync_batch(): void
+    {
+        config(['guard.url' => 'https://guard.geekclass.ru', 'guard.secret' => str_repeat('guard-test-', 6)]);
+        Http::fake(['*' => Http::response(['ok' => true])]);
+        app(GuardIdentitySync::class)->send([
+            ['id' => 42, 'name' => "\n\x00", 'role' => 'student'],
+            ['id' => 43, 'name' => str_repeat('Я', 180), 'role' => 'student'],
+        ]);
+        Http::assertSent(fn ($request) => $request->data()['users'][0]['name'] === 'Пользователь #42'
+            && mb_strlen($request->data()['users'][1]['name']) === 160);
+    }
 }

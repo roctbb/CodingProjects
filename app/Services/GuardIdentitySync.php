@@ -24,10 +24,11 @@ class GuardIdentitySync
             || !in_array($parts['path'] ?? '', ['', '/'], true) || strlen((string) config('guard.secret')) < 32) {
             throw new RuntimeException('Guard requires an HTTPS origin and an independent secret of at least 32 bytes.');
         }
-        $payload = array_map(static fn (array $user) => [
-            'id' => (int) $user['id'], 'name' => (string) $user['name'],
-            'role' => $user['role'] === 'novice' ? 'student' : $user['role'],
-        ], $users);
+        $payload = array_map(static function (array $user): array {
+            $name = trim(preg_replace('/[\x00-\x1F]/u', '', (string) $user['name']));
+            return ['id' => (int) $user['id'], 'name' => mb_substr($name ?: 'Пользователь #'.$user['id'], 0, 160),
+                'role' => $user['role'] === 'novice' ? 'student' : $user['role']];
+        }, $users);
         $now = time();
         $token = JWT::encode(['sub' => 'codingprojects', 'aud' => 'guard:identities', 'iat' => $now, 'exp' => $now + 30], config('guard.secret'), 'HS256');
         try {
