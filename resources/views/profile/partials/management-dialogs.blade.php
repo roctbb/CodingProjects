@@ -64,7 +64,7 @@
                         </div>
                         <div class="modal-footer gc-form-footer">
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
-                            <button type="submit" class="btn btn-coin">Сохранить операцию</button>
+                            <button type="submit" class="btn btn-primary">Сохранить операцию</button>
                         </div>
                     </form>
                 </div>

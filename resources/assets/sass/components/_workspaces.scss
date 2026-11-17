@@ -113,9 +113,7 @@
 .planner-entry>.planner-handle { width:8px; margin-left:-8px; opacity:0; }
 .planner-entry:hover>.planner-handle,.planner-entry:focus-within>.planner-handle,.is-dragging .planner-handle { opacity:1; }
 .planner-session-footer { display:flex; flex-wrap:wrap; align-items:center; gap:var(--gc-space-3); margin-top:var(--gc-space-3); }
-.planner-bonus-action { color:var(--gc-coin); min-width:var(--gc-control-height-sm); }
-.planner-bonus-action:is(:hover,:focus-visible) { background:color-mix(in srgb,var(--gc-coin) 8%,var(--gc-surface)); color:var(--gc-coin); }
-.planner-menu :is([data-action="session-bonus"],[data-action="class-bonus"]) {color:var(--gc-coin);}
+.planner-bonus-action { min-width:var(--gc-control-height-sm); }
 .planner-session.is-empty .planner-session-footer > .flex-grow-1 { display:none; }
 .planner-session-note { color:var(--gc-on-surface-muted); font-size:var(--gc-font-small); margin:var(--gc-space-3) 0 0; white-space:pre-wrap; overflow-wrap:anywhere; }
 .planner-session-note i { color:var(--gc-primary); margin-right:var(--gc-space-1); }

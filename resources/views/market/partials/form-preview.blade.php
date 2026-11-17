@@ -18,7 +18,7 @@
             </div>
             <h6 class="fw-medium lh-sm mb-2" data-market-preview-name>{{ $previewName }}</h6>
             <p class="text-muted small lh-sm mb-3" data-market-preview-description>{{ old('description', $good?->description ?? 'Описание товара появится здесь.') }}</p>
-            <div class="gc-purchase-footer mt-auto"><span class="gc-purchase-price"><span data-market-preview-price>{{ old('price', $good?->price ?? 0) }}</span> GC</span><button class="btn btn-coin btn-sm pe-none" type="button" tabindex="-1" aria-disabled="true"><span data-market-preview-action>{{ $previewAuction ? 'Ставка' : 'Купить' }}</span></button></div>
+            <div class="gc-purchase-footer mt-auto"><span class="gc-purchase-price"><span data-market-preview-price>{{ old('price', $good?->price ?? 0) }}</span> GC</span><button class="btn btn-primary btn-sm pe-none" type="button" tabindex="-1" aria-disabled="true"><span data-market-preview-action>{{ $previewAuction ? 'Ставка' : 'Купить' }}</span></button></div>
         </div>
     </article>
 </section>

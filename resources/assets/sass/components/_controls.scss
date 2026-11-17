@@ -1,4 +1,5 @@
 // Brand-aware shared components. Values come from tokens and runtime palette.
+// Reserved for student purchases that change learning access, limits or results.
 .btn-coin {
   --bs-btn-color:var(--gc-coin);
   --bs-btn-bg:color-mix(in srgb,var(--gc-coin) 8%,var(--gc-surface));

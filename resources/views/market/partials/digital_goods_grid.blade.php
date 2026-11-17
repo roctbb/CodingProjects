@@ -107,7 +107,7 @@
                                        placeholder="Например: Мастер циклов"
                                        @if(!$canBuy) disabled @endif>
                                 <x-gc-purchase-footer :price="$item['cost']" :original-price="$item['base_cost'] ?? null">
-                                    <button class="btn btn-coin btn-sm" type="submit" data-confirm="Купить кастомное звание на {{ $user->customTitleDurationDays() }} дней за {{ $item['cost'] }} GC?" @if(!$canBuy) disabled @endif>{{ $canBuy ? 'Купить' : 'Нужно ещё '.max(0, $item['cost'] - $user->balance()).' GC' }}</button>
+                                    <button class="btn btn-primary btn-sm" type="submit" data-confirm="Купить кастомное звание на {{ $user->customTitleDurationDays() }} дней за {{ $item['cost'] }} GC?" @if(!$canBuy) disabled @endif>{{ $canBuy ? 'Купить' : 'Нужно ещё '.max(0, $item['cost'] - $user->balance()).' GC' }}</button>
                                 </x-gc-purchase-footer>
                             </form>
                         @elseif ($type === 'avatar_frame')
@@ -117,7 +117,7 @@
                                 <input type="hidden" name="return_to" value="market">
                                 <input type="hidden" name="avatar_frame" value="{{ $item['frame_key'] }}">
                                 <x-gc-purchase-footer :price="$item['cost']" :original-price="$item['base_cost'] ?? null">
-                                    <button class="btn btn-coin btn-sm" type="submit" data-confirm="{{ ($item['active'] ?? false) ? 'Продлить' : 'Купить' }} {{ $item['name'] }} за {{ $item['cost'] }} GC?" @if(!$canBuy) disabled @endif>{{ $canBuy ? (($item['active'] ?? false) ? 'Продлить' : 'Купить') : 'Нужно ещё '.max(0, $item['cost'] - $user->balance()).' GC' }}</button>
+                                    <button class="btn btn-primary btn-sm" type="submit" data-confirm="{{ ($item['active'] ?? false) ? 'Продлить' : 'Купить' }} {{ $item['name'] }} за {{ $item['cost'] }} GC?" @if(!$canBuy) disabled @endif>{{ $canBuy ? (($item['active'] ?? false) ? 'Продлить' : 'Купить') : 'Нужно ещё '.max(0, $item['cost'] - $user->balance()).' GC' }}</button>
                                 </x-gc-purchase-footer>
                             </form>
                         @elseif ($type === 'custom_avatar_frame')
@@ -137,7 +137,7 @@
                                 {{ csrf_field() }}
                                 <input type="hidden" name="expected_cost" value="{{ $type === 'custom_avatar_frame' ? (!empty($frameConfig['animated']) ? $item['animated_cost'] : $item['static_cost']) : $item['cost'] }}" @if($type === 'custom_avatar_frame') data-frame-expected-cost @endif>
                                 <x-gc-purchase-footer :price="$item['cost']" :original-price="$item['base_cost'] ?? null">
-                                    <button class="btn btn-coin btn-sm" type="submit" data-confirm="Купить цифровой товар «{{ $item['name'] }}» за {{ $item['cost'] }} GC?">Купить</button>
+                                    <button class="btn btn-primary btn-sm" type="submit" data-confirm="Купить цифровой товар «{{ $item['name'] }}» за {{ $item['cost'] }} GC?">Купить</button>
                                 </x-gc-purchase-footer>
                             </form>
                         @else
@@ -276,7 +276,7 @@
                                     <button class="btn btn-light gc-action-button" type="button" data-market-frame-modal-close>
                                         Отмена
                                     </button>
-                                    <button class="btn btn-coin gc-action-button" type="submit"
+                                    <button class="btn btn-primary gc-action-button" type="submit"
                                             data-frame-submit
                                             data-frame-static-cost="{{ $item['static_cost'] ?? $item['cost'] }}"
                                             data-frame-animated-cost="{{ $item['animated_cost'] ?? $item['cost'] }}"

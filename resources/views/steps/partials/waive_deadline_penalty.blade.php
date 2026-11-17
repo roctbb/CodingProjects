@@ -4,7 +4,7 @@
     && (Auth::user()->role === 'admin' || (Auth::user()->role === 'teacher' && $course->teachers->contains('id', Auth::id()))))
     <form class="solution-special-action-row" method="POST" action="{{ url('/insider/courses/'.$solution->course_id.'/tasks/'.$solution->task_id.'/solution/'.$solution->id.'/waive-deadline-penalty') }}">
         @csrf
-        <button type="submit" class="btn btn-sm solution-special-action" data-confirm="Убрать штраф за дедлайн и восстановить XP без списания GC у ученика?">
+        <button type="submit" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2" data-confirm="Убрать штраф за дедлайн и восстановить XP без списания GC у ученика?">
             <i class="fas fa-calendar-check"></i>
             Убрать штраф
         </button>

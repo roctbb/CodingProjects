@@ -514,7 +514,7 @@ export async function workspace(root) {
             if(!record.text)panel.append(node('p',{class:'text-muted small'},'Код этой сдачи не сохранился отдельно.'));
             if(record.can_grade && !ownMode)panel.append(legacyGrading(record));
             else if(record.comment)panel.append(feedbackDisplay(record.comment));
-            if((!teacher || ownMode) && !root.hasAttribute('data-history-only'))panel.append(button('Ещё одно решение',showComposer,'primary'));
+            if((!teacher || ownMode) && !root.hasAttribute('data-history-only'))panel.append(actions(button('Ещё одно решение',showComposer,'primary')));
             if(!teacher)panel.append(reviewRequest(record,()=>showLegacyAttempt(item)));
             arrangeResult(panel);finishResult(panel);
         } catch(e) {
@@ -594,6 +594,14 @@ export async function workspace(root) {
         summary.classList.toggle('is-toolbar-only',teacher&&!ownMode && !!header?.hidden && !award && !status);
         summary.classList.toggle('is-student',!teacher||ownMode);
         if(!teacher || ownMode){
+            let controls=body.querySelector(':scope > .gc-execution-actions');
+            const review=body.querySelector(':scope > .gc-review-request');
+            if(review){controls??=actions();controls.append(review);}
+            if(controls){
+                controls.classList.add('gc-submission-actions');
+                controls.setAttribute('role','group');controls.setAttribute('aria-label','Действия с решением');
+                body.prepend(controls);
+            }
             const source=[...body.children].filter(child=>child.matches('.gc-submitted-work'));
             source.forEach(child=>body.append(child));return;
         }

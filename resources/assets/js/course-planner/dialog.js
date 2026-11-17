@@ -48,7 +48,7 @@ export function createPlannerDialog({ root, onOpen }) {
       "</select></div>"
     );
   }
-  function modal(title, html, submit, label = "Сохранить", tone = "primary") {
+  function modal(title, html, submit, label = "Сохранить") {
     onOpen();
     const dialog = $("#planner-dialog");
     $("#planner-dialog-title").textContent = title;
@@ -56,8 +56,6 @@ export function createPlannerDialog({ root, onOpen }) {
     $("#planner-dialog-error").textContent = "";
     $("#planner-dialog-submit").textContent = label;
     $("#planner-dialog-submit").hidden = !submit;
-    $("#planner-dialog-submit").classList.toggle('btn-coin', tone === 'coin');
-    $("#planner-dialog-submit").classList.toggle('btn-primary', tone !== 'coin');
     dialog.querySelector('footer [data-action="close-dialog"]').textContent =
       submit ? "Отмена" : "Закрыть";
     modalSubmit = submit;

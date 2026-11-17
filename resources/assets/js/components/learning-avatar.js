@@ -162,7 +162,6 @@ export default function initLearningAvatar() {
             const total = Array.from(purchased.values()).reduce(function (sum, item) {
                 return sum + item.cost;
             }, 0);
-            if (submit) { submit.classList.toggle('btn-coin', total > 0); submit.classList.toggle('btn-primary', total <= 0); }
 
             if (!summary) return;
 

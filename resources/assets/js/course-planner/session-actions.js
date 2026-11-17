@@ -37,7 +37,7 @@ export function createSessionActions({ root, getState, setTarget, setRange, load
           + '<p class="gc-help-text mt-3">Применится ко всем материалам, которые сейчас добавлены в занятие. Уроки и ступени включают все свои задачи. Индивидуальные суммы будут заменены; 0 — убрать бонус.</p>'
           + '<p class="gc-help-text">За каждую задачу бонус начисляется один раз в курсе, если первое полное решение отправлено во время занятия по расписанию. У занятия должно быть задано время.</p>', async () => {
             await mutate('session_bonus', {session_id: session.id, class_bonus_gc: Number(values().class_bonus_gc)}, 'Бонус применён ко всем задачам занятия.');
-          }, 'Сохранить', 'coin');
+          }, 'Сохранить');
         break;
       }
       case "add-session": {
