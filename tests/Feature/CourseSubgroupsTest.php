@@ -51,6 +51,19 @@ class CourseSubgroupsTest extends CoursePlannerTest
         $this->assertCount(0,CourseScope::for($course,User::find(1),new Request(['subgroup'=>'1']))->students());
     }
 
+    public function test_material_catalog_uses_the_subgroup_current_lesson_when_overridden(): void
+    {
+        DB::table('program_chapters')->insert(['id' => 4, 'name' => 'Next', 'program_id' => 1, 'sort_index' => 200]);
+        DB::table('lessons')->where('id', 2)->update(['chapter_id' => 4]);
+        DB::table('courses')->where('id', 1)->update(['current_lesson_id' => 1, 'default_chapter_id' => 1]);
+        CourseSubgroup::find(1)->update(['current_lesson_override' => true, 'current_lesson_id' => 2]);
+        $this->getJson('/insider/courses/1/planner/api/state?subgroup=1')->assertOk()
+            ->assertJsonPath('course.catalog_chapter_id', 4)->assertJsonPath('course.audience_name', 'Группа А');
+        $this->getJson('/insider/courses/1/planner/api/state?subgroup=2')->assertOk()->assertJsonPath('course.catalog_chapter_id', 1);
+        CourseSubgroup::find(1)->update(['current_lesson_override' => false]);
+        $this->getJson('/insider/courses/1/planner/api/state?subgroup=1')->assertOk()->assertJsonPath('course.catalog_chapter_id', 1);
+    }
+
     public function test_student_reads_own_and_common_sessions_and_cannot_write_or_read_other_groups(): void
     {
         $a=$this->manual(1,'Только А'); $b=$this->manual(2,'Только Б'); $common=$this->manual(0,'Общее','18:00');

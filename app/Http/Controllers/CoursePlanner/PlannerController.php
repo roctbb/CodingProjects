@@ -150,7 +150,8 @@ class PlannerController extends Controller
         $this->ready();
         $query = $request->validate(['query' => 'nullable|string|max:200', 'type' => 'nullable|string|max:80',
             'cursor' => 'nullable|string|max:4096', 'limit' => 'nullable|integer|min:1|max:50',
-            'parent_type' => 'nullable|string|max:80', 'parent_external_id' => 'nullable|string|max:190']);
+            'parent_type' => 'nullable|string|max:80', 'parent_external_id' => 'nullable|string|max:190',
+            'chapter' => 'nullable|integer|min:0']);
         $query = array_filter($query, fn ($v) => $v !== null);
         return $this->providerResponse(function () use ($providers, $service, $course, $request, $provider_key, $query) {
             $driver = $providers->driver($provider_key, $service->planner($course));

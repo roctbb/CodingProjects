@@ -80,7 +80,7 @@ export default async function interactions(page, config) {
             });
             await test('revision-conflict-and-retry', async () => {
                 await menuAction(first, 'add-text'); await p.locator('#planner-note-text').fill('QA повтор');
-                await p.route('**/commands/add_text', route => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ code: 'revision_conflict', message: 'QA конфликт ревизии' }) }), { times: 1 });
+                await p.route('**/commands/add_text*', route => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ code: 'revision_conflict', message: 'QA конфликт ревизии' }) }), { times: 1 });
                 await submit(); await p.locator('#planner-dialog-error').filter({ hasText: 'QA конфликт' }).waitFor(); await waitSaved();
                 assert(await p.locator('#planner-dialog').evaluate(el => el.open), 'Conflict closed the form');
                 assert(!await p.locator('#planner-dialog-submit').isDisabled(), 'Retry is disabled');

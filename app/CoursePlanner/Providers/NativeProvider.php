@@ -30,8 +30,12 @@ class NativeProvider implements ContentProvider
         if ($parentType && !in_array($parentType, ['lesson', 'step'], true)) {
             throw new ProviderException('invalid_filter', 'Неизвестный родительский материал.', 422);
         }
+        $chapter = isset($query['chapter']) ? (int) $query['chapter'] : null;
+        if ($chapter && !DB::table('program_chapters')->where('program_id', $course->program_id)->where('id', $chapter)->exists()) {
+            throw new ProviderException('invalid_filter', 'Глава не найдена в программе курса.', 422);
+        }
         $types = $type ? [$type] : ($parentType === 'lesson' ? ['step'] : ($parentType === 'step' ? ['task'] : array_keys(self::TYPES)));
-        $signature = hash('sha256', json_encode([$course->id, $actor->id, $type, $parentType, $parentId, $query['query'] ?? '']));
+        $signature = hash('sha256', json_encode([$course->id, $actor->id, $type, $parentType, $parentId, $query['query'] ?? '', $chapter]));
         $offset = 0;
         if (!empty($query['cursor'])) {
             $cursor = json_decode(base64_decode($query['cursor'], true) ?: '', true);
@@ -44,6 +48,16 @@ class NativeProvider implements ContentProvider
         $union = null;
         foreach ($types as $kind) {
             $q = $this->query($course, $kind);
+            $lesson = $kind === 'lesson' ? 'r' : 'l';
+            if ($chapter !== null) {
+                $chapter ? $q->where($lesson.'.chapter_id', $chapter) : $q->whereNull($lesson.'.chapter_id');
+            }
+            $q->leftJoin('program_chapters as c', 'c.id', '=', $lesson.'.chapter_id')
+                ->selectRaw('COALESCE(c.sort_index, 2147483647) as chapter_order, COALESCE(c.id, 2147483647) as chapter_position')
+                ->selectRaw('COALESCE('.$lesson.'.sort_index, 100) as lesson_order')
+                ->selectRaw(($kind === 'lesson' ? '-2147483648' : 'COALESCE('.($kind === 'step' ? 'r' : 's').'.sort_index, 100)').' as step_order')
+                ->selectRaw(($kind === 'lesson' ? '0' : ($kind === 'step' ? 'r.id' : 's.id')).' as step_position')
+                ->selectRaw(($kind === 'task' ? 'COALESCE(r.sort_index, 100)' : '-2147483648').' as task_order');
             if ($parentType === 'lesson') {
                 $q->where($kind === 'lesson' ? 'r.id' : 'l.id', $parentId);
             } elseif ($parentType === 'step') {
@@ -55,8 +69,12 @@ class NativeProvider implements ContentProvider
             }
             $union ? $union->unionAll($q) : $union = $q;
         }
-        $rows = DB::query()->fromSub($union, 'catalog')->orderBy('name')->orderBy('resource_type')->orderBy('external_id')
-            ->offset($offset)->limit($limit + 1)->get();
+        $rows = DB::query()->fromSub($union, 'catalog');
+        foreach (['chapter_order', 'chapter_position', 'lesson_order', 'lesson_id', 'step_order', 'step_position', 'task_order', 'external_id'] as $column) {
+            $rows->orderBy($column);
+        }
+        $rows = $rows->offset($offset)->limit($limit + 1)->get(['external_id', 'name', 'source_updated_at', 'resource_type',
+            'lesson_id', 'chapter_id', 'step_id', 'max_points', 'is_star', 'is_hidden']);
         $more = $rows->count() > $limit;
         return ['protocol_version' => '1', 'provider_key' => 'codingprojects',
             'items' => $rows->take($limit)->map(fn ($r) => $this->card($course, $r))->all(),

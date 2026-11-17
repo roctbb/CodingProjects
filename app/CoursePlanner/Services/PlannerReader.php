@@ -26,6 +26,13 @@ class PlannerReader
     public function state(Course $course, PlannerCourse $planner, string $from, string $to, string $layer, ?array $plannerIds = null): array
     {
         $plannerIds ??= [$planner->id];
+        $chapters = DB::table('program_chapters')->where('program_id', $course->program_id)->orderBy('sort_index')->orderBy('id')->get(['id', 'name']);
+        $lessons = Lesson::where('program_id', $course->program_id)->orderBy('sort_index')->orderBy('id')->get(['id', 'name', 'chapter_id']);
+        $scope = \App\Support\CourseScope::for($course);
+        $currentLessonId = $scope->group?->current_lesson_override ? $scope->group->current_lesson_id : $course->current_lesson_id;
+        $currentChapterId = $lessons->firstWhere('id', $currentLessonId)?->chapter_id;
+        $catalogChapterId = $chapters->firstWhere('id', $currentChapterId)?->id
+            ?? $chapters->firstWhere('id', $course->default_chapter_id)?->id ?? $chapters->first()?->id;
         $tracks = PlannerCourse::whereIn('id', $plannerIds)->get()->keyBy('id');
         $groups = app(\App\Services\CourseSubgroups::class)->available() ? $course->subgroups->keyBy('id') : collect();
         $providers = $this->providers->listing($planner);
@@ -71,11 +78,12 @@ class PlannerReader
             $data['entries'] = $data['entries']->sortBy('sort_index')->values()->all();
             return $data;
         })->values()->all();
-        return ['course' => ['id' => $course->id, 'name' => $course->name], 'settings' => $this->calendar->currentSettings($planner),
+        return ['course' => ['id' => $course->id, 'name' => $course->name, 'catalog_chapter_id' => $catalogChapterId, 'audience_name' => $scope->label()],
+            'chapters' => $chapters->all(), 'settings' => $this->calendar->currentSettings($planner),
             'today' => CarbonImmutable::now($planner->timezone)->toDateString(),
             'revision' => $planner->fresh()->revision, 'range' => ['from' => $from, 'to' => $to], 'slots' => $slots->map(fn ($slot) => $slot->toArray() + ['editable' => (int) $slot->planner_course_id === (int) $planner->id])->all(),
             'sessions' => $sessionData, 'exceptions' => CalendarException::where('planner_course_id', $planner->id)->orderBy('starts_on')->get()->toArray(),
-            'providers' => $providers, 'lessons' => Lesson::where('program_id', $course->program_id)->orderBy('sort_index')->orderBy('id')->get(['id', 'name', 'chapter_id'])->toArray(),
+            'providers' => $providers, 'lessons' => $lessons->toArray(),
             'deadlines' => $deadlines, 'summary' => $this->summary($course, $planner, $layer, $plannerIds),
             'history' => PlannerChange::where('planner_course_id', $planner->id)->orderByDesc('id')->limit(20)->get(['id', 'actor_id', 'operation_type', 'revision_after', 'undoable', 'created_at'])->toArray()];
     }

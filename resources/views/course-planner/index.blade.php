@@ -79,6 +79,7 @@
                 <div class="planner-catalog-heading"><div><h2 id="planner-catalog-title">Добавить материалы</h2><div class="planner-catalog-target" aria-live="polite"><strong id="planner-target-title">Выберите занятие</strong><span id="planner-target-subtitle"></span></div></div><button type="button" class="planner-close" data-action="close-catalog" aria-label="Закрыть выбор материалов">×</button></div>
                 <div class="planner-catalog-filters">
                     <label for="planner-provider">Провайдер</label><select id="planner-provider" class="form-select form-select-sm"></select>
+                    <label for="planner-chapter" data-catalog-chapter-label>Глава</label><select id="planner-chapter" class="form-select form-select-sm"><option value="">Все главы</option></select>
                     <div class="planner-search"><i class="fas fa-magnifying-glass" aria-hidden="true"></i><input id="planner-search" class="form-control form-control-sm" type="search" aria-label="Поиск материалов" maxlength="200" placeholder="Найти материал…" autocomplete="off"></div>
                     <label class="visually-hidden" for="planner-type">Тип материала</label><select id="planner-type" class="form-select form-select-sm"><option value="">Все типы</option></select>
                     <div id="planner-catalog-breadcrumb"></div>
@@ -86,6 +87,7 @@
                 <div id="planner-catalog-status" class="planner-catalog-status" aria-live="polite"></div>
                 <div id="planner-catalog-list" class="planner-catalog-list"></div>
                 <div class="planner-pagination"><button type="button" class="planner-quiet-button" data-action="catalog-prev" disabled aria-label="Предыдущая страница материалов">← Предыдущая страница</button><span id="planner-page">Страница 1</span><button type="button" class="planner-quiet-button" data-action="catalog-next" disabled aria-label="Следующая страница материалов">Следующая страница →</button></div>
+                <details id="planner-catalog-selection" class="planner-catalog-selection" hidden><summary>Выбранные материалы</summary><ul id="planner-catalog-selection-list" class="list-unstyled"></ul></details>
                 <div class="gc-dialog-actions"><span id="planner-catalog-selected" class="gc-help-text" aria-live="polite">Ничего не выбрано</span><button type="button" class="btn btn-outline-secondary btn-sm" data-action="close-catalog">Закрыть</button><button type="button" class="btn btn-primary btn-sm" data-action="catalog-attach-selected" aria-label="Добавить выбранные материалы на занятие" disabled>Добавить</button></div>
                 <p id="planner-catalog-error" class="text-danger small mb-0" role="alert"></p>
             </dialog>

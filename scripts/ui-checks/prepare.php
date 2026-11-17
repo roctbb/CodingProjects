@@ -57,6 +57,19 @@ foreach (['catalog-desktop', 'catalog-phone'] as $variant) {
         $insert->execute([500 + $i, sprintf('QA материал %02d', $i), 'Материал для проверки страниц каталога', 500 + $i]);
     }
 }
+foreach (['desktop', 'phone'] as $device) {
+    copy($directory.'/catalog-'.$device.'.sqlite', $directory.'/planner-chapters-'.$device.'.sqlite');
+    $db = new PDO('sqlite:'.$directory.'/planner-chapters-'.$device.'.sqlite');
+    $db->exec(<<<'SQL'
+        INSERT INTO program_chapters (id, program_id, name, sort_index) VALUES
+            (501, 1, 'Следующая глава', 2), (502, 1, 'Глава без материалов', 3);
+        INSERT INTO lessons (id, name, description, is_open, sort_index, program_id, chapter_id) VALUES
+            (601, 'Я — первый по программе', 'Первый урок следующей главы', 1, 1, 1, 501),
+            (602, 'А — второй по программе', 'Второй урок следующей главы', 1, 2, 1, 501),
+            (603, 'Материал без главы', 'Урок без главы', 1, 3, 1, NULL);
+        UPDATE courses SET current_lesson_id = 601 WHERE id = 1;
+        SQL);
+}
 require __DIR__.'/prepare-code-checking.php';
 require __DIR__.'/prepare-deadlines.php';
 require __DIR__.'/prepare-task-workspace.php';

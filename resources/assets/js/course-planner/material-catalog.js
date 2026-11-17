@@ -1,10 +1,11 @@
 import { esc, date } from './format.js';
 import { nativeLessonOverlap } from './resource-overlap.js';
+import { initialCatalogChapter } from './catalog-context.js';
 
 export function createMaterialCatalog({ root, getState, setTarget, request, ensureSession, mutate, sessionTitle, status, addResource }) {
   const $ = selector => root.querySelector(selector);
   let catalogReturnFocus = null, searchTimer, catalogAbort, requestNumber = 0;
-  const catalog = { provider: 'codingprojects', query: '', type: 'lesson', cursor: null,
+  const catalog = { provider: 'codingprojects', chapter: null, rememberedChapter: undefined, query: '', type: 'lesson', cursor: null,
     previous: [], next: null, parent: [], items: [], manifest: null, selection: new Map(), loading: false };
   const cache = new Map();
   const sessionById = id => getState().data.sessions.find(s => s.id === Number(id));
@@ -24,6 +25,7 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
     }
     if (!selected && !selectedSlot) throw new Error("Добавьте занятие или настройте расписание курса.");
     catalog.selection.clear();
+    const changedChapter = syncChapter();
     const menu = button?.closest('details.planner-entry-menu');
     catalogReturnFocus = menu?.querySelector('summary') || button || document.activeElement;
     if (menu) menu.open = false;
@@ -32,15 +34,45 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
     const dialog = $("#planner-catalog");
     if (!dialog.open) dialog.showModal();
     $("#planner-search").focus();
-    if (!catalog.manifest) loadCatalog().catch(error => $("#planner-catalog-error").textContent = error.message);
+    if (!catalog.manifest || changedChapter) loadCatalog().catch(error => $("#planner-catalog-error").textContent = error.message);
   }
   function catalogSelection() {
     const count = catalog.selection.size;
     $("#planner-catalog-selected").textContent = count ? `Выбрано: ${count}` : "Ничего не выбрано";
-    root.querySelector('[data-action="catalog-attach-selected"]').disabled = !count || getState().busy || catalog.loading;
+    const submit = root.querySelector('[data-action="catalog-attach-selected"]');
+    submit.disabled = !count || getState().busy || catalog.loading;
+    submit.textContent = count ? `Добавить (${count})` : 'Добавить';
+    $("#planner-catalog-selection").hidden = !count;
+    $("#planner-catalog-selection-list").innerHTML = [...catalog.selection].map(([key, item]) =>
+      `<li><span>${esc(item.title)}<small>${esc(item.type_label || item.resource_type)}</small></span><button type="button" class="planner-quiet-button" data-action="catalog-remove" data-key="${esc(key)}" aria-label="Убрать из выбранного: ${esc(item.title)}"><i class="fas fa-xmark" aria-hidden="true"></i></button></li>`).join('');
+  }
+  function syncChapter() {
+    const { data, selected } = getState();
+    const chapter = initialCatalogChapter({ data, sessionId: selected,
+      contextChapter: document.querySelector('[data-course-context]')?.dataset.courseChapter,
+      rememberedChapter: catalog.rememberedChapter });
+    if (catalog.chapter === chapter) return false;
+    catalog.chapter = chapter;
+    catalog.parent = [];
+    catalog.query = '';
+    catalog.type = catalog.provider === 'codingprojects' ? 'lesson' : '';
+    $("#planner-search").value = '';
+    resetCatalog();
+    return true;
+  }
+  function renderChapter() {
+    const native = catalog.provider === 'codingprojects';
+    const select = $("#planner-chapter"), { data } = getState();
+    select.hidden = !native;
+    root.querySelector('[data-catalog-chapter-label]').hidden = !native;
+    select.innerHTML = '<option value="">Все главы</option>' + (data.chapters || []).map((chapter, index) =>
+      `<option value="${esc(chapter.id)}">${index + 1}. ${esc(chapter.name)}</option>`).join('') +
+      (data.lessons.some(lesson => !lesson.chapter_id) ? '<option value="0">Без главы</option>' : '');
+    select.value = catalog.chapter ?? '';
+    $("#planner-search").placeholder = native && catalog.chapter !== '' ? 'Поиск в главе…' : 'Найти материал…';
   }
   function renderTarget() {
-    const { selected, selectedSlot, layer } = getState();
+    const { data, selected, selectedSlot, layer } = getState();
     const session = sessionById(selected);
     const slot = slotById(session?.calendar_slot_id || selectedSlot);
     $("#planner-target-title").textContent = session
@@ -50,12 +82,12 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
             : slot?.local_date,
         ) + (slot?.start_time ? " · " + slot.start_time : "")
       : slot
-        ? date(slot.local_date)
+        ? date(slot.local_date) + (slot.start_time ? ' · ' + slot.start_time : '')
         : "Выберите занятие";
     $("#planner-target-subtitle").textContent = session
-      ? sessionTitle(session) + (layer === "fact" ? " · в журнал" : "")
+      ? [sessionTitle(session), session.audience_name || data.course.audience_name, layer === "fact" ? 'в журнал' : ''].filter(Boolean).join(' · ')
       : slot
-        ? "Свободное место"
+        ? ['Свободное место', data.course.audience_name].filter(Boolean).join(' · ')
         : "Или перетащите материал на нужную дату";
     if (catalog.manifest) renderCatalog();
   }
@@ -86,12 +118,16 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
     await loadCatalog();
   }
   async function loadCatalog(force = false) {
+    clearTimeout(searchTimer);
+    if (catalog.chapter === null) syncChapter();
+    renderChapter();
     const number = ++requestNumber;
     catalogAbort?.abort();
     catalogAbort = new AbortController();
     catalog.loading = true;
     const context = catalog.parent.at(-1);
     const query = new URLSearchParams({ limit: "25" });
+    if (catalog.provider === 'codingprojects' && catalog.chapter !== '') query.set('chapter', catalog.chapter);
     if (catalog.query) query.set("query", catalog.query);
     if (catalog.type) query.set("type", catalog.type);
     if (catalog.cursor) query.set("cursor", catalog.cursor);
@@ -128,7 +164,8 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
       renderCatalog();
       $("#planner-catalog-status").textContent = catalog.items.length
         ? "Материалов на странице: " + catalog.items.length
-        : "По вашему запросу ничего не найдено.";
+        : catalog.provider === 'codingprojects' && catalog.chapter !== '' && !catalog.query
+          ? 'В этой главе пока нет материалов.' : 'По вашему запросу ничего не найдено.';
     } catch (error) {
       if (error.name === "AbortError" || number !== requestNumber) return;
       $("#planner-catalog-status").innerHTML =
@@ -145,6 +182,7 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
   }
   const resourceIdentity = (provider, type, id) => JSON.stringify([provider, type, String(id)]);
   function renderCatalog() {
+    renderChapter();
     const { selected } = getState();
     const types = catalog.manifest?.resource_types || [];
     $("#planner-type").innerHTML = '<option value="">Все типы</option>' + types.map(t => `<option value="${esc(t.key)}">${esc(t.label)}</option>`).join("");
@@ -193,7 +231,7 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
       if (available) await loadCatalog();
     }
   }
-  const actionNames = new Set(['open-catalog','session-materials','close-catalog','catalog-attach-selected',
+  const actionNames = new Set(['open-catalog','session-materials','close-catalog','catalog-attach-selected','catalog-remove',
     'catalog-next','catalog-prev','catalog-retry','catalog-parent','catalog-children','catalog-add']);
   async function handleAction(button) {
     switch (button.dataset.action) {
@@ -207,6 +245,13 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
       case "close-catalog":
         closeCatalog();
         break;
+      case 'catalog-remove': {
+        catalog.selection.delete(button.dataset.key);
+        renderCatalog();
+        const remaining = $("#planner-catalog-selection-list").querySelector('button');
+        (remaining || $("#planner-search")).focus({ preventScroll: true });
+        break;
+      }
       case "catalog-attach-selected": {
         const resources = [...catalog.selection.values()];
         if (!resources.length) break;
@@ -269,17 +314,27 @@ export function createMaterialCatalog({ root, getState, setTarget, request, ensu
         t.checked = false;
         $("#planner-catalog-error").textContent = "Выберите урок целиком или его ступени. Они не должны повторять друг друга на занятии.";
       } else if (t.checked) {
-        catalog.selection.set(key, {provider_key: catalog.provider, resource_type: resource.type, external_id: resource.external_id, public_metadata:resource.public_metadata});
+        catalog.selection.set(key, {provider_key: catalog.provider, resource_type: resource.type, external_id: resource.external_id,
+          title: resource.title, type_label: resource.type_label, public_metadata: resource.public_metadata});
         $("#planner-catalog-error").textContent = '';
       }
       else catalog.selection.delete(key);
       catalogSelection();
       return true;
     }
+    if (t.id === 'planner-chapter') {
+      catalog.chapter = t.value;
+      catalog.rememberedChapter = t.value;
+      catalog.parent = [];
+      catalog.type = 'lesson';
+      resetCatalog();
+      loadCatalog().catch(error => status(error.message, true));
+      return true;
+    }
     if (t.id === "planner-provider") {
       catalogAbort?.abort();
       catalog.provider = t.value;
-      catalog.type = "";
+      catalog.type = catalog.provider === 'codingprojects' ? 'lesson' : '';
       catalog.query = "";
       catalog.parent = [];
       catalog.items = [];

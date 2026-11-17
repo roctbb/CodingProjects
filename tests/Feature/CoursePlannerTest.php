@@ -45,6 +45,9 @@ class CoursePlannerTest extends TestCase
             INSERT INTO lesson_info (course_id,lesson_id,start_date) VALUES (1,1,'2020-01-01'),(1,2,'2020-01-01');
             INSERT INTO tasks VALUES (1,'Stairs',1,10,0,0,'2026-11-01'),(2,'Bonus',2,20,1,0,'2026-11-01'),(3,'Hidden',2,5,0,1,'2026-11-01'),(4,'Other task',4,10,0,0,'2026-11-01');
             SQL);
+        DB::statement('ALTER TABLE tasks ADD COLUMN sort_index INTEGER DEFAULT 100');
+        DB::statement('ALTER TABLE courses ADD COLUMN current_lesson_id INTEGER');
+        DB::statement('ALTER TABLE courses ADD COLUMN default_chapter_id INTEGER');
         (require base_path('database/migrations/2026_11_10_120000_create_course_planner_tables.php'))->up();
         (require base_path('database/migrations/2026_11_11_180000_add_comment_to_planner_sessions.php'))->up();
         Carbon::setTestNow(Carbon::parse('2026-11-10 12:00:00', 'Europe/Moscow'));
@@ -190,6 +193,51 @@ class CoursePlannerTest extends TestCase
         $this->assertCount(1, $search->json('catalog.items'));
         $this->assertSame('Call stack', $search->json('catalog.items.0.title'));
         $this->getJson($this->api.'/providers/codingprojects/resources?limit=1&type=task&cursor='.urlencode($cursor))->assertStatus(409);
+    }
+
+    public function test_catalog_filters_every_material_level_by_chapter_before_pagination(): void
+    {
+        DB::table('program_chapters')->insert(['id' => 4, 'name' => 'Next', 'program_id' => 1, 'sort_index' => 200]);
+        DB::table('lessons')->where('id', 2)->update(['chapter_id' => 4]);
+        DB::table('tasks')->insert(['id' => 5, 'name' => 'File task', 'step_id' => 3, 'max_mark' => 10]);
+        $catalog = $this->api.'/providers/codingprojects/resources';
+        foreach (['lesson' => '2', 'step' => '3', 'task' => '5'] as $type => $id) {
+            $this->getJson($catalog.'?chapter=4&type='.$type)->assertOk()->assertJsonCount(1, 'catalog.items')
+                ->assertJsonPath('catalog.items.0.external_id', $id);
+        }
+        $this->getJson($catalog.'?chapter=4&parent_type=lesson&parent_external_id=1')->assertOk()->assertJsonCount(0, 'catalog.items');
+        $this->getJson($catalog.'?chapter=2')->assertStatus(422);
+        $this->getJson($catalog.'?chapter=-1')->assertStatus(422);
+        $this->getJson($catalog.'?chapter[]=1')->assertStatus(422);
+        $cursor = $this->getJson($catalog.'?chapter=1&limit=1')->assertOk()->json('catalog.page.next_cursor');
+        $this->getJson($catalog.'?chapter=4&limit=1&cursor='.urlencode($cursor))->assertStatus(409);
+        $this->getJson($catalog)->assertOk()->assertJsonCount(9, 'catalog.items');
+        DB::table('lessons')->where('id', 2)->update(['chapter_id' => null]);
+        $this->getJson($catalog.'?chapter=0&type=lesson')->assertOk()->assertJsonPath('catalog.items.0.external_id', '2');
+    }
+
+    public function test_catalog_follows_chapter_lesson_step_and_task_order_instead_of_names(): void
+    {
+        DB::table('program_chapters')->insert(['id' => 4, 'name' => 'First chapter', 'program_id' => 1, 'sort_index' => 50]);
+        DB::table('lessons')->where('id', 2)->update(['chapter_id' => 4]);
+        $catalog = $this->api.'/providers/codingprojects/resources';
+        $this->assertSame(['2', '1'], array_column($this->getJson($catalog.'?type=lesson')->assertOk()->json('catalog.items'), 'external_id'));
+        DB::table('program_steps')->where('id', 2)->update(['sort_index' => 50]);
+        $this->assertSame(['2', '1'], array_column($this->getJson($catalog.'?type=step&chapter=1')->assertOk()->json('catalog.items'), 'external_id'));
+        DB::table('tasks')->where('id', 3)->update(['sort_index' => 50]);
+        $this->assertSame(['3', '2', '1'], array_column($this->getJson($catalog.'?type=task&chapter=1')->assertOk()->json('catalog.items'), 'external_id'));
+    }
+
+    public function test_catalog_default_chapter_uses_the_current_lesson_then_course_default_then_first_chapter(): void
+    {
+        DB::table('program_chapters')->insert(['id' => 4, 'name' => 'Next', 'program_id' => 1, 'sort_index' => 200]);
+        DB::table('lessons')->where('id', 2)->update(['chapter_id' => 4]);
+        DB::table('courses')->where('id', 1)->update(['current_lesson_id' => 2, 'default_chapter_id' => 1]);
+        $this->getJson($this->api.'/state')->assertOk()->assertJsonPath('course.catalog_chapter_id', 4)->assertJsonCount(2, 'chapters');
+        DB::table('courses')->where('id', 1)->update(['current_lesson_id' => 3, 'default_chapter_id' => 4]);
+        $this->getJson($this->api.'/state')->assertOk()->assertJsonPath('course.catalog_chapter_id', 4);
+        DB::table('courses')->where('id', 1)->update(['default_chapter_id' => 2]);
+        $this->getJson($this->api.'/state')->assertOk()->assertJsonPath('course.catalog_chapter_id', 1);
     }
 
     public function test_whole_lesson_can_be_split_without_duplicate_steps(): void
