@@ -4,7 +4,9 @@ export default function initFormWorkspaces() {
         const focusField = id => {
             const input = form.querySelector(`[id="${CSS.escape(id)}"]`);
             if (!input) return;
+            for(let parent=input.parentElement;parent && parent!==form;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;
             const editor = window.markdownEditors?.[id];
+            editor?.codemirror.refresh();
             const target = editor?.codemirror.getWrapperElement() || form.querySelector(`[data-field="${CSS.escape(id)}"]`) || input;
             target.scrollIntoView({block:'center'});
             if (editor) { if(editor.isPreviewActive())window.EasyMDE.togglePreview(editor); editor.codemirror.focus(); } else if (input.matches('select[data-enhanced-multiselect]')) document.getElementById(id+'-control')?.focus(); else (input.matches('fieldset') ? input.querySelector('input,select,textarea,button') : input)?.focus();
@@ -21,12 +23,21 @@ export default function initFormWorkspaces() {
         const updateMode = () => {
             const mode = form.querySelector('[name=answer_mode]:checked')?.value;
             const answer = form.querySelector('[data-short-answer]');
-            if (answer && mode) { answer.disabled = mode !== 'short'; answer.required = mode === 'short'; }
+            if (answer && mode) {
+                answer.disabled = mode !== 'short'; answer.required = mode === 'short';
+                answer.closest('[data-field]').hidden = mode !== 'short';
+            }
             const achievement = form.querySelector('[data-authoring-achievement]');
             const instruction = form.querySelector('[data-authoring-achievement-instruction]');
-            if (achievement && instruction) instruction.disabled = !achievement.checked;
+            if (achievement && instruction) {
+                instruction.disabled = !achievement.checked;
+                instruction.closest('[data-field]').hidden = !achievement.checked;
+            }
         };
         updateMode(); form.addEventListener('change', updateMode);
+        form.querySelectorAll('[data-authoring-optional]').forEach(details=>details.addEventListener('toggle',()=>{
+            if(details.open)details.querySelectorAll('[data-markdown-editor]').forEach(input=>window.markdownEditors?.[input.id]?.codemirror.refresh());
+        }));
         const dirty = () => { if (state) state.textContent = 'Есть несохранённые изменения'; };
         form.addEventListener('input',dirty); form.addEventListener('change',dirty);
         (form.matches('[data-registration-flow]') ? [] : form.closest('[data-authoring-page], [data-form-page]')?.querySelectorAll('[data-field-error-link]') || []).forEach(link => link.addEventListener('click',event=>{event.preventDefault();focusField(decodeURIComponent(link.hash.slice(1)));}));

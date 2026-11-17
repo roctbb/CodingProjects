@@ -105,6 +105,18 @@ class CodeCheckingTest extends TestCase
         ]];
     }
 
+    public function test_test_checkers_still_reject_null_or_invalid_test_configuration(): void
+    {
+        $url='/insider/courses/7/tasks/12/checker/private';
+        foreach ([null,'invalid'] as $tests) {
+            $this->login(1)->putJson($url,array_replace($this->configBody(),['test_config'=>$tests]))
+                ->assertUnprocessable()->assertJsonValidationErrors('test_config');
+        }
+        $this->putJson($url,array_replace($this->configBody(),['test_config'=>['tests'=>[]]]))
+            ->assertUnprocessable()->assertJsonValidationErrors('tests');
+        $this->assertDatabaseCount('code_task_checkers',0);
+    }
+
     public function test_teacher_uses_own_draft_and_the_normal_submission_limits_and_pipeline():void
     {
         $base='/insider/courses/7/tasks/12';

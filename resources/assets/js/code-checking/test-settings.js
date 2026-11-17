@@ -1,11 +1,13 @@
 import {node, button, field, input, textarea, select, check, actions, request, download} from './ui.js';
 import {comparisons, enableGroups, addGroup, removeGroup, testIssues} from './test-settings-model.js';
+import {hasFloatComparison} from './authoring-settings.js';
 
 export function testSettings(config, {base, maximum, sync, safe}) {
     config.tests ||= [];
     const host=node('div',{class:'gc-execution-tests'});
-    let summary;
-    const changed=()=>{sync();refreshMaximum();};
+    let summary,precision;
+    const refreshPrecision=()=>{if(precision){precision.hidden=!hasFloatComparison(config);precision.querySelectorAll('input').forEach(input=>input.disabled=precision.hidden);}};
+    const changed=()=>{sync();refreshMaximum();refreshPrecision();};
     const options=value=>({...comparisons,...(value && !comparisons[value] ? {[value]:`Сохранённое правило: ${value}`} : {})});
     const number=(label, object, key, fallback, attrs={}, factor=1, optional=false)=>field(label,input(
         object[key] == null ? optional ? '' : fallback/factor : object[key]/factor,
@@ -40,10 +42,11 @@ export function testSettings(config, {base, maximum, sync, safe}) {
                 number('Память, МиБ',config,'memory_limit',512,{min:128,max:2048,step:1})),
             node('div',{class:'gc-form-pair'},number('Лимит вывода, КиБ',config,'output_limit',8388608,{min:1,max:8192,step:1},1024),
                 number('Максимум процессов',config,'process_limit',128,{min:16,max:256,step:1})),
-            check('Запретить swap',config.disable_swap || false,value=>{config.disable_swap=value;changed();}),
-            node('p',{class:'gc-help-text'},'Погрешности используются при сравнении вещественных чисел. Для точного сравнения выберите соответствующее правило.'),
-            node('div',{class:'gc-form-pair'},field('Абсолютная погрешность',input(config.absolute_tolerance ?? '0.000001',value=>{config.absolute_tolerance=value;changed();},{type:'number',min:0,max:1,step:'any'})),
-                field('Относительная погрешность',input(config.relative_tolerance ?? '0.000001',value=>{config.relative_tolerance=value;changed();},{type:'number',min:0,max:1,step:'any'}))));
+            check('Запретить swap',config.disable_swap || false,value=>{config.disable_swap=value;changed();}));
+        precision=node('div',{class:'gc-form-pair',hidden:!hasFloatComparison(config)},field('Абсолютная погрешность',input(config.absolute_tolerance ?? '0.000001',value=>{config.absolute_tolerance=value;changed();},{type:'number',min:0,max:1,step:'any'})),
+            field('Относительная погрешность',input(config.relative_tolerance ?? '0.000001',value=>{config.relative_tolerance=value;changed();},{type:'number',min:0,max:1,step:'any'})));
+        limits.append(precision);
+        refreshPrecision();
         host.replaceChildren(rules,limits,node('h3',{class:'h6'},'Тесты'));
         config.tests.forEach((test,index)=>{
             const title=node('summary',{},`Тест ${index+1}${test.is_public?' · открытый':' · скрытый'}`);
@@ -52,11 +55,11 @@ export function testSettings(config, {base, maximum, sync, safe}) {
                 const value=test[key],area=node('div');
                 if(typeof value==='string' || value==null)area.append(field(label,textarea(value,text=>{test[key]=text;changed();},{spellcheck:false})));
                 else area.append(node('p',{},label,' · ',download(`${base}/checker/fixtures/${value.blob_id}`,`Сохранённый файл (${value.bytes} байт)`)),button('Заменить текстом',()=>{test[key]='';render();changed();}));
-                const upload=node('input',{type:'file',class:'form-control',disabled:!base,onchange:safe(async()=>{
+                if(base){const upload=node('input',{type:'file',class:'form-control',onchange:safe(async()=>{
                     const file=upload.files[0];if(!file)return;if(file.size>33554432)throw new Error('Поле теста должно быть не больше 32 МиБ.');
                     const data=new FormData();data.append('file',file);test[key]=await request(base+'/checker/fixtures','POST',data);render();changed();
                 })});
-                area.append(field(`Файл: ${label.toLowerCase()}`,upload,base?'Полный текст хранится в базе данных.':'Загрузка файлов доступна после создания задания.'));return area;
+                area.append(field(`Файл: ${label.toLowerCase()}`,upload,'Полный текст хранится в базе данных.'));}return area;
             };
             row.append(node('div',{class:'gc-form-pair'},fixture('input','Входные данные'),fixture('output','Ожидаемый вывод')),
                 check('Открытый тест — данные доступны ученику',test.is_public,value=>{test.is_public=value;title.textContent=`Тест ${index+1}${value?' · открытый':' · скрытый'}`;changed();}));

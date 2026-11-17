@@ -42,7 +42,7 @@ class Configuration
             'allows_test_reveals' => 'sometimes|boolean',
             'bypass_similarity_check' => 'sometimes|boolean',
             'ai_authorship_check' => 'sometimes|boolean',
-            'test_config' => 'sometimes|array',
+            'test_config' => 'exclude_unless:check_type,tests|sometimes|array',
         ])->validate();
         $legacyFormat = in_array($data['language'], ['ipynb', 'zip', 'image', 'xlsx', 'github'], true) ? $data['language'] : null;
         if ($legacyFormat) $data['language'] = $legacyFormat === 'ipynb' ? 'python' : 'text';

@@ -85,6 +85,41 @@ class TaskAuthoringTest extends TestCase
         $this->assertSame('manual',\App\CodeTaskChecker::findOrFail($task->id)->config['check_type']);
     }
 
+    #[DataProvider('nonTestCheckers')]
+    public function test_non_test_checker_with_legacy_null_tests_can_be_created_and_edited(string $checkType): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('code_checking'); \Illuminate\Support\Facades\Storage::fake('code_originals');
+        (require database_path('migrations/2026_11_14_120000_create_code_checking_tables.php'))->up();
+        (require database_path('migrations/2026_11_14_130000_expand_task_submissions.php'))->up();
+        (require database_path('migrations/2026_11_14_140000_complete_native_submission_storage.php'))->up();
+        $config=['check_type'=>$checkType,'language'=>'python','test_mode'=>'environment','test_config'=>null,
+            'private_instructions'=>'Критерии проверки','reference_answer'=>'Эталон','gpt_model'=>null,'gpt_rate_limit'=>3];
+        $data=['name'=>'AI task','text'=>'Условие задачи','max_mark'=>10,'price'=>0,'answer_mode'=>'native',
+            'checker_config'=>json_encode($config)];
+        $this->post('/insider/courses/1/steps/1/task',$data)->assertRedirect()->assertSessionHasNoErrors();
+        $task=Task::firstOrFail();
+        // Imported checkers still contain the unused null field when the author opens the form.
+        $checker=\App\CodeTaskChecker::findOrFail($task->id);
+        $checker->update(['config'=>$checker->config+['test_config'=>null]]);
+        $data['name']='Уточнённая задача';
+        $config['private_instructions']='Обновлённые критерии';
+        $data['checker_config']=json_encode($config);
+        $this->post('/insider/courses/1/tasks/'.$task->id.'/edit',$data)->assertRedirect()->assertSessionHasNoErrors();
+        $saved=$checker->fresh()->config;
+        $this->assertSame('Уточнённая задача',$task->fresh()->name);
+        $this->assertSame($checkType,$saved['check_type']);
+        $this->assertSame('Обновлённые критерии',$saved['private_instructions']);
+        $this->assertSame('Эталон',$saved['reference_answer']);
+        $this->assertSame(3,$saved['gpt_rate_limit']);
+        $this->assertArrayNotHasKey('test_config',$saved);
+        $this->assertSame($checkType!=='manual',(bool)$task->fresh()->is_code);
+    }
+
+    public static function nonTestCheckers(): array
+    {
+        return ['ai'=>['gpt'],'teacher'=>['manual']];
+    }
+
     public function testShortAnswerRequiresAnAnswerAndInvalidModeDoesNotWrite(): void
     {
         foreach(['short','unknown'] as $mode){
