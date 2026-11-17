@@ -32,20 +32,7 @@
     if ($hasEarlyAccess) $compactProgressHint = 'Вы открыли урок раньше остальных. '.$compactProgressHint;
 @endphp
 <div class="course-lesson-compact">
-    <span class="course-lesson-compact__number @if($hasEarlyAccess) course-lesson-compact__number--early-access @endif" title="{{ $compactProgressHint }}"
-          @if($compactProgress !== null)
-              role="progressbar" aria-label="Урок {{ $pathIndex + 1 }}. {{ $compactProgressLabel }}" aria-valuenow="{{ $compactProgress }}" aria-valuemin="0" aria-valuemax="100" aria-valuetext="{{ $compactProgressHint }}"
-          @else
-              role="img" aria-label="{{ $compactProgressHint }}"
-          @endif>
-        <svg viewBox="0 0 44 44" aria-hidden="true" focusable="false">
-            <circle class="course-lesson-compact__ring-track" cx="22" cy="22" r="19" />
-            @if($compactProgress > 0)
-                <circle class="course-lesson-compact__ring-value" cx="22" cy="22" r="19" pathLength="100" stroke-dasharray="{{ $compactProgress }} 100" />
-            @endif
-        </svg>
-        <span aria-hidden="true">@if($compactLocked)<i class="fas fa-lock course-lesson-compact__state @if($compactEarlyUnlock) course-lesson-compact__state--early-access @endif"></i>@else{{ $pathIndex + 1 }}@endif</span>
-    </span>
+    @include('courses.partials.lesson-progress')
     <div class="course-lesson-compact__body">
         <h3 class="course-lesson-compact__title" data-filter-by="text">
             @if($isAvailable)

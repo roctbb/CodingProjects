@@ -25,7 +25,7 @@ export function lessonDeadlineState(rules, now) {
     return today ? 'today' : null;
 }
 
-function initDeadlinePopovers() {
+function initAnchoredPopovers() {
     let active;
     const position = () => {
         if (!active?.panel.matches(':popover-open')) return;
@@ -42,8 +42,8 @@ function initDeadlinePopovers() {
         panel.style.left = `${Math.max(padding, Math.min(anchor.left, window.innerWidth - bounds.width - padding))}px`;
         panel.style.top = `${Math.max(padding, useBelow ? anchor.bottom + gap : anchor.top - bounds.height - gap)}px`;
     };
-    document.querySelectorAll('[data-deadline-popover]').forEach(root => {
-        const trigger = root.querySelector('.gc-deadline-popover__trigger');
+    document.querySelectorAll('[data-deadline-popover], [data-lesson-progress-popover]').forEach(root => {
+        const trigger = root.querySelector('.gc-deadline-popover__trigger, [data-lesson-progress-trigger]');
         const panel = root.querySelector('[popover]');
         panel.addEventListener('beforetoggle', event => {
             trigger.setAttribute('aria-expanded', String(event.newState === 'open'));
@@ -62,7 +62,7 @@ function initDeadlinePopovers() {
 }
 
 export default function initDeadlineSummaries() {
-    initDeadlinePopovers();
+    initAnchoredPopovers();
     const start = performance.now();
     const summaries = [...document.querySelectorAll('[data-deadline-summary]')].map(root => ({
         root, serverNow: Number(root.dataset.serverNow), legacy: root.dataset.legacyBoundary === 'true',
