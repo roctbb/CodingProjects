@@ -36,7 +36,7 @@ class CalendarService
             'ends_on' => 'required|date_format:Y-m-d|after_or_equal:starts_on',
             'timezone' => 'required|timezone',
             'default_duration_minutes' => 'required|integer|min:5|max:480',
-            'rules' => 'required|array|min:1|max:42',
+            'rules' => 'present|array|max:42',
             'rules.*.rule_key' => 'nullable|string|max:64|regex:/^[a-zA-Z0-9_-]+$/',
             'rules.*.weekday' => 'required|integer|min:1|max:7',
             'rules.*.start_time' => 'nullable|date_format:H:i',

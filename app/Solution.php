@@ -110,7 +110,7 @@ class Solution extends Model
     {
         if (!$this->course_id || !$this->task_id || !$this->user_id || $this->submitted === null || $this->deadline_rule_snapshot !== null ||
             !\Illuminate\Support\Facades\Schema::hasColumn('solutions', 'deadline_rule_snapshot')) return;
-        $deadline ??= $this->task?->getDeadline($this->course_id);
+        $deadline ??= $this->task?->getDeadline($this->course_id, $this->user_id, $this->submittedAt());
         $this->deadline_rule_snapshot = $deadline
             ? ($deadline instanceof \App\Support\DeadlineRule ? $deadline : \App\Support\DeadlineRule::fromLegacy($deadline))->snapshot()
             : ['none' => true];
@@ -126,7 +126,7 @@ class Solution extends Model
             return null;
         }
 
-        $deadline = $this->task->getDeadline($this->course_id);
+        $deadline = $this->task->getDeadline($this->course_id, $this->user_id, $this->submittedAt());
         return $deadline instanceof \App\Support\DeadlineRule ? $deadline->at($this->submittedAt()) : $deadline;
     }
 
@@ -418,7 +418,7 @@ class Solution extends Model
         $clone = clone $this;
         $clone->setRelation('task', $this->task);
         $clone->xp_booster_used_at = $clone->xp_booster_used_at ?: Carbon::now();
-        $clone->applyDeadlinePenalty($clone->raw_mark === null ? $clone->mark : $clone->raw_mark, $clone->task->getDeadline($clone->course_id));
+        $clone->applyDeadlinePenalty($clone->raw_mark === null ? $clone->mark : $clone->raw_mark, $clone->task->getDeadline($clone->course_id, $clone->user_id, $clone->submittedAt()));
 
         return (int) $clone->mark;
     }

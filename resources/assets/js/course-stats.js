@@ -1,3 +1,4 @@
+import { withCourseScope } from './components/course-context';
 document.addEventListener('DOMContentLoaded', function () {
     const panels = document.querySelectorAll('[data-course-stats-panel]');
     const buttons = document.querySelectorAll('[data-course-stats-toggle]');
@@ -27,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
         panel.setAttribute('aria-busy', 'true');
         if (!panel.children.length) panel.textContent = 'Загрузка статистики…';
         try {
-            const url = new URL(panel.dataset.courseStatsUrl);
+            const url = new URL(withCourseScope(panel.dataset.courseStatsUrl));
             url.searchParams.set('page', page);
             const response = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' }, signal: request.signal });
             if (!response.ok) throw new Error('Статистика недоступна');
@@ -35,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (request.signal.aborted) return;
             panel.innerHTML = data.html;
             panel.dataset.courseStatsLoaded = 'true';
+            document.dispatchEvent(new CustomEvent('gc:course-stats-loaded'));
             panel.querySelectorAll('[data-progress-width]').forEach(bar => {
                 bar.style.width = Math.max(0, Math.min(100, parseFloat(bar.dataset.progressWidth) || 0)) + '%';
             });

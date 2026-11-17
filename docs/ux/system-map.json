@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "date": "2026-11-14",
+  "date": "2026-11-17",
   "scope": "CodingProjects: routed screens, local UI states, transitions, endpoint owners and external boundaries.",
   "roles": {
     "guest": "Гость",
@@ -1244,6 +1244,7 @@
       "domain": "planner",
       "kind": "page",
       "roles": [
+        "student",
         "teacher",
         "admin"
       ],
@@ -1253,7 +1254,8 @@
         "resources/assets/js/course-planner/index.js",
         "resources/assets/js/course-planner/deadline-strip.js",
         "resources/views/components/gc-tab-strip.blade.php",
-        "resources/assets/js/components/tab-strip.js"
+        "resources/assets/js/components/tab-strip.js",
+        "resources/views/course-planner/student.blade.php"
       ],
       "goal": "Планировать занятия и фиксировать факт",
       "review": {
@@ -1270,9 +1272,13 @@
         "каталог недоступен",
         "конфликт версии",
         "нативный выбор календаря / обзора",
-        "план / факт"
+        "план / факт",
+        "независимые расписания подгрупп",
+        "общие занятия только для чтения в подгруппе",
+        "копирование материалов",
+        "ученический календарь"
       ],
-      "guard": "Администратор либо назначенный преподаватель с role=teacher; feature flag и миграции.",
+      "guard": "Участники курса читают свои и общие занятия. Редактирование — только преподаватель курса или администратор.",
       "design": {
         "stage": "implemented",
         "layout": "planner",
@@ -3388,6 +3394,49 @@
         "очередь / ошибка / неизвестный результат",
         "пустой журнал"
       ]
+    },
+    {
+      "id": "course-subgroups",
+      "title": "Подгруппы курса",
+      "domain": "courses",
+      "kind": "page",
+      "roles": [
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/courses/subgroups.blade.php",
+        "app/Http/Controllers/CourseSubgroupsController.php",
+        "app/Services/CourseSubgroups.php",
+        "app/Support/CourseScope.php",
+        "resources/assets/js/components/course-subgroups.js"
+      ],
+      "goal": "Создать подгруппы, распределить учеников и открыть отдельное расписание.",
+      "guard": "Администратор или преподаватель именно этого курса. Один текущий состав, история переводов сохранена.",
+      "review": {
+        "stage": "implemented",
+        "note": "Создание и переименование, массовый перевод, защита от устаревшего состава; проверки описаны в ../course-subgroups.md."
+      },
+      "layout": "course-workspace",
+      "checkStates": [
+        "нет подгрупп",
+        "нераспределённые ученики",
+        "перевод одного или нескольких учеников",
+        "конфликт состава",
+        "ширина 320 px",
+        "создание по запросу",
+        "добавление оставшихся одним действием",
+        "поиск большого класса",
+        "закреплённая панель перевода"
+      ],
+      "design": {
+        "stage": "implemented",
+        "layout": "course-workspace",
+        "rules": [
+          "Общие компоненты курса, форм и таблиц.",
+          "Выбор подгруппы сохраняется между разделами курса."
+        ]
+      }
     }
   ],
   "edges": [
@@ -5551,6 +5600,20 @@
         "admin"
       ],
       "source": "resources/views/courses/partials/course-actions.blade.php"
+    },
+    {
+      "from": "course",
+      "to": "course-subgroups",
+      "label": "Подгруппы",
+      "kind": "open",
+      "source": "resources/views/courses/partials/course-actions.blade.php"
+    },
+    {
+      "from": "course-subgroups",
+      "to": "planner",
+      "label": "Расписание подгруппы",
+      "kind": "open",
+      "source": "resources/views/courses/subgroups.blade.php"
     }
   ],
   "routeBindings": {
@@ -6493,6 +6556,26 @@
     "SolutionRemovalController@destroy": {
       "node": "review-tools",
       "kind": "action"
+    },
+    "CourseSubgroupsController@index": {
+      "node": "course-subgroups",
+      "kind": "screen"
+    },
+    "CourseSubgroupsController@store": {
+      "node": "course-subgroups",
+      "kind": "action"
+    },
+    "CourseSubgroupsController@update": {
+      "node": "course-subgroups",
+      "kind": "action"
+    },
+    "CourseSubgroupsController@assign": {
+      "node": "course-subgroups",
+      "kind": "action"
+    },
+    "CoursePlanner\\PlannerController@copyTargets": {
+      "node": "planner",
+      "kind": "api"
     }
   },
   "observations": [

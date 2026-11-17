@@ -22,7 +22,7 @@ if (root && root.querySelector("#planner-calendar")) {
     selectedSlot = null,
     busy = false;
   let from = "", to = "", stateRequestNumber = 0;
-  const getState = () => ({ data, layer, selected, selectedSlot, from, to, busy });
+  const getState = () => ({ data, layer, selected, selectedSlot, from, to, busy, scope: root.dataset.subgroup || 'all' });
   const setRange = (start, end) => { from = start; to = end; };
   const setTarget = (sessionId, slotId = null) => { selected = sessionId; selectedSlot = slotId; };
   const { sessionTitle, sessionMarkup } = createSessionView({ getState });
@@ -73,12 +73,12 @@ if (root && root.querySelector("#planner-calendar")) {
       document.querySelector(".gc-topbar")?.getBoundingClientRect().height || 0;
     root.style.setProperty("--planner-top-offset", height + "px");
   }
-  const request = createPlannerRequest(api);
+  const request = createPlannerRequest(api, root.dataset.subgroup);
   const catalog = createMaterialCatalog({ root, getState, setTarget, request, ensureSession, mutate, sessionTitle, status, addResource });
   function renderTarget() { catalog.refreshTarget(); }
   const settingsModal = createScheduleSettings({ root, getState, setRange, request, mutate, dialog });
   const entryDialogs = createEntryDialogs({ root, getState, request, mutate, dialog, sessionTitle });
-  const sessionActions = createSessionActions({ root, getState, setTarget, setRange, loadState, ensureSession, mutate, dialog, renderCalendar, renderTarget, revealSession });
+  const sessionActions = createSessionActions({ root, getState, setTarget, setRange, loadState, ensureSession, mutate, request, dialog, renderCalendar, renderTarget, revealSession });
 
   const providerSettings = createProviderSettings({ root, getState, mutate, dialog, catalog });
   const entryActions = createEntryActions({ getState, mutate, dialog, entryDialogs });
@@ -97,9 +97,9 @@ if (root && root.querySelector("#planner-calendar")) {
     to = data.range.to;
     $("#planner-from").value = from;
     $("#planner-to").value = to;
-    if (!data.sessions.some((s) => s.id === selected))
+    if (!data.sessions.some((s) => s.id === selected && s.editable !== false))
       selected =
-        data.sessions.find((s) =>
+        data.sessions.find((s) => s.editable !== false &&
           data.slots.some(
             (slot) =>
               slot.id === s.calendar_slot_id &&
@@ -107,8 +107,8 @@ if (root && root.querySelector("#planner-calendar")) {
               slot.state === "available",
           ),
         )?.id ??
-        data.sessions.find((s) => s.calendar_slot_id)?.id ??
-        data.sessions[0]?.id ??
+        data.sessions.find((s) => s.editable !== false && s.calendar_slot_id)?.id ??
+        data.sessions.find((s) => s.editable !== false)?.id ??
         null;
     catalog.syncProviders(data.providers);
     render();
@@ -132,7 +132,7 @@ if (root && root.querySelector("#planner-calendar")) {
         body: JSON.stringify({
           ...payload,
           unified: true,
-          revision: data?.revision ?? 0,
+          revision: payload.destination_revision ?? data?.revision ?? 0,
           operation_id: id,
         }),
       });
@@ -183,7 +183,10 @@ if (root && root.querySelector("#planner-calendar")) {
         .join("") || '<p class="small">Изменений пока нет.</p>';
   }
   async function ensureSession() {
-    if (selected) return selected;
+    if (selected) {
+      if (data.sessions.find(s => s.id === selected)?.editable === false) throw new Error('Для изменения выберите подгруппу этого занятия.');
+      return selected;
+    }
     if (selectedSlot) {
       const result = await mutate("add_session", {
         title: "Занятие",

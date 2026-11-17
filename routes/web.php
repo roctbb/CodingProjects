@@ -128,6 +128,10 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/courses/{id}/notifications/chats/{chat}', 'CourseNotificationsController@chat');
     Route::post('/courses/{id}/notifications/deliveries/{delivery}/retry', 'CourseNotificationsController@retry');
     Route::post('/courses/{id}/notifications/preference', 'CourseNotificationsController@preference');
+    Route::get('/courses/{course_id}/subgroups', 'CourseSubgroupsController@index')->name('courses.subgroups');
+    Route::post('/courses/{course_id}/subgroups', 'CourseSubgroupsController@store');
+    Route::post('/courses/{course_id}/subgroups/assign', 'CourseSubgroupsController@assign');
+    Route::post('/courses/{course_id}/subgroups/{subgroup_id}', 'CourseSubgroupsController@update')->whereNumber('subgroup_id');
     Route::get('/courses/{course_id}/deadline-policies/{type}/{target}', 'CourseDeadlineController@edit');
     Route::post('/courses/{course_id}/deadline-policies/{type}/{target}', 'CourseDeadlineController@update');
     Route::get('/courses/{id}/chapter-tasks', 'StudentCourseTasksController@index')->whereNumber('id')->name('courses.chapter-tasks');

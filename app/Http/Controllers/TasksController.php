@@ -721,7 +721,7 @@ class TasksController extends Controller
         ]);
 
         $old_rank = $solution->user->rank();
-        $deadline = $solution->task->getDeadline($course_id);
+        $deadline = $solution->task->getDeadline($course_id, $solution->user_id, $solution->submittedAt());
 
         $solution->setEvaluatedMark($request->mark);
         $solution->applyDeadlinePenalty($request->mark, $deadline);
@@ -827,7 +827,7 @@ class TasksController extends Controller
         $solution->xp_booster_used_at = Carbon::now();
         $solution->applyDeadlinePenalty(
             $solution->raw_mark === null ? $markBeforeBooster : $solution->raw_mark,
-            $task->getDeadline($solution->course_id)
+            $task->getDeadline($solution->course_id, $solution->user_id, $solution->submittedAt())
         );
 
         if ((int) $solution->mark <= $markBeforeBooster) {
@@ -1047,7 +1047,7 @@ class TasksController extends Controller
         $old_rank = $user->rank();
 
         $solution->deadline_penalty_paid_at = Carbon::now();
-        $solution->applyDeadlinePenalty($solution->raw_mark === null ? $solution->mark : $solution->raw_mark, $solution->task->getDeadline($course_id));
+        $solution->applyDeadlinePenalty($solution->raw_mark === null ? $solution->mark : $solution->raw_mark, $solution->task->getDeadline($course_id, $solution->user_id, $solution->submittedAt()));
         $shouldRewardTaskPrice = $solution->task->price > 0
             && $solution->qualifiesForTaskPriceReward()
             && !$solution->task->hasRewardableFullSolution($solution->user_id);
@@ -1124,7 +1124,7 @@ class TasksController extends Controller
         $markBeforeBooster = $solution->mark;
 
         $solution->xp_booster_used_at = Carbon::now();
-        $solution->applyDeadlinePenalty($solution->raw_mark === null ? $solution->mark : $solution->raw_mark, $solution->task->getDeadline($course_id));
+        $solution->applyDeadlinePenalty($solution->raw_mark === null ? $solution->mark : $solution->raw_mark, $solution->task->getDeadline($course_id, $solution->user_id, $solution->submittedAt()));
 
         if ($solution->mark <= $markBeforeBooster) {
             abort_if(request()->expectsJson(), 409, 'Бустер применяется до штрафа и не увеличит зачтённый XP.');

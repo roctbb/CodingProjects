@@ -3,7 +3,7 @@ export function initPlannerDragDrop({ root, getState, catalog, setTarget, ensure
   const isBusy = () => getState().busy;
   let dragged = null;
   root.addEventListener("dragstart", (e) => {
-    if (isBusy() || e.target.closest("button,input,select,a")) return;
+    if (isBusy() || e.target.closest("button,input,select,a,[data-read-only]")) return;
     const header = e.target.closest("[data-drag-session]");
     const entry = e.target.closest(".planner-entry");
     const source = e.target.closest(".planner-catalog-card");

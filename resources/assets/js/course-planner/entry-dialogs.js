@@ -1,3 +1,4 @@
+import { withCourseScope } from '../components/course-context';
 import { esc, date } from "./format.js";
 import { stageRow, initDeadlineEditor, deadlinePayload } from '../components/deadline-editor.js';
 
@@ -7,7 +8,7 @@ export function createEntryDialogs({ root, getState, request, mutate, dialog, se
   const slotById = id => getState().data.slots.find(s => s.id === Number(id));
   function targetOptions() {
     const { data, layer } = getState();
-    return data.sessions.map((s) => [
+    return data.sessions.filter(s => s.editable !== false).map((s) => [
       s.id,
       date(
         layer === "fact"
@@ -77,7 +78,7 @@ export function createEntryDialogs({ root, getState, request, mutate, dialog, se
   }
   async function nativeDeadlineModal(entry, deadline) {
     const taskId = Number(entry.resource.external_id);
-    const response = await fetch(root.dataset.deadlineApi + '/' + taskId, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    const response = await fetch(withCourseScope(root.dataset.deadlineApi + '/' + taskId), { credentials: 'same-origin', headers: { Accept: 'application/json' } });
     const policy = await response.json();
     if (!response.ok) throw new Error(policy.message || 'Не удалось загрузить сроки.');
     modal('Сроки работы', '<p>' + esc(entry.resource.title) + '</p><div data-deadline-editor>' +

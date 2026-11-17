@@ -1,3 +1,5 @@
+import initCourseScope from './components/course-context';
+import initCourseSubgroups from './components/course-subgroups';
 import initAchievements from './components/achievements';
 import initLearningAvatar from './components/learning-avatar';
 import initSolutionReview from './components/solution-review';
@@ -99,6 +101,8 @@ document.addEventListener('DOMContentLoaded', function () {
     initWorkbookNavigation();
     initTabStrips();
     initDeadlineWorkspaces();
+    initCourseScope();
+    initCourseSubgroups();
     initDeadlineEditors();
     initDeadlineSummaries();
 

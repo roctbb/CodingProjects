@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 
 class Course extends Model
 {
+    public ?\App\Support\CourseScope $participantScope = null;
     protected $table = "courses";
 
     protected $fillable = [
@@ -35,6 +36,11 @@ class Course extends Model
         return $this->belongsToMany('App\User', 'course_students', 'course_id', 'user_id')
             ->withPivot(['is_remote', 'hidden_from_stats'])
             ->orderBy('name');
+    }
+
+    public function subgroups()
+    {
+        return $this->hasMany(CourseSubgroup::class)->orderBy('name')->orderBy('id');
     }
 
     public function statsStudents()
@@ -64,11 +70,13 @@ class Course extends Model
 
     public function currentLessonFor(User $viewer): ?Lesson
     {
-        if (!$this->current_lesson_id || !$this->program) {
+        $scope = $this->participantScope ?? \App\Support\CourseScope::for($this, $viewer);
+        $currentId = $scope->group?->current_lesson_override ? $scope->group->current_lesson_id : $this->current_lesson_id;
+        if (!$currentId || !$this->program) {
             return null;
         }
 
-        $lesson = $this->program->lessons->firstWhere('id', $this->current_lesson_id);
+        $lesson = $this->program->lessons->firstWhere('id', $currentId);
         if (!$lesson || !$this->program->chapters->contains('id', $lesson->chapter_id)
             || !$lesson->isAvailableForUser($this, $viewer)) {
             return null;
@@ -184,7 +192,7 @@ class Course extends Model
     {
         $sum = 0;
         foreach ($this->lessons as $lesson) {
-            if (!$lesson->isStarted($this)) {
+            if (!$lesson->isStarted($this, $student)) {
                 continue;
             }
 
@@ -204,7 +212,7 @@ class Course extends Model
     {
         $sum = 0;
         foreach ($this->lessons as $lesson) {
-            if (!$lesson->isStarted($this)) {
+            if (!$lesson->isStarted($this, $student)) {
                 continue;
             }
 

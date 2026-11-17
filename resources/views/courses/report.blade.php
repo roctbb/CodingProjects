@@ -41,6 +41,7 @@
     <div class="container-fluid px-0" data-report-workspace data-report-detail-url="{{ url('/insider/courses/'.$course->id.'/report') }}" data-report-default-chapter="{{ $defaultReportChapterId }}">
         <x-gc-course-header :course="$course" :chapter="request('chapter', $defaultReportChapterId)" active="report" />
         <h2 class="visually-hidden">Отчёт</h2>
+        @include('courses.partials.scope-statistics')
         @if($students->isEmpty())
             <div class="gc-card p-4">
                 <h2 class="gc-section-title">{{ request('attention') === '1' ? 'По этому фильтру учеников нет' : 'Учеников пока нет' }}</h2>

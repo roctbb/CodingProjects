@@ -2,12 +2,14 @@
     $editor = app(\App\Services\CourseDeadlineService::class)->editor($course, $targetType, $targetId, $targetType === 'lesson' ? ($lesson ?? null) : ($task ?? null));
     $prefix = 'deadline-'.$targetType.'-'.$targetId;
 @endphp
+@include('courses.partials.scope-input')
 <div data-deadline-editor>
     <input type="hidden" name="revision" value="{{ $editor['revision'] }}">
     <input type="hidden" name="timezone" value="{{ $editor['timezone'] }}">
     <label class="form-label" for="{{ $prefix }}-mode">Правила сдачи</label>
     <select class="form-select mb-3" id="{{ $prefix }}-mode" name="mode" data-deadline-mode>
-        @if($targetType === 'task')<option value="inherit" @selected($editor['mode'] === 'inherit')>Сроки урока{{ $task->is_star ? ' (звёздная задача — без сроков)' : '' }}</option>@endif
+        @if($editor['audience_id'])<option value="inherit" @selected($editor['mode'] === 'inherit')>Общие сроки курса и урока</option>@endif
+        @if($targetType === 'task' && !$editor['audience_id'])<option value="inherit" @selected($editor['mode'] === 'inherit')>Сроки урока{{ $task->is_star ? ' (звёздная задача — без сроков)' : '' }}</option>@endif
         <option value="custom" @selected($editor['mode'] === 'custom')>Свои сроки</option>
         <option value="none" @selected($editor['mode'] === 'none')>Без дедлайна</option>
     </select>

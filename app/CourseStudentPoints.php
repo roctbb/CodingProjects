@@ -22,9 +22,9 @@ class CourseStudentPoints extends Model
         return $this->belongsTo('App\User', 'student_id', 'id');
     }
 
-    private static function isCommonProgressLesson(Lesson $lesson, Course $course)
+    private static function isCommonProgressLesson(Lesson $lesson, Course $course, User $student)
     {
-        return $lesson->isStarted($course);
+        return $lesson->isStarted($course, $student);
     }
 
     private static function isCommonProgressTask(Task $task)
@@ -48,7 +48,7 @@ class CourseStudentPoints extends Model
             ->groupBy('task_id')->map(fn ($submissions) => (int) $submissions->max('mark'));
 
         foreach ($course->program->lessons as $lesson) {
-            $isProgressLesson = self::isCommonProgressLesson($lesson, $course);
+            $isProgressLesson = self::isCommonProgressLesson($lesson, $course, $student);
 
             foreach ($lesson->steps as $step) {
                 foreach ($step->tasks as $task) {

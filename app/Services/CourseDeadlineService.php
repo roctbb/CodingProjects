@@ -28,17 +28,36 @@ class CourseDeadlineService
     public function forget(?int $courseId = null): void
     {
         if ($courseId === null) $this->policies = [];
-        else unset($this->policies[$courseId]);
+        else foreach (array_keys($this->policies) as $key) if (str_starts_with($key, $courseId.':')) unset($this->policies[$key]);
     }
 
-    private function policies(int $courseId)
+    public function audience(int $courseId, ?int $userId = null, ?\Carbon\CarbonInterface $at = null): int
     {
-        return $this->policies[$courseId] ??= DeadlinePolicy::with('stages')->where('course_id', $courseId)->get()->keyBy(fn ($p) => $p->target_type.':'.$p->target_id);
+        if (!app(CourseSubgroups::class)->available()) return 0;
+        if ($userId !== null) return app(CourseSubgroups::class)->groupFor($courseId, $userId, $at) ?? 0;
+        if (!auth()->user()) return 0;
+        return \App\Support\CourseScope::for(Course::findOrFail($courseId))->audienceId();
     }
 
-    public function forTask(Task $task, int $courseId): ?TaskDeadline
+    private function policies(int $courseId, int $audience = 0)
+    {
+        return $this->policies[$courseId.':'.$audience] ??= DeadlinePolicy::with('stages')->where('course_id', $courseId)
+            ->when(Schema::hasColumn('deadline_policies', 'audience_id'), fn ($q) => $q->where('audience_id', $audience))
+            ->get()->keyBy(fn ($p) => $p->target_type.':'.$p->target_id);
+    }
+
+    public function forTask(Task $task, int $courseId, ?int $audience = null): ?TaskDeadline
     {
         if ($this->available()) {
+            $audience ??= $this->audience($courseId);
+            if ($audience) {
+                $scoped = $this->policies($courseId, $audience);
+                $own = $scoped->get('task:'.$task->id);
+                if ($own && $own->mode !== 'inherit') return $own->mode === 'custom' ? DeadlineRule::fromPolicy($own) : null;
+                $lesson = $task->step?->lesson;
+                $parent = !$task->is_star && $lesson ? $scoped->get('lesson:'.$lesson->id) : null;
+                if ($parent && $parent->mode !== 'inherit') return $parent->mode === 'custom' ? DeadlineRule::fromPolicy($parent) : null;
+            }
             $policies = $this->policies($courseId);
             $own = $policies->get('task:'.$task->id);
             if ($own && $own->mode !== 'inherit') return $own->mode === 'custom' ? DeadlineRule::fromPolicy($own) : null;
@@ -54,19 +73,24 @@ class CourseDeadlineService
             : $task->deadlines()->where('course_id', $courseId)->first();
     }
 
-    public function forLesson(Lesson $lesson, int $courseId): ?DeadlineRule
+    public function forLesson(Lesson $lesson, int $courseId, ?int $audience = null): ?DeadlineRule
     {
         if (!$this->available()) return null;
+        $audience ??= $this->audience($courseId);
+        if ($audience) {
+            $scoped = $this->policies($courseId, $audience)->get('lesson:'.$lesson->id);
+            if ($scoped && $scoped->mode !== 'inherit') return $scoped->mode === 'custom' ? DeadlineRule::fromPolicy($scoped) : null;
+        }
         $policy = $this->policies($courseId)->get('lesson:'.$lesson->id);
         return $policy?->mode === 'custom' ? DeadlineRule::fromPolicy($policy) : null;
     }
 
-    public function entries(Course $course, array $with = []): \Illuminate\Support\Collection
+    public function entries(Course $course, array $with = [], ?int $audience = null): \Illuminate\Support\Collection
     {
         $tasks = Task::with(array_merge(['deadlines', 'step.lesson'], $with))
             ->whereHas('step.lesson', fn ($q) => $q->where('program_id', $course->program_id))->get();
-        return $tasks->flatMap(function ($task) use ($course) {
-            $deadline = $this->forTask($task, $course->id);
+        return $tasks->flatMap(function ($task) use ($course, $audience) {
+            $deadline = $this->forTask($task, $course->id, $audience);
             if (!$deadline) return [];
             $rule = $deadline instanceof DeadlineRule ? $deadline : DeadlineRule::fromLegacy($deadline);
             return collect($rule->series)->map(function ($stage) use ($rule, $task, $course) {
@@ -78,19 +102,22 @@ class CourseDeadlineService
         })->sortBy(fn ($d) => $d->cutoffAt()->timestamp)->values();
     }
 
-    public function timezone(int $courseId): string
+    public function timezone(int $courseId, int $audience = 0): string
     {
-        return $this->timezones[$courseId] ??= Schema::hasTable('planner_courses')
-            ? (DB::table('planner_courses')->where('course_id', $courseId)->value('timezone') ?: config('app.timezone')) : config('app.timezone');
+        return $this->timezones[$courseId.':'.$audience] ??= Schema::hasTable('planner_courses')
+            ? (DB::table('planner_courses')->where('course_id', $courseId)
+                ->when(Schema::hasColumn('planner_courses', 'audience_id'), fn ($q) => $q->where('audience_id', $audience))->value('timezone')
+                ?: ($audience ? $this->timezone($courseId) : config('app.timezone'))) : config('app.timezone');
     }
 
-    public function editor(Course $course, string $type, int $id, Lesson|Task|null $target = null): array
+    public function editor(Course $course, string $type, int $id, Lesson|Task|null $target = null, ?int $audience = null): array
     {
-        $policy = $this->available() ? $this->policies($course->id)->get($type.':'.$id) : null;
-        $timezone = $policy?->timezone ?: $this->timezone($course->id);
+        $audience ??= $this->audience($course->id);
+        $policy = $this->available() ? $this->policies($course->id, $audience)->get($type.':'.$id) : null;
+        $timezone = $policy?->timezone ?: $this->timezone($course->id, $audience);
         $rule = $policy?->mode === 'custom' ? DeadlineRule::fromPolicy($policy) : null;
         $stages = [];
-        if (!$policy) {
+        if (!$policy && !$audience) {
             $legacy = $type === 'task' ? TaskDeadline::where('course_id', $course->id)->where('task_id', $id)->first()
                 : ($target instanceof Lesson && $target->id === $id ? $target : Lesson::find($id))?->sharedDeadline($course->id);
             if ($legacy?->expiration) $rule = $legacy instanceof DeadlineRule ? $legacy : DeadlineRule::fromLegacy($legacy);
@@ -101,12 +128,14 @@ class CourseDeadlineService
                 'deadline_date' => $rule->deadlineAt($s)->format('Y-m-d'), 'retained_percent' => $s['percent'],
             ])->all();
         }
-        return ['mode' => $policy?->mode ?? ($stages ? 'custom' : ($type === 'task' ? 'inherit' : 'none')),
-            'revision' => $policy?->revision ?? 0, 'timezone' => $timezone, 'stages' => $stages];
+        return ['mode' => $policy?->mode ?? ($audience ? 'inherit' : ($stages ? 'custom' : ($type === 'task' ? 'inherit' : 'none'))),
+            'revision' => $policy?->revision ?? 0, 'timezone' => $timezone, 'stages' => $stages, 'audience_id' => $audience];
     }
 
-    public function savePolicy(Course $course, string $type, int $id, array $input, ?int $actorId = null, bool $legacy = false): DeadlinePolicy
+    public function savePolicy(Course $course, string $type, int $id, array $input, ?int $actorId = null, bool $legacy = false, ?int $audience = null): DeadlinePolicy
     {
+        $audience ??= $this->audience($course->id);
+        if ($audience) $course->subgroups()->findOrFail($audience);
         abort_unless($this->available(), 503, 'Сначала примените миграции дедлайнов.');
         abort_unless(in_array($type, ['lesson', 'task'], true), 404);
         $target = $type === 'lesson' ? Lesson::findOrFail($id) : Task::with('step.lesson')->findOrFail($id);
@@ -118,19 +147,21 @@ class CourseDeadlineService
             'stages.*.retained_percent' => 'required|numeric|min:0|max:100', 'apply_to_tasks' => 'sometimes|boolean',
         ])->validate();
         if ($data['mode'] === 'custom' && !$data['stages']) throw \Illuminate\Validation\ValidationException::withMessages(['stages' => 'Добавьте хотя бы один срок.']);
-        if ($type === 'lesson' && $data['mode'] === 'inherit') throw \Illuminate\Validation\ValidationException::withMessages(['mode' => 'Для урока выберите свои сроки или отсутствие дедлайна.']);
+        if (!$audience && $type === 'lesson' && $data['mode'] === 'inherit') throw \Illuminate\Validation\ValidationException::withMessages(['mode' => 'Для урока выберите свои сроки или отсутствие дедлайна.']);
         $normalized = collect($data['mode'] === 'custom' ? $data['stages'] : [])->map(fn ($s) => [
             // The selected day is inclusive. Advance in local calendar time before converting to UTC (DST-safe).
             'cutoff_at' => Carbon::createFromFormat('!Y-m-d', $s['deadline_date'], $data['timezone'])->addDay()->utc()->format('Y-m-d H:i:s'),
             'retained_percent' => (float) $s['retained_percent'],
         ])->sortBy('cutoff_at')->values();
         if ($normalized->unique('cutoff_at')->count() !== $normalized->count()) throw \Illuminate\Validation\ValidationException::withMessages(['stages' => 'Выберите разные даты сроков.']);
-        return DB::transaction(function () use ($course, $type, $id, $data, $actorId, $legacy, $normalized) {
+        return DB::transaction(function () use ($course, $type, $id, $data, $actorId, $legacy, $normalized, $audience) {
             // The course lock also serializes concurrent first writes of a policy.
             Course::whereKey($course->id)->lockForUpdate()->firstOrFail();
-            $policy = DeadlinePolicy::where('course_id', $course->id)->where('target_type', $type)->where('target_id', $id)->lockForUpdate()->first();
+            $hasAudience = Schema::hasColumn('deadline_policies', 'audience_id');
+            $policy = DeadlinePolicy::where('course_id', $course->id)->where('target_type', $type)->where('target_id', $id)
+                ->when($hasAudience, fn ($q) => $q->where('audience_id', $audience))->lockForUpdate()->first();
             if (($policy?->revision ?? 0) !== (int) $data['revision']) throw new ConflictHttpException('Сроки изменены в другом окне. Обновите страницу.');
-            $policy ??= new DeadlinePolicy(['course_id' => $course->id, 'target_type' => $type, 'target_id' => $id]);
+            $policy ??= new DeadlinePolicy(['course_id' => $course->id, 'target_type' => $type, 'target_id' => $id] + ($hasAudience ? ['audience_id' => $audience] : []));
             $policyAudience = (int) ($policy->audience_id ?? 0);
             $taskIds = $type === 'lesson' && !empty($data['apply_to_tasks'])
                 ? Task::whereHas('step', fn ($q) => $q->where('lesson_id', $id))->where('is_star', false)->pluck('id') : collect();
@@ -146,10 +177,11 @@ class CourseDeadlineService
             $policy->stages()->delete();
             foreach ($normalized as $position => $stage) $policy->stages()->create($stage + ['position' => $position]);
             if ($type === 'lesson' && !empty($data['apply_to_tasks'])) {
-                DeadlinePolicy::where('course_id', $course->id)->where('target_type', 'task')->whereIn('target_id', $taskIds)->update(['mode' => 'inherit', 'revision' => DB::raw('revision + 1')]);
-                TaskDeadline::where('course_id', $course->id)->whereIn('task_id', $taskIds)->delete();
+                DeadlinePolicy::where('course_id', $course->id)->where('target_type', 'task')->whereIn('target_id', $taskIds)
+                    ->when($hasAudience, fn ($q) => $q->where('audience_id', $audience))->update(['mode' => 'inherit', 'revision' => DB::raw('revision + 1')]);
+                if (!$audience) TaskDeadline::where('course_id', $course->id)->whereIn('task_id', $taskIds)->delete();
             }
-            if ($type === 'task') TaskDeadline::where('course_id', $course->id)->where('task_id', $id)->delete();
+            if ($type === 'task' && !$audience) TaskDeadline::where('course_id', $course->id)->where('task_id', $id)->delete();
             $this->forget($course->id);
             $policy->load('stages');
             app(DeadlineNotifications::class)->policyChanged($policy, $created);
@@ -157,10 +189,16 @@ class CourseDeadlineService
         });
     }
 
-    public function set(Course $course, Task $task, ?string $date, mixed $penalty = null): void
+    public function set(Course $course, Task $task, ?string $date, mixed $penalty = null, ?int $audience = null): void
     {
         abort_unless($task->step && $task->step->lesson && (int) $task->step->lesson->program_id === (int) $course->program_id, 404);
         Validator::make(['date' => $date, 'penalty' => $penalty], ['date' => 'nullable|date_format:Y-m-d', 'penalty' => 'nullable|numeric|min:0|max:1'])->validate();
+        if ($audience ??= $this->audience($course->id)) {
+            $editor = $this->editor($course, 'task', $task->id, $task, $audience);
+            $this->savePolicy($course, 'task', $task->id, ['revision' => $editor['revision'], 'mode' => $date ? 'custom' : 'none',
+                'timezone' => $editor['timezone'], 'stages' => $date ? [['deadline_date' => $date, 'retained_percent' => (float) ($penalty ?? 0) * 100]] : []], auth()->id(), false, $audience);
+            return;
+        }
         DB::transaction(function () use ($course, $task, $date, $penalty) {
             $penalty ??= TaskDeadline::where('course_id', $course->id)->where('task_id', $task->id)->value('penalty') ?? 0;
             if ($this->available()) {

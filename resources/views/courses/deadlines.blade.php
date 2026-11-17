@@ -63,6 +63,7 @@
                         <li class="gc-deadline-task" data-deadline-row data-deadline-task-id="{{ $task->id }}" data-deadline-done="{{ $item['done'] ? 'true' : 'false' }}" data-deadline-penalty="{{ $item['penalty'] }}" data-deadline-next-cutoff="{{ $item['next'] ?? '' }}" data-deadline-last="{{ $item['last']?->getTimestampMs() ?? 0 }}" data-deadline-chapter-id="{{ $item['chapter'] }}" data-deadline-search-text="{{ $task->name.' '.$task->step->name.' '.$task->step->lesson->name }}">
                             <a class="gc-deadline-task__body" href="{{ url('/insider/courses/'.$course->id.'/steps/'.$task->step_id.'#task'.$task->id) }}">
                                 <strong>{{ $task->name }}</strong>
+                                @if($item['audience_name'])<small>{{ $item['audience_name'] }}</small>@endif
                                 <small>{{ $task->step->lesson->name }}@if($task->step->name !== $task->step->lesson->name)<span aria-hidden="true"> · </span>{{ $task->step->name }}@endif</small>
                             </a>
                             <div class="gc-deadline-task__conditions">

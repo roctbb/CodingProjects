@@ -3,6 +3,7 @@
         <i class="fas fa-ellipsis-h" aria-hidden="true"></i>
     </button>
     <div class="dropdown-menu dropdown-menu-end gc-course-actions__menu">
+        <a class="dropdown-item" href="{{ route('courses.subgroups', $course->id) }}"><i class="fas fa-user-group" aria-hidden="true"></i> Подгруппы</a>
         <a class="dropdown-item" href="{{ url('/insider/courses/'.$course->id.'/edit') }}"><i class="fas fa-pen" aria-hidden="true"></i> Изменить курс</a>
         <a class="dropdown-item" href="{{ route('courses.notifications', $course->id) }}"><i class="fab fa-telegram" aria-hidden="true"></i> Уведомления курса</a>
         <a class="dropdown-item" href="{{ url('/insider/courses/'.$course->id.'/export-md') }}"><i class="fas fa-file-export" aria-hidden="true"></i> Экспорт в MD</a>

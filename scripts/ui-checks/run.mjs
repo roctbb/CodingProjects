@@ -1,3 +1,4 @@
+import subgroups from './subgroups.mjs';
 import { spawn, execFile, execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -21,7 +22,7 @@ import reviewNavigation from './review-navigation.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const directory = mkdtempSync(path.join(tmpdir(), 'codingprojects-ui-'));
 const mode = process.argv.includes('--baseline') ? 'baseline' : 'current';
-if ((process.argv.includes('--flows-only') || process.argv.includes('--workspace-only') || process.argv.includes('--stats-only') || process.argv.includes('--report-only') || process.argv.includes('--polish-only') || process.argv.includes('--reviews-only') || process.argv.includes('--removal-only') || process.argv.includes('--navigation-only')) && (mode === 'baseline' || process.argv.includes('--compare'))) {
+if ((process.argv.includes('--flows-only') || process.argv.includes('--workspace-only') || process.argv.includes('--stats-only') || process.argv.includes('--report-only') || process.argv.includes('--polish-only') || process.argv.includes('--reviews-only') || process.argv.includes('--removal-only') || process.argv.includes('--navigation-only') || process.argv.includes('--subgroups-only')) && (mode === 'baseline' || process.argv.includes('--compare'))) {
     throw new Error('Baseline and comparison require the complete screen suite.');
 }
 if (process.env.UI_BASELINE_CSS && mode !== 'baseline') throw new Error('UI_BASELINE_CSS is only allowed for a baseline.');
@@ -41,10 +42,10 @@ try {
         try { await fetch(`${url}/login`); break; } catch { if (attempt === 39) throw new Error('UI fixture server did not start'); await new Promise(resolve => setTimeout(resolve, 100)); }
     }
     await cli(['open', 'about:blank', ...(process.env.UI_HEADED === '1' ? ['--headed'] : [])]);
-    const config = { url, output, widths: process.argv.includes('--report-only') ? [1440, 768, 390, 320] : process.argv.includes('--reviews-only') ? [1440, 390, 320] : [1440, 390], palette: process.env.UI_PALETTE || '', css: process.env.UI_BASELINE_CSS ? path.resolve(process.env.UI_BASELINE_CSS) : null };
+    const config = { url, output, widths: process.argv.includes('--subgroups-only') ? [1440,390,320] : process.argv.includes('--report-only') ? [1440, 768, 390, 320] : process.argv.includes('--reviews-only') ? [1440, 390, 320] : [1440, 390], palette: process.env.UI_PALETTE || '', css: process.env.UI_BASELINE_CSS ? path.resolve(process.env.UI_BASELINE_CSS) : null };
     const report = { results: [], errors: [] };
-    const flows = [['interactions', interactions], ['deadlines', deadlineFlows], ['task-workspace', taskWorkspace], ['lesson-statistics', lessonStatistics], ['report-workspace', reportWorkspace], ['deadline-workspace', deadlineWorkspace], ['planner-bonus', plannerBonus], ['recent-reviews', recentReviews], ['solution-removal', solutionRemoval], ['review-navigation', reviewNavigation]];
-    const checks = process.argv.includes('--navigation-only') ? [['review-navigation', reviewNavigation]] : process.argv.includes('--removal-only') ? [['solution-removal', solutionRemoval]] : process.argv.includes('--reviews-only') ? [['recent-reviews', recentReviews]] : process.argv.includes('--polish-only') ? [['deadline-workspace', deadlineWorkspace], ['planner-bonus', plannerBonus]] : process.argv.includes('--report-only') ? [['report-workspace', reportWorkspace]] : process.argv.includes('--workspace-only') ? [['task-workspace', taskWorkspace]] : process.argv.includes('--stats-only') ? [['lesson-statistics', lessonStatistics]] : process.argv.includes('--flows-only') ? flows : [['browser', suite], ...flows];
+    const flows = [['subgroups', subgroups], ['interactions', interactions], ['deadlines', deadlineFlows], ['task-workspace', taskWorkspace], ['lesson-statistics', lessonStatistics], ['report-workspace', reportWorkspace], ['deadline-workspace', deadlineWorkspace], ['planner-bonus', plannerBonus], ['recent-reviews', recentReviews], ['solution-removal', solutionRemoval], ['review-navigation', reviewNavigation]];
+    const checks = process.argv.includes('--subgroups-only') ? [['subgroups', subgroups]] : process.argv.includes('--navigation-only') ? [['review-navigation', reviewNavigation]] : process.argv.includes('--removal-only') ? [['solution-removal', solutionRemoval]] : process.argv.includes('--reviews-only') ? [['recent-reviews', recentReviews]] : process.argv.includes('--polish-only') ? [['deadline-workspace', deadlineWorkspace], ['planner-bonus', plannerBonus]] : process.argv.includes('--report-only') ? [['report-workspace', reportWorkspace]] : process.argv.includes('--workspace-only') ? [['task-workspace', taskWorkspace]] : process.argv.includes('--stats-only') ? [['lesson-statistics', lessonStatistics]] : process.argv.includes('--flows-only') ? flows : [['browser', suite], ...flows];
     for (const [name, check] of checks) {
         const raw = await cli(['run-code', `async(page)=>(${check.toString()})(page,${JSON.stringify(config)})`]);
         writeFileSync(path.join(output, `${name}.log`), raw);

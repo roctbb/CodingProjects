@@ -31,6 +31,18 @@ test('conflicts retain status and code for workspace recovery', async t => {
     await assert.rejects(createPlannerRequest('/api')('/commands/attach'), error => error.status === 409 && error.code === 'revision_conflict' && error.message === 'Обновите план');
 });
 
+test('subgroup selection accompanies calendar reads and edits without losing the range', async t => {
+    const calls = [];
+    mockBrowser(t, async (url, options) => { calls.push({url, method: options.method}); return new Response('{}'); });
+    const request = createPlannerRequest('/api', '17');
+    await request('/state?from=2026-11-09&to=2026-11-15');
+    await request('/commands/move_session', {method:'POST',body:'{"session_id":2}'});
+    assert.deepEqual(calls, [
+        {url:'/api/state?from=2026-11-09&to=2026-11-15&subgroup=17',method:undefined},
+        {url:'/api/commands/move_session?subgroup=17',method:'POST'},
+    ]);
+});
+
 test('field validation errors remain visible and unreadable errors have a fallback', async t => {
     mockBrowser(t, async () => new Response(JSON.stringify({ errors: { starts_on: ['Укажите начало'], ends_on: ['Укажите окончание'] } }), { status: 422 }));
     await assert.rejects(createPlannerRequest('/api')('/calendar/preview'), /Укажите начало Укажите окончание/);

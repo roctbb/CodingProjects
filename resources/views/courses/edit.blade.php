@@ -19,6 +19,7 @@
     <x-gc-course-icon-picker :course="$course" />
 </x-gc-form-section>
 <x-gc-form-section title="Участники" description="Выбор участников сохраняется вместе с настройками курса.">
+    <a class="gc-text-action" href="{{ route('courses.subgroups', $course->id) }}">Состав и расписания подгрупп</a>
     <x-gc-field name="students" label="Ученики"><select id="students" name="students[]" class="form-select" multiple data-enhanced-multiselect data-placeholder="Выберите учеников" data-search-placeholder="Найти ученика">@foreach($students as $student)<option value="{{ $student->id }}" @selected($selectedStudentIds->contains($student->id))>{{ $student->name }}</option>@endforeach</select></x-gc-field>
     <x-gc-field name="hidden_students" label="Ученики, скрытые из статистики" hint="Доступ к материалам сохранится. Эти ученики не попадут в журнал, отчёт, рейтинг и экспорт баллов."><select id="hidden_students" name="hidden_students[]" class="form-select" multiple data-membership-source="#students" data-enhanced-multiselect data-placeholder="Никто не скрыт" data-search-placeholder="Найти ученика">@foreach($students as $student)<option value="{{ $student->id }}" @selected($hiddenStudentIds->contains($student->id))>{{ $student->name }}</option>@endforeach</select></x-gc-field>
     @if(Auth::user()->role === 'admin')

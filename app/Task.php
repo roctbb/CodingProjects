@@ -116,9 +116,10 @@ class Task extends Model
                 ->count() != 0;
     }
 
-    public function getDeadline($course_id)
+    public function getDeadline($course_id, ?int $userId = null, ?\Carbon\CarbonInterface $at = null)
     {
-        return app(\App\Services\CourseDeadlineService::class)->forTask($this, (int) $course_id);
+        $service = app(\App\Services\CourseDeadlineService::class);
+        return $service->forTask($this, (int) $course_id, $userId === null ? null : $service->audience((int) $course_id, $userId, $at));
 
     }
 

@@ -31,7 +31,7 @@ class CourseDeadlineList
         $taskRelations = [];
         foreach ($relations as $name => $constraint) $taskRelations[preg_replace('/^task\./', '', $name)] = $constraint;
         $entries = $service->available()
-            ? $courses->flatMap(fn ($course) => $service->entries($course, $taskRelations))->sortBy(fn ($d) => $d->cutoffAt()->timestamp)
+            ? $courses->flatMap(fn ($course) => $this->entries($course, $viewer, $service, $taskRelations))->sortBy(fn ($d) => $d->cutoffAt()->timestamp)
             : TaskDeadline::with($relations)
             ->whereIn('course_id', $courseIds)
             ->whereNotNull('expiration')
@@ -70,5 +70,24 @@ class CourseDeadlineList
                 return !$upcomingOnly || $cutoff->gt($now);
             })
             ->values();
+    }
+
+    private function entries($course, User $viewer, $service, array $relations): Collection
+    {
+        $scope = \App\Support\CourseScope::for($course, $viewer);
+        $rows = $service->entries($course, $relations, $scope->audienceId());
+        foreach ($rows as $row) { $row->audience_id = $scope->audienceId(); $row->audience_name = $scope->group?->name; }
+        if (!$scope->manager || $scope->key !== 'all' || !app(\App\Services\CourseSubgroups::class)->available() || $course->subgroups->isEmpty()) return $rows;
+        $common = $rows->keyBy('task_id');
+        foreach ($rows as $row) $row->audience_name = 'Общие сроки курса';
+        foreach ($course->subgroups as $group) {
+            foreach ($service->entries($course, $relations, $group->id) as $row) {
+                if ($row->policyId === $common->get($row->task_id)?->policyId) continue;
+                $row->audience_id = $group->id;
+                $row->audience_name = $group->name;
+                $rows->push($row);
+            }
+        }
+        return $rows;
     }
 }

@@ -242,6 +242,7 @@
 - Выбрать текущий урок в меню карточки → [Текущий урок курса](#course-current-lesson) (open)
 - Задачи главы → [Задачи главы ученика](#chapter-tasks) (navigate)
 - Уведомления курса · меню действий → [Уведомления курса](#course-notifications) (navigate)
+- Подгруппы → [Подгруппы курса](#course-subgroups) (open)
 
 Исходники:
 
@@ -931,15 +932,15 @@
 
 ## План занятий
 
-Тип: page. Роли сценария: Преподаватель, Администратор.
+Тип: page. Роли сценария: Ученик, Преподаватель, Администратор.
 
 Планировать занятия и фиксировать факт
 
-Условия: Администратор либо назначенный преподаватель с role=teacher; feature flag и миграции.
+Условия: Участники курса читают свои и общие занятия. Редактирование — только преподаватель курса или администратор.
 
 Проверка: Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.
 
-Состояния для макета и проверки: календарь; обзор; без даты; нет расписания; каталог недоступен; конфликт версии; нативный выбор календаря / обзора; план / факт.
+Состояния для макета и проверки: календарь; обзор; без даты; нет расписания; каталог недоступен; конфликт версии; нативный выбор календаря / обзора; план / факт; независимые расписания подгрупп; общие занятия только для чтения в подгруппе; копирование материалов; ученический календарь.
 
 Шаблон экрана: planner. Статус: implemented.
 
@@ -948,6 +949,7 @@
 - `GET|HEAD /insider/courses/{course_id}/planner` — screen
 - `POST /insider/courses/{course_id}/planner/api/calendar/preview` — api
 - `POST /insider/courses/{course_id}/planner/api/commands/{operation}` — api
+- `GET|HEAD /insider/courses/{course_id}/planner/api/copy-targets` — api
 - `GET|HEAD /insider/courses/{course_id}/planner/api/entries/{link_id}` — api
 - `GET|HEAD /insider/courses/{course_id}/planner/api/providers/{provider_key}/resources` — api
 - `GET|HEAD /insider/courses/{course_id}/planner/api/state` — api
@@ -983,6 +985,7 @@
 - [resources/assets/js/course-planner/deadline-strip.js](../../resources/assets/js/course-planner/deadline-strip.js)
 - [resources/views/components/gc-tab-strip.blade.php](../../resources/views/components/gc-tab-strip.blade.php)
 - [resources/assets/js/components/tab-strip.js](../../resources/assets/js/components/tab-strip.js)
+- [resources/views/course-planner/student.blade.php](../../resources/views/course-planner/student.blade.php)
 
 <a id="community"></a>
 
@@ -2878,3 +2881,38 @@ Telegram, почта и Силаэдр в личных настройках; н�
 - [app/Http/Controllers/CourseNotificationsController.php](../../app/Http/Controllers/CourseNotificationsController.php)
 - [app/Services/CourseTelegram.php](../../app/Services/CourseTelegram.php)
 - [app/Services/DeadlineNotifications.php](../../app/Services/DeadlineNotifications.php)
+
+<a id="course-subgroups"></a>
+
+## Подгруппы курса
+
+Тип: page. Роли сценария: Преподаватель, Администратор.
+
+Создать подгруппы, распределить учеников и открыть отдельное расписание.
+
+Условия: Администратор или преподаватель именно этого курса. Один текущий состав, история переводов сохранена.
+
+Проверка: Создание и переименование, массовый перевод, защита от устаревшего состава; проверки описаны в ../course-subgroups.md.
+
+Состояния для макета и проверки: нет подгрупп; нераспределённые ученики; перевод одного или нескольких учеников; конфликт состава; ширина 320 px; создание по запросу; добавление оставшихся одним действием; поиск большого класса; закреплённая панель перевода.
+
+Шаблон экрана: course-workspace. Статус: implemented.
+
+Маршруты:
+
+- `GET|HEAD /insider/courses/{course_id}/subgroups` — screen
+- `POST /insider/courses/{course_id}/subgroups` — action
+- `POST /insider/courses/{course_id}/subgroups/assign` — action
+- `POST /insider/courses/{course_id}/subgroups/{subgroup_id}` — action
+
+Переходы:
+
+- Расписание подгруппы → [План занятий](#planner) (open)
+
+Исходники:
+
+- [resources/views/courses/subgroups.blade.php](../../resources/views/courses/subgroups.blade.php)
+- [app/Http/Controllers/CourseSubgroupsController.php](../../app/Http/Controllers/CourseSubgroupsController.php)
+- [app/Services/CourseSubgroups.php](../../app/Services/CourseSubgroups.php)
+- [app/Support/CourseScope.php](../../app/Support/CourseScope.php)
+- [resources/assets/js/components/course-subgroups.js](../../resources/assets/js/components/course-subgroups.js)

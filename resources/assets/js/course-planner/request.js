@@ -1,6 +1,7 @@
-export function createPlannerRequest(api) {
+export function createPlannerRequest(api, subgroup = null) {
   return async function request(path, options = {}) {
-    const response = await fetch(api + path, {
+    const scopedPath = subgroup ? path + (path.includes('?') ? '&' : '?') + new URLSearchParams({ subgroup }) : path;
+    const response = await fetch(api + scopedPath, {
       credentials: "same-origin",
       ...options,
       headers: {

@@ -1,6 +1,6 @@
 import { esc, date, shift } from "./format.js";
 
-export function createSessionActions({ root, getState, setTarget, setRange, loadState, ensureSession, mutate, dialog, renderCalendar, renderTarget, revealSession }) {
+export function createSessionActions({ root, getState, setTarget, setRange, loadState, ensureSession, mutate, request, dialog, renderCalendar, renderTarget, revealSession }) {
   const $ = selector => root.querySelector(selector);
   const { field, select, modal, values } = dialog;
   const slotById = id => getState().data.slots.find(s => s.id === Number(id));
@@ -10,12 +10,24 @@ export function createSessionActions({ root, getState, setTarget, setRange, load
       '<div class="planner-field"><label for="planner-session-comment">Комментарий к занятию</label><textarea id="planner-session-comment" class="form-control" name="comment" rows="5" maxlength="10000" placeholder="Что успели, что изменилось, что нужно продолжить">' + esc(session.comment ?? session.record?.note ?? "") + '</textarea></div>',
       async () => { await mutate("comment", {session_id: session.id, comment: values().comment}, "Комментарий сохранён."); });
   }
-  const names = new Set(["add-session", "add-text", "record", "edit-session", "session-bonus", "add-slot", "exclude", "remove-exception"]);
+  const names = new Set(["copy-materials", "add-session", "add-text", "record", "edit-session", "session-bonus", "add-slot", "exclude", "remove-exception"]);
   async function handle(button) {
     const { data } = getState();
     const name = button.dataset.action;
     const session = data.sessions.find(s => s.id === Number(button.dataset.session));
     switch (name) {
+      case 'copy-materials': {
+        const { from, to } = getState();
+        const result = await request('/copy-targets?' + new URLSearchParams({ from, to }));
+        const targets = result.items.filter(target => target.id !== session.id);
+        if (!targets.length) throw new Error('Добавьте занятие назначения на этой неделе или без даты.');
+        modal('Скопировать материалы', select('target_session_id', 'Занятие назначения', targets.map(target => [target.id, `${target.audience_name} · ${date(target.local_date)} ${target.start_time || ''} · ${target.title}`]))
+          + '<p class="gc-help-text mt-3">Копия редактируется независимо. Комментарий, сроки сдачи и бонусы за решение не переносятся.</p>', async () => {
+          const target = targets.find(item => item.id === Number(values().target_session_id));
+          await mutate('copy_materials', { source_session_id: session.id, target_session_id: target.id, destination_revision: target.revision }, 'Материалы скопированы.');
+        });
+        break;
+      }
       case "session-bonus": {
         const entries = session.entries.filter(entry => entry.kind === 'resource' && entry.layer === 'plan'
           && entry.resource.provider_key === 'codingprojects' && ['task', 'step', 'lesson'].includes(entry.resource.type));

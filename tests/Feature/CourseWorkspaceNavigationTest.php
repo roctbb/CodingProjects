@@ -18,6 +18,9 @@ class CourseWorkspaceNavigationTest extends TestCase
         $this->actingAs($viewer);
         $course = (new Course())->forceFill(['id' => 133, 'name' => 'Python <script>test</script>', 'description' => 'Описание курса']);
         $course->setRelation('teachers', collect($assigned ? [$viewer] : []));
+        $this->mock(\App\Services\CourseSubgroups::class)->shouldReceive('available')->andReturn(false);
+        $this->mock(\App\Services\CourseAccess::class)->shouldReceive('manages')
+            ->andReturn($role === 'admin' || ($role === 'teacher' && $assigned));
         $program = new Program();
         $program->setRelation('chapters', collect([(new ProgramChapter())->forceFill(['id' => 1]), (new ProgramChapter())->forceFill(['id' => 50])]));
         $course->setRelation('program', $program);
@@ -43,7 +46,7 @@ class CourseWorkspaceNavigationTest extends TestCase
 
     public function test_manager_destinations_follow_role_and_course_membership(): void
     {
-        foreach ([['student', false, 3], ['student', true, 3], ['teacher', false, 2], ['teacher', true, 5], ['admin', false, 5]] as [$role, $assigned, $count]) {
+        foreach ([['student', false, 4], ['student', true, 4], ['teacher', false, 2], ['teacher', true, 5], ['admin', false, 5]] as [$role, $assigned, $count]) {
             $this->assertSame($count, $this->navigation($role, $assigned)->query('//nav/a')->length);
         }
         $xpath = $this->navigation('teacher', true, 'journal', false);
@@ -57,7 +60,7 @@ class CourseWorkspaceNavigationTest extends TestCase
             $xpath = $this->navigation('teacher', true, $active);
             $this->assertSame(1, $xpath->query('//header//div[@data-course-actions]')->length);
             $paths = array_map(fn ($link) => parse_url($link->getAttribute('href'), PHP_URL_PATH), iterator_to_array($xpath->query('//*[@data-course-actions]//a')));
-            $this->assertSame(['/insider/courses/133/edit', '/insider/courses/133/notifications', '/insider/courses/133/export-md', '/insider/courses/133/blocked'], $paths);
+            $this->assertSame(['/insider/courses/133/subgroups', '/insider/courses/133/edit', '/insider/courses/133/notifications', '/insider/courses/133/export-md', '/insider/courses/133/blocked'], $paths);
         }
         foreach ([['student', false], ['student', true], ['teacher', false]] as [$role, $assigned]) {
             $this->assertSame(0, $this->navigation($role, $assigned)->query('//*[@data-course-actions]')->length);

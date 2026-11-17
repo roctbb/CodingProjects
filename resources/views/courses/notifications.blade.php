@@ -19,6 +19,9 @@
         <section class="col-12 col-lg-6"><div class="gc-card p-3 h-100">
             <h3 class="h5 mb-3"><i class="fab fa-telegram" aria-hidden="true"></i> Чаты курса</h3>
             <p class="gc-help-text">Добавьте бота в группу, затем подтвердите её здесь. Для отдельной темы отправьте команду подключения внутри этой темы.</p>
+            @if(app(\App\Services\CourseSubgroups::class)->available() && $course->subgroups->isNotEmpty())
+                <p class="gc-help-text">В сообщении указана подгруппа, к которой относится срок. Сроки разных подгрупп приходят отдельными сообщениями; ссылка открывает дедлайны нужной подгруппы.</p>
+            @endif
             @foreach($chats as $chat)
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <div class="min-width-0"><strong class="text-break">{{ $chat->title }}</strong><small class="d-block gc-help-text">{{ ['active' => 'Подключён', 'pending' => 'Ждёт подтверждения', 'disabled' => 'Отключён'][$chat->status] ?? $chat->status }}@if($chat->thread_id) · Тема {{ $chat->thread_id }}@endif</small></div>

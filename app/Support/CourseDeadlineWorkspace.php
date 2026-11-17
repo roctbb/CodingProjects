@@ -10,7 +10,7 @@ final class CourseDeadlineWorkspace
     {
         $now = now();
 
-        return $entries->groupBy('task_id')->map(function ($stages) use ($now) {
+        return $entries->groupBy(fn ($entry) => ($entry->audience_id ?? 0).':'.$entry->task_id)->map(function ($stages) use ($now) {
             $entry = $stages->first();
             $rule = $entry instanceof DeadlineRule ? $entry : DeadlineRule::fromLegacy($entry);
             $schedule = collect($rule->series);
@@ -22,6 +22,7 @@ final class CourseDeadlineWorkspace
 
             return [
                 'task' => $entry->task,
+                'audience_id' => (int) ($entry->audience_id ?? 0), 'audience_name' => $entry->audience_name,
                 'rule' => $rule,
                 'done' => (bool) $entry->is_done,
                 'penalty' => (float) round(100 - $rule->at($now)->penalty * 100, 2),

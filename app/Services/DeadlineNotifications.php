@@ -14,7 +14,7 @@ class DeadlineNotifications
 {
     public function policyChanged(DeadlinePolicy $policy, bool $created): void
     {
-        if (!Schema::hasTable('deadline_notification_events') || $policy->mode !== 'custom' || ($policy->audience_id ?? 0)) return;
+        if (!Schema::hasTable('deadline_notification_events') || $policy->mode !== 'custom') return;
         $stage = $policy->stages->first();
         if (!$stage) return;
         $now = now()->utc();
@@ -94,7 +94,7 @@ class DeadlineNotifications
                 $stage = DB::table('deadline_stages')->find($event->stage_id);
                 foreach ($recipients as [$type, $id, $chatId, $thread]) {
                     $scope = $changed ? 'policy:'.$policy->id : $tasks->first()->step->lesson_id;
-                    $group = implode(':', [$course->id, $scope, $event->kind, $event->scheduled_at, $stage->retained_percent, $type, $id]);
+                    $group = implode(':', [$course->id, (int) ($policy->audience_id ?? 0), $scope, $event->kind, $event->scheduled_at, $stage->retained_percent, $type, $id]);
                     $groups[$group] ??= ['course_id' => $course->id, 'recipient_type' => $type, 'recipient_id' => $id, 'chat_id' => (string) $chatId, 'thread_id' => $thread, 'event_ids' => []];
                     $groups[$group]['event_ids'][] = $event->id;
                 }
@@ -127,15 +127,18 @@ class DeadlineNotifications
         $course = Course::find($event->course_id);
         if (!$course || !$policy || $policy->mode !== 'custom' || (int) $policy->revision !== (int) $event->revision ||
             in_array($event->status, ['cancelled', 'expired'], true) || Carbon::parse($event->expires_at, 'UTC')->lte(now())) return collect();
+        if (($policy->audience_id ?? 0) && !$course->subgroups()->whereKey($policy->audience_id)->exists()) return collect();
         $query = Task::with(['step.lesson.info', 'step.lesson.earlyAccesses', 'deadlines']);
         if ($policy->target_type === 'task') $query->whereKey($policy->target_id);
         else $query->where('is_star', false)->whereHas('step', fn ($q) => $q->where('lesson_id', $policy->target_id));
         if ($student) $query->with(['solutions' => fn ($q) => $q->where('course_id', $course->id)->where('user_id', $student->id)]);
         return $query->get()->filter(function ($task) use ($policy, $course, $student, $public) {
             if ((int) $task->step?->lesson?->program_id !== (int) $course->program_id) return false;
-            $rule = app(CourseDeadlineService::class)->forTask($task, $course->id);
+            $service = app(CourseDeadlineService::class);
+            $audience = $student ? $service->audience($course->id, $student->id) : (int) ($policy->audience_id ?? 0);
+            $rule = $service->forTask($task, $course->id, $audience);
             if (!($rule instanceof \App\Support\DeadlineRule) || $rule->policyId !== $policy->id) return false;
-            if ($public && ($task->is_hidden || !$task->step->lesson->isStarted($course))) return false;
+            if ($public && ($task->is_hidden || !$task->step->lesson->isStartedForAudience($course, $audience))) return false;
             if (!$student) return true;
             if (!$task->isVisible($student, $course) || !$task->step->lesson->isAvailableForUser($course, $student)) return false;
             // Do not nag about completed work or a submission awaiting review.

@@ -126,7 +126,7 @@
                                             $lessonProgressClass = $lessonPercent < 40 ? 'is-low' : ($lessonPercent < 60 ? 'is-mid' : 'is-high');
                                             $lessonIntegrity = $studentIntegrity['lessons'][$lesson->id] ?? null;
                                             $lessonHasIntegrityRisk = $lessonIntegrity && $lessonIntegrity['synced'] > 0 && $lessonIntegrity['risk_level'] !== 'low';
-                                            $lessonStartDate = $lesson->getStartDate($course);
+                                            $lessonStartDate = $lesson->getStartDate($course, $student);
                                             $lessonPendingCount = $lesson->steps->flatMap->tasks->filter(fn ($task) => isset($pendingReviewPairs[$student->id.':'.$task->id]))->count();
                                             $lessonState = $lessonPendingCount ? 'review' : ($lessonMaxPoints > 0 && $lessonPoints >= $lessonMaxPoints ? 'complete' : ($lessonMaxPoints > 0 ? 'incomplete' : 'unscored'));
                                         @endphp

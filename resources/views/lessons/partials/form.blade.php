@@ -4,6 +4,12 @@
 <x-gc-markdown-field name="description" label="Описание урока" :value="$lesson?->description ?? ''" :compact="true" :required="true" :improve="false" hint="Кратко опишите, чему посвящён урок. Основной материал размещается в ступенях." />
 </x-gc-form-section>
 <x-gc-form-section title="Доступ к уроку" description="Доступ по дате относится к этому курсу.">
+@php($participantScope = \App\Support\CourseScope::for($course))
+@include('courses.partials.scope-input')
+@if($participantScope->group)
+    <p class="gc-help-text">Дата открытия для «{{ $participantScope->label() }}». Содержание урока общее для всей программы.</p>
+    <x-gc-toggle name="inherit_start_date" label="Использовать общую дату курса" :checked="!$lesson || !\Illuminate\Support\Facades\DB::table('course_subgroup_lessons')->where('subgroup_id', $participantScope->group->id)->where('lesson_id', $lesson->id)->exists()" hint="Выключите, чтобы задать отдельную дату подгруппы." />
+@endif
 @if($lesson)
 <x-gc-field name="start_date" label="Дата открытия" hint="Без даты урок остаётся закрыт до ручного открытия."><input id="start_date" name="start_date" type="date" class="form-control" value="{{ old('start_date', $lesson->getStartDate($course)?->format('Y-m-d') ?? '') }}"  ></x-gc-field>
 <x-gc-toggle name="open" label="Открытый урок" value="yes" :checked="$lesson->is_open" hint="Параметр общего доступа урока." />

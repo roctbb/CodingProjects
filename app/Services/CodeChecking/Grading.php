@@ -37,7 +37,7 @@ class Grading
             $solution->setEvaluatedMark($points);
             if ($new && $submission->deadline_rule_snapshot !== null) $solution->deadline_rule_snapshot=$submission->deadline_rule_snapshot;
             if ($new && $submission->class_bonus_snapshot !== null) $solution->class_bonus_snapshot=$submission->class_bonus_snapshot;
-            $solution->applyDeadlinePenalty($points,$task->getDeadline($course->id));
+            $solution->applyDeadlinePenalty($points,$task->getDeadline($course->id, $user->id, $submission->created_at));
             $comment=mb_strcut($data['comment'],0,60000,'UTF-8');
             $solution->comment=$solution->hasActiveDeadlinePenalty() ? trim("Сдано с опозданием. Штраф: -{$solution->deadline_penalty_amount} XP.\n\n".$comment) : $comment;
             $solution->checked=now();

@@ -29,9 +29,9 @@ class LessonStudentStats extends Model
         return $this->belongsTo('App\User', 'student_id', 'id');
     }
 
-    private static function isCommonProgressLesson(Lesson $lesson, Course $course)
+    private static function isCommonProgressLesson(Lesson $lesson, Course $course, User $student)
     {
-        return $lesson->isStarted($course);
+        return $lesson->isStarted($course, $student);
     }
 
     private static function isCommonProgressTask(Task $task)
@@ -91,7 +91,7 @@ class LessonStudentStats extends Model
         $earnedMarksByTask = $student->submissions->filter(fn ($s) => $s->evaluatedMark() > 0)
             ->groupBy('task_id')->map(fn ($submissions) => (int) $submissions->max('mark'));
 
-        if (!self::isCommonProgressLesson($lesson, $course)) {
+        if (!self::isCommonProgressLesson($lesson, $course, $student)) {
             return [
                 'points' => 0,
                 'max_points' => 0,
@@ -179,7 +179,7 @@ class LessonStudentStats extends Model
         }
     }
 
-    public static function recalculateForStudents($courseId, $studentIds = null)
+    public static function recalculateForStudents($courseId, $studentIds = null, bool $notify = true)
     {
         $studentIds = collect($studentIds === null ? Course::findOrFail($courseId)->students()->pluck('users.id') : $studentIds)
             ->filter()
@@ -227,13 +227,13 @@ class LessonStudentStats extends Model
         }
 
         if (!empty($rows)) {
-            DB::transaction(function () use ($rows) {
+            DB::transaction(function () use ($rows, $notify) {
             self::upsert(
                 $rows,
                 ['course_id', 'lesson_id', 'student_id'],
                 ['points', 'max_points', 'percent', 'updated_at']
             );
-            app(RewardNotices::class)->stickers($rows);
+            if ($notify) app(RewardNotices::class)->stickers($rows);
             });
         }
 

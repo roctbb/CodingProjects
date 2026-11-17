@@ -19,7 +19,7 @@ class CodeSubmission extends Model
             if (\Illuminate\Support\Facades\Schema::hasColumn('code_submissions', 'class_bonus_snapshot')) $submission->class_bonus_snapshot = app(\App\Services\ClassroomBonus::class)->at(
                 Task::findOrFail($submission->task_id), $submission->course_id, $submission->user_id, $submission->created_at ?? now());
             if (!\Illuminate\Support\Facades\Schema::hasColumn('code_submissions', 'deadline_rule_snapshot')) return;
-            $rule = Task::findOrFail($submission->task_id)->getDeadline($submission->course_id);
+            $rule = Task::findOrFail($submission->task_id)->getDeadline($submission->course_id, $submission->user_id, $submission->created_at ?? now());
             $submission->deadline_rule_snapshot = $rule
                 ? ($rule instanceof \App\Support\DeadlineRule ? $rule : \App\Support\DeadlineRule::fromLegacy($rule))->snapshot() : ['none' => true];
         });

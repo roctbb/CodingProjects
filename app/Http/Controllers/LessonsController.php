@@ -132,7 +132,7 @@ class LessonsController extends Controller
         $lesson->name = $request->name;
         $wasStarted = $lesson->isStarted($course);
         $oldStartDate = $lesson->getStartDate($course);
-        $lesson->setStartDate($course, $request->start_date);
+        $lesson->setStartDate($course, $request->start_date, $request->boolean('inherit_start_date'));
         $lesson->description = clean($request->description);
         $lesson->chapter_id = $request->chapter;
         $lesson->early_access_enabled = $request->early_access_enabled == 'on';
@@ -176,7 +176,7 @@ class LessonsController extends Controller
             }
         }
 
-        return redirect('/insider/courses/' . $course_id . '?chapter=' . $request->chapter);
+        return redirect(\App\Support\CourseScope::for($course)->url('/insider/courses/' . $course_id . '?chapter=' . $request->chapter));
     }
 
     public function buyEarlyAccess($course_id, $id)
@@ -430,7 +430,7 @@ class LessonsController extends Controller
             abort(404);
         }
 
-        $students = $course->statsStudents;
+        $students = \App\Support\CourseScope::for($course)->filter($course->statsStudents);
         $studentIds = $students->pluck('id');
         $statsByStudent = LessonStudentStats::recalculateForLesson($course->id, $lesson->id, $studentIds);
 

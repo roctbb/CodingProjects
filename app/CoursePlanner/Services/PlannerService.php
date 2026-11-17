@@ -29,15 +29,34 @@ class PlannerService
     {
     }
 
-    public function planner(Course $course): PlannerCourse
+    public function planner(Course $course, ?int $audience = null): PlannerCourse
     {
-        return PlannerCourse::firstOrCreate(['course_id' => $course->id], ['timezone' => config('course_planner.timezone', 'Europe/Moscow')]);
+        $key = ['course_id' => $course->id];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('planner_courses', 'audience_id')) {
+            $audience ??= \App\Support\CourseScope::for($course)->audienceId();
+            if ($audience) $course->subgroups()->findOrFail($audience);
+            $key['audience_id'] = $audience;
+        }
+        $defaults = ['timezone' => config('course_planner.timezone', 'Europe/Moscow')];
+        if ($key['audience_id'] ?? 0) {
+            $common = PlannerCourse::where('course_id', $course->id)->where('audience_id', 0)->first();
+            if ($common) $defaults = $common->only(['timezone', 'starts_on', 'ends_on', 'default_duration_minutes']);
+        }
+        return PlannerCourse::firstOrCreate($key, $defaults);
     }
 
     public function command(Course $course, User $actor, string $operation, array $input): array
     {
         Validator::make($input, ['operation_id' => 'required|string|min:8|max:80', 'revision' => 'required|integer|min:0', 'unified' => 'sometimes|boolean'])->validate();
-        return $this->history->execute($this->planner($course), $actor, $operation, $input, function ($planner) use ($course, $actor, $operation, $input) {
+        app(\App\Services\CourseAccess::class)->manage($actor, $course);
+        $scope = \App\Support\CourseScope::for($course, $actor, new \Illuminate\Http\Request($input));
+        $planner = $this->planner($course, $scope->audienceId());
+        if ($operation === 'copy_materials') {
+            app(\App\Services\CourseAccess::class)->manage($actor, $course);
+            $destination = PlannerSession::findOrFail($input['target_session_id'] ?? null);
+            $planner = PlannerCourse::where('course_id', $course->id)->findOrFail($destination->planner_course_id);
+        }
+        return $this->history->execute($planner, $actor, $operation, $input, function ($planner) use ($course, $actor, $operation, $input) {
             return match ($operation) {
                 'configure' => $this->calendar->rebuild($planner, $input),
                 'providers' => $this->providers->configure($planner, $input),
@@ -50,6 +69,7 @@ class PlannerService
                 'session_bonus' => $this->sessionBonus($planner, $input),
                 'attach' => $this->attach($planner, $course, $actor, $input),
                 'attach_many' => $this->attachMany($planner, $course, $actor, $input),
+                'copy_materials' => $this->copyMaterials($planner, $course, $input),
                 'comment' => $this->comment($planner, $input),
                 'refresh_entry' => $this->refreshEntry($planner, $course, $actor, $input),
                 'split_lesson' => $this->splitLesson($planner, $course, $actor, $input),
@@ -69,6 +89,34 @@ class PlannerService
     private function session(PlannerCourse $planner, mixed $id): PlannerSession
     {
         return PlannerSession::where('planner_course_id', $planner->id)->whereKey($id)->firstOrFail();
+    }
+
+    private function copyMaterials(PlannerCourse $planner, Course $course, array $input): array
+    {
+        $data = Validator::make($input, ['source_session_id' => 'required|integer|min:1', 'target_session_id' => 'required|integer|different:source_session_id'])->validate();
+        $target = $this->session($planner, $data['target_session_id']);
+        $source = PlannerSession::whereIn('planner_course_id', PlannerCourse::where('course_id', $course->id)->select('id'))->findOrFail($data['source_session_id']);
+        $count = 0;
+        $entries = SessionResource::where('session_id', $source->id)->orderByRaw("CASE WHEN layer = 'plan' THEN 0 ELSE 1 END")->orderBy('sort_index')->get()->unique('resource_ref_id')
+            ->concat(SessionText::where('session_id', $source->id)->where('layer', 'plan')->get())->sortBy('sort_index');
+        foreach ($entries as $entry) {
+            if ($entry instanceof SessionText) {
+                $entry->replicate()->fill(['session_id' => $target->id, 'sort_index' => $this->nextIndex($target->id, null)])->save();
+                $count++;
+                continue;
+            }
+            if (SessionResource::where('session_id', $target->id)->where('resource_ref_id', $entry->resource_ref_id)->exists()) continue;
+            $this->checkLessonOverlap($target, null, $entry->resource_snapshot);
+            $snapshot = $entry->resource_snapshot;
+            unset($snapshot['deadline_snapshot'], $snapshot['deadline_policy_snapshot'], $snapshot['deadline_frozen_at']);
+            $copy = $entry->replicate()->fill(['session_id' => $target->id, 'layer' => 'plan', 'fact_state' => null,
+                'resource_snapshot' => $snapshot, 'sort_index' => $this->nextIndex($target->id, null)]);
+            if (array_key_exists('class_bonus_gc', $entry->getAttributes())) $copy->class_bonus_gc = 0;
+            $copy->save();
+            foreach (ResourceLessonLink::where('session_resource_id', $entry->id)->get() as $link) $link->replicate()->fill(['session_resource_id' => $copy->id])->save();
+            $count++;
+        }
+        return ['session_id' => $target->id, 'copied' => $count];
     }
 
     private function layer(array $input): string
@@ -363,7 +411,7 @@ class PlannerService
             'penalty' => 'nullable|numeric|min:0|max:1', 'title' => 'nullable|string|max:500', 'lesson_id' => 'nullable|integer',
             'deadline_id' => 'nullable|integer', 'task_id' => 'nullable|integer'])->validate();
         if (!empty($data['task_id'])) {
-            $this->nativeDeadline($course, (int) $data['task_id'], $input, $data);
+            $this->nativeDeadline($course, (int) $data['task_id'], $input, $data, (int) ($planner->audience_id ?? 0));
             return [];
         }
         if (!empty($data['resource_ref_id'])) {
@@ -374,7 +422,7 @@ class PlannerService
             $providerKey = DB::table('planner_providers')->where('id', $ref->provider_id)->value('key');
             if ($providerKey === 'codingprojects') {
                 abort_unless($ref->resource_type === 'task', 422);
-                $this->nativeDeadline($course, (int) $ref->external_id, $input, $data);
+                $this->nativeDeadline($course, (int) $ref->external_id, $input, $data, (int) ($planner->audience_id ?? 0));
                 return [];
             }
             if (empty($data['due_on'])) {
@@ -403,16 +451,16 @@ class PlannerService
         return $id ? Lesson::where('program_id', $course->program_id)->whereKey($id)->firstOrFail()->id : null;
     }
 
-    private function nativeDeadline(Course $course, int $taskId, array $input, array $legacy): void
+    private function nativeDeadline(Course $course, int $taskId, array $input, array $legacy, int $audience = 0): void
     {
         $service = app(CourseDeadlineService::class);
         if (array_key_exists('mode', $input)) {
             $service->savePolicy($course, 'task', $taskId, [
                 'revision' => $input['policy_revision'] ?? null, 'mode' => $input['mode'],
                 'timezone' => $input['timezone'] ?? $service->timezone($course->id), 'stages' => $input['stages'] ?? [],
-            ], auth()->id());
+            ], auth()->id(), false, $audience);
         } else {
-            $service->set($course, Task::findOrFail($taskId), $legacy['due_on'] ?? null, $legacy['penalty'] ?? null);
+            $service->set($course, Task::findOrFail($taskId), $legacy['due_on'] ?? null, $legacy['penalty'] ?? null, $audience);
         }
     }
 
@@ -476,7 +524,7 @@ class PlannerService
     {
         $snap = $link->resource_snapshot;
         if (($snap['provider_key'] ?? '') === 'codingprojects' && ($snap['type'] ?? '') === 'task') {
-            return Task::find($snap['external_id'])?->getDeadline($planner->course_id)?->expiration?->format('Y-m-d');
+            return app(CourseDeadlineService::class)->forTask(Task::findOrFail($snap['external_id']), $planner->course_id, (int) ($planner->audience_id ?? 0))?->expiration?->format('Y-m-d');
         }
         return PlannerDeadline::where('planner_course_id', $planner->id)->where('resource_ref_id', $link->resource_ref_id)->value('due_on');
     }
@@ -485,7 +533,7 @@ class PlannerService
     {
         $snap = $link->resource_snapshot;
         if (($snap['provider_key'] ?? '') !== 'codingprojects' || ($snap['type'] ?? '') !== 'task') return null;
-        $rule = Task::find($snap['external_id'])?->getDeadline($planner->course_id);
+        $rule = app(CourseDeadlineService::class)->forTask(Task::findOrFail($snap['external_id']), $planner->course_id, (int) ($planner->audience_id ?? 0));
         return $rule ? ($rule instanceof \App\Support\DeadlineRule ? $rule : \App\Support\DeadlineRule::fromLegacy($rule))->snapshot() : null;
     }
 

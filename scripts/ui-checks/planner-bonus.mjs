@@ -21,6 +21,7 @@ export default async function plannerBonus(controlPage, { url, output, widths = 
             check('catalog-bottom-back-restores-parent-and-search', await catalog.locator('#planner-type').inputValue() === 'lesson', width);
             await catalog.getByRole('button', { name: 'Закрыть выбор материалов', exact: true }).click();
             const before = await session.locator('.planner-entry').allTextContents();
+            check('planner-bonus-shortcut-is-accessible-icon', await session.locator('footer [data-action="session-bonus"]').evaluate(el => el.textContent.trim() === '' && Boolean(el.querySelector('.fa-coins')) && el.getAttribute('aria-label') === 'Бонус всем задачам занятия' && el.title === 'Бонус всем задачам занятия'), width);
             await session.locator('footer [data-action="session-bonus"]').click();
             const dialog = page.locator('#planner-dialog');
             await dialog.getByRole('heading', { name: 'Бонус всем задачам занятия', exact: true }).waitFor();

@@ -19,10 +19,12 @@ class ClassroomBonus
         if (Solution::where('course_id', $courseId)->where('user_id', $userId)->where('task_id', $task->id)->where('submitted', '<', $submitted)
             ->whereNotNull('mark')->get()->contains(fn ($s) => $s->evaluatedMark() >= $task->max_mark)) return [];
         $step = $task->step;
+        $audience = app(CourseSubgroups::class)->groupFor($courseId, $userId, $submitted) ?? 0;
         $entries = DB::table('planner_session_resources as e')->join('planner_sessions as s', 's.id', '=', 'e.session_id')
             ->join('planner_courses as p', 'p.id', '=', 's.planner_course_id')->join('planner_calendar_slots as c', 'c.id', '=', 's.calendar_slot_id')
             ->join('planner_resource_refs as r', 'r.id', '=', 'e.resource_ref_id')->join('planner_providers as provider', 'provider.id', '=', 'r.provider_id')
             ->where('p.course_id', $courseId)->where('e.layer', 'plan')->where('e.class_bonus_gc', '>', 0)->where('c.state', 'available')
+            ->when(Schema::hasColumn('planner_courses', 'audience_id'), fn ($q) => $q->whereIn('p.audience_id', array_unique([0, $audience])))
             ->whereNotNull('c.start_time')->where('provider.key', 'codingprojects')->where(function ($q) use ($task, $step) {
                 $q->where(fn ($q) => $q->where('r.resource_type', 'task')->where('r.external_id', (string) $task->id))
                     ->orWhere(fn ($q) => $q->where('r.resource_type', 'step')->where('r.external_id', (string) $step->id))

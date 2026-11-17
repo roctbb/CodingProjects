@@ -1,5 +1,5 @@
 import * as bootstrap from 'bootstrap';
-import { syncCourseChapter } from './course-context';
+import { syncCourseChapter, withCourseScope } from './course-context';
 
 export default function initReportWorkspaces() {
     document.querySelectorAll('[data-report-workspace]').forEach(root => {
@@ -57,7 +57,7 @@ export default function initReportWorkspaces() {
             pane.setAttribute('aria-busy', 'true');
             pane.innerHTML = '<div class="gc-card report-detail-status" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Загружаем отчёт ученика…</div>';
             try {
-                const url = new URL(root.dataset.reportDetailUrl, location.origin);
+                const url = new URL(withCourseScope(root.dataset.reportDetailUrl), location.origin);
                 url.searchParams.set('student', pane.dataset.reportStudentId);
                 url.searchParams.set('report_detail', '1');
                 const response = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });

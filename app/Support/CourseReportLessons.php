@@ -20,7 +20,7 @@ final class CourseReportLessons
                 ->where('chapter_id', $chapter->id)
                 ->sortBy('sort_index')
                 ->filter(function ($lesson) use ($course) {
-                    return $lesson->isStarted($course);
+                    return self::started($lesson, $course);
                 })
                 ->values();
 
@@ -39,7 +39,7 @@ final class CourseReportLessons
         $uncategorizedLessons = $allLessons
             ->filter(function ($lesson) use ($course, $knownChapterIds) {
                 return (!$lesson->chapter_id || !in_array($lesson->chapter_id, $knownChapterIds))
-                    && $lesson->isStarted($course);
+                    && self::started($lesson, $course);
             })
             ->sortBy('sort_index')
             ->values();
@@ -53,5 +53,13 @@ final class CourseReportLessons
         }
 
         return [$orderedLessons->values(), $groups];
+    }
+
+    private static function started($lesson, Course $course): bool
+    {
+        if ($lesson->isStarted($course)) return true;
+        if (($course->participantScope?->key ?? 'all') !== 'all' || !app(\App\Services\CourseSubgroups::class)->available()) return false;
+        return \Illuminate\Support\Facades\DB::table('course_subgroup_lessons as l')->join('course_subgroups as g', 'g.id', '=', 'l.subgroup_id')
+            ->where('g.course_id', $course->id)->where('l.lesson_id', $lesson->id)->where('l.start_date', '<', now()->setTime(23,59))->exists();
     }
 }

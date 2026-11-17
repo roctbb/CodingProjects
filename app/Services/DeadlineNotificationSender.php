@@ -38,12 +38,17 @@ class DeadlineNotificationSender
         $stage = DB::table('deadline_stages')->find($event->stage_id);
         if (!$stage) { $this->finish($id, 'cancelled'); return; }
         $policy = \App\DeadlinePolicy::with('stages')->find($event->policy_id);
+        $audience = (int) ($policy->audience_id ?? 0);
+        $scopeName = null;
+        if ($audience) $scopeName = $course->subgroups()->whereKey($audience)->value('name');
+        elseif (app(CourseSubgroups::class)->available() && $course->subgroups()->exists()) $scopeName = 'Общий срок курса';
+        $courseTitle = mb_substr($course->name, 0, 200).($scopeName !== null ? ' · '.preg_replace('/[\r\n]+/u', ' ', $scopeName) : '');
         $zone = $policy->timezone;
         $changed = in_array($event->kind, ['created', 'updated'], true);
         if ($changed) {
             $rule = \App\Support\DeadlineRule::fromPolicy($policy);
             $text = ($event->kind === 'created' ? '📅 Установлены сроки сдачи' : '📅 Изменены сроки сдачи')."\n".
-                mb_substr($course->name, 0, 200)."\n".mb_substr($tasks->first()->step->lesson->name, 0, 200)."\n";
+                $courseTitle."\n".mb_substr($tasks->first()->step->lesson->name, 0, 200)."\n";
             foreach (array_slice($rule->series, 0, 20) as $deadline) {
                 $text .= 'До '.$rule->deadlineAt($deadline)->format('d.m.Y H:i').' ('.$zone.'); после срока — '.($deadline['percent'] + 0)."% баллов\n";
             }
@@ -55,12 +60,12 @@ class DeadlineNotificationSender
             $minutes = max(1, (int) ceil(now()->diffInSeconds($rule->cutoffAt(), false) / 60));
             $remaining = $minutes >= 60 ? intdiv($minutes, 60).' ч '.($minutes % 60).' мин' : $minutes.' мин';
             $text = ($event->kind === 'reminder' ? '⏳ До срока сдачи: '.$remaining : '🏁 Наступил срок сдачи')."\n".
-                mb_substr($course->name, 0, 200)."\n".mb_substr($tasks->first()->step->lesson->name, 0, 200)."\n".
+                $courseTitle."\n".mb_substr($tasks->first()->step->lesson->name, 0, 200)."\n".
                 'До '.$date.' ('.$zone.'); после срока — '.($stage->retained_percent + 0)."% баллов\n";
         }
         foreach ($tasks->take(5) as $task) $text .= '• '.mb_substr($task->name, 0, 150)."\n";
         if ($tasks->count() > 5) $text .= 'И ещё '.($tasks->count() - 5)." задач\n";
-        $text .= "Сдача остаётся открытой. Уже заработанные баллы сохраняются.\n".url('/insider/courses/'.$course->id.'/deadlines');
+        $text .= "Сдача остаётся открытой. Уже заработанные баллы сохраняются.\n".url('/insider/courses/'.$course->id.'/deadlines'.($scopeName !== null ? '?subgroup='.($audience ?: 'all') : ''));
         $result = app(TelegramBot::class)->deliver($d->chat_id, $text, (int) $d->thread_id);
         if ($result['ok'] ?? false) {
             $this->finish($id, 'sent', ['message_id' => (string) ($result['result']['message_id'] ?? '')]); return;

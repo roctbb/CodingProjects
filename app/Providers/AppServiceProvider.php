@@ -37,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->app->scoped(\App\Services\CourseSubgroups::class, fn () => new \App\Services\CourseSubgroups());
         $this->app->scoped(\App\Services\CourseDeadlineService::class, fn () => new \App\Services\CourseDeadlineService());
         $this->app->scoped(\App\Services\SystemStoreSettings::class, fn () => new \App\Services\SystemStoreSettings());
         //Recaptcha service

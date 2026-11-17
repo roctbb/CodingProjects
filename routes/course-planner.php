@@ -7,6 +7,7 @@ Route::prefix('insider/courses/{course_id}/planner')->middleware(['web', 'auth',
     ->where(['course_id' => '[0-9]+'])->group(function () {
         Route::get('/', [PlannerController::class, 'page'])->name('courses.planner');
         Route::get('/api/state', [PlannerController::class, 'state']);
+        Route::get('/api/copy-targets', [PlannerController::class, 'copyTargets']);
         Route::get('/api/summary/details', [PlannerController::class, 'details']);
         Route::post('/api/calendar/preview', [PlannerController::class, 'preview']);
         Route::post('/api/commands/{operation}', [PlannerController::class, 'command'])->where('operation', '[a-z_]+');

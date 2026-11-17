@@ -55,6 +55,13 @@ class PlannerHistory
             throw new ConflictHttpException('Можно отменить только последнее изменение. Подтверждённый журнал исправляется отдельной записью.');
         }
         $delta = $change->delta;
+        // Pre-subgroup operations belong to the shared audience. Keep their undo valid after migration.
+        foreach ($delta as &$row) {
+            if (!in_array($row['table'], ['planner_courses', 'deadline_policies'], true)
+                || !\Illuminate\Support\Facades\Schema::hasColumn($row['table'], 'audience_id')) continue;
+            foreach (['before', 'after'] as $side) if ($row[$side] !== null && !array_key_exists('audience_id', $row[$side])) $row[$side]['audience_id'] = 0;
+        }
+        unset($row);
         $current = $this->snapshot($planner);
         foreach ($delta as $row) {
             if (($current[$row['table']][$row['id']] ?? null) !== $row['after']) {
@@ -128,8 +135,10 @@ class PlannerHistory
         $queries['task_deadlines'] = DB::table('task_deadlines')->where('course_id', $planner->course_id);
         if (\Illuminate\Support\Facades\Schema::hasTable('deadline_policies')) {
             $queries['deadline_policies'] = DB::table('deadline_policies')->where('course_id', $planner->course_id);
-            $queries['deadline_stages'] = DB::table('deadline_stages')->whereIn('policy_id', DB::table('deadline_policies')->where('course_id', $planner->course_id)->select('id'));
+            if (\Illuminate\Support\Facades\Schema::hasColumn('deadline_policies', 'audience_id')) $queries['deadline_policies']->where('audience_id', $planner->audience_id ?? 0);
+            $queries['deadline_stages'] = DB::table('deadline_stages')->whereIn('policy_id', (clone $queries['deadline_policies'])->select('id'));
         }
+        if ($planner->audience_id ?? 0) $queries['task_deadlines']->whereRaw('1 = 0');
         $result = [];
         foreach ($queries as $table => $query) {
             $result[$table] = [];

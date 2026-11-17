@@ -83,6 +83,7 @@
 | GET\|HEAD | `/insider/courses/{course_id}/planner` | screen | [План занятий](screens.md#planner) | web, auth, verified |
 | POST | `/insider/courses/{course_id}/planner/api/calendar/preview` | api | [План занятий](screens.md#planner) | web, auth, verified |
 | POST | `/insider/courses/{course_id}/planner/api/commands/{operation}` | api | [План занятий](screens.md#planner) | web, auth, verified |
+| GET\|HEAD | `/insider/courses/{course_id}/planner/api/copy-targets` | api | [План занятий](screens.md#planner) | web, auth, verified |
 | GET\|HEAD | `/insider/courses/{course_id}/planner/api/entries/{link_id}` | api | [План занятий](screens.md#planner) | web, auth, verified |
 | GET\|HEAD | `/insider/courses/{course_id}/planner/api/providers/{provider_key}/resources` | api | [План занятий](screens.md#planner) | web, auth, verified |
 | GET\|HEAD | `/insider/courses/{course_id}/planner/api/state` | api | [План занятий](screens.md#planner) | web, auth, verified |
@@ -99,6 +100,10 @@
 | POST | `/insider/courses/{course_id}/steps/{id}/task` | action | [Создание задания](screens.md#task-create) | web, verified, auth, task, teacher |
 | GET\|HEAD | `/insider/courses/{course_id}/steps/{id}/task/create` | screen | [Создание задания](screens.md#task-create) | web, verified, teacher, auth, task |
 | GET\|HEAD | `/insider/courses/{course_id}/steps/{id}/upper` | action | [Ступень](screens.md#step) | web, verified, auth, step, teacher |
+| GET\|HEAD | `/insider/courses/{course_id}/subgroups` | screen | [Подгруппы курса](screens.md#course-subgroups) | web, verified |
+| POST | `/insider/courses/{course_id}/subgroups` | action | [Подгруппы курса](screens.md#course-subgroups) | web, verified |
+| POST | `/insider/courses/{course_id}/subgroups/assign` | action | [Подгруппы курса](screens.md#course-subgroups) | web, verified |
+| POST | `/insider/courses/{course_id}/subgroups/{subgroup_id}` | action | [Подгруппы курса](screens.md#course-subgroups) | web, verified |
 | POST | `/insider/courses/{course_id}/tasks/{id}/ai-summary` | action | [ИИ-пересказ решений](screens.md#task-summary) | web, verified, auth, task, teacher |
 | POST | `/insider/courses/{course_id}/tasks/{id}/block/{student_id}` | action | [Оценка, комментарий, пропуск и блокировка](screens.md#review-tools) | web, verified, auth, task, teacher |
 | POST | `/insider/courses/{course_id}/tasks/{id}/deadline` | action | [Дедлайн задачи](screens.md#task-deadline) | web, verified, auth, task |

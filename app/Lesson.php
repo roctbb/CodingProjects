@@ -124,7 +124,7 @@ class Lesson extends Model
 
     public function canBuyEarlyAccess($course, $user)
     {
-        if (!$course || !$user || !$this->early_access_enabled || $this->isStarted($course)) {
+        if (!$course || !$user || !$this->early_access_enabled || $this->isStarted($course, $user)) {
             return false;
         }
 
@@ -135,15 +135,36 @@ class Lesson extends Model
         return !$this->hasEarlyAccess($course, $user);
     }
 
-    public function getStartDate($course)
+    public function getStartDate($course, $user = null)
     {
+        $groupId = 0;
+        if (app(\App\Services\CourseSubgroups::class)->available()) {
+            $groupId = $user ? app(\App\Services\CourseSubgroups::class)->groupFor($course->id, $user->id)
+                : ($course->participantScope ?? \App\Support\CourseScope::for($course))->group?->id;
+        }
+        return $this->getStartDateForAudience($course, (int) $groupId);
+    }
+
+    public function getStartDateForAudience($course, int $groupId)
+    {
+        if ($groupId && app(\App\Services\CourseSubgroups::class)->available()) {
+            $override = app(\App\Services\CourseSubgroups::class)->lessonOverride($groupId, $this->id);
+            if ($override) return $override->start_date ? Carbon::parse($override->start_date) : null;
+        }
         $info = $this->info->where('course_id', $course->id)->first();
         if ($info == null) return null;
         else return $info->start_date;
     }
 
-    public function setStartDate($course, $date)
+    public function setStartDate($course, $date, bool $inherit = false)
     {
+        if (app(\App\Services\CourseSubgroups::class)->available() && ($group = \App\Support\CourseScope::for($course)->group)) {
+            $query = DB::table('course_subgroup_lessons')->where('subgroup_id', $group->id)->where('lesson_id', $this->id);
+            if ($inherit) $query->delete();
+            else DB::table('course_subgroup_lessons')->updateOrInsert(['subgroup_id' => $group->id, 'lesson_id' => $this->id], ['start_date' => $date, 'created_at' => now(), 'updated_at' => now()]);
+            app(\App\Services\CourseSubgroups::class)->forget();
+            return;
+        }
         $info = $this->info->where('course_id', $course->id)->first();
         if ($info == null) {
             $info = new LessonInfo();
@@ -156,12 +177,16 @@ class Lesson extends Model
         $info->save();
     }
 
-    public function isStarted($course)
+    public function isStarted($course, $user = null)
     {
-        $info = $this->info->where('course_id', $course->id)->first();
-        if ($info == null) return false;
-        if ($info->start_date == null) return false;
-        return $info->start_date->lt(Carbon::now()->setTime(23, 59));
+        $date = $this->getStartDate($course, $user);
+        return $date !== null && $date->lt(Carbon::now()->setTime(23, 59));
+    }
+
+    public function isStartedForAudience($course, int $audience): bool
+    {
+        $date = $this->getStartDateForAudience($course, $audience);
+        return $date !== null && $date->lt(Carbon::now()->setTime(23, 59));
     }
 
     public function isAvailable($course)
@@ -177,7 +202,7 @@ class Lesson extends Model
     {
         if ($user->role == 'admin' || $course->teachers->contains($user)) return true;
         if (!$course->students->contains('id', $user->id)) return false;
-        return $this->isStarted($course) || $this->hasEarlyAccess($course, $user);
+        return $this->isStarted($course, $user) || $this->hasEarlyAccess($course, $user);
     }
 
     public function isDone($course)

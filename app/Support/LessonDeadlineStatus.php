@@ -20,7 +20,7 @@ final class LessonDeadlineStatus
             foreach ($step->tasks as $task) {
                 if (!$task->isVisible($student, $course)) continue;
                 if ($actionable !== null ? !$actionable->contains($task->id) : ($task->isDone($student->id) || $task->isOnCheck($student->id))) continue;
-                $deadline = $task->getDeadline($course->id);
+                $deadline = $task->getDeadline($course->id, $student->id);
                 if (!$deadline) continue;
                 $rule = $deadline instanceof DeadlineRule ? $deadline : DeadlineRule::fromLegacy($deadline);
                 if (!$rule->series) continue;

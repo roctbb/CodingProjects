@@ -23,22 +23,29 @@ class PlannerReader
     {
     }
 
-    public function state(Course $course, PlannerCourse $planner, string $from, string $to, string $layer): array
+    public function state(Course $course, PlannerCourse $planner, string $from, string $to, string $layer, ?array $plannerIds = null): array
     {
+        $plannerIds ??= [$planner->id];
+        $tracks = PlannerCourse::whereIn('id', $plannerIds)->get()->keyBy('id');
+        $groups = app(\App\Services\CourseSubgroups::class)->available() ? $course->subgroups->keyBy('id') : collect();
         $providers = $this->providers->listing($planner);
-        $allSessions = PlannerSession::where('planner_course_id', $planner->id)->get();
+        $allSessions = PlannerSession::whereIn('planner_course_id', $plannerIds)->get();
         $records = SessionRecord::whereIn('session_id', $allSessions->pluck('id'))->get()->keyBy('session_id');
-        $slots = CalendarSlot::where('planner_course_id', $planner->id)->whereBetween('local_date', [$from, $to])->orderBy('local_date')->orderBy('position')->orderBy('id')->get();
+        $slots = CalendarSlot::whereIn('planner_course_id', $plannerIds)->whereBetween('local_date', [$from, $to])->orderBy('local_date')->orderBy('start_time')->orderBy('position')->orderBy('id')->get();
         $sessions = $allSessions->filter(fn ($s) => !$s->calendar_slot_id || $slots->contains('id', $s->calendar_slot_id)
             || (in_array($layer, ['fact', 'workspace'], true) && $records->has($s->id) && $records[$s->id]->held_on >= $from && $records[$s->id]->held_on <= $to));
         $resources = SessionResource::whereIn('session_id', $sessions->pluck('id'))->get()->groupBy('session_id');
         $texts = SessionText::whereIn('session_id', $sessions->pluck('id'))->get()->groupBy('session_id');
         $relations = DB::table('planner_resource_lesson_links')->whereIn('session_resource_id', $resources->flatten()->pluck('id'))->get()->groupBy('session_resource_id');
-        $deadlines = $this->deadlines($course, $planner);
-        $currentDeadlines = collect($deadlines)->filter(fn ($d) => $d['resource_key'])->keyBy('resource_key');
-        $sessionData = $sessions->map(function ($session) use ($resources, $texts, $records, $relations, $currentDeadlines, $planner, $slots, $layer) {
+        $deadlines = $this->audienceDeadlines($course, $planner, $plannerIds);
+        $currentDeadlines = collect($deadlines)->filter(fn ($d) => $d['resource_key'])->keyBy(fn ($d) => ($d['audience_id'] ?? 0).':'.$d['resource_key']);
+        $sessionData = $sessions->map(function ($session) use ($resources, $texts, $records, $relations, $currentDeadlines, $planner, $slots, $layer, $tracks, $groups) {
             $data = $session->toArray();
-            $data['can_comment'] = $this->calendar->hasEnded($planner, $slots->firstWhere('id', $session->calendar_slot_id), $records->get($session->id));
+            $track = $tracks[$session->planner_course_id];
+            $data['audience_id'] = (int) ($track->audience_id ?? 0);
+            $data['audience_name'] = $groups->isNotEmpty() ? ($groups->get($data['audience_id'])?->name ?? 'Весь класс') : null;
+            $data['editable'] = (int) $session->planner_course_id === (int) $planner->id;
+            $data['can_comment'] = $this->calendar->hasEnded($track, $slots->firstWhere('id', $session->calendar_slot_id), $records->get($session->id));
             $data['record'] = $records->get($session->id)?->only(['id', 'held_on', 'timezone', 'duration_minutes', 'note', 'status', 'confirmed_at']);
             $data['entries'] = collect();
             foreach ($resources->get($session->id, collect()) as $link) {
@@ -50,7 +57,8 @@ class PlannerReader
                     'layer' => $link->layer, 'sort_index' => $link->sort_index, 'resource' => $snapshot,
                     'lesson_links' => $relations->get($link->id, collect())->map(fn ($r) => ['lesson_id' => $r->lesson_id, 'relation' => $r->relation])->all(),
                     'fact_state' => $link->fact_state, 'note' => $link->note, 'class_bonus_gc' => (int) $link->class_bonus_gc,
-                    'deadline' => $link->layer === 'fact' ? ['due_on' => $snapshot['deadline_snapshot'] ?? null] : $currentDeadlines->get($resourceKey)]);
+                    'deadline' => $link->layer === 'fact' ? ['due_on' => $snapshot['deadline_snapshot'] ?? null]
+                        : ($currentDeadlines->get(((int) ($planner->audience_id ?? 0) ?: $data['audience_id']).':'.$resourceKey) ?? $currentDeadlines->get('0:'.$resourceKey))]);
             }
             foreach ($texts->get($session->id, collect()) as $text) {
                 $data['entries']->push(['kind' => 'text', 'id' => $text->id, 'layer' => $text->layer,
@@ -65,18 +73,19 @@ class PlannerReader
         })->values()->all();
         return ['course' => ['id' => $course->id, 'name' => $course->name], 'settings' => $this->calendar->currentSettings($planner),
             'today' => CarbonImmutable::now($planner->timezone)->toDateString(),
-            'revision' => $planner->fresh()->revision, 'range' => ['from' => $from, 'to' => $to], 'slots' => $slots->toArray(),
+            'revision' => $planner->fresh()->revision, 'range' => ['from' => $from, 'to' => $to], 'slots' => $slots->map(fn ($slot) => $slot->toArray() + ['editable' => (int) $slot->planner_course_id === (int) $planner->id])->all(),
             'sessions' => $sessionData, 'exceptions' => CalendarException::where('planner_course_id', $planner->id)->orderBy('starts_on')->get()->toArray(),
             'providers' => $providers, 'lessons' => Lesson::where('program_id', $course->program_id)->orderBy('sort_index')->orderBy('id')->get(['id', 'name', 'chapter_id'])->toArray(),
-            'deadlines' => $deadlines, 'summary' => $this->summary($course, $planner, $layer),
+            'deadlines' => $deadlines, 'summary' => $this->summary($course, $planner, $layer, $plannerIds),
             'history' => PlannerChange::where('planner_course_id', $planner->id)->orderByDesc('id')->limit(20)->get(['id', 'actor_id', 'operation_type', 'revision_after', 'undoable', 'created_at'])->toArray()];
     }
 
-    public function summary(Course $course, PlannerCourse $planner, string $layer): array
+    public function summary(Course $course, PlannerCourse $planner, string $layer, ?array $plannerIds = null): array
     {
+        $plannerIds ??= [$planner->id];
         $lessons = Lesson::where('program_id', $course->program_id)->orderBy('sort_index')->orderBy('id')->get(['id', 'name']);
-        $sessionRows = PlannerSession::where('planner_course_id', $planner->id)->get()->keyBy('id');
-        $slots = CalendarSlot::where('planner_course_id', $planner->id)->get()->keyBy('id');
+        $sessionRows = PlannerSession::whereIn('planner_course_id', $plannerIds)->get()->keyBy('id');
+        $slots = CalendarSlot::whereIn('planner_course_id', $plannerIds)->get()->keyBy('id');
         $records = SessionRecord::whereIn('session_id', $sessionRows->keys())->get()->keyBy('session_id');
         $links = SessionResource::whereIn('session_id', $sessionRows->keys())->when($layer !== 'workspace', fn ($q) => $q->where('layer', $layer))->get();
         if ($layer === 'workspace') {
@@ -123,7 +132,7 @@ class PlannerReader
             $buckets[$task->lesson_id]['task_count']++;
         }
         $coveredTasks = []; $countedWork = [];
-        foreach ($this->deadlines($course, $planner) as $deadline) {
+        foreach ($this->audienceDeadlines($course, $planner, $plannerIds) as $deadline) {
             $lessonId = $deadline['lesson_id'] ?? 0;
             if (isset($buckets[$lessonId])) {
                 if ($deadline['provider_key'] === 'codingprojects' && $eligibleTasks->has($deadline['external_id']) && !isset($coveredTasks[$deadline['external_id']])) {
@@ -157,10 +166,31 @@ class PlannerReader
         return ['rows' => array_values($buckets), 'totals' => $this->counts($totals), 'weeks' => array_values($weeks)];
     }
 
+    private function audienceDeadlines(Course $course, PlannerCourse $planner, array $plannerIds): array
+    {
+        $tracks = PlannerCourse::whereIn('id', $plannerIds)->get();
+        $groups = app(\App\Services\CourseSubgroups::class)->available() ? $course->subgroups->keyBy('id') : collect();
+        $rows = collect();
+        foreach ($tracks->sortBy(fn ($track) => $track->id === $planner->id ? 0 : 1) as $track) {
+            foreach ($this->deadlines($course, $track) as $entry) {
+                // A subgroup uses its effective native deadlines, including shared events.
+                if (($planner->audience_id ?? 0) && $track->id !== $planner->id && $entry['provider_key'] === 'codingprojects') continue;
+                $audience = (int) ($track->audience_id ?? 0);
+                $entry['key'] = $audience.':'.$entry['key'];
+                $entry['audience_id'] = $audience;
+                $entry['audience_name'] = $groups->isNotEmpty() ? ($groups->get($audience)?->name ?? 'Весь класс') : null;
+                $entry['editable'] = $track->id === $planner->id;
+                $rows->push($entry);
+            }
+        }
+        if ($planner->audience_id ?? 0) $rows = $rows->unique(fn ($entry) => $entry['resource_key'] ?? $entry['key']);
+        return $rows->sortBy('due_on')->values()->all();
+    }
+
     public function deadlines(Course $course, PlannerCourse $planner): array
     {
         $service = app(\App\Services\CourseDeadlineService::class);
-        $result = $service->available() ? $service->entries($course)->map(fn ($d) => [
+        $result = $service->available() ? $service->entries($course, [], (int) ($planner->audience_id ?? 0))->map(fn ($d) => [
             'key' => 'codingprojects:'.$d->task_id.':'.$d->id, 'resource_key' => 'codingprojects:task:'.$d->task_id,
             'provider_key' => 'codingprojects', 'external_id' => (string) $d->task_id, 'title' => $d->task->name,
             'due_on' => $d->expiration->format('Y-m-d'), 'due_at' => $d->cutoffAt()->toIso8601String(),
@@ -190,12 +220,13 @@ class PlannerReader
         return collect($result)->sortBy('due_on')->values()->all();
     }
 
-    public function details(PlannerCourse $planner, string $layer, int $lessonId, string $provider, int $page): array
+    public function details(PlannerCourse $planner, string $layer, int $lessonId, string $provider, int $page, ?array $plannerIds = null): array
     {
+        $plannerIds ??= [$planner->id];
         $query = DB::table('planner_session_resources as r')->join('planner_sessions as s', 's.id', '=', 'r.session_id')
             ->join('planner_resource_refs as ref', 'ref.id', '=', 'r.resource_ref_id')->join('planner_providers as p', 'p.id', '=', 'ref.provider_id')
             ->leftJoin('planner_calendar_slots as c', 'c.id', '=', 's.calendar_slot_id')->leftJoin('planner_session_records as j', 'j.session_id', '=', 's.id')
-            ->where('s.planner_course_id', $planner->id)->where('p.key', $provider);
+            ->whereIn('s.planner_course_id', $plannerIds)->where('p.key', $provider);
         if ($layer === 'workspace') {
             $query->where(fn ($q) => $q->where('r.layer', 'plan')->orWhereNotExists(fn ($q) => $q->selectRaw('1')->from('planner_session_resources as canonical')
                 ->whereColumn('canonical.session_id', 'r.session_id')->whereColumn('canonical.resource_ref_id', 'r.resource_ref_id')->where('canonical.layer', 'plan')));

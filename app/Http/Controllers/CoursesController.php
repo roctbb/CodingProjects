@@ -330,6 +330,7 @@ class CoursesController extends Controller
             'lesson_state' => 'sometimes|in:all,incomplete,review,complete',
             'lesson_q' => 'sometimes|string|max:120', 'attention' => 'sometimes|in:0,1',
             'report_detail' => 'sometimes|boolean',
+            'from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
         ]);
         $data = app(\App\Services\CourseReportWorkspace::class)->data((int) $id, Auth::user(), $request);
         if ($request->boolean('report_detail')) {
@@ -428,10 +429,11 @@ class CoursesController extends Controller
         abort_unless(Auth::user()->role === 'admin' || $course->teachers->contains('id', Auth::id()), 403);
         $lesson = $course->lessons()->whereKey($lesson_id)->firstOrFail();
         $request->validate(['page' => ['sometimes', 'integer', 'min:1']]);
-        $students = $course->statsStudents()->orderBy('name')->orderBy('users.id')->paginate(\App\Support\CourseLessonStatistics::PAGE_SIZE, ['users.id', 'users.name']);
+        $scope = \App\Support\CourseScope::for($course, Auth::user(), $request);
+        $students = $scope->query($course->statsStudents())->orderBy('name')->orderBy('users.id')->paginate(\App\Support\CourseLessonStatistics::PAGE_SIZE, ['users.id', 'users.name']);
         abort_if($students->currentPage() > $students->lastPage(), 404);
         $allStats = LessonStudentStats::where('course_id', $course->id)->where('lesson_id', $lesson->id)
-            ->whereIn('student_id', $course->statsStudents()->select('users.id'))->get();
+            ->whereIn('student_id', $scope->query($course->statsStudents())->select('users.id'))->get();
         $summary = \App\Support\CourseLessonStatistics::summary($allStats, $students->total());
         $stats = $allStats->whereIn('student_id', $students->pluck('id'))->keyBy('student_id');
         return response()->json(['html' => view('courses.partials.lesson-statistics', compact('course', 'lesson', 'students', 'stats', 'summary'))->render()]);
@@ -464,7 +466,8 @@ class CoursesController extends Controller
         ])->findOrFail($id);
 
         $allStudents = $course->students;
-        $students = $course->statsStudents;
+        $course->participantScope = \App\Support\CourseScope::for($course, $user, $request);
+        $students = $course->participantScope->filter($course->statsStudents);
         $statsStudentIds = $students->pluck('id');
         if ($allStudents->contains('id', $user->id)) {
             $statsStudentIds = $statsStudentIds->push($user->id)->unique()->values();
@@ -594,7 +597,7 @@ class CoursesController extends Controller
             $deadlineNow = now();
             $courseDeadlines = $lessonCardDeadlines->filter(fn ($deadline) => ($deadline instanceof \App\Support\DeadlineRule
                 ? $deadline->cutoffAt() : $deadline->expiration->copy()->addDay())->gt($deadlineNow))->values();
-            $coursePendingCount = $isManager ? Solution::where('course_id', $course->id)->pendingReview()->count() : 0;
+            $coursePendingCount = $isManager ? Solution::where('course_id', $course->id)->whereIn('user_id', $students->pluck('id'))->pendingReview()->count() : 0;
 
             // Preload lesson statistics for all students and lessons in this chapter
             $lessonStats = LessonStudentStats::where('course_id', $id)
@@ -622,7 +625,7 @@ class CoursesController extends Controller
             'program.lessons.steps.tasks',
             'statsStudents.submissions' => fn ($query) => $query->where('course_id', $id),
         ])->findOrFail($id);
-        $course->setRelation('students', $course->statsStudents);
+        $course->setRelation('students', \App\Support\CourseScope::for($course)->filter($course->statsStudents));
 
         $blockedTaskMap = BlockedTask::where('course_id', $course->id)
             ->get(['user_id', 'task_id'])
@@ -638,7 +641,7 @@ class CoursesController extends Controller
             ? $course->program->lessons->where('chapter_id', $assessmentChapter->id)
             : collect();
         $pendingReviewPairs = $course->state === 'started'
-            ? Solution::where('course_id', $course->id)->pendingReview()->get(['user_id', 'task_id'])
+            ? Solution::where('course_id', $course->id)->whereIn('user_id', $course->students->pluck('id'))->pendingReview()->get(['user_id', 'task_id'])
                 ->mapWithKeys(fn ($solution) => [$solution->user_id.':'.$solution->task_id => true]) : collect();
         return view('courses.assessments', compact('course', 'blockedTaskMap', 'assessmentLessons', 'assessmentChapter', 'pendingReviewPairs'));
     }
@@ -732,7 +735,7 @@ class CoursesController extends Controller
     {
         $course = Course::with('teachers', 'program.chapters')->findOrFail($course_id);
         abort_unless(Auth::user()->role === 'admin' || $course->teachers->contains('id', Auth::id()), 403);
-        $input = $request->validate(['lesson_id' => ['nullable', 'integer', 'min:1'], 'chapter' => ['nullable', 'integer']]);
+        $input = $request->validate(['lesson_id' => ['nullable', 'integer', 'min:1'], 'chapter' => ['nullable', 'integer'], 'inherit_current' => 'sometimes|boolean']);
         $lesson = null;
         if (isset($input['lesson_id'])) {
             $lesson = $course->lessons()->whereKey($input['lesson_id'])->whereHas('steps')
@@ -744,13 +747,15 @@ class CoursesController extends Controller
             }
         }
         $chapterId = $course->program->chapters->firstWhere('id', $input['chapter'] ?? null)?->id ?? $lesson?->chapter_id;
-        $course->current_lesson_id = $lesson?->id;
-        $course->save();
+        $scope = \App\Support\CourseScope::for($course, Auth::user(), $request);
+        if ($scope->group) $scope->group->update(['current_lesson_id' => $lesson?->id, 'current_lesson_override' => !$request->boolean('inherit_current')]);
+        else { $course->current_lesson_id = $lesson?->id; $course->save(); }
 
-        return redirect('/insider/courses/'.$course->id.($chapterId ? '?chapter='.$chapterId : '').($lesson ? '#lesson-'.$lesson->id : ''))
+        return redirect($scope->url('/insider/courses/'.$course->id.($chapterId ? '?chapter='.$chapterId : '')).($lesson ? '#lesson-'.$lesson->id : ''))
             ->with('alert-class', 'alert-success')->with('alert-destination', 'head')
-            ->with('alert-title', $lesson ? 'Текущий урок выбран' : 'Автоматический выбор урока')
-            ->with('alert-text', $lesson ? 'Текущий урок курса: '.$lesson->name.'. Доступ к материалам определяется расписанием.' : 'Для ученика выделяется первый незавершённый доступный урок.');
+            ->with('alert-title', $request->boolean('inherit_current') && $scope->group ? 'Текущий урок как у курса' : ($lesson ? 'Текущий урок выбран' : 'Автоматический выбор урока'))
+            ->with('alert-text', $request->boolean('inherit_current') && $scope->group ? 'Подгруппа использует отметку текущего урока курса.'
+                : ($lesson ? $scope->label().': '.$lesson->name.'. Доступ к материалам определяется расписанием.' : 'Для ученика выделяется первый незавершённый доступный урок.'));
     }
 
     public function createChapter($course_id, Request $request)
@@ -855,6 +860,7 @@ class CoursesController extends Controller
                 'is_remote' => $remoteByStudent->get($studentId, false),
             ]];
         })->all());
+        app(\App\Services\CourseSubgroups::class)->closeRemoved($course);
 
         foreach ($studentIds as $student_id) {
             if (!$course->is_open) {
@@ -1059,7 +1065,7 @@ class CoursesController extends Controller
         $course = Course::with('statsStudents')->findOrFail($course_id);
         $chapter = ProgramChapter::where('program_id', $course->program_id)->findOrFail($chapter_id);
         $lessons = $chapter->lessons()->where('program_id', $course->program_id)->get();
-        $students = $course->statsStudents;
+        $students = \App\Support\CourseScope::for($course)->filter($course->statsStudents);
         $studentIds = $students->pluck('id');
 
         $statsByLesson = $lessons->mapWithKeys(function ($lesson) use ($course, $studentIds) {

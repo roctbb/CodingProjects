@@ -75,7 +75,7 @@ export function createScheduleSettings({ root, getState, setRange, request, muta
         ) +
         '<div class="planner-field"><label>День · начало · минуты</label><div id="planner-rules">' +
         existing.map(ruleRow).join("") +
-        '</div><button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="planner-add-rule">Добавить недельную позицию</button></div><p class="small text-secondary mt-3">После расчёта проверьте затронутые занятия. Проведённые и закреплённые занятия сохранятся.</p>',
+        '</div><button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="planner-add-rule">Добавить недельную позицию</button></div><p class="small text-secondary mt-3">Уберите все недельные позиции, если нужны только разовые занятия. После расчёта проверьте затронутые занятия. Проведённые и закреплённые занятия сохранятся.</p>',
       async () => {
         const payload = {
           ...values(),

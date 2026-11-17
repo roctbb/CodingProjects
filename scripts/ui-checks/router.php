@@ -13,7 +13,7 @@ $app->instance('request', $request);
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $kernel->bootstrap();
 $variant = $_GET['scenario'] ?? $_COOKIE['ui_qa_scenario'] ?? 'base';
-if (!in_array($variant, ['base', 'reading', 'notebook', 'catalog-desktop', 'catalog-phone', 'submissions', 'submissions-desktop', 'submissions-phone', 'statistics-desktop', 'statistics-phone'], true)) $variant = 'base';
+if (!in_array($variant, ['base', 'reading', 'notebook', 'catalog-desktop', 'catalog-phone', 'submissions', 'submissions-desktop', 'submissions-phone', 'statistics-desktop', 'statistics-phone', 'subgroups-desktop', 'subgroups-phone', 'subgroups-large-desktop', 'subgroups-large-phone'], true)) $variant = 'base';
 $actor = $_GET['actor'] ?? $_COOKIE['ui_qa_actor'] ?? 'student';
 if (isset($_GET['actor'])) setcookie('ui_qa_actor', $actor, ['path' => '/']);
 if (isset($_GET['scenario'])) setcookie('ui_qa_scenario', $variant, ['path' => '/']);

@@ -1050,6 +1050,19 @@
   },
   {
     "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/planner/api/copy-targets",
+    "name": null,
+    "action": "CoursePlanner\\PlannerController@copyTargets",
+    "middleware": [
+      "web",
+      "auth",
+      "verified"
+    ],
+    "node": "planner",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
     "uri": "insider/courses/{course_id}/planner/api/entries/{link_id}",
     "name": null,
     "action": "CoursePlanner\\PlannerController@entry",
@@ -1274,6 +1287,54 @@
       "teacher"
     ],
     "node": "step",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/courses/{course_id}/subgroups",
+    "name": "courses.subgroups",
+    "action": "CourseSubgroupsController@index",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "course-subgroups",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/subgroups",
+    "name": null,
+    "action": "CourseSubgroupsController@store",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "course-subgroups",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/subgroups/assign",
+    "name": null,
+    "action": "CourseSubgroupsController@assign",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "course-subgroups",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/subgroups/{subgroup_id}",
+    "name": null,
+    "action": "CourseSubgroupsController@update",
+    "middleware": [
+      "web",
+      "verified"
+    ],
+    "node": "course-subgroups",
     "kind": "action"
   },
   {

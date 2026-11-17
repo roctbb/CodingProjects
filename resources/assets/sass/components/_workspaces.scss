@@ -96,6 +96,10 @@
 .planner-session-head { display:flex; align-items:start; justify-content:space-between; gap:var(--gc-space-2); margin-bottom:var(--gc-space-3); }
 .planner-session-date { align-items:center; color:var(--gc-on-surface-muted); display:flex; flex-wrap:wrap; font-size:var(--gc-font-caption); gap:var(--gc-space-2); margin-bottom:var(--gc-space-2); }
 .planner-session-title { overflow-wrap:anywhere; }
+.planner-session-audience { color:var(--gc-on-surface-muted); display:block; font-size:var(--gc-font-caption); margin-top:var(--gc-space-1); overflow-wrap:anywhere; }
+.planner-session-scope-link { align-items:center; display:inline-flex; flex-wrap:wrap; gap:var(--gc-space-2); min-height:var(--gc-control-height-sm); text-decoration:none; }
+.planner-session-scope-link:is(:hover,:focus-visible) { color:var(--gc-primary); }
+.planner-session[data-read-only] .planner-session-head:last-child { margin-bottom:0; }
 .planner-entry { display:flex; align-items:start; gap:var(--gc-space-2); padding:var(--gc-space-2) 0; position:relative; }
 .planner-entry-body { flex:1; min-width:0; }
 .planner-entry-title { font-weight:500; overflow-wrap:anywhere; }
@@ -109,6 +113,8 @@
 .planner-entry>.planner-handle { width:8px; margin-left:-8px; opacity:0; }
 .planner-entry:hover>.planner-handle,.planner-entry:focus-within>.planner-handle,.is-dragging .planner-handle { opacity:1; }
 .planner-session-footer { display:flex; flex-wrap:wrap; align-items:center; gap:var(--gc-space-3); margin-top:var(--gc-space-3); }
+.planner-bonus-action { color:var(--gc-coin); min-width:var(--gc-control-height-sm); }
+.planner-bonus-action:is(:hover,:focus-visible) { background:color-mix(in srgb,var(--gc-coin) 8%,var(--gc-surface)); color:var(--gc-coin); }
 .planner-menu :is([data-action="session-bonus"],[data-action="class-bonus"]) {color:var(--gc-coin);}
 .planner-session.is-empty .planner-session-footer > .flex-grow-1 { display:none; }
 .planner-session-note { color:var(--gc-on-surface-muted); font-size:var(--gc-font-small); margin:var(--gc-space-3) 0 0; white-space:pre-wrap; overflow-wrap:anywhere; }

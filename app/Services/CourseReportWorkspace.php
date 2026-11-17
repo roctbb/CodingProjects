@@ -31,8 +31,10 @@ final class CourseReportWorkspace
             'program.lessons.steps.tasks.blockedTasks' => fn ($query) => $query->where('course_id', $id),
         ])->findOrFail($id);
         abort_unless(app(CourseAccess::class)->manages($viewer, $course), 403);
+        $scope = \App\Support\CourseScope::for($course, $viewer, $request);
+        $course->participantScope = $scope;
         [$lessons, $reportChapterGroups] = CourseReportLessons::groups($course);
-        $students = $course->statsStudents;
+        $students = $scope->filter($course->statsStudents);
         $requested = $request->query('student');
         abort_if($requested !== null && !$students->contains('id', (int) $requested), 404);
         $tasks = $lessons->flatMap->steps->flatMap->tasks;
@@ -60,12 +62,14 @@ final class CourseReportWorkspace
             if (!$score) $missing->push($student->id);
         }
         $pending = $course->state === 'started'
-            ? Solution::where('course_id', $id)->pendingReview()->get(['id', 'task_id', 'user_id']) : collect();
+            ? Solution::where('course_id', $id)->whereIn('user_id', $students->pluck('id'))->pendingReview()->get(['id', 'task_id', 'user_id']) : collect();
         $pendingByStudent = $pending->countBy('user_id');
         foreach ($students as $student) $student->pending_count = $pendingByStudent->get($student->id, 0);
         $attention = $students->filter(fn ($student) => ($student->max_points > 0 && $student->percent < 50)
             || in_array($geekPasteIntegrityStats[$student->id]['overall']['risk_level'] ?? 'none', ['high', 'medium'], true));
         $reportSummary = ['students' => $students->count(), 'attention' => $attention->count(), 'pending' => $pending->count()];
+        $scopeStatistics = app(CourseSubgroups::class)->available() && $course->subgroups->isNotEmpty()
+            ? app(CourseScopeStatistics::class)->build($course, $scope, $students, $lessons, $solutions->flatten(1), $pending, $request) : null;
         if ($request->query('attention') === '1' && !$request->boolean('report_detail')) $students = $attention->values();
         $selectedStudent = $students->firstWhere('id', (int) $requested) ?? $students->first();
         $selectedId = $selectedStudent?->id;
@@ -88,28 +92,30 @@ final class CourseReportWorkspace
         }
         if ($missing->isNotEmpty()) RecalculateCoursePoints::dispatch($id, $missing->unique()->values()->all());
         $steps = $lessons->flatMap->steps;
-        [$pulse_keys, $pulse_values, $task_keys, $task_values] = $this->activity($course, $selectedStudent, $steps->pluck('id'));
+        [$pulse_keys, $pulse_values, $task_keys, $task_values] = $this->activity($course, $selectedStudent, $steps->pluck('id'), $request);
         $pendingReviewPairs = $pending->mapWithKeys(fn ($solution) => [$solution->user_id.':'.$solution->task_id => true]);
         $pendingSolutionsCount = $pending->count();
         $user = $viewer;
         return compact('course', 'user', 'students', 'selectedStudent', 'reportSummary', 'steps', 'lessons', 'reportChapterGroups',
-            'lessonStats', 'geekPasteIntegrityStats', 'pendingReviewPairs', 'pendingSolutionsCount',
+            'lessonStats', 'geekPasteIntegrityStats', 'pendingReviewPairs', 'pendingSolutionsCount', 'scopeStatistics',
             'pulse_keys', 'pulse_values', 'task_keys', 'task_values');
     }
 
-    private function activity(Course $course, ?User $student, Collection $steps): array
+    private function activity(Course $course, ?User $student, Collection $steps, Request $request): array
     {
         $keys = collect(); $values = collect(); $taskKeys = collect(); $taskValues = collect();
         if (!$student) return [$keys, $values, $taskKeys, $taskValues];
-        $from = now()->subWeeks(2);
-        $views = ActionLog::where('user_id', $student->id)->where('created_at', '>', $from)
+        $from = \Carbon\Carbon::parse($request->input('from', now()->subDays(13)->toDateString()))->startOfDay();
+        $to = \Carbon\Carbon::parse($request->input('to', now()->toDateString()))->endOfDay();
+        abort_if($from->gt($to) || $from->diffInDays($to, true) > 366, 422, 'Выберите период не больше года.');
+        $views = ActionLog::where('user_id', $student->id)->whereBetween('created_at', [$from, $to])
             ->where(fn ($query) => $query->where(fn ($query) => $query->where('type', 'course')->where('object_id', $course->id))
                 ->orWhere(fn ($query) => $query->where('type', 'step')->whereIn('object_id', $steps)))
             ->get(['created_at'])->groupBy(fn ($row) => $row->created_at->format('Y-m-d'))->map->count();
-        $scores = Solution::where('course_id', $course->id)->where('user_id', $student->id)->where('created_at', '>', $from)
+        $scores = Solution::where('course_id', $course->id)->where('user_id', $student->id)->whereBetween('created_at', [$from, $to])
             ->get(['created_at', 'mark'])->groupBy(fn ($row) => $row->created_at->format('Y-m-d'))->map->sum('mark');
         $days = collect();
-        for ($day = $from->copy()->startOfDay(); $day->lte(now()); $day->addDay()) $days->push($day->format('Y-m-d'));
+        for ($day = $from->copy()->startOfDay(); $day->lte($to); $day->addDay()) $days->push($day->format('Y-m-d'));
         foreach ([[$views, $keys, $values], [$scores, $taskKeys, $taskValues]] as [$series, $dates, $points]) {
             if ($series->isEmpty()) continue;
             $dates->put($student->id, $days->toJson());
