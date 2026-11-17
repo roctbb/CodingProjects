@@ -1,6 +1,11 @@
 .git
 .idea
 .tools
+.DS_Store
+.playwright-cli
+output
+test-results
+playwright-report
 node_modules
 vendor
 public/build
@@ -15,6 +20,9 @@ bootstrap/cache/*.php
 .env
 .env.*
 docker-compose*.yml
+deploy.override.yml
+release.override.json
+compose.sh
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
