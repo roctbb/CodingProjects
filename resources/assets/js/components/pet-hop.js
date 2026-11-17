@@ -119,13 +119,36 @@ export class PetHopper {
         }
         if (this.visit?.stage === 'pause') {
             if (this.elapsed >= (this.data.visitPause ?? 1800)) {
+                if (this.data.turn) {
+                    this.visit.stage = 'turn';
+                    this.elapsed = 0;
+                } else {
+                    this.visit.stage = 'back';
+                    this.direction = -this.visit.entryDirection;
+                    this.elapsed = 0;
+                    this.origin = this.x;
+                    this.target = this.nextTarget();
+                }
+            }
+            this.draw({frame: 0, height: 0});
+            this.raf = requestAnimationFrame(time => this.tick(time));
+            return;
+        }
+        if (this.visit?.stage === 'turn') {
+            const sequence = this.data.turn[this.direction > 0 ? 'right' : 'left'];
+            const progress = clamp(this.elapsed / this.data.turnDuration, 0, 1) * (sequence.length - 1);
+            const index = Math.min(sequence.length - 2, Math.floor(progress));
+            this.draw({frame: 0, height: 0, layers: [
+                {sprite: sequence[index], opacity: 1 - (progress - index)},
+                {sprite: sequence[index + 1], opacity: progress - index},
+            ]});
+            if (this.elapsed >= this.data.turnDuration) {
                 this.visit.stage = 'back';
                 this.direction = -this.visit.entryDirection;
                 this.elapsed = 0;
                 this.origin = this.x;
                 this.target = this.nextTarget();
             }
-            this.draw({frame: 0, height: 0});
             this.raf = requestAnimationFrame(time => this.tick(time));
             return;
         }
@@ -160,20 +183,25 @@ export class PetHopper {
         const stage = this.visit?.stage || 'idle';
         if (this.host.dataset && this.host.dataset.petStage !== stage) this.host.dataset.petStage = stage;
         const {cell, columns, baseline, frames} = this.data;
-        const frame = frames[pose.frame];
         const sourceScale = this.image.naturalWidth / (cell * columns);
         const scale = this.size / cell;
         this.host.style.transform = `translate3d(${this.x - this.size / 2}px,0,0)`;
-        const paint = `${pose.frame}:${this.direction}:${pose.height.toFixed(3)}`;
+        const paint = JSON.stringify([pose, this.direction]);
         if (paint === this.lastPaint) return;
         this.lastPaint = paint;
         this.ctx.clearRect(0, 0, this.size, this.height);
-        this.ctx.save();
-        this.ctx.translate(this.size / 2, this.height - 1 - pose.height * this.size * .15);
-        this.ctx.scale(this.direction * (this.data.facing ?? 1), 1);
-        this.ctx.drawImage(this.image, frame.x * sourceScale, frame.y * sourceScale, cell * sourceScale, cell * sourceScale,
-            -this.size / 2 + (frame.dx || 0) * scale, -baseline * scale + (frame.dy || 0) * scale, this.size, this.size);
-        this.ctx.restore();
+        for (const layer of pose.layers || [{sprite: frames[pose.frame], opacity: 1}]) {
+            if (layer.opacity <= 0) continue;
+            const frame = layer.sprite;
+            this.ctx.save();
+            this.ctx.globalAlpha = layer.opacity;
+            this.ctx.translate(this.size / 2, this.height - 1 - pose.height * this.size * .15);
+            const facing = frame.flip == null ? this.direction * (this.data.facing ?? 1) : (frame.flip ? -1 : 1);
+            this.ctx.scale(facing, 1);
+            this.ctx.drawImage(this.image, frame.x * sourceScale, frame.y * sourceScale, cell * sourceScale, cell * sourceScale,
+                -this.size / 2 + (frame.dx || 0) * scale, -baseline * scale + (frame.dy || 0) * scale, this.size, this.size);
+            this.ctx.restore();
+        }
     }
 
     destroy() { this.pause(); this.canvas.remove(); }

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { PetHopper } from '../../resources/assets/js/components/pet-hop.js';
 
 test('every pet reaches the screen center, waits and returns to its entry side exactly once', () => {
-    const names = ['cheremsha-hop-v1', 'learning_bot-walk-v1', 'brr_brr_patapim-walk-v1', 'tralalelo_tralala-walk-v1', 'tung_tung_tung_sahur-walk-v1'];
+    const names = ['cheremsha-hop-v2', 'learning_bot-walk-v1', 'brr_brr_patapim-walk-v1', 'tralalelo_tralala-walk-v1', 'tung_tung_tung_sahur-walk-v1'];
     const keys = ['document','innerWidth','innerHeight','devicePixelRatio','requestAnimationFrame','cancelAnimationFrame'];
     const before = new Map(keys.map(key => [key, globalThis[key]]));
     try {

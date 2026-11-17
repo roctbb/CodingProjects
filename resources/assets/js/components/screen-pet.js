@@ -1,4 +1,5 @@
 import { PetHopper } from './pet-hop';
+import { PetWalker } from './pet-walker';
 import { PetVisits } from './pet-visits';
 
 export default function initScreenPet() {
@@ -45,7 +46,7 @@ export default function initScreenPet() {
             });
             const image = await imagePromise;
             if (current !== generation || !visits.active || blocked()) return;
-            if (!pet) pet = new PetHopper(host, image, data);
+            if (!pet) pet = data.motion === 'rig' ? new PetWalker(host, image, data) : new PetHopper(host, image, data);
             host.classList.remove('is-leaving', 'is-arriving');
             host.hidden = false;
             host.dataset.petVisit = 'hopping';
