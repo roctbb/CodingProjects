@@ -12,7 +12,8 @@ export default function initScreenPet() {
     const controls = [...document.querySelectorAll('[data-screen-pet-toggle]')];
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const key = `gc-screen-pet:${data.userId}`;
-    const nextKey = `${key}:next`;
+    // Discard the shorter schedules saved before rare visits were introduced.
+    const nextKey = `${key}:next:v2`;
     const read = name => { try { return localStorage.getItem(name); } catch { return null; } };
     const save = (name, value) => { try { localStorage.setItem(name, value); } catch { /* Optional local preference. */ } };
     let enabled = read(key) !== 'off';
