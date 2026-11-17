@@ -160,7 +160,7 @@ a.gc-person-card:is(:hover,:focus-visible) { border-color:var(--gc-border-hover)
 .markdown .gc-code-example > pre, .markdown-big .gc-code-example > pre { background: var(--gc-surface-variant); border-color: var(--gc-panel-border); box-shadow: none; color: var(--gc-on-surface); margin: 0; }
 .gc-table-scroll { margin: var(--gc-space-6) 0; max-width: 100%; overflow-x: auto; }
 .markdown .gc-table-scroll > table, .markdown-big .gc-table-scroll > table { display: table; margin: 0; }
-.markdown mjx-container[display="true"] { max-width: 100%; overflow-x: auto; padding-block: var(--gc-space-1); }
+.markdown mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-block: var(--gc-space-1); }
 .step-content .step-reading-card > :first-child { margin-top: 0; }
 .gc-reading-outline { display: none; margin-bottom: var(--gc-space-4); }
 .gc-reading-outline nav { display: grid; gap: var(--gc-space-1); padding-bottom: var(--gc-space-3); }
