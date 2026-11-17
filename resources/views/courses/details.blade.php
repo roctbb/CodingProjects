@@ -34,24 +34,6 @@
             : (in_array($studentsCountLastDigit, [2, 3, 4], true) && !in_array($studentsCountLastTwoDigits, [12, 13, 14], true)
                 ? 'ученика'
                 : 'учеников');
-        $sortedStudents = $students->sortByDesc(function ($student) {
-            return isset($student->points) ? $student->points : 0;
-        })->values();
-        $leaderboardPreviewLimit = 6;
-        $leaderboardPreviewStudents = $sortedStudents->take($leaderboardPreviewLimit);
-        $currentStudentRank = null;
-
-        if ($isLearner && $course->students->contains($user)) {
-            $currentStudentIndex = $sortedStudents->search(fn ($student) => $student->id == $user->id);
-            if ($currentStudentIndex !== false) {
-                $currentStudentRank = $currentStudentIndex + 1;
-            }
-        }
-
-        $leaderboardPreviewStudents = $isLearner && $currentStudentRank > $leaderboardPreviewLimit
-            ? $leaderboardPreviewStudents->concat($sortedStudents->where('id', $user->id))
-            : $leaderboardPreviewStudents;
-        $leaderboardExtraStudents = $sortedStudents->whereNotIn('id', $leaderboardPreviewStudents->pluck('id'))->values();
         $availablePathLessons = $pathLessons->filter(fn($lesson) => $lesson->isAvailableForUser($course, $user));
         $courseEnded = $course->state === 'ended';
         $lessonViews = $isLearner ? $availablePathLessons->mapWithKeys(fn ($lesson) => [$lesson->id => \App\Support\CourseLessonView::forStudent($lesson, $course, $user, $lessonStats[$lesson->id][$user->id] ?? null, $lessonCards->get($lesson->id)['rows'])]) : collect();
@@ -279,13 +261,30 @@
                             </ul>
 	                        </div>
 
-                        <div class="course-leaderboard-header" id="course-leaderboard">
-                            <h5 class="course-side-title mb-0">Рейтинг учеников</h5>
-                            <span class="badge rounded-pill bg-body-tertiary">{{ $students->count() }}</span>
-                            @if($isManager && $students->isNotEmpty())
-                                <button class="btn btn-outline-secondary btn-sm gc-icon-button" type="button" data-bs-toggle="collapse" data-bs-target="#course-histogram" aria-expanded="false" aria-controls="course-histogram" aria-label="Распределение результатов" title="Распределение результатов"><i class="fas fa-chart-bar" aria-hidden="true"></i></button>
-                            @endif
-                        </div>
+                        @if($isManager || !$course->hide_leaderboard)
+                            @php
+                                $sortedStudents = $students->sortByDesc(fn ($student) => $student->points ?? 0)->values();
+                                $leaderboardPreviewLimit = 6;
+                                $leaderboardPreviewStudents = $sortedStudents->take($leaderboardPreviewLimit);
+                                $currentStudentIndex = $isLearner ? $sortedStudents->search(fn ($student) => $student->id == $user->id) : false;
+                                if ($currentStudentIndex !== false && $currentStudentIndex >= $leaderboardPreviewLimit) {
+                                    $leaderboardPreviewStudents = $leaderboardPreviewStudents->concat($sortedStudents->where('id', $user->id));
+                                }
+                                $leaderboardExtraStudents = $sortedStudents->whereNotIn('id', $leaderboardPreviewStudents->pluck('id'))->values();
+                            @endphp
+
+                            <div class="course-leaderboard-header" id="course-leaderboard">
+                                <div>
+                                    <h5 class="course-side-title mb-0">Рейтинг учеников</h5>
+                                    @if($course->hide_leaderboard)
+                                        <span class="badge rounded-pill bg-body-tertiary text-body-secondary mt-1">Скрыт от учеников</span>
+                                    @endif
+                                </div>
+                                <span class="badge rounded-pill bg-body-tertiary">{{ $students->count() }}</span>
+                                @if($isManager && $students->isNotEmpty())
+                                    <button class="btn btn-outline-secondary btn-sm gc-icon-button" type="button" data-bs-toggle="collapse" data-bs-target="#course-histogram" aria-expanded="false" aria-controls="course-histogram" aria-label="Распределение результатов" title="Распределение результатов"><i class="fas fa-chart-bar" aria-hidden="true"></i></button>
+                                @endif
+                            </div>
                             <ul class="list-unstyled gc-person-rows mb-2">
                                 @foreach($leaderboardPreviewStudents as $student)
                                     @include('courses.partials.leaderboard_item', ['studentRank' => $sortedStudents->search(fn($rankedStudent) => $rankedStudent->id === $student->id) + 1])
@@ -306,10 +305,11 @@
                                     <i class="fas fa-chevron-down" aria-hidden="true"></i>
                                 </button>
                             @endif
-                        @if ($isManager && $students->isNotEmpty())
-                            <div class="collapse course-histogram-plot" id="course-histogram">
-                                <div id="histogram" data-plotly-histogram='@json($students->pluck('percent')->values())'></div>
-                            </div>
+                            @if ($isManager && $students->isNotEmpty())
+                                <div class="collapse course-histogram-plot" id="course-histogram">
+                                    <div id="histogram" data-plotly-histogram='@json($students->pluck('percent')->values())'></div>
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </section>

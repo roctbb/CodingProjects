@@ -21,6 +21,7 @@ class Course extends Model
 
     protected $casts = [
         'current_lesson_id' => 'integer',
+        'hide_leaderboard' => 'boolean',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'learning_avatar_poster_generated_at' => 'datetime',

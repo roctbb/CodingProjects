@@ -812,6 +812,7 @@ class CoursesController extends Controller
             'site' => 'nullable|string|max:255',
             'image' => 'nullable|string|max:255',
             'icon_key' => ['nullable', 'string', \Illuminate\Validation\Rule::in(array_merge(['auto'], array_keys(\App\Support\CourseIcons::options())))],
+            'hide_leaderboard' => 'sometimes|boolean',
             'telegram' => 'nullable|string|max:255',
             'weekdays' => 'nullable|string|max:255',
             'start_date' => 'nullable|date',
@@ -825,6 +826,9 @@ class CoursesController extends Controller
         $course->image = $request->image;
         if ($request->has('icon_key')) {
             $course->icon_key = $request->icon_key === 'auto' ? null : $request->icon_key;
+        }
+        if ($request->has('hide_leaderboard')) {
+            $course->hide_leaderboard = $request->boolean('hide_leaderboard');
         }
         $course->telegram = $request->telegram;
         $course->start_date = $request->start_date;

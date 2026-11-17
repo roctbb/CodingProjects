@@ -17,6 +17,7 @@
     <x-gc-field name="name" label="Название курса"><input id="name" name="name" class="form-control" value="{{ old('name', $course->name) }}" maxlength="255" required></x-gc-field>
     <x-gc-field name="description" label="Описание курса"><textarea id="description" name="description" class="form-control" rows="4" maxlength="1024" required>{{ old('description', $course->description) }}</textarea></x-gc-field>
     <x-gc-course-icon-picker :course="$course" />
+    <x-gc-toggle name="hide_leaderboard" label="Скрыть рейтинг от учеников" value="1" :checked="$course->hide_leaderboard" />
 </x-gc-form-section>
 <x-gc-form-section title="Участники" description="Выбор участников сохраняется вместе с настройками курса.">
     <a class="gc-text-action" href="{{ route('courses.subgroups', $course->id) }}">Состав и расписания подгрупп</a>
