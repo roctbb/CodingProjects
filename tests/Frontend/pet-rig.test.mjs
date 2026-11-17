@@ -62,8 +62,9 @@ test('turns keep planted paws fixed, finish in a neutral stance and use native b
                 const pose=rigPose(rig,{direction,state:'turn',progress:i/1500});
                 pose.legs.forEach((leg,index)=>{
                     if(leg.foot.planted) {
-                        anchors[index] ??= leg.foot.x;
-                        assert.ok(Math.abs(leg.foot.x-anchors[index])<1e-7,name);
+                        anchors[index] ??= {x:leg.foot.x,y:leg.foot.y};
+                        assert.ok(Math.abs(leg.foot.x-anchors[index].x)<1e-7,name);
+                        assert.ok(Math.abs(leg.foot.y-anchors[index].y)<1e-7,name);
                     } else anchors[index]=undefined;
                 });
                 assert.ok(pose.bodyLayers.every(layer=>frames[layer.frame]),name);

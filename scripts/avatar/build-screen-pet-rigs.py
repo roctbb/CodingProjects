@@ -8,7 +8,7 @@ import argparse
 import json
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[2]
 PUBLIC = ROOT / 'public/images/screen-pets'
@@ -63,12 +63,56 @@ def add_turn(tiles, path, body_bounds):
     return [0]+list(range(first,first+10))+[2]
 
 
+def register_mount(tile, desired):
+    # Register into the actual opaque torso, not the transparent space left by
+    # removing its legs. Keep a four-pixel overlap for the upper limb under it.
+    mask = tile.getchannel('A').point(lambda a: 255 if a >= 230 else 0).filter(ImageFilter.MinFilter(9))
+    x, y = desired
+    candidates = [(2*(xx-x)**2+(yy-y)**2,xx,yy)
+                  for yy in range(max(0,round(y)-70),min(256,round(y)+1))
+                  for xx in range(max(0,round(x)-32),min(256,round(x)+33)) if mask.getpixel((xx,yy))]
+    if not candidates:
+        raise ValueError('No opaque body mount near '+str(desired))
+    _,xx,yy = min(candidates)
+    return [xx,yy]
+
+
+def interpolate_mount(leg, yaw):
+    views = ('right','front') if yaw < .5 else ('front','left')
+    t = yaw*2 if yaw < .5 else yaw*2-1
+    t = t*t*(3-2*t)
+    return [leg[views[0]][i]+(leg[views[1]][i]-leg[views[0]][i])*t for i in range(2)]
+
+
+def register_rig(tiles, rig):
+    for item in rig['legs']:
+        item['feet'] = {view:[item[view][0],rig['ankle']] for view in ['right','front','left']}
+        if len(rig['legs']) >= 3 and not item['frontLeg']:
+            item['feet']['front'][1] -= 12 if rig['material']=='robot' else 8
+        for view in ['right','front','left']:
+            item[view] = register_mount(tiles[rig['body'][view]],item[view])
+    rig['turnHips'] = [[register_mount(tiles[frame],interpolate_mount(item,index/(len(rig['turnBody'])-1)))
+                        for item in rig['legs']] for index,frame in enumerate(rig['turnBody'])]
+    # Adjust anatomical lengths once, keeping every segment fixed during motion.
+    # Standing/stride targets stay where they were, independently of body mounts.
+    import math
+    for item in rig['legs']:
+        reach = 0
+        for view in ['right','left']:
+            for advance in [-rig['stride']*rig['duty']/2,rig['stride']*rig['duty']/2]:
+                reach = max(reach,math.hypot(item['feet'][view][0]+advance-item[view][0],rig['ankle']-item[view][1]))
+        length = math.ceil(reach/2)+1
+        item['upper'] = max(item['upper'],length)
+        item['lower'] = max(item['lower'],length)
+
+
 def leg(x, y, phase, upper, lower, *, far=False, front=False, bend=-1, front_x=None, front_y=None):
     return {'right': [x,y], 'front': [front_x if front_x is not None else (148 if far else 108), front_y if front_y is not None else y],
             'left': [256-x,y], 'phase': phase, 'upper': upper, 'lower': lower, 'bend': bend, 'far': far, 'frontLeg': front}
 
 
 def save(key, name, tiles, rig):
+    register_rig(tiles,rig)
     atlas = Image.new('RGBA', (CELL*4, CELL*((len(tiles)+3)//4)))
     for index, tile in enumerate(tiles):
         atlas.paste(tile, (index%4*CELL, index//4*CELL))

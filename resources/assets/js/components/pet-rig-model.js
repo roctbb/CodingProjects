@@ -8,6 +8,12 @@ function hipAt(leg, yaw) {
     return point(leg[views[0]], leg[views[1]], smooth(yaw < .5 ? yaw * 2 : yaw * 2 - 1));
 }
 
+function footAt(leg, yaw) {
+    const positions = leg.feet || leg;
+    const views = yaw < .5 ? ['right', 'front'] : ['front', 'left'];
+    return point(positions[views[0]], positions[views[1]], smooth(yaw < .5 ? yaw * 2 : yaw * 2 - 1));
+}
+
 export function solveLeg(hip, foot, upper, lower, bend = 1) {
     const dx = foot.x - hip.x, dy = foot.y - hip.y;
     const actual = Math.max(.001, Math.hypot(dx, dy));
@@ -32,19 +38,21 @@ export function rigPose(rig, {direction = 1, phase = 0, state = 'stand', progres
     const endView = direction > 0 ? 'left' : 'right';
     let yaw = direction > 0 ? 0 : 1;
     let bodyLayers = [{frame: rig.body[startView], opacity: 1}];
-    let order;
+    let order, turnIndex;
     if (state === 'turn') {
         yaw = direction > 0 ? smooth(progress) : 1 - smooth(progress);
         const sequence = rig.turnBody || [rig.body.right, rig.body.front, rig.body.left];
-        bodyLayers = [{frame: sequence[Math.round(yaw * (sequence.length - 1))], opacity: 1}];
+        turnIndex = Math.round(yaw * (sequence.length - 1));
+        bodyLayers = [{frame: sequence[turnIndex], opacity: 1}];
         order = [[startView, 'front'], ['front', endView]].map(views => rig.legs
-            .map((leg, index) => ({index, distance: Math.abs(leg[views[0]][0] - leg[views[1]][0])}))
+            .map((leg, index) => ({index, distance: Math.abs((leg.feet || leg)[views[0]][0] - (leg.feet || leg)[views[1]][0])}))
             .sort((a, b) => b.distance - a.distance).map(item => item.index));
     }
     const legs = rig.legs.map((leg, index) => {
-        const hip = hipAt(leg, yaw);
+        const mount = state === 'turn' ? rig.turnHips?.[turnIndex]?.[index] : null;
+        const hip = mount ? {x: mount[0], y: mount[1]} : hipAt(leg, yaw);
         const step = plantedFoot(phase + leg.phase, stride, rig.duty, rig.lift);
-        let foot = {x: leg[startView][0], y: rig.ankle, angle: 0, view: startView, planted: true};
+        let foot = {x: (leg.feet || leg)[startView][0], y: rig.ankle, angle: 0, view: startView, planted: true};
         if (state === 'walk') {
             foot = {...foot, x: foot.x + direction * step.x, y: foot.y + step.y,
                 angle: direction * step.angle, planted: step.planted};
@@ -58,25 +66,26 @@ export function rigPose(rig, {direction = 1, phase = 0, state = 'stand', progres
         } else if (state === 'turn') {
             const slot = .25 / rig.legs.length;
             const swing = slot * .95;
-            let anchor = leg[startView][0];
+            let anchor = {x: (leg.feet || leg)[startView][0], y: rig.ankle};
             for (let stepIndex = 0; stepIndex < 3; stepIndex++) {
                 const offset = order[stepIndex < 2 ? 0 : 1].indexOf(index) * slot;
                 const start = stepIndex * .36 + offset, end = start + swing;
                 if (progress < start) break;
                 const landingYaw = stepIndex === 2 ? (direction > 0 ? 1 : 0)
                     : (direction > 0 ? smooth(end) : 1 - smooth(end));
-                const target = hipAt(leg, landingYaw).x;
+                const target = footAt(leg, landingYaw);
                 if (progress < end) {
                     const t = (progress - start) / swing;
-                    foot.x = mix(anchor, target, smooth(t));
-                    foot.y -= Math.sin(Math.PI * t) * rig.repositionLift;
+                    foot.x = mix(anchor.x, target.x, smooth(t));
+                    foot.y = mix(anchor.y, target.y, smooth(t)) - Math.sin(Math.PI * t) * rig.repositionLift;
                     foot.planted = false;
                     const viewYaw = t < .5 ? yaw : landingYaw;
                     foot.view = viewYaw < .25 ? 'right' : viewYaw > .75 ? 'left' : 'front';
                     break;
                 }
                 anchor = target;
-                foot.x = anchor;
+                foot.x = anchor.x;
+                foot.y = anchor.y;
                 foot.view = landingYaw < .25 ? 'right' : landingYaw > .75 ? 'left' : 'front';
             }
         }
