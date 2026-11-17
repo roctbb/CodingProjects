@@ -41,7 +41,7 @@ RUN set -eu; \
     awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) next; sub("^/(usr/)?", "", so); print "*" so }' /tmp/php-runtime-ldd \
     | sort -u > /tmp/php-runtime-paths; \
     dpkg-query --search $(cat /tmp/php-runtime-paths) > /tmp/php-runtime-owners; \
-    cut -d: -f1 /tmp/php-runtime-owners \
+    awk -F: '/^[^[:space:]]+: / { print $1 }' /tmp/php-runtime-owners \
     | sort -u > /tmp/php-runtime-packages \
     && test -s /tmp/php-runtime-packages
 
