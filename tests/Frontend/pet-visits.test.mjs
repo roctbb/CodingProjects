@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PetVisits } from '../../resources/assets/js/components/pet-visits.js';
 
-function fixture(random = .5, nextAt = 0) {
+function fixture(random = .5, nextAt = 0, onNext = () => {}) {
     let time = 0, index = 0;
     const timers = new Map(), events = [];
-    const visits = new PetVisits({random: () => random, now: () => time, nextAt,
+    const visits = new PetVisits({random: () => random, now: () => time, nextAt, onNext,
         setTimer: (callback, delay) => { const id = ++index; timers.set(id, {at: time + delay, callback}); return id; },
         clearTimer: id => timers.delete(id), onStart: () => events.push('start'), onStop: reason => events.push(reason)});
     return {visits, events, timers, advance(ms) {
@@ -48,4 +48,24 @@ test('saved cooldown prevents reloads from immediately repeating a visit', () =>
     const f = fixture(.5, 600000); f.visits.setAvailable(true);
     f.advance(599999); assert.deepEqual(f.events, []);
     f.advance(1); assert.deepEqual(f.events, ['start']);
+});
+
+test('navigation preserves the first scheduled visit and updates the wait after a pause', () => {
+    let saved = 0;
+    const first = fixture(.5, 0, next => { saved = next; });
+    first.visits.setAvailable(true);
+    first.advance(120000);
+    first.visits.cancel();
+    const nextPage = fixture(1, saved - 120000, next => { saved = next; });
+    nextPage.visits.setAvailable(true);
+    nextPage.advance(419999); assert.deepEqual(nextPage.events, []);
+    nextPage.advance(1); assert.deepEqual(nextPage.events, ['start']);
+    nextPage.visits.complete();
+    nextPage.advance(1000);
+    nextPage.visits.setAvailable(false);
+    nextPage.advance(900000);
+    nextPage.visits.setAvailable(true);
+    assert.equal(saved, 2040000);
+    nextPage.advance(718999); assert.equal(nextPage.events.length, 2);
+    nextPage.advance(1); assert.equal(nextPage.events.at(-1), 'start');
 });

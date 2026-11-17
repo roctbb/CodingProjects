@@ -27,6 +27,7 @@ export class PetVisits {
         const delay = this.remaining ?? this.delay();
         this.remaining = null;
         this.dueAt = this.now() + delay;
+        this.onNext(this.dueAt);
         this.timer = this.setTimer(() => { this.timer = null; this.start(); }, delay);
     }
     start() {

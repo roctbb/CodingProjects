@@ -37,6 +37,7 @@
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="{{ url('insider/profile') }}"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                @include('layouts.partials.screen-pet-toggle')
                 <li>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

@@ -70,18 +70,22 @@ class ScreenPetTest extends TestCase
         }
     }
 
-    public function test_pet_component_renders_only_on_the_home_screen(): void
+    public function test_equipped_pet_and_control_are_available_on_every_page(): void
     {
         $this->be($this->userWithPet(['cheremsha_pet'], 'cheremsha_pet'));
-        foreach (['/insider/courses' => true, '/insider/courses/1' => false, '/insider/profile' => false] as $path => $visible) {
+        foreach (['/insider/courses', '/insider/courses/1', '/insider/courses/1/steps/1', '/insider/profile', '/insider/market', '/courses'] as $path) {
             $this->app->instance('request', Request::create($path));
             Facade::clearResolvedInstance('request');
             $html = view('components.gc-screen-pet')->render();
-            $this->assertSame($visible, str_contains($html, 'data-screen-pet='));
+            $this->assertStringContainsString('data-screen-pet=', $html);
+            $this->assertStringContainsString('data-screen-pet-toggle', view('layouts.partials.screen-pet-toggle')->render());
         }
+        $this->app['auth']->forgetGuards();
+        $this->assertStringNotContainsString('data-screen-pet=', view('components.gc-screen-pet')->render());
+        $this->assertStringNotContainsString('data-screen-pet-toggle', view('layouts.partials.screen-pet-toggle')->render());
     }
 
-    public function test_home_payload_selects_the_articulated_renderer_without_a_production_preview_bypass(): void
+    public function test_payload_selects_the_articulated_renderer_without_a_production_preview_bypass(): void
     {
         $user = $this->userWithPet(['learning_bot_pet'], 'learning_bot_pet');
         foreach (['student', 'teacher'] as $role) {
