@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PetVisits } from '../../resources/assets/js/components/pet-visits.js';
 
+const minute = 60000;
+
 function fixture(random = .5, nextAt = 0, onNext = () => {}) {
     let time = 0, index = 0;
     const timers = new Map(), events = [];
@@ -20,19 +22,21 @@ function fixture(random = .5, nextAt = 0, onNext = () => {}) {
 }
 
 test('automatic visits are rare and a completed return schedules another long wait', () => {
-    const f = fixture(); f.visits.setAvailable(true);
-    f.advance(539999); assert.deepEqual(f.events, []);
-    f.advance(1); assert.deepEqual(f.events, ['start']);
-    f.advance(28000); assert.deepEqual(f.events, ['start']);
-    f.visits.complete(); assert.deepEqual(f.events, ['start', 'finished']);
-    f.advance(539999); assert.equal(f.events.length, 2);
-    f.advance(1); assert.equal(f.events.at(-1), 'start');
+    for (const [random, minutes] of [[0, 30], [.5, 45], [1, 60]]) {
+        const f = fixture(random); f.visits.setAvailable(true);
+        f.advance(minutes * minute - 1); assert.deepEqual(f.events, []);
+        f.advance(1); assert.deepEqual(f.events, ['start']);
+        f.advance(28000); assert.deepEqual(f.events, ['start']);
+        f.visits.complete(); assert.deepEqual(f.events, ['start', 'finished']);
+        f.advance(minutes * minute - 1); assert.equal(f.events.length, 2);
+        f.advance(1); assert.equal(f.events.at(-1), 'start');
+    }
 });
 
 test('hidden pages freeze the wait and interrupt motion without starting background visits', () => {
-    const f = fixture(); f.visits.setAvailable(true); f.advance(100000);
-    f.visits.setAvailable(false); f.advance(900000); assert.deepEqual(f.events, []);
-    f.visits.setAvailable(true); f.advance(439999); assert.deepEqual(f.events, []);
+    const f = fixture(); f.visits.setAvailable(true); f.advance(2 * minute);
+    f.visits.setAvailable(false); f.advance(60 * minute); assert.deepEqual(f.events, []);
+    f.visits.setAvailable(true); f.advance(43 * minute - 1); assert.deepEqual(f.events, []);
     f.advance(1); assert.equal(f.events.at(-1), 'start');
     f.visits.setAvailable(false); assert.equal(f.events.at(-1), 'interrupted'); assert.equal(f.timers.size, 0);
 });
@@ -45,8 +49,8 @@ test('a stalled animation ends eventually, with no duplicate active visits', () 
 });
 
 test('saved cooldown prevents reloads from immediately repeating a visit', () => {
-    const f = fixture(.5, 600000); f.visits.setAvailable(true);
-    f.advance(599999); assert.deepEqual(f.events, []);
+    const f = fixture(.5, 40 * minute); f.visits.setAvailable(true);
+    f.advance(40 * minute - 1); assert.deepEqual(f.events, []);
     f.advance(1); assert.deepEqual(f.events, ['start']);
 });
 
@@ -54,18 +58,18 @@ test('navigation preserves the first scheduled visit and updates the wait after 
     let saved = 0;
     const first = fixture(.5, 0, next => { saved = next; });
     first.visits.setAvailable(true);
-    first.advance(120000);
+    first.advance(2 * minute);
     first.visits.cancel();
-    const nextPage = fixture(1, saved - 120000, next => { saved = next; });
+    const nextPage = fixture(1, saved - 2 * minute, next => { saved = next; });
     nextPage.visits.setAvailable(true);
-    nextPage.advance(419999); assert.deepEqual(nextPage.events, []);
+    nextPage.advance(43 * minute - 1); assert.deepEqual(nextPage.events, []);
     nextPage.advance(1); assert.deepEqual(nextPage.events, ['start']);
     nextPage.visits.complete();
     nextPage.advance(1000);
     nextPage.visits.setAvailable(false);
-    nextPage.advance(900000);
+    nextPage.advance(15 * minute);
     nextPage.visits.setAvailable(true);
-    assert.equal(saved, 2040000);
-    nextPage.advance(718999); assert.equal(nextPage.events.length, 2);
+    assert.equal(saved, (43 + 15 + 60) * minute);
+    nextPage.advance(60 * minute - 1001); assert.equal(nextPage.events.length, 2);
     nextPage.advance(1); assert.equal(nextPage.events.at(-1), 'start');
 });

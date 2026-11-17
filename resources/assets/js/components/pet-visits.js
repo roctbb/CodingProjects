@@ -9,7 +9,7 @@ export class PetVisits {
         this.visitTimer = null;
         this.remaining = nextAt > now() ? nextAt - now() : null;
     }
-    delay() { return 360000 + this.random() * 360000; }
+    delay() { return 1800000 + this.random() * 1800000; }
     setAvailable(available) {
         if (available === this.available) return;
         this.available = available;
