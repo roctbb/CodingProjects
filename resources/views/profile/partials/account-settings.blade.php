@@ -42,4 +42,5 @@
             @endif
         </x-gc-form-section>
     @endif
+    @include('layouts.partials.screen-pet-toggle')
 </div>

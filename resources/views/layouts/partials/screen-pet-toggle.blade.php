@@ -1,3 +1,5 @@
-@if(Auth::check() && \App\Support\ScreenPet::forUser(Auth::user()))
-    <li><button class="dropdown-item" type="button" data-screen-pet-toggle aria-pressed="false"><i class="fas fa-paw me-2" aria-hidden="true"></i>Питомец на экране<span class="ms-2" data-screen-pet-check aria-hidden="true" hidden>✓</span></button></li>
+@if(($isOwner ?? false) && \App\Support\ScreenPet::forUser(Auth::user()))
+    <x-gc-form-section title="Интерфейс" description="Изменения сохраняются автоматически.">
+        <x-gc-toggle name="screen_pet" label="Питомец на экране" :checked="true" hint="Экипированный питомец иногда гуляет по нижнему краю экрана." data-screen-pet-toggle disabled />
+    </x-gc-form-section>
 @endif

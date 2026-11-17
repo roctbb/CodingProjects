@@ -70,7 +70,7 @@ class ScreenPetTest extends TestCase
         }
     }
 
-    public function test_equipped_pet_and_control_are_available_on_every_page(): void
+    public function test_equipped_pet_is_available_on_every_page_and_its_setting_is_private(): void
     {
         $this->be($this->userWithPet(['cheremsha_pet'], 'cheremsha_pet'));
         foreach (['/insider/courses', '/insider/courses/1', '/insider/courses/1/steps/1', '/insider/profile', '/insider/market', '/courses'] as $path) {
@@ -78,11 +78,12 @@ class ScreenPetTest extends TestCase
             Facade::clearResolvedInstance('request');
             $html = view('components.gc-screen-pet')->render();
             $this->assertStringContainsString('data-screen-pet=', $html);
-            $this->assertStringContainsString('data-screen-pet-toggle', view('layouts.partials.screen-pet-toggle')->render());
         }
+        $this->assertStringContainsString('data-screen-pet-toggle', view('layouts.partials.screen-pet-toggle', ['isOwner' => true])->render());
+        $this->assertStringNotContainsString('data-screen-pet-toggle', view('layouts.partials.screen-pet-toggle', ['isOwner' => false])->render());
         $this->app['auth']->forgetGuards();
         $this->assertStringNotContainsString('data-screen-pet=', view('components.gc-screen-pet')->render());
-        $this->assertStringNotContainsString('data-screen-pet-toggle', view('layouts.partials.screen-pet-toggle')->render());
+        $this->assertStringNotContainsString('data-screen-pet-toggle', view('layouts.partials.screen-pet-toggle', ['isOwner' => true])->render());
     }
 
     public function test_payload_selects_the_articulated_renderer_without_a_production_preview_bypass(): void

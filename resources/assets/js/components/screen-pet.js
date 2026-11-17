@@ -81,18 +81,17 @@ export default function initScreenPet() {
     });
 
     function sync() {
-        controls.forEach(button => {
-            button.setAttribute('aria-pressed', String(enabled && !failed));
-            button.querySelector('[data-screen-pet-check]').hidden = !enabled || failed;
-            button.disabled = failed;
+        controls.forEach(input => {
+            input.checked = enabled && !failed;
+            input.disabled = failed;
         });
         const available = enabled && !failed && !blocked() && !reduced.matches;
         visits.setAvailable(available);
         if (!available) hide();
     }
 
-    controls.forEach(button => button.addEventListener('click', () => {
-        enabled = !enabled;
+    controls.forEach(input => input.addEventListener('change', () => {
+        enabled = input.checked;
         save(key, enabled ? 'on' : 'off');
         if (!enabled) { visits.cancel(); hide(); }
         sync();
