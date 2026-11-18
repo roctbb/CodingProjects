@@ -104,13 +104,14 @@ WORKDIR /var/www/html
 # Copy app and vendor from builder
 COPY --from=builder /app /var/www/html
 
-RUN mkdir -p /var/www/html/storage/app-private/room-character-sources \
+RUN mkdir -p /var/www/html/storage/app-private/room-character-sources /var/www/html/storage/logs \
+    && chmod 0750 /var/www/html/storage/logs \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 ENV PHP_INI_DIR=/usr/local/etc/php \
     APP_ENV=production \
     APP_DEBUG=false \
-    LOG_CHANNEL=stack
+    LOG_CHANNEL=stderr
 
 EXPOSE 9000
 ENTRYPOINT ["docker-php-entrypoint"]

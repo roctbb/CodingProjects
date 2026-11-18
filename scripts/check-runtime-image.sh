@@ -64,3 +64,26 @@ check(is_file('/var/www/html/public/build/manifest.json'), 'Frontend build missi
 echo 'Runtime checks passed on PHP ', PHP_VERSION, PHP_EOL;
 PHP
 SHELL
+
+docker run --rm --network none --user www-data --entrypoint sh "$image" -ec '
+    test -d storage/logs && test -w storage/logs || {
+        echo "The PHP-FPM user cannot write to storage/logs" >&2
+        exit 1
+    }
+'
+
+log_output=$(docker run --rm -i --network none --user www-data --entrypoint php "$image" 2>&1 >/dev/null <<'PHP'
+<?php
+require 'vendor/autoload.php';
+$app = require 'bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+if (config('logging.default') !== 'stderr') {
+    throw new RuntimeException('The default container log channel must be stderr');
+}
+Illuminate\Support\Facades\Log::warning('Laravel container stderr probe');
+PHP
+) || {
+    printf '%s\n' "$log_output" >&2
+    exit 1
+}
+printf '%s\n' "$log_output" | grep -Fq 'Laravel container stderr probe'

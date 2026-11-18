@@ -26,3 +26,14 @@ health and an HTTPS page before deleting the previous release and build cache.
 Keep server environment files and deployment overrides outside the build context.
 The production image does not include Composer, PHP build helpers or compilers;
 application console commands continue to run through `php artisan`.
+
+The production image writes Laravel logs to stderr. Keep
+`LOG_CHANNEL=stderr` in the server environment for PHP-FPM, the queue workers
+and the scheduler. View their logs with `docker compose logs php queue
+notifications scheduler`. Compose configures rotation through Docker's
+`json-file` driver.
+
+When running Artisan in the web container, use
+`docker compose exec --user www-data php php artisan …`. With daily file
+logging, the first process to log on a new day creates the file. Running
+Artisan as root can create a file that PHP-FPM cannot append to.
