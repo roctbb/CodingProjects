@@ -10,19 +10,23 @@
         </x-slot:actions>
         <ul class="list-unstyled gc-rows mb-0">
             @foreach($previewItems as $deadline)
+                @php $penaltyPercent = (float) round(100 - (float) $deadline->penalty * 100, 2); @endphp
                 <li>
                     <a class="gc-deadline-row" href="{{ url('/insider/courses/'.$deadline->course_id.'/steps/'.$deadline->task->step_id.'#task'.$deadline->task_id) }}">
                         <time class="gc-deadline-row__date @if($personal && $deadline->is_overdue) text-danger @endif" datetime="{{ $deadline->expiration->format('Y-m-d') }}" title="{{ $deadline->expiration->format('d.m.Y') }}">{{ $deadline->expiration->format('d.m') }}</time>
                         <span class="min-width-0"><strong>{{ $deadline->task->name }}</strong><small>{{ $showCourse ? $deadline->course->name : $deadline->task->step->lesson->name }}</small></span>
-                        @if($personal && ($deadline->is_overdue || $deadline->is_today || $deadline->expiration->isTomorrow() || $deadline->is_soon))
-                        <span class="gc-deadline-row__state @if($deadline->is_overdue) text-danger @elseif($deadline->is_today) text-primary @endif">
-                            @if($deadline->is_overdue)Просрочено
-                            @elseif($deadline->is_today)Сегодня
-                            @elseif($deadline->expiration->isTomorrow())Завтра
-                            @elseif($deadline->is_soon)Скоро
+                        <span class="gc-deadline-row__conditions">
+                            <span class="gc-deadline-row__penalty">После срока {{ $penaltyPercent ? '−'.$penaltyPercent.'%' : 'без штрафа' }}</span>
+                            @if($personal && ($deadline->is_overdue || $deadline->is_today || $deadline->expiration->isTomorrow() || $deadline->is_soon))
+                            <span class="gc-deadline-row__state @if($deadline->is_overdue) text-danger @elseif($deadline->is_today) text-primary @endif">
+                                @if($deadline->is_overdue)Просрочено
+                                @elseif($deadline->is_today)Сегодня
+                                @elseif($deadline->expiration->isTomorrow())Завтра
+                                @elseif($deadline->is_soon)Скоро
+                                @endif
+                            </span>
                             @endif
                         </span>
-                        @endif
                     </a>
                 </li>
             @endforeach

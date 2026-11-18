@@ -76,6 +76,8 @@ a.gc-person-card:is(:hover,:focus-visible) { border-color:var(--gc-border-hover)
 .gc-deadline-row strong { display: block; font-weight: 500; overflow-wrap: anywhere; }
 .gc-deadline-row small { color: var(--gc-on-surface-muted); display: block; margin-top: var(--gc-space-1); }
 .gc-deadline-row__date { color: var(--gc-primary); font-size: var(--gc-font-small); font-weight: 500; }
+.gc-deadline-row__conditions { display: grid; gap: var(--gc-space-1); justify-items: end; }
+.gc-deadline-row__penalty { font-size: var(--gc-font-small); }
 .gc-deadline-row__state { color: var(--gc-on-surface-muted); font-size: var(--gc-font-caption); }
 .gc-deadline-controls {padding:var(--gc-space-4); margin-bottom:var(--gc-space-4);}
 .gc-deadline-controls__heading {display:flex; flex-wrap:wrap; align-items:start; justify-content:space-between; gap:var(--gc-space-3);}
@@ -179,7 +181,7 @@ a.gc-person-card:is(:hover,:focus-visible) { border-color:var(--gc-border-hover)
 }
 @media (max-width: 575.98px) {
   .gc-deadline-row { grid-template-columns: 3rem minmax(0, 1fr); }
-  .gc-deadline-row__state { grid-column: 2; }
+  .gc-deadline-row__conditions { grid-column: 2; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--gc-space-3); }
   .gc-notebook__code, .gc-notebook__output { grid-template-columns: minmax(0, 1fr); }
   .gc-notebook__prompt { padding-top: 0; text-align: left; }
   .notebook-container .gc-notebook__input, .gc-notebook__output > :last-child { grid-column: 1; }
