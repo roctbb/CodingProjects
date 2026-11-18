@@ -6,6 +6,7 @@
     $pending = !$blocked && $task->isOnCheck($viewer->id);
     $complete = !$blocked && !$pending && $task->isFullDone($viewer->id);
     $submitted = $task->isSubmitted($viewer->id);
+    $exhausted = $task->is_quiz && $submitted && $task->quizAttemptsRemaining($viewer->id, $course->id) === 0;
     $rule = $compact && !$submitted ? $task->getDeadline($course->id) : null;
     $expiration = $rule?->expiration;
     $overdue = $expiration && ($rule instanceof \App\Support\DeadlineRule ? $rule->cutoffAt() : $expiration->copy()->addDay())->lte(now());
@@ -14,6 +15,7 @@
         $blocked => ['Заблокировано', 'lock', 'danger'],
         $pending => ['На проверке', 'hourglass-half', 'pending'],
         $complete => ['Выполнено', 'circle-check', 'complete'],
+        $exhausted => ['Попытки исчерпаны', 'circle-xmark', 'neutral'],
         $submitted => ['Можно улучшить', 'circle-half-stroke', 'neutral'],
         $overdue => ['Срок истёк', 'clock', 'danger'],
         $soon => [$expiration->isToday() ? 'Сдать сегодня' : 'Сдать скоро', 'clock', 'pending'],

@@ -24,6 +24,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Auth;
 use Notification;
 
@@ -56,11 +58,76 @@ class TasksController extends Controller
         return view('steps.create_task', compact('course', 'step'));
     }
 
-    private function normalizeAnswerMode(Request $request): void
+    private function validateTaskSettings(Request $request): void
     {
-        if (!$request->has('answer_mode')) return;
-        $request->merge(['is_code' => $request->answer_mode === 'code' ? 'on' : '0',
-            'answer' => $request->answer_mode === 'short' ? $request->input('answer') : null]);
+        $choice = in_array($request->input('answer_mode'), Task::CHOICE_MODES, true);
+        $rules = [
+            'text' => 'required|string',
+            'name' => 'required|string|max:255',
+            'answer_mode' => 'sometimes|required|in:manual,code,short,native,single,multiple',
+            'checker_config' => 'required_if:answer_mode,native|nullable|json',
+            'answer' => 'required_if:answer_mode,short|nullable|string|max:255',
+            'max_attempts' => 'nullable|integer|min:1|max:2147483647',
+            'price' => 'nullable|numeric|min:0',
+            'max_mark' => 'required|integer|min:0|max:1000',
+            'ai_achievement_instruction' => 'nullable|string|max:1000',
+        ];
+
+        if ($choice) {
+            $rules += [
+                'answer_options' => 'required|array|min:2',
+                'answer_options.*' => 'required|string|max:1000|distinct:strict',
+                'correct_options' => $request->answer_mode === 'single' ? 'required|array|size:1' : 'required|array|min:2',
+                'correct_options.*' => ['required', 'integer', 'distinct', Rule::in(array_keys((array) $request->input('answer_options')))],
+            ];
+        }
+
+        $this->validate($request, $rules, [
+            'answer_options.required' => 'Добавьте хотя бы два варианта ответа.',
+            'answer_options.min' => 'Добавьте хотя бы два варианта ответа.',
+            'answer_options.*.required' => 'Заполните текст каждого варианта.',
+            'answer_options.*.distinct' => 'Варианты ответа должны различаться.',
+            'correct_options.required' => 'Отметьте правильные варианты.',
+            'correct_options.size' => 'Отметьте один правильный вариант.',
+            'correct_options.min' => 'Отметьте хотя бы два правильных варианта.',
+            'max_attempts.integer' => 'Введите целое число попыток.',
+            'max_attempts.min' => 'Укажите хотя бы одну попытку.',
+        ]);
+    }
+
+    private function saveAnswerSettings(Task $task, Request $request): void
+    {
+        $mode = $request->input('answer_mode');
+        if ($mode === null) {
+            $hasAnswer = $request->filled('answer');
+            $legacyCode = $request->input('is_code') === 'on';
+            $mode = match (true) {
+                $legacyCode && ($task->exists || !$hasAnswer) => 'code',
+                $hasAnswer => 'short',
+                $task->is_quiz && $task->quiz_choices !== null => $task->quizAnswerMode(),
+                default => 'manual',
+            };
+        }
+
+        $choice = in_array($mode, Task::CHOICE_MODES, true);
+        $task->is_code = $mode === 'code';
+        $task->is_quiz = $mode === 'short' || $choice;
+        $task->answer = $mode === 'short' ? $request->input('answer') : null;
+
+        if (!$choice) {
+            $task->quiz_choices = null;
+        } elseif ($request->has('answer_mode')) {
+            $options = $request->input('answer_options');
+            $correct = array_map('strval', $request->input('correct_options'));
+            $task->quiz_choices = ['mode' => $mode, 'options' => array_map(
+                fn ($key, $label) => ['label' => $label, 'correct' => in_array((string) $key, $correct, true)],
+                array_keys($options), array_values($options)
+            )];
+        }
+
+        if ($task->is_quiz && $request->filled('max_attempts')) {
+            $task->max_attempts = (int) $request->input('max_attempts');
+        }
     }
 
     public function create($course_id, $id, Request $request)
@@ -86,19 +153,7 @@ class TasksController extends Controller
     private function createTask($course_id, $id, Request $request)
     {
         $step = ProgramStep::findOrFail($id);
-        $this->validate($request, [
-            'text' => 'required|string',
-            'name' => 'required|string|max:255',
-            'answer_mode' => 'sometimes|required|in:manual,code,short,native',
-            'checker_config' => 'required_if:answer_mode,native|nullable|json',
-            'answer' => 'required_if:answer_mode,short|nullable|string|max:255',
-            'price' => 'nullable|numeric|min:0',
-            'max_mark' => 'required|integer|min:0|max:1000',
-            'ai_achievement_instruction' => 'nullable|string|max:1000'
-        ]);
-
-
-        $this->normalizeAnswerMode($request);
+        $this->validateTaskSettings($request);
 
         $order = 100;
         if ($step->lesson->steps->count() != 0)
@@ -107,7 +162,7 @@ class TasksController extends Controller
         if (!$request->has('price') or $request->price == null) $price = 0;
         else $price = $request->price;
 
-        $task = Task::create(['text' => $request->text, 'step_id' => $step->id, 'name' => $request->name, 'max_mark' => $request->max_mark, 'sort_index' => $order,
+        $task = new Task(['text' => $request->text, 'step_id' => $step->id, 'name' => $request->name, 'max_mark' => $request->max_mark, 'sort_index' => $order,
             'is_star' => $request->is_star == 'on' ? true : false,
             'is_hidden' => $request->is_hidden == 'on' ? true : false,
             'xp_booster_enabled' => $request->xp_booster_enabled == 'on' ? true : false,
@@ -118,12 +173,7 @@ class TasksController extends Controller
         $task->solution = $request->solution;
         $task->price = $price;
 
-        if ($request->has('answer') and $request->answer != "") {
-            $task->is_quiz = true;
-            $task->answer = $request->answer;
-        } else if ($request->has('is_code') and $request->is_code == 'on') {
-            $task->is_code = true;
-        }
+        $this->saveAnswerSettings($task, $request);
         $task->save();
         $this->saveNativeChecker($task, $request);
         $course = Course::findOrFail($course_id);
@@ -161,19 +211,11 @@ class TasksController extends Controller
 
     private function editTask($course_id, $id, Request $request)
     {
-        $task = Task::findOrFail($id);
-        $this->validate($request, [
-            'text' => 'required|string',
-            'name' => 'required|string|max:255',
-            'answer_mode' => 'sometimes|required|in:manual,code,short,native',
-            'checker_config' => 'required_if:answer_mode,native|nullable|json',
-            'answer' => 'required_if:answer_mode,short|nullable|string|max:255',
-            'price' => 'nullable|numeric|min:0',
-            'max_mark' => 'required|integer|min:0|max:1000',
-            'ai_achievement_instruction' => 'nullable|string|max:1000'
-        ]);
-
-        $this->normalizeAnswerMode($request);
+        $task = Task::whereKey($id)->lockForUpdate()->firstOrFail();
+        $this->validateTaskSettings($request);
+        if (in_array($request->input('answer_mode'), Task::CHOICE_MODES, true) && $this->nativeChecker($task->id)) {
+            throw ValidationException::withMessages(['answer_mode' => 'Для этого задания уже настроена сдача в Coding Projects.']);
+        }
 
         $task->text = $request->text;
         $task->max_mark = $request->max_mark;
@@ -213,19 +255,7 @@ class TasksController extends Controller
         } else {
             $task->only_remote = false;
         }
-        if ($request->has('answer') and $request->answer != "") {
-            $task->is_quiz = true;
-            $task->answer = $request->answer;
-        } else {
-            $task->is_quiz = false;
-        }
-        if ($request->has('is_code') and $request->is_code == "on") {
-            $task->is_quiz = false;
-            $task->is_code = true;
-        } else {
-            $task->is_code = false;
-        }
-
+        $this->saveAnswerSettings($task, $request);
         $task->save();
 
         $this->saveNativeChecker($task, $request);
@@ -268,7 +298,10 @@ class TasksController extends Controller
 
     private function submitSolution($course_id, $id, Request $request)
     {
-        $task = Task::findOrFail($id);
+        $task = Task::whereKey($id)->lockForUpdate()->firstOrFail();
+        $revision = $request->input('quiz_revision');
+        abort_if($revision !== null && (!is_string($revision) || !$task->is_quiz || !hash_equals($task->quizRevision(), $revision)),
+            409, 'Задание изменилось. Обновите страницу перед отправкой.');
         abort_if($this->nativeChecker($task->id), 409, 'Для этой задачи используется API сдач Coding Projects.');
         $user = User::findOrFail(Auth::User()->id);
         $step_id = $task->step_id;
@@ -288,9 +321,41 @@ class TasksController extends Controller
                 : redirect('/insider/courses/' . $course_id . '/steps/' . $step_id . '#task' . $id);
         }
 
-        $this->validate($request, [
-            'text' => 'required|string',
-        ]);
+        if ($task->is_quiz) {
+            $responseData['max_attempts'] = $task->quizAttemptLimit();
+            $responseData['attempts_remaining'] = $task->quizAttemptsRemaining($user->id, (int) $course_id);
+            if ($responseData['attempts_remaining'] === 0) {
+                return $request->expectsJson()
+                    ? response()->json([
+                        'message' => 'Попытки исчерпаны.',
+                        'max_attempts' => $responseData['max_attempts'],
+                        'attempts_remaining' => 0,
+                    ], 409)
+                    : redirect('/insider/courses/' . $course_id . '/steps/' . $step_id . '#task' . $id);
+            }
+        }
+
+        $options = $task->is_quiz ? ($task->quiz_choices['options'] ?? null) : null;
+        if ($options !== null) {
+            $validated = $request->validateWithBag('quiz_'.$id, [
+                'selected_options' => $task->quizAnswerMode() === 'single' ? 'required|array|size:1' : 'required|array',
+                'selected_options.*' => ['required', 'integer', 'distinct', Rule::in(array_keys($options))],
+            ], [
+                'selected_options.required' => 'Выберите ответ.',
+                'selected_options.size' => 'Выберите один вариант ответа.',
+                'selected_options.*.in' => 'Выберите варианты из списка.',
+            ]);
+            $selected = array_map('intval', array_values($validated['selected_options']));
+            sort($selected, SORT_NUMERIC);
+            $correct = $selected === array_keys(array_filter($options, fn ($option) => $option['correct']));
+            $answerText = implode("\n", array_map(fn ($index) => $options[$index]['label'], $selected));
+        } else {
+            $validated = $request->validateWithBag($task->is_quiz ? 'quiz_'.$id : 'default', [
+                'text' => 'required|string',
+            ], $task->is_quiz ? ['text.required' => 'Введите ответ.'] : []);
+            $correct = $task->is_quiz && $task->answer == $validated['text'];
+            $answerText = clean($validated['text']);
+        }
 
         $course = Course::findOrFail($course_id);
 
@@ -300,11 +365,11 @@ class TasksController extends Controller
         $solution->user_id = Auth::User()->id;
         $solution->course_id = $course_id;
         $solution->submitted = Carbon::now();
-        $solution->text = clean($request->text);
+        $solution->text = $answerText;
 
         if ($task->is_quiz) {
             $old_rank = $user->rank();
-            if ($task->answer == $request->text) {
+            if ($correct) {
                 $deadline = $task->getDeadline($course_id);
                 $solution->applyDeadlinePenalty($task->max_mark, $deadline);
                 $solution->comment = $solution->hasActiveDeadlinePenalty()
@@ -347,6 +412,8 @@ class TasksController extends Controller
         }
 
         if ($task->is_quiz) {
+            $responseData['attempts_remaining']--;
+            $responseData['correct'] = $correct;
             // Recalculate cached points after auto-grading quiz
             CourseStudentPoints::recalculate($course_id, $user->id);
             LessonStudentStats::recalculateForStudent($course_id, $user->id);

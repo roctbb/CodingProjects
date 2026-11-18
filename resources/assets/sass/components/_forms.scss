@@ -12,6 +12,18 @@
 .gc-field__error { color:var(--gc-danger); font-size:var(--gc-font-small); }
 .gc-field__error[hidden] { display:none; }
 .gc-form-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--gc-space-4); align-items:start; }
+.gc-task-answer-modes { grid-template-columns:repeat(auto-fit,minmax(min(100%,max(14rem,30%)),1fr)); }
+.gc-quiz-options-editor { max-inline-size:42rem; }
+.gc-quiz-options-editor > legend { float:none; margin-block-end:var(--gc-space-2); }
+.gc-quiz-options-editor__add { justify-self:start; }
+.gc-quiz-option-field { display:flex; align-items:stretch; gap:var(--gc-space-2); }
+.gc-quiz-option-field > .form-control { flex:1; min-width:0; }
+.gc-quiz-option-field__key, .gc-quiz-option-field__remove {
+  flex:0 0 var(--gc-control-height);
+  min-block-size:var(--gc-control-height);
+}
+.gc-quiz-option-field__key { display:grid; place-items:center; cursor:pointer; }
+.gc-quiz-attempt-limit > .form-control { width:8rem; }
 .gc-toggle { align-items:start; display:flex; gap:var(--gc-space-3); cursor:pointer; margin:0; padding-block:var(--gc-space-2); }
 .gc-toggle > .form-check-input { flex:none; margin-top:.2rem; }
 .gc-toggle__label { font-weight:500; }
@@ -48,6 +60,8 @@
  .gc-form-media { gap:var(--gc-space-3); }
 }
 @media(pointer:coarse) {
+ .gc-quiz-option-field__key, .gc-quiz-option-field__remove { flex-basis:var(--gc-touch-target); }
+ .gc-quiz-option-field__key, .gc-quiz-options-editor__add, .gc-quiz-attempt-limit > .form-control { min-block-size:var(--gc-touch-target); }
  .gc-toggle { min-height:var(--gc-touch-target); }
  .EasyMDEContainer .editor-toolbar button { min-height:var(--gc-touch-target); min-width:var(--gc-touch-target); }
  .gc-multiselect__option { min-height:var(--gc-touch-target); }

@@ -5,7 +5,8 @@ foreach (glob($directory.'/*.sqlite') as $fixture) {
     config(['database.connections.sqlite.database'=>$fixture]);
     Illuminate\Support\Facades\DB::purge('sqlite');
     foreach (['2026_11_14_190000_create_deadline_policies.php','2026_11_14_200000_create_deadline_notifications.php',
-        '2026_11_14_210000_create_classroom_bonuses.php', '2026_11_14_220000_harden_business_processes.php'] as $file) (require $root.'/database/migrations/'.$file)->up();
+        '2026_11_14_210000_create_classroom_bonuses.php', '2026_11_14_220000_harden_business_processes.php',
+        '2026_11_18_120000_add_quiz_settings_to_tasks.php'] as $file) (require $root.'/database/migrations/'.$file)->up();
     app()->forgetInstance(App\Services\CourseDeadlineService::class);
     $service=app(App\Services\CourseDeadlineService::class);
     $service->savePolicy(App\Course::find(1),'lesson',1,['revision'=>0,'mode'=>'custom','timezone'=>'Europe/Moscow','apply_to_tasks'=>true,

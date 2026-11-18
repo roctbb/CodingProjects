@@ -39,6 +39,7 @@ class TaskAuthoringTest extends TestCase
             INSERT INTO lessons VALUES (1,1,'Lesson'),(2,2,'Foreign lesson');
             INSERT INTO program_steps VALUES (1,1,1,'Step',100),(2,2,2,'Foreign step',100);
             SQL);
+        (require database_path('migrations/2026_11_18_120000_add_quiz_settings_to_tasks.php'))->up();
         $this->actingAs(User::find(1));
     }
 
@@ -56,7 +57,10 @@ class TaskAuthoringTest extends TestCase
         $task=Task::first();
         $this->assertSame($code,(bool)$task->is_code);
         $this->assertSame($quiz,(bool)$task->is_quiz);
-        if($quiz)$this->assertSame('0',$task->answer);
+        if ($quiz) {
+            $this->assertSame('0', $task->answer);
+            $this->assertSame(2, $task->quizAttemptLimit());
+        }
         $this->post('/insider/courses/1/tasks/'.$task->id.'/edit',$data)->assertRedirect()->assertSessionHasNoErrors();
         $this->assertSame($code,(bool)$task->fresh()->is_code);
         $this->assertSame($quiz,(bool)$task->fresh()->is_quiz);
@@ -65,6 +69,38 @@ class TaskAuthoringTest extends TestCase
     public static function modes(): array
     {
         return [['manual',false,false],['code',true,false],['short',false,true]];
+    }
+
+    public function test_choice_configuration_validates_correct_options_and_persists_the_attempt_limit(): void
+    {
+        $url = '/insider/courses/1/steps/1/task';
+        $taskData = ['name' => 'Question', 'text' => 'Choose', 'max_mark' => 10, 'answer_mode' => 'single',
+            'answer_options' => [0 => 'First', 2 => 'Second', 4 => 'Third'], 'correct_options' => [2], 'max_attempts' => 4];
+
+        $this->postJson($url, array_replace($taskData, ['correct_options' => [0, 2], 'max_attempts' => 0]))
+            ->assertUnprocessable()->assertJsonValidationErrors(['correct_options', 'max_attempts']);
+        $this->postJson($url, array_replace($taskData, ['correct_options' => [1]]))
+            ->assertUnprocessable()->assertJsonValidationErrors('correct_options.0');
+        $this->postJson($url, $taskData)->assertRedirect();
+
+        $task = Task::sole();
+        $this->assertTrue((bool) $task->is_quiz);
+        $this->assertSame('single', $task->quizAnswerMode());
+        $this->assertSame(4, $task->quizAttemptLimit());
+        $this->assertSame([false, true, false], array_column($task->quiz_choices['options'], 'correct'));
+        $this->assertArrayNotHasKey('quiz_choices', $task->toArray());
+
+        $editUrl = '/insider/courses/1/tasks/'.$task->id.'/edit';
+        $this->postJson($editUrl, array_replace($taskData, ['answer_mode' => 'multiple']))
+            ->assertUnprocessable()->assertJsonValidationErrors('correct_options');
+        $this->postJson($editUrl, array_replace($taskData, ['answer_mode' => 'multiple', 'correct_options' => [2, 4]]))
+            ->assertRedirect();
+        $this->assertSame('multiple', $task->fresh()->quizAnswerMode());
+        $this->assertSame([false, true, true], array_column($task->fresh()->quiz_choices['options'], 'correct'));
+
+        $this->postJson($editUrl, array_replace($taskData, ['answer_mode' => 'short', 'answer' => '0']))->assertRedirect();
+        $this->assertNull($task->fresh()->quiz_choices);
+        $this->assertSame('0', $task->fresh()->answer);
     }
 
     public function test_native_settings_and_task_save_atomically(): void

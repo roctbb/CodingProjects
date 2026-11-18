@@ -7,12 +7,14 @@ export default function initWorkbookNavigation() {
             if (!event.detail?.taskId) return;
             workbook.querySelectorAll('[data-task-state]').forEach(function (state) {
                 if (state.dataset.taskState !== String(event.detail.taskId) || state.classList.contains('gc-task-state--danger')) return;
-                const complete = state.dataset.taskComplete === 'true' || Number(event.detail.mark) === Number(state.dataset.taskMaximum);
-                const label = complete ? 'Выполнено' : 'Можно улучшить';
+                const complete = state.dataset.taskComplete === 'true' ||
+                    (event.detail.correct !== false && Number(event.detail.mark) === Number(state.dataset.taskMaximum));
+                const label = complete ? 'Выполнено' : event.detail.exhausted ? 'Попытки исчерпаны' : 'Можно улучшить';
+                const icon = complete ? 'circle-check' : event.detail.exhausted ? 'circle-xmark' : 'circle-half-stroke';
                 state.dataset.taskComplete = String(complete);
                 state.classList.remove('gc-task-state--pending', 'gc-task-state--complete', 'gc-task-state--neutral');
                 state.classList.add(complete ? 'gc-task-state--complete' : 'gc-task-state--neutral');
-                state.querySelector('i').className = 'fas fa-' + (complete ? 'circle-check' : 'circle-half-stroke');
+                state.querySelector('i').className = 'fas fa-' + icon;
                 state.querySelector('span').textContent = label;
                 state.title = label;
             });

@@ -77,6 +77,7 @@
                         </div>
                         <div class="markdown perform p-3 p-md-4">
                             {!! parsedown_math($task->text) !!}
+                            @include('steps.partials.quiz-option-list', ['options' => $task->is_quiz ? ($task->quiz_choices['options'] ?? []) : []])
                         </div>
                     </div>
                 </div>

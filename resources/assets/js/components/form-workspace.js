@@ -1,3 +1,53 @@
+function initQuizOptions(form) {
+    const editor = form.querySelector('[data-quiz-options-editor]');
+    if (!editor) return null;
+
+    const list = editor.querySelector('[data-quiz-option-list]');
+    const template = editor.querySelector('[data-quiz-option-template]');
+    const hint = editor.querySelector('[data-quiz-options-hint]');
+    const add = editor.querySelector('[data-quiz-option-add]');
+    let nextIndex = Math.max(...Array.from(list.querySelectorAll('[data-quiz-option-correct]'), input => Number(input.value))) + 1;
+    const updateRemoveButtons = () => {
+        for (const button of list.querySelectorAll('[data-quiz-option-remove]')) {
+            button.classList.toggle('d-none', list.childElementCount <= 2);
+        }
+    };
+
+    add.addEventListener('click', () => {
+        const row = template.content.cloneNode(true);
+        const label = row.querySelector('[data-quiz-option-label]');
+        const correct = row.querySelector('[data-quiz-option-correct]');
+        label.name = `answer_options[${nextIndex}]`;
+        correct.value = nextIndex++;
+        correct.type = list.querySelector('[data-quiz-option-correct]').type;
+        list.append(row);
+        updateRemoveButtons();
+        label.focus();
+    });
+    list.addEventListener('click', event => {
+        const remove = event.target.closest('[data-quiz-option-remove]');
+        if (!remove || list.childElementCount <= 2) return;
+        const option = remove.closest('[data-quiz-option]');
+        const next = option.nextElementSibling || option.previousElementSibling;
+        option.remove();
+        updateRemoveButtons();
+        list.querySelector('[data-quiz-option-correct]').id = 'correct_options';
+        next.querySelector('[data-quiz-option-label]').focus();
+    });
+
+    return mode => {
+        const choice = mode === 'single' || mode === 'multiple';
+        editor.hidden = editor.disabled = !choice;
+        if (!choice) return;
+
+        const type = mode === 'single' ? 'radio' : 'checkbox';
+        hint.textContent = type === 'radio' ? 'Отметьте один правильный вариант.' : 'Отметьте не менее двух правильных вариантов.';
+        for (const input of list.querySelectorAll('[data-quiz-option-correct]')) {
+            if (input.type !== type) input.type = type;
+        }
+    };
+}
+
 export default function initFormWorkspaces() {
     document.querySelectorAll('[data-authoring-form], [data-profile-form], [data-account-form], [data-auth-form]').forEach(form => {
         const state = document.querySelector(`[data-form-state="${form.id}"]`);
@@ -20,12 +70,21 @@ export default function initFormWorkspaces() {
             if (error && !error.hidden) visible.setAttribute('aria-invalid','true');
             input.addEventListener('input', () => { if(error?.dataset.clientError){error.hidden=true;delete error.dataset.clientError;} });
         });
+        const updateQuizOptions = initQuizOptions(form);
         const updateMode = () => {
             const mode = form.querySelector('[name=answer_mode]:checked')?.value;
             const answer = form.querySelector('[data-short-answer]');
             if (answer && mode) {
                 answer.disabled = mode !== 'short'; answer.required = mode === 'short';
                 answer.closest('[data-field]').hidden = mode !== 'short';
+            }
+            updateQuizOptions?.(mode);
+            const attemptLimit = form.querySelector('[data-quiz-attempt-limit]');
+            if (attemptLimit) {
+                const quiz = ['short', 'single', 'multiple'].includes(mode);
+                attemptLimit.disabled = !quiz;
+                attemptLimit.required = quiz;
+                attemptLimit.closest('[data-field]').hidden = !quiz;
             }
             const achievement = form.querySelector('[data-authoring-achievement]');
             const instruction = form.querySelector('[data-authoring-achievement-instruction]');

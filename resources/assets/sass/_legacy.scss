@@ -2537,25 +2537,6 @@
   margin: 0.8rem 0 0;
 }
 
-.step-quiz-answer-form {
-  align-items: center;
-  border-radius: 0.62rem;
-  display: grid;
-  gap: 0.55rem;
-  grid-template-columns: auto minmax(12rem, 1fr) auto;
-  margin: 0.9rem 0 0.85rem;
-  max-width: 44rem;
-  padding: 0.55rem;
-}
-
-@media (max-width: 575.98px) {
-  .step-quiz-answer-form {
-    align-items: stretch;
-    display: flex;
-    flex-direction: column;
-  }
-}
-
 .solution-submit-hint {
   color: var(--gc-on-surface-muted);
   font-size: 0.88rem;

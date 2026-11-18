@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Task extends Model
 {
+    public const DEFAULT_QUIZ_ATTEMPTS = 2;
+    public const CHOICE_MODES = ['single', 'multiple'];
+
     protected $table = 'tasks';
 
     protected $fillable = [
@@ -15,7 +18,11 @@ class Task extends Model
     protected $casts = [
         'deadline' => 'datetime',
         'generates_ai_achievement' => 'boolean',
+        'quiz_choices' => 'array',
+        'max_attempts' => 'integer',
     ];
+
+    protected $hidden = ['quiz_choices'];
 
     public function step()
     {
@@ -49,6 +56,33 @@ class Task extends Model
         }
 
         return $this->solutions()->where('user_id', $user_id);
+    }
+
+    public function quizAnswerMode(): string
+    {
+        return $this->quiz_choices['mode'] ?? 'short';
+    }
+
+    public function quizAttemptLimit(): int
+    {
+        return $this->max_attempts ?? self::DEFAULT_QUIZ_ATTEMPTS;
+    }
+
+    public function quizRevision(): string
+    {
+        return hash_hmac('sha256', json_encode([
+            $this->id, $this->step_id, $this->name, $this->text, $this->max_mark,
+            (bool) $this->is_quiz, $this->answer, $this->quiz_choices, $this->quizAttemptLimit(),
+        ], JSON_THROW_ON_ERROR), (string) config('app.key'));
+    }
+
+    public function quizAttemptsRemaining(int $userId, int $courseId): int
+    {
+        // A single space is the placeholder created by phantomSolution for hidden tasks.
+        $used = $this->solutionsForUser($userId)->where('course_id', $courseId)
+            ->whereNotNull('submitted')->where('text', '!=', ' ')->count();
+
+        return max(0, $this->quizAttemptLimit() - $used);
     }
 
     public function isDone($user_id)
@@ -168,10 +202,10 @@ class Task extends Model
         $solutions = $this->solutionsForUser($user_id);
 
         if ($this->relationLoaded('solutions')) {
-            return $solutions->sortByDesc('submitted')->first();
+            return $solutions->sortBy([['submitted', 'desc'], ['id', 'desc']])->first();
         }
 
-        return $solutions->orderByDesc('submitted')->first();
+        return $solutions->orderByDesc('submitted')->orderByDesc('id')->first();
     }
 
 }

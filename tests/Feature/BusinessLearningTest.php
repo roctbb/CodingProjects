@@ -20,6 +20,7 @@ class BusinessLearningTest extends DeadlineFeatureCase
         parent::setUp();
         DB::statement('CREATE UNIQUE INDEX learning_course_stats ON course_student_points(course_id,student_id)');
         DB::statement('CREATE UNIQUE INDEX learning_lesson_stats ON lesson_student_stats(course_id,lesson_id,student_id)');
+        (require database_path('migrations/2026_11_18_120000_add_quiz_settings_to_tasks.php'))->up();
     }
 
     private function bonus(): void
@@ -119,6 +120,41 @@ class BusinessLearningTest extends DeadlineFeatureCase
         $this->assertEquals(0,DB::table('reward_notices')->where('kind','sticker')->where('user_id',1)->count());
         $this->postJson('/insider/courses/1/tasks/11/solution',['text'=>'right'])->assertOk();
         $this->assertTrue(Task::find(11)->isFullDone(1));$this->assertDatabaseHas('classroom_bonus_awards',['user_id'=>1,'amount'=>5]);
+        $this->postJson('/insider/courses/1/tasks/11/solution', ['text' => 'right'])->assertConflict();
+        $this->assertSame(2, Solution::where('task_id', 11)->count());
+    }
+
+    public function test_multiple_choice_requires_the_exact_set_and_spends_only_valid_attempts(): void
+    {
+        $task = Task::findOrFail(11);
+        $task->forceFill(['is_quiz' => true, 'max_attempts' => 4, 'quiz_choices' => ['mode' => 'multiple', 'options' => [
+            ['label' => 'First', 'correct' => true],
+            ['label' => 'Extra', 'correct' => false],
+            ['label' => 'Third', 'correct' => true],
+        ]]])->save();
+        $staleToken = $task->quizRevision();
+        $task->forceFill(['max_attempts' => 3])->save();
+
+        $url = '/insider/courses/1/tasks/11/solution';
+        $this->actingAs(User::findOrFail(1));
+        $this->postJson($url, ['selected_options' => [0, 2], 'quiz_revision' => $staleToken])
+            ->assertConflict()->assertJsonPath('message', 'Задание изменилось. Обновите страницу перед отправкой.');
+        $this->postJson($url, ['selected_options' => []])->assertUnprocessable();
+        $this->postJson($url, ['selected_options' => [0, 0]])->assertUnprocessable();
+        $this->postJson($url, ['selected_options' => [5]])->assertUnprocessable();
+        $this->postJson($url, ['selected_options' => [0]])->assertOk()
+            ->assertJsonPath('correct', false)->assertJsonPath('attempts_remaining', 2);
+        $this->postJson($url, ['selected_options' => [0, 1, 2]])->assertOk()
+            ->assertJsonPath('correct', false)->assertJsonPath('attempts_remaining', 1);
+        $this->postJson($url, ['selected_options' => [2, 0]])->assertOk()
+            ->assertJsonPath('correct', true)->assertJsonPath('attempts_remaining', 0);
+        $this->postJson($url, ['selected_options' => [0, 2]])->assertConflict()->assertJsonPath('attempts_remaining', 0);
+
+        $this->assertSame(3, Solution::where('task_id', 11)->count());
+        $this->assertSame("First\nThird", $task->latestSolutionForUser(1)->text);
+        $this->assertSame(0, $task->quizAttemptsRemaining(1, 1));
+        $this->assertSame(3, $task->quizAttemptsRemaining(3, 1));
+        $this->assertSame(3, $task->quizAttemptsRemaining(1, 2));
     }
 
     public static function reviewOrders(): array

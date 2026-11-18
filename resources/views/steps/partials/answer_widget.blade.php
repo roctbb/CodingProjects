@@ -18,22 +18,8 @@
         </div>
     @endif
 
-    @if ($task->is_quiz)
-        @if (!$blocked)
-            <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}"
-              method="POST"
-              class="step-quiz-answer-form" data-check-task data-task-id="{{$task->id}}">
-                {{ csrf_field() }}
-                <label for="text{{$task->id}}" class="form-label fw-medium mb-0">Ответ</label>
-                <input type="text" name="text" class="form-control form-control-sm rounded-3"
-                id="text{{$task->id}}"/>
-                <button type="submit" class="btn btn-success btn-sm rounded-3 fw-medium">Отправить</button>
-
-            </form>
-            @if ($errors->has('text'))
-                <span class="text-danger small d-block mb-3"><strong>{{ $errors->first('text') }}</strong></span>
-            @endif
-        @endif
+    @if ($task->is_quiz && !$blocked)
+        @include('steps.partials.quiz-answer-form')
     @endif
     <div class="step-task-status-row @if (!$blocked && !($task->is_quiz && $hasUserSolution)) d-none @endif"
          data-task-status-row>
