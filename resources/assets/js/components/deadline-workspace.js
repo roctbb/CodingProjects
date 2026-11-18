@@ -14,6 +14,7 @@ export default function initDeadlineWorkspaces() {
             const done = row.dataset.deadlineDone === 'true';
             return selected === 'all' || selected === 'pending' && !done || selected === 'done' && done
                 || selected === 'penalty' && !done && Number(row.dataset.deadlinePenalty) > 0
+                || selected === 'review' && ['pending', 'checking'].includes(row.dataset.deadlineStatus)
                 || selected === 'upcoming' && row.dataset.deadlineNextCutoff !== '';
         };
         const restore = () => {

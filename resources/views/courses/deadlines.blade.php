@@ -4,20 +4,25 @@
 
 @section('content')
     @php
-        $pendingCount = $deadlineItems->where('done', false)->count();
         $penaltyCount = $deadlineItems->where('done', false)->where('penalty', '>', 0)->count();
         $upcomingCount = $deadlineItems->whereNotNull('next')->count();
+        $reviewCount = $deadlineItems->whereIn('status', ['pending', 'checking'])->count();
         $filters = $isManager
             ? ['all' => ['Все задачи', $deadlineItems->count()], 'upcoming' => ['Есть следующий срок', $upcomingCount], 'penalty' => ['Со штрафом', $penaltyCount]]
-            : ['all' => ['Все задачи', $deadlineItems->count()], 'pending' => ['К выполнению', $pendingCount], 'penalty' => ['Со штрафом', $penaltyCount], 'done' => ['Выполнено', $deadlineItems->count() - $pendingCount]];
+            : ['all' => ['Невыполненные', $deadlineItems->count()], 'review' => ['На проверке', $reviewCount], 'penalty' => ['Со штрафом', $penaltyCount]];
+        $taskStates = [
+            'todo' => ['Не сдано', 'far fa-circle'], 'pending' => ['На проверке', 'far fa-clock'],
+            'checking' => ['Проверяется', 'fas fa-rotate'], 'check_error' => ['Ошибка проверки', 'fas fa-triangle-exclamation'],
+            'revision' => ['Нужно доработать', 'fas fa-pen'], 'blocked' => ['Заблокировано', 'fas fa-lock'],
+        ];
     @endphp
     <div class="container-fluid px-0" data-deadline-workspace>
-        <x-gc-course-header :course="$course" active="deadlines" />
+        <x-gc-course-header :course="$course" :deadline-items="$deadlineItems" active="deadlines" />
         <section class="gc-card gc-deadline-controls" aria-labelledby="deadline-title">
             <div class="gc-deadline-controls__heading">
                 <div class="min-width-0">
                     <h2 class="gc-section-title mb-1" id="deadline-title">Дедлайны</h2>
-                    <p class="gc-help-text mb-0">Штраф сейчас и следующее изменение. Все сроки — по нажатию на условия сдачи.</p>
+                    <p class="gc-help-text mb-0">{{ $isManager ? 'Штраф сейчас и следующее изменение.' : 'Только невыполненные задачи: статус решения и текущий штраф.' }} Все сроки — по нажатию на условия сдачи.</p>
                 </div>
                 @if($deadlineItems->isNotEmpty())<span class="gc-help-text" role="status" aria-live="polite" data-deadline-count>Показано {{ $deadlineItems->count() }} из {{ $deadlineItems->count() }}</span>@endif
             </div>
@@ -51,8 +56,8 @@
         @if($deadlineItems->isEmpty())
             <div class="gc-card gc-empty-state">
                 <div class="gc-empty-icon"><i class="fas fa-calendar-check" aria-hidden="true"></i></div>
-                <h3 class="h6">Дедлайнов пока нет</h3>
-                <p class="mx-auto mb-0">Здесь появятся сроки задач из доступных вам уроков курса.</p>
+                <h3 class="h6">{{ $isManager ? 'Дедлайнов пока нет' : 'Нет невыполненных задач со сроками' }}</h3>
+                <p class="mx-auto mb-0">{{ $isManager ? 'Здесь появятся сроки задач из доступных вам уроков курса.' : 'Здесь появятся невыполненные задачи со сроками сдачи из доступных уроков.' }}</p>
             </div>
         @else
             <section class="gc-card gc-deadline-agenda" aria-label="Задачи и условия сдачи" data-deadline-agenda>
@@ -60,13 +65,17 @@
                 <ul class="list-unstyled mb-0" data-deadline-list>
                     @foreach($deadlineItems as $item)
                         @php($task = $item['task'])
-                        <li class="gc-deadline-task" data-deadline-row data-deadline-task-id="{{ $task->id }}" data-deadline-done="{{ $item['done'] ? 'true' : 'false' }}" data-deadline-penalty="{{ $item['penalty'] }}" data-deadline-next-cutoff="{{ $item['next'] ?? '' }}" data-deadline-last="{{ $item['last']?->getTimestampMs() ?? 0 }}" data-deadline-chapter-id="{{ $item['chapter'] }}" data-deadline-search-text="{{ $task->name.' '.$task->step->name.' '.$task->step->lesson->name }}">
+                        <li class="gc-deadline-task" data-deadline-row data-deadline-task-id="{{ $task->id }}" data-deadline-status="{{ $item['status'] }}" data-deadline-done="{{ $item['done'] ? 'true' : 'false' }}" data-deadline-penalty="{{ $item['penalty'] }}" data-deadline-next-cutoff="{{ $item['next'] ?? '' }}" data-deadline-last="{{ $item['last']?->getTimestampMs() ?? 0 }}" data-deadline-chapter-id="{{ $item['chapter'] }}" data-deadline-search-text="{{ $task->name.' '.$task->step->name.' '.$task->step->lesson->name }}">
                             <a class="gc-deadline-task__body" href="{{ url('/insider/courses/'.$course->id.'/steps/'.$task->step_id.'#task'.$task->id) }}">
                                 <strong>{{ $task->name }}</strong>
                                 @if($item['audience_name'])<small>{{ $item['audience_name'] }}</small>@endif
                                 <small>{{ $task->step->lesson->name }}@if($task->step->name !== $task->step->lesson->name)<span aria-hidden="true"> · </span>{{ $task->step->name }}@endif</small>
                             </a>
                             <div class="gc-deadline-task__conditions">
+                                @if(isset($taskStates[$item['status']]))
+                                    @php([$stateLabel, $stateIcon] = $taskStates[$item['status']])
+                                    <span class="gc-deadline-task__state gc-deadline-task__state--{{ $item['status'] }}"><i class="{{ $stateIcon }}" aria-hidden="true"></i> {{ $stateLabel }}@if($item['points'] > 0 || $item['status'] === 'revision')<small> · {{ $item['points'] }} / {{ $task->max_mark }} XP</small>@endif</span>
+                                @endif
                                 @if($item['done'])<span class="gc-deadline-task__state gc-deadline-task__state--done"><i class="fas fa-check" aria-hidden="true"></i> Выполнено</span>@endif
                                 <x-gc-deadline-chain :rule="$item['rule']" note="Условия применяются к новым сдачам. Уже полученные баллы сохраняются. Сдавать можно и после последнего срока." />
                                 @if($item['last'])<small class="gc-deadline-task__last gc-help-text" @if($item['next'] !== null) hidden @endif data-deadline-last-label>Последний срок <time datetime="{{ $item['last']->toIso8601String() }}">{{ $item['last']->format('d.m.Y H:i') }}</time></small>@endif

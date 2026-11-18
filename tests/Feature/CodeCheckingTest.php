@@ -327,6 +327,22 @@ class CodeCheckingTest extends TestCase
         $this->login()->getJson('/insider/code-submissions/'.$submission['id'])->assertOk()->assertDontSee('PRIVATE CRITERIA')->assertDontSee('PRIVATE RUBRIC');
     }
 
+    public function test_empty_code_draft_does_not_create_a_source_file_and_cannot_be_submitted(): void
+    {
+        $base = '/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private', $this->configBody())->assertOk();
+        $this->login()->putJson($base.'/code-draft', ['revision'=>0, 'mode'=>'code', 'language'=>'python',
+            'draft_revision'=>0, 'keep_files'=>[], 'editor_files'=>[]])->assertOk()->assertJsonCount(0, 'files');
+        $this->getJson($base.'/code-draft')->assertJsonPath('revision', 1)->assertJsonCount(0, 'files');
+        $this->postJson($base.'/code-submissions', ['request_id'=>(string) Str::uuid(), 'use_draft'=>true,
+            'draft_revision'=>1])->assertUnprocessable();
+        $this->assertDatabaseCount('code_submissions', 0);
+        $this->putJson($base.'/code-draft', ['revision'=>1, 'mode'=>'files', 'language'=>'python',
+            'draft_revision'=>1, 'keep_files'=>[], 'editor_files'=>[]])->assertOk()->assertJsonCount(0, 'files');
+        $this->putJson($base.'/code-draft', ['revision'=>2, 'mode'=>'code', 'language'=>'python',
+            'editor_files'=>[['path'=>'main.py', 'content'=>'print(5)']]])->assertOk()->assertJsonPath('files.0.content', 'print(5)');
+    }
+
     public function test_project_draft_uses_optimistic_revision_and_can_be_submitted(): void
     {
         $base = '/insider/courses/7/tasks/12';

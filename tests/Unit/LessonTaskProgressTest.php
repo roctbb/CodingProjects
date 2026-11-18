@@ -48,6 +48,16 @@ class LessonTaskProgressTest extends TestCase
         $this->assertTrue(LessonTaskProgress::forStudent($task,1,collect())['completed']);
     }
 
+    public function test_a_native_submission_waiting_for_manual_review_is_pending_without_a_grade(): void
+    {
+        $task = (new Task())->forceFill(['id' => 11, 'max_mark' => 10]);
+        $task->setRelation('solutions', collect());
+        $row = LessonTaskProgress::forStudent($task, 1, collect(), ['latest_at' => now(), 'state' => 'awaiting_review']);
+        $this->assertSame('pending', $row['status']);
+        $this->assertTrue($row['pending']);
+        $this->assertFalse($row['completed']);
+    }
+
     public function test_an_additional_pending_review_does_not_erase_completion():void
     {
         $task=(new Task())->forceFill(['id'=>11,'max_mark'=>10,'is_star'=>false]);

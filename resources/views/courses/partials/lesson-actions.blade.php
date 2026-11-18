@@ -35,17 +35,4 @@
             </div>
         </div>
     </div>
-@elseif($isLearner)
-    <div class="course-lesson-actions course-path-actions">
-        <div class="dropdown">
-            <button class="btn btn-sm btn-options" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false" aria-label="Действия с уроком {{ $lesson->name }}"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></button>
-            <div class="dropdown-menu dropdown-menu-end">
-                @if($isAvailable)
-                    <a class="dropdown-item" href="{{ $lessonUrl }}" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i> Открыть урок в новой вкладке</a>
-                @endif
-                <button type="button" class="dropdown-item" data-copy-text="{{ url('/insider/courses/'.$course->id.'?chapter='.$lesson->chapter_id.'#lesson-'.$lesson->id) }}" aria-label="Скопировать ссылку на урок {{ $lesson->name }}"><i class="fas fa-copy" aria-hidden="true"></i> Скопировать ссылку</button>
-                <span class="visually-hidden" role="status" data-copy-status></span>
-            </div>
-        </div>
-    </div>
 @endif

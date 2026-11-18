@@ -7,6 +7,7 @@ use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection as ModelCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class CourseDeadlineList
 {
@@ -27,6 +28,9 @@ class CourseDeadlineList
             'task.step.lesson.earlyAccesses' => fn ($query) => $query->whereIn('course_id', $courseIds)->where('user_id', $viewer->id),
             'task.solutions' => fn ($query) => $query->whereIn('course_id', $courseIds)->where('user_id', $viewer->id),
         ];
+        if (Schema::hasTable('blocked_tasks')) {
+            $relations['task.blockedTasks'] = fn ($query) => $query->whereIn('course_id', $courseIds)->where('user_id', $viewer->id);
+        }
         $service = app(\App\Services\CourseDeadlineService::class);
         $taskRelations = [];
         foreach ($relations as $name => $constraint) $taskRelations[preg_replace('/^task\./', '', $name)] = $constraint;

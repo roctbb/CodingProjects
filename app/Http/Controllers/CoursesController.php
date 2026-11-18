@@ -412,12 +412,14 @@ class CoursesController extends Controller
         $user = Auth::user();
         $course = Course::with('teachers', 'students')->findOrFail($id);
         $isManager = $user->role == 'admin' || $course->teachers->contains($user);
-        $deadlines = app(CourseDeadlineList::class)->forCourses(collect([$course]), $user, includeCompleted: true);
+        $deadlines = app(CourseDeadlineList::class)->forCourses(collect([$course]), $user, includeCompleted: $isManager);
 
         $deadlineMonths = $deadlines->groupBy(fn ($deadline) => $deadline->expiration->format('Y-m'))
             ->map(fn ($month) => $month->groupBy(fn ($deadline) => $deadline->expiration->format('Y-m-d')));
 
-        $deadlineItems = \App\Support\CourseDeadlineWorkspace::items($deadlines);
+        $nativeProgress = $isManager ? null : app(\App\Services\CodeChecking\History::class)
+            ->ungradedProgress((int) $course->id, $deadlines->pluck('task_id')->unique()->values()->all(), (int) $user->id);
+        $deadlineItems = \App\Support\CourseDeadlineWorkspace::items($deadlines, $isManager ? null : (int) $user->id, $nativeProgress);
         $deadlineChapters = $course->program->chapters->whereIn('id', $deadlineItems->pluck('chapter'));
 
         return view('courses.deadlines', compact('course', 'user', 'isManager', 'deadlines', 'deadlineMonths', 'deadlineItems', 'deadlineChapters'));
@@ -613,7 +615,9 @@ class CoursesController extends Controller
         $projectPathStats = $isManager ? collect() : LessonStudentStats::where('course_id', $id)
             ->where('student_id', $user->id)->get(['lesson_id', 'max_points', 'percent'])->keyBy('lesson_id');
         $lessonCards = app(\App\Services\LessonCards::class)->forLessons($course, $lessons, $user, $students);
-        return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'statsTeachers', 'cstudent', 'lessons', 'lessonStats', 'lessonCards', 'courseDeadlines', 'lessonCardDeadlines', 'coursePendingCount', 'currentLesson', 'projectPathStats'));
+        $courseDeadlineItems = $isManager ? null : \App\Support\CourseDeadlineWorkspace::items($lessonCardDeadlines, (int) $user->id,
+            app(\App\Services\CodeChecking\History::class)->ungradedProgress((int) $course->id, $lessonCardDeadlines->pluck('task_id')->unique()->values()->all(), (int) $user->id));
+        return view('courses.details', compact('chapter', 'course', 'user', 'steps', 'students', 'statsTeachers', 'cstudent', 'lessons', 'lessonStats', 'lessonCards', 'courseDeadlines', 'lessonCardDeadlines', 'coursePendingCount', 'currentLesson', 'projectPathStats', 'courseDeadlineItems'));
 
 
     }

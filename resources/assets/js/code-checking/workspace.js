@@ -26,7 +26,6 @@ export async function workspace(root) {
     }
     const toolbar = node('div',{class:'gc-execution-toolbar'});
     const notice = node('div', {role:'status', 'aria-live':'polite'});
-    const attachmentsArea = node('div');
     const content = node('div',{class:'gc-submission-editor'});
     const results = node('div',{id:root.id+'-result',class:'gc-submission-result',hidden:true});
     const history = node('div',{class:'gc-submission-history'});
@@ -34,7 +33,7 @@ export async function workspace(root) {
     const heading=node('div',{class:'gc-submission-heading'},node('h3',{class:'h6 mb-0'},teacher?'Работа ученика':'Моё решение'),draftState);
     const stage=node('div',{class:'gc-submission-stage'},content,results);
     const summary=node('section',{class:'gc-result-summary'+(!teacher?' is-student':''),'aria-label':'Сдача и результат',hidden:true},toolbar,history);
-    const browser = node('section',{class:'gc-execution-browser gc-submission-surface'},summary,attachmentsArea,stage);
+    const browser = node('section',{class:'gc-execution-browser gc-submission-surface'},summary,stage);
     root.replaceChildren(notice,browser);
     const busy=node('span',{class:'gc-submission-loading',role:'status'},node('i',{class:'fas fa-spinner fa-spin','aria-hidden':'true'}),' Загружаем работу…');
     function beginResult(){const jump=toolbar.querySelector('.gc-review-jump');if(jump)jump.disabled=true;stage.hidden=false;summary.hidden=false;summary.setAttribute('aria-busy','true');summary.querySelectorAll(':scope > header,:scope > .gc-award').forEach(el=>el.setAttribute('inert',''));stage.setAttribute('aria-busy','true');stage.setAttribute('inert','');stage.append(busy);}
@@ -106,17 +105,11 @@ export async function workspace(root) {
         if(canNavigate())toolbar.append(actions(iconButton('Предыдущая работа','fa-chevron-left',()=>root.dispatchEvent(new CustomEvent('gc:execution-navigate',{detail:{direction:-1}}))),iconButton('Следующая работа','fa-chevron-right',nextStudent)));
         if(teacher&&!ownMode){const jump=button('К оценке ↓',()=>{const grade=results.querySelector('.gc-inline-grade');grade?.querySelector('input')?.focus({preventScroll:true});grade?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});});jump.classList.add('gc-review-jump');const navigation=toolbar.querySelector('.gc-execution-actions');if(navigation)navigation.prepend(jump);else toolbar.append(actions(jump));}
     }
-    async function attachments() {
-        if (attachmentsArea.dataset.loaded) return;
-        const value = await request(base+'/checker/files');
-        attachmentsArea.dataset.loaded = 'true';
-        if (value.items.length) attachmentsArea.replaceChildren(node('div',{class:'gc-execution-attachments'},node('h3',{class:'h6'},'Материалы задания'),value.items.map(file => node('div',{},download(file.download_url,file.path),file.read_only ? ' · только чтение' : ''))));
-    }
     async function selectStudent(student,{attempt=null}={}) {
         generation++;historyGeneration++;stop();current=null;activeAttempt=null;
         clearResult();
         selectedUser=student;ownMode=false;attemptItems=[];attemptList=null;
-        content.hidden=true;attachmentsArea.hidden=true;notice.replaceChildren();renderToolbar();beginResult();
+        content.hidden=true;notice.replaceChildren();renderToolbar();beginResult();
         try {
             await loadHistory();
             if(selectedUser===student && !ownMode){const target=attempt || attemptItems.find(item=>item.needs_review || item.state==='awaiting_review')?.id || attemptItems.find(item=>item.teacher_viewed===false)?.id || attemptItems[0]?.id;if(target)await openAttemptById(target);else{results.hidden=false;finishResult(node('p',{class:'gc-help-text'},'Сохранённых сдач пока нет.'));}}
@@ -125,17 +118,17 @@ export async function workspace(root) {
     async function startOwnSubmission({attempt=null}={}) {
         generation++;historyGeneration++;stop();current=null;activeAttempt=null;
         ownMode=true;selectedUser=null;results.replaceChildren();notice.replaceChildren();renderToolbar();
-        content.hidden=false;attachmentsArea.hidden=false;
+        content.hidden=false;
         content.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем форму сдачи…'));
         try {
             let records;
-            if(root.hasAttribute('data-history-only')){content.hidden=true;attachmentsArea.hidden=true;records=await loadHistory();}
+            if(root.hasAttribute('data-history-only')){content.hidden=true;records=await loadHistory();}
             else{
                 await settings();
                 if (!config.teacher_submission_allowed) throw new Error('Сдача этой задачи пока недоступна. Проверьте настройки проверки.');
                 if (!draft) setDraft(await request(base+'/code-draft'));
                 renderComposer();
-                [,records]=await Promise.all([attachments(),loadHistory()]);
+                records=await loadHistory();
             }
             if(ownMode && attempt)await openAttemptById(attempt);
         } catch(e) {content.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить',safe(startOwnSubmission)));}
@@ -262,8 +255,8 @@ export async function workspace(root) {
             form.append(field('Ссылка на репозиторий',input(draft.repository.url,value=>{draft.repository.url=value;markDirty();},{type:'url',placeholder:'https://github.com/username/project'})),
                 field('Ветка, тег или коммит',input(draft.repository.ref,value=>{draft.repository.ref=value;markDirty();},{placeholder:'По умолчанию — основная ветка'})));
         }else if(kind==='code'){
-            if(!files.length)files.push({path:config.entrypoint || (draft.language==='cpp'?'main.cpp':'main.py'),content:''});
-            const editable=files;
+            const editable=files.length ? files : [{path:config.entrypoint || (draft.language==='cpp'?'main.cpp':'main.py'),content:'',placeholder:true}];
+            const retain=file=>{if(file.placeholder){delete file.placeholder;files.push(file);}};
             const editors=node('div',{class:'gc-composer-editors'}),tabs=node('div',{class:'gc-source-tabs',role:'tablist','aria-label':'Файлы кода'});
             let selected=editable[0];
             const panes=[];
@@ -271,7 +264,7 @@ export async function workspace(root) {
             tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key)||event.target.getAttribute('role')!=='tab')return;event.preventDefault();activate(editable[(editable.indexOf(selected)+(event.key==='ArrowRight'?1:editable.length-1))%editable.length]);tabs.querySelector('[aria-selected="true"]')?.focus();});
             for(const file of editable){
                 const host=node('div',{class:'gc-code-editor'}),pane=node('div',editable.length>1?{role:'tabpanel'}:{});
-                const name=input(file.path,value=>{file.path=value;file.changed=true;tab.textContent=value || 'Новый файл';markDirty();},{placeholder:'main.py','aria-label':'Имя файла кода'});
+                const name=input(file.path,value=>{retain(file);file.path=value;file.changed=true;tab.textContent=value || 'Новый файл';markDirty();},{placeholder:'main.py','aria-label':'Имя файла кода'});
                 const controls=actions(field('Имя файла',name));
                 if(editable.length>1)controls.append(button('Удалить файл',()=>{files=files.filter(value=>value!==file);markDirty();renderComposer();}));
                 if(file.content===undefined){
@@ -281,9 +274,9 @@ export async function workspace(root) {
                 }else{if(editable.length>1)pane.append(controls);pane.append(host);}
                 const tab=button(file.path || 'Новый файл',()=>activate(file));tab.className='gc-source-tab';tab.setAttribute('role','tab');if(editable.length>1){tab.id=root.id+'-source-tab-'+editable.indexOf(file);pane.id=tab.id+'-panel';tab.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',tab.id);}
                 tabs.append(tab);panes.push({file,pane,tab});editors.append(pane);
-                if(file.content!==undefined)import('./editor').then(({editor})=>{if(!host.isConnected)return;const view=editor(host,file.content,draft.language,value=>{file.content=value;file.changed=true;markDirty();});const previous=editing;editing={destroy:()=>{previous?.destroy();view.destroy();},measure:()=>{previous?.measure?.();view.requestMeasure();}};}).catch(error);
+                if(file.content!==undefined)import('./editor').then(({editor})=>{if(!host.isConnected)return;const view=editor(host,file.content,draft.language,value=>{retain(file);file.content=value;file.changed=true;markDirty();});const previous=editing;editing={destroy:()=>{previous?.destroy();view.destroy();},measure:()=>{previous?.measure?.();view.requestMeasure();}};}).catch(error);
             }
-            if(allowed.includes('project') && editable.length<config.max_files){const add=button('+ Файл',()=>{files.push({path:`file${editable.length+1}.${draft.language==='cpp'?'cpp':'py'}`,content:''});markDirty();renderComposer();const buttons=content.querySelectorAll('.gc-source-tab');buttons[buttons.length-1]?.click();});add.classList.add('btn-sm');if(editable.length>1)tabs.append(add);else composerHeading.append(add);}
+            if(allowed.includes('project') && editable.length<config.max_files){const add=button('+ Файл',()=>{retain(editable[0]);files.push({path:`file${editable.length+1}.${draft.language==='cpp'?'cpp':'py'}`,content:''});markDirty();renderComposer();const buttons=content.querySelectorAll('.gc-source-tab');buttons[buttons.length-1]?.click();});add.classList.add('btn-sm');if(editable.length>1)tabs.append(add);else composerHeading.append(add);}
             if(editable.length>1)form.append(tabs);form.append(editors);activate(selected);
         }else{
             if(kind==='text' || kind==='files' && allowed.includes('text'))form.append(field('Ответ',textarea(draft.text,value=>{draft.text=value;markDirty();},{rows:8})));
@@ -842,7 +835,6 @@ export async function workspace(root) {
             if(root.dataset.blocked!=='true' && !config.requires_conversion){
                 if(!draft){setDraft(await request(base+'/code-draft'));renderComposer();}
             }else if(!content.children.length)content.append(node('p',{class:'alert alert-warning'},config.requires_conversion ? 'Преподавателю нужно настроить проверку перед сдачей.' : 'Новые сдачи этой задачи заблокированы.'));
-            await attachments();
         }
         if(root.dataset.submission || activeAttempt)await openAttemptById(activeAttempt || root.dataset.submission);
         else if(records?.length)await openAttempt(records[0]);
@@ -860,7 +852,7 @@ export async function workspace(root) {
     }
     try {
         if(teacher){
-            renderToolbar();content.hidden=true;attachmentsArea.hidden=true;
+            renderToolbar();content.hidden=true;
             if(root.dataset.user && root.dataset.user===root.dataset.viewerId)await startOwnSubmission({attempt:root.dataset.submission});
             else if(root.dataset.user)await selectStudent(selectedUser,{attempt:root.dataset.submission});
         }else await initializeStudent();

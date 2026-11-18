@@ -134,6 +134,8 @@
 .gc-project-path__point { align-items:center; background:var(--gc-project-track); border-radius:50%; display:flex; flex:none; font-size:var(--gc-font-caption); height:28px; justify-content:center; transition:transform var(--gc-transition); width:28px; }
 .gc-project-path .is-earned .gc-project-path__point { background:var(--gc-button-primary); color:var(--gc-button-primary-text); }
 .gc-project-path .is-current .gc-project-path__point { background:var(--gc-project-spot); box-shadow:0 0 0 2px var(--gc-surface),0 0 0 4px var(--gc-accent); color:var(--gc-on-surface); font-weight:600; }
+.gc-project-path .is-current.is-selected-other .gc-project-path__point {background:var(--gc-selected-surface); box-shadow:0 0 0 2px var(--gc-surface),0 0 0 4px var(--gc-primary); color:var(--gc-primary);}
+.gc-project-path .is-course-current:not(.is-current) .gc-project-path__point {box-shadow:0 0 0 2px var(--gc-surface),0 0 0 3px var(--gc-accent);}
 .gc-project-path .is-current .gc-project-path__name { color:var(--gc-on-surface); font-weight:500; }
 .gc-project-path .is-locked .gc-project-path__point { background:var(--gc-surface-variant); }
 .gc-project-path__name { display:none; }

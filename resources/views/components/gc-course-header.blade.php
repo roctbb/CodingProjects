@@ -1,4 +1,4 @@
-@props(['course', 'active' => 'program', 'chapter' => null])
+@props(['course', 'active' => 'program', 'chapter' => null, 'deadlineItems' => null])
 
 @php
     $viewer = Auth::user();
@@ -9,7 +9,7 @@
     $contextChapter = is_scalar($contextChapter) && ctype_digit((string) $contextChapter) && (int) $contextChapter > 0 ? (int) $contextChapter : null;
     if ($contextChapter && !$course->program?->chapters->contains('id', $contextChapter)) $contextChapter = null;
     $sections = ['program' => ['Программа', 'fa-book-open', url('/insider/courses/'.$course->id)]];
-    if (config('course_planner.enabled') && ($canManage || $viewer?->role === 'student')) {
+    if (config('course_planner.enabled') && $canManage) {
         $sections['plan'] = ['План занятий', 'fa-calendar-days', route('courses.planner', $course->id)];
     }
     if ($canManage) {
@@ -21,6 +21,8 @@
     if ($viewer?->role === 'student') {
         $sections['tasks'] = ['Задачи главы', 'fa-list-check', route('courses.chapter-tasks', $course->id)];
     }
+    $deadlineNavigation = $viewer?->role === 'student' && !$canManage
+        ? \App\Support\CourseDeadlineWorkspace::navigation($course, $viewer, $deadlineItems) : null;
 @endphp
 
 <div class="gc-course-context gc-page-masthead" data-course-context data-course-id="{{ $course->id }}" data-course-scope="{{ $participantScope->manager ? $participantScope->key : '' }}" data-course-chapter="{{ $contextChapter }}">
@@ -42,6 +44,9 @@
         @foreach($sections as $key => [$label, $icon, $href])
             <a class="nav-link {{ $active === $key ? 'active' : '' }}" href="{{ $participantScope->url($href.($contextChapter ? '?chapter='.$contextChapter : '')) }}" @if($active === $key) aria-current="page" @endif>
                 <i class="fas {{ $icon }}" aria-hidden="true"></i>{{ $label }}
+                @if($key === 'deadlines' && $deadlineNavigation)
+                    <span class="gc-course-deadline-count" data-course-deadline-badge data-deadline-badge-status="{{ $deadlineNavigation['status'] }}" data-deadline-server-now="{{ $deadlineNavigation['now'] }}" data-deadline-rules="{{ json_encode($deadlineNavigation['rules']) }}" aria-label="Невыполненных задач со сроками: {{ $deadlineNavigation['count'] }}" @if(!$deadlineNavigation['count']) hidden @endif>{{ $deadlineNavigation['count'] }}</span>
+                @endif
             </a>
         @endforeach
     </nav>

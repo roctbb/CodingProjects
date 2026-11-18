@@ -77,16 +77,16 @@ class CourseDeadlinesTest extends TestCase
         $this->assertFalse($data['deadlines'][1]->is_overdue);
     }
 
-    public function test_completed_tasks_remain_in_list_without_overdue_state_and_marks_are_course_scoped(): void
+    public function test_completed_tasks_are_hidden_from_the_student_and_marks_are_course_scoped(): void
     {
         DB::table('solutions')->insert([
             ['id' => 1, 'task_id' => 1, 'course_id' => 1, 'user_id' => 1, 'mark' => 10],
             ['id' => 2, 'task_id' => 2, 'course_id' => 2, 'user_id' => 1, 'mark' => 10],
         ]);
         $data = $this->deadlineData();
-        $this->assertTrue($data['deadlines'][0]->is_done);
-        $this->assertFalse($data['deadlines'][0]->is_overdue);
-        $this->assertFalse($data['deadlines'][1]->is_done);
+        $this->assertNotContains(1, $data['deadlines']->pluck('task_id'));
+        $this->assertFalse($data['deadlines']->firstWhere('task_id', 2)->is_done);
+        $this->assertContains(1, $this->deadlineData(2)['deadlines']->pluck('task_id'));
     }
 
     public function test_dashboard_keeps_low_marks_and_overdue_work_without_exposing_closed_lessons(): void
@@ -175,6 +175,6 @@ class CourseDeadlinesTest extends TestCase
     {
         DB::table('task_deadlines')->delete();
         $this->actingAs(User::findOrFail(1))->get('/insider/courses/1/deadlines')
-            ->assertOk()->assertSee('Дедлайнов пока нет');
+            ->assertOk()->assertSee('Нет невыполненных задач со сроками');
     }
 }

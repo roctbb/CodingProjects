@@ -38,9 +38,28 @@ class CourseChapterTimelineTest extends TestCase
         return [$course, $viewer, $chapters];
     }
 
-    private function render(Course $course, User $viewer, ProgramChapter $chapter): string
+    private function render(Course $course, User $viewer, ProgramChapter $chapter, ?int $currentChapterId = null, ?array $projectPath = null): string
     {
-        return Blade::render('<x-gc-chapter-timeline :course="$course" :chapter="$chapter" :viewer="$viewer" />', compact('course', 'viewer', 'chapter'));
+        return Blade::render('<x-gc-chapter-timeline :course="$course" :chapter="$chapter" :viewer="$viewer" :current-chapter-id="$currentChapterId" :project-path="$projectPath" />', compact('course', 'viewer', 'chapter', 'currentChapterId', 'projectPath'));
+    }
+
+    public function test_course_current_chapter_is_distinct_from_the_browsed_chapter(): void
+    {
+        [$course, $viewer, $chapters] = $this->fixture([true, true, true]);
+        $path = ['total' => 3, 'nodes' => $chapters->map(fn ($chapter, $index) => [
+            'id' => $chapter->id, 'number' => $index + 1, 'name' => $chapter->name, 'earned' => false,
+            'current' => $index === 0, 'url' => '?chapter='.$chapter->id, 'state' => 'Глава доступна',
+        ])->all()];
+        $html = $this->render($course, $viewer, $chapters[0], $chapters[1]->id, $path);
+        $dom = new \DOMDocument(); @$dom->loadHTML('<?xml encoding="UTF-8">'.$html); $xp = new \DOMXPath($dom);
+        $this->assertSame(1, $xp->query('//nav[@data-chapter-list]//a[contains(@href,"chapter=93")]//*[contains(@class,"gc-chapter-picker__current")]')->length);
+        $this->assertSame(1, $xp->query('//nav[@data-chapter-list]//a[@aria-current="page" and contains(@href,"chapter=100")]')->length);
+        $this->assertSame(1, $xp->query('//nav[contains(@class,"gc-project-path")]//li[contains(@class,"is-selected-other")]/a[contains(@href,"chapter=100")]')->length);
+        $this->assertSame(1, $xp->query('//nav[contains(@class,"gc-project-path")]//li[contains(@class,"is-course-current")]/a[contains(@href,"chapter=93")]')->length);
+        $path['nodes'][0]['current'] = false; $path['nodes'][1]['current'] = true;
+        $current = $this->render($course, $viewer, $chapters[1], $chapters[1]->id, $path);
+        $this->assertStringNotContainsString('is-selected-other', $current);
+        $this->assertStringContainsString('is-current-chapter', $current);
     }
 
     public function test_positions_follow_program_order_and_urls_use_chapter_ids(): void

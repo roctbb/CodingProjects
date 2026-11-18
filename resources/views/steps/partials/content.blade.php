@@ -1,4 +1,13 @@
 @if (!$quizer)
+    @php
+        $taskMaterials = collect();
+        if (\Request::is('insider/*') && \Illuminate\Support\Facades\Schema::hasTable('code_task_files')) {
+            $materialsManager = $course->teachers->contains($user) || $user->role === 'admin';
+            $taskMaterials = \App\CodeTaskFile::whereIn('task_id', $tasks->pluck('id'))
+                ->when(!$materialsManager, fn ($query) => $query->where('is_public', true))
+                ->orderBy('path')->get(['id', 'task_id', 'path', 'kind', 'is_public', 'read_only'])->groupBy('task_id');
+        }
+    @endphp
     @foreach ($tasks as $key => $task)
         <div class="tab-pane fade @if ($zero_theory && $loop->first) show active @endif"
              id="task{{$task->id}}"
@@ -124,6 +133,22 @@
                             @endif
                         </div>
                     </div>
+                    @if($taskMaterials->get($task->id)?->isNotEmpty())
+                        <section class="gc-task-materials" aria-labelledby="task-materials-title-{{ $task->id }}">
+                            <h3 id="task-materials-title-{{ $task->id }}">Материалы задания</h3>
+                            <ul class="gc-task-materials__list list-unstyled mb-0">
+                                @foreach($taskMaterials->get($task->id) as $material)
+                                    <li><a class="gc-task-materials__file" href="{{ route('code-task-files.download', ['course' => $course->id, 'task' => $task->id, 'attachment' => $material->id]) }}" target="_blank" rel="noopener">
+                                        <i class="fas fa-file-arrow-down" aria-hidden="true"></i>
+                                        <span>{{ $material->path }}</span>
+                                        @if($material->kind === 'starter')<small>Шаблон кода</small>@elseif($material->kind === 'resource')<small>Данные для программы</small>@endif
+                                        @if($material->read_only)<small>Только чтение</small>@endif
+                                        @if(!$material->is_public)<small><i class="fas fa-lock" aria-hidden="true"></i> Для преподавателя</small>@endif
+                                    </a></li>
+                                @endforeach
+                            </ul>
+                        </section>
+                    @endif
                     @if ($isManager)
                         <div class="modal fade" id="task-ai-summary-modal-{{$task->id}}" tabindex="-1" aria-labelledby="task-ai-summary-title-{{$task->id}}" aria-hidden="true">
                             <div class="modal-dialog modal-lg modal-dialog-scrollable">

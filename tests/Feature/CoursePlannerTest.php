@@ -96,6 +96,14 @@ class CoursePlannerTest extends TestCase
         $this->get('/insider/courses/1/planner')->assertOk()->assertSee('План занятий')->assertSee('coursePlanner.js')->assertSee('planner-search');
     }
 
+    public function test_student_planner_bookmarks_redirect_to_deadlines_and_navigation_hides_the_plan(): void
+    {
+        $this->actingAs(User::find(3))->get('/insider/courses/1/planner')->assertRedirect(route('courses.deadlines', 1));
+        $html = \Illuminate\Support\Facades\Blade::render('<x-gc-course-header :course="$course" />', ['course' => Course::find(1)]);
+        $this->assertStringNotContainsString('План занятий', $html);
+        $this->assertStringContainsString('/insider/courses/1/deadlines', $html);
+    }
+
     public function test_calendar_is_idempotent_and_does_not_change_course_lifecycle(): void
     {
         $sessions = $this->configure();

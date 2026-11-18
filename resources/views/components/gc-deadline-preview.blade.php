@@ -4,7 +4,7 @@
     @php
         $previewItems = $items->take($limit);
     @endphp
-    <x-gc-panel title="Ближайшие сроки" icon="fas fa-flag" :embedded="$embedded" {{ $attributes }}>
+    <x-gc-panel title="Ближайшие сроки" :embedded="$embedded" {{ $attributes }}>
         <x-slot:actions>
             @if($allUrl)<a class="gc-quiet-link small" href="{{ $allUrl }}">Все сроки</a>@endif
         </x-slot:actions>

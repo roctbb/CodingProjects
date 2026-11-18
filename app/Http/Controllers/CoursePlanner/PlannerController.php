@@ -45,10 +45,8 @@ class PlannerController extends Controller
     public function page(Request $request, int $course_id)
     {
         $course = $this->course($request, $course_id, false);
-        if (!app(CoursePlannerPolicy::class)->manage($request->user(), $course) && $this->schemaReady()) {
-            $request->merge(['layer' => 'workspace']);
-            $response = $this->state($request, $course_id, app(PlannerService::class), app(PlannerReader::class));
-            return view('course-planner.student', ['course' => $course, 'data' => $response->getData(true)]);
+        if (!app(CoursePlannerPolicy::class)->manage($request->user(), $course)) {
+            return redirect()->route('courses.deadlines', $course->id);
         }
         return view('course-planner.index', ['course' => $course, 'ready' => $this->schemaReady()]);
     }

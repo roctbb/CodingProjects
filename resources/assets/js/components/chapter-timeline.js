@@ -61,7 +61,7 @@ export default function initChapterTimelines() {
         initChapterPicker(root);
         const range = root.querySelector('[data-chapter-range]');
         if (!range) return;
-        const {items, selected: current} = JSON.parse(root.querySelector('[data-chapter-options]').textContent);
+        const {items, selected: current, currentChapterId} = JSON.parse(root.querySelector('[data-chapter-options]').textContent);
         const available = items.map((item, index) => item.url ? index : null).filter(index => index !== null);
         const title = root.querySelector('[data-chapter-title]');
         const counter = root.querySelector('[data-chapter-counter]');
@@ -75,6 +75,7 @@ export default function initChapterTimelines() {
                 status.textContent = '';
             }
             range.value = index;
+            root.classList.toggle('is-current-chapter', Number(items[index].id) === Number(currentChapterId));
             root.style.setProperty('--gc-timeline-position', `${index / (items.length - 1) * 100}%`);
             title.textContent = items[index].name;
             counter.textContent = `Глава ${index + 1} из ${items.length}`;

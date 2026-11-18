@@ -1,4 +1,4 @@
-@props(['course', 'chapter', 'viewer', 'embedded' => false, 'projectPath' => null])
+@props(['course', 'chapter', 'viewer', 'embedded' => false, 'projectPath' => null, 'currentChapterId' => null])
 
 @php
     $navigation = \App\Support\CourseChapterNavigation::forCourse($course, $chapter, $viewer);
@@ -9,7 +9,7 @@
     $statusId = 'chapter-timeline-status-'.$course->id;
     $pickerId = 'chapter-picker-'.$course->id;
 @endphp
-<section class="{{ $embedded ? 'gc-chapter-timeline--embedded' : 'gc-card' }} gc-chapter-timeline {{ $projectPath ? 'gc-chapter-timeline--journey' : '' }} {{ $count === 1 ? 'gc-chapter-timeline--single' : '' }} mb-3" data-chapter-timeline aria-label="Выбор главы" style="--gc-timeline-position: {{ $position }}%; --gc-timeline-count: {{ $count }};">
+<section class="{{ $embedded ? 'gc-chapter-timeline--embedded' : 'gc-card' }} gc-chapter-timeline {{ $projectPath ? 'gc-chapter-timeline--journey' : '' }} {{ $count === 1 ? 'gc-chapter-timeline--single' : '' }} {{ $chapter->id === $currentChapterId ? 'is-current-chapter' : '' }} mb-3" data-chapter-timeline aria-label="Выбор главы" style="--gc-timeline-position: {{ $position }}%; --gc-timeline-count: {{ $count }};">
     <div class="dropdown gc-chapter-timeline__picker" data-chapter-picker>
         <button type="button" class="gc-chapter-timeline__choose" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-controls="{{ $pickerId }}" title="Глава {{ $selected + 1 }} из {{ $count }}: {{ $chapter->name }}">
             <span class="gc-chapter-timeline__text">
@@ -28,8 +28,8 @@
                     <div data-chapter-choice data-chapter-name="{{ $item['name'] }}">
                         @if($item['url'])
                             <a class="dropdown-item gc-chapter-picker__item" href="{{ $item['url'] }}" @if($index === $selected) aria-current="page" @endif>
-                                <span class="gc-chapter-picker__number" aria-hidden="true">{{ $index + 1 }}</span><span>{{ $item['name'] }}</span>
-                                @if($index === $selected)<span class="gc-chapter-picker__state"><i class="fas fa-check" aria-hidden="true"></i><span class="visually-hidden">Текущая глава</span></span>@endif
+                                <span class="gc-chapter-picker__number" aria-hidden="true">{{ $index + 1 }}</span><span>{{ $item['name'] }}@if($item['id'] === $currentChapterId)<span class="gc-chapter-picker__current">Текущая</span>@endif</span>
+                                @if($index === $selected)<span class="gc-chapter-picker__state"><i class="fas fa-check" aria-hidden="true"></i><span class="visually-hidden">Выбранная глава</span></span>@endif
                             </a>
                         @else
                             <span class="gc-chapter-picker__item is-locked" aria-disabled="true" @if($index === $selected) aria-current="page" @endif>
@@ -43,7 +43,7 @@
         </div>
     </div>
     @if($projectPath)
-        <x-gc-project-path :path="$projectPath" />
+        <x-gc-project-path :path="$projectPath" :current-chapter-id="$currentChapterId" />
     @elseif($count > 1)
         <div class="gc-chapter-timeline__rail">
             <div class="gc-chapter-timeline__track" aria-hidden="true">
@@ -68,5 +68,5 @@
         </noscript>
     @endif
     @isset($actions) {{ $actions }} @endisset
-    <script type="application/json" data-chapter-options>@json(['items' => $items, 'selected' => $selected], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)</script>
+    <script type="application/json" data-chapter-options>@json(['items' => $items, 'selected' => $selected, 'currentChapterId' => $currentChapterId], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)</script>
 </section>

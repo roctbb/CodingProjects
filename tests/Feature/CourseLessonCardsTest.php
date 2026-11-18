@@ -23,8 +23,11 @@ class CourseLessonCardsTest extends DeadlineFeatureCase
         $xpath = $this->cards(1);
         $this->assertSame(0, $xpath->query('//*[@id="lesson-1"]/details')->length);
         $this->assertSame(1, $xpath->query('//*[@id="lesson-1"]//a[@aria-current="step"]')->length);
-        $this->assertSame(1, $xpath->query('//*[@id="lesson-1"]//*[@role="progressbar"]')->length);
-        $this->assertSame(1, $xpath->query('//*[@id="lesson-1"]//ol')->length);
+        $this->assertSame(1, $xpath->query('//*[@id="lesson-1"]//*[@data-lesson-progress-trigger]')->length);
+        $this->assertSame(0, $xpath->query('//*[@id="lesson-1"]//ol')->length);
+        $this->assertSame(1, $xpath->query('//*[@id="lesson-1"]//a[contains(@class,"course-continue")]')->length);
+        $this->assertSame(0, $xpath->query('//*[starts-with(@id,"lesson-")]//button[contains(@aria-label,"Действия с уроком")]')->length);
+        $this->assertSame(0, $xpath->query('//*[starts-with(@id,"lesson-")]//a[@target="_blank"]')->length);
         $this->assertSame(1, $xpath->query('//*[@id="lesson-1"]//*[@data-course-stats-toggle]')->length);
         $this->assertSame(0, $xpath->query('//*[@id="lesson-2"]//details')->length);
         $this->assertSame(1, $xpath->query('//*[@id="lesson-2"]//h3')->length);
@@ -48,9 +51,9 @@ class CourseLessonCardsTest extends DeadlineFeatureCase
         DB::table('lesson_student_stats')->where('lesson_id', 3)->where('student_id', 1)
             ->update(['points' => 9.5, 'percent' => 47.5]);
         $xpath = $this->cards(1);
-        $ring = $xpath->query('//*[@id="lesson-3"]//*[@role="progressbar"]')->item(0);
-        $this->assertSame('48', $ring->getAttribute('aria-valuenow'));
-        $this->assertStringContainsString('9.5 / 20 XP', $ring->getAttribute('aria-valuetext'));
+        $ring = $xpath->query('//*[@id="lesson-3"]//*[@data-lesson-progress-trigger]')->item(0);
+        $this->assertStringContainsString('Прогресс 48%', $ring->getAttribute('aria-label'));
+        $this->assertStringContainsString('9.5 / 20 XP', $xpath->query('//*[@id="lesson-progress-1-3"]')->item(0)->textContent);
         $this->assertSame(1, $xpath->query('//*[@id="lesson-3"]//h3/a[contains(@href,"/steps/3")]')->length);
         $personalStats = $xpath->query('//*[@id="lesson-3"]//*[@id="marks3"]')->item(0);
         $this->assertStringContainsString('9.5 / 20 XP', $personalStats->textContent);
@@ -58,7 +61,7 @@ class CourseLessonCardsTest extends DeadlineFeatureCase
         $this->assertFalse($personalStats->hasAttribute('data-course-stats-url'));
         $this->assertSame(1, $xpath->query('//*[@id="lesson-3"]//*[@data-course-stats-target="#marks3"]')->length);
         $this->assertSame(0, $xpath->query('//*[@id="lesson-3"]//form[contains(@action,"current-lesson")]')->length);
-        $this->assertSame(1, $xpath->query('//*[@id="lesson-3"]//*[@data-copy-text]')->length);
+        $this->assertSame(0, $xpath->query('//*[@id="lesson-3"]//*[@data-copy-text]')->length);
     }
 
     public function test_calendar_for_different_task_rules_uses_the_next_date_and_lists_every_penalty_stage(): void
@@ -74,7 +77,7 @@ class CourseLessonCardsTest extends DeadlineFeatureCase
         $document = new \DOMDocument();
         @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
         $xpath = new \DOMXPath($document);
-        $label = $xpath->query('//*[@id="lesson-1"]//button[@popovertarget]')->item(0)->textContent;
+        $label = $xpath->query('//*[@id="lesson-1"]//*[contains(@class,"course-lesson-deadline")]//button[@popovertarget]')->item(0)->textContent;
         $this->assertStringContainsString('22.11', $label);
         $this->assertStringNotContainsString('15.11', $label);
     }
@@ -101,7 +104,7 @@ class CourseLessonCardsTest extends DeadlineFeatureCase
         $this->policy('task', 11, stages: [['deadline_date' => '2026-11-16', 'retained_percent' => 0]]);
         $xpath = $this->cards(1);
         $this->assertSame(0, $xpath->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="overdue" or @data-lesson-deadline-status="today"]')->length);
-        $this->assertStringContainsString('16.11', $xpath->query('//*[@id="lesson-1"]//button[@popovertarget]')->item(0)->textContent);
+        $this->assertStringContainsString('16.11', $xpath->query('//*[@id="lesson-1"]//*[contains(@class,"course-lesson-deadline")]//button[@popovertarget]')->item(0)->textContent);
     }
 
     public function test_different_past_task_deadlines_stay_on_the_card_but_out_of_upcoming_previews(): void
@@ -110,7 +113,7 @@ class CourseLessonCardsTest extends DeadlineFeatureCase
         $this->policy('task', 11, stages: [['deadline_date' => '2026-11-15', 'retained_percent' => 70]]);
         $this->policy('task', 12, stages: [['deadline_date' => '2026-11-14', 'retained_percent' => 50]]);
         $xpath = $this->cards(1);
-        $this->assertStringContainsString('15.11', $xpath->query('//*[@id="lesson-1"]//button[@popovertarget]')->item(0)->textContent);
+        $this->assertStringContainsString('15.11', $xpath->query('//*[@id="lesson-1"]//*[contains(@class,"course-lesson-deadline")]//button[@popovertarget]')->item(0)->textContent);
         $this->assertSame(1, $xpath->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="overdue"]')->length);
         $this->assertSame(0, $xpath->query('//*[contains(@class,"gc-course-learning-focus__deadlines")]//time')->length);
     }

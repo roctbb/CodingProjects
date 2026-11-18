@@ -6,7 +6,7 @@
     $task = null;
 @endphp
 <x-gc-authoring-page title="Создание задания" :description="$course->name.' · '.$step->name" :back="url('/insider/courses/'.$course->id.'/steps/'.$step->id)" back-label="К ступени" form="task-create-form" submit="Создать задание">
-    <form id="task-create-form" method="POST" action="{{ url('/insider/courses/'.$course->id.'/steps/'.$step->id.'/task') }}" class="gc-card gc-form-sheet" data-authoring-form>
+    <form id="task-create-form" method="POST" action="{{ url('/insider/courses/'.$course->id.'/steps/'.$step->id.'/task') }}" class="gc-task-editor-form" data-authoring-form>
         @csrf
         @include('steps.partials.task-form')
     </form>

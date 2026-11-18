@@ -25,6 +25,11 @@ export function lessonDeadlineState(rules, now) {
     return today ? 'today' : null;
 }
 
+export function deadlineBadgeState(rules, now) {
+    const active = rules.filter(rule => (rule.stages.filter(stage => rule.legacy ? now > stage.cutoff : now >= stage.cutoff).at(-1)?.percent ?? 100) > 0);
+    return {count: active.length, status: lessonDeadlineState(active.filter(rule => rule.actionable !== false), now)};
+}
+
 function initAnchoredPopovers() {
     let active;
     const position = () => {
@@ -73,7 +78,10 @@ export default function initDeadlineSummaries() {
     const alerts = [...document.querySelectorAll('[data-lesson-deadline-rules]')].map(root => ({
         root, rules: JSON.parse(root.dataset.lessonDeadlineRules), serverNow: Number(root.dataset.deadlineServerNow),
     })).filter(alert => alert.rules.length);
-    if (!summaries.length && !alerts.length) return;
+    const badges = [...document.querySelectorAll('[data-course-deadline-badge]')].map(root => ({
+        root, rules: JSON.parse(root.dataset.deadlineRules), serverNow: Number(root.dataset.deadlineServerNow),
+    }));
+    if (!summaries.length && !alerts.length && !badges.length) return;
     let timer;
     const update = () => {
         clearTimeout(timer);
@@ -114,8 +122,17 @@ export default function initDeadlineSummaries() {
             root.setAttribute('aria-label', label);
             root.title = label;
         }
+        for (const {root, rules, serverNow} of badges) {
+            const {count, status} = deadlineBadgeState(rules, serverNow + performance.now() - start);
+            root.hidden = count === 0;
+            root.textContent = count;
+            root.dataset.deadlineBadgeStatus = status ?? '';
+            const detail = status === 'overdue' ? '. Есть просроченные задачи' : status === 'today' ? '. Есть сроки сегодня' : '';
+            const label = `Невыполненных задач со сроками: ${count}${detail}`;
+            root.setAttribute('aria-label', label); root.title = label;
+        }
         // Also update the local calendar day while the page remains open.
-        if (alerts.length) delay = Math.min(delay, 60000);
+        if (alerts.length || badges.length) delay = Math.min(delay, 60000);
         // One timer for the page, capped at the browser's maximum timeout.
         if (Number.isFinite(delay)) timer = setTimeout(update, Math.min(delay, 2147483647));
     };

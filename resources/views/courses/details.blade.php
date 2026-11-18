@@ -52,13 +52,13 @@
     @endphp
 
     <div class="course-page">
-        <x-gc-course-header :course="$course" :chapter="$chapter" active="program" />
+        <x-gc-course-header :course="$course" :chapter="$chapter" :deadline-items="$courseDeadlineItems" active="program" />
 
         <div class="gc-course-program-layout">
             <main class="gc-course-program-main">
                 @if($course->program->chapters->count() > 1)
                 <div class="gc-card gc-course-program-controls">
-                    <x-gc-chapter-timeline :course="$course" :chapter="$chapter" :viewer="$user" :project-path="$coursePath" embedded>
+                    <x-gc-chapter-timeline :course="$course" :chapter="$chapter" :viewer="$user" :project-path="$coursePath" :current-chapter-id="$currentLesson?->chapter_id" embedded>
                         <x-slot:actions>@include('courses.partials.program-actions')</x-slot:actions>
                     </x-gc-chapter-timeline>
                     @if($isManager && !$courseEnded && !$course->current_lesson_id)
@@ -149,14 +149,11 @@
                             <div class="gc-card course-path-card course-lesson-panel {{ $isCurrent ? 'course-path-card--expanded' : 'course-path-card--compact' }}">
                                 @include('courses.partials.lesson-summary')
                                 @if($isCurrent)
+                                    @if(filled($lesson->description))
                                     <div class="course-path-card__details">
-                                        @if(filled($lesson->description))
-                                            <div class="course-path-description" data-filter-by="text">@parsedown($lesson->description)</div>
-                                        @endif
-                                        @if($isAvailable)
-                                            <x-gc-lesson-outline :course="$course" :lesson="$lesson" :next-step="$lessonTargetStep" :next-label="$lessonView['hint'] ?? 'Продолжить'" />
-                                        @endif
+                                        <div class="course-path-description" data-filter-by="text">@parsedown($lesson->description)</div>
                                     </div>
+                                    @endif
                                     @if($isAvailable)
                                         <div class="course-path-card__footer">
                                             <a class="btn btn-primary btn-sm course-continue" href="{{ $isManager && $lessonCard['pending'] ? $lessonCard['reviewUrl'] : $lessonUrl }}">{{ $isManager ? ($lessonCard['pending'] ? 'Проверить работы · '.$lessonCard['pending'] : 'Открыть материалы') : ($lessonView['action'] ?? 'Открыть урок') }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>

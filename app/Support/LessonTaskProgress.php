@@ -21,6 +21,7 @@ final class LessonTaskProgress
         $latest = $attempts->first();
         $latestAt = $latest?->submitted ?? $latest?->checked ?? $latest?->created_at;
         $newerNative = $native && (!$latestAt || $native['latest_at']->gt(Carbon::parse($latestAt)));
+        $pending = $pending || ($newerNative && in_array($native['state'], ['awaiting_review', 'imported_pending'], true));
         $checking = $newerNative && !in_array($native['state'], ['completed', 'error', 'imported_pending', 'awaiting_review'], true);
         $checkError = $newerNative && $native['state'] === 'error';
         $status = match (true) {

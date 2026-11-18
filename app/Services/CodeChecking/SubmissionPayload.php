@@ -101,7 +101,7 @@ class SubmissionPayload
             }
         }
         abort_if($total > ($config['max_total_bytes'] ?? 52428800), 422, 'Submission exceeds task limit.');
-        abort_if($value['mode'] === 'code' && count($value['files']) !== 1, 422, 'Single editor requires one file.');
+        abort_if($value['mode'] === 'code' && count($value['files']) !== 1 && !($draft && !$value['files']), 422, 'Single editor requires one file.');
         if (!$draft) {
             abort_if($value['mode'] === 'code' && $value['files'][0]['artifact']['bytes'] === 0, 422, 'Source is empty.');
             abort_if($value['mode'] === 'text' && trim($value['text']) === '', 422, 'Answer is empty.');
