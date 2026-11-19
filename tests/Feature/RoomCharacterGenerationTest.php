@@ -178,7 +178,7 @@ class RoomCharacterGenerationTest extends TestCase
         Http::fake(fn () => Http::response($provider === 'gateway' ? ['result' => $body] : $body));
     }
 
-    public function testImagesApiInstallsCharacterUsingAvatarAndStaticReferenceWithOneCharge(): void
+    public function testImagesApiInstallsCharacterUsingOnlyAvatarWithOneCharge(): void
     {
         config(['ai.provider' => 'openai', 'ai.providers.openai.image_api' => 'images',
             'ai.providers.openai.images_url' => 'https://openai.example/v1/images',
@@ -187,11 +187,10 @@ class RoomCharacterGenerationTest extends TestCase
         $generation = $this->purchase($user);
         $sourcePath = $generation->source_path;
         $avatar = Storage::disk('room_character_sources')->get($sourcePath);
-        $reference = file_get_contents(public_path($generation->reference_path));
-        Http::fake(function (Request $request) use ($avatar, $reference) {
+        Http::fake(function (Request $request) use ($avatar) {
             $this->assertSame('https://openai.example/v1/images/edits', $request->url());
+            $this->assertCount(1, collect($request->data())->where('name', 'image[]'));
             $this->assertTrue($request->hasFile('image[]', $avatar, 'reference-1.png'));
-            $this->assertTrue($request->hasFile('image[]', $reference, 'reference-2.png'));
             return Http::response(['data' => [['b64_json' => base64_encode($this->png())]]]);
         });
         app(RoomCharacterGenerator::class)->generate($generation->id);
@@ -324,7 +323,7 @@ class RoomCharacterGenerationTest extends TestCase
     }
 
     #[DataProvider('providers')]
-    public function testGenerationSendsTwoReferencesInOneRequestAndInstallsPng(string $provider): void
+    public function testGenerationSendsOnlyTheAvatarInOneRequestAndInstallsPng(string $provider): void
     {
         config(['ai.commands.room_character.provider' => $provider]);
         $user = $this->user();
@@ -341,10 +340,10 @@ class RoomCharacterGenerationTest extends TestCase
             $this->assertSame('https://' . $provider . '.example/responses', $request->url());
             $this->assertSame('character-model', $request['model']);
             $input = $request['input'][0]['content'];
+            $this->assertCount(2, $input);
             $this->assertSame('input_text', $input[0]['type']);
+            $this->assertSame('input_image', $input[1]['type']);
             $this->assertSame('data:image/png;base64,' . base64_encode($snapshot), $input[1]['image_url']);
-            $this->assertSame('input_image', $input[2]['type']);
-            $this->assertCount(3, $input);
             $params = $provider === 'gateway' ? $request['params'] : $request->data();
             $this->assertSame('transparent', $params['tools'][0]['background']);
             $this->assertSame('png', $params['tools'][0]['output_format']);
