@@ -696,11 +696,11 @@ export async function workspace(root) {
             if (record.legacy.requires_conversion || record.legacy.warnings.length) body.append(node('details',{class:'gc-report-provenance'},node('summary',{},'О материалах работы'),node('p',{},'Некоторые материалы этой сдачи нельзя показать в текущем формате. Доступные материалы приведены выше.')));
         }
         if (!teacher || ownMode) {
-            menu.add(button(record.is_public ? 'Закрыть публичный доступ' : 'Поделиться решением',safe(async () => {
+            if (teacher || record.is_public) menu.add(button(record.is_public ? 'Закрыть публичный доступ' : 'Поделиться решением',safe(async () => {
                 if (!record.is_public && !confirm('Опубликовать отправленный текст и все файлы? Их сможет скачать любой, у кого есть ссылка. Тесты и критерии остаются закрытыми.')) return;
                 await request(`/insider/code-submissions/${id}/flags`,'PUT',{is_public:!record.is_public}); await show(id);
             })));
-            if (record.is_public) body.append(download(`/shared/code-submissions/${id}`,'Публичная ссылка'));
+            if (teacher && record.is_public) body.append(download(`/shared/code-submissions/${id}`,'Публичная ссылка'));
             if(!teacher && !sourceOnly)body.append(reviewRequest(record,()=>show(id,options)));
         }
         if(!sourceOnly && attemptItems.filter(item=>item.kind==='submission'&&!item.source_version_unknown).length>1)menu.add(button('Сравнить две сдачи',()=>compareDialog(record)));

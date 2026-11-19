@@ -101,7 +101,8 @@ class TaskSubmissionController extends Controller
         $record=CodeSubmission::findOrFail($submission);$access->authorOrTeacher($request->user(),$record);
         $data=$request->validate(['teacher_viewed'=>'sometimes|boolean','is_public'=>'sometimes|boolean']);
         if (array_key_exists('teacher_viewed',$data)) abort_unless($access->teacher($request->user(),$record->course_id),403);
-        if (array_key_exists('is_public',$data)) abort_unless((int)$record->user_id===(int)$request->user()->id,403);
+        if (array_key_exists('is_public',$data)) abort_unless((int)$record->user_id===(int)$request->user()->id
+            && (!$data['is_public'] || $access->teacher($request->user(),$record->course_id)),403);
         $record->update($data);
         return $this->json(['teacher_viewed'=>$record->teacher_viewed,'is_public'=>$record->is_public]);
     }

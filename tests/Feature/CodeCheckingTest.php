@@ -1526,7 +1526,10 @@ class CodeCheckingTest extends TestCase
         $this->login()->get('/shared/code-submissions/'.$id)->assertNotFound();
         $this->login(3)->putJson('/insider/code-submissions/'.$id.'/flags',['is_public'=>true])->assertForbidden();
         $this->login()->putJson('/insider/code-submissions/'.$id.'/flags',['teacher_viewed'=>true])->assertForbidden();
-        $this->putJson('/insider/code-submissions/'.$id.'/flags',['is_public'=>true])->assertOk();
+        $this->putJson('/insider/code-submissions/'.$id.'/flags',['is_public'=>true])->assertForbidden();
+        $this->assertFalse(CodeSubmission::findOrFail($id)->is_public);
+        // Previously shared work remains accessible until its author revokes it.
+        CodeSubmission::findOrFail($id)->update(['is_public'=>true]);
         $this->get('/shared/code-submissions/'.$id)->assertOk()->assertSee('print(2+3)')->assertDontSee('PRIVATE RUBRIC');
         $this->getJson('/insider/code-submissions/'.$id.'/compare?with='.$two['id'])->assertOk()->assertJsonPath('before.id',$two['id']);
         $this->login(3)->getJson('/insider/code-submissions/'.$id.'/compare?with='.$two['id'])->assertForbidden();
@@ -1543,6 +1546,20 @@ class CodeCheckingTest extends TestCase
         $this->assertSame(7,$new->fresh()->points);
         $this->login()->putJson('/insider/code-submissions/'.$id.'/flags',['is_public'=>false])->assertOk();
         $this->get('/shared/code-submissions/'.$id)->assertNotFound();
+    }
+
+    public function test_teachers_can_publish_only_their_own_solutions(): void
+    {
+        $student=$this->createSubmission();
+        $base='/insider/courses/7/tasks/12';
+        $teacher=$this->login(1)->postJson($base.'/code-submissions', ['request_id'=>(string) Str::uuid(),
+            'code'=>'print(42)'])->assertCreated()->json();
+        $this->putJson('/insider/code-submissions/'.$student['id'].'/flags',['is_public'=>true])->assertForbidden();
+        $this->putJson('/insider/code-submissions/'.$teacher['id'].'/flags',['is_public'=>true])->assertOk();
+        $this->get('/shared/code-submissions/'.$teacher['id'])->assertOk()->assertSee('print(42)');
+        $this->putJson('/insider/code-submissions/'.$teacher['id'].'/flags',['is_public'=>false])->assertOk();
+        $this->get('/shared/code-submissions/'.$teacher['id'])->assertNotFound();
+        $this->login(4)->putJson('/insider/code-submissions/'.$student['id'].'/flags',['is_public'=>true])->assertForbidden();
     }
 
     public function test_private_s3_adapter_round_trip_and_signed_links(): void
