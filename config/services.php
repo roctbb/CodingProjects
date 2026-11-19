@@ -35,6 +35,7 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
 
+    'geekexam_alert_secret' => env('GEEKEXAM_ALERT_SECRET'),
     'geekexecutor_url' => env('GEEKEXECUTOR_URL', 'http://geekexecutor:8086'),
     'geekexecutor_public_url' => env('GEEKEXECUTOR_PUBLIC_URL'),
     'geekexecutor_socket_url' => env('GEEKEXECUTOR_SOCKET_URL'),
