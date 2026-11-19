@@ -812,6 +812,41 @@ class CodeCheckingTest extends TestCase
         $this->assertDatabaseCount('coin_transactions', 2);
     }
 
+    public function test_compiler_diagnostic_is_visible_without_unlocking_private_test_data(): void
+    {
+        foreach ([false, true] as $large) {
+            $submission = $this->createSubmission();
+            $run = $submission['execution_id'];
+            $payload = $this->report($run);
+            $payload['code_id'] = $submission['id'];
+            $diagnostic = "Compilation failed: expected ';'".($large ? str_repeat("\ncompiler diagnostic", 6000) : '');
+            $payload['tests'][0]['verdict'] = 'compilation_error';
+            $payload['tests'][0]['error'] = $large ? app(Artifacts::class)->put($diagnostic) : $this->field($diagnostic);
+            app(Reports::class)->accept($payload);
+            CodeExecutionRun::findOrFail($run)->update(['state'=>'completed', 'points'=>0, 'finished_at'=>now()]);
+            $base = '/insider/code-submissions/'.$submission['id'];
+            $report = '/insider/code-test-reports/'.$run;
+            foreach ([$base.'?test_data=metadata', $base.'/runs/'.$run.'?test_data=metadata', $report.'?test_data=metadata'] as $url) {
+                $response = $this->login()->getJson($url)->assertOk()->assertDontSee('SECRET');
+                $data = $response->json('report') ?? $response->json();
+                $this->assertFalse($data['tests'][0]['unlocked']);
+                $this->assertFalse($data['tests'][0]['can_purchase']);
+                foreach (['input', 'expected', 'actual', 'error'] as $field) $this->assertArrayNotHasKey($field, $data['tests'][0]);
+                $this->assertSame($large ? 'blob' : 'inline', $data['compilation_error']['type']);
+                if (!$large) $this->assertSame($diagnostic, $data['compilation_error']['text']);
+                if ($large) $download = $data['compilation_error']['download_url'];
+            }
+            if ($large) $this->get($download)->assertOk()->assertStreamedContent($diagnostic);
+            $this->getJson($base.'/runs/'.$run.'/tests/1')->assertForbidden();
+            foreach (['input', 'expected', 'actual'] as $field) $this->getJson($report.'/tests/'.str_repeat('b', 64).'/'.$field)->assertForbidden();
+            $this->postJson($report.'/tests/'.str_repeat('b', 64).'/purchase')->assertConflict();
+            $this->login(3)->getJson($report)->assertForbidden();
+            if ($large) $this->get($download)->assertForbidden();
+        }
+        $this->assertDatabaseCount('code_test_purchases', 0);
+        $this->assertSame(20, (int) User::find(2)->balance());
+    }
+
     public function test_test_metadata_and_purchases_are_body_free_and_single_test_access_is_scoped():void
     {
         $submission=$this->createSubmission();$run=$submission['execution_id'];

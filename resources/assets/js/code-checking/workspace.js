@@ -301,6 +301,13 @@ export async function workspace(root) {
     let reportSequence = 0;
     function renderReport(report, parent, submissionId,{savedSource=false}={}) {
         if (!report) return;
+        if (report.compilation_error) {
+            parent.append(node('section',{class:'gc-compilation-error','aria-label':'Ошибка компиляции'},
+                node('h4',{class:'h6 text-danger'},'Ошибка компиляции'),
+                node('p',{class:'text-muted'},'Код не скомпилирован. Тесты не запускались.'),
+                artifact(report.compilation_error)));
+            return;
+        }
         for (const note of report.notes || []) parent.append(node('p',{},note));
         if (report.notice && !savedSource) parent.append(report.legacy
             ? node('details',{class:'gc-report-provenance'},node('summary',{},'О данных исторической проверки'),node('p',{class:'text-muted small'},report.notice))

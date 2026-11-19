@@ -69,6 +69,7 @@
 .gc-attempt-best {color:var(--gc-primary); font-weight:500;}
 .gc-attempt-history__footer {margin-top:var(--gc-space-3);}
 .gc-test-report {margin-block:var(--gc-space-4);}
+.gc-compilation-error {margin-block:var(--gc-space-4);}
 .gc-test-report__heading {display:flex; align-items:center; flex-wrap:wrap; justify-content:space-between; gap:var(--gc-space-2); margin-bottom:var(--gc-space-3);}
 .gc-test-total {font-size:var(--gc-font-small); font-weight:500; color:var(--gc-on-surface-muted);}
 .gc-test-total.is-passed, .gc-test-verdict.is-passed {color:var(--gc-success);}

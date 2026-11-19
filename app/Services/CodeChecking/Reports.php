@@ -76,6 +76,13 @@ class Reports
         $purchased = $this->purchased($viewer, $record);
         $canPurchase=$teacher?false:$this->purchaseAllowed($record,$viewer);
         $report = $record->report;
+        // The compiler never receives test input. Its diagnostic is visible
+        // immediately, while the first test's fixtures remain private.
+        $compilation = collect($report['tests'])->firstWhere('verdict', 'compilation_error');
+        if ($compilation && !empty($compilation['error'])) {
+            $report['compilation_error'] = $this->artifacts->testField($compilation['error'],
+                route('code-reports.download', ['run'=>$record->id, 'test'=>$compilation['test_id'], 'field'=>'error']));
+        }
         $report['tests'] = array_map(function ($test) use ($teacher, $purchased, $record, $viewer,$includeFields,$canPurchase) {
             $unlocked = $teacher || $test['is_public'] || in_array($test['test_id'], $purchased, true);
             $row = array_intersect_key($test, array_flip(['number', 'test_id', 'is_public', 'verdict']));
@@ -167,7 +174,7 @@ class Reports
     {
         $view = $this->view($record, $user);
         $test = collect($view['tests'])->firstWhere('test_id', $testId);
-        abort_unless($test && $test['unlocked'], 403);
+        abort_unless($test && ($test['unlocked'] || ($field === 'error' && $test['verdict'] === 'compilation_error')), 403);
         abort_unless(in_array($field, ['input', 'expected', 'actual', 'error'], true), 404);
         $value = collect($record->report['tests'])->firstWhere('test_id', $testId)[$field];
         abort_unless($value && $value['type'] === 'blob', 404);
