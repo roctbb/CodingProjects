@@ -296,6 +296,15 @@
 .gc-submission-surface .gc-composer-heading h3 {font-size:var(--gc-font-ui); color:var(--gc-on-surface); font-weight:500;}
 .gc-execution-result--review {padding:0;}
 .gc-result-overview {min-width:0;}
+.gc-student-result-columns {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--gc-space-4); align-items:start;}
+.gc-student-result-columns > section {min-width:0; display:grid; gap:var(--gc-space-4);}
+.gc-student-result-columns :is(.gc-submitted-work,.gc-grading-feedback) {margin:0;}
+@container task-answer (max-width:48rem) {
+    .gc-student-result-columns {grid-template-columns:minmax(0,1fr);}
+}
+@media (max-width:767.98px) {
+    .gc-student-result-columns {grid-template-columns:minmax(0,1fr);}
+}
 .gc-result-assessment {display:grid; grid-template-columns:minmax(0,1fr) 350px; gap:var(--gc-space-4); margin-top:var(--gc-space-4); align-items:start;}
 .gc-result-assessment.is-grading-only {grid-template-columns:minmax(0,1fr); gap:0; border:1px solid var(--gc-border); border-radius:var(--gc-radius-md); overflow:clip;}
 .gc-result-assessment.is-results-only {grid-template-columns:minmax(0,1fr);}

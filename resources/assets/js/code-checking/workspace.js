@@ -596,7 +596,13 @@ export async function workspace(root) {
                 body.prepend(controls);
             }
             const source=[...body.children].filter(child=>child.matches('.gc-submitted-work'));
-            source.forEach(child=>body.append(child));return;
+            const feedback=[...body.children].filter(child=>child.matches('.gc-grading-feedback'));
+            if(source.length && feedback.length){
+                const work=node('section',{class:'gc-student-result-columns__work','aria-label':'Сданная работа'},source);
+                const review=node('section',{class:'gc-student-result-columns__feedback','aria-label':'Комментарий к проверке'},feedback);
+                body.append(node('div',{class:'gc-student-result-columns'},work,review));
+            }else source.forEach(child=>body.append(child));
+            return;
         }
         const overview=node('div',{class:'gc-result-overview'}),main=node('div',{class:'gc-result-main'}),side=node('aside',{class:'gc-result-review','aria-label':'Проверка и оценивание'});
         for(const child of [...body.children]){
@@ -723,7 +729,7 @@ export async function workspace(root) {
         const target=options.snapshotOf || record;
         const comment=target.teacher_feedback ? target.review_comment ?? target.comment ?? '' : target.review_comment || target.comment || (target.check_type!=='tests' && record.state!=='error'?record.comment:'') || '';
         const teacherComment=target.teacher_feedback||target.check_type==='manual';
-        if(comment)body.append(feedbackPanel(comment,{title:teacherComment?'Комментарий преподавателя':target.check_type==='gpt'?'Разбор AI-проверки':'Комментарий проверки',collapsible:!teacherComment,open:teacher&&!ownMode,meta:target.checked_at?new Date(target.checked_at).toLocaleString('ru-RU'):''}));
+        if(comment)body.append(feedbackPanel(comment,{title:teacherComment?'Комментарий преподавателя':target.check_type==='gpt'?'Разбор AI-проверки':'Комментарий проверки',collapsible:!teacherComment,open:true,meta:target.checked_at?new Date(target.checked_at).toLocaleString('ru-RU'):''}));
         if(options.snapshotOf?.can_grade && !ownMode)body.append(legacyGrading(options.snapshotOf,{comment:teacherComment?comment:''}));
         else if(teacher && !ownMode && !sourceOnly && terminal)body.append(inlineGrading({key:id,comment:teacherComment?comment:'',mark:record.points,onSkip:skipReview(record),maximum:record.maximum_points,ungraded:record.state==='awaiting_review',onSave:async(points,comment)=>{
             const savedGeneration=generation;
