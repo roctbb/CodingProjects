@@ -20,8 +20,9 @@
 .gc-code-editor .cm-scroller { font:var(--gc-font-ui)/1.6 var(--gc-code-font); height:100%; overflow:auto; }
 .gc-code-editor .cm-gutters { background:var(--gc-surface-variant); color:var(--gc-on-surface-muted); border-color:var(--gc-border); }
 .gc-code-editor .cm-cursor { border-left-color:var(--gc-code-text); }
-.gc-code-editor .cm-activeLine, .gc-code-editor .cm-activeLineGutter { background:var(--gc-selected-surface); }
-.gc-code-editor .cm-selectionBackground { background:var(--gc-selected-surface) !important; }
+// CodeMirror paints the selection underneath the active line.
+.gc-code-editor .cm-activeLine, .gc-code-editor .cm-activeLineGutter { background:var(--gc-code-active-line); }
+.gc-code-editor .cm-selectionBackground { background:var(--gc-code-selection) !important; }
 .gc-code-editor .cm-panels, .gc-code-editor .cm-tooltip { background:var(--gc-surface); color:var(--gc-on-surface); }
 .gc-reward-notice { position:relative; overflow:hidden; }
 .gc-reward-notice__counter { color:var(--gc-primary); font-size:var(--gc-font-subtitle); font-variant-numeric:tabular-nums; font-weight:600; }

@@ -187,6 +187,8 @@ body {
   --gc-code-block-highlight: rgba(255, 255, 255, 0.65);
   --gc-code-base-text: #1e293b;
   --gc-code-text: #1e293b;
+  --gc-code-active-line: color-mix(in srgb, var(--gc-code-text) 6%, transparent);
+  --gc-code-selection: color-mix(in srgb, var(--gc-primary) 26%, var(--gc-code-block-surface));
   --gc-inline-code-surface: rgba(15, 23, 42, 0.06);
   --gc-inline-code-border: rgba(15, 23, 42, 0.056);
   --gc-inline-code-text: #0f172a;
