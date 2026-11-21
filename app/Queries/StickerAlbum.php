@@ -4,6 +4,8 @@ namespace App\Queries;
 
 use App\Lesson;
 use App\Sticker;
+use App\LessonStudentStats;
+use App\Program;
 use App\User;
 use Illuminate\Support\Collection;
 
@@ -11,8 +13,13 @@ class StickerAlbum
 {
     public function forProfile(User $student, bool $owner): Collection
     {
-        $earned = $student->getStickers()->flip();
+        $earnedLessons = Lesson::whereIn('id', LessonStudentStats::where('student_id', $student->id)
+            ->where('percent', '>', 90)->select('lesson_id'))->whereHas('steps.tasks')->whereNotNull('sticker')
+            ->orderBy('sort_index')->orderBy('id')->get(['id', 'name', 'program_id', 'sticker']);
         $slots = [];
+        foreach ($earnedLessons as $lesson) {
+            $slots[$lesson->program_id][$lesson->sticker] = ['state'=>'earned', 'lesson'=>$lesson->name];
+        }
         if ($owner) {
             $courses = $student->courses->where('state', 'started');
             $lessons = Lesson::whereIn('program_id', $courses->pluck('program_id'))->whereNotNull('sticker')
@@ -21,21 +28,30 @@ class StickerAlbum
             foreach ($courses as $course) {
                 foreach ($lessons->get($course->program_id, collect()) as $lesson) {
                     $image = $lesson->sticker;
-                    if ($earned->has($image) || isset($slots[$image]['href'])) continue;
-                    $slots[$image] ??= ['state' => 'locked'];
+                    if (in_array($slots[$lesson->program_id][$image]['state'] ?? null, ['available','earned'], true)) continue;
+                    $slots[$lesson->program_id][$image] ??= ['state' => 'locked'];
                     if ($lesson->isStarted($course, $student) || $lesson->hasEarlyAccess($course, $student)) {
-                        $slots[$image] = ['state' => 'available', 'lesson' => $lesson->name,
+                        $slots[$lesson->program_id][$image] = ['state' => 'available', 'lesson' => $lesson->name,
                             'href' => url("/insider/courses/{$course->id}/steps/{$lesson->steps_min_id}")];
                     }
                 }
             }
         }
-        $sources = $student->getStickerDescriptions();
-        foreach ($earned as $image => $index) {
-            $slots[$image] = ['state' => 'earned', 'lesson' => $sources[$image] ?? ''];
+        $images = collect($slots)->flatMap(fn ($items) => array_keys($items))->unique();
+        $catalog = Sticker::whereIn('image', $images)->get()->keyBy('image');
+        $programs = Program::whereIn('id', array_keys($slots))->pluck('name', 'id');
+        $titles = config('sticker_albums', []);
+        $albums = collect();
+        foreach ($slots as $program => $items) {
+            $name = $programs->get($program);
+            $title = $titles[$name] ?? $name;
+            foreach ($items as $image => $slot) {
+                if (!$sticker = $catalog->get($image)) continue;
+                $album = $albums->getOrPut($title, fn () => collect());
+                $album->put($image, ['image'=>$image, 'name'=>$sticker->name, 'collection'=>$title] + $slot);
+            }
         }
-        return Sticker::whereIn('image', array_keys($slots))->orderBy('collection')->orderBy('id')->get()
-            ->map(fn ($item) => ['name'=>$item->name, 'image'=>$item->image, 'collection'=>$item->collection] + $slots[$item->image])
-            ->groupBy('collection')->sortByDesc(fn ($items) => $items->where('state', 'earned')->count());
+        return $albums->map(fn ($items) => $items->values())
+            ->sortByDesc(fn ($items) => $items->where('state', 'earned')->count());
     }
 }

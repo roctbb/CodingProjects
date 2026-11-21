@@ -99,12 +99,12 @@
                             ][$notificationType];
                             $notificationIcon = $notification->data['icon'] ?? $notificationIcon;
                         @endphp
-                        <div class="gc-card gc-alert-row home-notification home-notification--{{ $notificationType }} alert-dismissible fade show" role="alert">
+                        <div id="home-notification-{{ $notification->id }}" class="gc-card gc-alert-row home-notification home-notification--{{ $notificationType }} alert-dismissible fade show" role="alert">
                             <span class="home-notification__icon"><i class="{{ $notificationIcon }}"></i></span>
-                            <div class="min-width-0 flex-grow-1">
+                            <div class="home-notification__body min-width-0 flex-grow-1">
                                 {!! clean($notification->data['text'] ?? '') !!}
                             </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                            <button type="button" class="home-notification__close" data-bs-target="#home-notification-{{ $notification->id }}" data-bs-dismiss="alert" aria-label="Закрыть уведомление"><i class="fas fa-xmark" aria-hidden="true"></i></button>
                         </div>
                     @endforeach
 

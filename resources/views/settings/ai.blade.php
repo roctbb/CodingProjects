@@ -21,7 +21,7 @@
         <input type="hidden" name="settings[shared_models]" value="1">
         <x-gc-form-section title="Подключение">
             <input type="hidden" name="settings[provider]" value="openai" data-ai-provider-select>
-            <p class="gc-help-text mb-0">OpenAI-совместимый API · общий ключ для текста и изображений</p>
+            <p class="gc-help-text mb-0">Общий шлюз GeekClass для помощника, проверки решений, текста и изображений.</p>
             @foreach($providers as $provider => $label)
                 @php
                     $connection = $settings['providers'][$provider];
@@ -30,8 +30,8 @@
                 @endphp
                 <fieldset class="gc-stack border-0 p-0 m-0" data-ai-provider="{{ $provider }}">
                     <legend class="visually-hidden">Параметры {{ $label }}</legend>
-                        <x-gc-field :name="'settings[providers]['.$provider.'][base_url]'" :id="'ai-base-'.$provider" label="Базовый адрес API" hint="Один адрес для текста и изображений. Пути /responses и /images добавляются автоматически.">
-                            <input id="ai-base-{{ $provider }}" name="settings[providers][{{ $provider }}][base_url]" type="url" class="form-control" maxlength="2048" value="{{ old('settings.providers.'.$provider.'.base_url', $base) }}" placeholder="https://api.example.com/v1" spellcheck="false" data-ai-base>
+                        <x-gc-field :name="'settings[providers]['.$provider.'][base_url]'" :id="'ai-base-'.$provider" label="Базовый адрес API" hint="Укажите адрес со служебным префиксом, например https://vpn.telepat.online/gpt/v1. Путь операции добавляется автоматически.">
+                            <input id="ai-base-{{ $provider }}" name="settings[providers][{{ $provider }}][base_url]" type="url" class="form-control" maxlength="2048" value="{{ old('settings.providers.'.$provider.'.base_url', $base) }}" placeholder="https://api.example.com/v1" spellcheck="false" required>
                         </x-gc-field>
                         <x-gc-field :name="'settings[providers]['.$provider.'][image_api]'" :id="'ai-image-api-'.$provider" label="API для изображений">
                             <select id="ai-image-api-{{ $provider }}" name="settings[providers][{{ $provider }}][image_api]" class="form-select" data-ai-image-api>
@@ -40,17 +40,6 @@
                             </select>
                             <p class="gc-help-text mb-0">Для текста всегда используется Responses. Ключ и прокси общие для обоих API.</p>
                         </x-gc-field>
-                        @if($provider === 'openai')
-                            <div data-ai-legacy-endpoints>
-                                <p class="gc-help-text">Ранее были заданы отдельные адреса. Можно сохранить их или заполнить общий базовый адрес выше.</p>
-                                <x-gc-field name="settings[providers][openai][endpoint]" id="ai-endpoint-openai" label="Полный адрес Responses API">
-                                    <input id="ai-endpoint-openai" name="settings[providers][openai][endpoint]" type="url" class="form-control" maxlength="2048" value="{{ old('settings.providers.openai.endpoint', $connection['endpoint'] ?? '') }}" data-ai-legacy-response>
-                                </x-gc-field>
-                                <x-gc-field name="settings[providers][openai][images_url]" id="ai-images-url-openai" label="Адрес Images API, до /images">
-                                    <input id="ai-images-url-openai" name="settings[providers][openai][images_url]" type="url" class="form-control" maxlength="2048" value="{{ old('settings.providers.openai.images_url', $connection['images_url'] ?? '') }}" data-ai-legacy-images>
-                                </x-gc-field>
-                            </div>
-                        @endif
                     <div class="row g-3">
                         @foreach(['key' => 'API-ключ', 'proxy' => 'Сетевой прокси'] as $field => $fieldLabel)
                             <div class="col-12 col-md-6">

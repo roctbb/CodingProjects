@@ -39,9 +39,10 @@ export async function workspace(root) {
     const summary=node('section',{class:'gc-result-summary'+(!teacher?' is-student':''),'aria-label':'Сдача и результат',hidden:true},toolbar,history);
     const browser = node('section',{class:'gc-execution-browser gc-submission-surface'},summary,stage);
     root.replaceChildren(notice,browser);
-    const personalChat = !root.hasAttribute('data-quiz-review') && (!teacher || inlineReview || root.dataset.user && root.dataset.user!==root.dataset.viewerId);
-    const legacyForm = !teacher && root.hasAttribute('data-history-only') ?
-        root.closest('.gc-task-answer')?.querySelector('.step-submit-form')?.closest('.row') : null;
+    const teacherOwnChat = teacher && root.dataset.user === root.dataset.viewerId;
+    const personalChat = !root.hasAttribute('data-quiz-review') && (!teacher || inlineReview || !!root.dataset.user);
+    const legacyForm = (!teacher || teacherOwnChat) && root.hasAttribute('data-history-only') ?
+        (root.closest('[role="tabpanel"]')?.id.startsWith('own-solution-') ? root.closest('[role="tabpanel"]') : root.closest('.gc-task-answer'))?.querySelector('.step-submit-form')?.closest('.row') : null;
     let workspaceDialog, dialogHeading, previousAttempt;
     function openWorkspace(title) {
         dialogHeading.textContent=title;
@@ -195,7 +196,7 @@ export async function workspace(root) {
             chat.refresh();
         });
     }
-    const verdictHost=focusedVerdict || (!taskOutcome || root.closest('.gc-student-attempt') ? chat?.verdict : null);
+    const verdictHost = focusedVerdict;
     const busy=node('span',{class:'gc-submission-loading',role:'status'},node('i',{class:'fas fa-spinner fa-spin','aria-hidden':'true'}),' Загружаем работу…');
     function beginResult(){verdictHost?.replaceChildren();const jump=toolbar.querySelector('.gc-review-jump');if(jump)jump.disabled=true;stage.hidden=false;summary.hidden=false;summary.setAttribute('aria-busy','true');summary.querySelectorAll(':scope > header,:scope > .gc-award').forEach(el=>el.setAttribute('inert',''));stage.setAttribute('aria-busy','true');stage.setAttribute('inert','');stage.append(busy);}
     function finishResult(panel){
@@ -269,7 +270,7 @@ export async function workspace(root) {
     }
     async function startOwnSubmission({attempt=null}={}) {
         generation++;historyGeneration++;stop();current=null;activeAttempt=null;
-        chat?.select(null);ownMode=true;selectedUser=null;results.replaceChildren();notice.replaceChildren();renderToolbar();
+        ownMode=true;selectedUser=null;chat?.select(root.dataset.viewerId,'',!!legacyForm);results.replaceChildren();notice.replaceChildren();renderToolbar();
         content.hidden=false;
         content.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем форму сдачи…'));
         try {
@@ -280,10 +281,12 @@ export async function workspace(root) {
                 if (!config.teacher_submission_allowed) throw new Error('Сдача этой задачи пока недоступна. Проверьте настройки проверки.');
                 if (!draft) setDraft(await request(base+'/code-draft'));
                 renderComposer();
+                chat?.setCanSubmit(true);
                 records=await loadHistory();
             }
             if(ownMode && attempt)await openAttemptById(attempt);
-        } catch(e) {content.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить',safe(startOwnSubmission)));}
+            else if(ownMode && records?.length && chat)await openAttempt(records[0]);
+        } catch(e) {error(e);notice.append(button('Повторить',safe(startOwnSubmission)));}
     }
 
     function setDraft(value) {

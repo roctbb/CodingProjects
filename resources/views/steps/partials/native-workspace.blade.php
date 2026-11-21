@@ -2,7 +2,7 @@
     id="{{ $nativeWorkspaceId ?? 'execution-workspace-'.$task->id }}"
     data-execution-workspace
     @isset($editorStarter) data-editor-starter="{{ route('code-task-files.download', [$course->id, $task->id, $editorStarter->id]) }}" @endisset
-    @if(!$task->is_quiz && ($nativeTeacher || Auth::user()->role === 'student') && \App\Services\Tutor\Context::enabledForCourse($course->id)) data-chat-tutor @endif
+    @if(!$task->is_quiz && \App\Services\Tutor\Context::enabledForCourse($course->id) && (($nativeTeacher && ($nativeUser ?? null) == Auth::id()) || (!$nativeTeacher && Auth::user()->role === 'student'))) data-chat-tutor @endif
     @if(!$task->is_quiz && \Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') data-chat-socket="{{ config('services.task_chat_socket') }}" @endif
     @if($task->is_quiz) data-quiz-review @endif
     @if($nativeTabWorkspace ?? false) data-execution-tab-workspace @endif

@@ -27,6 +27,7 @@ class ChatGptService
         $data = $this->api->create([
             'model' => $settings['model'],
             'input' => $this->normalizeMessages($messages),
+            ...(isset($options['max_output_tokens']) ? ['store'=>false, 'max_output_tokens'=>$options['max_output_tokens']] : []),
         ], $settings['provider'], $settings['connection'], $settings['timeout'], $options['command'] ?? null);
 
         $parts = [];

@@ -24,6 +24,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 // dozens of progress events and upload multiple output artifacts.
 Route::prefix('executor')->withoutMiddleware('throttle:60,1')->middleware('throttle:6000,1')->group(function () {
     Route::get('/executions/{execution}/input', 'CodeCheckerAPI@input');
+    Route::post('/executions/{execution}/grade', 'CodeCheckerAPI@grade');
     Route::post('/executions/{execution}/progress', 'CodeCheckerAPI@progress');
     Route::post('/executions/{execution}/result', 'CodeCheckerAPI@result');
     Route::post('/test-reports', 'CodeCheckerAPI@report');

@@ -15,9 +15,10 @@ final class Conversation
 
     public function ask(User $user, int $course_id, int $id, array $data): array
     {
-        abort_unless(Context::enabledForCourse($course_id), 503, 'Помощник ещё не подключён.');
         $course = Course::findOrFail($course_id);
-        abort_unless($user->role === 'student' && $course->students()->where('users.id', $user->id)->exists(), 403);
+        $ownTeachingTask = isset($data['task_id']) && $this->access->manages($user, $course);
+        abort_unless(Context::enabledForCourse($course_id), 503, 'Помощник ещё не подключён.');
+        abort_unless($ownTeachingTask || ($user->role === 'student' && $course->students()->where('users.id', $user->id)->exists()), 403);
         $step = $this->access->step($course, $id);
         abort_if($step->review_archived_at, 404);
         $this->access->study($user, $course, $step->lesson);
@@ -44,6 +45,7 @@ final class Conversation
             $report = ['comment'=>mb_substr(implode("\n", $feedback), 0, 1800), 'points'=>$result['points'], 'maximum'=>$result['maximum']];
             $basis = ['feedback'=>$feedback] + array_intersect_key($selected, ['source'=>true]);
         } elseif (isset($data['legacy_solution']) && $task) {
+            abort_unless(\App\Solution::where(['user_id'=>$user->id, 'task_id'=>$task->id, 'course_id'=>$course_id])->whereKey($data['legacy_solution'])->exists(), 404);
             $event = app(\App\Services\CodeChecking\History::class)->event($user, $course_id, $task, $data['legacy_solution']);
             $mode = 'review';
             $feedback = (string)($event['comment'] ?? '');
@@ -117,7 +119,7 @@ final class Conversation
                     'url' => url('/insider/courses/'.$course_id.'/steps/'.$part['step']).'#'.$part['anchor']];
             }
             $reply = ['answer' => $answer['answer'], 'links' => array_values($links),
-                'good_question' => ($answer['guided'] ?? true) === false && ($answer['good_question'] ?? false) === true,
+                'good_question' => !$ownTeachingTask && ($answer['guided'] ?? true) === false && ($answer['good_question'] ?? false) === true,
                 'reference' => $answer['reference'] ?? null, 'guided' => (bool) ($answer['guided'] ?? false)];
             $reply['recheck'] = null;
             $finding = $answer['recheck'] ?? null;

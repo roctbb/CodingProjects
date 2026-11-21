@@ -119,7 +119,7 @@ class TaskChat
                 ->whereIn('solution_id', $ids(self::LEGACY_GRADE))->orderBy('id')->get(['solution_id','payload'])->keyBy('solution_id');
         }
         $checks = $runs->leftJoin('code_test_reports as t','t.id','=','r.id')->whereIn('r.id',$ids(self::CHECK))
-            ->get(['r.id','r.submission_id','s.legacy_id','s.current_run_id','s.preparation_state','r.state','r.points','r.comment','r.criteria','r.snapshot->check_type as method',
+            ->get(['r.id','r.submission_id','s.legacy_id','s.current_run_id','s.preparation_state','r.state','r.progress','r.points','r.comment','r.criteria','r.snapshot->check_type as method',
                 'r.snapshot->points as maximum','r.snapshot->ai_review->source_run_id as stronger',
                 'r.snapshot->review_solution_id as solution','t.report->passed as passed','t.report->total as total',
                 'r.legacy_report->passed as archive_passed','r.legacy_report->total as archive_total',
@@ -163,6 +163,9 @@ class TaskChat
                     'awaiting_teacher'=>$run->method === 'manual' && $run->state === 'awaiting_review'
                         && $run->current_run_id === $id && $run->preparation_state === 'ready',
                     'text'=>in_array($run->method,['gpt','manual'],true) && $run->state==='completed' ? (string)$run->comment : ''];
+                if ($run->current_run_id === $id && !in_array($run->state, ['completed','error','imported_pending','awaiting_review'], true)) {
+                    $item['progress'] = $run->progress ? json_decode($run->progress, true) : ['phase'=>$run->state];
+                }
                 if (($run->first_verdict ?? $run->archive_verdict) === 'compilation_error') {
                     $item['compiler_error'] = $run->first_verdict ? $this->compilerPreview($diagnostics->get($id)) : mb_substr((string)$run->archive_diagnostic,0,1200);
                 }

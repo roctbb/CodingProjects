@@ -363,6 +363,7 @@ class Submissions
         if ($settings['check_type'] === 'gpt') {
             $settings['grading_format'] = 'criteria-v1';
             $settings['qualitative_criteria'] = true;
+            $settings['grading_transport'] = 'platform';
         }
         return ['execution_id' => $run->id, 'submission_id' => $submission->id, 'user_id' => (int) $submission->user_id,
             'course_id' => (int) $submission->course_id, 'task_id' => (int) $submission->task_id,

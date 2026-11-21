@@ -2943,6 +2943,14 @@
   padding: 1rem;
 }
 
+.home-notification.gc-alert-row { align-items: center; }
+.home-notification__body > :last-child { margin-bottom: 0; }
+.home-notification__close {
+  display: grid; place-items: center; flex: none; width: 2.25rem; height: 2.25rem;
+  border: 0; border-radius: var(--gc-radius-md); background: transparent; color: var(--gc-on-surface-muted);
+}
+.home-notification__close:is(:hover,:focus-visible) { background: var(--gc-surface-variant); color: var(--gc-on-surface); }
+
 .gc-session-alert.gc-alert-row {
   align-items: center;
   gap: 0.85rem;

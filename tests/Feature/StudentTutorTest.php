@@ -104,6 +104,24 @@ class StudentTutorTest extends DeadlineFeatureCase
         $this->assertDatabaseHas('student_tutor_usage', ['id'=>$id, 'reserved_tokens'=>232]);
     }
 
+    public function test_teacher_personal_conversation_and_submission_comments_use_separate_threads(): void
+    {
+        $this->actingAs(User::findOrFail(2));
+        config(['tutor.courses'=>['1']]);
+        $root = '/insider/courses/1/tasks/11/chat/';
+        $work = $this->solution();
+        $this->postJson($root.'1', ['body'=>'Посмотри на строку 3.', 'attempt'=>'solution-'.$work->id,
+            'client_id'=>(string)Str::uuid()])->assertOk();
+        \Illuminate\Support\Facades\Queue::assertNotPushed(\App\Jobs\AnswerTaskQuestion::class);
+        $this->postJson($root.'2', ['body'=>'Как приступить?', 'client_id'=>(string)Str::uuid()])->assertOk();
+        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\AnswerTaskQuestion::class);
+        $this->stubTutor(fn () => ['answer'=>'Начни с маленького примера.', 'sources'=>[], 'guided'=>false, 'usage'=>self::USAGE]);
+        $id = DB::table('task_chat_messages')->where('student_id',2)->value('id');
+        (new \App\Jobs\AnswerTaskQuestion($id))->handle(app(\App\Services\Tutor\Conversation::class));
+        $this->getJson($root.'2')->assertOk()->assertJsonFragment(['text'=>'Начни с маленького примера.'])->assertJsonMissing(['text'=>'Посмотри на строку 3.']);
+        $this->actingAs(User::findOrFail(1))->getJson($root.'2')->assertForbidden();
+    }
+
     public function test_each_student_and_the_whole_platform_have_a_daily_coin_limit(): void
     {
         config(['tutor.question_coin_chance'=>100, 'tutor.daily_coins'=>1, 'tutor.platform_daily_coins'=>2]);

@@ -16,13 +16,6 @@ export default function initAiSettings() {
             const active = panel.dataset.aiProvider === provider.value;
             panel.hidden = !active;
             panel.disabled = !active;
-            const base = panel.querySelector('[data-ai-base]');
-            const legacy = panel.querySelector('[data-ai-legacy-endpoints]');
-            if (legacy) {
-                const useBase = base.value.trim() !== '';
-                legacy.hidden = useBase;
-                legacy.querySelectorAll('input').forEach(input => { input.disabled = useBase; input.required = !useBase && (input.hasAttribute('data-ai-legacy-response') || panel.querySelector('[data-ai-image-api]').value === 'images'); });
-            }
             panel.querySelectorAll('[data-secret-action]').forEach(syncSecret);
         });
         const active = panels.find(panel => !panel.hidden);
@@ -33,6 +26,5 @@ export default function initAiSettings() {
             : 'Модель Responses с доступом к инструменту image_generation.';
     };
     form.addEventListener('change', sync);
-    form.querySelectorAll('[data-ai-base]').forEach(input => input.addEventListener('input', sync));
     sync();
 }

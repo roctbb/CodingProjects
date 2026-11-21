@@ -98,7 +98,11 @@ export default function initCodeChecking() {
                 const selected = intent;
                 if (selected.own) await controller.startOwnSubmission();
                 else await controller.selectStudent(selected,{attempt:selected.attempt});
-                if (sequence === openSequence) revealAttempt(root, selected.attempt);
+                if (sequence === openSequence && !selected.fromList) revealAttempt(root, selected.attempt);
+                if (sequence === openSequence && selected.fromList) {
+                    const tabs=root.closest('.gc-task-workspaces')?.querySelector('[role="tablist"]');
+                    if (tabs && tabs.getBoundingClientRect().bottom < 0) tabs.scrollIntoView({block:'start',behavior:'instant'});
+                }
             } catch { /* The workspace displays its retry action. */ }
         };
         root.addEventListener('gc:execution-open',event => open(event.detail));

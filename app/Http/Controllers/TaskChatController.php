@@ -25,8 +25,9 @@ class TaskChatController extends Controller
                 'run_id' => ['nullable', 'uuid'],
                 'client_id' => ['required', 'uuid'],
             ]);
-            $withTutor = $student === (int)$viewer->id && $viewer->role === 'student' && !$assignment->is_quiz
-                && \App\Services\Tutor\Context::enabledForCourse($course);
+            $withTutor = $student === (int)$viewer->id && !$assignment->is_quiz
+                && \App\Services\Tutor\Context::enabledForCourse($course)
+                && ($viewer->role === 'student' || $access->teacher($viewer, $course));
             $chat->send($course, $task, $student, (int) $viewer->id, $input, $withTutor);
             return response()->json(['saved'=>true], 200);
         }

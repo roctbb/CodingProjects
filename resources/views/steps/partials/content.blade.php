@@ -36,7 +36,7 @@
                 $taskScoreBadgeClass = $hasUserSolution ? $latestUserSolution->scoreBadgeClass('bg-body') : 'bg-body';
                 $visibleMaterials = $taskMaterials->get($task->id, collect());
                 $editorStarter = null;
-                if (!$isManager && !$task->is_quiz && ($nativeTaskChecker?->config['submission_modes'] ?? []) === ['code']
+                if (!$task->is_quiz && in_array('code', $nativeTaskChecker?->config['submission_modes'] ?? [], true)
                     && $visibleMaterials->where('kind', 'starter')->count() === 1) {
                     $file = $visibleMaterials->firstWhere('kind', 'starter');
                     if (!$file->read_only && strtolower(pathinfo($file->path, PATHINFO_EXTENSION)) !== 'zip') {
@@ -248,8 +248,8 @@
                             </div>
                             <div class="tab-content">
                             <div class="tab-pane fade @if(!$ownTabActive) show active @endif" id="student-solutions-{{ $task->id }}" role="tabpanel" aria-labelledby="student-solutions-tab-{{ $task->id }}" tabindex="0">
-                        <div class="row my-3">
-                            <div class="col">
+                        <div>
+                            <div>
                                 <div class="gc-section step-progress-card overflow-hidden" data-execution-review-navigation>
                                     <div data-execution-student-list>
                                     <div class="gc-section-header gc-section-header--between">

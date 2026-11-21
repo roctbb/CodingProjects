@@ -91,7 +91,7 @@ class LessonStickerSettingsTest extends TestCase
         $student = User::findOrFail(2);
         $album = app(\App\Queries\StickerAlbum::class)->forProfile($student, false);
         $this->assertSame([$sticker->image], $student->getStickers()->all());
-        $this->assertSame(['Любимые герои'], $album->keys()->all());
+        $this->assertSame(['Program'], $album->keys()->all());
         $this->assertSame('earned', $album->first()->sole()['state']);
         $this->actingAs($student)->postJson('/insider/settings/stickers', $data)->assertForbidden();
         $this->putJson('/insider/settings/stickers/'.$sticker->id, ['name'=>'X', 'collection'=>'X'])->assertForbidden();

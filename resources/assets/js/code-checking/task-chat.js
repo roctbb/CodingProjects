@@ -3,6 +3,8 @@ import {watchTaskChat} from './chat-live';
 import {showCriteria, criterionTable, testSummary} from './chat-results';
 import {markdownContent} from './feedback';
 import autosize from 'autosize';
+import {executionPhase} from './composer-options';
+import {subscribe} from './progress';
 
 const clock = new Intl.DateTimeFormat('ru-RU',{hour:'2-digit',minute:'2-digit'});
 const day = new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'});
@@ -17,18 +19,17 @@ function fitChat(shell, root, input) {
     const condition=sheet?.querySelector(':scope > .gc-task-condition-disclosure');
     const header=root.closest('[data-step-details-page]')?.querySelector('.gc-workbook-header');
     const viewport=window.visualViewport;
+    const stepNav=sheet?.closest('.step-main')?.querySelector('.step-page-nav');
     let frame=0, inputWidth=0;
     function measure() {
         frame=0;
         if(shell.hidden || !shell.getClientRects().length)return;
         const height=viewport?.height || innerHeight;
-        const top=viewport?.offsetTop || 0;
-        const bottom=top+height;
+        const navSpace=stepNav ? stepNav.offsetHeight + parseFloat(getComputedStyle(stepNav).marginTop) : 0;
         const available=element=>{
-            const y=element.getBoundingClientRect().top;
-            // An expanded statement can push the mobile conversation below the fold.
-            if(y>=bottom)return Math.floor(height);
-            return Math.floor(Math.max(Math.min(160,height),bottom-Math.max(y,top)));
+            // Measure from the document origin so page scrolling never grows either panel.
+            const y=element.getBoundingClientRect().top + window.scrollY;
+            return Math.round(Math.max(height * .42, height - Math.max(0,y) - navSpace));
         };
         shell.style.setProperty('--gc-chat-height',available(shell)+'px');
         if(condition)condition.style.setProperty('--gc-reading-height',available(condition)+'px');
@@ -39,22 +40,20 @@ function fitChat(shell, root, input) {
     }
     function schedule(){if(!frame)frame=requestAnimationFrame(measure);}
     const observer=new ResizeObserver(schedule);
-    for(const el of [header,sheet,condition,root,input])if(el)observer.observe(el);
+    for(const el of [header,sheet,condition,root,input,stepNav])if(el)observer.observe(el);
     window.addEventListener('resize',schedule);
-    window.addEventListener('scroll',schedule,{passive:true});
     viewport?.addEventListener('resize',schedule);
-    viewport?.addEventListener('scroll',schedule);
     schedule();
     return ()=>{
         cancelAnimationFrame(frame);observer.disconnect();
-        window.removeEventListener('resize',schedule);window.removeEventListener('scroll',schedule);
-        viewport?.removeEventListener('resize',schedule);viewport?.removeEventListener('scroll',schedule);
+        window.removeEventListener('resize',schedule);
+        viewport?.removeEventListener('resize',schedule);
         shell.style.removeProperty('--gc-chat-height');condition?.style.removeProperty('--gc-reading-height');
     };
 }
 
 export function taskChat(root, actions) {
-    const teacher = root.dataset.teacher === 'true';
+    const teacher = root.dataset.teacher === 'true' && root.dataset.user !== root.dataset.viewerId;
     const viewer = Number(root.dataset.viewerId);
     const withTutor = root.hasAttribute('data-chat-tutor');
     const title = node('strong', {}, withTutor ? tutorName : 'Чат задачи');
@@ -64,7 +63,6 @@ export function taskChat(root, actions) {
         : node('span', {class:'gc-chat-avatar', 'aria-hidden':'true'}, 'ГК');
     const header = node('header', {class:'gc-chat-head'}, avatar, node('div', {}, title, withTutor ? null : member));
     if (actions.back) header.prepend(iconButton('К списку учеников','fa-arrow-left',actions.back));
-    const verdict=node('div',{class:'gc-chat-verdict'});
     const messages = node('div', {class:'gc-chat-messages'});
     const log = node('div',{class:'gc-chat-log',role:'log','aria-label':'Сообщения по задаче'},messages);
     const earlier = button('Предыдущие сообщения',()=>load(true)); earlier.className='gc-chat-earlier';
@@ -77,7 +75,7 @@ export function taskChat(root, actions) {
     const quoted = node('span');
     const reply = node('div',{class:'gc-chat-reply',hidden:true},quoted,iconButton('Отменить ответ','fa-xmark',()=>setReply(null)));
     const form = node('form',{class:'gc-chat-compose'},reply,node('div',{class:'gc-chat-entry'},attach,input,send));
-    const shell = node('section',{class:'gc-task-chat',hidden:true,'aria-label':'Личная переписка по задаче'},header,verdict,log,form,status,retry);
+    const shell = node('section',{class:'gc-task-chat',hidden:true,'aria-label':'Личная переписка по задаче'},header,log,form,status,retry);
     let stopFit, stopWatching, refreshPending = false;
     let student=null, cursor=null, loading=false, token=0, readNumber=0, pending=false, replyTo=null;
     let events=new Map(), drafts=new Map(), newestIds=[], signature='';
@@ -113,7 +111,34 @@ export function taskChat(root, actions) {
         item.append(node('div', {class:'gc-chat-file-row'}, file, reply));
     }
 
+    const watching = new Map();
+    function syncProgress() {
+        const active = new Map([...events.values()].filter(e => e.progress).map(e => [e.run, e]));
+        for (const [run, watch] of watching) {
+            if (!active.has(run)) { watch.stop?.(); watching.delete(run); }
+        }
+        for (const [run, event] of active) {
+            if (watching.has(run)) continue;
+            const watch = {};
+            watching.set(run, watch);
+            const tokenForRun = () => request('/insider/code-submissions/'+event.source+'/subscription');
+            tokenForRun().then(subscription => {
+                if (watching.get(run) !== watch || subscription.execution_id !== run) return;
+                watch.stop = subscribe(subscription, progress => {
+                    watch.progress = progress;
+                    const label = messages.querySelector('[data-run-progress="'+run+'"]');
+                    if (label) label.textContent = executionPhase(progress).label;
+                }, refresh, refresh, tokenForRun);
+            }).catch(() => { if (watching.get(run) === watch) watching.delete(run); });
+        }
+    }
+
     function checkBody(item, event, inlinePoints) {
+        if (event.progress) {
+            const progress = watching.get(event.run)?.progress || event.progress;
+            item.append(node('p', {class:'gc-chat-score', 'data-run-progress':event.run, role:'status'}, executionPhase(progress).label));
+            return;
+        }
         if (event.method === 'tests' && 'compiler_error' in event) {
             if (event.compiler_error) item.append(node('pre', {class:'gc-chat-diagnostic'}, event.compiler_error));
             return;
@@ -277,7 +302,7 @@ export function taskChat(root, actions) {
         const parts=[];let date='';
         if(cursor)parts.push(earlier);
         else if(withTutor)parts.push(node('article', {class:'gc-chat-bubble', 'data-kind':'tutor'}, tutorByline(),
-            markdownContent('Отправь мне решение или задай любой вопрос по задаче. Для решения нажми «Сдать решение», а вопрос напиши здесь. Можно спросить и до первой попытки.')));
+            markdownContent('Отправь мне решение или задай любой вопрос по задаче. Чтобы открыть редактор, нажми «Решение». Можно спросить и до первой попытки.')));
         for(const [index, e] of sorted.entries()){
             const stamp=day.format(dateOf(e));
             if(stamp!==date){parts.push(node('small',{class:'gc-chat-day',title:stamp},stamp===today?'Сегодня':stamp));date=stamp;}
@@ -322,6 +347,7 @@ export function taskChat(root, actions) {
                 newestIds=page.events.map(e=>e.id);
             }else cursor=page.before;
             for(const e of page.events)events.set(e.id,e);
+            syncProgress();
             render(older,initial);
             if(changed.length)actions.updated(changed);
         }catch(e){if(context===token && read===readNumber){status.textContent='Не удалось загрузить переписку.';retry.hidden=false;}}
@@ -339,6 +365,8 @@ export function taskChat(root, actions) {
     }
     function select(studentId, name, canSubmit) {
         if(student && student!==Number(studentId))saveDraft(drafts.get(student)?.clientId);
+        for (const watch of watching.values()) watch.stop?.();
+        watching.clear();
         token++;stopWatching?.();refreshPending=false;loading=false;pending=false;events=new Map();newestIds=[];signature='';cursor=null;
         stopFit?.();stopFit=null;
         student=Number(studentId)||null;shell.hidden=!student;
@@ -352,6 +380,7 @@ export function taskChat(root, actions) {
         reply.hidden=!replyTo;quoted.textContent=replyTo?'Ответ на посылку · '+replyTo.label:'';
         messages.replaceChildren();status.textContent='Загружаем переписку…';retry.hidden=true;enable();load();stopWatching=watchTaskChat(root, student, refresh);
     }
+    window.addEventListener('pagehide', () => { for (const watch of watching.values()) watch.stop?.(); watching.clear(); });
     input.oninput=()=>{saveDraft();enable();};
     input.onkeydown=e=>{if(e.key==='Enter' && !e.shiftKey && !e.isComposing){e.preventDefault();form.requestSubmit();}};
     form.onsubmit=async e=>{
@@ -370,5 +399,5 @@ export function taskChat(root, actions) {
         }catch(error){if(context===token)status.textContent='Сообщение не отправлено. '+error.message;}
         finally{if(context===token){pending=false;enable();}}
     };
-    return {shell,verdict,select,refresh,setCanSubmit:value=>{attach.hidden=!value;},setName:name=>{member.textContent=name;}};
+    return {shell,select,refresh,setCanSubmit:value=>{attach.hidden=!value;},setName:name=>{member.textContent=name;}};
 }

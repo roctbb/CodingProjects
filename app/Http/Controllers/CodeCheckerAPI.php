@@ -21,6 +21,40 @@ class CodeCheckerAPI extends Controller
         return response()->json($submissions->input($run))->header('Cache-Control', 'private, no-store');
     }
 
+    public function grade(Request $request, string $execution, ServiceToken $tokens, \App\Services\ChatGptService $ai)
+    {
+        $tokens->verify($request, 'execution-grade');
+        $data = $this->body($request, 32 * 1024 * 1024);
+        abort_unless(($data['execution_id'] ?? null) === $execution, 422);
+        $run = CodeExecutionRun::findOrFail($execution);
+        abort_unless(($run->snapshot['check_type'] ?? null) === 'gpt' && !$run->finished_at
+            && $run->submission->current_run_id === $execution, 409);
+
+        $messages = $data['messages'] ?? null;
+        abort_unless(is_array($messages) && array_is_list($messages) && count($messages) >= 1 && count($messages) <= 8, 422);
+        foreach ($messages as $message) {
+            abort_unless(in_array($message['role'] ?? null, ['system','developer','user'], true)
+                && (is_string($message['content'] ?? null) || is_array($message['content'] ?? null)), 422);
+            foreach (is_array($message['content']) ? $message['content'] : [] as $part) {
+                abort_unless((($part['type'] ?? null) === 'input_text' && is_string($part['text'] ?? null))
+                    || (($part['type'] ?? null) === 'input_image' && is_string($part['image_url'] ?? null)
+                        && preg_match('~^data:image/(?:png|jpeg|webp);base64,~', $part['image_url'])), 422);
+            }
+        }
+        $key = 'executor-grade:'.$execution;
+        $lock = \Illuminate\Support\Facades\Cache::lock($key.':lock', 210);
+        abort_unless($lock->get(), 503);
+        try {
+            $answer = \Illuminate\Support\Facades\Cache::remember($key, 7200, fn () => $ai->generate($messages, [
+                'model'=>$run->snapshot['gpt_model'] ?? null, 'timeout'=>(int)($run->snapshot['gpt_timeout'] ?? 150),
+                'max_output_tokens'=>8192,
+            ]));
+            return response()->json(['answer'=>$answer])->header('Cache-Control', 'private, no-store');
+        } finally {
+            $lock->release();
+        }
+    }
+
     public function progress(Request $request, string $execution, ServiceToken $tokens, Results $results)
     {
         $tokens->verify($request, 'execution-progress');

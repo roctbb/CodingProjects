@@ -796,7 +796,7 @@ class CodeCheckingTest extends TestCase
         $body = $method === 'GET' ? '' : json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
         $token = JWT::encode(['iss' => 'geekexecutor', 'aud' => 'codingprojects', 'purpose' => match (true) {
             str_ends_with($uri, '/progress') => 'execution-progress', str_ends_with($uri, '/result') => 'execution-result',
-            str_ends_with($uri, '/input') => 'execution-input', default => 'test-report',
+            str_ends_with($uri, '/grade') => 'execution-grade', str_ends_with($uri, '/input') => 'execution-input', default => 'test-report',
         }, 'iat' => time(), 'exp' => time() + 60, 'body_sha256' => hash('sha256', $body)], $this->secret, 'HS256');
         return $this->call($method, $uri, [], [], [], ['HTTP_AUTHORIZATION' => 'Bearer '.$token,
             'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'], $body);
@@ -1553,6 +1553,21 @@ class CodeCheckingTest extends TestCase
         try { $job->handle($client); $this->fail('Dispatch should fail'); } catch (\RuntimeException $e) { $this->assertSame('offline', $e->getMessage()); }
         $this->assertNull($run->fresh()->dispatch_lease_until);
         $this->assertNull($run->fresh()->dispatched_at);
+    }
+
+    public function test_grading_callback_uses_the_shared_client_once_for_a_signed_current_ai_run(): void
+    {
+        $created = $this->createSubmission();
+        $run = CodeExecutionRun::findOrFail($created['execution_id']);
+        $uri = '/api/executor/executions/'.$run->id.'/grade';
+        $data = ['execution_id'=>$run->id, 'messages'=>[['role'=>'user', 'content'=>'Работа']]];
+        $this->postJson($uri, $data)->assertUnauthorized();
+        $run->update(['snapshot'=>['check_type'=>'tests']]);
+        $this->service('POST', $uri, $data)->assertConflict();
+        $run->update(['snapshot'=>['check_type'=>'gpt', 'gpt_model'=>'test-model']]);
+        $this->mock(\App\Services\ChatGptService::class)->shouldReceive('generate')->once()
+            ->with($data['messages'], ['model'=>'test-model', 'timeout'=>150, 'max_output_tokens'=>8192])->andReturn('Оценка');
+        for ($i=0; $i<2; $i++) $this->service('POST', $uri, $data)->assertOk()->assertJsonPath('answer','Оценка');
     }
 
     public function test_execution_can_download_only_the_signed_artifact_and_signature_covers_exact_body(): void

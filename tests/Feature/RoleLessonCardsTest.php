@@ -21,6 +21,8 @@ class RoleLessonCardsTest extends DeadlineFeatureCase
         DB::table('code_task_files')->insert($file+['id'=>(string)Str::uuid(),'path'=>'input.wav','kind'=>'attachment']);
         $this->actingAs(User::find(1))->get($url)->assertOk()->assertSee('data-editor-starter=',false)->assertSee('input.wav')
             ->assertDontSee('Шаблон кода')->assertDontSee('Баллы и прогресс урока');
+        $this->actingAs(User::find(2))->get($url)->assertOk()->assertSee('data-editor-starter=',false)
+            ->assertSee('input.wav')->assertDontSee('Шаблон кода');
         DB::table('code_task_files')->where('id',$starter)->update(['path'=>'project.zip']);
         $this->get($url)->assertOk()->assertSee('project.zip')->assertSee('Шаблон кода')->assertDontSee('data-editor-starter=',false);
     }
