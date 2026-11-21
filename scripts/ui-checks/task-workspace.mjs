@@ -267,9 +267,11 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await page.getByRole('dialog',{name:'Работа с решением'}).getByRole('button',{name:'Закрыть',exact:true}).click();
             await page.getByRole('tab',{name:'Моё решение',exact:true}).click();
             const own=page.locator('#execution-own-workspace-14');
-            await own.getByRole('textbox',{name:'Ответ',exact:true}).fill('Собственная сдача преподавателя.');
-            const ownResponse=page.waitForResponse(response=>response.url().endsWith('/tasks/14/code-submissions') && response.request().method()==='POST');
             await own.getByRole('button',{name:'Отправить решение',exact:true}).click();
+            const editor=page.locator('dialog[open] .gc-execution-composer');
+            await editor.getByRole('textbox',{name:'Ответ',exact:true}).fill('Собственная сдача преподавателя.');
+            const ownResponse=page.waitForResponse(response=>response.url().endsWith('/tasks/14/code-submissions') && response.request().method()==='POST');
+            await editor.getByRole('button',{name:'Отправить решение',exact:true}).click();
             const response=await ownResponse;
             check('task-teacher-own-submission',response.status()===201 && (await response.json()).user_id===2,width);
             await visit('teacher',17,id(18),{open:false});
