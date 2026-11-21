@@ -3,6 +3,7 @@ import {watchTaskChat} from './chat-live';
 import {showCriteria, criterionTable, testSummary} from './chat-results';
 import {markdownContent} from './feedback';
 import autosize from 'autosize';
+import {chatDesktop} from '../components/workbook-navigation';
 import {executionPhase} from './composer-options';
 import {subscribe} from './progress';
 
@@ -13,26 +14,22 @@ const dateOf = item => new Date(item.at);
 const tutorPortrait = '/images/rostislop.webp';
 const tutorName = 'Ростислоп Нейрославович';
 
-// Both panes end at the visual viewport, including when the mobile keyboard resizes it.
+// On a phone the condition sits above the chat and the keyboard can resize the viewport.
 function fitChat(shell, root, input) {
     const sheet=root.closest('.gc-chat-sheet');
-    const condition=sheet?.querySelector(':scope > .gc-task-condition-disclosure');
+    const desktop=chatDesktop();
+    const condition=sheet?.querySelector('[data-task-condition]');
     const header=root.closest('[data-step-details-page]')?.querySelector('.gc-workbook-header');
     const viewport=window.visualViewport;
-    const stepNav=sheet?.closest('.step-main')?.querySelector('.step-page-nav');
     let frame=0, inputWidth=0;
     function measure() {
         frame=0;
         if(shell.hidden || !shell.getClientRects().length)return;
-        const height=viewport?.height || innerHeight;
-        const navSpace=stepNav ? stepNav.offsetHeight + parseFloat(getComputedStyle(stepNav).marginTop) : 0;
-        const available=element=>{
-            // Measure from the document origin so page scrolling never grows either panel.
-            const y=element.getBoundingClientRect().top + window.scrollY;
-            return Math.round(Math.max(height * .42, height - Math.max(0,y) - navSpace));
-        };
-        shell.style.setProperty('--gc-chat-height',available(shell)+'px');
-        if(condition)condition.style.setProperty('--gc-reading-height',available(condition)+'px');
+        if (!sheet || !desktop.matches) {
+            const height=viewport?.height || innerHeight;
+            const top=shell.getBoundingClientRect().top + window.scrollY;
+            shell.style.setProperty('--gc-chat-height', Math.round(Math.max(height * .42, height - Math.max(0,top)))+'px');
+        }
         if (input.clientWidth !== inputWidth) {
             inputWidth = input.clientWidth;
             autosize.update(input);
@@ -40,7 +37,7 @@ function fitChat(shell, root, input) {
     }
     function schedule(){if(!frame)frame=requestAnimationFrame(measure);}
     const observer=new ResizeObserver(schedule);
-    for(const el of [header,sheet,condition,root,input,stepNav])if(el)observer.observe(el);
+    for(const el of [header,sheet,condition,root,input])if(el)observer.observe(el);
     window.addEventListener('resize',schedule);
     viewport?.addEventListener('resize',schedule);
     schedule();
@@ -48,7 +45,7 @@ function fitChat(shell, root, input) {
         cancelAnimationFrame(frame);observer.disconnect();
         window.removeEventListener('resize',schedule);
         viewport?.removeEventListener('resize',schedule);
-        shell.style.removeProperty('--gc-chat-height');condition?.style.removeProperty('--gc-reading-height');
+        shell.style.removeProperty('--gc-chat-height');
     };
 }
 
@@ -86,7 +83,7 @@ export function taskChat(root, actions) {
     }
     function setReply(target) {
         replyTo=target; reply.hidden=!target; quoted.textContent=target?'Ответ на посылку · '+target.label:'';
-        saveDraft(); input.focus();
+        saveDraft(); input.focus({preventScroll:chatDesktop().matches});
     }
     function enable() {send.disabled=pending || !input.value.trim(); input.readOnly=pending;}
     function action(text, handler, css) {

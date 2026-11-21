@@ -99,9 +99,10 @@ export default function initCodeChecking() {
                 if (selected.own) await controller.startOwnSubmission();
                 else await controller.selectStudent(selected,{attempt:selected.attempt});
                 if (sequence === openSequence && !selected.fromList) revealAttempt(root, selected.attempt);
-                if (sequence === openSequence && selected.fromList) {
-                    const tabs=root.closest('.gc-task-workspaces')?.querySelector('[role="tablist"]');
-                    if (tabs && tabs.getBoundingClientRect().bottom < 0) tabs.scrollIntoView({block:'start',behavior:'instant'});
+                if (sequence === openSequence && selected.fromList && !chatDesktop().matches) {
+                    const heading = root.querySelector('.gc-chat-head') || root;
+                    const bounds = heading.getBoundingClientRect();
+                    if (bounds.top < 0 || bounds.bottom > innerHeight) heading.scrollIntoView({block:'start',behavior:'instant'});
                 }
             } catch { /* The workspace displays its retry action. */ }
         };

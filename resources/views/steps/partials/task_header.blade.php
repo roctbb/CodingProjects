@@ -16,6 +16,13 @@
     </div>
     @if ($isManager)
         @include('steps.partials.deadline_modal')
+        @if($reviewTabs ?? false)
+        <div class="gc-task-review-controls">
+            <div class="nav gc-segmented-tabs" role="tablist" aria-label="Работа с задачей">
+                <button class="nav-link @if(!$ownTabActive) active @endif" id="student-solutions-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#student-solutions-{{ $task->id }}" data-execution-tab-target="#execution-workspace-{{ $task->id }}" aria-controls="student-solutions-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'false' : 'true' }}">Решения учеников</button>
+                <button class="nav-link @if($ownTabActive) active @endif" id="own-solution-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#own-solution-{{ $task->id }}" data-execution-tab-target="#execution-own-workspace-{{ $task->id }}" aria-controls="own-solution-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'true' : 'false' }}">Моё решение</button>
+            </div>
+        @endif
         <div class="dropdown step-task-actions">
             <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Действия с задачей {{ $task->name }}"><i class="fas fa-ellipsis-h" aria-hidden="true"></i></button>
             <div class="dropdown-menu dropdown-menu-end">
@@ -37,5 +44,6 @@
                 <a class="dropdown-item text-danger" href="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/delete')}}" data-confirm="Вы уверены?"><i class="fas fa-trash" aria-hidden="true"></i>Удалить задачу</a>
             </div>
         </div>
+        @if($reviewTabs ?? false)</div>@endif
     @endif
 </div>

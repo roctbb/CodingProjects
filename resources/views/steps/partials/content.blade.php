@@ -45,9 +45,15 @@
                     }
                 }
                 $studentSheet = $isInsider && !$isManager && !$task->is_quiz;
+                $teacherSheet = $isManager && !$task->is_quiz;
+                $ownTabActive = $teacherSheet && $errors->has('text');
             @endphp
             <div class="gc-task-sheet @if($isInsider && $task->is_quiz) gc-section step-task-card step-task-card--quiz gc-quiz-card @elseif($isInsider) gc-task-sheet--split gc-chat-sheet @endif">
-            @if($studentSheet)
+            @if($teacherSheet)
+                <header class="gc-task-title-row gc-task-title-row--teacher">
+                    @include('steps.partials.task_header', ['reviewTabs' => true])
+                </header>
+            @elseif($studentSheet)
                 <header class="gc-task-title-row">
                     <div class="gc-task-title-group">
                     @if(!empty($studentAttempt))<h1>{{ $task->name }}</h1>@else<h2>{{ $task->name }}</h2>@endif
@@ -70,7 +76,7 @@
                      @if($latestUserSolution?->submitted || ($submittedCodeTasks ?? collect())->has($task->id)) data-submitted @endif
                      @if(($attemptTask ?? null)?->id !== $task->id) open @endif>
             <summary>
-                @if($studentSheet || !empty($studentAttempt))
+                @if($teacherSheet || $studentSheet || !empty($studentAttempt))
                     <span>Условие</span>
                 @else
                 <span class="gc-condition-label">Условие задачи · {{ $task->name }}</span>
@@ -239,13 +245,8 @@
                     @if ($course->teachers->contains($user) || $user->role == 'admin')
                         @php
                             $stepProgressStudents = $course->relationLoaded('statsStudents') ? $course->statsStudents : $course->students;
-                            $ownTabActive = $errors->has('text');
                         @endphp
                         <div class="gc-task-workspaces">
-                            <div class="nav gc-segmented-tabs" role="tablist" aria-label="Работа с задачей">
-                                <button class="nav-link @if(!$ownTabActive) active @endif" id="student-solutions-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#student-solutions-{{ $task->id }}" data-execution-tab-target="#execution-workspace-{{ $task->id }}" aria-controls="student-solutions-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'false' : 'true' }}">Решения учеников</button>
-                                <button class="nav-link @if($ownTabActive) active @endif" id="own-solution-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#own-solution-{{ $task->id }}" data-execution-tab-target="#execution-own-workspace-{{ $task->id }}" aria-controls="own-solution-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'true' : 'false' }}">Моё решение</button>
-                            </div>
                             <div class="tab-content">
                             <div class="tab-pane fade @if(!$ownTabActive) show active @endif" id="student-solutions-{{ $task->id }}" role="tabpanel" aria-labelledby="student-solutions-tab-{{ $task->id }}" tabindex="0">
                         <div>

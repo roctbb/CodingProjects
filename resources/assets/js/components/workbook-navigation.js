@@ -3,19 +3,6 @@ import * as bootstrap from 'bootstrap';
 export const chatDesktop = () => matchMedia('(min-width: 992px)');
 
 function readingHeading(condition, desktop) {
-    const summary = condition.querySelector(':scope > summary');
-    const current = condition.querySelector(':scope > .gc-task-reading-head');
-    const intro = summary.querySelector('.gc-task-intro');
-    if (desktop && !current && intro) {
-        const head = document.createElement('div');
-        head.className = 'gc-task-reading-head';
-        head.append(intro);
-        summary.after(head);
-    } else if (!desktop && current) {
-        const intro = current.querySelector('.gc-task-intro');
-        if (intro) summary.insertBefore(intro, summary.querySelector(':scope > i'));
-        current.remove();
-    }
     if(desktop){
         condition.tabIndex=0;
         condition.setAttribute('aria-label','Условие задачи');
@@ -24,6 +11,36 @@ function readingHeading(condition, desktop) {
         condition.removeAttribute('aria-label');
     }
     condition.classList.toggle('gc-task-condition--reading', desktop);
+}
+
+// Use the same bottom edge in the roster, student review and personal chat.
+function fitDesktopPanes(workbook, desktop) {
+    const main = workbook.querySelector('.step-main');
+    const sheets = [...main.querySelectorAll('.gc-chat-sheet')];
+    if (!sheets.length) return;
+    function measure() {
+        if (!desktop.matches) return;
+        const available = document.documentElement.clientHeight - parseFloat(getComputedStyle(main).paddingBottom);
+        for (const sheet of sheets) {
+            const condition = sheet.querySelector(':scope > [data-task-condition]');
+            if (!condition?.getClientRects().length) continue;
+            const top = condition.getBoundingClientRect().top + window.scrollY;
+            const height = Math.max(320, Math.floor(available - top));
+            sheet.style.setProperty('--gc-pane-height', height + 'px');
+        }
+    }
+    let frame;
+    function schedule() {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(measure);
+    }
+    const observer = new ResizeObserver(schedule);
+    for (const element of workbook.querySelectorAll('.gc-workbook-header, .step-section-toolbar, .gc-chat-sheet, .gc-task-title-row')) {
+        observer.observe(element);
+    }
+    window.addEventListener('resize', schedule);
+    workbook.addEventListener('shown.bs.tab', schedule);
+    measure();
 }
 
 export default function initWorkbookNavigation() {
@@ -51,6 +68,7 @@ export default function initWorkbookNavigation() {
             }
         }
         applyConditionLayout();
+        fitDesktopPanes(workbook, desktop);
         desktop.addEventListener('change', applyConditionLayout);
         phone.addEventListener('change', applyConditionLayout);
         wide.addEventListener('change', applyConditionLayout);

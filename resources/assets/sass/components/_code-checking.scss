@@ -229,6 +229,7 @@
 
 // A single worksheet follows the same paper, ink and branding as the course.
 .gc-workbook .step-content-layout:has(.tab-pane.active > .gc-task-sheet) {max-width:82rem;}
+.step-main:has(.step-content > .tab-pane.active > .gc-chat-sheet) > .step-page-nav { display: none; }
 
 .gc-task-sheet {min-width:0; max-width:100%; background:var(--gc-surface);}
 .gc-workbook .step-top-tabs {background:var(--gc-surface-variant); border-radius:var(--gc-radius-md); padding:var(--gc-space-1);}
@@ -268,9 +269,15 @@
 
 .gc-task-answer {container-type:inline-size; container-name:task-answer;}
 .gc-task-answer .gc-execution-workspace {margin:0 !important;}
-.gc-task-answer .gc-task-workspaces > .nav {
-    margin: 0; padding: .55rem .85rem; gap: .25rem;
-    border-bottom: 1px solid var(--gc-border);
+.gc-task-review-controls { display: flex; align-items: center; gap: var(--gc-space-2); max-width: 100%; }
+.gc-task-review-controls > .nav { margin: 0; }
+.gc-task-title-row--teacher > .step-task-card__header {
+    display: flex; flex: 1; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    margin: 0; padding: 0; border: 0; gap: var(--gc-space-2) var(--gc-space-4);
+}
+.gc-task-title-row--teacher .gc-task-heading { flex: 1 1 22rem; }
+.gc-task-title-row--teacher .gc-task-heading > :is(.gc-task-metadata__deadline, .gc-task-deadline-chain) {
+    padding-inline-start: var(--gc-space-3); border-inline-start: 1px solid var(--gc-border);
 }
 .gc-task-workspaces .tab-pane > .gc-execution-workspace,
 .gc-task-workspaces [data-execution-inline-review] { margin-block: 0 !important; }
@@ -661,7 +668,9 @@
 }
 .gc-task-title-group { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: .4rem .8rem; min-width: 0; }
 .gc-task-title-group :is(.gc-task-metadata__deadline,.gc-task-deadline-chain) { padding-inline-start:.8rem; border-inline-start:1px solid var(--gc-border); }
-.gc-task-title-row :is(h1,h2) { margin: 0; font-size: clamp(1.18rem,1.5vw,1.4rem); line-height: 1.3; overflow-wrap: anywhere; }
+.gc-task-title-row :is(h1,h2), .gc-task-title-row--teacher .step-task-card__title {
+    margin: 0; font-size: clamp(1.18rem,1.5vw,1.4rem); font-weight: 600; line-height: 1.3; overflow-wrap: anywhere;
+}
 .gc-task-title-meta, .gc-task-outcome { display:inline-flex; align-items:center; gap:.35rem; color:var(--gc-on-surface-muted); font-size:var(--gc-font-small); }
 .gc-task-title-meta { white-space:nowrap; }
 .gc-task-reward i { color:var(--gc-accent); }
@@ -709,8 +718,6 @@
     .gc-chat-sheet > .gc-task-title-row ~ .gc-task-layout { grid-column:2; grid-row:2; }
     .gc-chat-sheet > .gc-task-condition-disclosure { border: 0; border-radius: 0; }
     .gc-task-condition--reading > summary { display: none; }
-    .gc-task-reading-head { padding: 1.25rem clamp(1rem,3vw,3rem) .75rem 0; }
-    .gc-task-reading-head h2 { margin: 0; font-size: var(--gc-font-ui); font-weight: 600; }
     .gc-workbook .gc-chat-sheet > .gc-task-condition--reading > :is(.gc-task-context,.step-task-card__body) {
         padding: 0 clamp(1rem,3vw,3rem) 1.5rem 0; min-width: 0;
     }
@@ -722,17 +729,38 @@
     }
     .gc-chat-sheet .gc-task-answer > .gc-execution-workspace { margin: 0 !important; }
     .gc-chat-sheet > .gc-task-condition--reading {
-        max-height: var(--gc-reading-height); overflow-y: auto; overscroll-behavior-y: auto; scrollbar-width: thin;
+        max-height: var(--gc-pane-height); overflow-y: auto; overscroll-behavior-y: auto; scrollbar-width: thin;
     }
-    .gc-student-attempt .step-main { padding-bottom: 0; }
-    .gc-chat-sheet .gc-task-chat { border: 0; border-radius: 0; }
+    .gc-student-attempt .step-main,
+    .step-main:has(.step-content > .tab-pane.active > .gc-chat-sheet) { padding-bottom: 0; }
+    .gc-chat-sheet .gc-task-chat {
+        height: var(--gc-pane-height, 65dvh); border: 0; border-radius: 0;
+    }
+    .gc-chat-sheet .gc-chat-log { overscroll-behavior-y: auto; }
+    .gc-chat-sheet .step-progress-card:has([data-execution-student-list]) {
+        border: 0; border-radius: 0 !important; box-shadow: none;
+    }
+    .gc-chat-sheet [data-execution-student-list]:not([hidden]) {
+        display: flex; flex-direction: column; height: var(--gc-pane-height, 65dvh); margin: 0;
+    }
+    .gc-chat-sheet [data-execution-student-list] > .gc-section-header { flex: none; }
+    .gc-chat-sheet .step-progress-grid-wrap { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+    .gc-chat-sheet .step-progress-cardlet {
+        grid-template-columns: minmax(0, 1fr) minmax(2rem, 12%) minmax(6rem, 30%);
+        gap: var(--gc-space-3);
+    }
+    .gc-chat-sheet .step-progress-cardlet__meta { display: grid; justify-content: start; gap: .2rem; line-height: 1.25; }
+    .gc-chat-sheet .step-progress-cardlet__meta > span { white-space: normal; }
     .gc-chat-sheet .gc-chat-head { padding: .65rem 1rem; }
     .gc-chat-sheet .gc-chat-messages { padding-inline: 1rem; }
-    .gc-chat-sheet .step-progress-card:has(.gc-task-chat:not([hidden])) { border: 0; border-radius: 0; box-shadow: none; }
-    .gc-chat-sheet .gc-task-reading-head .gc-task-intro { flex-wrap: wrap; }
 }
 @media (max-width: 991.98px) {
     .gc-chat-sheet { display: block; }
+    .gc-chat-sheet [data-execution-student-list]:not([hidden]) {
+        display: flex; flex-direction: column; max-height: max(20rem, 65dvh);
+    }
+    .gc-chat-sheet [data-execution-student-list] > .gc-section-header { flex: none; }
+    .gc-chat-sheet .step-progress-grid-wrap { min-height: 0; overflow-y: auto; }
     .gc-chat-sheet > .gc-task-submit-action { margin: var(--gc-space-3) 0; }
     .gc-task-submit-action .btn { min-height: var(--gc-touch-target); }
     .gc-chat-sheet > .gc-task-layout, .gc-student-attempt .gc-chat-sheet > .gc-execution-workspace { margin-top: .75rem !important; }

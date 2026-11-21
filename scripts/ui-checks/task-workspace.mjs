@@ -55,6 +55,31 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
         };
         try{
             await page.setViewportSize({width,height:1000});
+            if (width >= 992) {
+                await visit('teacher',13,null,{open:false});
+                const list = page.locator('#student-solutions-13 [data-execution-student-list]');
+                const geometry = element => element.evaluate(el => ({
+                    bottom: el.getBoundingClientRect().bottom,
+                    pageY: window.scrollY,
+                }));
+                await list.waitFor();
+                const title = page.locator('#task13 > .gc-chat-sheet > .gc-task-title-row');
+                check('teacher-switches-chats-from-task-title',
+                    await title.getByRole('tab',{name:'Моё решение'}).isVisible()
+                    && await title.getByRole('button',{name:/Действия с задачей/}).isVisible(),width);
+                check('no-step-footer-in-task', !await page.locator('.step-page-nav').isVisible(),width);
+                const original = await geometry(list);
+                await list.locator('[data-student-id="1"]').click();
+                const chat = page.locator('#execution-workspace-13 .gc-task-chat:visible');
+                await chat.locator('.gc-chat-file').first().waitFor();
+                const selected = await geometry(chat);
+                await chat.getByRole('button',{name:'К списку учеников'}).click();
+                await list.waitFor();
+                const restored = await geometry(list);
+                check('teacher-roster-and-chat-keep-the-page-still',
+                    [selected,restored].every(view => Math.abs(view.pageY-original.pageY)<=1
+                        && Math.abs(view.bottom-original.bottom)<=2),width,{original,selected,restored});
+            }
             await visit('student',12,id(1));
             const root=page.locator('#execution-workspace-12');
             const worksheet=await root.evaluate(el=>{
