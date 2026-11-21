@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Services\CodeChecking\Access;
+use App\Services\TaskChat;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class TaskChatController extends Controller
+{
+    public function thread(Request $request, int $course, int $task, int $student, Access $access, TaskChat $chat)
+    {
+        $viewer = $request->user();
+        $assignment = $access->task($viewer, $course, $task);
+        if ($student !== (int) $viewer->id) {
+            abort_unless($access->teacher($viewer, $course), 403);
+            abort_unless(DB::table('course_students')->where(['course_id'=>$course, 'user_id'=>$student])->exists(), 404);
+        }
+
+        if ($request->isMethod('post')) {
+            $input = $request->validate([
+                'body' => ['required', 'string', 'max:3000'],
+                'attempt' => ['nullable', 'string', 'regex:/^(?:solution-[1-9][0-9]{0,17}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/D'],
+                'run_id' => ['nullable', 'uuid'],
+                'client_id' => ['required', 'uuid'],
+            ]);
+            $withTutor = $student === (int)$viewer->id && $viewer->role === 'student' && !$assignment->is_quiz
+                && \App\Services\Tutor\Context::enabledForCourse($course);
+            $chat->send($course, $task, $student, (int) $viewer->id, $input, $withTutor);
+            return response()->json(['saved'=>true], 200);
+        }
+
+        if ($request->boolean('socket_auth')) return response()->noContent()->header('Cache-Control', 'private, no-store');
+        $request->validate(['before'=>['nullable','string','max:1024']]);
+        if ($request->filled('before')) {
+            $cursor = json_decode(base64_decode(strtr($request->input('before'), '-_', '+/'), true) ?: '', true);
+            abort_unless(is_array($cursor) && ($cursor['_pointsToNextItems'] ?? null) === true, 422);
+            validator($cursor, [
+                'happened_at'=>['required','date'],
+                'kind'=>['required','integer','between:1,5'],
+                'event_id'=>['required','string','regex:/^[0-9a-f-]+ *$/Di'],
+            ])->validate();
+        }
+        $page = $chat->page($course, $assignment, $student);
+        if ((int)$viewer->id !== $student) {
+            $page['awaiting_reply'] = $chat->waitingStudents($course, [$task], $student)->isNotEmpty();
+        }
+        return response()->json($page)->header('Cache-Control', 'private, no-store');
+    }
+}

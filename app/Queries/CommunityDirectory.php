@@ -2,6 +2,7 @@
 
 namespace App\Queries;
 
+use App\Lesson;
 use App\Rank;
 use App\Solution;
 use App\User;
@@ -21,7 +22,12 @@ class CommunityDirectory
         $this->ranks = Rank::orderBy('from')->orderBy('id')->get();
     }
 
-    public function paginate(string $search, string $role): LengthAwarePaginator
+    public function rankOptions(): Collection
+    {
+        return $this->ranks->reverse()->pluck('name', 'id');
+    }
+
+    public function paginate(string $search, string $role, ?int $rankId = null): LengthAwarePaginator
     {
         $query = $this->visibleUsers();
         if ($role === 'teacher') {
@@ -32,9 +38,22 @@ class CommunityDirectory
         if ($search !== '') {
             $this->search($query, $search);
         }
+        if ($rankId !== null) {
+            [$rank, $values] = $this->rankExpression('id');
+            $query->whereRaw("CAST(($rank) AS DECIMAL(20,0)) = ?", [...$values, $rankId]);
+        }
 
-        $users = $this->ordered($query)->with('manual_rank')->paginate(self::PER_PAGE)
-            ->appends(array_filter(['q' => $search, 'role' => $role === 'all' ? '' : $role], fn ($value) => $value !== ''));
+        $stickers = Lesson::query()->whereHas('steps.tasks')
+            ->join('lesson_student_stats as progress', 'lessons.id', '=', 'progress.lesson_id')
+            ->join('stickers', 'lessons.sticker', '=', 'stickers.image')
+            ->where('progress.percent', '>', 90)->groupBy('progress.student_id')
+            ->selectRaw('progress.student_id, COUNT(DISTINCT stickers.id) AS earned');
+        [$rankOrder, $bindings] = $this->rankExpression('from');
+        $query->leftJoinSub($stickers, 'albums', fn ($join) => $join->on('albums.student_id', '=', 'users.id'))
+            ->selectRaw('COALESCE(albums.earned, 0) AS community_stickers')
+            ->orderByRaw("CAST(($rankOrder) AS DECIMAL(20,0)) DESC", $bindings)->orderByDesc('community_stickers');
+        $users = $this->ordered($query)->with(['manual_rank', 'roomCharacterGeneration'])->paginate(self::PER_PAGE)
+            ->appends(array_filter(['q' => $search, 'role' => $role === 'all' ? '' : $role, 'rank'=>$rankId], fn ($value) => $value !== '' && $value !== null));
 
         $users->getCollection()->each(function (User $user) {
             $score = (int) $user->community_score;
@@ -88,6 +107,24 @@ class CommunityDirectory
             ->where(fn ($query) => $query->whereNotIn('users.role', ['teacher', 'admin'])->orWhereNull('users.role'));
     }
 
+    private function rankExpression(string $attribute): array
+    {
+        // Manual ranks take priority; otherwise use the same ordered intervals as the cards.
+        $expression = $this->ranks->isEmpty() ? '' : 'CASE';
+        $bindings = [];
+        foreach ($this->ranks as $rank) {
+            $expression .= ' WHEN users.rank_id = ? THEN ?';
+            array_push($bindings, $rank->id, $rank->{$attribute});
+        }
+        foreach ($this->ranks as $rank) {
+            $expression .= ' WHEN users.community_score >= ? AND users.community_score < ? THEN ?';
+            array_push($bindings, $rank->from, $rank->to, $rank->{$attribute});
+        }
+        $expression .= $this->ranks->isEmpty() ? '?' : ' ELSE ? END';
+        $bindings[] = $this->ranks->first()?->{$attribute} ?? ($attribute === 'from' ? 0 : '');
+        return [$expression, $bindings];
+    }
+
     private function search(Builder $query, string $search): void
     {
         $pattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search).'%';
@@ -97,19 +134,7 @@ class CommunityDirectory
         $xp = "CAST(users.community_score AS {$scoreType})";
         $xp = $driver === 'mysql' ? "CONCAT({$xp}, ' XP')" : "({$xp} || ' XP')";
 
-        // Manual ranks take priority; otherwise use the same ordered intervals as the cards.
-        $rankName = $this->ranks->isEmpty() ? '' : 'CASE';
-        $rankBindings = [];
-        foreach ($this->ranks as $rank) {
-            $rankName .= ' WHEN users.rank_id = ? THEN ?';
-            array_push($rankBindings, $rank->id, $rank->name);
-        }
-        foreach ($this->ranks as $rank) {
-            $rankName .= ' WHEN users.community_score >= ? AND users.community_score < ? THEN ?';
-            array_push($rankBindings, $rank->from, $rank->to, $rank->name);
-        }
-        $rankName .= $this->ranks->isEmpty() ? '?' : ' ELSE ? END';
-        $rankBindings[] = $this->ranks->first()?->name ?? '';
+        [$rankName, $rankBindings] = $this->rankExpression('name');
 
         $query->where(function (Builder $matches) use ($search, $pattern, $operator, $xp, $rankName, $rankBindings) {
             $matches->whereRaw("users.name {$operator} ? ESCAPE '!'", [$pattern])

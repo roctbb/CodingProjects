@@ -137,9 +137,9 @@ class CodeCheckingController extends Controller
     public function recheck(Request $request, string $submission, Submissions $submissions)
     {
         $request->validate(['latest_configuration' => 'sometimes|boolean', 'stronger_ai' => 'sometimes|boolean', 'comment' => 'nullable|string|max:4000',
-            'review_solution_id'=>'nullable|integer|min:1',
+            'review_solution_id'=>'nullable|integer|min:1', 'expected_run_id'=>'sometimes|uuid',
             'model' => 'prohibited', 'gpt_model' => 'prohibited', 'gpt_timeout' => 'prohibited']);
-        $run = $submissions->recheck(CodeSubmission::findOrFail($submission), $request->user(), $request->boolean('latest_configuration'), $request->boolean('stronger_ai'), (string) $request->input('comment', ''),$request->filled('review_solution_id')?(int)$request->input('review_solution_id'):null);
+        $run = $submissions->recheck(CodeSubmission::findOrFail($submission), $request->user(), $request->boolean('latest_configuration'), $request->boolean('stronger_ai'), (string) $request->input('comment', ''),$request->filled('review_solution_id')?(int)$request->input('review_solution_id'):null, $request->input('expected_run_id'));
         return $this->json(['execution_id' => $run->id, 'state' => $run->state], 202);
     }
 

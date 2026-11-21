@@ -27,6 +27,11 @@ class UserExperienceTest extends TestCase
 
         DB::unprepared(<<<'SQL'
             CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, rank_id INTEGER, role TEXT DEFAULT 'student', is_hidden BOOLEAN DEFAULT 0, is_teacher BOOLEAN DEFAULT 0, is_trainee BOOLEAN DEFAULT 0, custom_title TEXT, custom_title_expires_at TEXT);
+            CREATE TABLE lessons (id INTEGER PRIMARY KEY, sticker TEXT);
+            CREATE TABLE program_steps (id INTEGER PRIMARY KEY, lesson_id INTEGER);
+            CREATE TABLE tasks (id INTEGER PRIMARY KEY, step_id INTEGER);
+            CREATE TABLE stickers (id INTEGER PRIMARY KEY, image TEXT);
+            CREATE TABLE lesson_student_stats (student_id INTEGER, lesson_id INTEGER, percent INTEGER);
             CREATE TABLE ranks (id INTEGER PRIMARY KEY, name TEXT, "from" INTEGER, "to" INTEGER);
             CREATE TABLE solutions (id INTEGER PRIMARY KEY, user_id INTEGER, course_id INTEGER, task_id INTEGER, mark INTEGER);
             CREATE TABLE completed_courses (id INTEGER PRIMARY KEY, user_id INTEGER, course_id INTEGER, mark TEXT);

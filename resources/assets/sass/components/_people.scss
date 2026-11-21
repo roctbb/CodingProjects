@@ -3,17 +3,21 @@
   --profile-avatar-frame-width: 0.38rem;
 }
 .gc-person-grid { display:grid; gap:var(--gc-space-3); grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr)); }
-.gc-person-card { align-items:start; align-content:start; color:var(--gc-on-surface); display:grid; grid-template-columns:5.75rem minmax(0,1fr); gap:var(--gc-space-3); min-width:0; overflow-wrap:anywhere; padding:var(--gc-space-3); position:relative; text-align:left; text-decoration:none; scroll-margin-block:5rem; }
+.gc-person-card { align-items:center; align-content:center; color:var(--gc-on-surface); display:grid; grid-template-columns:5.75rem minmax(0,1fr); gap:var(--gc-space-3); min-width:0; overflow-wrap:anywhere; padding:var(--gc-space-3); position:relative; text-align:left; text-decoration:none; scroll-margin-block:5rem; }
 a.gc-person-card:is(:hover,:focus-visible) { border-color:var(--gc-border-hover); box-shadow:none; color:var(--gc-on-surface); }
 .gc-person-card:target { outline:2px solid var(--gc-focus-color); outline-offset:2px; }
 .gc-person-card__portrait { align-items:center; display:flex; justify-content:center; min-width:0; min-height:5.75rem; }
+.gc-person-card__portrait .gc-person-character { object-fit:cover; background:var(--gc-surface-variant); }
+.gc-directory-rank { width:auto; max-width:100%; }
 .gc-person-card__portrait > .gc-avatar-frame { flex-shrink:0; }
 .gc-person-card__identity { display:grid; align-content:start; justify-items:start; gap:var(--gc-space-1); min-width:0; }
-.gc-person-card h2 { font-size:var(--gc-font-ui); font-weight:500; line-height:1.4; margin:0; }
+.gc-person-card h3 { font-size:var(--gc-font-ui); font-weight:600; line-height:1.4; margin:0; }
 .gc-person-card .profile-custom-title { font-size:var(--gc-font-caption); line-height:1.4; max-width:100%; margin:0; }
 .gc-person-card .profile-custom-title span { white-space:normal; }
 .gc-person-card__summary { display:flex; flex-wrap:wrap; align-items:baseline; gap:0 var(--gc-space-2); }
-.gc-person-card__summary .gc-rank-label { font-weight:500; font-size:var(--gc-font-small); }
+.gc-person-card__summary { color:var(--gc-on-surface-muted); font-size:var(--gc-font-small); }
+.gc-community-rank + .gc-community-rank { margin-top:var(--gc-space-6); }
+.gc-community-rank > h2 { font-size:var(--gc-font-heading); margin:0 0 var(--gc-space-2); }
 .gc-page-navigation { display:flex; align-items:center; gap:var(--gc-space-1); }
 .gc-directory-header > .gc-page-header { flex-wrap:nowrap; gap:var(--gc-space-2); }
 .gc-directory-search { display:flex; align-items:center; flex-wrap:wrap; gap:var(--gc-space-3); }
@@ -79,45 +83,24 @@ a.gc-person-card:is(:hover,:focus-visible) { border-color:var(--gc-border-hover)
 .gc-deadline-row__date { color: var(--gc-primary); font-size: var(--gc-font-small); font-weight: 500; }
 .gc-deadline-row__penalty { background: var(--gc-surface-variant); border-radius: var(--gc-radius-sm); color: var(--gc-on-surface-muted); font-size: var(--gc-font-caption); font-weight: 500; line-height: 1.5; padding-inline: var(--gc-space-1); white-space: nowrap; }
 .gc-deadline-row__state { white-space: nowrap; }
-.gc-deadline-task__state--pending, .gc-deadline-task__state--checking {color:var(--gc-primary);}
-.gc-deadline-task__state--revision, .gc-deadline-task__state--check_error {color:var(--gc-warning);}
-.gc-deadline-task__state--blocked {color:var(--gc-danger);}
 .gc-course-deadline-count {display:inline-grid; place-items:center; min-width:var(--gc-space-6); height:var(--gc-space-6); padding-inline:var(--gc-space-1); border-radius:50%; background:var(--gc-surface-variant); color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption); font-variant-numeric:tabular-nums;}
 .gc-course-deadline-count[data-deadline-badge-status="overdue"] {background:color-mix(in srgb,var(--gc-danger) 12%,var(--gc-surface)); color:var(--gc-danger);}
 .gc-course-deadline-count[data-deadline-badge-status="today"] {background:var(--gc-reward-bg); color:var(--gc-warning);}
 .gc-course-deadline-count[hidden] {display:none;}
-.gc-deadline-controls {padding:var(--gc-space-4); margin-bottom:var(--gc-space-4);}
-.gc-deadline-controls__heading {display:flex; flex-wrap:wrap; align-items:start; justify-content:space-between; gap:var(--gc-space-3);}
-.gc-deadline-controls__heading h2 {font-size:var(--gc-font-heading);}
-.gc-deadline-tools {display:grid; grid-template-columns:minmax(0,1fr) minmax(12rem,.5fr); align-items:center; gap:var(--gc-space-3); margin-top:var(--gc-space-4);}
-.gc-deadline-search {min-width:0; margin:0;}
-.gc-deadline-chapter {min-width:0;}
-.gc-deadline-filters {display:flex; flex-wrap:wrap; gap:var(--gc-space-1); margin-top:var(--gc-space-3);}
-.gc-deadline-reminders {margin-top:var(--gc-space-4); padding-top:var(--gc-space-3); border-top:1px solid var(--gc-panel-border);}
-.gc-deadline-reminders__form {display:flex; flex-wrap:wrap; align-items:center; gap:var(--gc-space-3); padding-top:var(--gc-space-3);}
-.gc-deadline-agenda {padding:0 var(--gc-space-4);}
-.gc-deadline-agenda__columns {display:grid; grid-template-columns:minmax(0,1fr) minmax(15rem,auto); gap:var(--gc-space-6); padding:var(--gc-space-3) 0; border-bottom:1px solid var(--gc-panel-border); color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption);}
-.gc-deadline-agenda__columns > :last-child {text-align:right;}
-.gc-deadline-task {display:grid; align-items:center; grid-template-columns:minmax(0,1fr) minmax(15rem,auto); gap:var(--gc-space-3) var(--gc-space-6); padding:var(--gc-space-4) 0; border-bottom:1px solid var(--gc-panel-border);}
-.gc-deadline-task:last-child {border-bottom:0;}
-.gc-deadline-task__body {display:grid; gap:var(--gc-space-1); min-width:0; overflow-wrap:anywhere; color:var(--gc-on-surface); text-decoration:none;}
-.gc-deadline-task__body:hover strong {color:var(--gc-link-hover);}
-.gc-deadline-task__body strong {font-size:var(--gc-font-ui); font-weight:500;}
-.gc-deadline-task__body small {color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption);}
-.gc-deadline-task__conditions {display:grid; gap:var(--gc-space-1); justify-items:end; min-width:0; text-align:right;}
-.gc-deadline-task__conditions .gc-deadline-popover__trigger {justify-content:flex-end; max-width:100%;}
-.gc-deadline-task[data-deadline-done="false"]:not([data-deadline-penalty="0"]) [data-deadline-current] {color:var(--gc-danger);}
-.gc-deadline-task__state {display:inline-flex; align-items:center; gap:var(--gc-space-1); color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption);}
-.gc-deadline-task__state--done {color:var(--gc-success);}
-.gc-deadline-task__last {font-size:var(--gc-font-caption);}
-[data-deadline-workspace] [hidden] {display:none !important;}
-@media(max-width:767.98px) {
- .gc-deadline-tools {grid-template-columns:minmax(0,1fr); gap:var(--gc-space-2);}
- .gc-deadline-agenda__columns {display:none;}
- .gc-deadline-task {grid-template-columns:minmax(0,1fr); gap:var(--gc-space-2);}
- .gc-deadline-task__conditions {justify-items:start; text-align:left;}
- .gc-deadline-task__conditions .gc-deadline-popover__trigger {justify-content:flex-start; text-align:left;}
-}
+.gc-deadline-controls { display:flex; align-items:baseline; flex-wrap:wrap; gap:.45rem 1rem; margin-block:1rem .75rem; }
+.gc-deadline-controls h2 { margin:0 auto 0 0; font-size:var(--gc-font-heading); }
+.gc-deadline-controls details > summary { color:var(--gc-on-surface-muted); cursor:pointer; font-size:var(--gc-font-small); }
+.gc-deadline-controls details[open] { flex-basis:100%; }
+.gc-deadline-tools,.gc-deadline-reminders__form { display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; margin-top:.5rem; }
+.gc-deadline-tools :is(.gc-deadline-search,select) { width:min(100%,17rem); margin:0; }
+.gc-deadline-agenda ul[data-deadline-list] { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,19rem),1fr)); gap:var(--gc-space-3); }
+.gc-deadline-task { min-width:0; padding:.8rem 1rem; display:flex; flex-direction:column; justify-content:space-between; gap:.6rem; }
+.gc-deadline-task__body { display:grid; gap:.15rem; overflow-wrap:anywhere; color:var(--gc-on-surface); text-decoration:none; }
+.gc-deadline-task__body:hover strong { color:var(--gc-link-hover); text-decoration:underline; }
+.gc-deadline-task__body small { color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption); }
+.gc-deadline-task__conditions { display:flex; flex-wrap:wrap; align-items:baseline; gap:.3rem; font-size:var(--gc-font-small); font-variant-numeric:tabular-nums; }
+.gc-deadline-task__conditions .gc-deadline-popover__trigger { font:inherit; color:var(--gc-on-surface); }
+[data-deadline-workspace] [hidden] { display:none !important; }
 .solution-task-card { overflow: hidden; }
 .solution-task-card .gc-section-header { border: 0; flex-wrap: wrap; gap: var(--gc-space-3); padding: var(--gc-space-3) var(--gc-space-4); }
 .solution-task-card__title { flex: 1 1 6rem; min-width: 0; overflow-wrap: anywhere; }

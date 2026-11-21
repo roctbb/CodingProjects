@@ -9,14 +9,16 @@
         }
     @endphp
     @foreach ($tasks as $key => $task)
-        <div class="tab-pane fade @if ($zero_theory && $loop->first) show active @endif"
-             id="task{{$task->id}}"
-             role="tabpanel" aria-labelledby="tasks-tab{{$task->id}}">
+        @continue(!empty($studentAttempt) && $task->id !== $attemptTask->id)
+        <div @if(empty($studentAttempt))
+                 class="tab-pane fade @if ($initialTaskId == $task->id) show active @endif"
+                 id="task{{$task->id}}" role="tabpanel" aria-labelledby="tasks-tab{{$task->id}}"
+             @endif>
             @php
                 $isInsider = \Request::is('insider/*');
                 $nativeTaskChecker = $isInsider && \Illuminate\Support\Facades\Schema::hasTable('code_task_checkers') ? \App\CodeTaskChecker::find($task->id) : null;
                 $isManager = $isInsider && ($course->teachers->contains($user) || $user->role=='admin');
-                $deadline = $isInsider ? $task->getDeadline($course->id) : null;
+                $deadline = $isInsider ? $task->getDeadline($course->id, $isManager ? null : $user->id) : null;
                 $latestUserSolution = $isInsider && Auth::check() ? $task->latestSolutionForUser(Auth::id()) : null;
                 $hasUserSolution = $latestUserSolution !== null;
                 $taskType = $task->is_code ? 'code' : ($task->is_quiz ? 'quiz' : 'text');
@@ -32,25 +34,53 @@
                         : ((int) $latestUserSolution->mark >= (int) $task->max_mark ? 'is-complete' : 'is-submitted');
                 }
                 $taskScoreBadgeClass = $hasUserSolution ? $latestUserSolution->scoreBadgeClass('bg-body') : 'bg-body';
+                $visibleMaterials = $taskMaterials->get($task->id, collect());
+                $editorStarter = null;
+                if (!$isManager && !$task->is_quiz && ($nativeTaskChecker?->config['submission_modes'] ?? []) === ['code']
+                    && $visibleMaterials->where('kind', 'starter')->count() === 1) {
+                    $file = $visibleMaterials->firstWhere('kind', 'starter');
+                    if (!$file->read_only && strtolower(pathinfo($file->path, PATHINFO_EXTENSION)) !== 'zip') {
+                        $editorStarter = $file;
+                        $visibleMaterials = $visibleMaterials->reject(fn ($item) => $item->id === $file->id);
+                    }
+                }
+                $studentSheet = $isInsider && !$isManager && !$task->is_quiz;
             @endphp
-            <div class="gc-task-sheet">
-            <details class="gc-task-condition-disclosure" open>
-            <summary><div class="gc-task-intro {{ $isManager ? 'is-teacher' : 'is-student' }}">
+            <div class="gc-task-sheet @if($isInsider && $task->is_quiz) gc-section step-task-card step-task-card--quiz gc-quiz-card @elseif($isInsider) gc-task-sheet--split gc-chat-sheet @endif">
+            @if($studentSheet)
+                <header class="gc-task-title-row">
+                    <div class="gc-task-title-group">
+                    @if(!empty($studentAttempt))<h1>{{ $task->name }}</h1>@else<h2>{{ $task->name }}</h2>@endif
+                    @include('steps.partials.task-title-rewards')
+                    @include('steps.partials.task-timing')
+                    </div>
+                    @php
+                        $outcome = \App\Support\TaskOutcome::forStudent($task, $user->id, ($nativeTaskProgress ?? collect())->get($task->id)?->get($user->id));
+                    @endphp
+                    <div class="gc-task-outcome" data-task-outcome data-tone="{{ $outcome['tone'] }}" aria-live="polite">
+                        <span>{{ $outcome['label'] }}</span>
+                        <small title="Лучшая оценка за решение" @if($outcome['score'] === null) hidden @endif>{{ $outcome['score'] }}</small>
+                    </div>
+                </header>
+            @endif
+            @if($isInsider && $task->is_quiz)
                 @include('steps.partials.task_header')
-                @if($isInsider && !$isManager && !$task->is_quiz)
-                    @include('steps.partials.task-goal')
+            @else
+            <details class="gc-task-condition-disclosure" data-task-condition="{{ $task->id }}"
+                     @if($latestUserSolution?->submitted || ($submittedCodeTasks ?? collect())->has($task->id)) data-submitted @endif
+                     @if(($attemptTask ?? null)?->id !== $task->id) open @endif>
+            <summary>
+                @if($studentSheet || !empty($studentAttempt))
+                    <span>Условие</span>
+                @else
+                <span class="gc-condition-label">Условие задачи · {{ $task->name }}</span>
+                <div class="gc-task-intro {{ $isManager ? 'is-teacher' : 'is-student' }}">
+                @include('steps.partials.task_header')
+            </div>
                 @endif
-            </div><i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
+                <i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
+            @endif
                 <div class="gc-task-context">
-                    @if ($task->is_star)
-                        <div class="step-task-note step-task-note--optional" role="note">
-                            <span class="text-warning-emphasis flex-shrink-0"><i class="fas fa-star"></i></span>
-                            <div class="min-width-0">
-                                <strong class="d-block">Необязательная задача</strong>
-                                <span class="text-muted small">За ее решение вы получите дополнительный опыт.</span>
-                            </div>
-                        </div>
-                    @endif
                     @if (!empty($latestAiPayload['summary']))
                         <section class="task-ai-summary-card mb-3" id="task-ai-summary-{{$task->id}}">
                             <div class="task-ai-summary__head">
@@ -75,12 +105,28 @@
                             @endif
                         </section>
                     @endif
+                    @if($visibleMaterials->isNotEmpty())
+                        <section class="gc-task-materials" aria-labelledby="task-materials-title-{{ $task->id }}">
+                            <h3 id="task-materials-title-{{ $task->id }}" @if($studentSheet && $visibleMaterials->count() === 1) class="visually-hidden" @endif>Материалы задания</h3>
+                            <ul class="gc-task-materials__list list-unstyled mb-0">
+                                @foreach($visibleMaterials as $material)
+                                    <li><a class="gc-task-materials__file" href="{{ route('code-task-files.download', ['course' => $course->id, 'task' => $task->id, 'attachment' => $material->id]) }}" target="_blank" rel="noopener">
+                                        <i class="fas fa-file-arrow-down" aria-hidden="true"></i>
+                                        <span>{{ $material->path }}</span>
+                                        @if($material->kind === 'starter')<small>Шаблон кода</small>@elseif($material->kind === 'resource')<small>Данные для программы</small>@endif
+                                        @if($material->read_only)<small>Только чтение</small>@endif
+                                        @if(!$material->is_public)<small><i class="fas fa-lock" aria-hidden="true"></i> Для преподавателя</small>@endif
+                                    </a></li>
+                                @endforeach
+                            </ul>
+                        </section>
+                    @endif
                     <div class="gc-task-condition-content">
                         <div class="markdown step-task-card__body">
                             {!! parsedown_math($task->text) !!}
                             @if ($isInsider)
                                 @php $blocked = $task->isBlocked(Auth::User()->id, $course->id); @endphp
-                                @if ($blocked)
+                                @if ($blocked && !$task->is_quiz)
                                     <div class="step-task-note step-task-note--danger bg-danger-subtle text-danger-emphasis mb-3" role="note">
                                         <span class="flex-shrink-0"><i class="fas fa-lock"></i></span>
                                         <div class="min-width-0">
@@ -113,41 +159,22 @@
                                         </div>
                                     </div>
                                 @endif
-                                @if ($task->is_quiz && !$blocked)
-                                    @include('steps.partials.quiz-answer-form')
+                                @if(!$task->is_quiz)
+                                    <div class="step-task-status-row {{ $blocked ? 'is-blocked' : $taskStatusClass }} @if(!$blocked) d-none @endif" data-task-status-row>
+                                        <span class="badge rounded-pill {{ $blocked ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-body step-task-score' }}"
+                                              id="TSK_{{$task->id}}">{{ $blocked ? '0 XP' : '' }}</span>
+                                        <span class="small text-muted" id="TSK_COM_{{$task->id}}">{{ $blocked ? 'Задача заблокирована' : '' }}</span>
+                                    </div>
                                 @endif
-                                <div class="step-task-status-row {{ $blocked ? 'is-blocked' : $taskStatusClass }} @if (!$blocked && !($task->is_quiz && $hasUserSolution)) d-none @endif"
-                                     data-task-status-row>
-                                    @if ($blocked)
-                                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-medium" id="TSK_{{$task->id}}">0 XP</span>
-                                        <span class="small text-muted" id="TSK_COM_{{$task->id}}">Задача заблокирована</span>
-                                    @elseif ($task->is_quiz && $hasUserSolution)
-                                        <span class="badge rounded-pill {{ $taskScoreBadgeClass }} step-task-score"
-                                              id="TSK_{{$task->id}}">{{$latestUserSolution->mark}} XP</span>
-                                        <span class="small text-muted" id="TSK_COM_{{$task->id}}">{{$latestUserSolution->comment}}</span>
-                                    @else
-                                        <span class="badge rounded-pill bg-body step-task-score" id="TSK_{{$task->id}}"></span>
-                                        <span class="small text-muted" id="TSK_COM_{{$task->id}}"></span>
-                                    @endif
-                                </div>
                             @endif
                         </div>
                     </div>
-                    @if($taskMaterials->get($task->id)?->isNotEmpty())
-                        <section class="gc-task-materials" aria-labelledby="task-materials-title-{{ $task->id }}">
-                            <h3 id="task-materials-title-{{ $task->id }}">Материалы задания</h3>
-                            <ul class="gc-task-materials__list list-unstyled mb-0">
-                                @foreach($taskMaterials->get($task->id) as $material)
-                                    <li><a class="gc-task-materials__file" href="{{ route('code-task-files.download', ['course' => $course->id, 'task' => $task->id, 'attachment' => $material->id]) }}" target="_blank" rel="noopener">
-                                        <i class="fas fa-file-arrow-down" aria-hidden="true"></i>
-                                        <span>{{ $material->path }}</span>
-                                        @if($material->kind === 'starter')<small>Шаблон кода</small>@elseif($material->kind === 'resource')<small>Данные для программы</small>@endif
-                                        @if($material->read_only)<small>Только чтение</small>@endif
-                                        @if(!$material->is_public)<small><i class="fas fa-lock" aria-hidden="true"></i> Для преподавателя</small>@endif
-                                    </a></li>
-                                @endforeach
-                            </ul>
-                        </section>
+                    @if($studentSheet && !$blocked && ($nativeTaskChecker ? empty($nativeTaskChecker->config['requires_conversion']) : !$task->is_code))
+                        <div data-task-submit-slot>
+                            <div class="gc-task-submit-action">
+                                <button type="button" class="btn btn-primary" data-task-compose="execution-workspace-{{ $task->id }}">Сдать решение</button>
+                            </div>
+                        </div>
                     @endif
                     @if ($isManager)
                         <div class="modal fade" id="task-ai-summary-modal-{{$task->id}}" tabindex="-1" aria-labelledby="task-ai-summary-title-{{$task->id}}" aria-hidden="true">
@@ -200,9 +227,12 @@
                         </div>
                     @endif
                 </div>
-            </details>
+            @unless($isInsider && $task->is_quiz)</details>@endunless
             <div class="gc-task-layout {{ $isManager ? 'is-teacher' : 'is-student' }} @if($task->is_quiz) is-quiz @endif">
                 <div class="gc-task-answer">
+                @if($isInsider && $task->is_quiz)
+                    @include('steps.partials.quiz-response')
+                @endif
             @if (\Request::is('insider/*'))
 
                 @if (!$task->is_quiz)
@@ -297,17 +327,13 @@
                                                 $solutionsCount = $filtered->count() + ($nativeProgress['attempts'] ?? 0);
                                                 $searchTitle = trim($student->name . ' ' . $stateLabel . ' ' . $mark . ' ' . $task->max_mark);
                                             @endphp
-                                            @if($solutionsCount > 0)
                                             <a class="step-progress-cardlet {{ $stateClass }}"
                                                href="{{url('/insider/courses/'.$course->id.'/steps/'.$step->id).'?student='.$student->id.'&task='.$task->id.'#task'.$task->id}}"
                                                    data-execution-student="#execution-workspace-{{ $task->id }}"
                                                    data-student-id="{{ $student->id }}" data-student-name="{{ $student->name }}"
+                                               @if(!$solutionsCount) data-without-attempts @endif
                                                data-step-progress-card
                                                data-step-progress-text="{{ $searchTitle }}">
-                                            @else
-                                            <div class="step-progress-cardlet {{ $stateClass }}" aria-disabled="true"
-                                                 data-step-progress-card data-step-progress-text="{{ $searchTitle }}">
-                                            @endif
                                                 <span class="step-progress-cardlet__head">
                                                     <span class="step-progress-student">
                                                         <span>{{$student->name}}</span>
@@ -320,6 +346,7 @@
                                                 <span class="step-progress-cardlet__meta">
                                                     <span>{{ $stateLabel }}</span>
                                                     <span>
+                                                        <span data-chat-waiting @unless(($waitingStudents ?? collect())->get($task->id)?->has($student->id)) hidden @endunless><i class="far fa-comment" aria-hidden="true"></i> Ждёт ответа</span>
                                                         @if($solutionsCount > 0)
                                                             {{ $solutionsCount }} {{ trans_choice('сдача|сдачи|сдач', $solutionsCount) }}
                                                             @if($latestSubmittedAt)
@@ -330,7 +357,7 @@
                                                         @endif
                                                     </span>
                                                 </span>
-                                            @if($solutionsCount > 0)</a>@else</div>@endif
+                                            </a>
                                         @endforeach
                                         </div>
                                         <div class="step-progress-empty text-muted small text-center d-none" data-step-progress-empty>Ничего не найдено</div>
@@ -356,7 +383,7 @@
                     @if(!$nativeTaskChecker && !$isManager) @include('steps.partials.native-workspace', ['nativeTeacher' => false, 'nativeHistoryOnly' => true]) @endif
                 @endif
 
-                @if($isInsider && $nativeTaskChecker && !$isManager)
+                @if($isInsider && !$task->is_quiz && $nativeTaskChecker && !$isManager)
                     @include('steps.partials.native-workspace', ['nativeTeacher' => $isManager])
                 @endif
                 @if (!$task->is_quiz && !$task->is_code && !$nativeTaskChecker)
@@ -370,5 +397,5 @@
             </div>
         </div>
     @endforeach
-    <div data-step-content-tabs data-zero-theory="{{ $zero_theory ? 'true' : 'false' }}" hidden></div>
+    @if(empty($studentAttempt))<div data-step-content-tabs data-zero-theory="{{ $zero_theory ? 'true' : 'false' }}" hidden></div>@endif
 @endif

@@ -1,8 +1,68 @@
 import * as bootstrap from 'bootstrap';
 
+export const chatDesktop = () => matchMedia('(min-width: 992px)');
+
+function readingHeading(condition, desktop) {
+    const summary = condition.querySelector(':scope > summary');
+    const current = condition.querySelector(':scope > .gc-task-reading-head');
+    const intro = summary.querySelector('.gc-task-intro');
+    if (desktop && !current && intro) {
+        const head = document.createElement('div');
+        head.className = 'gc-task-reading-head';
+        head.append(intro);
+        summary.after(head);
+    } else if (!desktop && current) {
+        const intro = current.querySelector('.gc-task-intro');
+        if (intro) summary.insertBefore(intro, summary.querySelector(':scope > i'));
+        current.remove();
+    }
+    if(desktop){
+        condition.tabIndex=0;
+        condition.setAttribute('aria-label','Условие задачи');
+    }else{
+        condition.removeAttribute('tabindex');
+        condition.removeAttribute('aria-label');
+    }
+    condition.classList.toggle('gc-task-condition--reading', desktop);
+}
+
 export default function initWorkbookNavigation() {
     const workbook = document.querySelector('[data-step-details-page]');
     if (workbook) {
+        const phone = matchMedia('(max-width: 767.98px)');
+        const wide = matchMedia('(min-width: 1200px)');
+        const desktop = chatDesktop();
+        const conditions = workbook.querySelectorAll('[data-task-condition]');
+        function applyConditionLayout() {
+            for (const condition of conditions) {
+                const selected = workbook.dataset.attemptTask === condition.dataset.taskCondition;
+                if (condition.closest('.gc-chat-sheet')) {
+                    condition.open = desktop.matches || !(selected || condition.hasAttribute('data-submitted'));
+                    readingHeading(condition, desktop.matches);
+                    const submitSlot = condition.querySelector('[data-task-submit-slot]');
+                    if (submitSlot) {
+                        const action = condition.closest('.gc-chat-sheet').querySelector('.gc-task-submit-action');
+                        if (desktop.matches) submitSlot.append(action);
+                        else condition.after(action);
+                    }
+                } else {
+                    condition.open = wide.matches || !(selected || (phone.matches && condition.hasAttribute('data-submitted')));
+                }
+            }
+        }
+        applyConditionLayout();
+        desktop.addEventListener('change', applyConditionLayout);
+        phone.addEventListener('change', applyConditionLayout);
+        wide.addEventListener('change', applyConditionLayout);
+
+        function recordSubmission(event) {
+            const condition = [...conditions].find(el => el.dataset.taskCondition === String(event.detail?.taskId));
+            if (!condition || condition.hasAttribute('data-submitted')) return;
+            condition.setAttribute('data-submitted', '');
+            if (condition.closest('.gc-chat-sheet') ? !desktop.matches : phone.matches) condition.open = false;
+        }
+        workbook.addEventListener('gc:attempt-submitted', recordSubmission);
+        document.addEventListener('gc:task-checked', recordSubmission);
         document.addEventListener('gc:task-checked', function (event) {
             if (!event.detail?.taskId) return;
             workbook.querySelectorAll('[data-task-state]').forEach(function (state) {

@@ -19,33 +19,12 @@
 
     <div class="courses-page">
 
-    @if($user->isBirthday())
-        <div class="gc-card border p-3 mb-3 alert-dismissible fade show position-relative" role="alert">
-            <h5 class="mb-0 pe-4">
-                <i class="fas fa-wand-magic-sparkles text-warning" aria-hidden="true"></i>
-                С днем рождения!!!
-                <i class="fas fa-wand-magic-sparkles text-warning" aria-hidden="true"></i>
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
-        </div>
-    @endif
-
-    <div class="gc-page-masthead mb-3">
-    <x-gc-page-header title="Мои курсы" mark="rocket">
-        <x-slot:middle>@include('courses.partials.home_activity_feed', ['compact' => true])</x-slot:middle>
-        @if ($isTeacher)
-            <a class="btn btn-primary fw-medium" href="{{ url('/insider/courses/create/') }}"><i class="fas fa-plus me-1"></i>Создать курс</a>
-        @else
-            <form autocomplete="off" class="gc-invite-form" method="get" action="{{ url('insider/invite') }}">
-                @csrf
-                <i class="fas fa-ticket-alt text-muted d-none d-sm-inline"></i>
-                <input type="text" class="form-control" name="invite" maxlength="255" placeholder="Код приглашения" aria-label="Код приглашения на курс">
-                <button type="submit" class="btn btn-primary fw-medium text-nowrap">Добавить</button>
-            </form>
-        @endif
-    </x-gc-page-header>
-
+    <div class="{{ $isTeacher ? 'gc-page-masthead' : 'gc-student-home' }} mb-3">
     @if ($isTeacher)
+        <x-gc-page-header title="Мои курсы" mark="rocket">
+            <x-slot:middle>@include('courses.partials.home_activity_feed', ['compact' => true])</x-slot:middle>
+            <a class="btn btn-primary fw-medium" href="{{ url('/insider/courses/create/') }}"><i class="fas fa-plus me-1"></i>Создать курс</a>
+        </x-gc-page-header>
         <div class="d-flex align-items-center justify-content-between mb-3">
             <x-gc-tab-strip>
             <ul class="nav gc-page-tabs" id="coursesTabs" role="tablist">
@@ -67,14 +46,48 @@
             </ul>
             </x-gc-tab-strip>
         </div>
+    @else
+        <div class="gc-student-home-heading">
+            <h1>Мои курсы</h1>
+            @include('courses.partials.home_activity_feed', ['compact' => true])
+            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#course-invite"
+                    aria-controls="course-invite" aria-expanded="{{ $errors->has('invite') ? 'true' : 'false' }}"
+                    aria-label="Добавить курс" title="Добавить курс">
+                <i class="fas fa-plus" aria-hidden="true"></i>@if($activeCourses->isEmpty())<span class="ms-2">Добавить курс</span>@endif
+            </button>
+        </div>
+        <div class="collapse @if($errors->has('invite')) show @endif" id="course-invite">
+            <form autocomplete="off" class="gc-invite-form mt-2" method="get" action="{{ url('insider/invite') }}">
+                <input type="text" class="form-control" name="invite" maxlength="255" required value="{{ old('invite') }}"
+                       placeholder="Код приглашения" aria-label="Код приглашения на курс">
+                <button type="submit" class="btn btn-outline-secondary">Присоединиться</button>
+            </form>
+            @error('invite')<p class="gc-field__error" role="alert">{{ $message }}</p>@enderror
+        </div>
     @endif
     </div>
-    @include('market.partials.promotion-banner')
+    @if($isTeacher)
+        @include('market.partials.promotion-banner')
+    @endif
 
     <div class="tab-content" id="courses">
         <div class="tab-pane fade show active" id="active" role="tabpanel">
-            <div class="row g-4">
-                <div class="col-12 col-xl-9">
+            <div class="{{ $isTeacher ? 'row g-4' : 'gc-home-layout' }}">
+                <div class="{{ $isTeacher ? 'col-12 col-xl-9' : 'gc-home-main' }}">
+                    @include('courses.partials.home_project_journey')
+                    <div class="gc-home-study">
+
+                    @if($user->isBirthday())
+                        <div class="gc-card border p-3 mb-3 alert-dismissible fade show position-relative" role="alert">
+                            <h5 class="mb-0 pe-4">
+                                <i class="fas fa-wand-magic-sparkles text-warning" aria-hidden="true"></i>
+                                С днем рождения!!!
+                                <i class="fas fa-wand-magic-sparkles text-warning" aria-hidden="true"></i>
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                        </div>
+                    @endif
+
                     @foreach($notifications as $notification)
                         @php
                             $notificationType = in_array($notification->data['type'] ?? 'info', ['success', 'warning', 'danger', 'info']) ? $notification->data['type'] : 'info';
@@ -94,8 +107,6 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
                         </div>
                     @endforeach
-
-                    @include('courses.partials.home_project_journey')
 
                     @if($isTeacher && $pendingSolutionsTotal)
                         @php
@@ -131,7 +142,7 @@
                         @include('courses.partials.home_empty_state', [
                             'icon' => 'fas fa-rocket',
                             'title' => 'Вы пока не записаны на курсы',
-                            'text' => 'Введите инвайт от преподавателя или выберите открытый курс ниже.',
+                            'text' => 'Нажмите «Добавить курс», чтобы ввести код преподавателя, или выберите открытый курс ниже.',
                         ])
                     @endif
 
@@ -162,9 +173,14 @@
                             </div>
                         </div>
                     @endif
+                    </div>
                 </div>
-
-                @include('courses.partials.home_profile_panel')
+                <div class="{{ $isTeacher ? 'col-12 col-xl-3' : 'gc-home-side' }}">
+                    @if(!$isTeacher)
+                        @include('market.partials.promotion-banner', ['compact' => true])
+                    @endif
+                    @include('courses.partials.home_profile_panel')
+                </div>
             </div>
         </div>
 
@@ -188,7 +204,7 @@
                             ])
                         @endif
                     </div>
-                    @include('courses.partials.home_profile_panel')
+                    <div class="col-12 col-xl-3">@include('courses.partials.home_profile_panel')</div>
                 </div>
             </div>
 
@@ -209,7 +225,7 @@
                             ])
                         @endif
                     </div>
-                    @include('courses.partials.home_profile_panel')
+                    <div class="col-12 col-xl-3">@include('courses.partials.home_profile_panel')</div>
                 </div>
             </div>
         @endif

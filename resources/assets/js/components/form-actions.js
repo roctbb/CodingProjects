@@ -55,12 +55,18 @@ export default function initFormActions() {
         const attempts = form.querySelector('[data-quiz-attempts]');
         const message = form.querySelector('[data-quiz-error]');
         const taskId = form.dataset.taskId;
+        const quiz = form.closest('[data-quiz-response]');
+        const entry = form.closest('[data-quiz-entry]');
         const data = new URLSearchParams(new FormData(form));
         let exhausted = false;
         const updateAttempts = result => {
             if (result?.attempts_remaining == null) return;
             exhausted = result.attempts_remaining === 0;
             attempts.textContent = exhausted ? 'Попытки исчерпаны.' : `Осталось попыток: ${result.attempts_remaining} из ${result.max_attempts}.`;
+            if (entry) {
+                entry.hidden = exhausted;
+                quiz.querySelector('[data-quiz-exhausted]').hidden = !exhausted;
+            }
         };
 
         fields.disabled = true;
@@ -79,6 +85,18 @@ export default function initFormActions() {
                 }
             }
             if (taskComment) taskComment.textContent = response.data.comment || '';
+            if (entry && response.data.correct != null) {
+                quiz.querySelector('[data-quiz-given]').textContent = response.data.answer;
+                const historyLink = quiz.querySelector('[data-quiz-history]');
+                historyLink.href = response.data.attempt_url;
+                historyLink.hidden = false;
+                entry.querySelector('summary').hidden = false;
+                entry.open = false;
+                form.reset();
+                const result = quiz.querySelector('[data-task-status-row]');
+                result.tabIndex = -1;
+                result.focus({preventScroll:true});
+            }
             document.dispatchEvent(new CustomEvent('gc:task-checked', {
                 detail: { taskId, mark: response.data.mark, correct: response.data.correct, exhausted },
             }));

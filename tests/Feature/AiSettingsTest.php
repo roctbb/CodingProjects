@@ -79,6 +79,27 @@ class AiSettingsTest extends TestCase
         $this->assertStringContainsString('href="' . route('settings.ai.edit') . '"', $response->getContent());
     }
 
+    public function test_admin_can_change_tutor_limits_and_restore_server_values(): void
+    {
+        $this->login();
+        $settings = app(AiSettings::class);
+        $payload = $this->payload();
+        $this->get(self::URL)->assertOk()->assertSee('Токены на всю платформу за месяц');
+        $payload['settings']['tutor_limits']['platform_monthly_tokens'] = '9500000';
+        $payload['settings']['tutor_limits']['daily_coins'] = '0';
+        $this->put(self::URL, $payload)->assertSessionHasNoErrors();
+        $this->assertSame(9500000, $settings->all()['tutor_limits']['platform_monthly_tokens']);
+        $this->assertSame(0, $settings->all()['tutor_limits']['daily_coins']);
+        $payload['settings']['tutor_limits']['platform_monthly_tokens'] = -1;
+        $this->put(self::URL, $payload)->assertSessionHasErrors('settings.tutor_limits.platform_monthly_tokens');
+        $this->assertSame(9500000, $settings->all()['tutor_limits']['platform_monthly_tokens']);
+        unset($payload['settings']['tutor_limits']);
+        $this->put(self::URL, $payload)->assertSessionHasNoErrors();
+        $this->assertSame(9500000, $settings->all()['tutor_limits']['platform_monthly_tokens']);
+        $this->delete(self::URL)->assertRedirect();
+        $this->assertSame(config('tutor.platform_monthly_tokens'), $settings->all()['tutor_limits']['platform_monthly_tokens']);
+    }
+
     public static function deniedRoles(): array
     {
         return [['student'], ['teacher'], ['novice']];

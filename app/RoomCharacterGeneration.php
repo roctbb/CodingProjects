@@ -35,9 +35,9 @@ class RoomCharacterGeneration extends Model
             });
     }
 
-    public function previewPath(): string
+    public function previewPath(bool $portrait = false): string
     {
-        return 'room-character-previews/v1-' . hash('sha256', $this->result_path) . '.png';
+        return 'room-character-previews/'.($portrait ? 'portrait-v1-' : 'v1-') . hash('sha256', $this->result_path) . '.png';
     }
 
     public static function recentForShowcase()

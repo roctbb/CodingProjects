@@ -25,6 +25,11 @@ class RouteServiceProvider extends ServiceProvider
     {
         //
         Route::pattern('id', '[0-9]+');
+        $this->callAfterResolving(\Illuminate\Cache\RateLimiter::class, function ($limiter) {
+            $limiter->for('task-chat', fn ($request) => $request->isMethod('post')
+                ? \Illuminate\Cache\RateLimiting\Limit::perMinute(12)->by('chat:'.$request->user()->id)
+                : \Illuminate\Cache\RateLimiting\Limit::none());
+        });
         parent::boot();
     }
 

@@ -5,6 +5,10 @@ Illuminate\Support\Facades\DB::purge('sqlite');
 $store=app(App\Services\CodeChecking\Artifacts::class);
 $db=Illuminate\Support\Facades\DB::class;
 $baseTask=App\Task::findOrFail(12);
+$quiz = $baseTask->replicate();
+$quiz->forceFill(['id'=>18, 'name'=>'Размер одного байта', 'text'=>'Сколько бит в одном байте?',
+    'sort_index'=>18, 'is_code'=>false, 'is_quiz'=>true, 'max_attempts'=>2, 'max_mark'=>3,
+    'quiz_choices'=>['mode'=>'single', 'options'=>[['label'=>'4','correct'=>false],['label'=>'8','correct'=>true]]]])->save();
 foreach ([13=>['Разбор алгоритма','gpt'],14=>['Объяснение решения','manual'],15=>['Архив проекта','tests'],16=>['Много тестов','tests'],17=>['Исследование в тетрадке','gpt']] as $id=>[$name,$type]) {
     $copy=$baseTask->replicate();$copy->id=$id;$copy->name=$name;$copy->text='Объясните работу алгоритма и приложите своё решение.';
     $copy->sort_index=$id;$copy->is_code=$type!=='manual';$copy->save();

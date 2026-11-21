@@ -1,18 +1,19 @@
 <div class="col-12" data-sticker-field>
-    <label for="sticker" class="form-label">Ссылка на стикер</label>
-    <input id="sticker" type="text" inputmode="url" class="form-control rounded-3 @error('sticker') is-invalid @enderror"
-           name="sticker" value="{{ old('sticker', $sticker ?? null) }}" maxlength="255"
-           placeholder="https://…/sticker.png" aria-describedby="sticker-help sticker-error">
-    <div id="sticker-help" class="form-text">
-        Загрузите изображение в <a href="https://storage.geekclass.ru" target="_blank" rel="noopener">GeekStorage</a>
-        и вставьте прямую ссылку. Оставьте поле пустым, чтобы не выдавать стикер.
-        Стикер выдаётся только за уроки с задачами.
+    <label for="sticker" class="form-label">Наклейка за урок</label>
+    <select id="sticker" class="form-select @error('sticker') is-invalid @enderror" name="sticker" aria-describedby="sticker-help">
+        <option value="">Без наклейки</option>
+        @foreach($stickerGroups as $collection => $items)
+            <optgroup label="{{ $collection }}">
+                @foreach($items as $item)
+                    <option value="{{ $item->image }}" @selected(old('sticker', $sticker ?? '') === $item->image)>{{ $item->name }}</option>
+                @endforeach
+            </optgroup>
+        @endforeach
+    </select>
+    <div id="sticker-help" class="form-text">Выдаётся за результат выше 90% в уроке с задачами.
+        @if(auth()->user()?->role === 'admin')<a href="{{ route('settings.stickers.index') }}" target="_blank" rel="noopener">Каталог наклеек</a>@endif
     </div>
-    @error('sticker')
-        <div id="sticker-error" class="invalid-feedback">Укажите прямую ссылку на изображение по HTTP или HTTPS (до 255 символов).</div>
-    @enderror
-    <div id="sticker-preview" class="mt-3" hidden>
-        <img id="sticker-preview-image" class="gc-sticker" height="128" style="max-width: 100%; object-fit: contain;" alt="Предпросмотр стикера">
-    </div>
-    <div id="sticker-preview-error" class="form-text text-danger" role="status" hidden>Не удалось загрузить изображение. Проверьте прямую ссылку.</div>
+    @error('sticker')<div class="invalid-feedback">Выберите наклейку из каталога.</div>@enderror
+    <div id="sticker-preview" class="mt-2" hidden><img id="sticker-preview-image" width="72" height="72" class="object-fit-contain" alt="Выбранная наклейка"></div>
+    <div id="sticker-preview-error" class="form-text" role="status" hidden>Изображение недоступно.</div>
 </div>

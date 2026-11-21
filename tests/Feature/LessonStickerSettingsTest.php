@@ -41,12 +41,60 @@ class LessonStickerSettingsTest extends TestCase
             INSERT INTO tasks (id, step_id) VALUES (1, 1);
             INSERT INTO lesson_student_stats VALUES (1, 1, 1, 2, 100), (2, 2, 1, 2, 100);
             SQL);
+        DB::table('lessons')->insert(['id'=>10, 'program_id'=>2, 'name'=>'Введение в ML',
+            'sticker'=>'https://storage.test/file/grade9-2026-01-01-alisa-selezneva-57976fafd9a9.png']);
+        (require database_path('migrations/2026_11_21_230000_create_stickers_catalog.php'))->up();
+        $this->assertDatabaseHas('stickers', ['name'=>'Алиса Селезнёва','collection'=>'Тайна третьей планеты']);
+        DB::table('lessons')->where('id', 10)->delete();
+        foreach (['https://storage.geekclass.ru/files/custom.png?download=1&v=2','https://storage.geekclass.ru/files/my-sticker.png'] as $image) {
+            \App\Sticker::create(['image'=>$image, 'name'=>'Наклейка', 'collection'=>'Пробная коллекция']);
+        }
         $this->actingAs(User::findOrFail(1));
     }
 
     private function settings(array $values = []): array
     {
         return array_merge(['name' => 'Practice', 'description' => 'Description', 'chapter' => 1], $values);
+    }
+
+    public function test_album_distinguishes_available_and_future_rewards_in_the_students_course(): void
+    {
+        DB::statement('CREATE TABLE lesson_early_accesses (course_id INTEGER, lesson_id INTEGER, user_id INTEGER)');
+        foreach ([2, 3, 4] as $id) {
+            $image = $id === 4 ? '/stickers/2.png' : "/stickers/$id.png";
+            DB::table('lessons')->insert(['id'=>$id,'program_id'=>1,'name'=>"Урок $id",'sticker'=>$image]);
+            DB::table('program_steps')->insert(['id'=>$id,'lesson_id'=>$id,'program_id'=>1]);
+            DB::table('tasks')->insert(['step_id'=>$id]);
+        }
+        DB::table('lesson_info')->insert(['lesson_id'=>2, 'course_id'=>1, 'start_date'=>'2020-01-01']);
+        $student = User::findOrFail(2);
+        $student->setRelation('courses', collect([(new \App\Course)->forceFill(['id'=>1, 'program_id'=>1, 'state'=>'started'])]));
+        $service = app(\App\Queries\StickerAlbum::class);
+        $slots = $service->forProfile($student, true)->collapse()->keyBy('image');
+        $this->assertCount(3, $slots);
+        $this->assertSame('earned', $slots['/stickers/1.png']['state']);
+        $this->assertSame('available', $slots['/stickers/2.png']['state']);
+        $this->assertStringEndsWith('/courses/1/steps/2', $slots['/stickers/2.png']['href']);
+        $this->assertSame('locked', $slots['/stickers/3.png']['state']);
+        $this->assertArrayNotHasKey('href', $slots['/stickers/3.png']);
+        $this->assertCount(1, $service->forProfile($student, false)->collapse());
+    }
+
+    public function test_catalog_registration_assignment_and_collection_edit_preserve_one_reward(): void
+    {
+        $data = ['name'=>'Сова', 'collection'=>'Винни-Пух', 'image'=>'https://example.test/owl.png'];
+        $this->post('/insider/settings/stickers', $data)->assertRedirect();
+        $sticker = \App\Sticker::where('image', $data['image'])->firstOrFail();
+        $this->postJson('/insider/settings/stickers', $data)->assertJsonValidationErrors('image');
+        $this->post('/insider/courses/1/lessons/1/edit', $this->settings(['sticker'=>$sticker->image]))->assertRedirect();
+        $this->put('/insider/settings/stickers/'.$sticker->id, ['name'=>'Сова', 'collection'=>'Любимые герои'])->assertRedirect();
+        $student = User::findOrFail(2);
+        $album = app(\App\Queries\StickerAlbum::class)->forProfile($student, false);
+        $this->assertSame([$sticker->image], $student->getStickers()->all());
+        $this->assertSame(['Любимые герои'], $album->keys()->all());
+        $this->assertSame('earned', $album->first()->sole()['state']);
+        $this->actingAs($student)->postJson('/insider/settings/stickers', $data)->assertForbidden();
+        $this->putJson('/insider/settings/stickers/'.$sticker->id, ['name'=>'X', 'collection'=>'X'])->assertForbidden();
     }
 
     public function test_custom_url_replaces_earned_sticker_and_invalidates_student_caches(): void
@@ -102,7 +150,7 @@ class LessonStickerSettingsTest extends TestCase
     {
         return [
             ['javascript:alert(1)'], ['data:image/png;base64,AAAA'], ['ftp://example.org/sticker.png'],
-            ['//example.org/sticker.png'], ['not a link'], ['https://example.org/'.str_repeat('a', 240)], [['url' => 'https://example.org/a.png']],
+            ['//example.org/sticker.png'], ['not a link'], ['https://example.org/unregistered.png'], ['https://example.org/'.str_repeat('a', 240)], [['url' => 'https://example.org/a.png']],
         ];
     }
 

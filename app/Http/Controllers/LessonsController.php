@@ -43,10 +43,7 @@ class LessonsController extends Controller
 
     private function stickerRules(): array
     {
-        return ['nullable', 'string', 'max:255', Rule::anyOf([
-            ['url:http,https'],
-            ['regex:~^/stickers/[1-9][0-9]*\.png$~'],
-        ])];
+        return ['bail', 'nullable', 'string', 'max:255', Rule::exists('stickers', 'image')];
     }
 
     /**
@@ -58,7 +55,7 @@ class LessonsController extends Controller
     public function createView($id)
     {
         $course = Course::with('program.chapters')->findOrFail($id);
-        return view('lessons.create', compact('course'));
+        return view('lessons.create', compact('course') + ['stickerGroups' => \App\Sticker::catalog()->groupBy('collection')]);
     }
 
     public function create($id, Request $request)
@@ -112,7 +109,7 @@ class LessonsController extends Controller
             abort(404);
         }
 
-        return view('lessons.edit', compact('lesson', 'course'));
+        return view('lessons.edit', ['stickerGroups' => \App\Sticker::catalog()->groupBy('collection')] + compact('lesson', 'course'));
     }
 
     public function edit($course_id, $id, Request $request)

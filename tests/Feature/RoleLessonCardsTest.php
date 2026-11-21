@@ -4,10 +4,27 @@ namespace Tests\Feature;
 
 use App\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\Support\DeadlineFeatureCase;
 
 class RoleLessonCardsTest extends DeadlineFeatureCase
 {
+    public function test_code_starter_moves_to_editor_while_zip_and_input_files_stay_with_the_task(): void
+    {
+        $url='/insider/courses/1/steps/1';
+        DB::table('tasks')->where('id',11)->update(['is_code'=>true]);
+        DB::table('code_task_checkers')->updateOrInsert(['task_id'=>11], ['config'=>json_encode(['submission_modes'=>['code'],
+            'language'=>'python','check_type'=>'manual']), 'revision'=>str_repeat('a',64), 'updated_by'=>2]);
+        $starter=(string)Str::uuid();
+        $file=['task_id'=>11,'artifact'=>'{}','created_by'=>2,'is_public'=>true,'read_only'=>false];
+        DB::table('code_task_files')->insert($file+['id'=>$starter,'path'=>'main.py','kind'=>'starter']);
+        DB::table('code_task_files')->insert($file+['id'=>(string)Str::uuid(),'path'=>'input.wav','kind'=>'attachment']);
+        $this->actingAs(User::find(1))->get($url)->assertOk()->assertSee('data-editor-starter=',false)->assertSee('input.wav')
+            ->assertDontSee('Шаблон кода')->assertDontSee('Баллы и прогресс урока');
+        DB::table('code_task_files')->where('id',$starter)->update(['path'=>'project.zip']);
+        $this->get($url)->assertOk()->assertSee('project.zip')->assertSee('Шаблон кода')->assertDontSee('data-editor-starter=',false);
+    }
+
     private function attempt(int $task,int $student,?int $points,?int $evaluation=null,string $comment='',int $course=1):int
     {
         return DB::table('solutions')->insertGetId(['course_id'=>$course,'task_id'=>$task,'user_id'=>$student,
@@ -55,6 +72,36 @@ class RoleLessonCardsTest extends DeadlineFeatureCase
         $this->assertStringNotContainsString('2 на проверке',$meta);
     }
 
+    public function test_completed_class_lesson_leaves_a_direct_link_to_outstanding_revision(): void
+    {
+        foreach ([11, 12] as $task) $this->attempt($task, 1, 10, 10);
+        $this->attempt(21, 1, 2, 2);
+        $xpath = $this->page(1);
+        $this->assertStringContainsString('Сейчас в классе', $xpath->query('//*[@id="lesson-1"]')->item(0)->textContent);
+        $repeat = $xpath->query('//*[@id="lesson-1"]//a[contains(@class,"course-continue")]')->item(0);
+        $this->assertStringNotContainsString('btn-primary', $repeat->getAttribute('class'));
+        $revision = $xpath->query('//*[@id="lesson-2"]//a[contains(@class,"course-revision-link")]')->item(0);
+        $this->assertStringEndsWith('task=21#task21', $revision->getAttribute('href'));
+    }
+
+    public function test_task_link_initially_renders_its_heading_and_best_evaluation_even_after_a_weaker_submission(): void
+    {
+        $this->attempt(11, 1, 6, 10);
+        $this->attempt(11, 1, 7, 7);
+        $this->attempt(11, 1, null);
+        $this->actingAs(User::findOrFail(1));
+        $page = $this->get('/insider/courses/1/steps/1?task=11')->assertOk();
+        $dom = new \DOMDocument();
+        @$dom->loadHTML('<?xml encoding="UTF-8">'.$page->getContent());
+        $xpath = new \DOMXPath($dom);
+        $heading = '//*[@id="task11" and contains(@class,"active")]//header[contains(@class,"gc-task-title-row")]';
+        $this->assertSame(1, $xpath->query($heading.'//h2')->length);
+        $this->assertStringContainsString('10 / 10', $xpath->query($heading.'//*[@data-task-outcome]')->item(0)->textContent);
+        $this->assertSame(0, $xpath->query($heading.'//select')->length);
+        $this->getJson('/insider/courses/1/tasks/11/code-submissions')
+            ->assertOk()->assertJsonPath('task_outcome.label', 'Решение принято')->assertJsonPath('task_outcome.score', '10 / 10');
+    }
+
     public function test_teacher_completion_is_separate_from_cached_xp_and_review_actions_are_lesson_scoped():void
     {
         DB::table('lesson_student_stats')->where('student_id',1)->update(['percent'=>140]);
@@ -98,7 +145,8 @@ class RoleLessonCardsTest extends DeadlineFeatureCase
         $this->attempt(11,1,3,3);
         DB::table('lesson_student_stats')->where('student_id',1)->where('lesson_id',1)->update(['points'=>0,'max_points'=>0,'percent'=>0]);
         $xpath=$this->page(1);
-        $this->assertSame('15',$xpath->query('//*[@id="lesson-1"]//*[@role="progressbar"]')->item(0)->getAttribute('aria-valuenow'));
+        $ring = $xpath->query('//*[@id="lesson-1"]//*[@data-lesson-progress-trigger]')->item(0);
+        $this->assertStringContainsString('Прогресс 15%', $ring->getAttribute('aria-label'));
         $this->assertStringContainsString('3 / 20 XP',$xpath->query('//*[@id="marks1"]')->item(0)->textContent);
     }
 

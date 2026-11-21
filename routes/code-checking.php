@@ -17,6 +17,7 @@ Route::middleware(['web', 'auth', 'verified'])->prefix('insider')->where([
     Route::get('/settings/code-executor/status', [CodeCheckingController::class, 'executorStatus']);
     Route::get('/settings/code-executor/login', [CodeCheckingController::class, 'executorLogin'])->name('code-executor.login');
     $base = '/courses/{course}/tasks/{task}';
+    Route::match(['get','post'], $base.'/chat/{student}', [\App\Http\Controllers\TaskChatController::class, 'thread'])->whereNumber('student')->middleware('throttle:task-chat')->name('task-chat.thread');
     Route::get($base.'/checker/legacy', [TaskSubmissionController::class, 'legacySettings']);
     Route::get($base.'/checker/fixtures/{artifact}', [TaskSubmissionController::class, 'fixture'])->where('artifact', '[a-f0-9]{64}')->name('code-fixtures.download');
     Route::match(['get', 'post'], $base.'/checker/files', [TaskSubmissionController::class, 'taskFiles']);

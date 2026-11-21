@@ -159,7 +159,7 @@ class PersonalWorkspaceTest extends TestCase
         $this->actingAs($user);
         $html = view('profile.details', [
             'user' => $user, 'guest' => $user, 'coinBalance' => 50, 'errors' => new \Illuminate\Support\ViewErrorBag(),
-            'stickers' => collect(), 'sticker_description' => [], 'coinTransactions' => collect(),
+            'album' => collect(), 'coinTransactions' => collect(),
             'canViewMoneyHistory' => true, 'canManageMoney' => false, 'achievements' => collect(),
         ])->render();
         $this->assertStringContainsString('data-learning-avatar-form', $html);
@@ -181,8 +181,8 @@ class PersonalWorkspaceTest extends TestCase
             $this->actingAs($viewer);
             $html = view('profile.details', [
                 'user' => $owner, 'guest' => $viewer, 'coinBalance' => 0,
-                'errors' => new \Illuminate\Support\ViewErrorBag(), 'stickers' => collect(),
-                'sticker_description' => [], 'coinTransactions' => collect(),
+                'errors' => new \Illuminate\Support\ViewErrorBag(), 'album' => collect(),
+                'coinTransactions' => collect(),
                 'canViewMoneyHistory' => false, 'canManageMoney' => false, 'achievements' => collect(),
             ])->render();
             $this->assertStringContainsString('Public interests', $html);

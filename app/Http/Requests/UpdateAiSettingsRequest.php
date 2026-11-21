@@ -20,7 +20,7 @@ class UpdateAiSettingsRequest extends FormRequest
         $selected = $this->input('settings.provider');
         $model = ['string', 'max:200', 'regex:/\A[a-zA-Z0-9][a-zA-Z0-9._:\/-]*\z/'];
         $rules = [
-            'settings' => ['required', 'array:provider,providers,defaults,commands,shared_models'],
+            'settings' => ['required', 'array:provider,providers,defaults,commands,shared_models,tutor_limits'],
             'settings.provider' => ['required', Rule::in($providers)],
             'settings.shared_models' => ['sometimes', 'boolean'],
             'settings.providers' => ['required', 'array:' . implode(',', $providers)],
@@ -28,6 +28,10 @@ class UpdateAiSettingsRequest extends FormRequest
             'settings.commands' => ['sometimes', 'array:' . implode(',', array_keys(AiSettings::COMMANDS))],
             'secrets' => ['required', 'array:' . implode(',', $providers)],
         ];
+        $rules['settings.tutor_limits'] = ['sometimes', 'array:'.implode(',', array_keys(AiSettings::TUTOR_LIMITS))];
+        foreach (array_keys(AiSettings::TUTOR_LIMITS) as $key) {
+            $rules['settings.tutor_limits.'.$key] = ['required_with:settings.tutor_limits', 'integer', 'between:0,2147483647'];
+        }
         foreach ($providers as $provider) {
             $rules['settings.providers.' . $provider] = [$provider === $selected ? 'required' : 'sometimes', 'array:base_url,endpoint,image_api,images_url'];
             $rules['settings.providers.' . $provider . '.endpoint'] = [
@@ -97,6 +101,9 @@ class UpdateAiSettingsRequest extends FormRequest
     public function attributes(): array
     {
         $attributes = ['settings.provider' => 'провайдер по умолчанию'];
+        foreach (AiSettings::TUTOR_LIMITS as $key => $label) {
+            $attributes['settings.tutor_limits.'.$key] = $label;
+        }
         $attributes['settings.providers.openai.image_api'] = 'формат генерации изображений';
         $attributes['settings.providers.openai.images_url'] = 'адрес Images API';
         foreach (AiSettings::PROVIDERS as $provider => $label) {

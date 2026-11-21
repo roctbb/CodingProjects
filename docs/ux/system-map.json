@@ -477,7 +477,10 @@
         "неизменяемая отправленная версия",
         "WebSocket: очередь / компиляция / тесты / результат",
         "покупка скрытого теста",
-        "реальный прирост XP / новое звание / GC без перезагрузки"
+        "реальный прирост XP / новое звание / GC без перезагрузки",
+        "чат до первой посылки",
+        "ответ преподавателя на выбранную посылку",
+        "журнал конкретной проверки в диалоге"
       ],
       "guard": "Участник курса; для ученика учитываются состояние курса, урок и видимость задачи.",
       "design": {
@@ -3437,6 +3440,31 @@
           "Выбор подгруппы сохраняется между разделами курса."
         ]
       }
+    },
+    {
+      "id": "settings-stickers",
+      "title": "Каталог наклеек",
+      "domain": "admin",
+      "kind": "page",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/settings/stickers.blade.php",
+        "app/Http/Controllers/StickersController.php",
+        "app/Sticker.php"
+      ],
+      "goal": "Добавить наклейку в коллекцию или изменить название и коллекцию",
+      "review": {
+        "stage": "implemented",
+        "note": "Проверяется на локальном стенде в административных настройках."
+      },
+      "layout": "settings",
+      "checkStates": [
+        "Новая наклейка",
+        "Изменение коллекции",
+        "Повторяющееся изображение"
+      ]
     }
   ],
   "edges": [
@@ -3521,10 +3549,10 @@
     {
       "from": "step",
       "to": "task-solutions",
-      "label": "Попытки и обратная связь",
+      "label": "Чат задачи, посылки и результаты проверок",
       "kind": "state",
       "roles": [],
-      "source": "resources/views/steps/partials/task_solutions_list.blade.php"
+      "source": "resources/assets/js/code-checking/task-chat.js"
     },
     {
       "from": "step",
@@ -5614,6 +5642,36 @@
       "label": "Расписание подгруппы",
       "kind": "open",
       "source": "resources/views/courses/subgroups.blade.php"
+    },
+    {
+      "from": "settings-ai",
+      "to": "settings-stickers",
+      "label": "Наклейки",
+      "kind": "navigate",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/settings/partials/tabs.blade.php"
+    },
+    {
+      "from": "lesson-edit",
+      "to": "settings-stickers",
+      "label": "Каталог наклеек",
+      "kind": "navigate",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/lessons/partials/sticker.blade.php"
+    },
+    {
+      "from": "settings-stickers",
+      "to": "settings-ai",
+      "label": "ИИ",
+      "kind": "navigate",
+      "roles": [
+        "admin"
+      ],
+      "source": "resources/views/settings/partials/tabs.blade.php"
     }
   ],
   "routeBindings": {
@@ -6229,6 +6287,10 @@
       "node": "text-assist",
       "kind": "api"
     },
+    "GeekExamWifiAlertController@store": {
+      "node": "geekexam",
+      "kind": "callback"
+    },
     "TelegramBotController@webhook": {
       "node": "telegram",
       "kind": "api"
@@ -6346,6 +6408,14 @@
       "kind": "api"
     },
     "CodeCheckingController@extraAttempt": {
+      "node": "step",
+      "kind": "api"
+    },
+    "StudentTutorController": {
+      "node": "step",
+      "kind": "api"
+    },
+    "TaskChatController@thread": {
       "node": "step",
       "kind": "api"
     },
@@ -6576,6 +6646,18 @@
     "CoursePlanner\\PlannerController@copyTargets": {
       "node": "planner",
       "kind": "api"
+    },
+    "StickersController@index": {
+      "node": "settings-stickers",
+      "kind": "screen"
+    },
+    "StickersController@store": {
+      "node": "settings-stickers",
+      "kind": "action"
+    },
+    "StickersController@update": {
+      "node": "settings-stickers",
+      "kind": "action"
     }
   },
   "observations": [

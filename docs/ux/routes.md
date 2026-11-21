@@ -13,6 +13,7 @@
 | POST | `/api/executor/test-artifacts/status` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | PUT | `/api/executor/test-artifacts/{artifact}` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | POST | `/api/executor/test-reports` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
+| POST | `/api/geekexam/wifi-disconnect` | callback | [GeekExam](screens.md#geekexam) | api |
 | GET\|HEAD | `/api/user` | api | [Профиль](screens.md#profile) | api, auth:api |
 | GET\|HEAD | `/auth/silaeder` | callback | [Личный кабинет Силаэдра](screens.md#silaeder) | web, guest, throttle:30,1 |
 | GET\|HEAD | `/auth/silaeder/callback` | callback | [Личный кабинет Силаэдра](screens.md#silaeder) | web, throttle:60,1 |
@@ -99,6 +100,7 @@
 | POST | `/insider/courses/{course_id}/steps/{id}/question` | action | [Ступень](screens.md#step) | web, verified, auth, step |
 | POST | `/insider/courses/{course_id}/steps/{id}/task` | action | [Создание задания](screens.md#task-create) | web, verified, auth, task, teacher |
 | GET\|HEAD | `/insider/courses/{course_id}/steps/{id}/task/create` | screen | [Создание задания](screens.md#task-create) | web, verified, teacher, auth, task |
+| POST | `/insider/courses/{course_id}/steps/{id}/tutor` | api | [Ступень](screens.md#step) | web, verified, auth, throttle:12,1 |
 | GET\|HEAD | `/insider/courses/{course_id}/steps/{id}/upper` | action | [Ступень](screens.md#step) | web, verified, auth, step, teacher |
 | GET\|HEAD | `/insider/courses/{course_id}/subgroups` | screen | [Подгруппы курса](screens.md#course-subgroups) | web, verified |
 | POST | `/insider/courses/{course_id}/subgroups` | action | [Подгруппы курса](screens.md#course-subgroups) | web, verified |
@@ -130,6 +132,7 @@
 | POST | `/insider/courses/{course_id}/tasks/{id}/unblock/{student_id}` | action | [Оценка, комментарий, пропуск и блокировка](screens.md#review-tools) | web, verified, auth, task |
 | GET\|HEAD | `/insider/courses/{course_id}/tasks/{id}/up` | action | [Задача: текст, код или квиз](screens.md#step-task) | web, verified, auth, task |
 | DELETE | `/insider/courses/{course}/tasks/{task}/attempts/{attempt}` | action | [Оценка, комментарий, пропуск и блокировка](screens.md#review-tools) | web, auth, verified |
+| GET\|POST\|HEAD | `/insider/courses/{course}/tasks/{task}/chat/{student}` | api | [Ступень](screens.md#step) | web, auth, verified, throttle:task-chat |
 | GET\|HEAD | `/insider/courses/{course}/tasks/{task}/checker` | api | [Ступень](screens.md#step) | web, auth, verified |
 | POST | `/insider/courses/{course}/tasks/{task}/checker/extra-attempt` | api | [Ступень](screens.md#step) | web, auth, verified |
 | GET\|POST\|HEAD | `/insider/courses/{course}/tasks/{task}/checker/files` | api | [Редактирование задачи](screens.md#task-edit) | web, auth, verified |
@@ -218,6 +221,9 @@
 | GET\|HEAD | `/insider/settings/code-executor/legacy-exports/{export}/files/{file}` | download | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | web, auth, verified |
 | GET\|HEAD | `/insider/settings/code-executor/login` | redirect | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | web, auth, verified |
 | GET\|HEAD | `/insider/settings/code-executor/status` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | web, auth, verified |
+| GET\|HEAD | `/insider/settings/stickers` | screen | [Каталог наклеек](screens.md#settings-stickers) | web, verified, auth, admin |
+| POST | `/insider/settings/stickers` | action | [Каталог наклеек](screens.md#settings-stickers) | web, verified, auth, admin |
+| PUT | `/insider/settings/stickers/{sticker}` | action | [Каталог наклеек](screens.md#settings-stickers) | web, verified, auth, admin |
 | GET\|HEAD | `/insider/settings/system-store` | screen | [Цены и акции](screens.md#settings-store) | web, verified, auth, admin |
 | PUT | `/insider/settings/system-store` | action | [Цены и акции](screens.md#settings-store) | web, verified, auth, admin |
 | GET\|HEAD | `/insider/settings/system-store/targets` | api | [Выбор товаров акции](screens.md#market-promotion-picker) | web, verified, auth, admin |

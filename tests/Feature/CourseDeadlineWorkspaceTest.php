@@ -29,14 +29,14 @@ class CourseDeadlineWorkspaceTest extends DeadlineFeatureCase
         $this->solution(mark: 10);
         Carbon::setTestNow('2026-11-24 12:00:00 Europe/Moscow');
         $response = $this->actingAs(User::find(1))->get('/insider/courses/1/deadlines')->assertOk();
-        $response->assertDontSee('data-deadline-filter="done"', false)->assertSee('Сейчас −100%')->assertSee('Последний срок')->assertSee('22.11.2026 23:59');
+        $response->assertSee('Сейчас −100%')->assertSee('Последний срок')->assertSee('22.11 23:59');
         $items = $response->viewData('deadlineItems');
         $this->assertNull($items->firstWhere('task.id', 11));
         $this->assertNull($items->firstWhere('task.id', 12)['next']);
         $this->assertStringContainsString('Сдавать можно и после последнего срока', $response->getContent());
     }
 
-    public function test_student_sees_review_and_revision_states_with_the_current_penalty(): void
+    public function test_cards_show_due_dates_for_pending_and_partial_work(): void
     {
         $this->policy('task', 11); $this->policy('task', 12);
         $this->solution(); $this->solution(mark: 5, task: 12);
@@ -45,7 +45,7 @@ class CourseDeadlineWorkspaceTest extends DeadlineFeatureCase
         $items = $response->viewData('deadlineItems');
         $this->assertSame('pending', $items->firstWhere('task.id', 11)['status']);
         $this->assertSame('revision', $items->firstWhere('task.id', 12)['status']);
-        $response->assertSee('На проверке')->assertSee('Нужно доработать')->assertSee('5 / 10 XP')->assertSee('Сейчас −30%');
+        $response->assertDontSee('data-deadline-filter=',false)->assertDontSee('5 / 10 XP')->assertSee('data-deadline-calendar',false)->assertSee('Сейчас −30%');
         $response->assertDontSee('План занятий')->assertDontSee('data-deadline-filter="done"', false);
     }
 

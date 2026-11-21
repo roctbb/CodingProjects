@@ -10,12 +10,12 @@ class CommunityNavigationTest extends TestCase
 {
     public function test_profile_round_trip_preserves_filters_page_and_selected_person(): void
     {
-        $context = CommunityNavigation::profileQuery('Роботы & код', 'student', 3);
+        $context = CommunityNavigation::profileQuery('Роботы & код', 'student', 3, 7);
         $url = CommunityNavigation::returnUrl(Request::create('/insider/profile/666', 'GET', $context), 666);
         parse_str(parse_url($url, PHP_URL_QUERY), $query);
 
         $this->assertSame('/insider/community', parse_url($url, PHP_URL_PATH));
-        $this->assertSame(['q' => 'Роботы & код', 'role' => 'student', 'page' => '3'], $query);
+        $this->assertSame(['q' => 'Роботы & код', 'role' => 'student', 'page' => '3', 'rank'=>'7'], $query);
         $this->assertSame('community-user-666', parse_url($url, PHP_URL_FRAGMENT));
     }
 

@@ -1,6 +1,6 @@
 @php
     $mode = $task->quizAnswerMode();
-    $attemptsRemaining = $task->quizAttemptsRemaining(Auth::id(), $course->id);
+    $attemptsRemaining = $attemptsRemaining ?? $task->quizAttemptsRemaining(Auth::id(), $course->id);
     $quizErrors = $errors->getBag('quiz_'.$task->id);
     $oldText = $quizErrors->any() ? old('text') : null;
     $oldSelection = $quizErrors->any() ? (array) old('selected_options') : [];

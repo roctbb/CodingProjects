@@ -11,27 +11,40 @@
                     <span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span>
                     <input type="search" name="q" value="{{ $search }}" maxlength="120" class="form-control" placeholder="Имя, ранг или звание" aria-label="Найти участника">
                 </div>
-                <button type="submit" name="role" value="{{ $role }}" class="btn btn-primary">Найти</button>
+                <button type="submit" name="role" value="{{ $role }}" data-directory-submit class="btn btn-outline-secondary">Найти</button>
             </div>
             <div class="gc-directory-search__roles" role="group" aria-label="Роль участника">
                 @foreach(['all' => 'Все', 'student' => 'Ученики', 'teacher' => 'Преподаватели'] as $value => $label)
                     <button type="submit" name="role" value="{{ $value }}" class="gc-filter-toggle" aria-pressed="{{ $role === $value ? 'true' : 'false' }}">{{ $label }}</button>
                 @endforeach
             </div>
-            @if($search !== '' || $role !== 'all')<a href="{{ url('/insider/community') }}" class="gc-quiet-link gc-directory-search__reset">Сбросить</a>@endif
+            @if($rankOptions->isNotEmpty())
+                <select class="form-select form-select-sm gc-directory-rank" name="rank" aria-label="Звание" onchange="this.form.requestSubmit(this.form.querySelector('[data-directory-submit]'))">
+                    <option value="">Все звания</option>
+                    @foreach($rankOptions as $id => $name)<option value="{{ $id }}" @selected($rankId === (int)$id)>{{ $name }}</option>@endforeach
+                </select>
+            @endif
+            @if($search !== '' || $role !== 'all' || $rankId)<a href="{{ url('/insider/community') }}" class="gc-quiet-link gc-directory-search__reset">Сбросить</a>@endif
         </form>
     </div>
     @if($users->isNotEmpty())
-        <div class="gc-person-grid" id="community-grid" data-community-grid>
-            @foreach($users as $user)
-                @php $leaderPosition = $topUserIds->search($user->id); @endphp
-                <x-gc-person-card :user="$user" :position="$leaderPosition === false ? null : $leaderPosition + 1" :profile-query="$profileQuery" />
+        <div id="community-grid" data-community-grid>
+            @foreach($users->getCollection()->groupBy(fn ($person) => $person->rank()?->name ?: 'Без звания') as $rankName => $people)
+                <section class="gc-community-rank" aria-labelledby="community-rank-{{ $loop->index }}">
+                    <h2 id="community-rank-{{ $loop->index }}">{{ $rankName }}</h2>
+                    <div class="gc-person-grid">
+                        @foreach($people as $user)
+                            @php $leaderPosition = $topUserIds->search($user->id); @endphp
+                            <x-gc-person-card :user="$user" :position="$leaderPosition === false ? null : $leaderPosition + 1" :profile-query="$profileQuery" />
+                        @endforeach
+                    </div>
+                </section>
             @endforeach
         </div>
     @else
         <div class="gc-card gc-empty-state">
-            <h2 class="h5">{{ $search !== '' || $role !== 'all' ? 'Ничего не найдено' : 'Участников пока нет' }}</h2>
-            @if($search !== '' || $role !== 'all')
+            <h2 class="h5">{{ $search !== '' || $role !== 'all' || $rankId ? 'Ничего не найдено' : 'Участников пока нет' }}</h2>
+            @if($search !== '' || $role !== 'all' || $rankId)
                 <p>Попробуйте изменить имя, ранг или роль участника.</p>
                 <a href="{{ url('/insider/community') }}" class="btn btn-outline-secondary btn-sm">Показать всех участников</a>
             @endif

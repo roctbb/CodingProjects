@@ -3,9 +3,17 @@ import {node} from './ui';
 
 const tags = new Set(['P','BR','H1','H2','H3','H4','H5','H6','STRONG','EM','DEL','BLOCKQUOTE','UL','OL','LI','PRE','CODE','TABLE','THEAD','TBODY','TR','TH','TD','HR','A']);
 
-export function markdownContent(value) {
+// HTML pasted in a conversation is usually a code example. Render it as text.
+const chatRenderer = new marked.Renderer();
+const literal = text => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+chatRenderer.html = literal;
+chatRenderer.image = (href, title, alt) => literal(`![${alt || ''}](${href}${title ? ' "' + title + '"' : ''})`);
+
+export function markdownContent(value, {conversation = false} = {}) {
     const template = document.createElement('template');
-    template.innerHTML = marked.parse(String(value || ''), {mangle:false, headerIds:false});
+    const options = {mangle:false, headerIds:false};
+    if (conversation) Object.assign(options, {breaks:true, renderer:chatRenderer});
+    template.innerHTML = marked.parse(String(value || ''), options);
     const clean = parent => {
         for (const el of [...parent.children]) {
             if (!tags.has(el.tagName)) {el.replaceWith(document.createTextNode(el.textContent)); continue;}

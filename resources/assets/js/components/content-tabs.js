@@ -105,7 +105,7 @@ export default function initContentTabs({ onChange = () => {} } = {}) {
             new bootstrap.Tab(stepHashTab).show();
 
             window.requestAnimationFrame(function () {
-                window.scrollTo({ top: 0, behavior: 'auto' });
+                window.scrollTo({ top: 0, behavior: 'instant' });
                 syncTabContentHeight(document.querySelector('.step-content'));
                 onChange();
             });

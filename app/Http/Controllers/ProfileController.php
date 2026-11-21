@@ -53,16 +53,19 @@ class ProfileController extends Controller
         $value = $request->query('role', 'all');
         $role = in_array($value, ['all', 'student', 'teacher'], true) ? $value : 'all';
         $directory = new CommunityDirectory();
-        $users = $directory->paginate($search, $role);
+        $rankOptions = $directory->rankOptions();
+        $rankId = filter_var($request->query('rank'), FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]) ?: null;
+        if (!$rankOptions->has($rankId)) $rankId = null;
+        $users = $directory->paginate($search, $role, $rankId);
 
         if ($users->currentPage() > $users->lastPage()) {
             return redirect($users->url($users->lastPage()));
         }
 
         $topUserIds = $directory->leaderIds();
-        $profileQuery = \App\Support\CommunityNavigation::profileQuery($search, $role, $users->currentPage());
+        $profileQuery = \App\Support\CommunityNavigation::profileQuery($search, $role, $users->currentPage(), $rankId);
 
-        return view('profile.index', compact('users', 'search', 'role', 'topUserIds', 'profileQuery'));
+        return view('profile.index', compact('users', 'search', 'role', 'rankOptions', 'rankId', 'topUserIds', 'profileQuery'));
     }
 
     public function details($id = null)
@@ -112,11 +115,9 @@ class ProfileController extends Controller
             ->sortByDesc('published_at')
             ->values();
 
-        // Use cached sticker retrieval and descriptions
-        $stickers = $user->getStickers();
-        $sticker_description = $user->getStickerDescriptions();
+        $album = app(\App\Queries\StickerAlbum::class)->forProfile($user, $guest->id === $user->id);
 
-        return view('profile.details', compact('user', 'guest', 'stickers', 'sticker_description', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'canManageMoney', 'learningAvatarData', 'achievements', 'roomCharacterAvailable', 'roomCharacterGeneration'));
+        return view('profile.details', compact('user', 'guest', 'album', 'coinTransactions', 'coinBalance', 'canViewMoneyHistory', 'canManageMoney', 'learningAvatarData', 'achievements', 'roomCharacterAvailable', 'roomCharacterGeneration'));
     }
 
     public function updateAchievement($user_id, $achievement_id, Request $request)

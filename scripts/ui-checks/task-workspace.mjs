@@ -7,11 +7,45 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
         const page=await context.newPage();page.setDefaultTimeout(7000);
         page.on('pageerror',error=>errors.push({name:'task-workspace-js',width,message:error.message}));
         const scenario=width>600?'submissions-desktop':'submissions-phone';
-        const visit=async(actor,task,attempt=null)=>{
+        const openWork=async(actor,task,attempt=null)=>{
+            const chat=page.locator('#execution-workspace-'+task+' .gc-task-chat:visible');
+            const file=chat.locator('[data-kind="file"]'+(attempt?'[data-attempt="'+attempt+'"]':'')).last();
+            await file.locator('.gc-chat-file').click();
+            await page.getByRole('dialog',{name:'Отправленное решение'}).getByRole('button',{name:'Подробнее о посылке'}).click();
+        };
+        const visit=async(actor,task,attempt=null,{open=true}={})=>{
             const query=new URLSearchParams({scenario,actor,task:String(task)});
             if(palette)query.set('palette',palette);
             if(attempt){query.set('student','1');query.set('attempt',attempt);}
             await page.goto(`${url}/insider/courses/1/steps/1?${query}#task${task}`);
+            if (actor === 'student' && task === 12) {
+                await page.waitForFunction(() => {
+                    const chat = document.querySelector('#execution-workspace-12 .gc-task-chat:not([hidden])');
+                    if (!chat) return false;
+                    const viewport = window.visualViewport;
+                    const bottom = viewport ? viewport.offsetTop + viewport.height : innerHeight;
+                    const input = chat.querySelector('textarea').getBoundingClientRect();
+                    return Math.abs(bottom - chat.getBoundingClientRect().bottom) <= 2
+                        && input.height > 0 && input.bottom <= bottom;
+                });
+                check('chat-fills-viewport-and-keeps-composer-visible', true, width);
+                check('student-chat-header-has-no-menu',await page.locator('#execution-workspace-12 .gc-chat-head button').count()===0,width);
+                await page.getByRole('button',{name:'Сдать решение',exact:true}).click();
+                await page.locator('dialog[open] .gc-execution-composer').waitFor();
+                await page.keyboard.press('Escape');
+                check('start-solution-below-statement',true,width);
+                const chat = page.locator('#execution-workspace-12 .gc-task-chat');
+                const question = 'Как вывести <header> через `print`?\n\n```python\nprint("<header>")\n```';
+                await chat.getByRole('textbox', {name:'Сообщение в чат задачи'}).fill(question);
+                await chat.getByRole('button', {name:'Отправить сообщение', exact:true}).click();
+                const message = chat.locator('[data-kind="message"]').filter({hasText:'Как вывести <header>'}).last();
+                await message.locator('pre code').waitFor();
+                check('chat-renders-inline-and-block-code-and-keeps-literal-html',
+                    await message.locator('p code').innerText() === 'print'
+                    && (await message.locator('pre code').innerText()).trim() === 'print("<header>")'
+                    && await message.locator('header').count() === 0, width);
+            }
+            if(open)await openWork(actor,task,attempt);
         };
         const writeComment=async(root,text)=>{
             await root.locator('.gc-comment-editor .CodeMirror').waitFor();
@@ -24,12 +58,15 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await visit('student',12,id(1));
             const root=page.locator('#execution-workspace-12');
             const worksheet=await root.evaluate(el=>{
-                const sheet=el.closest('.gc-task-sheet'),context=sheet.querySelector('.gc-task-context');
-                return {conditionAbove:context.getBoundingClientRect().bottom<=el.getBoundingClientRect().top+1,
-                    reward:getComputedStyle(sheet.querySelector('.gc-task-reward i')).color,
+                const sheet=el.closest('.gc-task-sheet'),condition=sheet.querySelector('.gc-task-condition-disclosure');
+                const left=condition.getBoundingClientRect(),right=el.getBoundingClientRect();
+                const desktop=matchMedia('(min-width: 992px)').matches;
+                return {layout:desktop ? condition.open && Math.abs(left.right-right.left)<=2 && !condition.querySelector(':scope > summary').getClientRects().length : left.bottom<right.top,
+
+                    reward:getComputedStyle(sheet.querySelector('.gc-task-title-row .gc-task-reward i')).color,
                     paper:getComputedStyle(sheet).backgroundColor,ground:getComputedStyle(sheet.closest('.step-main')).backgroundColor};
             });
-            check('task-worksheet-layout-and-two-colors',worksheet.conditionAbove && worksheet.paper===worksheet.ground && (palette || worksheet.reward==='rgb(255, 161, 23)'),width,worksheet);
+            check('task-worksheet-layout-and-two-colors',worksheet.layout && worksheet.paper===worksheet.ground && (palette || worksheet.reward==='rgb(255, 161, 23)'),width,worksheet);
             await root.getByRole('button',{name:'Исправить решение',exact:true}).click();
             await root.getByRole('button',{name:'Код',exact:true}).click();
             const code=root.locator('.cm-content');await code.fill('def largest(values):\n    return max(values)\n# saved draft');
@@ -90,7 +127,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await page.screenshot({path:`${output}/task-purple-coin-action-${width}.png`,fullPage:true});
             const unavailablePattern=`**/code-submissions/${id(13)}?test_data=metadata`;
             await page.route(unavailablePattern,async route=>{const response=await route.fetch();const value=await response.json();if(value.award_breakdown?.actions?.booster)value.award_breakdown.actions.booster.available=false;await route.fulfill({response,json:value});});
-            await page.reload();
+            await page.reload();await openWork('student',13);
             await page.locator('#execution-workspace-13 .gc-result-score > strong').waitFor();
             check('task-unavailable-coin-action-is-hidden',await page.locator('#execution-workspace-13 .gc-award button.btn-coin').count()===0,width);
             await page.unroute(unavailablePattern);
@@ -149,8 +186,11 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await page.screenshot({path:`${output}/task-notebook-${width}.png`,fullPage:true});
             await notebook.getByRole('combobox',{name:'Выбрать попытку',exact:true}).selectOption(id(18));
             await notebook.getByText('large-notebook.ipynb',{exact:true}).waitFor();
-            await notebook.locator('.gc-notebook__input').nth(1).waitFor();
-            check('task-large-notebook-preview',await notebook.locator('.gc-notebook__input').count()===2,width);
+            const notebookPreview = notebook.getByRole('region',{name:'large-notebook.ipynb',exact:true})
+                .getByRole('region',{name:'Тетрадка Jupyter',exact:true});
+            await notebookPreview.waitFor();
+            await notebookPreview.locator('.gc-notebook__input').nth(1).waitFor({state:'attached'});
+            check('task-large-notebook-preview',await notebookPreview.locator('.gc-notebook__input').count()===2,width);
 
             await visit('teacher',13,id(13));
             const ai=page.locator('#execution-workspace-13');
@@ -174,15 +214,20 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             check('task-review-draft-survives-student-switch',(await ai.getByRole('textbox',{name:'Комментарий ученику',exact:true}).evaluate(el=>el.closest('.CodeMirror')?.CodeMirror.getValue() ?? el.value))==='Нужно пояснить начальное значение.',width);
             await page.screenshot({path:`${output}/task-teacher-ai-${width}.png`,fullPage:true});
             const recheckResponse=page.waitForResponse(response=>response.url().endsWith('/'+id(13)+'/recheck') && response.request().method()==='POST');
-            await ai.getByRole('button',{name:'Действия',exact:true}).click();
-            await ai.getByRole('button',{name:'Перепроверить усиленной моделью',exact:true}).click();
+            await page.getByRole('dialog',{name:'Работа с решением'}).getByRole('button',{name:'Закрыть'}).click();
+            const result=ai.locator('[data-kind="check"][data-attempt="'+id(13)+'"]');
+            await result.getByRole('button',{name:'Перепроверить',exact:true}).click();
+            await page.getByRole('combobox',{name:'Способ проверки'}).selectOption('strong');
             await page.getByRole('textbox',{name:'Комментарий к перепроверке',exact:true}).fill('Проверьте второй критерий подробнее.');
+            if(width===1440)await page.getByRole('dialog',{name:'Перепроверить решение'}).screenshot({path:`${output}/chat-recheck-method.png`});
             await page.getByRole('button',{name:'Запустить перепроверку',exact:true}).click();
             const enhanced=await recheckResponse;
             check('task-enhanced-ai-recheck',enhanced.status()===202 && JSON.parse(enhanced.request().postData()).stronger_ai===true,width);
+            await result.getByRole('button',{name:'Перепроверить',exact:true}).waitFor({state:'hidden'});
 
-            await visit('teacher',14,id(14));
+            await visit('teacher',14,id(14),{open:false});
             const manual=page.locator('#execution-workspace-14');
+            await manual.locator('[data-attempt="'+id(14)+'"]').getByRole('button',{name:'Оценить решение',exact:true}).click();
             await manual.getByRole('spinbutton',{name:'Баллы, из 20',exact:true}).fill('17');
             await writeComment(manual,'Объяснение верное, добавьте пример.');
             await manual.getByRole('button',{name:'Сохранить оценку',exact:true}).click();
@@ -194,6 +239,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await manual.getByRole('button',{name:'Следующая работа',exact:true}).click();
             await manual.getByRole('heading',{name:'Ученик 1',exact:true}).waitFor();
             check('task-arrow-navigation',true,width);
+            await page.getByRole('dialog',{name:'Работа с решением'}).getByRole('button',{name:'Закрыть',exact:true}).click();
             await page.getByRole('tab',{name:'Моё решение',exact:true}).click();
             const own=page.locator('#execution-own-workspace-14');
             await own.getByRole('textbox',{name:'Ответ',exact:true}).fill('Собственная сдача преподавателя.');
@@ -201,6 +247,34 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await own.getByRole('button',{name:'Отправить решение',exact:true}).click();
             const response=await ownResponse;
             check('task-teacher-own-submission',response.status()===201 && (await response.json()).user_id===2,width);
+            await visit('teacher',17,id(18),{open:false});
+            const selected=page.locator('#execution-workspace-17');
+            await selected.locator('[data-kind="check"][data-attempt="'+id(17)+'"]').getByRole('button',{name:'Перепроверить',exact:true}).click();
+            await page.getByRole('dialog',{name:'Перепроверить решение'}).getByRole('button',{name:'Оценить вручную'}).click();
+            await selected.getByRole('spinbutton',{name:'Баллы, из 20',exact:true}).fill('19');
+            await writeComment(selected,'Проверил исходный блокнот.');
+            const saved=page.waitForResponse(r=>r.url().endsWith('/'+id(17)+'/grade') && r.request().method()==='PUT');
+            await selected.getByRole('button',{name:'Сохранить оценку',exact:true}).click();
+            check('chat-grades-earlier-attempt', (await saved).ok(), width);
+            await page.getByRole('dialog',{name:'Работа с решением'}).getByRole('button',{name:'Закрыть'}).click();
+            await selected.locator('[data-kind="check"][data-attempt="'+id(17)+'"]').getByText('Проверил исходный блокнот.',{exact:true}).waitFor();
+            if(width===1440)await selected.locator('.gc-task-chat').screenshot({path:`${output}/chat-manual-recheck.png`});
+            const other=await (await page.request.get(url+'/insider/code-submissions/'+id(18)+'?test_data=metadata',{headers:{Accept:'application/json'}})).json();
+            check('chat-keeps-other-attempt-grade',other.points===16,width);
+            await page.goto(`${url}/insider/courses/1/steps/1?scenario=${scenario}&actor=student#task18`);
+            const quiz=page.locator('#task18');
+            await quiz.getByRole('radio',{name:'4',exact:true}).check();
+            await quiz.getByRole('button',{name:'Отправить',exact:true}).click();
+            await quiz.getByText('Неверный ответ.',{exact:true}).waitFor();
+            check('quiz-shows-answer-without-chat',await quiz.locator('[data-quiz-given]').innerText()==='4' &&
+                !await quiz.getByRole('radio').count() && !await quiz.locator('.gc-task-chat,[data-task-compose]').count(),width);
+            await quiz.getByText('Ответить ещё раз',{exact:true}).click();
+            await quiz.getByRole('radio',{name:'8',exact:true}).check();
+            await quiz.getByRole('button',{name:'Отправить',exact:true}).click();
+            await quiz.locator('[data-quiz-exhausted]').waitFor();
+            await page.reload();
+            check('quiz-saves-last-answer-and-respects-limit',await quiz.locator('[data-quiz-given]').innerText()==='8' &&
+                await quiz.locator('[data-quiz-exhausted]').isVisible() && !await quiz.getByRole('button',{name:'Отправить'}).count(),width);
             check('task-document-no-horizontal-overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),width);
         }catch(error){await page.screenshot({path:`${output}/task-failed-${width}.png`,fullPage:true});errors.push({name:'task-workspace',width,message:error.message,url:page.url()});}
         finally{await context.close();}

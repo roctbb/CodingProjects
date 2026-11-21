@@ -12,14 +12,15 @@ use Storage;
 
 class MediaController extends Controller
 {
-    public function roomCharacterPreview(int $generation_id, RoomCharacterImages $images)
+    public function roomCharacterPreview(int $generation_id, RoomCharacterImages $images, Request $request)
     {
         $generation = RoomCharacterGeneration::visibleForShowcase()->findOrFail($generation_id);
         abort_unless(Storage::exists($generation->result_path), 404);
-        $path = $generation->previewPath();
+        $portrait = $request->boolean('portrait');
+        $path = $generation->previewPath($portrait);
         if (!Storage::exists($path)) {
             // Build existing characters' small previews on demand, outside the homepage request.
-            $bytes = $images->preview(Storage::get($generation->result_path));
+            $bytes = $images->preview(Storage::get($generation->result_path), $portrait);
             abort_unless(Storage::put($path, $bytes), 503);
         }
 

@@ -27,7 +27,7 @@ abstract class DeadlineFeatureCase extends TestCase
         foreach (['2026_11_14_120000_create_code_checking_tables.php', '2026_11_14_130000_expand_task_submissions.php',
             '2026_11_14_140000_complete_native_submission_storage.php', '2026_11_13_180000_create_reward_notices_table.php',
             '2026_11_14_190000_create_deadline_policies.php', '2026_11_14_200000_create_deadline_notifications.php',
-            '2026_11_14_210000_create_classroom_bonuses.php', '2026_11_14_220000_harden_business_processes.php'] as $file) (require database_path('migrations/'.$file))->up();
+            '2026_11_14_210000_create_classroom_bonuses.php', '2026_11_14_220000_harden_business_processes.php','2026_11_21_180000_create_task_chat_messages.php','2026_11_22_001000_classify_task_chat_messages.php','2026_11_22_002000_add_tutor_chat_replies.php'] as $file) (require database_path('migrations/'.$file))->up();
         app()->forgetInstance(CourseDeadlineService::class);
         $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
         Http::preventStrayRequests(); Queue::fake(); Notification::fake();

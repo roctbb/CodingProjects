@@ -22,7 +22,7 @@ export function resultVerdict(record) {
     return {tone:'review',icon:'fa-file-circle-check',title:'Результат проверки сохранён'};
 }
 
-export function resultHeader(record,{sourceOnly=false,showScore=true,showSourceDate=true,reviewing=false}={}) {
+export function resultHeader(record,{sourceOnly=false,showScore=true,showSourceDate=true,reviewing=false,compact=false}={}) {
     const verdict=resultVerdict(record);
     const title=node('h3',{class:'gc-result-verdict__title'},verdict.title);
     const details=node('div',{class:'gc-result-verdict__details'},title,
@@ -30,12 +30,12 @@ export function resultHeader(record,{sourceOnly=false,showScore=true,showSourceD
     const raw=record.award_breakdown?.evaluated_points ?? record.evaluated_points ?? record.points;
     const maximum=record.maximum_points ?? record.grading_maximum_points;
     const credited=!sourceOnly && record.awarded_xp!==null && record.awarded_xp!==undefined;
-    if(raw!==null && raw!==undefined && record.state!=='error')details.append(node('p',{class:'gc-help-text mb-0'},`Оценка за работу: ${raw}${maximum?' из '+maximum:''} баллов${record.check_type==='gpt'?' · проверка ИИ':''}`));
+    if(raw!==null && raw!==undefined && record.state!=='error' && !(compact && showScore && !credited && raw===record.points))details.append(node('p',{class:'gc-help-text mb-0', 'data-score-repeated':credited && Number(raw) === Number(record.awarded_xp) ? '' : null},`Оценка за работу: ${raw}${maximum?' из '+maximum:''} баллов${record.check_type==='gpt'?' · проверка ИИ':''}`));
     const header=node('header',{class:`gc-result-verdict is-${verdict.tone}`,'aria-label':'Итог проверки'},
         node('i',{class:`fas ${verdict.icon} gc-result-verdict__icon`,'aria-hidden':'true'}),details);
     header.hidden=reviewing && (record.state==='awaiting_review' || record.kind==='legacy_attempt' && record.awarded_xp===null);
     if(showScore && record.state!=='error' && (credited || record.points!==null && record.points!==undefined))header.append(node('div',{class:'gc-result-score'},
-        node('strong',{},String(credited?record.awarded_xp:record.points)),node('span',{},record.kind==='legacy_attempt'?' XP':` / ${maximum} ${credited?'XP':'баллов'}`),credited?node('small',{},'Зачтено за эту сдачу'):null));
+        node('strong',{},String(credited?record.awarded_xp:record.points)),node('span',{},record.kind==='legacy_attempt'?' XP':(compact && !credited ? (maximum!=null?' из '+maximum:'')+' баллов' : ` / ${maximum} ${credited?'XP':'баллов'}`)),credited?node('small',{},'Зачтено за эту сдачу'):null));
     return {header,terminal:terminal.includes(record.state)};
 }
 
@@ -79,7 +79,8 @@ export function submittedWork(record) {
                 }catch(error){if(version===sequence)preview.replaceChildren(node('p',{class:'gc-help-text'},'Не удалось показать тетрадку. '+error.message),download(file.download_url,'Скачать исходную тетрадку'),button('Повторить загрузку тетрадки',()=>show(file)));}
                 return;
             }
-            if(file.source!==undefined){preview.replaceChildren(renderSource(file,file.source,{showFilename:files.length===1}));return;}
+            const source = file.source ?? (file.is_answer ? record.text : undefined);
+            if(source != null){preview.replaceChildren(renderSource(file,source,{showFilename:files.length===1}));return;}
             if(/\.(png|jpe?g|gif|webp)$/i.test(file.name)){
                 const url=new URL(file.download_url,location.origin);url.searchParams.set('proxy','1');
                 preview.replaceChildren(node('div',{class:'gc-submitted-file__heading'},node('strong',{},file.original_name || file.name),download(file.download_url,'Скачать')),node('img',{src:url.href,alt:file.original_name || file.name,class:'gc-execution-image',loading:'lazy'}));return;
@@ -116,7 +117,10 @@ export function submittedWork(record) {
         tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();const index=files.indexOf(selected),next=files[(index+(event.key==='ArrowRight'?1:files.length-1))%files.length];show(next);tabs.querySelector('[aria-selected="true"]')?.focus();});
         if(files.length>1){heading.querySelector('.gc-submitted-work__title').remove();tools.before(tabs);}section.append(preview);show(files.find(file=>file.source!==undefined) || files[0]);
     }
-    if(record.text && (record.mode==='text' || record.mode==='files')){
+    const duplicatesAnswer = record.mode === 'text' && files.some(file =>
+        file.is_answer || (file.name === 'answer.txt' && typeof file.source === 'string'
+            && file.source.replace(/\r\n/g, '\n') === record.text?.replace(/\r\n/g, '\n')));
+    if(record.text && !duplicatesAnswer && (record.mode==='text' || record.mode==='files')){
         const answer=node('pre',{class:'gc-submitted-answer__text',tabIndex:0,'aria-label':'Текст ответа ученика'},record.text);
         section.append(node('div',{class:'gc-submitted-answer'},files.length?node('h4',{class:'h6'},'Комментарий к работе'):null,answer));
         if(!files.length)tools.append(iconButton('Копировать ответ','fa-copy',async()=>{

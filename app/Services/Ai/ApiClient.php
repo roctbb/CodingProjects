@@ -10,7 +10,7 @@ class ApiClient
 {
     /** One HTTP boundary for the OpenAI-compatible Responses and Images APIs. */
     public function create(array $payload, string $provider, array $settings, int $timeout, ?string $command = null,
-        array $attachments = [], string $api = 'responses'): array
+        array $attachments = [], string $api = 'responses', ?callable $observeUsage = null): array
     {
         if (!array_key_exists($provider, AiSettings::PROVIDERS)) {
             throw new \RuntimeException('Unknown AI provider');
@@ -49,6 +49,9 @@ class ApiClient
         $context['status_code'] = $response->status();
         $context['request_id'] = $this->safeIdentifier($response->header('x-request-id'), $settings) ?? '';
         $data = json_decode($response->body(), true);
+        if ($observeUsage !== null && is_array($data)) {
+            $observeUsage($data['usage'] ?? null, $context['request_id'], $data['model'] ?? null);
+        }
         $error = is_array($data) ? ($data['error'] ?? ($data['result']['error'] ?? null)) : null;
         if (is_array($error)) {
             foreach (['code', 'type', 'param'] as $field) {

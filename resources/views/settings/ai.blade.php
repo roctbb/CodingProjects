@@ -56,8 +56,8 @@
                             <div class="col-12 col-md-6">
                                 <label for="ai-{{ $provider }}-{{ $field }}-action" class="form-label">{{ $fieldLabel }} <span class="gc-help-text">· {{ $configured[$provider][$field] ? 'задан' : 'не задан' }}</span></label>
                                 <select id="ai-{{ $provider }}-{{ $field }}-action" name="secrets[{{ $provider }}][{{ $field }}][action]" class="form-select" data-secret-action="ai-{{ $provider }}-{{ $field }}-value">
-                                    <option value="keep" @selected($field !== 'key' || $configured[$provider][$field])>Оставить текущий</option>
-                                    <option value="replace" @selected($field === 'key' && !$configured[$provider][$field])>{{ $configured[$provider][$field] ? 'Заменить' : 'Указать' }}</option>
+                                    <option value="keep">{{ $configured[$provider][$field] ? 'Оставить текущий' : 'Оставить незаданным' }}</option>
+                                    <option value="replace">{{ $configured[$provider][$field] ? 'Заменить' : 'Указать' }}</option>
                                     <option value="clear">{{ $field === 'proxy' ? 'Без прокси' : 'Удалить ключ' }}</option>
                                     <option value="inherit">Использовать серверную настройку</option>
                                 </select>
@@ -97,6 +97,28 @@
                     </x-gc-field>
                 </div>
             </div>
+        </x-gc-form-section>
+        <x-gc-form-section title="Ростислоп Нейрославович">
+            <div class="row g-3" id="tutor-limits">
+                <div class="col-12 col-md-6">
+                    <x-gc-field name="settings[tutor_limits][platform_monthly_tokens]" id="tutor-platform_monthly_tokens" :label="$tutorLimits['platform_monthly_tokens']" hint="Включает вопросы учеников, ответы помощника и проверку ответов. Лимит обновляется в начале календарного месяца.">
+                        <input id="tutor-platform_monthly_tokens" name="settings[tutor_limits][platform_monthly_tokens]" type="number" class="form-control" min="0" max="2147483647" required value="{{ old('settings.tutor_limits.platform_monthly_tokens', $settings['tutor_limits']['platform_monthly_tokens']) }}">
+                    </x-gc-field>
+                </div>
+            </div>
+            <details @if($errors->has('settings.tutor_limits.*')) open @endif>
+                <summary>Дневные лимиты</summary>
+                <div class="row g-3 mt-1">
+                    @foreach($tutorLimits as $key => $label)
+                        @continue($key === 'platform_monthly_tokens')
+                        <div class="col-12 col-md-6">
+                            <x-gc-field :name="'settings[tutor_limits]['.$key.']'" :id="'tutor-'.$key" :label="$label">
+                                <input id="tutor-{{ $key }}" name="settings[tutor_limits][{{ $key }}]" type="number" min="0" max="2147483647" required class="form-control" value="{{ old('settings.tutor_limits.'.$key, $settings['tutor_limits'][$key]) }}">
+                            </x-gc-field>
+                        </div>
+                    @endforeach
+                </div>
+            </details>
         </x-gc-form-section>
         <p class="gc-help-text mb-0">Изменения применяются со следующего запроса. Ключи и прокси хранятся зашифрованными.</p>
     </form>

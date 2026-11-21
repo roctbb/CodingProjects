@@ -7,6 +7,13 @@ $database = new PDO('sqlite:'.$directory.'/base.sqlite');
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $database->exec(file_get_contents(__DIR__.'/fixture.sql'));
 unset($database);
+$root = dirname(__DIR__, 2);
+require $root.'/vendor/autoload.php';
+$app = require $root.'/bootstrap/app.php';
+$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+config(['database.default'=>'sqlite','database.connections.sqlite.database'=>$directory.'/base.sqlite']);
+(require $root.'/database/migrations/2026_11_21_230000_create_stickers_catalog.php')->up();
+\Illuminate\Support\Facades\DB::disconnect('sqlite');
 $theory = <<<'MD'
 # Исследуем циклы
 

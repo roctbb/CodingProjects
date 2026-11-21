@@ -6,8 +6,9 @@
         ->filter(fn ($task) => $isManager || $task->isVisible($user, $course))->sum('max_mark');
     $compactMeta = [];
     $showGroupProgress = $isManager && (!$showTeacherLock || $lessonCard['hasActivity']);
+    $revisionLink = $isLearner && $isAvailable && !$isCurrent && !$courseEnded && $lessonView['revisionCount'] > 0;
     if ($isLearner && $isAvailable) {
-        if ($lessonView['workLabel']) $compactMeta[] = $lessonView['workLabel'];
+        if ($lessonView['workLabel'] && !$revisionLink) $compactMeta[] = $lessonView['workLabel'];
         if ($lessonView['pendingCount']) $compactMeta[] = $lessonView['pendingCount'].' на проверке';
         if ($lessonView['checkingCount']) $compactMeta[] = 'Автопроверка: '.$lessonView['checkingCount'];
     } elseif ($showGroupProgress && $lessonTaskCount > 0 && $lessonCard['total']) {
@@ -34,6 +35,7 @@
 <div class="course-lesson-compact">
     @include('courses.partials.lesson-progress')
     <div class="course-lesson-compact__body">
+        @if($classLesson)<small class="gc-help-text">Сейчас в классе</small>@endif
         <h3 class="course-lesson-compact__title" data-filter-by="text">
             @if($isAvailable)
                 <a href="{{ $lessonUrl }}" @if($isCurrent) aria-current="step" @endif>{{ $lesson->name }}</a>
@@ -41,11 +43,20 @@
                 {{ $lesson->name }}
             @endif
         </h3>
-        @if($compactMeta || ($isManager && $lessonCard['pending']))
+        @if($compactMeta || $revisionLink || ($isManager && $lessonCard['pending']))
             <div class="course-lesson-compact__meta">
+                @if($revisionLink)<a class="course-revision-link" href="{{ $lessonUrl }}">{{ $lessonView['workLabel'] }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>@endif
                 @if($compactMeta)<span>{{ implode(' · ', $compactMeta) }}</span>@endif
                 @if($isManager && $lessonCard['pending'])<a class="course-lesson-review-link" href="{{ $lessonCard['reviewUrl'] }}" data-lesson-review-link>На проверке: {{ $lessonCard['pending'] }}</a>@endif
                 @if($isLearner && $isAvailable && $cmaxPoints > 0)<span class="course-lesson-compact__xp">{{ $cpoints }} / {{ $cmaxPoints }} XP</span>@endif
+            </div>
+        @endif
+        @if($repeatLesson)
+            <div class="course-lesson-review-actions">
+                <a class="course-continue" href="{{ $lessonUrl }}">Повторить урок</a>
+                @if(filled($lesson->description))
+                    <details><summary>Об уроке</summary><div class="course-path-description" data-filter-by="text">@parsedown($lesson->description)</div></details>
+                @endif
             </div>
         @endif
         <div class="course-lesson-compact__access">@include('courses.partials.lesson-access')</div>

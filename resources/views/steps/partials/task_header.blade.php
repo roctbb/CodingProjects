@@ -1,8 +1,8 @@
-@php($hasDeadlineChain = $deadline instanceof \App\Support\DeadlineRule && !empty($deadline->series))
 <div class="step-task-card__header gc-section-header">
-    @if(!$isManager)<span class="gc-task-emblem" aria-hidden="true"><i class="{{ $taskTypeIcon }}"></i></span>@endif
+    @if(!$isManager && empty($studentAttempt))<span class="gc-task-emblem" aria-hidden="true"><i class="{{ $taskTypeIcon }}"></i></span>@endif
     <div class="gc-task-heading min-width-0">
-        <h2 class="step-task-card__title mb-0">{{$task->name}}</h2>
+        @if(empty($studentAttempt))<h2 class="step-task-card__title mb-0">{{$task->name}}</h2>@endif
+        @include('steps.partials.task-title-rewards')
         <div class="gc-task-heading__type">
             <span class="step-task-type step-task-type--{{$taskType}}"><i class="{{$taskTypeIcon}}" aria-hidden="true"></i>{{$taskTypeLabel}}</span>
             <span class="gc-help-text">{{$task->max_mark}} XP</span>
@@ -11,21 +11,8 @@
             @if($isInsider && !$isManager && !$task->is_quiz)
                 <x-gc-task-state :task="$task" :viewer="$user" :course="$course" />
             @endif
-            @if($deadline && !$hasDeadlineChain)
-                <span class="gc-task-metadata__deadline"><span class="gc-help-text">{{ $isManager ? 'Срок сдачи:' : 'Срок:' }}</span> <x-gc-deadline-label :expiration="$deadline->expiration" :rule="$deadline" :personal="!$isManager" :settled="!$isManager && $task->isDone($user->id)" /></span>
-            @endif
-            @if($earnedAchievementId)
-                <a class="step-task-achievement-badge" href="{{ url('/insider/profile/'.$user->id.'#achievement-'.$earnedAchievementId) }}"><i class="fas fa-trophy" aria-hidden="true"></i> Достижение получено</a>
-            @endif
-            @if($task->price > 0)
-                <span class="gc-task-reward"><i class="fas fa-coins gc-currency-icon" aria-hidden="true"></i> {{$task->price}} GC</span>
-            @endif
         </div>
-        @if($hasDeadlineChain)<div class="gc-task-deadline-chain"><i class="fas fa-calendar-days" aria-hidden="true"></i> <x-gc-deadline-chain :rule="$deadline" /></div>@endif
-        @if($isInsider && !$isManager)
-            @php($classBonus = app(\App\Services\ClassroomBonus::class)->at($task, $course->id, $user->id, now()))
-            @if(!empty($classBonus['amount']))<p class="gc-help-note mt-2 mb-0"><i class="fas fa-coins gc-currency-icon" aria-hidden="true"></i> Решите полностью на занятии: +{{ $classBonus['amount'] }} GC. Сдайте до {{ \Carbon\Carbon::parse($classBonus['ends_at'])->setTimezone(config('app.timezone'))->format('H:i') }}.</p>@endif
-        @endif
+        @include('steps.partials.task-timing')
     </div>
     @if ($isManager)
         @include('steps.partials.deadline_modal')

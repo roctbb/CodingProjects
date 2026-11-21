@@ -19,30 +19,12 @@
             }
             $taskScoreBadgeClass = $hasUserSolution ? $latestUserSolution->scoreBadgeClass('bg-body') : 'bg-body';
         @endphp
-        <div id="task{{$task->id}}" class="gc-section step-task-card step-task-card--{{$taskType}} @if ($task->is_star) is-optional @endif @if ($hasUserSolution) is-submitted @endif overflow-hidden mb-3">
+        <section id="task{{$task->id}}" class="gc-section step-task-card step-task-card--quiz gc-quiz-card mb-3">
             @include('steps.partials.task_header')
-
-            <div class="markdown step-task-card__body">
-                {!! parsedown_math($task->text) !!}
-
-                @if($blocked)
-                    <p class="gc-help-note text-danger"><i class="fas fa-lock" aria-hidden="true"></i> Задача заблокирована. Новые сдачи запрещены.</p>
-                @endif
-                @if ($task->is_quiz && !$blocked)
-                    @include('steps.partials.quiz-answer-form')
-                @endif
-
-                <div class="step-task-status-row {{$taskStatusClass}} @if (!($task->is_quiz && $hasUserSolution)) d-none @endif"
-                     data-task-status-row>
-                    @if ($task->is_quiz && $hasUserSolution)
-                        <span class="badge rounded-pill {{ $taskScoreBadgeClass }} step-task-score" id="TSK_{{$task->id}}">{{$latestUserSolution->mark}} XP</span>
-                        <span class="small text-muted" id="TSK_COM_{{$task->id}}">{{$latestUserSolution->comment}}</span>
-                    @else
-                        <span class="badge rounded-pill bg-body step-task-score" id="TSK_{{$task->id}}"></span>
-                        <span class="small text-muted" id="TSK_COM_{{$task->id}}"></span>
-                    @endif
-                </div>
+            <div class="step-task-card__body">
+                <div class="markdown">{!! parsedown_math($task->text) !!}</div>
+                @include('steps.partials.quiz-response')
             </div>
-        </div>
+        </section>
     @endforeach
 @endif

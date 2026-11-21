@@ -106,6 +106,17 @@
     "kind": "api"
   },
   {
+    "method": "POST",
+    "uri": "api/geekexam/wifi-disconnect",
+    "name": null,
+    "action": "GeekExamWifiAlertController@store",
+    "middleware": [
+      "api"
+    ],
+    "node": "geekexam",
+    "kind": "callback"
+  },
+  {
     "method": "GET|HEAD",
     "uri": "api/user",
     "name": null,
@@ -1275,6 +1286,20 @@
     "kind": "screen"
   },
   {
+    "method": "POST",
+    "uri": "insider/courses/{course_id}/steps/{id}/tutor",
+    "name": "student.tutor",
+    "action": "StudentTutorController",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "throttle:12,1"
+    ],
+    "node": "step",
+    "kind": "api"
+  },
+  {
     "method": "GET|HEAD",
     "uri": "insider/courses/{course_id}/steps/{id}/upper",
     "name": null,
@@ -1712,6 +1737,20 @@
     ],
     "node": "review-tools",
     "kind": "action"
+  },
+  {
+    "method": "GET|POST|HEAD",
+    "uri": "insider/courses/{course}/tasks/{task}/chat/{student}",
+    "name": "task-chat.thread",
+    "action": "TaskChatController@thread",
+    "middleware": [
+      "web",
+      "auth",
+      "verified",
+      "throttle:task-chat"
+    ],
+    "node": "step",
+    "kind": "api"
   },
   {
     "method": "GET|HEAD",
@@ -2923,6 +2962,48 @@
     ],
     "node": "geekexecutor",
     "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/settings/stickers",
+    "name": "settings.stickers.index",
+    "action": "StickersController@index",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-stickers",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/settings/stickers",
+    "name": "settings.stickers.store",
+    "action": "StickersController@store",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-stickers",
+    "kind": "action"
+  },
+  {
+    "method": "PUT",
+    "uri": "insider/settings/stickers/{sticker}",
+    "name": "settings.stickers.update",
+    "action": "StickersController@update",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-stickers",
+    "kind": "action"
   },
   {
     "method": "GET|HEAD",

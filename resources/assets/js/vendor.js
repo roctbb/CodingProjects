@@ -3,6 +3,7 @@ import initCourseSubgroups from './components/course-subgroups';
 import initAchievements from './components/achievements';
 import initLearningAvatar from './components/learning-avatar';
 import initSolutionReview from './components/solution-review';
+import initStudentTutor from './components/student-tutor';
 import initReadingWorkspace from './components/reading-workspace';
 import initContentTabs from './components/content-tabs';
 import initProfileLinks from './components/profile-links';
@@ -94,6 +95,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initSolutionReview();
 
+    initStudentTutor();
     const reading = initReadingWorkspace();
     initContentTabs({ onChange: () => reading.refresh() });
     initProfileLinks();

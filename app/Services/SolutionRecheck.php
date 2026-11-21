@@ -46,6 +46,7 @@ class SolutionRecheck
             $locked->recheck_comment = trim($comment);
             $locked->review_skipped = false;
             $locked->save();
+            app(TaskChat::class)->recordRecheck($locked);
             Notification::send($locked->course->teachers,
                 (new NewSolution($locked))->delay(now()->addSecond())->afterCommit());
             return $this->status($locked);

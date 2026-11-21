@@ -6,7 +6,7 @@
         $isManager = $isInsider && isset($course) && $course && $user && ($course->teachers->contains($user) || $user->role == 'admin');
     @endphp
 
-    <div class="tab-pane fade show active markdown step-reading-card" id="theory" role="tabpanel" aria-labelledby="theory-tab">
+    <div class="tab-pane fade @if(empty($initialTaskId)) show active @endif markdown step-reading-card" id="theory" role="tabpanel" aria-labelledby="theory-tab">
 
         @if ($step->video_url)
             <div class="ratio ratio-16x9 step-reading-video">
@@ -17,11 +17,11 @@
         @endif
 
         @if ($step->is_notebook)
-            <div class="notebook-container" id="notebook" data-notebook-content="{{ e($step->theory) }}">
+            <div class="notebook-container" id="notebook" data-tutor-cells="{{ \App\Services\Tutor\Reading::revision($step) }}" data-notebook-content="{{ e($step->theory) }}">
 
             </div>
         @else
-            @parsedown($step->theory)
+            <div data-tutor-reading="{{ \App\Services\Tutor\Reading::revision($step) }}">@parsedown($step->theory)</div>
         @endif
         @if (!$step->lesson->is_open && $isManager && $step->notes!='')
             <div class="step-teacher-note mt-4">

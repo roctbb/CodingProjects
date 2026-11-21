@@ -318,7 +318,7 @@
 
 Проверка: Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.
 
-Состояния для макета и проверки: теория; текст; код; квиз; пустая ступень; сдано / проверено / блокировка; ученик / преподаватель; список ступеней слева с текущим пунктом; мобильный список раскрыт / скрыт; одна ступень без боковой колонки; вкладка задачи по прямой ссылке видна на узком экране; загрузка готовых файлов и вставка кода; неизменяемая отправленная версия; WebSocket: очередь / компиляция / тесты / результат; покупка скрытого теста; реальный прирост XP / новое звание / GC без перезагрузки.
+Состояния для макета и проверки: теория; текст; код; квиз; пустая ступень; сдано / проверено / блокировка; ученик / преподаватель; список ступеней слева с текущим пунктом; мобильный список раскрыт / скрыт; одна ступень без боковой колонки; вкладка задачи по прямой ссылке видна на узком экране; загрузка готовых файлов и вставка кода; неизменяемая отправленная версия; WebSocket: очередь / компиляция / тесты / результат; покупка скрытого теста; реальный прирост XP / новое звание / GC без перезагрузки; чат до первой посылки; ответ преподавателя на выбранную посылку; журнал конкретной проверки в диалоге.
 
 Шаблон экрана: learning-workspace. Статус: implemented.
 
@@ -329,7 +329,9 @@
 - `GET|HEAD /insider/courses/{course_id}/steps/{id}/delete` — action
 - `GET|HEAD /insider/courses/{course_id}/steps/{id}/lower` — action
 - `POST /insider/courses/{course_id}/steps/{id}/question` — action
+- `POST /insider/courses/{course_id}/steps/{id}/tutor` — api
 - `GET|HEAD /insider/courses/{course_id}/steps/{id}/upper` — action
+- `GET|POST|HEAD /insider/courses/{course}/tasks/{task}/chat/{student}` — api
 - `GET|HEAD /insider/courses/{course}/tasks/{task}/checker` — api
 - `POST /insider/courses/{course}/tasks/{task}/checker/extra-attempt` — api
 - `GET|PUT|DELETE|HEAD /insider/courses/{course}/tasks/{task}/code-draft` — api
@@ -340,7 +342,7 @@
 
 - Теория / оглавление / Notebook → [Теория / оглавление / Notebook](#step-theory) (state)
 - Задача: текст, код или квиз → [Задача: текст, код или квиз](#step-task) (state)
-- Попытки и обратная связь → [Попытки и обратная связь](#task-solutions) (state)
+- Чат задачи, посылки и результаты проверок → [Попытки и обратная связь](#task-solutions) (state)
 - Прогресс учеников и поиск → [Прогресс учеников и поиск](#student-progress) (state)
 - Создать задание → [Создание задания](#task-create) (navigate)
 - Дедлайн задачи → [Дедлайн задачи](#task-deadline) (open)
@@ -594,6 +596,7 @@
 Переходы:
 
 - Сохранить → [Страница курса](#course) (action)
+- Каталог наклеек → [Каталог наклеек](#settings-stickers) (navigate)
 
 Исходники:
 
@@ -1274,6 +1277,7 @@
 
 - Цены товаров → [Цены и акции](#settings-store) (navigate)
 - Telegram → [Настройки Telegram](#settings-telegram) (navigate)
+- Наклейки → [Каталог наклеек](#settings-stickers) (navigate)
 
 Исходники:
 
@@ -2396,6 +2400,10 @@ GeekExam
 
 Проверка: Внешний сервис: его внутренние экраны не входят в аудит CodingProjects.
 
+Маршруты:
+
+- `POST /api/geekexam/wifi-disconnect` — callback
+
 Исходники:
 
 - Внешняя граница системы.
@@ -2916,3 +2924,31 @@ Telegram, почта и Силаэдр в личных настройках; н�
 - [app/Services/CourseSubgroups.php](../../app/Services/CourseSubgroups.php)
 - [app/Support/CourseScope.php](../../app/Support/CourseScope.php)
 - [resources/assets/js/components/course-subgroups.js](../../resources/assets/js/components/course-subgroups.js)
+
+<a id="settings-stickers"></a>
+
+## Каталог наклеек
+
+Тип: page. Роли сценария: Администратор.
+
+Добавить наклейку в коллекцию или изменить название и коллекцию
+
+Проверка: Проверяется на локальном стенде в административных настройках.
+
+Состояния для макета и проверки: Новая наклейка; Изменение коллекции; Повторяющееся изображение.
+
+Маршруты:
+
+- `GET|HEAD /insider/settings/stickers` — screen
+- `POST /insider/settings/stickers` — action
+- `PUT /insider/settings/stickers/{sticker}` — action
+
+Переходы:
+
+- ИИ → [Настройки ИИ](#settings-ai) (navigate)
+
+Исходники:
+
+- [resources/views/settings/stickers.blade.php](../../resources/views/settings/stickers.blade.php)
+- [app/Http/Controllers/StickersController.php](../../app/Http/Controllers/StickersController.php)
+- [app/Sticker.php](../../app/Sticker.php)

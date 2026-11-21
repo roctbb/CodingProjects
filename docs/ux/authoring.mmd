@@ -14,6 +14,7 @@ flowchart TB
   step["Ступень"]
   courses["Мои курсы"]
   course["Страница курса"]
+  settings_stickers["Каталог наклеек"]
   task_create -->|"Сохранить / отменить"| step
   perform -->|"Вернуться"| step
   perform -->|"Соседняя ступень"| perform
@@ -29,3 +30,4 @@ flowchart TB
   course_edit -->|"Исправить / улучшить текст"| text_assist
   step_edit -->|"Исправить / улучшить текст"| text_assist
   task_edit -->|"Исправить / улучшить текст"| text_assist
+  lesson_edit -->|"Каталог наклеек"| settings_stickers

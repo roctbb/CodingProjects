@@ -96,10 +96,16 @@ class RecentRoomCharactersTest extends TestCase
         $this->assertSame(0, (imagecolorat($preview, 64, 100) >> 24) & 0x7f);
         imagedestroy($preview);
         Storage::assertExists($generation->previewPath());
+        $portraitUrl = $url.'?portrait=1';
+        $portraitResponse = $this->get($portraitUrl)->assertOk();
+        $info = getimagesizefromstring($portraitResponse->getContent());
+        $this->assertSame([192,192], [$info[0],$info[1]]);
+        Storage::assertExists($generation->previewPath(true));
 
         // A repeated request must serve the saved file without decoding the original again.
         $this->mock(RoomCharacterImages::class)->shouldNotReceive('preview');
         $this->get($url)->assertOk()->assertContent($response->getContent());
+        $this->get($portraitUrl)->assertOk()->assertContent($portraitResponse->getContent());
     }
 
     public function test_preview_does_not_expose_hidden_unfinished_replaced_or_missing_characters(): void

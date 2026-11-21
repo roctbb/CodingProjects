@@ -147,6 +147,43 @@ class Reports
             && $this->purchaseAllowed($record,$user);
     }
 
+    /** Use the same lock and permanent test identity as a coin purchase. */
+    public function tutorExamples(CodeTestReport $record, User $user): array
+    {
+        if (!$this->purchaseAllowed($record, $user)) return [];
+        $report = $record->report;
+        $limit = min(3, intdiv(count($report['tests']), 3));
+        if (!$limit || $report['passed'] === $report['total']) return [];
+
+        return app(CoinWallet::class)->transaction($user->id, function () use ($record, $user, $report, $limit) {
+            $scope = ['user_id' => $user->id, 'task_id' => $record->task_id];
+            $unlocks = DB::table('code_test_purchases')->where($scope)->pluck('from_tutor', 'test_id');
+            $remaining = $limit - $unlocks->filter()->count();
+            $examples = [];
+            foreach ($report['tests'] as $test) {
+                if ($test['is_public'] || !in_array($test['verdict'], self::PURCHASABLE, true)) continue;
+                $id = $test['test_id'];
+                if (!$unlocks->get($id)) {
+                    if ($unlocks->has($id) || $remaining <= 0) continue;
+                    DB::table('code_test_purchases')->insert($scope + ['test_id' => $id, 'amount' => 0,
+                        'from_tutor' => true, 'created_at' => now(), 'updated_at' => now()]);
+                    $unlocks->put($id, true);
+                    $remaining--;
+                }
+                $example = ['number' => $test['number']];
+                foreach (['input', 'expected', 'actual'] as $key) {
+                    if (isset($test[$key])) {
+                        $field = $this->artifacts->testField($test[$key], '');
+                        if ($field['type'] === 'inline') $example[$key] = mb_strimwidth($field['text'], 0, 400, '…');
+                    }
+                }
+                $examples[] = $example;
+                if (count($examples) === $limit) break;
+            }
+            return $examples;
+        });
+    }
+
     public function buy(CodeTestReport $record, string $testId, User $user, ?int $expectedPrice = null,bool $includeFields=true): array
     {
         $this->access->authorOrTeacher($user, $record);

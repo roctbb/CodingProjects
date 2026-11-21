@@ -46,7 +46,7 @@ class CourseWorkspaceNavigationTest extends TestCase
 
     public function test_manager_destinations_follow_role_and_course_membership(): void
     {
-        foreach ([['student', false, 4], ['student', true, 4], ['teacher', false, 2], ['teacher', true, 5], ['admin', false, 5]] as [$role, $assigned, $count]) {
+        foreach ([['student', false, 3], ['student', true, 3], ['teacher', false, 2], ['teacher', true, 5], ['admin', false, 5]] as [$role, $assigned, $count]) {
             $this->assertSame($count, $this->navigation($role, $assigned)->query('//nav/a')->length);
         }
         $xpath = $this->navigation('teacher', true, 'journal', false);

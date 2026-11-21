@@ -58,6 +58,8 @@
                 </div>
             </div>
             <section id="learning-avatar" class="gc-profile-hero__room" aria-label="Комната программиста">
+                @php($roomBackdrop = collect($learningAvatarData['layers'])->firstWhere('equippedSlot', 'room'))
+                @if($roomBackdrop)<span class="gc-profile-room-backdrop" style="background-image:url('{{ $roomBackdrop['src'] }}')" aria-hidden="true"></span>@endif
                 @if($isOwner)
                     <div class="gc-profile-hero__room-controls">
                         <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="offcanvas" data-bs-target="#room-settings" aria-controls="room-settings">Настроить</button>
@@ -79,7 +81,7 @@
                 <p class="gc-preserve-lines mb-0">{{ $user->comments }}</p>
             </x-gc-panel>
         @endif
-        @if($stickers->count())
+        @if($album->isNotEmpty())
             @include('profile.partials.stickers')
         @endif
     </div>

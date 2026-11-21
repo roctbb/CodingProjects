@@ -41,6 +41,7 @@ class SubmissionReview
             if (!$solution->recheck_requested) {
                 $solution->recheck_requested=true;$solution->recheck_comment=trim($comment);$solution->review_skipped=false;$solution->save();
                 $locked->update(['solution_id'=>$solution->id]);
+                app(\App\Services\TaskChat::class)->recordRecheck($solution, $locked->id);
                 Notification::send($solution->course->teachers,(new \App\Notifications\NewSolution($solution))->delay(now()->addSecond())->afterCommit());
             }
             return $this->status($locked);

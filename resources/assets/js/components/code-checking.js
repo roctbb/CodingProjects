@@ -1,5 +1,25 @@
-function showURLContext(){
-    const url=new URL(location.href),task=url.searchParams.get('task'),student=url.searchParams.get('student'),attempt=url.searchParams.get('attempt');
+import {chatDesktop} from './workbook-navigation';
+
+function revealAttempt(root, attempt) {
+    if (!attempt || new URL(location.href).searchParams.get('attempt') !== attempt || !root.getClientRects().length) return;
+    const heading = root.closest('.gc-student-attempt')?.querySelector('.gc-task-title-row, [data-attempt-verdict] > header');
+    if (heading) {
+        const bounds = heading.getBoundingClientRect();
+        if (bounds.bottom <= 0 || bounds.top >= innerHeight) heading.scrollIntoView({block:'center',behavior:'instant'});
+        return;
+    }
+    const status = root.querySelector('.gc-result-verdict__title, [role="alert"]') || root;
+    const bounds = status.getBoundingClientRect();
+    if (bounds.top < 60 || bounds.bottom > window.innerHeight - 32) {
+        root.scrollIntoView({block: 'start', behavior: 'instant'});
+    }
+}
+
+function showURLContext(initialContext) {
+    const query = new URL(location.href).searchParams;
+    const attempt = query.get('attempt');
+    const task = query.get('task') || initialContext?.attemptTask;
+    const student = query.get('student') || initialContext?.attemptAuthor;
     if(!/^\d+$/.test(task || ''))return;
     const roots=[...document.querySelectorAll('[data-execution-workspace]')].filter(root=>root.dataset.taskId===task);
     if(!roots.length)return;
@@ -7,10 +27,18 @@ function showURLContext(){
     if(taskTrigger)globalThis.bootstrap?.Tab.getOrCreateInstance(taskTrigger).show();
     if(!/^\d+$/.test(student || ''))return;
     const teacher=roots.some(root=>root.dataset.teacher==='true'),own=student===roots[0].dataset.viewerId;
-    const root=teacher ? roots.find(root=>own ? root.hasAttribute('data-execution-tab-workspace') : root.hasAttribute('data-execution-inline-review')) : roots[0];
+    const bound = roots.find(root => root.dataset.user === student && root.dataset.submission === attempt);
+    const root=bound || (teacher ? roots.find(root=>own ? root.hasAttribute('data-execution-tab-workspace') : root.hasAttribute('data-execution-inline-review')) : roots[0]);
     if(!root)return;
     root.dataset.submission=attempt || '';
-    if(teacher){
+    if (attempt) {
+        const condition = root.closest('.gc-task-sheet')?.querySelector('.gc-task-condition-disclosure');
+        if (condition) {
+            const sideBySide = condition.closest('.gc-chat-sheet') ? chatDesktop().matches : matchMedia('(min-width: 1200px)').matches;
+            if (!sideBySide) condition.open = false;
+        }
+    }
+    if(teacher && !bound){
         const tab=document.getElementById((own?'own-solution-tab-':'student-solutions-tab-')+task);
         if(tab)globalThis.bootstrap?.Tab.getOrCreateInstance(tab).show();
         if(!own){
@@ -24,6 +52,16 @@ function showURLContext(){
 }
 
 export default function initCodeChecking() {
+    document.querySelectorAll('[data-quiz-student-for]').forEach(select=>{
+        if(select.dataset.connected)return;
+        select.dataset.connected='true';
+        const root=document.getElementById(select.dataset.quizStudentFor);
+        select.addEventListener('change',()=>root.dispatchEvent(select.value ?
+            new CustomEvent('gc:execution-open',{detail:{id:select.value,name:select.selectedOptions[0].text}}) :
+            new CustomEvent('gc:execution-close')));
+        root.addEventListener('gc:execution-close',()=>{select.value='';});
+        root.addEventListener('gc:execution-open',event=>{select.value=event.detail.id;select.closest('details').open=true;});
+    });
     document.querySelectorAll('[data-execution-workspace]').forEach(root => {
         if (root.dataset.initialized) return;
         root.dataset.initialized = 'true';
@@ -38,6 +76,18 @@ export default function initCodeChecking() {
             if(list){const back=document.createElement('button');back.type='button';back.className='btn btn-outline-secondary';back.textContent='К списку работ';back.addEventListener('click',()=>root.dispatchEvent(new CustomEvent('gc:execution-close')));root.append(back);}
             throw error;
         });
+        const submitButton = root.closest('.gc-task-sheet')?.querySelector('[data-task-compose="'+root.id+'"]');
+        submitButton?.addEventListener('click', async () => {
+            submitButton.disabled = true;
+            try {
+                const controller = await load();
+                submitButton.disabled = false;
+                submitButton.focus({preventScroll:true});
+                controller.openEditor();
+            }
+            catch { root.scrollIntoView({block:'center'}); }
+            finally { submitButton.disabled = false; }
+        });
         const open = async intent => {
             pendingIntent = intent;const sequence=++openSequence;
             root.hidden = false;
@@ -48,12 +98,12 @@ export default function initCodeChecking() {
                 const selected = intent;
                 if (selected.own) await controller.startOwnSubmission();
                 else await controller.selectStudent(selected,{attempt:selected.attempt});
-
+                if (sequence === openSequence) revealAttempt(root, selected.attempt);
             } catch { /* The workspace displays its retry action. */ }
         };
         root.addEventListener('gc:execution-open',event => open(event.detail));
         root.addEventListener('gc:execution-navigate',event=>{
-            const links=[...document.querySelectorAll('[data-execution-student]')].filter(link=>link.dataset.executionStudent==='#'+root.id && !link.classList.contains('d-none'));
+            const links=[...document.querySelectorAll('[data-execution-student]')].filter(link=>link.dataset.executionStudent==='#'+root.id && !link.classList.contains('d-none') && !link.hasAttribute('data-without-attempts'));
             const index=links.findIndex(link=>String(link.dataset.studentId)===String(pendingIntent?.id));
             if(links.length>1)links[index<0 ? (event.detail.direction<0?links.length-1:0) : (index+(event.detail.direction<0?links.length-1:1))%links.length].click();
         });
@@ -63,7 +113,7 @@ export default function initCodeChecking() {
         });
         root.addEventListener('gc:execution-context',event=>load().then(async controller=>{
             await controller.context(event.detail.attempt);
-
+            revealAttempt(root, event.detail.attempt);
         }).catch(()=>{}));
         root.addEventListener('gc:execution-close',() => {
             openSequence++;root.hidden = true;
@@ -142,5 +192,5 @@ export default function initCodeChecking() {
             root.textContent = 'Не удалось загрузить настройки проверки. Обновите страницу.';
         });
     });
-    showURLContext();
+    showURLContext(document.querySelector('[data-attempt-task]')?.dataset);
 }

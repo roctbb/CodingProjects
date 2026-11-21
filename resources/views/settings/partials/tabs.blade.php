@@ -9,5 +9,6 @@
     <a class="nav-link {{ Request::routeIs('settings.system-store.*') ? 'active' : '' }}" href="{{ route('settings.system-store.edit') }}" @if(Request::routeIs('settings.system-store.*')) aria-current="page" @endif>
         <i class="fas fa-coins me-1"></i> Цены и акции
     </a>
+    <a class="nav-link {{ Request::routeIs('settings.stickers.*') ? 'active' : '' }}" href="{{ route('settings.stickers.index') }}" @if(Request::routeIs('settings.stickers.*')) aria-current="page" @endif>Наклейки</a>
 </nav>
 </x-gc-tab-strip>

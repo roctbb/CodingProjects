@@ -32,6 +32,8 @@ class CoursePlannerTest extends TestCase
             CREATE TABLE program_steps (id INTEGER PRIMARY KEY, name TEXT, lesson_id INTEGER, program_id INTEGER, sort_index INTEGER, updated_at TEXT);
             CREATE TABLE tasks (id INTEGER PRIMARY KEY, name TEXT, step_id INTEGER, max_mark INTEGER, is_star INTEGER DEFAULT 0, is_hidden INTEGER DEFAULT 0, updated_at TEXT);
             CREATE TABLE lesson_info (id INTEGER PRIMARY KEY, course_id INTEGER, lesson_id INTEGER, start_date TEXT);
+            CREATE TABLE solutions (id INTEGER PRIMARY KEY, course_id INTEGER, task_id INTEGER, user_id INTEGER, submitted TEXT, mark INTEGER);
+            CREATE TABLE blocked_tasks (id INTEGER PRIMARY KEY, course_id INTEGER, task_id INTEGER, user_id INTEGER);
             CREATE TABLE achievements (id INTEGER PRIMARY KEY, user_id INTEGER, status TEXT);
             CREATE TABLE task_deadlines (id INTEGER PRIMARY KEY AUTOINCREMENT, course_id INTEGER, task_id INTEGER, expiration TEXT, penalty NUMERIC, created_at TEXT, updated_at TEXT);
             INSERT INTO users VALUES (1,'Teacher','teacher@example.test','teacher','2026-01-01',null),(2,'Other teacher','other@example.test','teacher','2026-01-01',null),(3,'Student','student@example.test','student','2026-01-01',null);
@@ -45,6 +47,7 @@ class CoursePlannerTest extends TestCase
             INSERT INTO lesson_info (course_id,lesson_id,start_date) VALUES (1,1,'2020-01-01'),(1,2,'2020-01-01');
             INSERT INTO tasks VALUES (1,'Stairs',1,10,0,0,'2026-11-01'),(2,'Bonus',2,20,1,0,'2026-11-01'),(3,'Hidden',2,5,0,1,'2026-11-01'),(4,'Other task',4,10,0,0,'2026-11-01');
             SQL);
+        (require base_path('database/migrations/2026_05_10_130000_add_early_access_to_lessons.php'))->up();
         DB::statement('ALTER TABLE tasks ADD COLUMN sort_index INTEGER DEFAULT 100');
         DB::statement('ALTER TABLE courses ADD COLUMN current_lesson_id INTEGER');
         DB::statement('ALTER TABLE courses ADD COLUMN default_chapter_id INTEGER');

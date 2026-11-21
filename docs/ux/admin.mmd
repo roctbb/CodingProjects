@@ -4,6 +4,7 @@ flowchart TB
   settings_telegram["Настройки Telegram"]
   room_debug["Редактор комнаты"]
   market_promotion_picker(["Выбор товаров акции"])
+  settings_stickers["Каталог наклеек"]
   settings_ai -->|"Цены товаров"| settings_store
   settings_ai -->|"Telegram"| settings_telegram
   settings_store -->|"ИИ"| settings_ai
@@ -12,3 +13,5 @@ flowchart TB
   settings_telegram -->|"Цены товаров"| settings_store
   settings_store -->|"Выбрать товары акции"| market_promotion_picker
   market_promotion_picker -.->|"Применить выбор / отменить"| settings_store
+  settings_ai -->|"Наклейки"| settings_stickers
+  settings_stickers -->|"ИИ"| settings_ai

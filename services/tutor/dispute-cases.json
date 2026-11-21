@@ -1,0 +1,107 @@
+[
+  {
+    "task": "Граница учтена",
+    "grade": 7,
+    "mode": "review",
+    "topic": "Сравнение чисел",
+    "question": "Я не согласен с оценкой. Проверь замечание именно для нуля.",
+    "assignment": "Для положительного целого числа напечатай «плюс», иначе «не плюс».",
+    "review": {
+      "comment": "При нуле программа выводит «плюс»."
+    },
+    "review_basis": {
+      "feedback": [
+        "При нуле программа выводит «плюс»."
+      ]
+    },
+    "latest_submission": {
+      "text": "if n <= 0:\n    print(\"не плюс\")\nelse:\n    print(\"плюс\")",
+      "files": [],
+      "source_status": "ready",
+      "result": {
+        "method": "gpt",
+        "state": "completed",
+        "comment": "При нуле программа выводит «плюс»."
+      }
+    },
+    "previous_results": [],
+    "readings": [],
+    "neighbors": [],
+    "lesson": {
+      "title": "Сравнения",
+      "steps": []
+    },
+    "history": [],
+    "excerpt": ""
+  },
+  {
+    "task": "Замечание верно",
+    "grade": 7,
+    "mode": "review",
+    "topic": "Сравнение чисел",
+    "question": "Я не согласен с оценкой. Проверь замечание именно для нуля.",
+    "assignment": "Для положительного целого числа напечатай «плюс», иначе «не плюс».",
+    "review": {
+      "comment": "При нуле программа выводит «плюс»."
+    },
+    "review_basis": {
+      "feedback": [
+        "При нуле программа выводит «плюс»."
+      ]
+    },
+    "latest_submission": {
+      "text": "if n < 0:\n    print(\"не плюс\")\nelse:\n    print(\"плюс\")",
+      "files": [],
+      "source_status": "ready",
+      "result": {
+        "method": "gpt",
+        "state": "completed",
+        "comment": "При нуле программа выводит «плюс»."
+      }
+    },
+    "previous_results": [],
+    "readings": [],
+    "neighbors": [],
+    "lesson": {
+      "title": "Сравнения",
+      "steps": []
+    },
+    "history": [],
+    "excerpt": ""
+  },
+  {
+    "task": "Данных мало",
+    "grade": 7,
+    "mode": "review",
+    "topic": "Сравнение чисел",
+    "question": "Я не согласен с оценкой. Проверь замечание именно для нуля.",
+    "assignment": "Для положительного целого числа напечатай «плюс», иначе «не плюс».",
+    "review": {
+      "comment": "В нескольких случаях неверный результат."
+    },
+    "review_basis": {
+      "feedback": [
+        "В нескольких случаях неверный результат."
+      ]
+    },
+    "latest_submission": {
+      "text": "print(label(n))",
+      "files": [],
+      "source_status": "ready",
+      "result": {
+        "method": "gpt",
+        "state": "completed",
+        "comment": "В нескольких случаях неверный результат."
+      }
+    },
+    "previous_results": [],
+    "readings": [],
+    "neighbors": [],
+    "lesson": {
+      "title": "Сравнения",
+      "steps": []
+    },
+    "history": [],
+    "excerpt": ""
+  }
+]

@@ -42,6 +42,10 @@ class SolutionRecheckTest extends TestCase
         DB::table('solutions')->insert(['id' => 1, 'user_id' => 42, 'course_id' => 7, 'task_id' => 12,
             'text' => 'https://paste.test/?id=TEST', 'submitted' => now(), 'checked' => now(),
             'mark' => 5, 'raw_mark' => 5, 'comment' => 'Original feedback', 'review_skipped' => true]);
+        Schema::create('code_submissions', fn ($t) => $t->uuid('id')->primary());
+        (require database_path('migrations/2026_11_21_180000_create_task_chat_messages.php'))->up();
+        (require database_path('migrations/2026_11_22_001000_classify_task_chat_messages.php'))->up();
+        (require database_path('migrations/2026_11_22_002000_add_tutor_chat_replies.php'))->up();
         Notification::fake();
     }
 
@@ -61,6 +65,7 @@ class SolutionRecheckTest extends TestCase
         $solution->refresh();
         $this->assertSame(5,$solution->mark);$this->assertSame(5,$solution->raw_mark);
         $this->assertSame('Original feedback',$solution->comment);
+        $this->assertDatabaseCount('task_chat_messages', 1);
         $this->assertSame('Не согласен со вторым критерием',$solution->recheck_comment);
         $this->assertFalse($solution->review_skipped);
         Notification::assertSentToTimes(User::find(99),NewSolution::class,1);

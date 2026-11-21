@@ -10,6 +10,16 @@ use Illuminate\Support\Facades\Schema;
 class AiSettings
 {
     public const PROVIDERS = ['openai' => 'OpenAI-совместимый API'];
+    public const TUTOR_LIMITS = [
+        'platform_monthly_tokens' => 'Токены на всю платформу за месяц',
+        'platform_daily_tokens' => 'Токены на всю платформу за день',
+        'daily_tokens' => 'Токены на ученика за день',
+        'daily_questions' => 'Вопросы от ученика за день',
+        'daily_coins' => 'Монеты на ученика за день',
+        'platform_daily_coins' => 'Монеты на всю платформу за день',
+        'daily_rechecks' => 'Перепроверки на ученика за день',
+        'platform_daily_rechecks' => 'Перепроверки на всю платформу за день',
+    ];
     public const COMMANDS = [
         'text_improvement' => 'Исправление опечаток и стиля',
         'task_summary' => 'Пересказ решений',
@@ -25,7 +35,9 @@ class AiSettings
         // Until the migration is deployed, existing .env configuration remains usable.
         $stored = Schema::hasTable('ai_settings') ? AiSetting::find(1)?->settings : null;
 
-        $settings = array_replace_recursive(config('ai'), $stored ?? []);
+        $defaults = config('ai');
+        $defaults['tutor_limits'] = array_intersect_key(config('tutor'), self::TUTOR_LIMITS);
+        $settings = array_replace_recursive($defaults, $stored ?? []);
         $settings['legacy_gateway_disabled'] = ($settings['provider'] ?? '') === 'gateway';
         if ($settings['legacy_gateway_disabled']) $settings['provider'] = 'openai';
         unset($settings['providers']['gateway']);

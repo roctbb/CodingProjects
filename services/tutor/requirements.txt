@@ -1,0 +1,4 @@
+Flask>=3.1,<4
+gunicorn>=23,<27
+requests[socks]>=2.32,<3
+

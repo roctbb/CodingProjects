@@ -41,42 +41,43 @@ class History
             abort_if($author!==null && $author!==(int)$viewer->id,403);
             $author=(int)$viewer->id;
         }
-        $sources=$this->sources($course,$task->id,$author);
-        $byId=$sources->keyBy('id');$byLegacy=$sources->filter(fn($r)=>$r->legacy_id!==null)->keyBy('legacy_id');
-        $bySolution=$sources->filter(fn($r)=>$r->solution_id!==null)->keyBy('solution_id');
-        $items=[];$represented=[];$attempts=0;
-        if(Schema::hasTable('solutions')){
-            $query=$this->solutions($course,$task->id,$author);
-            foreach($query->get() as $event){
-                $source=$this->sourceFor($event,$byId,$byLegacy,$bySolution);
-                if($source)$represented[$source->id]=true;
-                $canonical=$source && $source->legacy_id===null && (int)$source->solution_id===(int)$event->id;
-                $row=$canonical?$this->submission($source):$this->legacy($event,$source);
-                $row['needs_review']=(!(bool)($event->review_skipped??false) && $event->mark===null) || (bool)($event->recheck_requested??false);
-                if($canonical){$row['awarded_xp']=$event->mark===null?null:(int)$event->mark;$row['solution_id']=(int)$event->id;}
-                $attempts++;
-                $items[]=$row;
+        $selected = (new AttemptHistoryPage)->select($course, $task->id, $author, $viewed, $page);
+        $summary = $selected[0];
+        $keys = collect($selected)->whereNotNull('entry_id');
+        $sourceIds = $keys->pluck('source_id')->filter()->unique()->values();
+        $eventIds = $keys->pluck('event_id')->filter()->unique()->values();
+        $sources = $sourceIds->isEmpty() ? collect() : $this->sources($course, $task->id, $author)
+            ->whereIn('s.id', $sourceIds)->get()->keyBy('id');
+        $events = $eventIds->isEmpty() ? collect() : $this->solutions($course, $task->id, $author)
+            ->whereIntegerInRaw('solutions.id', $eventIds)->get()->keyBy('id');
+        $items = [];
+        $bestAttempt = null;
+        foreach ($keys as $key) {
+            $source = $sources->get($key->source_id);
+            $event = $events->get($key->event_id);
+            if (($key->event_id !== null && !$event) || ($key->entry_id === $key->source_id && !$source)) continue;
+            $native = $source && $key->entry_id === $source->id;
+            $row = $native ? $this->submission($source) : $this->legacy($event, $source);
+            if ($event) {
+                $row['needs_review'] = (!$event->review_skipped && $event->mark === null) || (bool)$event->recheck_requested;
+                if ($native) {
+                    $row['awarded_xp'] = $event->mark === null ? null : (int)$event->mark;
+                    $row['evaluated_points'] = $event->evaluated_mark ?? $event->raw_mark ?? $event->mark;
+                    $row['solution_id'] = (int)$event->id;
+                }
+            } elseif (!$row['counts_as_attempt']) {
+                $row['origin'] = 'geekpaste_archive';
             }
+            $row['is_best'] = (int)$key->grade_rank === 1 && $key->xp !== null;
+            if ($key->on_page) $items[] = $row;
+            else $bestAttempt = $row;
         }
-        foreach($sources as $source){
-            if(isset($represented[$source->id]))continue;
-            $row=$this->submission($source);
-            if(!$row['counts_as_attempt'])$row['origin']='geekpaste_archive';else $attempts++;
-            $items[]=$row;
-        }
-        usort($items,fn($a,$b)=>($b['_order']<=>$a['_order']) ?: strcmp($b['id'],$a['id']));
-        $best=[];
-        foreach($items as $index=>$row)if($row['counts_as_attempt'] && $row['awarded_xp']!==null){
-            $current=$best[$row['user_id']]??null;
-            if($current===null || $row['awarded_xp']>$items[$current]['awarded_xp'])$best[$row['user_id']]=$index;
-        }
-        foreach($items as $index=>&$row)$row['is_best']=($best[$row['user_id']]??null)===$index;unset($row);
-        $bestAttempt=$author!==null && isset($best[$author])?$items[$best[$author]]:null;
-        if($bestAttempt)unset($bestAttempt['_order']);
-        if($viewed!==null)$items=array_values(array_filter($items,fn($row)=>(bool)$row['teacher_viewed']===$viewed));
-        $total=count($items);$slice=array_slice($items,($page-1)*20,20);
-        foreach($slice as &$row)unset($row['_order']);unset($row);
-        return ['items'=>$slice,'has_more'=>$page*20<$total,'total'=>$total,'total_attempts'=>$attempts,'best_attempt'=>$bestAttempt];
+        $total = (int)$summary->total;
+        return ['items'=>$items, 'has_more'=>$page*20 < $total, 'total'=>$total,
+            'total_attempts'=>(int)$summary->attempts, 'best_attempt'=>$bestAttempt,
+            'task_outcome'=>$author === null ? null : \App\Support\TaskOutcome::summary(
+                $summary->best_evaluation, (int)$task->max_mark, $summary->latest_state
+            )];
     }
 
     public function event(User $viewer,int $course,Task $task,int $id):array
@@ -87,9 +88,15 @@ class History
         $teacher=$this->access->teacher($viewer,$course);
         abort_unless($teacher || (int)$event->user_id===(int)$viewer->id,403);
         $solution=\App\Solution::findOrFail($id);
-        $sources=$this->sources($course,$task->id,(int)$event->user_id);
+        $sources=$this->sources($course,$task->id,(int)$event->user_id)->where(function ($query) use ($event) {
+            $query->where('s.solution_id', $event->id);
+            if (preg_match('~/code-submissions/([a-f0-9-]{36})(?:[/?#]|$)~i',$event->source_reference ?? '',$match)
+                && \Illuminate\Support\Str::isUuid($match[1])) $query->orWhere('s.id',$match[1]);
+            if (!empty($event->geekpaste_code_id)) $query->orWhere('s.legacy_id',$event->geekpaste_code_id);
+            if (preg_match('/(?:\?|&|&amp;)id=([A-Za-z0-9_-]+)/',$event->source_reference ?? '',$match)) $query->orWhere('s.legacy_id',$match[1]);
+        })->get();
         $source=$this->sourceFor($event,$sources->keyBy('id'),$sources->filter(fn($r)=>$r->legacy_id!==null)->keyBy('legacy_id'),$sources->filter(fn($r)=>$r->solution_id!==null)->keyBy('solution_id'));
-        $row=$this->legacy($event,$source);unset($row['_order']);
+        $row=$this->legacy($event,$source);
         $saved=DB::table('solutions')->where('id',$id)->first();
         $answer=(string)($saved->text??'');
         $isLink=$source || preg_match('~(?:paste\.geekclass\.ru|/code-submissions/|^https?://)~i',$answer);
@@ -129,7 +136,11 @@ class History
         $activity=\App\CourseActivity::where('solution_id',$solution->id)->where('course_id',$solution->course_id)
             ->where('task_id',$solution->task_id)->where('user_id',$solution->user_id)
             ->where('type',\App\CourseActivity::TYPE_SOLUTION_CHECKED)->orderByDesc('id')->first(['payload']);
-        $payload=$activity?->payload ?? [];
+        return self::verifiedTeacherComment($activity?->payload ?? [], $comment);
+    }
+
+    public static function verifiedTeacherComment(array $payload, string $comment): ?string
+    {
         if(($payload['feedback_source']??null)!=='teacher' || !is_string($payload['feedback_sha256']??null)
             || !hash_equals(hash('sha256',$comment),$payload['feedback_sha256'])
             || !is_string($payload['editable_comment']??null) || mb_strlen($payload['editable_comment'])>20000)return null;
@@ -142,7 +153,7 @@ class History
             ->leftJoin('users as u','u.id','=','s.user_id')
             ->where('s.course_id',$course)->where('s.task_id',$task)
             ->when($author!==null,fn($q)=>$q->where('s.user_id',$author))
-            ->get(['s.id','s.user_id','s.legacy_id','s.solution_id','s.created_at','s.teacher_viewed','s.preparation_state',
+            ->select(['s.id','s.user_id','s.legacy_id','s.solution_id','s.created_at','s.teacher_viewed','s.preparation_state',
                 'u.name as user_name','r.id as execution_id','r.state','r.progress','r.points','r.snapshot->points as maximum_points','r.snapshot->check_type as check_type']);
     }
 
@@ -173,7 +184,7 @@ class History
             'points'=>$source->points===null?null:(int)$source->points,'maximum_points'=>$source->maximum_points===null?null:(int)$source->maximum_points,
             'awarded_xp'=>null,'teacher_viewed'=>(bool)$source->teacher_viewed,'review_state_known'=>true,
             'source_version_unknown'=>$source->legacy_id!==null,'source_available'=>true,'source_submission_id'=>$source->id,
-            'counts_as_attempt'=>$source->legacy_id===null,'_order'=>$this->order($source->created_at)];
+            'counts_as_attempt'=>$source->legacy_id===null];
     }
 
     private function legacy(object $event,?object $source):array
@@ -185,16 +196,11 @@ class History
             'points'=>null,'maximum_points'=>null,'awarded_xp'=>$event->mark===null?null:(int)$event->mark,
             'evaluated_points'=>isset($event->evaluated_mark)?(int)$event->evaluated_mark:(isset($event->raw_mark)?(int)$event->raw_mark:null),
             'teacher_viewed'=>$source!==null?(bool)$source->teacher_viewed:null,'review_state_known'=>$source!==null,
-            'counts_as_attempt'=>true,'_order'=>$this->order($event->submitted)];
+            'counts_as_attempt'=>true];
     }
 
     private function date(?string $value):?string
     {
         return $value?Carbon::parse($value,config('app.timezone'))->toIso8601String():null;
-    }
-
-    private function order(?string $value):float
-    {
-        return $value?(float)Carbon::parse($value,config('app.timezone'))->format('U.u'):0;
     }
 }

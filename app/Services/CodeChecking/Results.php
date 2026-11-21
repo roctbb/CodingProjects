@@ -29,6 +29,24 @@ class Results
             && in_array($data['state'] ?? null, ['done', 'partially done', 'execution error'], true)
             && is_int($data['points'] ?? null) && $data['points'] >= 0 && $data['points'] <= $run->snapshot['points']
             && is_string($data['comment'] ?? null) && strlen($data['comment']) <= 200000, 422, 'Invalid execution result.');
+        if (array_key_exists('criteria', $data)) {
+            $rows = $data['criteria'];
+            abort_unless($run->snapshot['check_type'] === 'gpt' && $data['state'] !== 'execution error'
+                && is_array($rows) && array_is_list($rows) && count($rows) <= 100, 422);
+            foreach ($rows as $row) {
+                abort_unless(is_array($row)
+                    && is_string($row['title'] ?? null) && trim($row['title']) !== '' && mb_strlen($row['title']) <= 200
+                    && is_string($row['comment'] ?? null) && trim($row['comment']) !== '' && mb_strlen($row['comment']) <= 4000, 422);
+                if (count($row) === 3 && in_array($row['status'] ?? null, ['met','partial','unmet'], true)) continue;
+                abort_unless(count($row) === 4
+                    && is_int($row['points'] ?? null) && is_int($row['maximum'] ?? null)
+                    && $row['maximum'] > 0 && $row['points'] >= 0 && $row['points'] <= $row['maximum'], 422);
+            }
+            $remaining = $data['points'] - array_sum(array_column($rows, 'points'));
+            $unweighted = (int)$run->snapshot['points'] - array_sum(array_column($rows, 'maximum'));
+            abort_if($rows && ($remaining < 0 || $remaining > $unweighted
+                || (!array_column($rows, 'status') && ($remaining !== 0 || $unweighted !== 0))), 422, 'Invalid rubric totals.');
+        }
         if (isset($data['suite_diagnostics'])) {
             abort_unless(($run->snapshot['test_mode']??null)==='suite' && is_array($data['suite_diagnostics'])
                 && is_string($data['suite_diagnostics']['text']??null) && strlen($data['suite_diagnostics']['text'])<=400000
@@ -50,6 +68,7 @@ class Results
                     && ($report['course_id'] ?? null) === (int) $submission->course_id, 422, 'Report belongs to another execution.');
                 $this->reports->accept($report);
             }
+            if (isset($data['criteria'])) $run->criteria = $data['criteria'];
             $run->update(['result_hash' => $hash, 'points' => $data['points'], 'comment' => $data['comment'],
                 'legacy_report'=>isset($data['suite_diagnostics'])?['suite_diagnostics'=>$data['suite_diagnostics']]:$run->legacy_report,
                 'state' => $data['state'] === 'execution error' ? 'error' : 'completed', 'finished_at' => now(),

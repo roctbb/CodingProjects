@@ -119,6 +119,7 @@ var nbv = (function() {
 
             var cell = d.createElement('div');
             cell.className = 'gc-notebook__cell';
+            if (target.dataset.tutorCells) cell.id = 'read-' + target.dataset.tutorCells + '-' + j;
 
             var dm = d.createElement('div'); // empty div as a fallback
 

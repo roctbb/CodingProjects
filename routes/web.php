@@ -77,6 +77,11 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::post('/chatgpt/improve-text', 'TextImprovementController@improveText');
     Route::post('/yandexgpt/improve-text', 'TextImprovementController@improveText');
 
+    Route::middleware(['auth','admin'])->prefix('settings/stickers')->name('settings.stickers.')->group(function () {
+        Route::get('/', 'StickersController@index')->name('index');
+        Route::post('/', 'StickersController@store')->name('store');
+        Route::put('/{sticker}', 'StickersController@update')->whereNumber('sticker')->name('update');
+    });
     Route::get('/settings/ai', 'AiSettingsController@edit')->name('settings.ai.edit');
     Route::get('/settings/system-store', 'SystemStoreSettingsController@edit')->name('settings.system-store.edit');
     Route::get('/settings/system-store/targets', 'SystemStoreSettingsController@targets')->name('settings.system-store.targets');
@@ -180,6 +185,8 @@ Route::prefix('insider')->middleware('verified')->group(function () {
     Route::get('/courses/{course_id}/lessons/{id}/create', 'StepsController@createView');
     Route::post('/courses/{course_id}/lessons/{id}/create', 'StepsController@create');
     Route::get('/courses/{course_id}/steps/{id}', 'StepsController@details');
+    Route::post('/courses/{course_id}/steps/{id}/tutor', 'StudentTutorController')
+        ->whereNumber('course_id')->whereNumber('id')->middleware(['auth', 'throttle:12,1'])->name('student.tutor');
     Route::get('/courses/{course_id}/steps/{id}/notebook', 'StepsController@downloadNotebook');
     Route::get('/courses/{course_id}/perform/{id}', 'StepsController@perform');
     Route::get('/courses/{course_id}/steps/{id}/edit', 'StepsController@editView');

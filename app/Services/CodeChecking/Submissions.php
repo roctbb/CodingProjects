@@ -77,11 +77,12 @@ class Submissions
         return $run;
     }
 
-    public function recheck(CodeSubmission $submission, User $teacher, bool $latestConfiguration = false, bool $strongerAi = false, string $comment = '',?int $reviewSolution=null): CodeExecutionRun
+    public function recheck(CodeSubmission $submission, User $teacher, bool $latestConfiguration = false, bool $strongerAi = false, string $comment = '',?int $reviewSolution=null, ?string $expectedRun=null): CodeExecutionRun
     {
         $task = $this->access->task($teacher, $submission->course_id, $submission->task_id, true);
-        return DB::transaction(function () use ($submission, $task, $teacher, $latestConfiguration, $strongerAi, $comment,$reviewSolution) {
+        return DB::transaction(function () use ($submission, $task, $teacher, $latestConfiguration, $strongerAi, $comment,$reviewSolution,$expectedRun) {
             $locked = CodeSubmission::lockForUpdate()->findOrFail($submission->id);
+            abort_if($expectedRun !== null && $expectedRun !== $locked->current_run_id, 409, 'По этой посылке уже началась другая проверка. Откройте её в чате.');
             $previous = $locked->currentRun;
             $automatic=$this->automaticRun($locked,$previous);
             abort_unless($previous->finished_at || $previous->state === 'awaiting_review', 409, 'A check is already running.');
@@ -128,16 +129,56 @@ class Submissions
             if ($strongerAi) {
                 $model = app(\App\Services\Ai\AiSettings::class)->recheck();
                 abort_unless($model, 409, 'Модель для повторной ИИ-проверки не настроена администратором.');
-                $snapshot['gpt_model'] = $model['model'];
-                $snapshot['gpt_timeout'] = $model['timeout'];
-                $snapshot['ai_review'] = ['source_run_id' => $automatic->id, 'requested_by' => (int) $teacher->id,
-                    'previous_model' => $automatic->snapshot['gpt_model'] ?? null,
-                    'model' => $model['model'], 'timeout' => $model['timeout']];
+                $snapshot = $this->strongerSnapshot($snapshot, $automatic, $model, $teacher);
             }
             $id = (string) Str::uuid();
             $run = $this->newRun($locked, $id, $snapshot);
             $locked->update(['current_run_id' => $id]);
             return $run;
+        });
+    }
+
+    private function strongerSnapshot(array $snapshot, CodeExecutionRun $source, array $model, User $requester): array
+    {
+        $snapshot['gpt_model'] = $model['model'];
+        $snapshot['gpt_timeout'] = $model['timeout'];
+        $snapshot['ai_review'] = ['source_run_id'=>$source->id, 'requested_by'=>(int) $requester->id,
+            'previous_model'=>$source->snapshot['gpt_model'] ?? null, 'model'=>$model['model'], 'timeout'=>$model['timeout']];
+        return $snapshot;
+    }
+
+    /** Called only with a tutor finding independently accepted for this student's frozen source. */
+    public function tutorRecheck(User $student, int $course, Task $task, array $target, array $finding): string
+    {
+        return DB::transaction(function () use ($student, $course, $task, $target, $finding) {
+            $submission = CodeSubmission::where(['user_id'=>$student->id, 'course_id'=>$course, 'task_id'=>$task->id])
+                ->lockForUpdate()->find($target['submission']);
+            if (!$submission) return 'unavailable';
+            $existing = CodeExecutionRun::where('submission_id', $submission->id)
+                ->where('snapshot->ai_review->origin', 'tutor')->where('snapshot->ai_review->source_run_id', $target['run'])->exists();
+            if ($existing) return 'already_requested';
+            $run = $submission->currentRun;
+            if (!$run || $run->id !== $target['run']) return 'superseded';
+            $snapshot = $run->snapshot;
+            if ($run->state !== 'completed' || !$run->finished_at || $run->graded_by || $submission->preparation_state !== 'ready'
+                || ($snapshot['check_type'] ?? null) !== 'gpt' || isset($snapshot['ai_review'])
+                || ($snapshot['requires_conversion'] ?? false) || ($submission->source_metadata['requires_conversion'] ?? false)
+                || $this->sourceVersionUnknown($submission) || $task->isBlocked($student->id, $course)) return 'teacher';
+            if ($submission->solution_id) {
+                $lastGrade = \App\CourseActivity::where('solution_id', $submission->solution_id)
+                    ->where('type', \App\CourseActivity::TYPE_SOLUTION_CHECKED)->latest('id')->first(['payload']);
+                if (($lastGrade?->payload['feedback_source'] ?? null) === 'teacher') return 'teacher';
+            }
+            $model = app(\App\Services\Ai\AiSettings::class)->recheck();
+            if (!$model || $model['model'] === ($snapshot['gpt_model'] ?? null)) return 'unavailable';
+            if (!\App\Services\Tutor\Budget::canRecheck($student->id)) return 'teacher';
+            $snapshot = $this->strongerSnapshot($snapshot, $run, $model, $student);
+            $snapshot['ai_review']['origin'] = 'tutor';
+            $snapshot['ai_review']['finding'] = array_intersect_key($finding, array_flip(['claim','evidence','focus']));
+            $id = (string) Str::uuid();
+            $this->newRun($submission, $id, $snapshot);
+            $submission->update(['current_run_id'=>$id]);
+            return 'queued';
         });
     }
 
@@ -231,7 +272,7 @@ class Submissions
         $files = [];
         $sourceBudget = $includeSource ? 2097152 : 0;
         foreach ($submission->files as $index => $file) {
-            $item = ['name' => $file['name'], 'original_name'=>$file['original_name']??$file['name'], 'bytes' => $file['artifact']['bytes'],
+            $item = ['name' => $file['name'], 'is_answer' => !empty($file['is_answer']), 'original_name'=>$file['original_name']??$file['name'], 'bytes' => $file['artifact']['bytes'],
                 'download_url' => route('code-submissions.file', ['submission' => $submission->id, 'file' => $index])];
             if (app(ArchivePreview::class)->available($submission, $index)) {
                 $item['archive_url'] = route('code-submissions.archive', ['submission' => $submission->id, 'file' => $index]);
@@ -265,7 +306,7 @@ class Submissions
             'preparation_state' => $submission->preparation_state,
             'created_at' => $submission->created_at?->toIso8601String(), 'execution_id' => $run->id,
             'checked_at'=>$run->finished_at?->toIso8601String(),
-            'state' => $run->state, 'progress' => $run->progress, 'points' => $run->points,
+            'state' => $run->state, 'progress' => $run->progress, 'points' => $run->points, 'criteria' => $run->criteria,
             'execution_error' => $this->executionError($submission, $run),
             'ai_recheck' => $this->aiRecheck($submission, $run, $viewer),
             'comment' => $run->state === 'error' || (!$includeTestFields && ($reportView || ($run->snapshot['check_type']??null)==='tests'))?'':$run->comment,
@@ -318,9 +359,14 @@ class Submissions
             }
             return array_map($withUrls, $value);
         };
+        $settings = array_replace($run->snapshot, ['language' => $submission->language]);
+        if ($settings['check_type'] === 'gpt') {
+            $settings['grading_format'] = 'criteria-v1';
+            $settings['qualitative_criteria'] = true;
+        }
         return ['execution_id' => $run->id, 'submission_id' => $submission->id, 'user_id' => (int) $submission->user_id,
             'course_id' => (int) $submission->course_id, 'task_id' => (int) $submission->task_id,
-            'task' => $withUrls(array_replace($run->snapshot, ['language' => $submission->language])), 'files' => $withUrls($this->executionFiles($submission, $run->snapshot)), 'language' => $submission->language,
+            'task' => $withUrls($settings), 'files' => $withUrls($this->executionFiles($submission, $run->snapshot)), 'language' => $submission->language,
             'answer' => ['mode' => $submission->mode, 'text' => $submission->answer_text ?? '']];
     }
     public function executionFiles(CodeSubmission $submission, array $snapshot): array

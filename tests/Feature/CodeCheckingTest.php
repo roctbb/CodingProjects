@@ -62,6 +62,10 @@ class CodeCheckingTest extends TestCase
         (require database_path('migrations/2026_11_14_120000_create_code_checking_tables.php'))->up();
         (require database_path('migrations/2026_11_14_130000_expand_task_submissions.php'))->up();
         (require database_path('migrations/2026_11_14_140000_complete_native_submission_storage.php'))->up();
+        (require database_path('migrations/2026_11_21_180000_create_task_chat_messages.php'))->up();
+        (require database_path('migrations/2026_11_22_001000_classify_task_chat_messages.php'))->up();
+        (require database_path('migrations/2026_11_22_002000_add_tutor_chat_replies.php'))->up();
+        (require database_path('migrations/2026_11_21_221000_add_execution_criteria.php'))->up();
     }
 
     protected function tearDown(): void
@@ -96,6 +100,78 @@ class CodeCheckingTest extends TestCase
         $this->assertSame(60, $claims->exp - $claims->iat);
         $this->get('/insider/settings/code-executor/login?state=bad')->assertStatus(422);
         $this->get('/insider/settings/code-executor/login')->assertRedirect('https://executor.test/auth/login');
+    }
+
+    private function createChatSolutions(): void
+    {
+        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY, user_id INTEGER, course_id INTEGER, task_id INTEGER, submitted TEXT, checked TEXT, mark INTEGER, raw_mark INTEGER, evaluated_mark INTEGER, comment TEXT, geekpaste_code_id TEXT)');
+    }
+
+    public function test_task_chat_keeps_questions_and_scoped_replies_across_checks_and_retries(): void
+    {
+        $this->createChatSolutions();
+        $thread = '/insider/courses/7/tasks/12/chat/2';
+        $question = ['body'=>'Как проверить результат?', 'client_id'=>(string)Str::uuid()];
+        $this->login()->getJson($thread.'?before=e30')->assertUnprocessable();
+        $this->postJson($thread,$question)->assertOk();
+        $this->postJson($thread,$question)->assertOk();
+        $this->postJson($thread,['body'=>'Другая запись'] + $question)->assertConflict();
+        $this->assertDatabaseCount('task_chat_messages',1);
+        $this->getJson($thread)->assertJsonPath('events.0.text',$question['body']);
+        $this->login(3)->getJson($thread)->assertForbidden();
+        $this->postJson($thread,$question)->assertForbidden();
+        $this->login(1)->getJson($thread)->assertJsonPath('awaiting_reply',true);
+        $this->getJson('/insider/courses/7/tasks/12/chat/99')->assertNotFound();
+
+        $source = (string)Str::uuid();
+        $first = (string)Str::uuid();
+        $second = (string)Str::uuid();
+        $now = now()->subHour();
+        $scope = ['course_id'=>7,'task_id'=>12,'user_id'=>2];
+        DB::table('solutions')->insert($scope + ['id'=>41,'submitted'=>$now,'checked'=>$now,'mark'=>8]);
+        DB::table('code_submissions')->insert($scope + ['id'=>$source,'solution_id'=>41,'request_id'=>(string)Str::uuid(),
+            'current_run_id'=>$second,'language'=>'python','files'=>json_encode([['name'=>'quest.py']]),
+            'payload_hash'=>str_repeat('a',64),'created_at'=>$now]);
+        foreach ([$first=>'tests',$second=>'gpt'] as $id=>$type) {
+            DB::table('code_execution_runs')->insert(['id'=>$id,'submission_id'=>$source,'state'=>'completed',
+                'snapshot'=>json_encode(['check_type'=>$type,'points'=>10,'ai_review'=>$type==='gpt'?['source_run_id'=>$first]:null]),
+                'criteria'=>$type === 'gpt' ? json_encode([['title'=>'Ключ', 'maximum'=>10, 'points'=>8, 'comment'=>'Сохраняется.']]) : null,
+                'comment'=>$type==='tests'?'PRIVATE TEST OUTPUT':'Ключ остаётся в рюкзаке.',
+                'points'=>8,'created_at'=>$now,'finished_at'=>$now->copy()->addMinutes($type==='tests'?1:2)]);
+        }
+        DB::table('code_test_reports')->insert(['id'=>$first,'code_id'=>$source,'user_id'=>2,'course_id'=>7,'task_id'=>12,
+            'started_at'=>1,'payload_hash'=>str_repeat('b',64),'created_at'=>$now,
+            'report'=>json_encode(['passed'=>2,'total'=>3,'tests'=>[['expected'=>'HIDDEN EXPECTED VALUE']]])]);
+        $reply=['body'=>'В этой версии уже правильно.', 'attempt'=>$source,'client_id'=>(string)Str::uuid()];
+        $this->postJson($thread,$reply)->assertOk();
+        $this->getJson($thread)->assertJsonPath('awaiting_reply',false);
+        app(\App\Services\TaskChat::class)->recordRecheck(\App\Solution::findOrFail(41),$source);
+        $this->getJson($thread)->assertJsonPath('awaiting_reply',false);
+        $this->postJson('/insider/courses/7/tasks/12/chat/3',['client_id'=>(string)Str::uuid()] + $reply)->assertNotFound();
+        $this->login()->postJson($thread,['body'=>'  ','client_id'=>(string)Str::uuid()])->assertUnprocessable();
+        $response=$this->getJson($thread)->assertOk()->assertDontSee('PRIVATE TEST OUTPUT')->assertDontSee('HIDDEN EXPECTED VALUE');
+        $events=collect($response->json('events'));
+        $this->assertCount(1,$events->where('type','file'));
+        $this->assertSame('quest.py',$events->firstWhere('type','file')['label']);
+        $this->assertCount(2,$events->where('type','check'));
+        $this->assertEquals(2,$events->firstWhere('run',$first)['passed']);
+        $this->assertEquals(3,$events->firstWhere('run',$first)['total']);
+        $this->assertSame('Ключ остаётся в рюкзаке.',$events->firstWhere('stronger',true)['text']);
+        $this->assertSame('Ключ',$events->firstWhere('stronger',true)['criteria'][0]['title']);
+        $this->assertSame($source,$events->firstWhere('text',$reply['body'])['attempt']);
+
+        DB::table('solutions')->insert($scope + ['id'=>42,'submitted'=>$now,'checked'=>$now,'mark'=>6]);
+        $this->login(1)->postJson($thread,['client_id'=>(string)Str::uuid(),'attempt'=>'solution-42','body'=>'Ответ по старой работе'])->assertOk();
+        $this->login(3)->postJson('/insider/courses/7/tasks/12/chat/3',['client_id'=>(string)Str::uuid(),'attempt'=>'solution-42','body'=>'Вопрос'])->assertNotFound();
+        $this->login()->postJson($thread,['client_id'=>(string)Str::uuid(),'body'=>'Ещё вопрос'])->assertOk();
+        $this->login(1)->getJson($thread)->assertJsonPath('awaiting_reply',true);
+        for($i=0;$i<42;$i++) DB::table('task_chat_messages')->insert(['student_id'=>2,'author_id'=>2,'course_id'=>7,'task_id'=>12,
+            'client_id'=>(string)Str::uuid(),'body'=>'Сообщение '.$i,'created_at'=>$now->copy()->addDays(1)]);
+        $recent=$this->login()->getJson($thread)->assertOk()->json();
+        $older=$this->getJson($thread.'?before='.urlencode($recent['before']))->assertOk()->json();
+        $this->assertCount(40,$recent['events']);
+        $this->assertEmpty(array_intersect(array_column($recent['events'],'id'),array_column($older['events'],'id')));
+        $this->assertSame('solution-42',collect($older['events'])->firstWhere('text','Ответ по старой работе')['attempt']);
     }
 
     private function configBody(): array
@@ -173,6 +249,23 @@ class CodeCheckingTest extends TestCase
         $this->login(3)->getJson($base.'/code-attempts/101')->assertForbidden();
         $this->getJson($base.'/code-attempts/201')->assertOk()->assertJsonPath('source_submission_id',null)->assertJsonPath('source_url',null);
         $this->getJson($base.'/code-submissions?user_id=2')->assertForbidden();
+    }
+
+    public function test_history_pages_keep_the_best_attempt_outside_the_current_page(): void
+    {
+        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY,user_id INTEGER,course_id INTEGER,task_id INTEGER,text TEXT,mark INTEGER,submitted TEXT,created_at TEXT,updated_at TEXT)');
+        $date = '2026-11-10 12:00:00';
+        for ($id = 100; $id < 123; $id++) {
+            DB::table('solutions')->insert(['id'=>$id,'user_id'=>2,'course_id'=>7,'task_id'=>12,
+                'text'=>'answer','mark'=>$id === 100 ? 10 : 3,'submitted'=>$date,'created_at'=>$date,'updated_at'=>$date]);
+        }
+        $url = '/insider/courses/7/tasks/12/code-submissions?user_id=2&page=';
+        $first = $this->login()->getJson($url.'1')->assertOk()->assertJsonCount(20,'items')
+            ->assertJsonPath('total_attempts',23)->assertJsonPath('has_more',true)->assertJsonPath('best_attempt.id','solution-100')->json('items');
+        $last = $this->getJson($url.'2')->assertOk()->assertJsonCount(3,'items')->assertJsonPath('has_more',false)->json('items');
+        $ids = array_column(array_merge($first,$last),'id');
+        $this->assertSame(array_map(fn($id) => 'solution-'.$id, range(122,100)), $ids);
+        $this->getJson($url.'3')->assertOk()->assertJsonCount(0,'items')->assertJsonPath('best_attempt.id','solution-100');
     }
 
     public function test_legacy_attempt_test_comments_are_metadata_only_and_ai_or_manual_feedback_remains_available():void
@@ -262,6 +355,7 @@ class CodeCheckingTest extends TestCase
         for($id=1;$id<=22;$id++)DB::table('solutions')->insert(['id'=>$id,'user_id'=>2,'course_id'=>7,'task_id'=>12,'text'=>'saved answer','mark'=>$id<=2?10:5,'submitted'=>sprintf('2026-11-%02d 12:00:00',$id)]);
         $response=$this->login(1)->getJson('/insider/courses/7/tasks/12/code-submissions?user_id=2')->assertJsonCount(20,'items')->assertJsonPath('best_attempt.id','solution-2')->assertJsonPath('has_more',true)->json();
         $this->assertSame([],array_filter($response['items'],fn($item)=>$item['is_best']));
+        $this->assertSame('10 / 10', $response['task_outcome']['score']);
         $this->getJson('/insider/courses/7/tasks/12/code-submissions?user_id=2&page=2')->assertJsonPath('items.0.id','solution-2')->assertJsonPath('items.0.is_best',true);
         $this->getJson('/insider/courses/7/tasks/12/code-submissions?user_id=2&teacher_viewed=1')->assertJsonCount(0,'items')->assertJsonPath('best_attempt.id','solution-2');
     }
@@ -426,9 +520,16 @@ class CodeCheckingTest extends TestCase
             ->assertCreated()->assertJsonPath('state', 'awaiting_review')->assertJsonPath('subscription', null)->assertJsonPath('text', "  My answer\n")->json();
         Queue::assertNotPushed(\App\Jobs\DispatchCodeExecution::class);
         $this->putJson('/insider/code-submissions/'.$result['id'].'/grade', ['points' => 3, 'comment' => 'Feedback'])->assertForbidden();
+        $this->createChatSolutions();
+        $thread = $base.'/chat/2';
+        $this->assertTrue(collect($this->getJson($thread)->assertOk()->json('events'))->firstWhere('type','check')['awaiting_teacher']);
         $this->mock(Grading::class)->shouldReceive('apply')->once();
         for ($i = 0; $i < 2; $i++) $this->login(1)->putJson('/insider/code-submissions/'.$result['id'].'/grade', ['points' => 3, 'comment' => 'Feedback'])->assertOk();
         $this->assertSame(1, CodeExecutionRun::find($result['execution_id'])->graded_by);
+        $grade = collect($this->login()->getJson($thread)->assertOk()->json('events'))->where('type','check')->sole();
+        $this->assertSame(['completed', 'manual', 3, 'Feedback', false],
+            [$grade['state'], $grade['method'], $grade['points'], $grade['text'], $grade['awaiting_teacher']]);
+        $this->login(1);
         $this->putJson('/insider/code-submissions/'.$result['id'].'/grade', ['points' => 4, 'comment' => 'Changed'])->assertConflict();
     }
 
@@ -795,6 +896,33 @@ class CodeCheckingTest extends TestCase
         $this->assertDatabaseCount('code_execution_runs', 1);
     }
 
+    public function test_tutor_opens_at_most_one_third_and_never_charges_twice(): void
+    {
+        (require database_path('migrations/2026_11_22_004000_mark_tutor_test_reveals.php'))->up();
+        $reports = app(Reports::class);
+        $student = User::findOrFail(2);
+        $suite = function (int $count, int $start = 0) use ($reports) {
+            $data = $this->report();
+            $row = $data['tests'][0];
+            $data['total'] = $count;
+            $data['tests'] = [];
+            for ($i = 1; $i <= $count; $i++) {
+                $data['tests'][] = array_merge($row, ['number'=>$i, 'test_id'=>hash('sha256', (string)($start + $i))]);
+            }
+            return $reports->accept($data);
+        };
+        $this->assertSame([], $reports->tutorExamples($suite(2), $student));
+        $run = $suite(8);
+        $this->assertSame([], $reports->tutorExamples($run, User::findOrFail(3)));
+        $this->assertSame([1,2], array_column($reports->tutorExamples($run, $student), 'number'));
+        $this->assertSame([1,2], array_column($reports->tutorExamples($suite(8), $student), 'number'));
+        $this->assertSame([], $reports->tutorExamples($suite(8, 50), $student));
+        $this->assertCount(1, $reports->tutorExamples($suite(12, 90), $student));
+        $this->assertSame(0, $reports->buy($run, hash('sha256','1'), $student)['charged']);
+        $this->assertDatabaseCount('code_test_purchases', 3);
+        $this->assertSame(20, (int)$student->balance());
+    }
+
     public function test_purchase_unlocks_only_the_author_and_is_reused_in_another_run(): void
     {
         $report = app(Reports::class)->accept($this->report());
@@ -824,6 +952,9 @@ class CodeCheckingTest extends TestCase
             $payload['tests'][0]['error'] = $large ? app(Artifacts::class)->put($diagnostic) : $this->field($diagnostic);
             app(Reports::class)->accept($payload);
             CodeExecutionRun::findOrFail($run)->update(['state'=>'completed', 'points'=>0, 'finished_at'=>now()]);
+            if (!$large) $this->createChatSolutions();
+            $chat = $this->login()->getJson('/insider/courses/7/tasks/12/chat/2')->assertOk()->assertDontSee('SECRET');
+            $this->assertStringStartsWith("Compilation failed: expected ';'", collect($chat->json('events'))->firstWhere('run', $run)['compiler_error']);
             $base = '/insider/code-submissions/'.$submission['id'];
             $report = '/insider/code-test-reports/'.$run;
             foreach ([$base.'?test_data=metadata', $base.'/runs/'.$run.'?test_data=metadata', $report.'?test_data=metadata'] as $url) {
@@ -1023,6 +1154,27 @@ class CodeCheckingTest extends TestCase
         $this->assertDatabaseCount('code_test_reports', 1);
     }
 
+    public function test_weighted_and_unweighted_criteria_survive_the_callback_and_chat(): void
+    {
+        $base = '/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private', ['language'=>'python', 'check_type'=>'gpt',
+            'private_instructions'=>'Rubric', 'submission_modes'=>['code']])->assertOk();
+        $run = $this->login()->postJson($base.'/code-submissions', [
+            'request_id'=>(string)Str::uuid(), 'code'=>'print(1)',
+        ])->assertCreated()->json('execution_id');
+        $this->createChatSolutions();
+        $criteria = [['title'=>'Ввод', 'points'=>5, 'maximum'=>5, 'comment'=>'Данные прочитаны.'],
+            ['title'=>'Объяснение', 'status'=>'partial', 'comment'=>'Уточни случай пустого ввода.']];
+        $payload = ['execution_id'=>$run, 'state'=>'partially done', 'points'=>7, 'comment'=>'Ввод работает.', 'criteria'=>$criteria];
+        $url = '/api/executor/executions/'.$run.'/result';
+        $this->service('POST', $url, array_replace($payload,['points'=>4]))->assertUnprocessable();
+        $this->mock(Grading::class)->shouldReceive('apply')->once();
+        $this->service('POST', $url, $payload)->assertOk();
+        $check = collect($this->login()->getJson($base.'/chat/2')->assertOk()->json('events'))->firstWhere('run',$run);
+        $this->assertEquals($criteria, $check['criteria']);
+        $this->assertEquals(7, $check['points']);
+    }
+
     public function test_progress_ignores_out_of_order_events_and_completed_results_are_idempotent(): void
     {
         $created = $this->createSubmission();
@@ -1193,7 +1345,7 @@ class CodeCheckingTest extends TestCase
         // Current instructions and mode are irrelevant to this frozen recheck.
         CodeTaskChecker::whereKey(12)->update(['config'=>['check_type'=>'tests', 'language'=>'cpp']]);
         Queue::fake();
-        $next = $this->postJson($url.'/recheck', ['stronger_ai'=>true])->assertStatus(202)->json();
+        $next = $this->postJson($url.'/recheck', ['stronger_ai'=>true, 'expected_run_id'=>$old->id])->assertStatus(202)->json();
         $run = CodeExecutionRun::findOrFail($next['execution_id']);
         $expected = array_replace($snapshot, ['legacy'=>false, 'gpt_model'=>'strong-model', 'gpt_timeout'=>150,
             'ai_review'=>['source_run_id'=>$old->id, 'requested_by'=>1, 'previous_model'=>'original-model', 'model'=>'strong-model', 'timeout'=>150]]);
@@ -1208,6 +1360,8 @@ class CodeCheckingTest extends TestCase
         Queue::assertPushed(\App\Jobs\DispatchCodeExecution::class, 1);
         $this->assertSame(1, CodeSubmission::count());
         $run->update(['state'=>'completed', 'finished_at'=>now()]);
+        $this->postJson($url.'/recheck', ['stronger_ai'=>true, 'expected_run_id'=>$old->id])->assertConflict();
+        Queue::assertPushed(\App\Jobs\DispatchCodeExecution::class, 1);
         $again = $this->postJson($url.'/recheck', ['stronger_ai'=>true])->assertStatus(202)->json();
         $strongAgain = CodeExecutionRun::findOrFail($again['execution_id']);
         $strongAgain->update(['state'=>'completed', 'finished_at'=>now()]);

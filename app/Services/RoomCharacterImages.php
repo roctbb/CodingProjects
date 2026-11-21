@@ -59,11 +59,18 @@ class RoomCharacterImages
         }
     }
 
-    public function preview(string $bytes): string
+    public function preview(string $bytes, bool $portrait = false): string
     {
         $source = $this->decode($bytes, true);
         try {
             $bounds = $this->bounds($source);
+            if ($portrait) {
+                $side = max(1, min($bounds['width'], (int)round($bounds['height'] * .58)));
+                $x = $bounds['x'] + intdiv($bounds['width'] - $side, 2);
+                $canvas = $this->canvas(192, 192);
+                imagecopyresampled($canvas, $source, 0, 0, $x, $bounds['y'], 192, 192, $side, $side);
+                return $this->png($canvas);
+            }
             $scale = min(120 / $bounds['width'], 184 / $bounds['height'], 1);
             $width = max(1, (int) round($bounds['width'] * $scale));
             $height = max(1, (int) round($bounds['height'] * $scale));

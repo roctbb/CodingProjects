@@ -37,6 +37,7 @@ return [
 
     'geekexam_alert_secret' => env('GEEKEXAM_ALERT_SECRET'),
     'geekexecutor_url' => env('GEEKEXECUTOR_URL', 'http://geekexecutor:8086'),
+    'task_chat_socket' => env('TASK_CHAT_SOCKET_URL', '/task-chat/socket'),
     'geekexecutor_public_url' => env('GEEKEXECUTOR_PUBLIC_URL'),
     'geekexecutor_socket_url' => env('GEEKEXECUTOR_SOCKET_URL'),
     'geekexecutor_secret' => env('GEEKEXECUTOR_SECRET'),

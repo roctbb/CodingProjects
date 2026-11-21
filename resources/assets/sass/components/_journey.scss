@@ -281,8 +281,17 @@
 .gc-feed-workspace { width:100%; min-width:0; }
 .gc-pulse-summary { display:grid; grid-template-columns:minmax(10rem,1fr) minmax(14rem,2fr); align-items:center; gap:var(--gc-space-4); margin-top:var(--gc-space-3); }
 .gc-pulse-summary__value { display:flex; align-items:baseline; gap:var(--gc-space-2); }
-.gc-pulse-summary__value strong { color:var(--gc-primary); font-size:1.75rem; font-weight:var(--gc-font-weight-heading); }
-.gc-pulse-summary__chart svg { display:block; height:64px; width:100%; }
+.gc-pulse-summary__value strong { color:var(--gc-on-surface); font-size:1.5rem; font-weight:var(--gc-font-weight-heading); }
+.gc-pulse-summary__chart svg { display:block; height:44px; width:100%; }
+.gc-feed-workspace .gc-filter:not(.is-active),
+.gc-catalog-controls .gc-filter:not(.is-active) {
+  border-color: transparent;
+}
+.gc-feed-workspace .gc-filter:is(:hover, :focus-visible),
+.gc-catalog-controls .gc-filter:is(:hover, :focus-visible) {
+  background: var(--gc-hover-surface);
+  color: var(--gc-on-surface);
+}
 .gc-feed-course { color:var(--gc-on-surface); }
 .gc-feed-workspace .gc-toolbar__search, .solution-review-page .gc-toolbar__search { flex:1 1 14rem; max-width:none; }
 .gc-feed-workspace .gc-toolbar, .solution-review-page .gc-toolbar { align-items:end; }

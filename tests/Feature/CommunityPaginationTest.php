@@ -21,6 +21,11 @@ class CommunityPaginationTest extends TestCase
                 is_trainee BOOLEAN DEFAULT 0, birthday_hidden BOOLEAN DEFAULT 0,
                 custom_title TEXT, custom_title_expires_at TEXT, email_verified_at TEXT
             );
+            CREATE TABLE lessons (id INTEGER PRIMARY KEY, sticker TEXT);
+            CREATE TABLE program_steps (id INTEGER PRIMARY KEY, lesson_id INTEGER);
+            CREATE TABLE tasks (id INTEGER PRIMARY KEY, step_id INTEGER);
+            CREATE TABLE stickers (id INTEGER PRIMARY KEY, image TEXT);
+            CREATE TABLE lesson_student_stats (student_id INTEGER, lesson_id INTEGER, percent INTEGER);
             CREATE TABLE ranks (id INTEGER PRIMARY KEY, name TEXT, "from" INTEGER, "to" INTEGER);
             CREATE TABLE solutions (id INTEGER PRIMARY KEY, user_id INTEGER, task_id INTEGER, mark INTEGER);
             CREATE TABLE courses (id INTEGER PRIMARY KEY, name TEXT, state TEXT);
@@ -86,6 +91,8 @@ class CommunityPaginationTest extends TestCase
         $this->assertSame([$best, $manual, $zero], $users->pluck('id')->all());
         $this->assertSame([250, 199, 0], $users->map(fn ($user) => $user->score())->all());
         $this->assertSame([3, 2, 1], $users->map(fn ($user) => $user->rank()->id)->all());
+        $this->get('/insider/community?rank=2')->assertOk()->assertViewHas('users', fn ($page) => $page->pluck('id')->all() === [$manual]);
+        $this->get('/insider/community?rank=3&role=student')->assertOk()->assertViewHas('users', fn ($page) => $page->pluck('id')->all() === [$best]);
     }
 
     public function testRoleFilterIncludesFlaggedTeachersAndCombinesWithSearch(): void
@@ -172,6 +179,24 @@ class CommunityPaginationTest extends TestCase
         $this->person('Common student');
         $this->get('/insider/community?q=Common&role=student&page=999')
             ->assertRedirect('/insider/community?q=Common&role=student&page=1');
+    }
+
+    public function testLargestEarnedAlbumsLeadEachRankAcrossPages(): void
+    {
+        for ($i = 0; $i < 24; $i++) $this->person("A student {$i}");
+        $collector = $this->person('Z collector');
+        $officer = $this->person('Officer', ['rank_id' => 2]);
+        DB::unprepared("INSERT INTO stickers VALUES (1,'moon'),(2,'sun'),(3,'star');
+            INSERT INTO lessons VALUES (1,'moon'),(2,'moon'),(3,'sun'),(4,'star');
+            INSERT INTO program_steps VALUES (1,1),(2,2),(3,3);
+            INSERT INTO tasks VALUES (1,1),(2,2),(3,3);");
+        foreach ([1=>94, 2=>100, 3=>90, 4=>100] as $lesson => $percent) {
+            DB::table('lesson_student_stats')->insert(['student_id'=>$collector, 'lesson_id'=>$lesson, 'percent'=>$percent]);
+        }
+        $response = $this->get('/insider/community')->assertOk()->assertSee('1 наклейка');
+        $users = $response->viewData('users');
+        $this->assertSame([$officer, $collector], $users->pluck('id')->take(2)->all());
+        $this->assertEquals(1, $users[1]->community_stickers);
     }
 
     private function person(string $name, array $attributes = []): int

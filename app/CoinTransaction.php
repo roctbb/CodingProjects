@@ -37,6 +37,9 @@ class CoinTransaction extends Authenticatable
         if ($comment === '') {
             return 'Операция с монетами';
         }
+        if (preg_match('/^Tutor question #[0-9]+$/D', $comment)) {
+            return 'За хороший вопрос Ростислопу';
+        }
 
         if (preg_match('/^Task #(\d+)$/', $comment, $matches)) {
             return 'Награда за задачу #' . $matches[1];

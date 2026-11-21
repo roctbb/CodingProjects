@@ -124,6 +124,8 @@
                             $cprogressWidth = (int) round($cdisplayPercent);
 	                            $isDone = $isLearner && ($lessonView['completed'] ?? false);
 	                            $isCurrent = $currentPathLessonId == $lesson->id;
+                                $classLesson = $isLearner && $isCurrent && $currentLesson?->id === $lesson->id;
+                                $repeatLesson = $isCurrent && $isDone && $lessonView['action'] === 'Повторить урок';
                                 $lessonTargetStep = $isCurrent ? $nextLearningStep : ($lessonView['nextStep'] ?? null);
                                 $lessonUrl = $lessonView['targetUrl'] ?? url('/insider/courses/'.$course->id.'/steps/'.($lessonTargetStep?->id ?? $lesson->steps->first()->id));
 	                            $lessonTaskCount = $lesson->steps->sum(function ($step) {
@@ -149,14 +151,14 @@
                             <div class="gc-card course-path-card course-lesson-panel {{ $isCurrent ? 'course-path-card--expanded' : 'course-path-card--compact' }}">
                                 @include('courses.partials.lesson-summary')
                                 @if($isCurrent)
-                                    @if(filled($lesson->description))
+                                    @if(filled($lesson->description) && !$repeatLesson)
                                     <div class="course-path-card__details">
                                         <div class="course-path-description" data-filter-by="text">@parsedown($lesson->description)</div>
                                     </div>
                                     @endif
-                                    @if($isAvailable)
+                                    @if($isAvailable && !$repeatLesson)
                                         <div class="course-path-card__footer">
-                                            <a class="btn btn-primary btn-sm course-continue" href="{{ $isManager && $lessonCard['pending'] ? $lessonCard['reviewUrl'] : $lessonUrl }}">{{ $isManager ? ($lessonCard['pending'] ? 'Проверить работы · '.$lessonCard['pending'] : 'Открыть материалы') : ($lessonView['action'] ?? 'Открыть урок') }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                                            <a class="btn btn-primary btn-sm course-continue" href="{{ $isManager && $lessonCard['pending'] ? $lessonCard['reviewUrl'] : $lessonUrl }}">{{ $isManager ? ($lessonCard['pending'] ? 'Проверить работы · '.$lessonCard['pending'] : 'Открыть материалы') : ($classLesson && $lessonView['action'] === 'Продолжить урок' ? 'К уроку класса' : $lessonView['action']) }} <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
                                         </div>
                                     @endif
                                 @endif

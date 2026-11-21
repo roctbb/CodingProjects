@@ -26,6 +26,7 @@ export default async function deadlineWorkspace(controlPage, { url, output, widt
                     check('deadlines-popover-restores-focus', await trigger.evaluate(el => document.activeElement === el), width, { role, theme });
                     await page.screenshot({ path: `${output}/deadlines-${role}-${theme}-${width}.png`, fullPage: true });
                 }
+                await page.locator('[data-deadline-search-panel] > summary').click();
                 await page.locator('[data-deadline-search]').fill('нет такой задачи');
                 await page.locator('[data-deadline-empty]:visible').waitFor();
                 await page.reload();
@@ -33,18 +34,14 @@ export default async function deadlineWorkspace(controlPage, { url, output, widt
                 check('deadlines-search-survives-reload', true, width, { role });
                 await page.locator('[data-deadline-reset]').click();
                 check('deadlines-reset-restores-rows', await page.locator('[data-deadline-row]:visible').count() === ids.length, width, { role });
-                if (role === 'student') {
-                    await page.locator('[data-deadline-filter="done"]').click();
-                    check('deadlines-done-filter-contains-completed-only', await page.locator('[data-deadline-row]:visible').evaluateAll(rows => rows.length > 0 && rows.every(row => row.dataset.deadlineDone === 'true')), width);
-                }
+                check('deadlines-date-on-each-card', await rows.locator('time[data-deadline-calendar]').count() === ids.length, width);
             }
             await page.clock.install();
             await page.goto(`${url}/insider/courses/1/deadlines?actor=teacher&scenario=base`);
             const rule = page.locator('[data-deadline-task-id="11"] [data-deadline-summary]');
             const schedule = await rule.evaluate(el => ({ now: Number(el.dataset.serverNow), cutoffs: [...el.querySelectorAll('[data-deadline-stage]')].map(stage => Number(stage.dataset.cutoff)) }));
-            await page.locator('[data-deadline-filter="penalty"]').click();
             await page.clock.fastForward(schedule.cutoffs[0] - schedule.now + 10);
-            check('deadlines-live-penalty-updates-filter', (await rule.locator('[data-deadline-current]').innerText()) === 'Сейчас −30%' && await rule.isVisible(), width);
+            check('deadlines-live-date-advances', (await rule.locator('[data-deadline-calendar]').getAttribute('datetime')) === await rule.locator('[data-deadline-stage]').last().getAttribute('data-datetime'), width);
             await page.clock.fastForward(schedule.cutoffs.at(-1) - schedule.cutoffs[0] + 10);
             check('deadlines-live-final-stage-shows-last-date', await rule.locator('[data-deadline-next]').isHidden() && await page.locator('[data-deadline-task-id="11"] [data-deadline-last-label]').isVisible(), width);
         } finally { await context.close(); }

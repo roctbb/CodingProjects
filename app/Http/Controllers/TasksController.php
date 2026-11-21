@@ -414,6 +414,8 @@ class TasksController extends Controller
         if ($task->is_quiz) {
             $responseData['attempts_remaining']--;
             $responseData['correct'] = $correct;
+            $responseData['answer'] = $solution->text;
+            $responseData['attempt_url'] = app(\App\Services\TaskLocation::class)->task($course->id, $task, $user->id, 'solution-'.$solution->id);
             // Recalculate cached points after auto-grading quiz
             CourseStudentPoints::recalculate($course_id, $user->id);
             LessonStudentStats::recalculateForStudent($course_id, $user->id);

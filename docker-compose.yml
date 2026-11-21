@@ -112,6 +112,21 @@ services:
     networks:
       - app
 
+  task-chat:
+    build: ./services/task-chat
+    restart: unless-stopped
+    environment:
+      PGHOST: ${DB_HOST:-db}
+      PGPORT: ${DB_PORT:-5432}
+      PGDATABASE: ${DB_DATABASE:-codingprojects}
+      PGUSER: ${DB_USERNAME:-codingprojects}
+      PGPASSWORD: ${DB_PASSWORD:-codingprojects}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - app
+
   node:
     image: node:22-alpine
     container_name: codingprojects-node

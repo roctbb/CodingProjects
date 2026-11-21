@@ -17,11 +17,7 @@
           <div class="gc-actions gc-workbook-heading-actions">
               @if($isManager)
                   @include('steps.partials.screen-actions')
-                  @if(!$hasStepNavigation)
-                      @include('steps.partials.add_step', ['compact' => true])
-                  @endif
-              @endif
-              @if ($step->is_notebook && filled($step->theory))
+              @elseif ($step->is_notebook && filled($step->theory))
                   <a href="{{ url((\Request::is('insider/*') ? '/insider/courses/'.$course->id.'/steps/' : '/open/steps/').$step->id.'/notebook') }}"
                      class="btn btn-outline-secondary btn-sm flex-shrink-0" download>
                       <i class="fas fa-download me-1" aria-hidden="true"></i> Скачать .ipynb

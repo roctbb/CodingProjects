@@ -17,12 +17,16 @@ class AiSettingsController extends Controller
         return response()->view('settings.ai', $settings->forForm() + [
             'providers' => AiSettings::PROVIDERS,
             'commands' => AiSettings::COMMANDS,
+            'tutorLimits' => AiSettings::TUTOR_LIMITS,
         ])->header('Cache-Control', 'no-store, private');
     }
 
     public function update(UpdateAiSettingsRequest $request, AiSettings $settings)
     {
         $data = $request->validated();
+        if (isset($data['settings']['tutor_limits'])) {
+            $data['settings']['tutor_limits'] = array_map('intval', $data['settings']['tutor_limits']);
+        }
         foreach (['defaults', 'commands'] as $group) {
             if (!isset($data['settings'][$group])) continue;
             foreach ($data['settings'][$group] as &$item) {

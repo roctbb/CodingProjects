@@ -94,12 +94,21 @@ class StepsController extends Controller
             if (!$task->is_quiz) $quizer = false;
 
         $quizer = $quizer && $zero_theory && !$empty;
-        $nativeTaskProgress=app(\App\Services\CourseAccess::class)->manages($user,$course)
-            ? app(\App\Services\CodeChecking\History::class)->ungradedProgress($course->id,$tasks->pluck('id')->all()) : collect();
+        $waitingStudents = app(\App\Services\CourseAccess::class)->manages($user, $course)
+            && \Illuminate\Support\Facades\Schema::hasTable('task_chat_messages')
+            ? app(\App\Services\TaskChat::class)->waitingStudents($course_id, $tasks->pluck('id')->all())
+            : collect();
+        $manager = app(\App\Services\CourseAccess::class)->manages($user, $course);
+        $nativeTaskProgress = app(\App\Services\CodeChecking\History::class)->ungradedProgress(
+            $course->id, $tasks->pluck('id')->all(), $manager ? null : $user->id
+        );
         $taskReviewContext=app(\App\Services\TaskLocation::class)->context(request(),$user,$course,$tasks);
-        $taskLessonProgress=\App\LessonStudentStats::where('course_id',$course->id)->where('lesson_id',$step->lesson_id)->where('student_id',$user->id)->first();
+        $submittedCodeTasks = \Illuminate\Support\Facades\Schema::hasTable('code_submissions')
+            ? \App\CodeSubmission::where('course_id', $course->id)->where('user_id', $user->id)
+                ->whereIn('task_id', $tasks->pluck('id'))->whereNull('legacy_id')->distinct()->pluck('task_id')->flip()
+            : collect();
 
-        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'latestTaskAiSummaries', 'earnedTaskAchievements','nativeTaskProgress','taskReviewContext','taskLessonProgress'));
+        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'latestTaskAiSummaries', 'earnedTaskAchievements','nativeTaskProgress','waitingStudents','taskReviewContext','submittedCodeTasks'));
     }
 
     public function downloadNotebook($course_id, $id)
