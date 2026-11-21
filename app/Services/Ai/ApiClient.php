@@ -8,9 +8,13 @@ use Illuminate\Support\Facades\Log;
 
 class ApiClient
 {
+    public function __construct(private TokenUsage $tokens)
+    {
+    }
+
     /** One HTTP boundary for the OpenAI-compatible Responses and Images APIs. */
     public function create(array $payload, string $provider, array $settings, int $timeout, ?string $command = null,
-        array $attachments = [], string $api = 'responses', ?callable $observeUsage = null): array
+        array $attachments = [], string $api = 'responses', ?callable $observeUsage = null, ?int $userId = null): array
     {
         if (!array_key_exists($provider, AiSettings::PROVIDERS)) {
             throw new \RuntimeException('Unknown AI provider');
@@ -39,18 +43,29 @@ class ApiClient
         }
 
         $context = ['provider' => $provider, 'command' => $command, 'model' => $payload['model'], 'api' => $api];
+        $purpose = $command ?? (str_starts_with($api, 'images') ? 'image_generation' : 'text_generation');
+        $requestedModel = $this->safeModel($payload['model'], $settings);
         try {
             // No automatic retry or provider fallback: either can duplicate paid generation.
             $response = $request->post($endpoint, $payload);
         } catch (ConnectionException $e) {
+            if ($api !== 'input_tokens') {
+                $this->tokens->record($purpose, $requestedModel, $userId, null);
+            }
             $this->fail('AI connection failed', $context);
         }
 
         $context['status_code'] = $response->status();
         $context['request_id'] = $this->safeIdentifier($response->header('x-request-id'), $settings) ?? '';
         $data = json_decode($response->body(), true);
+        $validJson = json_last_error() === JSON_ERROR_NONE;
+        $usage = $data['usage'] ?? $data['result']['usage'] ?? null;
+        $model = $this->safeModel($data['model'] ?? $data['result']['model'] ?? null, $settings);
+        if ($api !== 'input_tokens') {
+            $this->tokens->record($purpose, $model ?? $requestedModel, $userId, $usage);
+        }
         if ($observeUsage !== null && is_array($data)) {
-            $observeUsage($data['usage'] ?? null, $context['request_id'], $data['model'] ?? null);
+            $observeUsage($usage, $context['request_id'], $model);
         }
         $error = is_array($data) ? ($data['error'] ?? ($data['result']['error'] ?? null)) : null;
         if (is_array($error)) {
@@ -71,7 +86,7 @@ class ApiClient
             $this->fail('AI request failed with HTTP ' . $response->status(), $context);
         }
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
+        if (!$validJson) {
             $this->fail('AI returned invalid JSON', $context);
         }
         if (!is_array($data) || !empty($data['error'])) {
@@ -92,9 +107,14 @@ class ApiClient
         return $result;
     }
 
-    private function safeIdentifier(mixed $value, array $settings): ?string
+    private function safeModel(mixed $value, array $settings): ?string
     {
-        if (!is_string($value) || !preg_match('/\A[a-zA-Z0-9_.\[\]-]{1,128}\z/', $value)) {
+        return $this->safeIdentifier($value, $settings, '/\A[a-zA-Z0-9_.\[\]\/+:@-]{1,200}\z/');
+    }
+
+    private function safeIdentifier(mixed $value, array $settings, string $pattern = '/\A[a-zA-Z0-9_.\[\]-]{1,128}\z/'): ?string
+    {
+        if (!is_string($value) || !preg_match($pattern, $value)) {
             return null;
         }
         foreach (['key', 'proxy'] as $secret) {

@@ -1,10 +1,14 @@
 flowchart TB
   settings_ai["Настройки ИИ"]
+  settings_ai_usage["Расход токенов ИИ"]
   settings_store["Цены и акции"]
   settings_telegram["Настройки Telegram"]
   room_debug["Редактор комнаты"]
   market_promotion_picker(["Выбор товаров акции"])
   settings_stickers["Каталог наклеек"]
+  settings_ai -->|"Расход ИИ"| settings_ai_usage
+  settings_ai_usage -->|"ИИ"| settings_ai
+  settings_ai_usage -->|"Уточнить фильтры отчёта"| settings_ai_usage
   settings_ai -->|"Цены товаров"| settings_store
   settings_ai -->|"Telegram"| settings_telegram
   settings_store -->|"ИИ"| settings_ai

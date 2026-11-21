@@ -1275,6 +1275,7 @@
 
 Переходы:
 
+- Расход ИИ → [Расход токенов ИИ](#settings-ai-usage) (navigate)
 - Цены товаров → [Цены и акции](#settings-store) (navigate)
 - Telegram → [Настройки Telegram](#settings-telegram) (navigate)
 - Наклейки → [Каталог наклеек](#settings-stickers) (navigate)
@@ -1289,6 +1290,35 @@
 - [app/Services/Ai/AiSettings.php](../../app/Services/Ai/AiSettings.php)
 - [app/Services/Ai/ImagesClient.php](../../app/Services/Ai/ImagesClient.php)
 - [app/Http/Requests/UpdateAiSettingsRequest.php](../../app/Http/Requests/UpdateAiSettingsRequest.php)
+
+<a id="settings-ai-usage"></a>
+
+## Расход токенов ИИ
+
+Тип: page. Роли сценария: Администратор.
+
+Посмотреть суммарный расход токенов и уточнить его по назначению, модели, пользователю и периоду
+
+Условия: Только глобальный администратор.
+
+Проверка: Для вызовов с частичным или отсутствующим счётчиком показано число таких вызовов.
+
+Состояния для макета и проверки: общий отчёт; фильтр по пользователю и модели; частичный счётчик; пустой период.
+
+Маршруты:
+
+- `GET|HEAD /insider/settings/ai/usage` — screen
+
+Переходы:
+
+- ИИ → [Настройки ИИ](#settings-ai) (navigate)
+- Уточнить фильтры отчёта → [Расход токенов ИИ](#settings-ai-usage) (state)
+
+Исходники:
+
+- [resources/views/settings/ai-usage.blade.php](../../resources/views/settings/ai-usage.blade.php)
+- [app/Http/Controllers/AiUsageController.php](../../app/Http/Controllers/AiUsageController.php)
+- [app/Services/Ai/TokenUsage.php](../../app/Services/Ai/TokenUsage.php)
 
 <a id="settings-store"></a>
 

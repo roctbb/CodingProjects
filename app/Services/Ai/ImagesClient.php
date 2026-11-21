@@ -63,9 +63,11 @@ class ImagesClient
                     'image_url' => ['url' => 'data:'.$image['mime'].';base64,'.base64_encode($image['bytes'])],
                 ], $attachments);
             }
-            return $this->api->create($payload, 'openai', $connection, $timeout, $command, [], 'images');
+            return $this->api->create($payload, 'openai', $connection, $timeout, $command, [], 'images',
+                userId: $options['usage_user_id'] ?? null);
         }
-        return $this->api->create($payload, 'openai', $connection, $timeout, $command, $attachments, 'images.' . $operation);
+        return $this->api->create($payload, 'openai', $connection, $timeout, $command, $attachments, 'images.' . $operation,
+            userId: $options['usage_user_id'] ?? null);
     }
 
     private function attachment(mixed $url, int $index): array

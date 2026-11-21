@@ -1367,7 +1367,7 @@ class CodeCheckingTest extends TestCase
         $strongAgain->update(['state'=>'completed', 'finished_at'=>now()]);
         $normal = $this->postJson($url.'/recheck')->assertStatus(202)->json();
         $ordinary = CodeExecutionRun::findOrFail($normal['execution_id']);
-        $this->assertSame(array_replace($snapshot, ['legacy'=>false]), $ordinary->snapshot);
+        $this->assertSame(array_replace($snapshot, ['legacy'=>false, 'ai_recheck_by'=>1]), $ordinary->snapshot);
         $this->assertSame($expected, $run->fresh()->snapshot);
         $this->assertSame($before, $record->fresh()->only(array_keys($before)));
     }
@@ -1566,7 +1566,8 @@ class CodeCheckingTest extends TestCase
         $this->service('POST', $uri, $data)->assertConflict();
         $run->update(['snapshot'=>['check_type'=>'gpt', 'gpt_model'=>'test-model']]);
         $this->mock(\App\Services\ChatGptService::class)->shouldReceive('generate')->once()
-            ->with($data['messages'], ['model'=>'test-model', 'timeout'=>150, 'max_output_tokens'=>8192])->andReturn('Оценка');
+            ->with($data['messages'], ['model'=>'test-model', 'timeout'=>150, 'max_output_tokens'=>8192,
+                'usage_purpose'=>'code_check', 'usage_user_id'=>2])->andReturn('Оценка');
         for ($i=0; $i<2; $i++) $this->service('POST', $uri, $data)->assertOk()->assertJsonPath('answer','Оценка');
     }
 

@@ -225,6 +225,8 @@ flowchart LR
   market --> credit["Массово начислить GC"]
   tools["Меню пользователя"] --> system["Настройки"]
   system --> ai["Настроить ИИ"]
+  system --> usage["Расход ИИ"]
+  usage --> filters["Выбрать период, назначение, модель или пользователя"]
   system --> telegram["Настроить Telegram-бота"]
   system --> prices["Изменить цены и акции магазина"]
   tools --> stickers["Настройки → Наклейки"]
@@ -233,7 +235,9 @@ flowchart LR
   tools --> materials["Ресурсы → Ревью программ"]
 ```
 
-У администратора есть также служебные входы по прямым адресам. Это `/insider/room-debug` для редактора раскладки комнаты и `/insider/settings/code-executor/…` для статуса, входа в GeekExecutor и выгрузок прежних проверок. В шаблоне вкладок системных настроек видны «ИИ», «Telegram», «Цены и акции» и «Наклейки». Привязка личного Telegram в профиле, чат курса и настройка системного бота имеют разные точки входа и права. [Вкладки настроек](../../resources/views/settings/partials/tabs.blade.php) · [Поля курса для администратора](../../resources/views/courses/edit.blade.php) · [Служебные маршруты](../../routes/code-checking.php) · [Редактор комнаты](../../app/Http/Controllers/RoomDebugController.php).
+Во вкладке «Расход ИИ» администратор видит сумму входных и выходных токенов, число вызовов без полного счётчика и разбивку по назначению, модели и пользователю. Строка в таблице уточняет фильтр для всего отчёта. Доступ проверяют `auth` и `admin`. [Отчёт о расходе ИИ](../../resources/views/settings/ai-usage.blade.php) · [Проверка доступа](../../app/Http/Controllers/AiUsageController.php).
+
+У администратора есть также служебные входы по прямым адресам. Это `/insider/room-debug` для редактора раскладки комнаты и `/insider/settings/code-executor/…` для статуса, входа в GeekExecutor и выгрузок прежних проверок. Привязка личного Telegram в профиле, чат курса и настройка системного бота имеют разные точки входа и права. [Вкладки настроек](../../resources/views/settings/partials/tabs.blade.php) · [Поля курса для администратора](../../resources/views/courses/edit.blade.php) · [Служебные маршруты](../../routes/code-checking.php) · [Редактор комнаты](../../app/Http/Controllers/RoomDebugController.php).
 
 <a id="materials"></a>
 

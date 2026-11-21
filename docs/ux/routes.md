@@ -217,6 +217,7 @@
 | GET\|HEAD | `/insider/settings/ai` | screen | [Настройки ИИ](screens.md#settings-ai) | web, verified, auth, admin |
 | PUT | `/insider/settings/ai` | action | [Настройки ИИ](screens.md#settings-ai) | web, verified, auth, admin |
 | DELETE | `/insider/settings/ai` | action | [Настройки ИИ](screens.md#settings-ai) | web, verified, auth, admin |
+| GET\|HEAD | `/insider/settings/ai/usage` | screen | [Расход токенов ИИ](screens.md#settings-ai-usage) | web, verified, auth, admin |
 | GET\|HEAD | `/insider/settings/code-executor/legacy-artifacts/{artifact}` | download | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | web, auth, verified |
 | GET\|HEAD | `/insider/settings/code-executor/legacy-exports` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | web, auth, verified |
 | GET\|HEAD | `/insider/settings/code-executor/legacy-exports/{export}/files/{file}` | download | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | web, auth, verified |

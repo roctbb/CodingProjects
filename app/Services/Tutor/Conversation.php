@@ -103,7 +103,7 @@ final class Conversation
             Cache::put($key, ['digest' => $digest], 600);
             try {
                 $answer = $this->responder->reply($payload, fn ($usage) => $this->meter->checkpoint($usageId, $usage),
-                    fn ($tokens, $previous) => $this->meter->reserve($usageId, $tokens, $previous));
+                    fn ($tokens, $previous) => $this->meter->reserve($usageId, $tokens, $previous), (int) $user->id);
             } catch (\Throwable $error) {
                 $this->meter->finish($usageId, null);
                 throw $error;

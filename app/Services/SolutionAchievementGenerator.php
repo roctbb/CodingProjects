@@ -8,6 +8,7 @@ use App\CourseActivity;
 use App\Jobs\GenerateAchievementTrophy;
 use App\Solution;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -85,7 +86,7 @@ class SolutionAchievementGenerator
                 $this->awardManualAchievementCoins($achievement, $coinReward);
                 CourseActivity::recordAchievementEarned($achievement);
                 app(RewardNotices::class)->achievement($achievement);
-                GenerateAchievementTrophy::dispatch($achievement->id)->afterCommit();
+                GenerateAchievementTrophy::dispatch($achievement->id, false, $manual ? Auth::id() : null)->afterCommit();
 
                 return $achievement;
             }, 5);
@@ -187,6 +188,7 @@ class SolutionAchievementGenerator
             ['role' => 'user', 'content' => $content],
         ], [
             'command' => 'achievement_variants',
+            'usage_user_id' => (int) (Auth::id() ?? $solution->user_id),
         ]);
 
         return $this->normalizePayload($response);

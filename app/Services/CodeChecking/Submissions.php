@@ -131,6 +131,10 @@ class Submissions
                 abort_unless($model, 409, 'Модель для повторной ИИ-проверки не настроена администратором.');
                 $snapshot = $this->strongerSnapshot($snapshot, $automatic, $model, $teacher);
             }
+            if (!$strongerAi && $snapshot['check_type'] === 'gpt') {
+                $snapshot['ai_recheck_by'] = (int) $teacher->id;
+                unset($snapshot['ai_retry_by']);
+            }
             $id = (string) Str::uuid();
             $run = $this->newRun($locked, $id, $snapshot);
             $locked->update(['current_run_id' => $id]);
@@ -140,6 +144,7 @@ class Submissions
 
     private function strongerSnapshot(array $snapshot, CodeExecutionRun $source, array $model, User $requester): array
     {
+        unset($snapshot['ai_retry_by'], $snapshot['ai_recheck_by']);
         $snapshot['gpt_model'] = $model['model'];
         $snapshot['gpt_timeout'] = $model['timeout'];
         $snapshot['ai_review'] = ['source_run_id'=>$source->id, 'requested_by'=>(int) $requester->id,
@@ -186,10 +191,13 @@ class Submissions
     public function retry(CodeSubmission $submission, User $viewer): CodeExecutionRun
     {
         $this->access->authorOrTeacher($viewer, $submission);
-        return DB::transaction(function () use ($submission) {
+        return DB::transaction(function () use ($submission, $viewer) {
             $locked = CodeSubmission::lockForUpdate()->findOrFail($submission->id);
             abort_unless($this->retryAllowed($locked, $locked->currentRun), 409, 'Повторить можно только завершившуюся технической ошибкой проверку.');
             $snapshot = $locked->currentRun->snapshot;
+            if ($snapshot['check_type'] === 'gpt') {
+                $snapshot['ai_retry_by'] = (int) $viewer->id;
+            }
             // This is a new native run; a later archive import must not overwrite it.
             $snapshot['legacy'] = false;
             $run = $this->newRun($locked, (string) Str::uuid(), $snapshot);

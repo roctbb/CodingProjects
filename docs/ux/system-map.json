@@ -1727,6 +1727,26 @@
       }
     },
     {
+      "id": "settings-ai-usage",
+      "title": "Расход токенов ИИ",
+      "domain": "admin",
+      "kind": "page",
+      "roles": ["admin"],
+      "sources": [
+        "resources/views/settings/ai-usage.blade.php",
+        "app/Http/Controllers/AiUsageController.php",
+        "app/Services/Ai/TokenUsage.php"
+      ],
+      "goal": "Посмотреть суммарный расход токенов и уточнить его по назначению, модели, пользователю и периоду",
+      "review": {
+        "stage": "mapped",
+        "note": "Для вызовов с частичным или отсутствующим счётчиком показано число таких вызовов."
+      },
+      "layout": "settings",
+      "checkStates": ["общий отчёт", "фильтр по пользователю и модели", "частичный счётчик", "пустой период"],
+      "guard": "Только глобальный администратор."
+    },
+    {
       "id": "settings-store",
       "title": "Цены и акции",
       "domain": "admin",
@@ -5119,6 +5139,30 @@
     },
     {
       "from": "settings-ai",
+      "to": "settings-ai-usage",
+      "label": "Расход ИИ",
+      "kind": "navigate",
+      "roles": ["admin"],
+      "source": "resources/views/settings/partials/tabs.blade.php"
+    },
+    {
+      "from": "settings-ai-usage",
+      "to": "settings-ai",
+      "label": "ИИ",
+      "kind": "navigate",
+      "roles": ["admin"],
+      "source": "resources/views/settings/partials/tabs.blade.php"
+    },
+    {
+      "from": "settings-ai-usage",
+      "to": "settings-ai-usage",
+      "label": "Уточнить фильтры отчёта",
+      "kind": "state",
+      "roles": ["admin"],
+      "source": "resources/views/settings/ai-usage.blade.php"
+    },
+    {
+      "from": "settings-ai",
       "to": "settings-store",
       "label": "Цены товаров",
       "kind": "navigate",
@@ -5825,6 +5869,10 @@
     },
     "AiSettingsController@edit": {
       "node": "settings-ai",
+      "kind": "screen"
+    },
+    "AiUsageController@index": {
+      "node": "settings-ai-usage",
       "kind": "screen"
     },
     "SystemStoreSettingsController@edit": {

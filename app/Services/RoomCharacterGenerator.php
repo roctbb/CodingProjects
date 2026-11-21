@@ -119,7 +119,7 @@ class RoomCharacterGenerator
                         PROMPT],
                     ['type' => 'input_image', 'image_url' => 'data:image/png;base64,' . base64_encode($avatar)],
                 ],
-            ]], ['command' => 'room_character', 'size' => '1024x1536', 'quality' => 'medium',
+            ]], ['command' => 'room_character', 'usage_user_id' => (int) $generation->user_id, 'size' => '1024x1536', 'quality' => 'medium',
                 'output_format' => 'png', 'background' => 'transparent']);
             $bytes = $this->images->normalize($image['bytes'], $generation->reference_path);
             if (!Storage::put($path, $bytes, ['visibility' => 'public', 'directory_visibility' => 'public'])) {

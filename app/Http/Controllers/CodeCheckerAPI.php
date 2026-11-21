@@ -48,6 +48,9 @@ class CodeCheckerAPI extends Controller
             $answer = \Illuminate\Support\Facades\Cache::remember($key, 7200, fn () => $ai->generate($messages, [
                 'model'=>$run->snapshot['gpt_model'] ?? null, 'timeout'=>(int)($run->snapshot['gpt_timeout'] ?? 150),
                 'max_output_tokens'=>8192,
+                'usage_purpose' => isset($run->snapshot['ai_recheck_by']) || isset($run->snapshot['ai_review']) ? 'code_recheck' : 'code_check',
+                'usage_user_id' => (int) ($run->snapshot['ai_retry_by'] ?? $run->snapshot['ai_recheck_by']
+                    ?? $run->snapshot['ai_review']['requested_by'] ?? $run->submission->user_id),
             ]));
             return response()->json(['answer'=>$answer])->header('Cache-Control', 'private, no-store');
         } finally {

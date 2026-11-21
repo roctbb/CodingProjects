@@ -13,7 +13,7 @@ class AchievementTrophyGenerator
     {
     }
 
-    public function generateForAchievement(Achievement $achievement): string
+    public function generateForAchievement(Achievement $achievement, ?int $requestedBy = null): string
     {
         $achievement->loadMissing('course', 'task');
         $image = $this->chatGpt->generateImage([
@@ -29,6 +29,7 @@ class AchievementTrophyGenerator
                 . 'Задача: ' . optional($achievement->task)->name],
         ], [
             'command' => 'achievement_image',
+            'usage_user_id' => $requestedBy ?? $achievement->user_id,
             'size' => '1024x1024',
             'quality' => 'medium',
             'output_format' => 'png',

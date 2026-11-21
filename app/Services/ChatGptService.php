@@ -7,6 +7,7 @@ use App\Services\Ai\ImagesClient;
 use App\Services\Ai\AiSettings;
 use App\Services\Ai\Connection;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 
 class ChatGptService
@@ -28,7 +29,8 @@ class ChatGptService
             'model' => $settings['model'],
             'input' => $this->normalizeMessages($messages),
             ...(isset($options['max_output_tokens']) ? ['store'=>false, 'max_output_tokens'=>$options['max_output_tokens']] : []),
-        ], $settings['provider'], $settings['connection'], $settings['timeout'], $options['command'] ?? null);
+        ], $settings['provider'], $settings['connection'], $settings['timeout'], $options['usage_purpose'] ?? $options['command'] ?? null,
+            userId: $options['usage_user_id'] ?? Auth::id());
 
         $parts = [];
         foreach ($data['output'] ?? [] as $item) {
@@ -52,6 +54,7 @@ class ChatGptService
     public function generateImage(array $messages, array $options = []): array
     {
         $settings = $this->settings('image', $options);
+        $options['usage_user_id'] ??= Auth::id();
         $startedAt = hrtime(true);
         $imageApi = $settings['connection']['image_api'] ?? 'responses';
         if ($settings['provider'] === 'openai' && $imageApi === 'images') {
@@ -103,7 +106,8 @@ class ChatGptService
             'input' => $this->normalizeMessages($messages),
             'tools' => [$imageTool],
             'tool_choice' => ['type' => 'image_generation'],
-        ], $settings['provider'], $settings['connection'], $settings['timeout'], $options['command'] ?? null);
+        ], $settings['provider'], $settings['connection'], $settings['timeout'], $options['command'] ?? 'image_generation',
+            userId: $options['usage_user_id']);
     }
 
     private function settings(string $type, array $options): array

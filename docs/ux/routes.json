@@ -2912,6 +2912,20 @@
   },
   {
     "method": "GET|HEAD",
+    "uri": "insider/settings/ai/usage",
+    "name": "settings.ai.usage",
+    "action": "AiUsageController@index",
+    "middleware": [
+      "web",
+      "verified",
+      "auth",
+      "admin"
+    ],
+    "node": "settings-ai-usage",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
     "uri": "insider/settings/code-executor/legacy-artifacts/{artifact}",
     "name": null,
     "action": "TaskSubmissionController@archiveArtifact",

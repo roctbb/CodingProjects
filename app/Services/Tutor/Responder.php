@@ -13,7 +13,7 @@ class Responder
 
     public function __construct(private ApiClient $api, private AiSettings $settings) {}
 
-    public function reply(array $data, ?callable $checkpoint = null, ?callable $reserve = null): array
+    public function reply(array $data, ?callable $checkpoint = null, ?callable $reserve = null, ?int $userId = null): array
     {
         $calls = [];
         $reply = $this->guided($data);
@@ -23,7 +23,7 @@ class Responder
             $connection = Connection::resolve($provider, $settings['providers'][$provider]);
             if (!empty($connection['key'])) {
                 try {
-                    $reply = $this->generate($data, $provider, $connection, $calls, $checkpoint, $reserve) ?? $reply;
+                    $reply = $this->generate($data, $provider, $connection, $calls, $checkpoint, $reserve, $userId) ?? $reply;
                 } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
                     if ($error->getStatusCode() !== 429) throw $error;
                     $reply['quota_limited'] = $error->getMessage();
@@ -35,7 +35,7 @@ class Responder
         return $reply + ['usage'=>$this->usage($calls)];
     }
 
-    private function generate(array $data, string $provider, array $connection, array &$calls, ?callable $checkpoint, ?callable $reserve): ?array
+    private function generate(array $data, string $provider, array $connection, array &$calls, ?callable $checkpoint, ?callable $reserve, ?int $userId): ?array
     {
         $cards = json_decode(file_get_contents(resource_path('tutor/reference.json')), true, flags: JSON_THROW_ON_ERROR);
         $words = static function (string $s): array {
@@ -53,7 +53,7 @@ class Responder
         $fields = ['answer'=>$string,'sources'=>['type'=>'array','items'=>$refs && count($refs)<=200 ? $string+['enum'=>$refs] : $string,
             'maxItems'=>min(2,count($refs))], 'card'=>['type'=>['string','null'],'enum'=>array_merge([null],array_column($cards,'id'))]];
         if ($canCheck) $fields['recheck'] = ['anyOf'=>[['type'=>'null'],$this->object(array_fill_keys(['claim','evidence','focus'],$string))]];
-        $draft = $this->call('answer',$fields,$data,$provider,$connection,$canCheck,$calls,$checkpoint,$reserve);
+        $draft = $this->call('answer',$fields,$data,$provider,$connection,$canCheck,$calls,$checkpoint,$reserve,$userId);
         $text = $draft['answer'] ?? null;
         $selected = $draft['sources'] ?? null;
         if (!is_string($text) || trim($text)==='' || mb_strlen($text)>1400 || $this->unsuitable($text)
@@ -63,7 +63,7 @@ class Responder
         if (isset($draft['card']) && !$card) return null;
         $fields = ['allow'=>['type'=>'boolean'], 'good_question'=>['type'=>'boolean']];
         if ($canCheck) $fields['confirm_recheck'] = ['type'=>'boolean'];
-        $check = $this->call('check',$fields,$data+['draft'=>$draft],$provider,$connection,$canCheck,$calls,$checkpoint,$reserve);
+        $check = $this->call('check',$fields,$data+['draft'=>$draft],$provider,$connection,$canCheck,$calls,$checkpoint,$reserve,$userId);
         if (($check['allow'] ?? false)!==true) return null;
         $finding = $canCheck && ($check['confirm_recheck'] ?? false)===true ? ($draft['recheck'] ?? null) : null;
         if ($finding && (!is_array($finding) || collect($finding)->contains(fn ($s) => !is_string($s) || preg_match('~https?://|www\.|\x60{3}~i',$s))
@@ -82,7 +82,7 @@ class Responder
         return ['type'=>'object','properties'=>$fields,'required'=>array_keys($fields),'additionalProperties'=>false];
     }
 
-    private function call(string $stage, array $fields, array $data, string $provider, array $settings, bool $canCheck, array &$calls, ?callable $checkpoint, ?callable $reserve): array
+    private function call(string $stage, array $fields, array $data, string $provider, array $settings, bool $canCheck, array &$calls, ?callable $checkpoint, ?callable $reserve, ?int $userId): array
     {
         $model = config($stage === 'check' ? 'tutor.check_model' : 'tutor.model');
         $effort = config('tutor.effort');
@@ -131,7 +131,7 @@ class Responder
                 $call['total_tokens']=$call['input_tokens']+$call['output_tokens'];
             if ($checkpoint) $checkpoint($this->usage($calls));
         };
-        $result = $this->api->create($payload,$provider,$settings,25,'student_tutor',observeUsage:$observe);
+        $result = $this->api->create($payload,$provider,$settings,25,'student_tutor',observeUsage:$observe,userId:$userId);
         $text='';
         foreach ($result['output'] ?? [] as $message) {
             if (($message['type'] ?? null)!=='message') continue;

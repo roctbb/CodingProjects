@@ -21,7 +21,7 @@ class GenerateAchievementTrophy implements ShouldQueue
     protected $achievementId;
     protected $force;
 
-    public function __construct($achievementId, bool $force = false)
+    public function __construct($achievementId, bool $force = false, protected ?int $requestedBy = null)
     {
         $this->achievementId = $achievementId;
         $this->onConnection(config('queue.default') === 'sync' ? 'database' : config('queue.default'));
@@ -40,7 +40,7 @@ class GenerateAchievementTrophy implements ShouldQueue
         }
 
         try {
-            $generator->generateForAchievement($achievement);
+            $generator->generateForAchievement($achievement, $this->requestedBy ?? null);
         } catch (\Throwable $e) {
             Log::warning('Queued achievement trophy generation failed', [
                 'achievement_id' => $achievement->id,

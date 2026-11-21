@@ -83,6 +83,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
         Route::put('/{sticker}', 'StickersController@update')->whereNumber('sticker')->name('update');
     });
     Route::get('/settings/ai', 'AiSettingsController@edit')->name('settings.ai.edit');
+    Route::get('/settings/ai/usage', 'AiUsageController@index')->name('settings.ai.usage');
     Route::get('/settings/system-store', 'SystemStoreSettingsController@edit')->name('settings.system-store.edit');
     Route::get('/settings/system-store/targets', 'SystemStoreSettingsController@targets')->name('settings.system-store.targets');
     Route::put('/settings/system-store', 'SystemStoreSettingsController@update')->name('settings.system-store.update');

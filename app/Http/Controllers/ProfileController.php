@@ -145,13 +145,13 @@ class ProfileController extends Controller
             'regenerate_trophy' => 'nullable|boolean',
         ]);
 
-        DB::transaction(function () use ($achievement, $data) {
+        DB::transaction(function () use ($achievement, $data, $manager) {
             $achievement->title = $data['title'];
             $achievement->description = $data['description'];
             $achievement->save();
             CourseActivity::recordAchievementEarned($achievement);
             if (!empty($data['regenerate_trophy'])) {
-                GenerateAchievementTrophy::dispatch($achievement->id, true)->afterCommit();
+                GenerateAchievementTrophy::dispatch($achievement->id, true, (int) $manager->id)->afterCommit();
             }
         });
 
