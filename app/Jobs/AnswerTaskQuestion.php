@@ -62,7 +62,7 @@ class AnswerTaskQuestion implements ShouldQueue, ShouldBeUnique
             $input += ['submission_id'=>$question->submission_id, 'run_id'=>$run->id];
         }
         try {
-            $reply = $conversation->ask($student, $question->course_id, $task->step_id, $input);
+            $reply = $conversation->ask($student, $question->course_id, $task->step_id, $input, $this->history($question));
         } catch (HttpExceptionInterface $error) {
             $reply = ['answer'=>match ($error->getStatusCode()) {
                 429 => $error->getMessage().' Вопрос сохранён в чате.',
@@ -71,6 +71,27 @@ class AnswerTaskQuestion implements ShouldQueue, ShouldBeUnique
             }];
         }
         $this->save($question, $reply);
+    }
+
+    private function history(object $question): array
+    {
+        $messages = DB::table('task_chat_messages')
+            ->where(['course_id'=>$question->course_id, 'task_id'=>$question->task_id, 'student_id'=>$question->student_id])
+            ->where('id', '<', $question->id)
+            ->where(fn ($query) => $query->where('automatic', false)->orWhereNotNull('answer_to'))
+            ->orderByDesc('id')->limit(20)->get(['author_id','answer_to','body']);
+
+        $history = [];
+        $remaining = 12000;
+        foreach ($messages as $message) {
+            $length = mb_strlen($message->body);
+            if ($length > $remaining) break;
+            $remaining -= $length;
+            $role = $message->answer_to !== null ? 'assistant'
+                : ((int)$message->author_id === (int)$question->student_id ? 'student' : 'teacher');
+            $history[] = ['role'=>$role, 'text'=>$message->body];
+        }
+        return array_reverse($history);
     }
 
     public function failed(?\Throwable $error): void

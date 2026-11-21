@@ -17,7 +17,10 @@ foreach ([13=>['Разбор алгоритма','gpt'],14=>['Объяснени
         'private_instructions'=>'Оцените корректность объяснения.', 'gpt_model'=>'qa-basic','gpt_rate_limit'=>5,
         'test_config'=>$type==='tests'?['tests'=>array_fill(0,$id===16?23:1,['input'=>'1','output'=>'1','is_public'=>true])]:[]],2);
 }
-$db::table('tasks')->where('id',13)->update(['xp_booster_enabled'=>true]);
+$db::table('tasks')->where('id',13)->update([
+    'xp_booster_enabled'=>true,
+    'text'=>"Объясните работу алгоритма.\n\n| Ввод (по строкам) | Вывод |\n| --- | --- |\n| `2`<br>`4 7` | `7` |\n| `1`<br>`0` | `0` |",
+]);
 $make=function(int $task,int $user,int $suffix,string $type,?int $points,?int $solution=null)use($store,$db){
     $id=sprintf('10000000-0000-4000-8000-%012d',$suffix);$run=sprintf('20000000-0000-4000-8000-%012d',$suffix);
     $config=app(App\Services\CodeChecking\Configuration::class)->snapshot(App\Task::find($task),App\CodeTaskChecker::find($task));

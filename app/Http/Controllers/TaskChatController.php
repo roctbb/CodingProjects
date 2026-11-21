@@ -44,6 +44,9 @@ class TaskChatController extends Controller
             ])->validate();
         }
         $page = $chat->page($course, $assignment, $student);
+        if ((int)$viewer->id === $student && !$request->filled('before')) {
+            $page['awaiting_tutor'] = $chat->awaitingTutor($course, $task, $student);
+        }
         if ((int)$viewer->id !== $student) {
             $page['awaiting_reply'] = $chat->waitingStudents($course, [$task], $student)->isNotEmpty();
         }

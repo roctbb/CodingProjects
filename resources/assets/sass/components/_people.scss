@@ -150,6 +150,15 @@ a.gc-person-card:is(:hover,:focus-visible) { border-color:var(--gc-border-hover)
 .gc-code-example { margin: var(--gc-space-6) 0; min-width: 0; }
 .gc-code-example__toolbar { align-items: center; color: var(--gc-on-surface-muted); display: flex; font-size: var(--gc-font-caption); gap: var(--gc-space-3); justify-content: space-between; margin-bottom: var(--gc-space-2); }
 .markdown .gc-code-example > pre, .markdown-big .gc-code-example > pre { background: var(--gc-surface-variant); border-color: var(--gc-panel-border); box-shadow: none; color: var(--gc-on-surface); margin: 0; }
+.markdown td.gc-sample-cell { position: relative; padding-inline-end: 2.6rem; vertical-align: top; }
+.gc-sample-data { font-family: var(--gc-code-font); white-space: pre-wrap; }
+.markdown .gc-sample-data code { color: inherit; background: transparent; border: 0; padding: 0; font: inherit; }
+.gc-sample-copy {
+    position: absolute; inset-block-start: .25rem; inset-inline-end: .25rem;
+    display: grid; place-items: center; width: 2rem; height: 2rem;
+    color: var(--gc-on-surface-muted); background: transparent; border: 0; border-radius: var(--gc-radius-sm);
+    &:is(:hover, :focus-visible) { color: var(--gc-link); background: var(--gc-surface-variant); }
+}
 .gc-table-scroll { margin: var(--gc-space-6) 0; max-width: 100%; overflow-x: auto; }
 .markdown .gc-table-scroll > table, .markdown-big .gc-table-scroll > table { display: table; margin: 0; }
 .markdown mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-block: var(--gc-space-1); }

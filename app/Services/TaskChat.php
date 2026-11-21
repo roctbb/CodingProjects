@@ -54,20 +54,34 @@ class TaskChat
             $message = ['course_id'=>$course,'task_id'=>$task,'student_id'=>$student,
                 'submission_id'=>$submission,'solution_id'=>$solution,'review_run_id'=>$runId,'body'=>$body];
             $table = DB::table('task_chat_messages');
-            $created = $table->insertOrIgnore($key + $message + ['created_at'=>now()->format('Y-m-d H:i:s.u')]);
+            $toTutor = $withTutor && $student === $author
+                && !preg_match('/(?<![\p{L}\p{N}_@])@преподаватель(?![\p{L}\p{N}_])/iu', $body);
+            $created = $table->insertOrIgnore($key + $message + [
+                'tutor_details'=>$toTutor ? json_encode(['recipient'=>'tutor'], JSON_THROW_ON_ERROR) : null,
+                'created_at'=>now()->format('Y-m-d H:i:s.u'),
+            ]);
             $id = $table->where($key + $message)->value('id');
             abort_unless($id, 409, 'Этот запрос уже отправлен с другим сообщением.');
             if (!$created || $student !== $author) return;
-            $forTeacher = !$withTutor || preg_match('/(?<![\p{L}\p{N}_@])@преподаватель(?![\p{L}\p{N}_])/iu', $body);
-            if ($forTeacher && User::whereKey($author)->where('role', 'student')->exists()) {
+            if ($toTutor) {
+                AnswerTaskQuestion::dispatch((int)$id)->afterCommit();
+            } elseif (User::whereKey($author)->where('role', 'student')->exists()) {
                 $teachers = DB::table('course_teachers')->where('course_id', $course)->distinct()->pluck('user_id');
                 foreach ($teachers as $teacher) {
                     NotifyTaskQuestionTeacher::dispatch((int)$id, (int)$teacher)->afterCommit();
                 }
-            } elseif ($withTutor) {
-                AnswerTaskQuestion::dispatch((int)$id)->afterCommit();
             }
         });
+    }
+
+    public function awaitingTutor(int $course, int $task, int $student): bool
+    {
+        return DB::table('task_chat_messages as question')
+            ->where(['question.course_id'=>$course, 'question.task_id'=>$task, 'question.student_id'=>$student])
+            ->where('question.tutor_details->recipient', 'tutor')
+            ->whereNotExists(fn ($reply) => $reply->selectRaw('1')->from('task_chat_messages as reply')
+                ->whereColumn('reply.answer_to', 'question.id'))
+            ->exists();
     }
 
     public function recordRecheck(\App\Solution $solution, ?string $submission = null): void
@@ -184,7 +198,7 @@ class TaskChat
             } elseif ($kind === self::MESSAGE && $note = $notes->get($id)) {
                 $item += ['type'=>$note->answer_to ? 'tutor' : 'message','author'=>(int)$note->author_id,
                     'name'=>$note->answer_to ? 'Ростислоп Нейрославович' : $note->name,'text'=>$note->body,
-                    'tutor'=>$note->tutor_details ? json_decode($note->tutor_details, true) : null,
+                    'tutor'=>$note->answer_to && $note->tutor_details ? json_decode($note->tutor_details, true) : null,
                     'attempt'=>$note->submission_id ?? ($note->solution_id ? 'solution-'.$note->solution_id : null)];
             } else continue;
             $events[] = $item;

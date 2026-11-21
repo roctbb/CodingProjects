@@ -13,7 +13,7 @@ final class Conversation
     public function __construct(private CourseAccess $access, private Context $context, private Attempts $attempts,
         private Usage $meter, private Responder $responder) {}
 
-    public function ask(User $user, int $course_id, int $id, array $data): array
+    public function ask(User $user, int $course_id, int $id, array $data, ?array $chatHistory = null): array
     {
         $course = Course::findOrFail($course_id);
         $ownTeachingTask = isset($data['task_id']) && $this->access->manages($user, $course);
@@ -92,10 +92,12 @@ final class Conversation
                 abort_unless(isset($previous['reply']) && !array_diff($previous['sources'], $available), 409, 'Обновите вопрос.');
                 return $previous['reply'];
             }
-            $history = array_values(array_filter(Cache::get($thread, []), fn ($turn) => !array_diff($turn['sources'], $available)));
+            $history = $chatHistory === null
+                ? array_filter(Cache::get($thread, []), fn ($turn) => !array_diff($turn['sources'], $available))
+                : [];
             $payload = ['mode' => $mode, 'question' => $data['question'], 'topic' => $step->name,
                 'assignment' => $assignment, 'excerpt' => $data['excerpt'] ?? '',
-                'review' => $report, 'history' => array_column($history, 'exchange')] + $materials + $work;
+                'review' => $report, 'history' => $chatHistory ?? array_column($history, 'exchange')] + $materials + $work;
             if ($basis !== null) $payload['review_basis'] = $basis;
             $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
             abort_if(strlen($body) > Context::MAX_BYTES, 413, Context::TOO_LARGE);
@@ -135,8 +137,10 @@ final class Conversation
                 if ($record) $reply['test_examples'] = app(\App\Services\CodeChecking\Reports::class)->tutorExamples($record, $user);
             }
             $refs = array_keys($links);
-            $history[] = ['sources' => $refs, 'exchange' => ['question' => $data['question'], 'answer' => mb_substr($answer['answer'], 0, 750)]];
-            Cache::put($thread, array_slice($history, -3), 3600);
+            if ($chatHistory === null) {
+                $history[] = ['sources' => $refs, 'exchange' => ['question' => $data['question'], 'answer' => mb_substr($answer['answer'], 0, 750)]];
+                Cache::put($thread, array_slice($history, -3), 3600);
+            }
             Cache::put($key, ['digest' => $digest, 'sources' => $refs, 'reply' => $reply], 600);
             return $reply;
         } finally {

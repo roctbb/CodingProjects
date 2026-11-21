@@ -57,6 +57,12 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await page.setViewportSize({width,height:1000});
             if (width >= 992) {
                 await visit('teacher',13,null,{open:false});
+                await context.grantPermissions(['clipboard-read','clipboard-write'],{origin:url});
+                const sample = page.locator('#task13 .gc-task-condition-content');
+                for (const [label,expected] of [['ввод примера 1','2\n4 7'],['вывод примера 1','7'],['ввод примера 2','1\n0']]) {
+                    await sample.getByRole('button',{name:'Скопировать '+label}).click();
+                    check('copy-'+label,await page.evaluate(()=>navigator.clipboard.readText())===expected,width);
+                }
                 const list = page.locator('#student-solutions-13 [data-execution-student-list]');
                 const geometry = element => element.evaluate(el => ({
                     bottom: el.getBoundingClientRect().bottom,

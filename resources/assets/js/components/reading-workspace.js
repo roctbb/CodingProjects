@@ -1,5 +1,60 @@
 import linkifyHtml from 'linkify-html';
 
+function addSampleCopyButtons(table) {
+    const header = table.tHead?.rows[0];
+    if (!header || header.cells.length !== 2 || !table.closest('.gc-task-condition-content')) return;
+    const [input, output] = Array.from(header.cells, cell => cell.textContent.trim());
+    if (!/^(?:ввод|входные данные|input(?:\.txt)?)(?:\s*\([^)]*\))?$/iu.test(input)
+        || !/^(?:вывод|возможный вывод|ожидаемое поведение или вывод|выходные данные|output(?:\.txt)?)$/iu.test(output)) return;
+
+    for (const row of table.tBodies[0]?.rows || []) {
+        if (row.cells.length !== 2) continue;
+        for (const cell of row.cells) {
+            if (cell.querySelector('pre') || !cell.textContent.trim()) continue;
+            const data = document.createElement('div');
+            data.className = 'gc-sample-data';
+            data.append(...cell.childNodes);
+            const copy = document.createElement('button');
+            copy.type = 'button';
+            copy.className = 'gc-sample-copy';
+            const label = 'Скопировать ' + (cell.cellIndex === 0 ? 'ввод' : 'вывод') + ' примера ' + (row.sectionRowIndex + 1);
+            const icon = document.createElement('i');
+            icon.className = 'far fa-copy';
+            icon.setAttribute('aria-hidden', 'true');
+            copy.append(icon);
+            const setLabel = text => {
+                copy.title = text;
+                copy.setAttribute('aria-label', text);
+            };
+            setLabel(label);
+            let reset;
+            copy.addEventListener('click', async () => {
+                clearTimeout(reset);
+                try {
+                    await navigator.clipboard.writeText(data.innerText);
+                } catch {
+                    const range = document.createRange();
+                    range.selectNodeContents(data);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    if (!document.execCommand('copy')) {
+                        setLabel('Данные выделены для копирования');
+                        reset = setTimeout(() => setLabel(label), 1800);
+                        return;
+                    }
+                    selection.removeAllRanges();
+                }
+                setLabel('Скопировано');
+                icon.className = 'fas fa-check';
+                reset = setTimeout(() => { setLabel(label); icon.className = 'far fa-copy'; }, 1800);
+            });
+            cell.classList.add('gc-sample-cell');
+            cell.append(data, copy);
+        }
+    }
+}
+
 export default function initReadingWorkspace() {
     const stepDetailsPage = document.querySelector('[data-step-details-page]');
     const stepTabs = document.querySelector('[data-step-content-tabs]');
@@ -162,6 +217,7 @@ export default function initReadingWorkspace() {
             scroll.tabIndex = 0;
             scroll.setAttribute('role', 'region');
             scroll.setAttribute('aria-label', table.caption?.textContent || 'Таблица, прокручивается по горизонтали');
+            addSampleCopyButtons(table);
             table.before(scroll);
             scroll.append(table);
         });

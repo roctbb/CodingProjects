@@ -324,7 +324,7 @@ export function taskChat(root, actions) {
             const page=await request(endpoint()+(older?'?before='+encodeURIComponent(cursor):''));
             if(context!==token || read!==readNumber)return;
             retry.hidden=true;
-            if(!pending)status.textContent='';
+            if (!older) status.textContent = withTutor && page.awaiting_tutor ? 'Ростислоп набирает сообщение…' : '';
             const initial=signature==='';
             const changed=[];
             if(!older){
@@ -390,7 +390,7 @@ export function taskChat(root, actions) {
             await request(url,'POST',{body:input.value.trim(),attempt:replyTo?.id || null,run_id:replyTo?.run || null,client_id:id});
             if(drafts.get(recipient)?.clientId===id)drafts.delete(recipient);
             if(context!==token)return;
-            input.value='';autosize.update(input);replyTo=null;reply.hidden=true;status.textContent='Сообщение отправлено.';
+            input.value='';autosize.update(input);replyTo=null;reply.hidden=true;
             // Invalidate an older in-flight read so the post is visible immediately.
             await load(false,true);if(context===token)log.scrollTop=0;
         }catch(error){if(context===token)status.textContent='Сообщение не отправлено. '+error.message;}

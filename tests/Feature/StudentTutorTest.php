@@ -141,6 +141,50 @@ class StudentTutorTest extends DeadlineFeatureCase
         $queue::assertPushed($notification, 2);
     }
 
+    public function test_assistant_uses_the_persisted_task_dialogue_and_reports_outstanding_replies(): void
+    {
+        $root = '/insider/courses/1/tasks/11/chat/';
+        $post = fn (int $student, string $body) => $this->postJson($root.$student,
+            ['body'=>$body, 'client_id'=>(string) Str::uuid()])->assertOk();
+        $state = fn (bool $pending) => $this->getJson($root.'1')->assertOk()->assertJsonPath('awaiting_tutor', $pending);
+        $job = fn () => \Illuminate\Support\Facades\Queue::pushed(\App\Jobs\AnswerTaskQuestion::class)->last();
+        $answer = "Сначала найди разницу.\n\nНапример, 300 − 100 = 200.";
+        $histories = [];
+        $this->stubTutor(function ($payload) use (&$histories, $answer) {
+            $histories[] = $payload['history'];
+            return ['answer'=>$answer, 'sources'=>[], 'guided'=>false, 'usage'=>self::USAGE];
+        });
+
+        $post(1, '@преподаватель, что прочитать?');
+        $state(false);
+        $this->actingAs(User::findOrFail(2));
+        $post(1, 'Посмотри на соседние отсчёты.');
+        $post(2, 'Другой личный чат.');
+        $this->actingAs(User::findOrFail(1));
+        $post(1, 'Как найти разницу?');
+        $state(true);
+        $job()->handle(app(\App\Services\Tutor\Conversation::class));
+        $state(false);
+        $this->getJson($root.'1')->assertJsonFragment(['text'=>$answer]);
+        \Illuminate\Support\Facades\Cache::flush();
+
+        $post(1, 'А что с ней делать дальше?');
+        $followup = $job();
+        $post(1, 'Покажи ещё один пример.');
+        $last = $job();
+        $followup->handle(app(\App\Services\Tutor\Conversation::class));
+        $state(true);
+        $expected = [
+            ['role'=>'student', 'text'=>'@преподаватель, что прочитать?'],
+            ['role'=>'teacher', 'text'=>'Посмотри на соседние отсчёты.'],
+            ['role'=>'student', 'text'=>'Как найти разницу?'],
+            ['role'=>'assistant', 'text'=>$answer],
+        ];
+        $this->assertSame($expected, $histories[1]);
+        $last->failed(new \RuntimeException('Interrupted'));
+        $state(false);
+    }
+
     public function test_teacher_personal_conversation_and_submission_comments_use_separate_threads(): void
     {
         $this->actingAs(User::findOrFail(2));
