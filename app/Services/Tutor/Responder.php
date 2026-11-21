@@ -26,7 +26,7 @@ class Responder
                     $reply = $this->generate($data, $provider, $connection, $calls, $checkpoint, $reserve) ?? $reply;
                 } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
                     if ($error->getStatusCode() !== 429) throw $error;
-                    $reply['quota_limited'] = true;
+                    $reply['quota_limited'] = $error->getMessage();
                 } catch (\RuntimeException|\JsonException $error) {
                     // ApiClient logs request identifiers. A failed check must never expose the unchecked draft.
                 }
@@ -95,7 +95,25 @@ class Responder
             'reasoning'=>['effort'=>$effort],'input'=>json_encode($data,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),
             'text'=>['format'=>['type'=>'json_schema','name'=>"tutor_$stage",'strict'=>true,'schema'=>$this->object($fields)]]];
         // UTF-8 bytes upper-bound the visible tokenized text; include schema, protocol overhead and the entire output allowance.
-        if ($reserve) $reserve(strlen(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) + 1024 + $payload['max_output_tokens'], $this->usage($calls));
+        if ($reserve) {
+            $prior = $this->usage($calls);
+            $output = $payload['max_output_tokens'];
+            try {
+                $reserve(strlen(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) + 1024 + $output, $prior);
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+                if ($error->getStatusCode() !== 429) throw $error;
+                // If even the output allowance cannot fit, skip the network request entirely.
+                $reserve($output, $prior);
+                $countSettings = $settings;
+                $countSettings['endpoint'] = rtrim($settings['endpoint'], '/').'/input_tokens';
+                $count = $this->api->create(Arr::only($payload, ['model','instructions','input','text','reasoning']),
+                    $provider, $countSettings, 8, 'student_tutor', api: 'input_tokens');
+                if (!is_int($count['input_tokens'] ?? null) || $count['input_tokens'] <= 0) {
+                    throw new \RuntimeException('AI returned an invalid input token count');
+                }
+                $reserve($count['input_tokens'] + $output, $prior);
+            }
+        }
         $index = count($calls);
         $calls[] = ['stage'=>$stage,'model'=>$model,'reasoning_effort'=>$effort,'input_tokens'=>null,'output_tokens'=>null,
             'total_tokens'=>null,'cached_input_tokens'=>null,'reasoning_tokens'=>null];

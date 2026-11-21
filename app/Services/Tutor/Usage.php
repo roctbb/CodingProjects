@@ -39,10 +39,15 @@ final class Usage
             $daily = (clone $others)->where('usage_day',$row->usage_day);
             $monthly = $others->where('usage_day','>=',$month)->where('usage_day','<',\Carbon\Carbon::parse($month)->addMonth()->toDateString());
             $charge = 'COALESCE(SUM(CASE WHEN state = \'complete\' OR known_tokens > reserved_tokens THEN known_tokens ELSE reserved_tokens END), 0) AS charged';
+            $reasons = [
+                'daily_tokens' => 'Оставшегося личного лимита токенов на сегодня недостаточно для этого вопроса.',
+                'platform_daily_tokens' => 'Оставшегося дневного бюджета помощника на все курсы недостаточно для этого вопроса.',
+                'platform_monthly_tokens' => 'Оставшегося месячного бюджета помощника на все курсы недостаточно для этого вопроса.',
+            ];
             foreach ([[(clone $daily)->where('user_id',$row->user_id), 'daily_tokens'],
                 [$daily, 'platform_daily_tokens'], [$monthly, 'platform_monthly_tokens']] as [$scope, $setting]) {
                 abort_if($required + (int)$scope->selectRaw($charge)->first()->charged > $limits[$setting],
-                    429, 'Доступного бюджета помощника недостаточно для этого вопроса.');
+                    429, $reasons[$setting]);
             }
             DB::table('student_tutor_usage')->where('id',$id)->update(['reserved_tokens'=>$required]);
         });

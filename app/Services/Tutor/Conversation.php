@@ -109,7 +109,7 @@ final class Conversation
                 throw $error;
             }
             $accounted = $this->meter->finish($usageId, $answer['usage'] ?? null);
-            abort_if(!empty($answer['quota_limited']), 429, 'Доступного бюджета помощника недостаточно для этого вопроса.');
+            if (!empty($answer['quota_limited'])) abort(429, $answer['quota_limited']);
             abort_unless($accounted && is_string($answer['answer'] ?? null) && is_array($answer['sources'] ?? null), 502);
             $links = [];
             foreach (array_unique($answer['sources']) as $ref) {

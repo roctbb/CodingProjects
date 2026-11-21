@@ -65,7 +65,7 @@ class AnswerTaskQuestion implements ShouldQueue, ShouldBeUnique
             $reply = $conversation->ask($student, $question->course_id, $task->step_id, $input);
         } catch (HttpExceptionInterface $error) {
             $reply = ['answer'=>match ($error->getStatusCode()) {
-                429 => 'Сейчас я достиг лимита. Твой вопрос сохранён, преподаватель его видит.',
+                429 => $error->getMessage().' Вопрос сохранён в чате.',
                 413 => 'Материал слишком велик для одного разбора. Преподаватель видит твой вопрос.',
                 default => 'Сейчас я не могу разобрать этот вопрос. Он сохранён в чате для преподавателя.',
             }];
