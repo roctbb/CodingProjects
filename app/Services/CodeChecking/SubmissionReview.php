@@ -15,10 +15,9 @@ class SubmissionReview
         $run=$submission->currentRun; $task=\App\Task::findOrFail($submission->task_id);
         $reason=null;
         if (!$run->finished_at && $run->state!=='imported_pending') $reason='Дождитесь результата проверки.';
-        elseif ($task->isBlocked($submission->user_id,$submission->course_id)) $reason='Задача заблокирована.';
-        elseif (($run->points !== null && (int)($run->snapshot['points']??0)>0 && $run->points >= $run->snapshot['points'])
-            || (\Illuminate\Support\Facades\Schema::hasTable('solutions') && Solution::where('task_id',$task->id)->where('course_id',$submission->course_id)
-                ->where('user_id',$submission->user_id)->fullEvaluation((int)$task->max_mark)->exists())) $reason='Задача уже зачтена на полный балл.';
+        elseif ($run->points !== null && (int)($run->snapshot['points']??0)>0 && $run->points >= $run->snapshot['points'])
+            $reason='Задача уже зачтена на полный балл.';
+        else $reason=\App\Services\SolutionRecheck::taskRestriction($task, $submission->course_id, $submission->user_id);
         return ['available'=>!$requested && !$reason,'requested'=>$requested,'comment'=>$requested?$solution->recheck_comment:null,
             'message'=>$requested?'Запрос отправлен преподавателю.':$reason];
     }

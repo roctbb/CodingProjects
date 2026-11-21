@@ -83,7 +83,7 @@ export async function workspace(root) {
         return {data,source};
     }
     function openSource(attempt) {
-        chatDialog('Отправленное решение',async(reload,dialog)=>{
+        chatDialog('Отправленное решение',async()=>{
             const {data,source}=await chatSubmission(attempt);
             const repository=source.repository;
             const preview=repository?.url && !source.files?.length ? node('div') :
@@ -92,7 +92,6 @@ export async function workspace(root) {
             if(repository?.url)preview.append(node('p',{},download(repository.url,repository.url)));
             if(repository?.commit)preview.append(node('p',{},node('code',{},repository.commit),' ',
                 download('/insider/code-submissions/'+source.id+'/repository/archive','Скачать репозиторий')));
-            preview.append(button('Подробнее о посылке',()=>{dialog.close();viewDetails(attempt);}));
             return preview;
         });
     }
@@ -177,7 +176,7 @@ export async function workspace(root) {
     }
     const chat=personalChat ? taskChat(root,{
         back:inlineReview ? ()=>root.dispatchEvent(new CustomEvent('gc:execution-close')) : null,
-        grade:gradeChatSubmission,recheck:openChatReview,
+        grade:gradeChatSubmission,recheck:openChatReview,requestReview:openReviewRequest,
         details:viewDetails,source:openSource,report:openReport,compose:openEditor,
         updated:refreshChatAttempts,
     }) : null;
@@ -322,10 +321,12 @@ export async function workspace(root) {
         const selected=['code','project'].includes(draft.mode)?'code':draft.mode;
         return groups.includes(selected)?selected:groups[0] || 'text';
     }
+    const backToResult=button('Вернуться к результату',safe(()=>openAttemptById(lastResultAttempt)));
     function showComposer(){
         if(!draft || root.hasAttribute('data-history-only'))return;
         verdictHost?.replaceChildren();
         lastResultAttempt=activeAttempt || lastResultAttempt;
+        backToResult.hidden=!lastResultAttempt;
         generation++;stop();details.cancel();current=null;markSelectedAttempt(null);
         composerVisible=true;requestId=null;notice.replaceChildren();notice.className='';content.hidden=false;if(!content.querySelector('.gc-execution-composer'))renderComposer();
         results.hidden=true;history.hidden=true;summary.hidden=true;finishResult();editing?.measure?.();
@@ -388,7 +389,8 @@ export async function workspace(root) {
         const kind=composerKind(),groups=submissionGroups(config),allowed=config.submission_modes;
         content.hidden=!composerVisible;
         const composerHeading=node('div',{class:'gc-composer-heading'},node('h3',{class:'h6 mb-0'},teacher?'Пробное решение':'Ваше решение'));
-        if(lastResultAttempt)composerHeading.append(button('Вернуться к результату',safe(()=>openAttemptById(lastResultAttempt))));
+        backToResult.hidden=!lastResultAttempt;
+        composerHeading.append(backToResult);
         const body=node('section',{class:'gc-execution-composer'+(kind==='code'?' is-code-composer':''),'aria-label':'Форма сдачи решения'},composerHeading);
         if(composerVisible)summary.hidden=true;
         const form=node('div',{class:'gc-composer-body'});body.append(form);
@@ -484,7 +486,9 @@ export async function workspace(root) {
         if(!expandedTests.has(expansionKey))expandedTests.set(expansionKey,new Set());
         const expanded=expandedTests.get(expansionKey),allTests=report.tests || [];
         const pageCount=Math.max(1,Math.ceil(allTests.length/10)),pageNodes=new Map();
-        let testPage=Math.min(pageCount,testPages.get(expansionKey)||1);
+        const firstForSale=allTests.findIndex(test => test.can_purchase);
+        const initialPage=firstForSale < 0 ? 1 : Math.floor(firstForSale / 10) + 1;
+        let testPage=Math.min(pageCount,testPages.get(expansionKey) || initialPage);
         const pagination=node('nav',{class:'gc-test-pages','aria-label':'Страницы тестов'});
         const tableViewport=node('div',{class:'gc-test-table-scroll'},table);let pageHeight=0;
         function renderTests(){
@@ -516,40 +520,52 @@ export async function workspace(root) {
                 details.replaceChildren(node('p',{class:'text-muted mb-0',role:'status'},'Загружаем данные теста…'));
                 await loading;
             };
-            const toggle = button('Данные',() => {
-                detailRow.hidden = !detailRow.hidden;
-                if(detailRow.hidden)expanded.delete(test.number);else expanded.add(test.number);
-                toggle.setAttribute('aria-expanded',String(!detailRow.hidden));
-                toggle.textContent = detailRow.hidden ? 'Данные' : 'Свернуть';
-                if(!detailRow.hidden && test.unlocked)loadDetails();
-            });
-            toggle.classList.add('btn-sm');toggle.textContent=detailRow.hidden?'Данные':'Свернуть';toggle.setAttribute('aria-expanded',String(!detailRow.hidden));toggle.setAttribute('aria-controls',detailsId);toggle.setAttribute('aria-label',`Данные теста ${test.number}`);
+            let control;
             if (test.unlocked) {
-                // Authorized test contents are fetched only when this row is expanded.
+                const toggle = button('Данные',() => {
+                    detailRow.hidden = !detailRow.hidden;
+                    if(detailRow.hidden)expanded.delete(test.number);else expanded.add(test.number);
+                    toggle.setAttribute('aria-expanded',String(!detailRow.hidden));
+                    toggle.textContent = detailRow.hidden ? 'Данные' : 'Свернуть';
+                    if(!detailRow.hidden)loadDetails();
+                });
+                toggle.classList.add('btn-sm');
+                toggle.textContent=detailRow.hidden?'Данные':'Свернуть';
+                toggle.setAttribute('aria-expanded',String(!detailRow.hidden));
+                toggle.setAttribute('aria-controls',detailsId);
+                toggle.setAttribute('aria-label','Данные теста '+test.number);
                 if(test.has_details===false){toggle.disabled=true;toggle.textContent='Нет данных';toggle.title='Подробные данные этой проверки не сохранились.';}
+                else if(!detailRow.hidden)loadDetails();
+                control=toggle;
             } else if (test.can_purchase) {
-                details.append(node('p',{class:'text-muted'},'После открытия данные этого теста будут доступны и в следующих попытках. Оценка этой работы сохранится.'));
-                const purchase = button(`Открыть за ${report.price} GC`,safe(async () => {
-                    await settings();
-                    const provenance=test.data_source==='geekpaste_archive'?'\nВвод и эталон — из снимка GeekPaste при переносе; набор мог меняться после отправки. Вывод программы не сохранился.':'';
-                    if (!confirm(`Открыть тест ${test.number} за ${report.price} GC?\nБаланс: ${config.balance} GC.${provenance}`)) return;
-                    purchase.disabled = true;
+                const purchase = button(`Открыть за ${report.price} GC`,async () => {
+                    purchase.disabled=true;
                     try {
-                        const value = await request(test.purchase_url || `/insider/code-test-reports/${report.run_id}/tests/${test.test_id}/purchase?test_data=metadata`,'POST',{expected_price:report.price});
-                        notice.className = 'text-muted small';notice.textContent = `Списано ${value.charged} GC. Баланс: ${value.balance} GC.`;config.balance = value.balance;
+                        await settings();
+                        const provenance=test.data_source==='geekpaste_archive'?'\nВвод и эталон — из снимка GeekPaste при переносе; набор мог меняться после отправки. Вывод программы не сохранился.':'';
+                        if (!confirm(`Открыть тест № ${test.number} за ${report.price} GC?\nБаланс: ${config.balance} GC. Данные останутся доступны в следующих попытках.${provenance}`)) return;
+                        const value=await request(test.purchase_url || `/insider/code-test-reports/${report.run_id}/tests/${test.test_id}/purchase?test_data=metadata`,'POST',{expected_price:report.price});
+                        config.balance=value.balance;
+                        expanded.add(test.number);
+                        testPages.set(expansionKey,testPage);
                         if(afterPurchase)await afterPurchase();else await show(current.id,current.snapshotOf?{snapshotOf:current.snapshotOf}:{});
-                    } finally {purchase.disabled = false;}
-                }), 'coin');
-                details.append(purchase);
-            } else details.append(node('p',{class:'text-muted mb-0'},report.legacy
-                ? 'Для этого теста подробные данные недоступны.'
-                : 'Данные этого теста скрыты. Результат проверки доступен в таблице.'));
-            if(!detailRow.hidden && test.unlocked)loadDetails();
+                    } catch(error) {
+                        details.replaceChildren(node('p',{class:'text-danger mb-0',role:'alert'},error.message));
+                        detailRow.hidden=false;
+                    } finally {purchase.disabled=false;}
+                },'coin');
+                purchase.classList.add('btn-sm');
+                purchase.prepend(node('i',{class:'fas fa-coins','aria-hidden':'true'}),' ');
+                control=purchase;
+            } else {
+                const reason=passed ? 'Данные пройденного теста закрыты.' : 'Данные этого теста недоступны.';
+                control=node('span',{class:'text-muted',title:reason},node('i',{class:'fas fa-lock','aria-hidden':'true'}),node('span',{class:'visually-hidden'},reason));
+            }
             const verdict = node('span',{class:`gc-test-verdict ${passed ? 'is-passed' : 'is-failed'}`},
                 node('i',{class:`fas ${passed ? 'fa-check-circle' : 'fa-circle-xmark'}`,'aria-hidden':'true'}),' ',verdicts[test.verdict] || test.verdict);
             const visibility=(test.is_public?'Публичный':'Скрытый')+(!teacher&&test.unlocked&&!test.is_public?' · Открыт вам':'');
             rows.append(node('tr',{},node('th',{scope:'row'},`№ ${test.number}`),node('td',{},verdict,node('small',{class:'gc-test-access-mobile text-muted'},visibility)),
-                node('td',{class:'gc-test-access'},node('span',{class:'gc-test-visibility'},test.is_public ? 'Публичный' : 'Скрытый'),!teacher && test.unlocked && !test.is_public ? node('small',{class:'d-block text-muted'},'Открыт вам') : null),node('td',{},toggle)),detailRow);
+                node('td',{class:'gc-test-access'},node('span',{class:'gc-test-visibility'},test.is_public ? 'Публичный' : 'Скрытый'),!teacher && test.unlocked && !test.is_public ? node('small',{class:'d-block text-muted'},'Открыт вам') : null),node('td',{},control)),detailRow);
         }
         pageNodes.set(testPage,[...rows.children]);while(pageNodes.size>3)pageNodes.delete(pageNodes.keys().next().value);renderPages();
         }
@@ -820,17 +836,42 @@ export async function workspace(root) {
         if(!status)return null;
         if(status.requested)return node('div',{class:'gc-review-request-note'},node('strong',{},'Запрос на перепроверку отправлен'),status.comment?node('p',{},status.comment):null,node('p',{class:'gc-help-text mb-0'},'Преподаватель увидит вопрос вместе с этой сдачей.'));
         if(!status.available)return status.message?node('p',{class:'gc-help-text'},status.message):null;
-        let comment=reviewDrafts.get(record.id) || '';
-        const message=node('p',{class:'gc-help-text',role:'status'});
-        const area=textarea(comment,v=>{comment=v;reviewDrafts.set(record.id,v);},{minlength:10,maxlength:1000,rows:3,placeholder:'Что преподавателю нужно проверить?'});
-        let dialog;
-        const submit=button('Отправить запрос',async()=>{
-            if(comment.trim().length<10){message.textContent='Опишите вопрос подробнее: от 10 символов.';area.focus();return;}
+        if (chat) return null;
+        const attempt = record.kind === 'legacy_attempt' ? 'solution-'+record.solution_id : record.id;
+        return node('div', {class:'gc-review-request'}, button('Попросить перепроверить',
+            () => openReviewRequest(attempt, new Date(record.created_at).toLocaleString('ru-RU'), reload)));
+    }
+
+    function openReviewRequest(attempt, label, onResult) {
+        const legacy = attempt.startsWith('solution-');
+        const url = legacy ? base+'/solution/'+attempt.slice(9)+'/recheck' : '/insider/code-submissions/'+attempt+'/review-request';
+        const message = node('p',{class:'gc-help-text',role:'status'});
+        const area = textarea(reviewDrafts.get(attempt) || '',value=>reviewDrafts.set(attempt,value),
+            {minLength:10,maxLength:1000,rows:3});
+        const submit = button('Отправить запрос',async()=>{
+            const comment = area.value.trim();
+            if (comment.length < 10) {
+                message.textContent='Опишите вопрос подробнее: от 10 символов.';
+                area.focus();
+                return;
+            }
             submit.disabled=true;
-            try{await request(record.review_request_url || `/insider/code-submissions/${record.id}/review-request`,'POST',record.kind==='legacy_attempt'?{recheck_comment:comment}:{comment});reviewDrafts.delete(record.id);dialog.close();await reload();}
-            catch(e){message.textContent=e.message;}finally{submit.disabled=false;}
-        });
-        return node('div',{class:'gc-review-request'},button('Попросить перепроверку',()=>{dialog=openDialog('Запрос на перепроверку',node('div',{},node('p',{class:'gc-help-text'},'Сдача от '+new Date(record.created_at).toLocaleString('ru-RU')),field('Что преподавателю нужно проверить?',area),message),[submit]);}));
+            try {
+                const status=await request(url,'POST',legacy ? {recheck_comment:comment} : {comment});
+                if (status.requested) {
+                    reviewDrafts.delete(attempt);
+                    dialog.close();
+                } else {
+                    message.textContent=status.message || 'Перепроверка этой сдачи сейчас недоступна.';
+                }
+                await onResult(status);
+            } catch (error) {
+                message.textContent=error.message;
+            } finally { submit.disabled=false; }
+        },'primary');
+        const dialog=openDialog('Запрос на перепроверку',node('div',{},node('p',{class:'gc-help-text'},label),
+            field('Что преподавателю нужно проверить?',area),message),[submit]);
+        area.focus();
     }
     function skipReview(record){
         return record.review?.skip_url?async()=>{const selected=generation;await request(record.review.skip_url,'POST',{review_token:record.review.token});if(selected!==generation)return;await loadHistory();if(canNavigate())nextStudent();else await openAttemptById(record.id);}:null;
@@ -1052,12 +1093,11 @@ export async function workspace(root) {
             [,records]=await Promise.all([settings(),loadHistory()]);
             if(root.dataset.blocked!=='true' && !config.requires_conversion){
                 if(!draft){setDraft(await request(base+'/code-draft'));renderComposer();}
-                chat?.setCanSubmit(true);
             }else if(!content.children.length)content.append(node('p',{class:'alert alert-warning'},config.requires_conversion ? 'Преподавателю нужно настроить проверку перед сдачей.' : 'Новые сдачи этой задачи заблокированы.'));
         }
         if(root.dataset.submission || activeAttempt)await openAttemptById(activeAttempt || root.dataset.submission);
         else if(records?.length)await openAttempt(records[0]);
-
+        if (draft && root.dataset.blocked !== 'true' && !config?.requires_conversion) chat?.setCanSubmit(true);
     }
     function initializationError(e){
         error(e);

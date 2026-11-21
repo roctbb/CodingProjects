@@ -146,6 +146,11 @@
     .gc-attempt-list__item {align-items:start; flex-wrap:wrap;}
     .gc-submitted-code__source {padding:var(--gc-space-3);}
 }
+@media (max-width:359.98px) {
+    .gc-test-table :is(th, td) {padding-inline:var(--gc-space-1);}
+    .gc-test-table .btn-coin {display:inline-block; white-space:normal;}
+    .gc-test-table .btn-coin i {display:none;}
+}
 @container task-answer (max-width:56rem) {
     .gc-execution-toolbar > div:not(.gc-execution-actions,.gc-submission-history) {flex:1; max-width:none;}
     .gc-execution-toolbar > .gc-submission-history {order:3; flex-basis:100%; min-width:0;}
@@ -583,6 +588,7 @@
 }
 .gc-chat-file-pending { grid-column:1 / -1; font-size:var(--gc-font-small); }
 .gc-chat-file-pending .gc-chat-link { display:block; }
+.gc-chat-sources { display: grid; justify-items: start; gap: .15rem; margin-block-start: var(--gc-space-2); }
 .gc-chat-tutor-foot { align-items:baseline; margin-top:.55rem; }
 .gc-chat-coin { display:inline-flex; align-items:baseline; flex-wrap:wrap; gap:.3rem; color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption); }
 .gc-chat-coin i { color:color-mix(in srgb,var(--gc-accent) 75%,var(--gc-on-surface)); }

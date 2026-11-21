@@ -278,7 +278,8 @@ export function taskChat(root, actions) {
                 item.append(details);
             }
             if (info.reference) item.append(node('strong', {}, info.reference.title), node('p', {}, info.reference.text), node('code', {}, info.reference.example));
-            for (const link of info.links || []) item.append(node('a', {href:link.url, class:'d-block'}, link.heading || link.title));
+            if (info.links?.length) item.append(node('div',{class:'gc-chat-sources'},
+                info.links.map(link=>node('a',{href:link.url},link.heading || link.title))));
             if (info.coins === 1) {
                 const reward = node('small', {class:'gc-chat-coin'},
                     node('i', {class:'fas fa-coins', 'aria-hidden':'true'}), node('strong', {}, '+1 GC'), ' за хороший вопрос');
@@ -309,6 +310,16 @@ export function taskChat(root, actions) {
                 reply.className = 'gc-chat-answer';
                 footer.append(reply);
             }
+        }
+        if (event.student_review === 'available') {
+            footer.append(action('Попросить перепроверить', () => actions.requestReview(event.attempt, event.reference, status => {
+                const result = events.get(event.id);
+                if (result) result.student_review = status.requested ? 'requested' : null;
+                render();
+                refresh();
+            }), 'gc-chat-link'));
+        } else if (event.student_review === 'requested') {
+            footer.append(node('small',{class:'gc-help-text'},'Запрос на перепроверку отправлен'));
         }
         if (teacher && (event.type === 'grade' || event.reviewable)) {
             footer.append(action('Перепроверить', () => actions.recheck(event), 'gc-chat-link'));

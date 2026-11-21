@@ -109,7 +109,7 @@ class TaskChat
         return $query->selectRaw("$kind as kind, CAST($id AS CHAR(64)) as event_id, $time as happened_at");
     }
 
-    public function page(int $course, Task $assignment, int $student): array
+    public function page(int $course, Task $assignment, int $student, bool $studentActions = false): array
     {
         $task = (int)$assignment->id;
         $scope = $this->scope($course, $task, $student);
@@ -120,7 +120,7 @@ class TaskChat
                 ->whereColumn('native.user_id','solutions.user_id')->whereColumn('native.task_id','solutions.task_id')
                 ->whereColumn('native.course_id','solutions.course_id'));
         $messages = DB::table('task_chat_messages')->where(['course_id'=>$course,'task_id'=>$task,'student_id'=>$student]);
-        $threadSources = DB::table('code_submissions')->where($scope)->select('id','legacy_id','current_run_id','preparation_state');
+        $threadSources = DB::table('code_submissions')->where($scope)->select('id','legacy_id','solution_id','current_run_id','preparation_state');
         $runs = DB::table('code_execution_runs as r')->joinSub($threadSources,'s','s.id','=','r.submission_id');
 
         $stream = $this->events(clone $native,self::FILE,'id','created_at')
@@ -145,7 +145,7 @@ class TaskChat
                 ->whereIn('solution_id', $ids(self::LEGACY_GRADE))->orderBy('id')->get(['solution_id','payload'])->keyBy('solution_id');
         }
         $checks = $runs->leftJoin('code_test_reports as t','t.id','=','r.id')->whereIn('r.id',$ids(self::CHECK))
-            ->get(['r.id','r.submission_id','s.legacy_id','s.current_run_id','s.preparation_state','r.state','r.progress','r.points','r.comment','r.criteria','r.snapshot->check_type as method',
+            ->get(['r.id','r.submission_id','s.legacy_id','s.solution_id','r.finished_at','s.current_run_id','s.preparation_state','r.state','r.progress','r.points','r.comment','r.criteria','r.snapshot->check_type as method',
                 'r.snapshot->points as maximum','r.snapshot->ai_review->source_run_id as stronger',
                 'r.snapshot->review_solution_id as solution','t.report->passed as passed','t.report->total as total',
                 'r.legacy_report->passed as archive_passed','r.legacy_report->total as archive_total',
@@ -156,6 +156,15 @@ class TaskChat
             ->pluck('report->tests[0]->error as diagnostic','id');
         $notes = $messages->join('users as u','u.id','=','task_chat_messages.author_id')
             ->whereIn('task_chat_messages.id',$ids(self::MESSAGE))->get(['task_chat_messages.*','u.name'])->keyBy('id');
+
+        $mayRequest = false;
+        $requested = collect();
+        if ($studentActions && ($checks->isNotEmpty() || $ids(self::LEGACY_GRADE))) {
+            $mayRequest = SolutionRecheck::taskRestriction($assignment, $course, $student) === null;
+            $solutionIds = $checks->pluck('solution_id')->merge($checks->pluck('solution'))->merge($ids(self::LEGACY_GRADE))->filter();
+            $requested = DB::table('solutions')->where($scope)->whereIn('id', $solutionIds)
+                ->where('recheck_requested', true)->pluck('id')->flip();
+        }
 
         $events = [];
         foreach ($rows->reverse() as $row) {
@@ -178,6 +187,8 @@ class TaskChat
                 $item += ['type'=>'grade','attempt'=>'solution-'.$id,'method'=>$manual ? 'manual' : null,
                     'points'=>$grade->evaluated_mark ?? $grade->raw_mark ?? $grade->mark,'maximum'=>(int)$assignment->max_mark,
                     'text'=>$manual ? ($teacherComment ?? $comment) : 'Начислено '.$grade->mark.' XP'];
+                if ($requested->has($id)) $item['student_review'] = 'requested';
+                elseif ($mayRequest && $assignment->is_code) $item['student_review'] = 'available';
             } elseif ($kind === self::CHECK && $run = $checks->get($id)) {
                 $item += ['type'=>'check','attempt'=>$run->solution ? 'solution-'.$run->solution : $run->submission_id,
                     'source'=>$run->submission_id,'archived'=>$run->legacy_id!==null && !$run->solution,'run'=>$id,'state'=>$run->state,'method'=>$run->method,
@@ -189,6 +200,11 @@ class TaskChat
                     'awaiting_teacher'=>$run->method === 'manual' && $run->state === 'awaiting_review'
                         && $run->current_run_id === $id && $run->preparation_state === 'ready',
                     'text'=>in_array($run->method,['gpt','manual'],true) && $run->state==='completed' ? (string)$run->comment : ''];
+                if ($run->current_run_id === $id && $run->finished_at && in_array($run->state, ['completed','error'], true)) {
+                    if ($requested->has($run->solution ?: $run->solution_id)) $item['student_review'] = 'requested';
+                    elseif ($mayRequest && (!$run->solution || $assignment->is_code)
+                        && !($run->maximum > 0 && $run->points !== null && $run->points >= $run->maximum)) $item['student_review'] = 'available';
+                }
                 if ($run->current_run_id === $id && !in_array($run->state, ['completed','error','imported_pending','awaiting_review'], true)) {
                     $item['progress'] = $run->progress ? json_decode($run->progress, true) : ['phase'=>$run->state];
                 }

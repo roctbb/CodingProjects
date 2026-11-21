@@ -104,7 +104,7 @@ class CodeCheckingTest extends TestCase
 
     private function createChatSolutions(): void
     {
-        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY, user_id INTEGER, course_id INTEGER, task_id INTEGER, submitted TEXT, checked TEXT, mark INTEGER, raw_mark INTEGER, evaluated_mark INTEGER, comment TEXT, geekpaste_code_id TEXT)');
+        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY, user_id INTEGER, course_id INTEGER, task_id INTEGER, submitted TEXT, checked TEXT, mark INTEGER, raw_mark INTEGER, evaluated_mark INTEGER, comment TEXT, geekpaste_code_id TEXT, recheck_requested BOOLEAN DEFAULT 0)');
     }
 
     public function test_task_chat_keeps_questions_and_scoped_replies_across_checks_and_retries(): void
@@ -156,6 +156,11 @@ class CodeCheckingTest extends TestCase
         $this->assertCount(2,$events->where('type','check'));
         $this->assertEquals(2,$events->firstWhere('run',$first)['passed']);
         $this->assertEquals(3,$events->firstWhere('run',$first)['total']);
+        $this->assertArrayNotHasKey('student_review',$events->firstWhere('run',$first));
+        $this->assertSame('available',$events->firstWhere('run',$second)['student_review']);
+        DB::table('solutions')->where('id',41)->update(['recheck_requested'=>true]);
+        $latest=collect($this->getJson($thread)->assertOk()->json('events'))->firstWhere('run',$second);
+        $this->assertSame('requested',$latest['student_review']);
         $this->assertSame('Ключ остаётся в рюкзаке.',$events->firstWhere('stronger',true)['text']);
         $this->assertSame('Ключ',$events->firstWhere('stronger',true)['criteria'][0]['title']);
         $this->assertSame($source,$events->firstWhere('text',$reply['body'])['attempt']);

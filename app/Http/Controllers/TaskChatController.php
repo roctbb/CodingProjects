@@ -43,7 +43,7 @@ class TaskChatController extends Controller
                 'event_id'=>['required','string','regex:/^[0-9a-f-]+ *$/Di'],
             ])->validate();
         }
-        $page = $chat->page($course, $assignment, $student);
+        $page = $chat->page($course, $assignment, $student, $viewer->role === 'student' && (int)$viewer->id === $student);
         if ((int)$viewer->id === $student && !$request->filled('before')) {
             $page['awaiting_tutor'] = $chat->awaitingTutor($course, $task, $student);
         }

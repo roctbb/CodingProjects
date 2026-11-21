@@ -3,24 +3,33 @@
 namespace App\Services;
 
 use App\Solution;
+use App\Task;
 use App\Notifications\NewSolution;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Schema;
 
 class SolutionRecheck
 {
+    public static function taskRestriction(Task $task, int $course, int $student): ?string
+    {
+        if ($task->isBlocked($student, $course)) return 'Задача заблокирована преподавателем.';
+        if (Schema::hasTable('solutions') && Solution::where('task_id', $task->id)
+            ->where('course_id', $course)->where('user_id', $student)
+            ->fullEvaluation((int)$task->max_mark)->exists()) {
+            return 'Задача уже зачтена на полный балл.';
+        }
+        return null;
+    }
+
     public function status(Solution $solution): array
     {
         $requested = (bool) $solution->recheck_requested;
         $reason = null;
         if (!$solution->task || !$solution->task->is_code || !$solution->submitted || $solution->mark === null) {
             $reason = 'Дождитесь результата проверки решения.';
-        } elseif ($solution->task->isBlocked($solution->user_id, $solution->course_id)) {
-            $reason = 'Задача заблокирована преподавателем.';
-        } elseif (Solution::where('task_id', $solution->task_id)
-            ->where('course_id', $solution->course_id)->where('user_id', $solution->user_id)
-            ->fullEvaluation((int) $solution->task->max_mark)->exists()) {
-            $reason = 'Задача уже зачтена на полный балл.';
+        } else {
+            $reason = self::taskRestriction($solution->task, $solution->course_id, $solution->user_id);
         }
 
         return [

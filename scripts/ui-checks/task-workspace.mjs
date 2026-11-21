@@ -9,9 +9,22 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
         const scenario=width>600?'submissions-desktop':'submissions-phone';
         const openWork=async(actor,task,attempt=null)=>{
             const chat=page.locator('#execution-workspace-'+task+' .gc-task-chat:visible');
-            const file=chat.locator('[data-kind="file"]'+(attempt?'[data-attempt="'+attempt+'"]':'')).last();
-            await file.locator('.gc-chat-file').click();
-            await page.getByRole('dialog',{name:'Отправленное решение'}).getByRole('button',{name:'Подробнее о посылке'}).click();
+            const work=page.locator('#execution-workspace-'+task);
+            if(actor==='teacher'){
+                await chat.locator('[data-kind="check"][data-attempt="'+attempt+'"]').getByRole('button',{name:'Перепроверить',exact:true}).click();
+                await page.getByRole('dialog',{name:'Перепроверить решение'}).getByRole('button',{name:'Оценить вручную'}).click();
+            }else if(attempt?.startsWith('solution-')){
+                await chat.locator('[data-kind="grade"][data-attempt="'+attempt+'"]').getByRole('button',{name:'Посмотреть проверку'}).click();
+            }else{
+                await chat.getByRole('button',{name:'Отправить решение',exact:true}).click();
+                await work.getByRole('button',{name:'Вернуться к результату',exact:true}).click();
+                await work.locator('.gc-execution-result').waitFor();
+                const picker = work.getByRole('combobox',{name:'Выбрать попытку'});
+                if(attempt && await picker.count() && await picker.inputValue() !== attempt) {
+                    await picker.selectOption(attempt);
+                    await work.locator('.gc-submission-stage[aria-busy="true"]').waitFor({state:'hidden'});
+                }
+            }
         };
         const visit=async(actor,task,attempt=null,{open=true}={})=>{
             const query=new URLSearchParams({scenario,actor,task:String(task)});
@@ -129,16 +142,30 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await root.getByRole('button',{name:'Исправить решение',exact:true}).click();
             check('task-draft-survives-history',(await code.innerText()).includes('# saved draft'),width);
             await root.getByRole('button',{name:'Вернуться к результату',exact:true}).click();
-            await root.getByRole('button',{name:'Данные теста 2',exact:true}).click();
-            const purchase=root.getByRole('button',{name:'Открыть за 5 GC',exact:true});await purchase.waitFor();
+            await page.getByRole('dialog',{name:'Работа с решением'}).getByRole('button',{name:'Закрыть'}).click();
+            const file=root.locator('[data-kind="file"][data-attempt="'+id(1)+'"] .gc-chat-file');
+            await file.click();
+            const source=page.getByRole('dialog',{name:'Отправленное решение'});
+            await source.locator('.gc-submitted-work').waitFor();
+            check('source-preview-opens-without-extra-details',await source.getByRole('button',{name:'Подробнее о посылке'}).count()===0,width);
+            await source.getByRole('button',{name:'Закрыть'}).click();
+            const card=root.locator('[data-kind="check"][data-attempt="'+id(1)+'"]');
+            await card.getByRole('button',{name:'Подробнее',exact:true}).click();
+            const report=page.getByRole('dialog',{name:'Журнал тестирования'});
+            const purchase=report.getByRole('row').filter({hasText:'№ 2'}).getByRole('button',{name:'Открыть за 5 GC'});
+            page.once('dialog',dialog=>dialog.dismiss());await purchase.click();
+            check('cancel-keeps-hidden-test-locked',await purchase.isVisible(),width);
             page.once('dialog',dialog=>dialog.accept());await purchase.click();
-            await root.locator('.gc-test-detail:not([hidden]) .gc-test-data').filter({hasText:'-8 -2 -5'}).waitFor();
-            check('task-purchased-test-stays-open',await root.getByRole('button',{name:'Данные теста 2',exact:true}).getAttribute('aria-expanded')==='true',width);
-            await root.getByRole('button',{name:'Попросить перепроверку',exact:true}).click();
+            await report.locator('.gc-test-detail:not([hidden]) .gc-test-data').filter({hasText:'-8 -2 -5'}).waitFor();
+            check('task-purchased-test-stays-open',await report.getByRole('button',{name:'Данные теста 2',exact:true}).getAttribute('aria-expanded')==='true',width);
+            await report.getByRole('button',{name:'Закрыть'}).click();
+            await card.getByRole('button',{name:'Попросить перепроверить',exact:true}).click();
             await page.getByRole('textbox',{name:'Что преподавателю нужно проверить?',exact:true}).fill('Проверьте, пожалуйста, второй тест и моё объяснение.');
+            const sent=page.waitForResponse(res=>res.url().endsWith('/'+id(1)+'/review-request') && res.request().method()==='POST');
             await page.getByRole('button',{name:'Отправить запрос',exact:true}).click();
-            await root.getByText('Запрос на перепроверку отправлен',{exact:true}).waitFor();
-            check('task-student-recheck-request',true,width);
+            await card.getByText('Запрос на перепроверку отправлен',{exact:true}).waitFor();
+            check('task-student-recheck-request',(await sent).ok(),width);
+            await openWork('student',12,id(1));
             const picker=root.getByRole('combobox',{name:'Выбрать попытку',exact:true});
             const before=(await picker.boundingBox()).y;
             await page.route('**/code-submissions/*?test_data=metadata',async route=>{await new Promise(resolve=>setTimeout(resolve,300));await route.continue().catch(()=>{});});
