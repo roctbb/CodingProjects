@@ -40,6 +40,9 @@ config(['app.env' => 'testing', 'app.debug' => false, 'app.url' => getenv('UI_QA
     'ai.commands' => [],
     'services.telegram' => ['bot_token'=>'123:qa-fake','bot_username'=>'class_test_bot','api_url'=>'https://telegram.example','timeout'=>10,'proxy'=>null,'webhook_secret'=>'qa-secret'],
     'logging.default' => 'single', 'logging.channels.single.path' => $directory.'/server-errors.log']);
+if (in_array($variant, ['submissions-desktop', 'submissions-phone'], true)) {
+    config(['tutor.enabled'=>true, 'tutor.courses'=>['1']]);
+}
 $app->setLocale('ru');
 mt_srand(4);
 Illuminate\Support\Facades\DB::purge('sqlite');

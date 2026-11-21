@@ -35,11 +35,30 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 await page.keyboard.press('Escape');
                 check('start-solution-below-statement',true,width);
                 const chat = page.locator('#execution-workspace-12 .gc-task-chat');
+                const ask = chat.getByRole('button', {name:'Спросить преподавателя',exact:true});
+                const draft = chat.getByRole('textbox', {name:'Сообщение в чат задачи'});
+                const note = 'Можно уточнить условие?';
+                await draft.fill(note);
+                await ask.click();
+                await ask.click();
+                check('teacher-shortcut-preserves-draft-and-focus', await draft.inputValue() === '@преподаватель '+note
+                    && await draft.evaluate(el=>el===document.activeElement), width);
+                await chat.getByRole('button', {name:'Отправить сообщение',exact:true}).click();
+                await chat.getByRole('log').getByText('@преподаватель '+note,{exact:true}).waitFor();
+                check('teacher-mention-skips-typing-indicator',await chat.locator('.gc-chat-typing').count()===0,width);
                 const question = 'Как вывести <header> через `print`?\n\n```python\nprint("<header>")\n```';
                 await chat.getByRole('textbox', {name:'Сообщение в чат задачи'}).fill(question);
                 await chat.getByRole('button', {name:'Отправить сообщение', exact:true}).click();
                 const message = chat.locator('[data-kind="message"]').filter({hasText:'Как вывести <header>'}).last();
                 await message.locator('pre code').waitFor();
+                const typing = chat.getByRole('log').locator('.gc-chat-typing:last-child');
+                await typing.waitFor();
+                const placement = await typing.evaluate(el => ({
+                    followsQuestion: !!(el.parentElement.querySelector('[data-kind="message"]').compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING),
+                    bottom: el.getBoundingClientRect().bottom,
+                    composerTop: el.closest('.gc-task-chat').querySelector('form').getBoundingClientRect().top,
+                }));
+                check('tutor-typing-follows-question-in-log',placement.followsQuestion && placement.bottom <= placement.composerTop+1,width,placement);
                 check('chat-renders-inline-and-block-code-and-keeps-literal-html',
                     await message.locator('p code').innerText() === 'print'
                     && (await message.locator('pre code').innerText()).trim() === 'print("<header>")'
@@ -78,6 +97,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 await list.locator('[data-student-id="1"]').click();
                 const chat = page.locator('#execution-workspace-13 .gc-task-chat:visible');
                 await chat.locator('.gc-chat-file').first().waitFor();
+                check('teacher-feedback-has-no-mention-shortcut',await chat.getByRole('button',{name:'Спросить преподавателя'}).count()===0,width);
                 const selected = await geometry(chat);
                 await chat.getByRole('button',{name:'К списку учеников'}).click();
                 await list.waitFor();

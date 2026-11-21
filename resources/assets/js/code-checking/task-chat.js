@@ -13,6 +13,9 @@ const pointsPlural = new Intl.PluralRules('ru-RU');
 const dateOf = item => new Date(item.at);
 const tutorPortrait = '/images/rostislop.webp';
 const tutorName = 'Ростислоп Нейрославович';
+const askTeacherLabel = 'Спросить преподавателя';
+const teacherMention = '@преподаватель ';
+const hasTeacherMention = /(?:^|[^\p{L}\p{N}_@])@преподаватель(?![\p{L}\p{N}_])/iu;
 
 // On a phone the condition sits above the chat and the keyboard can resize the viewport.
 function fitChat(shell, root, input) {
@@ -68,12 +71,19 @@ export function taskChat(root, actions) {
     const input = node('textarea',{rows:2,maxLength:3000,placeholder:'Сообщение','aria-label':'Сообщение в чат задачи'});
     const attach = button('Решение',actions.compose);
     attach.prepend(node('i',{class:'fas fa-paperclip','aria-hidden':'true'}),' ');attach.className='gc-chat-attach';attach.setAttribute('aria-label','Отправить решение');
+    const askTeacher = withTutor && root.dataset.teacher !== 'true'
+        ? button(askTeacherLabel, mentionTeacher) : null;
+    if (askTeacher) {
+        askTeacher.className = 'gc-chat-attach';
+        askTeacher.prepend(node('i', {class:'fas fa-at', 'aria-hidden':'true'}), ' ');
+    }
     const send = node('button',{type:'submit',class:'gc-chat-send','aria-label':'Отправить сообщение'},node('i',{class:'fas fa-arrow-up','aria-hidden':'true'}));
     const quoted = node('span');
     const reply = node('div',{class:'gc-chat-reply',hidden:true},quoted,iconButton('Отменить ответ','fa-xmark',()=>setReply(null)));
-    const form = node('form',{class:'gc-chat-compose'},reply,node('div',{class:'gc-chat-entry'},attach,input,send));
+    const shortcuts = askTeacher ? node('div', {class:'gc-chat-shortcuts'}, attach, askTeacher) : null;
+    const form = node('form',{class:'gc-chat-compose'},reply,shortcuts,node('div',{class:'gc-chat-entry'},shortcuts ? null : attach,input,send));
     const shell = node('section',{class:'gc-task-chat',hidden:true,'aria-label':'Личная переписка по задаче'},header,log,form,status,retry);
-    let stopFit, stopWatching, refreshPending = false;
+    let stopFit, stopWatching, refreshPending = false, awaitingTutor = false;
     let student=null, cursor=null, loading=false, token=0, readNumber=0, pending=false, replyTo=null;
     let events=new Map(), drafts=new Map(), newestIds=[], signature='';
     const endpoint = () => root.dataset.endpoint+'/chat/'+student;
@@ -85,7 +95,25 @@ export function taskChat(root, actions) {
         replyTo=target; reply.hidden=!target; quoted.textContent=target?'Ответ на посылку · '+target.label:'';
         saveDraft(); input.focus({preventScroll:chatDesktop().matches});
     }
-    function enable() {send.disabled=pending || !input.value.trim(); input.readOnly=pending;}
+    function mentionTeacher() {
+        input.focus({preventScroll:true});
+        if (hasTeacherMention.test(input.value)) return;
+        if (input.value.length + teacherMention.length > input.maxLength) {
+            input.setCustomValidity('Сократи сообщение, чтобы в нём поместилось обращение к преподавателю.');
+            input.reportValidity();
+            input.setCustomValidity('');
+            return;
+        }
+        const start = input.selectionStart, end = input.selectionEnd;
+        input.setRangeText(teacherMention, 0, 0);
+        input.setSelectionRange(start + teacherMention.length, end + teacherMention.length);
+        input.dispatchEvent(new Event('input', {bubbles:true}));
+    }
+    function enable() {
+        send.disabled = pending || !input.value.trim();
+        input.readOnly = pending;
+        if (askTeacher) askTeacher.disabled = pending;
+    }
     function action(text, handler, css) {
         const b=button(text,handler);b.className=css;return b;
     }
@@ -299,7 +327,7 @@ export function taskChat(root, actions) {
         const parts=[];let date='';
         if(cursor)parts.push(earlier);
         else if(withTutor)parts.push(node('article', {class:'gc-chat-bubble', 'data-kind':'tutor'}, tutorByline(),
-            markdownContent('Отправь мне решение или задай любой вопрос по задаче. Чтобы открыть редактор, нажми «Решение». Можно спросить и до первой попытки.' + (root.dataset.teacher === 'true' ? '' : ' Чтобы позвать преподавателя, напиши @преподаватель.'))));
+            markdownContent('Отправь мне решение или задай вопрос по задаче. Можно спросить и до первой попытки. Чтобы открыть редактор, нажми «Решение».' + (askTeacher ? ' Нужна помощь преподавателя? Нажми «'+askTeacherLabel+'».' : ''))));
         for(const [index, e] of sorted.entries()){
             const stamp=day.format(dateOf(e));
             if(stamp!==date){parts.push(node('small',{class:'gc-chat-day',title:stamp},stamp===today?'Сегодня':stamp));date=stamp;}
@@ -308,6 +336,8 @@ export function taskChat(root, actions) {
             if (feedback) feedback.open = true;
             parts.push(item);
         }
+        if (awaitingTutor) parts.push(node('small', {class:'gc-chat-typing'},
+            node('img', {src:tutorPortrait, width:20, height:20, alt:''}), 'Ростислоп набирает сообщение…'));
         if(!sorted.length && !withTutor)parts.push(node('p',{class:'gc-chat-empty'},teacher?'Сообщений пока нет.':'Здесь можно задать вопрос преподавателю.'));
         const focus=log.contains(document.activeElement)?document.activeElement:null;
         const focusId=focus?.closest('[data-event]')?.dataset.event;
@@ -324,7 +354,10 @@ export function taskChat(root, actions) {
             const page=await request(endpoint()+(older?'?before='+encodeURIComponent(cursor):''));
             if(context!==token || read!==readNumber)return;
             retry.hidden=true;
-            if (!older) status.textContent = withTutor && page.awaiting_tutor ? 'Ростислоп набирает сообщение…' : '';
+            if (!older) {
+                status.textContent = '';
+                awaitingTutor = withTutor && page.awaiting_tutor === true;
+            }
             const initial=signature==='';
             const changed=[];
             if(!older){
@@ -375,7 +408,7 @@ export function taskChat(root, actions) {
         autosize(input);
         autosize.update(input);
         reply.hidden=!replyTo;quoted.textContent=replyTo?'Ответ на посылку · '+replyTo.label:'';
-        messages.replaceChildren();status.textContent='Загружаем переписку…';retry.hidden=true;enable();load();stopWatching=watchTaskChat(root, student, refresh);
+        awaitingTutor=false;messages.replaceChildren();status.textContent='Загружаем переписку…';retry.hidden=true;enable();load();stopWatching=watchTaskChat(root, student, refresh);
     }
     window.addEventListener('pagehide', () => { for (const watch of watching.values()) watch.stop?.(); watching.clear(); });
     input.oninput=()=>{saveDraft();enable();};

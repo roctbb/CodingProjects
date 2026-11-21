@@ -664,6 +664,20 @@
 }
 .gc-chat-feedback[open] .gc-feedback-markdown { margin-top: .5rem; }
 .gc-chat-compose { margin: 0; padding: .55rem .65rem max(.55rem, env(safe-area-inset-bottom)); border-top: 1px solid var(--gc-border); }
+.gc-chat-shortcuts {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--gc-space-2); margin-bottom: .25rem;
+    > button { min-height: 2rem; }
+}
+@media (max-width: 359.98px) {
+    .gc-chat-shortcuts { column-gap: var(--gc-space-1); }
+    .gc-chat-shortcuts > button { padding-inline: .125rem; }
+}
+.gc-chat-typing {
+    display: inline-flex; align-items: center; gap: .4rem; padding: .2rem .5rem .2rem .25rem;
+    border-radius: 1rem; color: var(--gc-on-surface-muted); background: var(--gc-surface);
+    font-size: var(--gc-font-caption);
+    img { border-radius: 50%; }
+}
 .gc-chat-entry { align-items: flex-end; }
 .gc-chat-entry textarea {
     flex: 1; min-width: 0; line-height: 1.45; padding: .55rem .8rem; border: 1px solid var(--gc-border);
