@@ -51,6 +51,8 @@ class StickerAlbum
             foreach ($items as $image => $slot) {
                 if (!$sticker = $catalog->get($image)) continue;
                 $album = $albums->getOrPut($title, fn () => collect());
+                $previous = $album->get($image);
+                if ($previous && ($previous['state'] === 'earned' || ($previous['state'] === 'available' && $slot['state'] !== 'earned'))) continue;
                 $album->put($image, ['image'=>$image, 'name'=>$sticker->name, 'collection'=>$title] + $slot);
             }
         }

@@ -90,7 +90,8 @@
 
                     @foreach($notifications as $notification)
                         @php
-                            $notificationType = in_array($notification->data['type'] ?? 'info', ['success', 'warning', 'danger', 'info']) ? $notification->data['type'] : 'info';
+                            $notificationType = $notification->data['type'] ?? 'info';
+                            if (!in_array($notificationType, ['success', 'warning', 'danger', 'info'], true)) $notificationType = 'info';
                             $notificationIcon = [
                                 'success' => 'fas fa-check',
                                 'warning' => 'fas fa-exclamation',

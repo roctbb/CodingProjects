@@ -16,7 +16,7 @@
         <div class="row g-3 align-items-end">
             @if($editing)<div class="col-auto"><img src="{{ url($editing->image) }}" width="64" height="64" class="object-fit-contain" alt=""></div>
             @else<div class="col-md"><label for="image" class="form-label">Ссылка на изображение</label>
-            <input id="image" name="image" class="form-control" type="url" value="{{ old('image') }}" required maxlength="255"></div>@endif
+            <input id="image" name="image" class="form-control" type="text" inputmode="url" placeholder="https://…" value="{{ old('image') }}" required maxlength="255"></div>@endif
             <div class="col-md"><label for="name" class="form-label">Название наклейки</label>
             <input id="name" name="name" class="form-control" value="{{ old('name', $editing?->name) }}" maxlength="160" required></div>
             <div class="col-md"><label for="collection" class="form-label">Коллекция</label>
