@@ -34,6 +34,18 @@
     "kind": "api"
   },
   {
+    "method": "POST",
+    "uri": "api/executor/executions/{execution}/grade",
+    "name": null,
+    "action": "CodeCheckerAPI@grade",
+    "middleware": [
+      "api",
+      "throttle:6000,1"
+    ],
+    "node": "geekexecutor",
+    "kind": "api"
+  },
+  {
     "method": "GET|HEAD",
     "uri": "api/executor/executions/{execution}/input",
     "name": null,

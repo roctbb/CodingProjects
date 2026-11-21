@@ -2775,6 +2775,7 @@ Telegram, почта и Силаэдр в личных настройках; н�
 Маршруты:
 
 - `GET|HEAD /api/executor/artifacts/{artifact}` — api
+- `POST /api/executor/executions/{execution}/grade` — api
 - `GET|HEAD /api/executor/executions/{execution}/input` — api
 - `POST /api/executor/executions/{execution}/progress` — api
 - `POST /api/executor/executions/{execution}/result` — api

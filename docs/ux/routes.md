@@ -7,6 +7,7 @@
 | GET\|HEAD | `/` | redirect | [Вход](screens.md#login) | web |
 | GET\|HEAD | `/1561test` | redirect | [Материал подключённого провайдера](screens.md#provider-resource) | web |
 | GET\|HEAD | `/api/executor/artifacts/{artifact}` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
+| POST | `/api/executor/executions/{execution}/grade` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | GET\|HEAD | `/api/executor/executions/{execution}/input` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | POST | `/api/executor/executions/{execution}/progress` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | POST | `/api/executor/executions/{execution}/result` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
