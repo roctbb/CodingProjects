@@ -302,7 +302,7 @@ export function taskChat(root, actions) {
         const parts=[];let date='';
         if(cursor)parts.push(earlier);
         else if(withTutor)parts.push(node('article', {class:'gc-chat-bubble', 'data-kind':'tutor'}, tutorByline(),
-            markdownContent('Отправь мне решение или задай любой вопрос по задаче. Чтобы открыть редактор, нажми «Решение». Можно спросить и до первой попытки.')));
+            markdownContent('Отправь мне решение или задай любой вопрос по задаче. Чтобы открыть редактор, нажми «Решение». Можно спросить и до первой попытки.' + (root.dataset.teacher === 'true' ? '' : ' Чтобы позвать преподавателя, напиши @преподаватель.'))));
         for(const [index, e] of sorted.entries()){
             const stamp=day.format(dateOf(e));
             if(stamp!==date){parts.push(node('small',{class:'gc-chat-day',title:stamp},stamp===today?'Сегодня':stamp));date=stamp;}

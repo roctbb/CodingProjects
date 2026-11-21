@@ -215,7 +215,7 @@ class AiSettingsTest extends TestCase
         $payload = $this->payload();
         $payload['settings']['provider'] = 'openai';
         $payload['settings']['providers']['openai']['image_api'] = 'images';
-        $payload['settings']['providers']['openai']['images_url'] = 'https://images.example/v1/images';
+        $payload['settings']['providers']['openai']['base_url'] = 'https://images.example/v1';
         $payload['settings']['commands']['room_character']['model'] = 'gpt-image-2';
         $this->put(self::URL, $payload)->assertSessionHasNoErrors();
         $png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
@@ -224,7 +224,7 @@ class AiSettingsTest extends TestCase
         Http::assertSent(fn (Request $request) => $request['model'] === 'gpt-image-2'
             && $request->hasHeader('Authorization', 'Bearer env-openai-key'));
         Http::assertSentCount(1);
-        $this->get(self::URL)->assertOk()->assertSee('https://images.example/v1/images')->assertDontSee('env-openai-key');
+        $this->get(self::URL)->assertOk()->assertSee('https://images.example/v1')->assertDontSee('env-openai-key');
     }
 
     public function testImagesProtocolRequiresAnExplicitImagesUrl(): void

@@ -4,17 +4,7 @@
 
 @section('content')
 <div class="gc-form-layout">
-    <div class="gc-page-masthead mb-4">
-    <div class="gc-page-header">
-        <div>
-            <span class="gc-eyebrow">Администрирование</span>
-            <h1 class="mb-1">Настройки Telegram</h1>
-            <p class="text-muted mb-0">Бот для привязки профилей и отправки уведомлений.</p>
-        </div>
-    </div>
-
-    @include('settings.partials.tabs')
-    </div>
+    @include('settings.partials.masthead', ['title' => 'Настройки Telegram', 'description' => 'Бот для привязки профилей и отправки уведомлений.'])
     @if (session('status'))
         <div class="alert alert-success rounded-3" role="status">{{ session('status') }}</div>
     @endif

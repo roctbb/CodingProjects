@@ -77,7 +77,10 @@ class LessonStickerSettingsTest extends TestCase
         $this->assertStringEndsWith('/courses/1/steps/2', $slots['/stickers/2.png']['href']);
         $this->assertSame('locked', $slots['/stickers/3.png']['state']);
         $this->assertArrayNotHasKey('href', $slots['/stickers/3.png']);
-        $this->assertCount(1, $service->forProfile($student, false)->collapse());
+        $visitorSlots = $service->forProfile($student, false)->collapse();
+        $this->assertCount(3, $visitorSlots);
+        $this->assertCount(2, $visitorSlots->where('state', 'missing'));
+        $this->assertEmpty($visitorSlots->pluck('href')->filter());
     }
 
     public function test_catalog_registration_assignment_and_collection_edit_preserve_one_reward(): void

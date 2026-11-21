@@ -250,7 +250,10 @@
 .gc-profile-hero__room { grid-area:room; position:relative; min-width:0; align-self:start; }
 .gc-sticker-directory { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,13rem),1fr)); gap:.4rem; }
 .gc-sticker-entry { display:flex; align-items:center; gap:.7rem; padding:.3rem; color:var(--gc-on-surface); }
-.gc-sticker-entry img { object-fit:contain; }
+.gc-sticker-entry { border-radius:var(--gc-radius-sm); text-decoration:none; }
+.gc-sticker-entry:hover, .gc-sticker-entry[aria-current] { background:var(--gc-surface-variant); }
+.gc-sticker-entry[aria-current] { box-shadow:inset 0 0 0 1px var(--gc-panel-border); }
+.gc-sticker-entry img { flex:none; object-fit:contain; }
 // Collection tabs sit along the top edge of the album.
 .gc-sticker-album { padding: 0 var(--gc-space-4) var(--gc-space-4); min-width: 0; }
 .gc-album-tabs .nav-link { font-size: var(--gc-font-small); }
@@ -280,7 +283,7 @@
 .gc-sticker-art img { position: absolute; inset: 0; margin: auto; width: 88%; height: 90%; max-height: min(100%,5.5rem); object-fit: contain; }
 .gc-album-slot.is-earned img { filter: drop-shadow(0 2px 1px var(--album-fold)); }
 .gc-album-slot.is-available .gc-sticker-art { border-color: var(--gc-control-border); }
-.gc-album-slot.is-available img { filter: grayscale(1); opacity: .65; }
+.gc-album-slot:is(.is-available, .is-missing) img { filter: grayscale(1); opacity: .65; }
 .gc-album-slot small { color: var(--gc-on-surface-muted); font-size: var(--gc-font-caption); }
 .gc-album-slot a small { color: var(--gc-primary); }
 .gc-album-slot a:hover small, .gc-album-slot button:hover > span:last-child { text-decoration: underline; }

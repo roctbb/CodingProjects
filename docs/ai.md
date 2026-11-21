@@ -165,3 +165,5 @@ docker compose up -d --force-recreate php queue scheduler
 ```bash
 php artisan test --filter='ChatGptService|ImagesApiTransport|RouterAiTransport|RoomCharacterGeneration|AchievementGeneration|AchievementTrophyGenerator|AiConfiguration|AiSettings|TextImprovement'
 ```
+
+В личном чате задачи ученик может обратиться к преподавателям курса через «@преподаватель». Такой вопрос отправляется связанным личным Telegram-аккаунтам преподавателей через очередь notifications. При выключенном помощнике так отправляется любое сообщение ученика. Ссылка ведёт в диалог этого ученика, с выбранной посылкой, если вопрос был привязан к ней.

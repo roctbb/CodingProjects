@@ -18,7 +18,7 @@
                 @endphp
                 <section class="gc-album-page tab-pane @if($loop->first) active @endif" id="album-page-{{ $loop->index }}"
                          role="tabpanel" aria-labelledby="album-tab-{{ $loop->index }}" tabindex="0">
-                    <p class="gc-album-count">@if($isOwner)Собрано {{ $items->where('state', 'earned')->count() }} из {{ $count }} {{ $single ? 'наклейки' : 'наклеек' }}@else{{ trans_choice('В коллекции :count наклейка|В коллекции :count наклейки|В коллекции :count наклеек', $count, [], 'ru') }}@endif</p>
+                    <p class="gc-album-count">Собрано {{ $items->where('state', 'earned')->count() }} из {{ $count }} {{ $single ? 'наклейки' : 'наклеек' }}</p>
                     <ul class="gc-album-slots list-unstyled mb-0">
                         @foreach($items as $item)
                             <li class="gc-album-slot is-{{ $item['state'] }}">
@@ -36,8 +36,8 @@
                                     </a>
                                 @else
                                     <div>
-                                        <span class="gc-sticker-art"><img src="{{ url($item['image']) }}" alt="" loading="lazy" width="96" height="96"><i class="fas fa-lock" aria-hidden="true"></i></span>
-                                        <span>{{ $item['name'] }}</span><small>Урок пока закрыт</small>
+                                        <span class="gc-sticker-art"><img src="{{ url($item['image']) }}" alt="" loading="lazy" width="96" height="96">@if($item['state'] === 'locked')<i class="fas fa-lock" aria-hidden="true"></i>@endif</span>
+                                        <span>{{ $item['name'] }}</span><small>{{ $item['state'] === 'locked' ? 'Урок пока закрыт' : 'Пока не получена' }}</small>
                                     </div>
                                 @endif
                             </li>

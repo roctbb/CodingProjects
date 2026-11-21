@@ -4,6 +4,9 @@ namespace App\Services;
 
 use Carbon\Carbon;
 use App\Task;
+use App\User;
+use App\Jobs\AnswerTaskQuestion;
+use App\Jobs\NotifyTaskQuestionTeacher;
 use App\Services\CodeChecking\Artifacts;
 use App\Services\CodeChecking\History;
 use App\Services\CodeChecking\HistoricalReport;
@@ -51,10 +54,19 @@ class TaskChat
             $message = ['course_id'=>$course,'task_id'=>$task,'student_id'=>$student,
                 'submission_id'=>$submission,'solution_id'=>$solution,'review_run_id'=>$runId,'body'=>$body];
             $table = DB::table('task_chat_messages');
-            $table->insertOrIgnore($key + $message + ['created_at'=>now()->format('Y-m-d H:i:s.u')]);
+            $created = $table->insertOrIgnore($key + $message + ['created_at'=>now()->format('Y-m-d H:i:s.u')]);
             $id = $table->where($key + $message)->value('id');
             abort_unless($id, 409, 'Этот запрос уже отправлен с другим сообщением.');
-            if ($withTutor && !DB::table('task_chat_messages')->where('answer_to',$id)->exists()) \App\Jobs\AnswerTaskQuestion::dispatch((int)$id)->afterCommit();
+            if (!$created || $student !== $author) return;
+            $forTeacher = !$withTutor || preg_match('/(?<![\p{L}\p{N}_@])@преподаватель(?![\p{L}\p{N}_])/iu', $body);
+            if ($forTeacher && User::whereKey($author)->where('role', 'student')->exists()) {
+                $teachers = DB::table('course_teachers')->where('course_id', $course)->distinct()->pluck('user_id');
+                foreach ($teachers as $teacher) {
+                    NotifyTaskQuestionTeacher::dispatch((int)$id, (int)$teacher)->afterCommit();
+                }
+            } elseif ($withTutor) {
+                AnswerTaskQuestion::dispatch((int)$id)->afterCommit();
+            }
         });
     }
 

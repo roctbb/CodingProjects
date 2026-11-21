@@ -1,13 +1,14 @@
 @extends('layouts.left-menu')
 @section('title', 'Каталог наклеек')
 @section('content')
-<x-gc-page-header title="Каталог наклеек" mark="star" />
-@include('settings.partials.tabs')
+<div class="gc-form-layout">
+    @include('settings.partials.masthead', ['title' => 'Каталог наклеек', 'description' => 'Изображения и коллекции для уроков.'])
+    @if(session('status'))<div class="alert alert-success" role="status">{{ session('status') }}</div>@endif
 <div class="gc-stack">
-<section class="gc-card p-3">
-    <div class="d-flex justify-content-between align-items-center">
-        <h2 class="h5">{{ $editing ? 'Редактирование наклейки' : 'Новая наклейка' }}</h2>
-        @if($editing)<a href="{{ route('settings.stickers.index') }}">Добавить наклейку</a>@endif
+<section class="gc-card p-3 p-md-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h2 class="h5 mb-0">{{ $editing ? 'Редактирование наклейки' : 'Новая наклейка' }}</h2>
+        @if($editing)<a class="btn btn-sm btn-outline-secondary" href="{{ route('settings.stickers.index') }}">Новая наклейка</a>@endif
     </div>
     <form method="POST" action="{{ $editing ? route('settings.stickers.update', $editing) : route('settings.stickers.store') }}">
         @csrf
@@ -27,15 +28,16 @@
     </form>
 </section>
 @foreach($groups as $name => $items)
-<section class="gc-card p-3"><h2 class="h5">{{ $name }} <small class="gc-help-text">{{ $items->count() }}</small></h2>
+<section class="gc-card p-3 p-md-4"><h2 class="h5">{{ $name }} <small class="gc-help-text">{{ $items->count() }}</small></h2>
     <div class="gc-sticker-directory">
         @foreach($items as $item)
-        <a class="gc-sticker-entry" href="{{ route('settings.stickers.index', ['edit' => $item->id]) }}">
+        <a class="gc-sticker-entry" @if($editing?->id === $item->id) aria-current="true" @endif href="{{ route('settings.stickers.index', ['edit' => $item->id]) }}">
             <img src="{{ url($item->image) }}" width="40" height="40" alt="" loading="lazy"><span>{{ $item->name }}</span>
         </a>
         @endforeach
     </div>
 </section>
 @endforeach
+</div>
 </div>
 @endsection

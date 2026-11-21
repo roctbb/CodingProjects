@@ -104,6 +104,43 @@ class StudentTutorTest extends DeadlineFeatureCase
         $this->assertDatabaseHas('student_tutor_usage', ['id'=>$id, 'reserved_tokens'=>232]);
     }
 
+    public function test_telegram_question_delivery_is_addressed_scoped_and_idempotent(): void
+    {
+        $queue = \Illuminate\Support\Facades\Queue::class;
+        $notification = \App\Jobs\NotifyTaskQuestionTeacher::class;
+        $assistant = \App\Jobs\AnswerTaskQuestion::class;
+        $url = '/insider/courses/1/tasks/11/chat/1';
+        $post = fn (string $body) => ['body'=>$body, 'client_id'=>(string)Str::uuid()];
+        $this->postJson($url, $post('Как начать?'))->assertOk();
+        $queue::assertPushed($assistant, 1);
+        $queue::assertNotPushed($notification);
+
+        $message = $post('@Преподаватель, почему так?') + ['attempt'=>'solution-'.$this->solution()->id];
+        $this->postJson($url, $message)->assertOk();
+        $this->postJson($url, $message)->assertOk();
+        $queue::assertPushed($assistant, 1);
+        $queue::assertPushed($notification, 1);
+        $job = $queue::pushed($notification)->sole();
+        $this->assertSame('notifications', $job->queue);
+        $this->assertSame(2, $job->teacherId);
+        DB::table('users')->where('id', 2)->update(['telegram_chat_id'=>'12345']);
+        \Illuminate\Support\Facades\Http::fake(['https://telegram.example/*'=>\Illuminate\Support\Facades\Http::response(['ok'=>true])]);
+        app()->call([$job, 'handle']);
+        \Illuminate\Support\Facades\Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && $request['chat_id'] === '12345' && str_contains($request['text'], $message['body'])
+            && str_contains($request['text'], 'student=1&task=11&attempt='.$message['attempt'].'#task11'));
+        DB::table('course_teachers')->where(['course_id'=>1,'user_id'=>2])->delete();
+        app()->call([$job, 'handle']);
+        \Illuminate\Support\Facades\Http::assertSentCount(1);
+        DB::table('course_teachers')->insert(['course_id'=>1,'user_id'=>2]);
+        config(['tutor.enabled'=>false]);
+        $this->postJson($url, $post('Подскажите, с чего начать'))->assertOk();
+        $queue::assertPushed($notification, 2);
+        $queue::assertPushed($assistant, 1);
+        $this->actingAs(User::findOrFail(2))->postJson($url, $post('Начни с ввода.'))->assertOk();
+        $queue::assertPushed($notification, 2);
+    }
+
     public function test_teacher_personal_conversation_and_submission_comments_use_separate_threads(): void
     {
         $this->actingAs(User::findOrFail(2));

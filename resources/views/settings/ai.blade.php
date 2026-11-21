@@ -2,10 +2,7 @@
 @section('title', 'Настройки ИИ')
 @section('content')
 <div class="gc-form-layout">
-    <div class="gc-page-masthead mb-4">
-        <x-gc-page-header title="Настройки ИИ" description="Одно подключение и две модели для всей платформы." embedded />
-        @include('settings.partials.tabs')
-    </div>
+    @include('settings.partials.masthead', ['title' => 'Настройки ИИ', 'description' => 'Одно подключение и две модели для всей платформы.'])
     @if(session('status'))<div class="alert alert-success" role="status">{{ session('status') }}</div>@endif
     @if($legacyGatewayDisabled)<div class="alert alert-info">Старый протокол шлюза отключён. Укажите адрес и ключ OpenAI-совместимого API. Старые ключи шлюза не переносятся автоматически.</div>@endif
     @if($errors->any())

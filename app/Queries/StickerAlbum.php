@@ -20,20 +20,23 @@ class StickerAlbum
         foreach ($earnedLessons as $lesson) {
             $slots[$lesson->program_id][$lesson->sticker] = ['state'=>'earned', 'lesson'=>$lesson->name];
         }
+        $courses = $owner ? $student->courses->where('state', 'started')->groupBy('program_id') : collect();
+        $programIds = $courses->keys()->merge(array_keys($slots))->unique();
+        $lessons = Lesson::whereIn('program_id', $programIds)->whereNotNull('sticker')->whereHas('steps.tasks');
         if ($owner) {
-            $courses = $student->courses->where('state', 'started');
-            $lessons = Lesson::whereIn('program_id', $courses->pluck('program_id'))->whereNotNull('sticker')
-                ->whereHas('steps.tasks')->with(['info', 'earlyAccesses' => fn ($query) => $query->where('user_id', $student->id)])
-                ->withMin('steps', 'id')->orderBy('sort_index')->get()->groupBy('program_id');
-            foreach ($courses as $course) {
-                foreach ($lessons->get($course->program_id, collect()) as $lesson) {
-                    $image = $lesson->sticker;
-                    if (in_array($slots[$lesson->program_id][$image]['state'] ?? null, ['available','earned'], true)) continue;
-                    $slots[$lesson->program_id][$image] ??= ['state' => 'locked'];
-                    if ($lesson->isStarted($course, $student) || $lesson->hasEarlyAccess($course, $student)) {
-                        $slots[$lesson->program_id][$image] = ['state' => 'available', 'lesson' => $lesson->name,
-                            'href' => url("/insider/courses/{$course->id}/steps/{$lesson->steps_min_id}")];
-                    }
+            $lessons->with(['info', 'earlyAccesses' => fn ($query) => $query->where('user_id', $student->id)])
+                ->withMin('steps', 'id');
+        }
+        foreach ($lessons->orderBy('sort_index')->orderBy('id')->get() as $lesson) {
+            $program = $lesson->program_id;
+            $image = $lesson->sticker;
+            if (in_array($slots[$program][$image]['state'] ?? null, ['earned', 'available'], true)) continue;
+            $slots[$program][$image] = ['state' => $owner ? 'locked' : 'missing'];
+            foreach ($courses->get($program, []) as $course) {
+                if ($lesson->isStarted($course, $student) || $lesson->hasEarlyAccess($course, $student)) {
+                    $slots[$program][$image] = ['state'=>'available', 'lesson'=>$lesson->name,
+                        'href'=>url("/insider/courses/{$course->id}/steps/{$lesson->steps_min_id}")];
+                    break;
                 }
             }
         }

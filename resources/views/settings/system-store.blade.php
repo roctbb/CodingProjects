@@ -2,16 +2,7 @@
 @section('title', 'Цены и акции')
 @section('content')
 <div class="gc-form-layout">
-    <div class="gc-page-masthead mb-4">
-    <div class="gc-page-header">
-        <div>
-            <span class="gc-eyebrow">Администрирование</span>
-            <h1 class="mb-1">Цены и акции</h1>
-            <p class="text-muted mb-0">Стоимость в GC для магазина, профиля и платных действий.</p>
-        </div>
-    </div>
-    @include('settings.partials.tabs')
-    </div>
+    @include('settings.partials.masthead', ['title' => 'Цены и акции', 'description' => 'Стоимость в GC для магазина, профиля и платных действий.'])
     @if(session('status'))
         <div class="alert alert-success rounded-3" role="status">{{ session('status') }}</div>
     @endif
