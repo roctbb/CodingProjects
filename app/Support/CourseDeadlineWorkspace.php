@@ -19,7 +19,8 @@ final class CourseDeadlineWorkspace
             $items = self::items($entries, (int) $student->id, $native);
         }
         request()->attributes->set($key, $items);
-        $rules = $items->filter(fn ($item) => !$item['done'] && $item['status'] !== 'blocked')->map(function ($item) {
+        $unfinishedItems = $items->filter(fn ($item) => !$item['done'] && $item['status'] !== 'blocked');
+        $rules = $unfinishedItems->map(function ($item) {
             $rule = $item['rule'];
             return ['legacy' => $rule->legacyBoundary, 'timezone' => $rule->ruleTimezone,
                 'actionable' => !in_array($item['status'], ['pending', 'checking'], true),
@@ -34,7 +35,8 @@ final class CourseDeadlineWorkspace
             }
             return $percent > 0;
         });
-        return ['count' => $active->count(), 'status' => LessonDeadlineStatus::status($active->where('actionable', true)->all(), $now),
+        return ['has_upcoming' => $unfinishedItems->contains(fn ($item) => $item['next'] !== null),
+            'count' => $active->count(), 'status' => LessonDeadlineStatus::status($active->where('actionable', true)->all(), $now),
             'rules' => $rules->all(), 'now' => $now->getTimestampMs()];
     }
 

@@ -9,6 +9,43 @@ use Tests\Support\DeadlineFeatureCase;
 
 class CourseDeadlineWorkspaceTest extends DeadlineFeatureCase
 {
+    public function test_home_deadline_cards_open_the_corresponding_course_deadlines(): void
+    {
+        $this->policy('task', 11);
+        DB::table('lesson_info')->insert(['course_id' => 2, 'lesson_id' => 1, 'start_date' => '2026-09-01']);
+        DB::table('task_deadlines')->insert(['course_id' => 2, 'task_id' => 12, 'expiration' => '2026-11-16', 'penalty' => 0.7]);
+
+        $response = $this->actingAs(User::findOrFail(1))->get('/insider/courses')->assertOk()->assertDontSee('Все сроки');
+        $document = new \DOMDocument();
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
+        $xpath = new \DOMXPath($document);
+        $cards = $xpath->query('//a[contains(@class, "gc-deadline-preview-link")]');
+
+        $this->assertSame(2, $cards->length);
+        $this->assertStringEndsWith('/insider/courses/1/deadlines', $cards->item(0)->getAttribute('href'));
+        $this->assertStringEndsWith('/insider/courses/2/deadlines', $cards->item(1)->getAttribute('href'));
+        $this->assertStringContainsString('Приветствие', $cards->item(0)->textContent);
+        $this->assertStringContainsString('Небольшое исследование', $cards->item(1)->textContent);
+    }
+
+    public function test_student_deadline_tab_requires_an_upcoming_cutoff(): void
+    {
+        $courseUrl = '/insider/courses/1';
+        $badge = 'data-course-deadline-badge';
+        $this->actingAs(User::findOrFail(1))->get($courseUrl)->assertOk()->assertDontSee($badge, false);
+
+        $this->policy('task', 11, [['deadline_date' => '2026-11-15', 'retained_percent' => 70]]);
+        $this->get($courseUrl)->assertOk()->assertSee($badge, false);
+
+        Carbon::setTestNow('2026-11-16 12:00:00 Europe/Moscow');
+        $this->get($courseUrl)->assertOk()->assertDontSee($badge, false);
+        $this->get($courseUrl.'/deadlines')->assertOk()->assertDontSee($badge, false)
+            ->assertSee('Пропущенные дедлайны')->assertSee('Приветствие');
+
+        $this->actingAs(User::findOrFail(2))->get($courseUrl)->assertOk()
+            ->assertSee('fa-flag" aria-hidden="true"></i>Дедлайны', false);
+    }
+
     public function test_each_task_has_one_row_with_current_penalty_and_all_stages(): void
     {
         $this->policy('task', 11);

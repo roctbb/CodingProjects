@@ -549,7 +549,6 @@
 .gc-student-home-heading { flex-wrap: wrap; }
 .gc-student-home-heading .gc-header-pulse {
   width: clamp(5.5rem, 18vw, 14rem);
-  margin-inline-start: auto;
   gap: var(--gc-space-2);
 }
 .gc-home-layout { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: var(--gc-space-6); }
@@ -663,6 +662,7 @@
 .gc-header-pulse svg { flex: 1; height: 48px; min-width: 0; }
 @media (min-width: 1200px) {
   .gc-page-header--with-middle { grid-template-areas: "title middle actions"; grid-template-columns: minmax(0, 1fr) minmax(12rem, 18rem) auto; }
+  .courses-page .gc-page-header--with-middle { grid-template-columns: minmax(0, 1fr) clamp(12rem, 30%, 18rem) auto; }
   .gc-page-header--with-middle:has(> .gc-page-header__middle > .gc-header-pulse--empty) { grid-template-columns: minmax(0, 1fr) max-content auto; }
 }
 @media (max-width: 767.98px) {

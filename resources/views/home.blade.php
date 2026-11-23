@@ -18,10 +18,11 @@
         $rankProgress = min(100, max(0, round(100 * ($score - $rank->from) / max(1, $rank->to - $rank->from))));
     @endphp
 
-    <div class="courses-page">
+    <div @class(['courses-page', 'row g-4' => $isTeacher])>
+    <div @class(['col-12 col-xl-9' => $isTeacher])>
 
-    <div class="{{ $isTeacher ? 'gc-page-masthead' : 'gc-student-home' }} mb-3">
     @if ($isTeacher)
+    <div class="gc-page-masthead mb-3">
         <x-gc-page-header title="Мои курсы" mark="rocket">
             <x-slot:middle>@include('courses.partials.home_activity_feed', ['compact' => true])</x-slot:middle>
             <a class="btn btn-primary fw-medium" href="{{ url('/insider/courses/create/') }}"><i class="fas fa-plus me-1"></i>Создать курс</a>
@@ -47,34 +48,37 @@
             </ul>
             </x-gc-tab-strip>
         </div>
-    @else
-        <div class="gc-student-home-heading">
-            <h1>Мои курсы</h1>
-            @include('courses.partials.home_activity_feed', ['compact' => true])
-            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#course-invite"
-                    aria-controls="course-invite" aria-expanded="{{ $errors->has('invite') ? 'true' : 'false' }}"
-                    aria-label="Добавить курс" title="Добавить курс">
-                <i class="fas fa-plus" aria-hidden="true"></i>@if($activeCourses->isEmpty())<span class="ms-2">Добавить курс</span>@endif
-            </button>
-        </div>
-        <div class="collapse @if($errors->has('invite')) show @endif" id="course-invite">
-            <form autocomplete="off" class="gc-invite-form mt-2" method="get" action="{{ url('insider/invite') }}">
-                <input type="text" class="form-control" name="invite" maxlength="255" required value="{{ old('invite') }}"
-                       placeholder="Код приглашения" aria-label="Код приглашения на курс">
-                <button type="submit" class="btn btn-outline-secondary">Присоединиться</button>
-            </form>
-            @error('invite')<p class="gc-field__error" role="alert">{{ $message }}</p>@enderror
-        </div>
-    @endif
     </div>
-    @if($isTeacher)
         @include('market.partials.promotion-banner')
     @endif
 
     <div class="tab-content" id="courses">
         <div class="tab-pane fade show active" id="active" role="tabpanel">
-            <div class="{{ $isTeacher ? 'row g-4' : 'gc-home-layout' }}">
-                <div class="{{ $isTeacher ? 'col-12 col-xl-9' : 'gc-home-main' }}">
+            @unless($isTeacher)
+                <div class="gc-home-layout">
+                    <div class="gc-home-main">
+                        <div class="gc-student-home mb-xl-3">
+                            <div class="gc-student-home-heading">
+                                <h1>Мои курсы</h1>
+                                <div class="gc-actions ms-auto justify-content-end">
+                                    @include('courses.partials.home_activity_feed', ['compact' => true])
+                                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#course-invite"
+                                            aria-controls="course-invite" aria-expanded="{{ $errors->has('invite') ? 'true' : 'false' }}"
+                                            aria-label="Добавить курс" title="Добавить курс">
+                                        <i class="fas fa-plus" aria-hidden="true"></i>@if($activeCourses->isEmpty())<span class="ms-2">Добавить курс</span>@endif
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="collapse @if($errors->has('invite')) show @endif" id="course-invite">
+                                <form autocomplete="off" class="gc-invite-form mt-2" method="get" action="{{ url('insider/invite') }}">
+                                    <input type="text" class="form-control" name="invite" maxlength="255" required value="{{ old('invite') }}"
+                                           placeholder="Код приглашения" aria-label="Код приглашения на курс">
+                                    <button type="submit" class="btn btn-outline-secondary">Присоединиться</button>
+                                </form>
+                                @error('invite')<p class="gc-field__error" role="alert">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+            @endunless
                     @include('courses.partials.home_project_journey')
                     <div class="gc-home-study">
 
@@ -131,7 +135,10 @@
                             </span>
                         </a>
                     @elseif(!$isTeacher && $upcomingDeadlines->count())
-                        <x-gc-deadline-preview :items="$upcomingDeadlines" :show-course="true" :limit="2" class="mb-3" />
+                        @foreach($upcomingDeadlines->groupBy('course_id') as $courseId => $deadlines)
+                            <x-gc-deadline-preview :items="$deadlines" :card-url="route('courses.deadlines', $courseId)" :show-course="true" :limit="2"
+                                :aria-label="'Ближайшие сроки · '.$deadlines->first()->course->name" class="mb-3" />
+                        @endforeach
                     @endif
 
                     @if ($activeCourses->count())
@@ -176,61 +183,56 @@
                         </div>
                     @endif
                     </div>
-                </div>
-                <div class="{{ $isTeacher ? 'col-12 col-xl-3' : 'gc-home-side' }}">
-                    @if(!$isTeacher)
+            @unless($isTeacher)
+                    </div>
+                    <div class="gc-home-side">
                         @include('market.partials.promotion-banner', ['compact' => true])
-                    @endif
-                    @include('courses.partials.home_profile_panel')
+                        @include('courses.partials.home_profile_panel')
+                    </div>
                 </div>
-            </div>
+            @endunless
         </div>
 
         @if ($isTeacher)
             <div class="tab-pane fade" id="draft" role="tabpanel">
-                <div class="row g-4">
-                    <div class="col-12 col-xl-9">
-                        @if($draftCourses->count())
-                            <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-3 g-3">
-                                @foreach($draftCourses as $course)
-                                    @include('courses.partials.home_course_card', ['variant' => 'draft'])
-                                @endforeach
-                            </div>
-                        @else
-                            @include('courses.partials.home_empty_state', [
-                                'icon' => 'fas fa-pen-ruler',
-                                'title' => 'Черновиков нет',
-                                'text' => 'Создайте курс, чтобы подготовить программу до запуска.',
-                                'actionUrl' => url('/insider/courses/create/'),
-                                'actionText' => 'Создать курс',
-                            ])
-                        @endif
+                @if($draftCourses->count())
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-3 g-3">
+                        @foreach($draftCourses as $course)
+                            @include('courses.partials.home_course_card', ['variant' => 'draft'])
+                        @endforeach
                     </div>
-                    <div class="col-12 col-xl-3">@include('courses.partials.home_profile_panel')</div>
-                </div>
+                @else
+                    @include('courses.partials.home_empty_state', [
+                        'icon' => 'fas fa-pen-ruler',
+                        'title' => 'Черновиков нет',
+                        'text' => 'Создайте курс, чтобы подготовить программу до запуска.',
+                        'actionUrl' => url('/insider/courses/create/'),
+                        'actionText' => 'Создать курс',
+                    ])
+                @endif
             </div>
 
             <div class="tab-pane fade" id="archive" role="tabpanel">
-                <div class="row g-4">
-                    <div class="col-12 col-xl-9">
-                        @if($archiveCourses->count())
-                            <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-3 g-3">
-                                @foreach($archiveCourses as $course)
-                                    @include('courses.partials.home_course_card', ['variant' => 'archive'])
-                                @endforeach
-                            </div>
-                        @else
-                            @include('courses.partials.home_empty_state', [
-                                'icon' => 'fas fa-box-archive',
-                                'title' => 'Архив пуст',
-                                'text' => 'Завершенные курсы появятся здесь.',
-                            ])
-                        @endif
+                @if($archiveCourses->count())
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-3 g-3">
+                        @foreach($archiveCourses as $course)
+                            @include('courses.partials.home_course_card', ['variant' => 'archive'])
+                        @endforeach
                     </div>
-                    <div class="col-12 col-xl-3">@include('courses.partials.home_profile_panel')</div>
-                </div>
+                @else
+                    @include('courses.partials.home_empty_state', [
+                        'icon' => 'fas fa-box-archive',
+                        'title' => 'Архив пуст',
+                        'text' => 'Завершенные курсы появятся здесь.',
+                    ])
+                @endif
             </div>
         @endif
     </div>
+    </div>
+
+    @if($isTeacher)
+        <div class="col-12 col-xl-3">@include('courses.partials.home_profile_panel')</div>
+    @endif
     </div>
 @endsection

@@ -1,6 +1,8 @@
-@props(['title' => null, 'embedded' => false, 'icon' => null])
+@props(['title' => null, 'embedded' => false, 'icon' => null, 'href' => null])
 
-<section {{ $attributes->class(['gc-card' => !$embedded, 'gc-panel--embedded' => $embedded]) }}>
+@php($tag = $href ? 'a' : 'section')
+
+<{{ $tag }} @if($href) href="{{ $href }}" @endif {{ $attributes->class(['gc-card' => !$embedded, 'gc-panel--embedded' => $embedded, 'gc-card-link d-block' => $href]) }}>
     @if($title || isset($heading))
         <div class="gc-panel-heading">
             @isset($heading)
@@ -12,4 +14,4 @@
         </div>
     @endif
     <div class="gc-panel-body">{{ $slot }}</div>
-</section>
+</{{ $tag }}>

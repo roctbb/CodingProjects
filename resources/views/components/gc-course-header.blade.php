@@ -17,12 +17,14 @@
         $sections['report'] = ['Отчёт', 'fa-chart-line', url('/insider/courses/'.$course->id.'/report')];
         if ($active === 'subgroups') $sections['subgroups'] = ['Подгруппы', 'fa-user-group', route('courses.subgroups', $course->id)];
     }
-    $sections['deadlines'] = ['Дедлайны', 'fa-flag', url('/insider/courses/'.$course->id.'/deadlines')];
+    $deadlineNavigation = $viewer?->role === 'student' && !$canManage
+        ? \App\Support\CourseDeadlineWorkspace::navigation($course, $viewer, $deadlineItems) : null;
+    if ($deadlineNavigation === null || $deadlineNavigation['has_upcoming']) {
+        $sections['deadlines'] = ['Дедлайны', 'fa-flag', route('courses.deadlines', $course->id)];
+    }
     if ($viewer?->role === 'student') {
         $sections['tasks'] = ['Задачи главы', 'fa-list-check', route('courses.chapter-tasks', $course->id)];
     }
-    $deadlineNavigation = $viewer?->role === 'student' && !$canManage
-        ? \App\Support\CourseDeadlineWorkspace::navigation($course, $viewer, $deadlineItems) : null;
 @endphp
 
 <div class="gc-course-context gc-page-masthead" data-course-context data-course-id="{{ $course->id }}" data-course-scope="{{ $participantScope->manager ? $participantScope->key : '' }}" data-course-chapter="{{ $contextChapter }}">
