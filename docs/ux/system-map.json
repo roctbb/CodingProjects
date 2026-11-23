@@ -6555,6 +6555,10 @@
       "node": "geekexecutor",
       "kind": "api"
     },
+    "CodeCheckerAPI@executionTestReport": {
+      "node": "geekexecutor",
+      "kind": "api"
+    },
     "CodeCheckerAPI@result": {
       "node": "geekexecutor",
       "kind": "api"

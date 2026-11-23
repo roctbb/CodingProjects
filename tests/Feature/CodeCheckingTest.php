@@ -824,7 +824,8 @@ class CodeCheckingTest extends TestCase
         $body = $method === 'GET' ? '' : json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
         $token = JWT::encode(['iss' => 'geekexecutor', 'aud' => 'codingprojects', 'purpose' => match (true) {
             str_ends_with($uri, '/progress') => 'execution-progress', str_ends_with($uri, '/result') => 'execution-result',
-            str_ends_with($uri, '/grade') => 'execution-grade', str_ends_with($uri, '/input') => 'execution-input', default => 'test-report',
+            str_ends_with($uri, '/grade') => 'execution-grade', str_ends_with($uri, '/input') => 'execution-input',
+            str_ends_with($uri, '/test-report') => 'execution-test-report', default => 'test-report',
         }, 'iat' => time(), 'exp' => time() + 60, 'body_sha256' => hash('sha256', $body)], $this->secret, 'HS256');
         return $this->call($method, $uri, [], [], [], ['HTTP_AUTHORIZATION' => 'Bearer '.$token,
             'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'], $body);
@@ -836,6 +837,82 @@ class CodeCheckingTest extends TestCase
         return $this->login()->postJson('/insider/courses/7/tasks/12/code-submissions', [
             'request_id' => (string) Str::uuid(), 'code' => "  print(2+3)\n",
         ])->assertCreated()->json();
+    }
+
+    public function test_combined_grading_publishes_diagnostic_groups_before_one_final_rubric_grade(): void
+    {
+        $base = '/insider/courses/7/tasks/12';
+        $config = [
+            'language' => 'python', 'check_type' => 'tests_then_ai',
+            'rubric_criteria' => [
+                ['title'=>'Разбор', 'maximum'=>5, 'description'=>'PRIVATE RUBRIC'],
+                ['title'=>'Метод', 'maximum'=>5],
+            ],
+            'test_config' => [
+                'groups' => [['id'=>'fields', 'name'=>'Разбор полей', 'points'=>10]],
+                'tests' => [
+                    ['group'=>'fields', 'is_public'=>false, 'input'=>'SECRET INPUT', 'output'=>'SECRET EXPECTED'],
+                    ['group'=>'fields', 'is_public'=>true, 'input'=>'PUBLIC INPUT', 'output'=>'PUBLIC EXPECTED'],
+                ],
+            ],
+        ];
+        $this->login(1)->putJson($base.'/checker/private', array_replace($config, [
+            'rubric_criteria' => [['title'=>'Метод', 'maximum'=>4]],
+        ]))->assertUnprocessable();
+        $this->putJson($base.'/checker/private', $config)->assertOk()
+            ->assertJsonPath('config.test_config.scoring', 'diagnostic')
+            ->assertJsonMissingPath('config.test_config.groups.0.points');
+        $this->login()->getJson($base.'/checker')->assertOk()->assertDontSee('PRIVATE RUBRIC');
+        $submission = $this->postJson($base.'/code-submissions', [
+            'request_id'=>(string) Str::uuid(), 'code'=>'print(0)',
+        ])->assertCreated()->json();
+        $this->createChatSolutions();
+        $run = $submission['execution_id'];
+        $api = '/api/executor/executions/'.$run;
+        $this->service('GET', $api.'/input')->assertOk()->assertJsonMissingPath('test_evidence');
+
+        $criteria = [
+            ['title'=>'Разбор', 'maximum'=>5, 'points'=>2, 'comment'=>'Частично.'],
+            ['title'=>'Метод', 'maximum'=>5, 'points'=>5, 'comment'=>'Код соответствует таблице.'],
+        ];
+        $final = ['execution_id'=>$run, 'state'=>'partially done', 'points'=>7, 'comment'=>'Разбор сохранён.', 'criteria'=>$criteria];
+        $this->mock(Grading::class)->shouldReceive('apply')->once();
+        $this->service('POST', $api.'/result', $final)->assertConflict();
+        $this->service('POST', $api.'/grade', ['execution_id'=>$run])->assertConflict();
+
+        $report = array_replace($this->report($run), ['code_id'=>$submission['id'], 'total'=>2]);
+        $report['tests'][] = array_replace($report['tests'][0], [
+            'number'=>2, 'is_public'=>true, 'test_id'=>str_repeat('c', 64),
+            'input'=>$this->field('PUBLIC INPUT'), 'expected'=>$this->field('PUBLIC EXPECTED'),
+            'actual'=>$this->field('PUBLIC ACTUAL'),
+        ]);
+        $mislabelled = $report;
+        $mislabelled['tests'][0]['is_public'] = true;
+        $this->service('POST', $api.'/test-report', $mislabelled)->assertUnprocessable();
+        $this->service('POST', $api.'/test-report', $report)->assertOk()
+            ->assertJsonPath('test_evidence.groups.0.name', 'Разбор полей')
+            ->assertJsonPath('test_evidence.groups.0.executed', 2)
+            ->assertJsonPath('test_evidence.tests.0.verdict', 'wrong_answer')
+            ->assertJsonPath('test_evidence.tests.1.actual.text', 'PUBLIC ACTUAL')
+            ->assertDontSee('SECRET');
+        $this->service('POST', $api.'/test-report', $report)->assertOk();
+        $this->service('GET', $api.'/input')->assertOk()->assertJsonPath('test_evidence.groups.0.passed', 0);
+        $this->mock(\App\Services\ChatGptService::class)->shouldReceive('generate')->once()->andReturn('MODEL RESPONSE');
+        $this->service('POST', $api.'/grade', [
+            'execution_id'=>$run, 'messages'=>[['role'=>'user', 'content'=>'Saved diagnostic evidence']],
+        ])->assertOk()->assertJsonPath('answer', 'MODEL RESPONSE');
+        $attempt = '/insider/code-submissions/'.$submission['id'];
+        $this->getJson($attempt.'?test_data=metadata')->assertOk()->assertJsonPath('points', null)
+            ->assertJsonPath('report.groups.0.total', 2)->assertJsonPath('report.tests.0.group', 'fields')->assertDontSee('SECRET');
+        $check = collect($this->getJson($base.'/chat/2')->assertOk()->json('events'))->firstWhere('run', $run);
+        $this->assertSame('Разбор полей', $check['test_groups'][0]['name']);
+
+        $this->service('POST', $api.'/result', array_replace($final, ['criteria'=>array_reverse($criteria)]))->assertUnprocessable();
+        $this->service('POST', $api.'/result', $final)->assertOk();
+        $this->service('POST', $api.'/result', $final)->assertOk();
+        $this->getJson($attempt.'?test_data=metadata')->assertOk()
+            ->assertJsonPath('points', 7)->assertJsonPath('comment', 'Разбор сохранён.')
+            ->assertJsonPath('criteria.1.points', 5)->assertJsonPath('report.groups.0.passed', 0);
     }
 
     public function test_private_configuration_is_separate_and_whitespace_is_preserved(): void

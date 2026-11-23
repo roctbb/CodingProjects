@@ -1,3 +1,7 @@
+export const combinedCheck = 'tests_then_ai';
+export const usesTests = type => type === 'tests' || type === combinedCheck;
+export const usesAi = type => type === 'gpt' || type === combinedCheck;
+
 export function submissionFields(config) {
     const modes = new Set(config.submission_modes || []);
     const project = modes.has('project') || modes.has('repository');
@@ -17,12 +21,17 @@ export function hasFloatComparison(config) {
 
 export function checkerPayload(config) {
     const payload = {...config};
-    if (config.check_type !== 'tests') delete payload.test_config;
+    if (!usesTests(config.check_type)) delete payload.test_config;
     else if(config.test_config && config.test_mode!=='suite' && !hasFloatComparison(config.test_config)){
         payload.test_config={...config.test_config};
         delete payload.test_config.absolute_tolerance;delete payload.test_config.relative_tolerance;
     }
-    if(config.check_type!=='gpt')for(const key of ['gpt_model','gpt_rate_limit','reference_answer'])delete payload[key];
+    if (!usesAi(config.check_type)) for(const key of ['gpt_model','gpt_rate_limit','reference_answer']) delete payload[key];
+    if (config.check_type === combinedCheck && payload.test_config) {
+        payload.test_config = {...payload.test_config, groups: payload.test_config.groups?.map(({id, name})=>({id, name}))};
+    } else {
+        delete payload.rubric_criteria;
+    }
     const fields=submissionFields(config);
     if(!fields.languages)delete payload.allowed_languages;
     if(!fields.extensions)delete payload.allowed_extensions;

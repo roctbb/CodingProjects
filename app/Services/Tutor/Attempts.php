@@ -7,6 +7,7 @@ use App\CodeSubmission;
 use App\CodeTestReport;
 use App\Course;
 use App\Services\CodeChecking\Artifacts;
+use App\Services\CodeChecking\Configuration;
 use App\Services\CodeChecking\HistoricalReport;
 use App\Services\CodeChecking\History;
 use App\Task;
@@ -91,7 +92,7 @@ final class Attempts
         $matches = [];
         $runs = DB::table('code_execution_runs as r')->joinSub($submissions, 's', 's.id', '=', 'r.submission_id')
             ->where('r.state','completed')->where('r.points',$points)
-            ->whereIn('r.snapshot->check_type',['tests','manual','gpt'])
+            ->whereIn('r.snapshot->check_type',['tests','manual', ...Configuration::AI_TYPES])
             ->orderByDesc('r.finished_at')->get(['r.id','r.submission_id','r.snapshot->points as maximum','r.finished_at','s.created_at']);
         foreach ($runs as $run) {
             if ((int)$run->maximum !== $maximum || $run->maximum === null) continue;
@@ -142,7 +143,7 @@ final class Attempts
     {
         $record = CodeSubmission::where(['course_id'=>$course->id, 'task_id'=>$task->id, 'user_id'=>$user->id])->findOrFail($submission);
         $result = $this->nativeResult($record, $course, $task, $user, $run);
-        abort_unless($result['state'] === 'completed' && in_array($result['method'], ['tests','gpt','manual'], true), 404);
+        abort_unless($result['state'] === 'completed' && in_array($result['method'], ['tests','manual', ...Configuration::AI_TYPES], true), 404);
         $selected = ['result'=>$result];
         if ($includeSource) $selected['source'] = $this->source($record);
         $review = CodeExecutionRun::where('submission_id',$record->id)->whereKey($run)
@@ -170,6 +171,9 @@ final class Attempts
                 if (isset($test[$key])) $lines->push($label.' '.$test[$key]);
             }
         }
+        foreach ($result['groups'] ?? [] as $group) {
+            $lines->push($group['name'].' · '.($group['executed'] ? $group['passed'].' из '.$group['total'] : 'тесты не запускались'));
+        }
         return $lines->filter(fn ($value) => is_string($value) && trim($value) !== '')->values()->all();
     }
 
@@ -180,13 +184,13 @@ final class Attempts
         if (!$run) return ['state'=>$record->preparation_state ?? 'pending', 'method'=>null];
         $result = ['state'=>$run->state, 'method'=>$run->method, 'points'=>$run->points, 'maximum'=>$run->maximum];
         if ($run->assignment && $run->state === 'completed') $result['assignment'] = $run->assignment;
-        if ($run->method === 'tests') {
+        if (in_array($run->method, ['tests', Configuration::TESTS_THEN_AI], true)) {
             $report = CodeTestReport::where(['user_id'=>$user->id,'course_id'=>$course->id,'task_id'=>$task->id])->find($run->id);
             $unlocked = $report ? DB::table('code_test_purchases')->where(['user_id'=>$user->id, 'task_id'=>$task->id])
                 ->pluck('test_id')->all() : [];
-            return $result + $this->tests($report?->report ?? $run->legacy_report, $unlocked);
+            $result += $this->tests($report?->report ?? $run->legacy_report, $unlocked);
         }
-        if ($run->state === 'completed' && in_array($run->method, ['gpt','manual'], true)) {
+        if ($run->state === 'completed' && in_array($run->method, ['manual', ...Configuration::AI_TYPES], true)) {
             $result['comment'] = (string) $run->comment;
             $result['criteria'] = array_map(fn ($criterion) => Arr::only($criterion, ['title','points','maximum','status','comment']), $run->criteria ?? []);
         }
@@ -196,7 +200,7 @@ final class Attempts
     private function tests(?array $report, array $unlocked = []): array
     {
         if ($report === null) return [];
-        $result = Arr::only($report, ['passed','total']);
+        $result = Arr::only($report, ['passed','total','groups']);
         $result['tests'] = [];
         $examples = 0;
         foreach ($report['tests'] ?? [] as $test) {

@@ -92,7 +92,7 @@ class Submissions
             $automatic=$this->automaticRun($locked,$previous);
             abort_unless($previous->finished_at || $previous->state === 'awaiting_review', 409, 'A check is already running.');
             abort_if($strongerAi && $latestConfiguration, 422, 'Для усиленной ИИ-проверки используются настройки исходной проверки.');
-            abort_if($strongerAi && ($automatic->snapshot['check_type'] ?? null) !== 'gpt', 409, 'Исходное решение проверялось без ИИ.');
+            abort_if($strongerAi && !in_array($automatic->snapshot['check_type'] ?? null, Configuration::AI_TYPES, true), 409, 'Исходное решение проверялось без ИИ.');
             abort_if($strongerAi && $this->sourceVersionUnknown($locked) && $reviewSolution===null, 409, 'Для перепроверки сохранённых файлов выберите конкретную сдачу ученика.');
             if($reviewSolution!==null){
                 $event=app(History::class)->event($teacher,$locked->course_id,$task,$reviewSolution);
@@ -126,7 +126,7 @@ class Submissions
             unset($snapshot['review_comment'], $snapshot['review_instructions_original']);
             if (trim($comment) !== '') {
                 $snapshot['review_comment'] = trim($comment);
-                if (($snapshot['check_type'] ?? null) === 'gpt') {
+                if (in_array($snapshot['check_type'] ?? null, Configuration::AI_TYPES, true)) {
                     $snapshot['review_instructions_original'] = $snapshot['private_instructions'] ?? '';
                     $snapshot['private_instructions'] = trim(($snapshot['private_instructions'] ?? '')."\n\nКомментарий преподавателя к перепроверке:\n".trim($comment));
                 }
@@ -136,7 +136,7 @@ class Submissions
                 abort_unless($model, 409, 'Модель для повторной ИИ-проверки не настроена администратором.');
                 $snapshot = $this->strongerSnapshot($snapshot, $automatic, $model, $teacher);
             }
-            if (!$strongerAi && $snapshot['check_type'] === 'gpt') {
+            if (!$strongerAi && in_array($snapshot['check_type'], Configuration::AI_TYPES, true)) {
                 $snapshot['ai_recheck_by'] = (int) $teacher->id;
                 unset($snapshot['ai_retry_by']);
             }
@@ -171,7 +171,7 @@ class Submissions
             if (!$run || $run->id !== $target['run']) return 'superseded';
             $snapshot = $run->snapshot;
             if ($run->state !== 'completed' || !$run->finished_at || $run->graded_by || $submission->preparation_state !== 'ready'
-                || ($snapshot['check_type'] ?? null) !== 'gpt' || isset($snapshot['ai_review'])
+                || !in_array($snapshot['check_type'] ?? null, Configuration::AI_TYPES, true) || isset($snapshot['ai_review'])
                 || ($snapshot['requires_conversion'] ?? false) || ($submission->source_metadata['requires_conversion'] ?? false)
                 || $this->sourceVersionUnknown($submission) || $task->isBlocked($student->id, $course)) return 'teacher';
             if ($submission->solution_id) {
@@ -200,7 +200,7 @@ class Submissions
             $locked = CodeSubmission::lockForUpdate()->findOrFail($submission->id);
             abort_unless($this->retryAllowed($locked, $locked->currentRun), 409, 'Повторить можно только завершившуюся технической ошибкой проверку.');
             $snapshot = $locked->currentRun->snapshot;
-            if ($snapshot['check_type'] === 'gpt') {
+            if (in_array($snapshot['check_type'], Configuration::AI_TYPES, true)) {
                 $snapshot['ai_retry_by'] = (int) $viewer->id;
             }
             // This is a new native run; a later archive import must not overwrite it.
@@ -216,7 +216,7 @@ class Submissions
         return (string) $submission->current_run_id === (string) $run->id && $run->state === 'error'
             && $run->finished_at && $submission->preparation_state === 'ready'
             && !$this->sourceVersionUnknown($submission)
-            && in_array($run->snapshot['check_type'] ?? null, ['tests', 'gpt'], true)
+            && in_array($run->snapshot['check_type'] ?? null, ['tests', ...Configuration::AI_TYPES], true)
             && !($run->snapshot['requires_conversion'] ?? false)
             && !($submission->source_metadata['requires_conversion'] ?? false)
             && !Task::findOrFail($submission->task_id)->isBlocked($submission->user_id, $submission->course_id);
@@ -253,7 +253,7 @@ class Submissions
     public function aiRecheck(CodeSubmission $submission, CodeExecutionRun $run, User $viewer): ?array
     {
         $automatic=$this->automaticRun($submission,$run);
-        if (($automatic->snapshot['check_type'] ?? null) !== 'gpt' || !$this->access->teacher($viewer, (int) $submission->course_id)) return null;
+        if (!in_array($automatic->snapshot['check_type'] ?? null, Configuration::AI_TYPES, true) || !$this->access->teacher($viewer, (int) $submission->course_id)) return null;
         $model = app(\App\Services\Ai\AiSettings::class)->recheck();
         return ['available' => (bool) ($model && $run->finished_at && (string) $submission->current_run_id === (string) $run->id
                 && !($automatic->snapshot['requires_conversion'] ?? false) && !($submission->source_metadata['requires_conversion'] ?? false)),
@@ -322,7 +322,8 @@ class Submissions
             'state' => $run->state, 'progress' => $run->progress, 'points' => $run->points, 'criteria' => $run->criteria,
             'execution_error' => $this->executionError($submission, $run),
             'ai_recheck' => $this->aiRecheck($submission, $run, $viewer),
-            'comment' => $run->state === 'error' || (!$includeTestFields && ($reportView || ($run->snapshot['check_type']??null)==='tests'))?'':$run->comment,
+            'comment' => $run->state === 'error' || (!$includeTestFields && ($run->snapshot['check_type'] ?? null) !== Configuration::TESTS_THEN_AI
+                && ($reportView || ($run->snapshot['check_type']??null)==='tests'))?'':$run->comment,
             'text_report_available'=>$run->state !== 'error' && !$includeTestFields && !$reportView && ($run->snapshot['check_type']??null)==='tests' && (bool)($run->comment || isset($run->legacy_report['suite_diagnostics'])),
             'text_report_url'=>url('/insider/code-submissions/'.$submission->id.'/runs/'.$run->id).'?test_data=full',
             'awarded_xp' => $awardedXp,
@@ -373,15 +374,19 @@ class Submissions
             return array_map($withUrls, $value);
         };
         $settings = array_replace($run->snapshot, ['language' => $submission->language]);
-        if ($settings['check_type'] === 'gpt') {
+        if (in_array($settings['check_type'], Configuration::AI_TYPES, true)) {
             $settings['grading_format'] = 'criteria-v1';
-            $settings['qualitative_criteria'] = true;
+            $settings['qualitative_criteria'] = $settings['check_type'] === 'gpt';
             $settings['grading_transport'] = 'platform';
         }
-        return ['execution_id' => $run->id, 'submission_id' => $submission->id, 'user_id' => (int) $submission->user_id,
+        $input = ['execution_id' => $run->id, 'submission_id' => $submission->id, 'user_id' => (int) $submission->user_id,
             'course_id' => (int) $submission->course_id, 'task_id' => (int) $submission->task_id,
             'task' => $withUrls($settings), 'files' => $withUrls($this->executionFiles($submission, $run->snapshot)), 'language' => $submission->language,
             'answer' => ['mode' => $submission->mode, 'text' => $submission->answer_text ?? '']];
+        if ($settings['check_type'] === Configuration::TESTS_THEN_AI && ($report = CodeTestReport::find($run->id))) {
+            $input['test_evidence'] = app(CombinedTests::class)->evidence($report);
+        }
+        return $input;
     }
     public function executionFiles(CodeSubmission $submission, array $snapshot): array
     {

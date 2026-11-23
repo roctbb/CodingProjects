@@ -2,8 +2,10 @@ import {node, button, field, input, textarea, select, check, actions, request, d
 import {comparisons, enableGroups, addGroup, removeGroup, testIssues} from './test-settings-model.js';
 import {hasFloatComparison} from './authoring-settings.js';
 
-export function testSettings(config, {base, maximum, sync, safe}) {
+export function testSettings(config, {base, maximum, sync, safe, diagnostic = false}) {
     config.tests ||= [];
+    if (diagnostic && config.scoring !== 'diagnostic') enableGroups(config, maximum(), true);
+    const grouped = () => diagnostic || config.scoring === 'groups';
     const host=node('div',{class:'gc-execution-tests'});
     let summary,precision;
     const refreshPrecision=()=>{if(precision){precision.hidden=!hasFloatComparison(config);precision.querySelectorAll('input').forEach(input=>input.disabled=precision.hidden);}};
@@ -21,21 +23,24 @@ export function testSettings(config, {base, maximum, sync, safe}) {
     }
     function render() {
         summary=null;
-        const rules=node('details',{class:'gc-disclosure gc-disclosure--inline',open:true},node('summary',{},'Правила сравнения и начисления баллов'));
+        const rules=node('details',{class:'gc-disclosure gc-disclosure--inline',open:true},node('summary',{},diagnostic?'Правила сравнения и группы':'Правила сравнения и начисления баллов'));
         rules.append(node('div',{class:'gc-form-pair'},
             field('Сравнение по умолчанию',select(config.comparison || 'tokens',options(config.comparison),value=>{config.comparison=value;changed();})),
-            field('Начисление баллов',select(config.scoring || 'proportional',{proportional:'Пропорционально тестам',all_or_nothing:'Только за все тесты',groups:'По группам тестов'},value=>{
+            diagnostic ? null : field('Начисление баллов',select(config.scoring || 'proportional',{proportional:'Пропорционально тестам',all_or_nothing:'Только за все тесты',groups:'По группам тестов'},value=>{
                 if(value==='groups')enableGroups(config,maximum());else config.scoring=value;render();changed();
             }))),
             field('Пробелы и переводы строк в конце ответа',select(config.trailing_whitespace || 'one_newline',{one_newline:'Убрать один завершающий перевод строки',newlines:'Убрать завершающие переводы строк',all:'Убрать все завершающие пробельные символы'},value=>{config.trailing_whitespace=value;changed();})));
-        if(config.scoring==='groups') {
+        if(grouped()) {
             const groups=node('div',{},node('h4',{class:'h6'},'Группы тестов'));
+            if(diagnostic)groups.append(node('p',{class:'gc-help-text'},'Назовите проверяемое поведение. Названия увидят ученики и получит ИИ вместе с результатами тестов.'));
             for(const group of config.groups)groups.append(node('div',{class:'gc-execution-group'},
                 node('div',{class:'gc-form-pair'},field('Название группы',input(group.name,value=>{group.name=value;for (const option of host.querySelectorAll('option')) if(option.value===group.id) option.textContent=value;changed();},{maxlength:100})),
-                    number('Баллы группы, XP',group,'points',1,{min:1,max:1000000,step:1})),
+                    diagnostic ? null : number('Баллы группы, XP',group,'points',1,{min:1,max:1000000,step:1})),
                 button('Удалить группу',()=>{if(config.tests.some(test=>test.group===group.id) && !confirm('Удалить группу? Для её тестов нужно будет выбрать другую группу.'))return;removeGroup(config,group.id);render();changed();})));
-            summary=node('p',{role:'status','aria-live':'polite'});
-            groups.append(button('Добавить группу',()=>{addGroup(config);render();changed();}),summary);rules.append(groups);
+            if(!diagnostic)summary=node('p',{role:'status','aria-live':'polite'});
+            groups.append(button('Добавить группу',()=>{addGroup(config);render();changed();}));
+            if(summary)groups.append(summary);
+            rules.append(groups);
         }
         const limits=node('details',{class:'gc-disclosure gc-disclosure--inline'},node('summary',{},'Лимиты исполнения и точность чисел'),
             node('div',{class:'gc-form-pair'},number('Время на тест, с',config,'time_limit',2,{min:1,max:30,step:1}),
@@ -63,7 +68,7 @@ export function testSettings(config, {base, maximum, sync, safe}) {
             };
             row.append(node('div',{class:'gc-form-pair'},fixture('input','Входные данные'),fixture('output','Ожидаемый вывод')),
                 check('Открытый тест — данные доступны ученику',test.is_public,value=>{test.is_public=value;title.textContent=`Тест ${index+1}${value?' · открытый':' · скрытый'}`;changed();}));
-            if(config.scoring==='groups')row.append(field(`Группа теста ${index+1}`,select(test.group || '',{'':'Выберите группу',...Object.fromEntries(config.groups.map(group=>[group.id,group.name]))},value=>{test.group=value;changed();})));
+            if(grouped())row.append(field(`Группа теста ${index+1}`,select(test.group || '',{'':'Выберите группу',...Object.fromEntries(config.groups.map(group=>[group.id,group.name]))},value=>{test.group=value;changed();})));
             const overrides=node('details',{class:'gc-disclosure gc-disclosure--inline'},node('summary',{},'Настройки этого теста'),
                 field('Правило сравнения этого теста',select(test.comparison || '',{'':'Как в общих настройках',...options(test.comparison)},value=>{if(value)test.comparison=value;else delete test.comparison;changed();})),
                 node('div',{class:'gc-form-pair'},number('Время этого теста, с',test,'time_limit',2,{min:1,max:30,step:1},1,true),
@@ -72,7 +77,7 @@ export function testSettings(config, {base, maximum, sync, safe}) {
                 button('Удалить тест',()=>{config.tests.splice(index,1);render();changed();})));
             host.append(row);
         });
-        const add=button('Добавить тест',()=>{config.tests.push({input:'',output:'',is_public:false,...(config.scoring==='groups' && config.groups[0]?{group:config.groups[0].id}:{})});render();changed();});
+        const add=button('Добавить тест',()=>{config.tests.push({input:'',output:'',is_public:false,...(grouped() && config.groups[0]?{group:config.groups[0].id}:{})});render();changed();});
         add.disabled=config.tests.length>=50;host.append(add,node('small',{class:'text-muted'},`${config.tests.length} из 50 тестов`));refreshMaximum();
     }
     render();return {element:host,refreshMaximum,issues:()=>testIssues(config,maximum())};

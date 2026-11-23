@@ -1,6 +1,7 @@
 import {node, button, iconButton, request, phases} from './ui';
 import {watchTaskChat} from './chat-live';
-import {showCriteria, criterionTable, testSummary} from './chat-results';
+import {showCriteria, criterionTable, testSummary, testGroupSummary} from './chat-results';
+import {combinedCheck} from './authoring-settings';
 import {markdownContent} from './feedback';
 import autosize from 'autosize';
 import {chatDesktop, mountTaskChatPanel} from '../components/workbook-navigation';
@@ -205,12 +206,21 @@ export function taskChat(root, actions) {
                     watch.progress = progress;
                     const label = messages.querySelector('[data-run-progress="'+run+'"]');
                     if (label) label.textContent = executionPhase(progress).label;
+                    if (progress.phase === 'grading' && event.method === combinedCheck && !events.get(event.id)?.test_groups && !watch.checkedReport) {
+                        watch.checkedReport = true;
+                        refresh();
+                    }
                 }, refresh, refresh, tokenForRun);
             }).catch(() => { if (watching.get(run) === watch) watching.delete(run); });
         }
     }
 
     function checkBody(item, event, inlinePoints) {
+        if (event.method === combinedCheck) {
+            const groups = testGroupSummary(event.test_groups);
+            if (groups) item.append(groups);
+            if (event.compiler_error) item.append(node('pre', {class:'gc-chat-diagnostic'}, event.compiler_error));
+        }
         if (event.progress) {
             const progress = watching.get(event.run)?.progress || event.progress;
             item.append(node('p', {class:'gc-chat-score', 'data-run-progress':event.run, role:'status'}, executionPhase(progress).label));
@@ -298,7 +308,7 @@ export function taskChat(root, actions) {
             let author = event.name;
             if (event.type === 'grade') author = 'Результат проверки';
             if (event.type === 'check') author = event.stronger ? 'Расширенная проверка' : event.archived ? 'Проверка сохранённой версии'
-                : ({gpt:'Проверка по критериям', manual:'Проверка преподавателя', tests:'Автотесты'}[event.method] || 'Проверка');
+                : ({gpt:'Проверка по критериям', manual:'Проверка преподавателя', tests:'Автотесты', [combinedCheck]:'Тесты → ИИ'}[event.method] || 'Проверка');
             if (event.method === 'manual' && finished) author = 'Проверено преподавателем';
             if (event.method === 'manual' && event.state === 'awaiting_review') author = 'Решение получено';
             if (event.method === 'tests' && 'compiler_error' in event) author = 'Ошибка компиляции';
@@ -308,7 +318,7 @@ export function taskChat(root, actions) {
             }
             const byline = event.type === 'tutor' ? tutorByline() : node('strong', {class:'gc-chat-who'});
             if (event.type === 'check' || event.type === 'grade') {
-                const compilation = 'compiler_error' in event;
+                const compilation = event.method === 'tests' && 'compiler_error' in event;
                 const counts = event.method === 'tests' && event.total > 0 && event.passed != null;
                 const score = counts ? Number(event.passed) : event.points, maximum = counts ? Number(event.total) : event.maximum;
                 const tone = compilation || event.state === 'error' ? 'failed' : !finished || score == null ? 'waiting'
@@ -394,6 +404,9 @@ export function taskChat(root, actions) {
             }
             if (teacher && event.awaiting_teacher) footer.append(gradeAction(event));
             if (event.criteria?.length) footer.append(action('Подробнее', () => showCriteria(event), 'gc-chat-link'));
+            if (event.method === combinedCheck && event.test_groups?.length) {
+                footer.append(action('Журнал тестирования', () => actions.report(event), 'gc-chat-link'));
+            }
             if (event.method === 'tests' && ['completed','error'].includes(event.state)) {
                 footer.append(action('Подробнее', () => actions.report(event), 'gc-chat-link'));
             }

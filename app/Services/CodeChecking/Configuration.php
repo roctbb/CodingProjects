@@ -9,6 +9,8 @@ use Illuminate\Validation\Rule;
 
 class Configuration
 {
+    public const TESTS_THEN_AI = 'tests_then_ai';
+    public const AI_TYPES = ['gpt', self::TESTS_THEN_AI];
     public const LANGUAGES = ['text', 'cpp', 'python', 'java', 'cs', 'html', 'css', 'js', 'json', 'xml', 'swift', 'php', 'sql', 'brainfuck'];
     public const MODES = ['text', 'files', 'code', 'project', 'repository'];
     public const COMPARISONS = ['tokens', 'exact', 'float', 'tokens_ignore_cr', 'exact_crlf', 'float_binary64',
@@ -23,7 +25,7 @@ class Configuration
         abort_unless($task->max_mark > 0, 422, 'Checking requires a positive maximum grade.');
         $data = Validator::make($input, [
             'language' => ['required', Rule::in(array_merge(self::LANGUAGES, ['ipynb', 'zip', 'image', 'xlsx', 'github']))],
-            'check_type' => ['required', Rule::in(['manual', 'tests', 'gpt'])],
+            'check_type' => ['required', Rule::in(['manual', 'tests', ...self::AI_TYPES])],
             'test_mode' => ['sometimes', Rule::in(['io', 'environment', 'suite'])],
             'private_instructions' => 'sometimes|nullable|string|max:200000',
             'submission_modes' => 'sometimes|array|min:1|max:5',
@@ -42,7 +44,11 @@ class Configuration
             'allows_test_reveals' => 'sometimes|boolean',
             'bypass_similarity_check' => 'sometimes|boolean',
             'ai_authorship_check' => 'sometimes|boolean',
-            'test_config' => 'exclude_unless:check_type,tests|sometimes|array',
+            'test_config' => 'exclude_unless:check_type,tests,'.self::TESTS_THEN_AI.'|sometimes|array',
+            'rubric_criteria' => 'exclude_unless:check_type,'.self::TESTS_THEN_AI.'|required|array|min:1|max:20',
+            'rubric_criteria.*.title' => 'required|string|max:200|distinct',
+            'rubric_criteria.*.maximum' => 'required|integer|min:1',
+            'rubric_criteria.*.description' => 'nullable|string|max:4000',
         ])->validate();
         $legacyFormat = in_array($data['language'], ['ipynb', 'zip', 'image', 'xlsx', 'github'], true) ? $data['language'] : null;
         if ($legacyFormat) $data['language'] = $legacyFormat === 'ipynb' ? 'python' : 'text';
@@ -60,13 +66,27 @@ class Configuration
         $config['max_total_bytes'] = (int) ($data['max_total_bytes'] ?? 52428800);
         $config['entrypoint'] = isset($data['entrypoint']) ? Paths::validate($data['entrypoint']) : null;
         $config['test_mode'] = $data['test_mode'] ?? 'io';
+        $combined = $data['check_type'] === self::TESTS_THEN_AI;
+        if ($combined) {
+            abort_unless($config['test_mode'] === 'io', 422, 'Комбинированная проверка требует тестов ввода и вывода.');
+            $config['rubric_criteria'] = array_values(array_map(fn ($row) => [
+                'title' => trim($row['title']), 'maximum' => (int) $row['maximum'],
+                'description' => trim($row['description'] ?? ''),
+            ], $data['rubric_criteria']));
+            $titles = array_column($config['rubric_criteria'], 'title');
+            abort_if(in_array('', $titles, true) || count(array_unique($titles)) !== count($titles)
+                || array_sum(array_column($config['rubric_criteria'], 'maximum')) !== (int) $task->max_mark,
+                422, 'Укажите разные названия критериев и баллы, в сумме равные максимуму задачи.');
+        }
         abort_if($data['check_type'] === 'tests' && $config['test_mode'] === 'environment', 422,
             'Legacy environments must be converted to data-only IO tests before native submissions are enabled.');
-        if ($data['check_type'] === 'tests' && $config['test_mode'] === 'io') {
+        if (($data['check_type'] === 'tests' || $combined) && $config['test_mode'] === 'io') {
             abort_unless(in_array($data['language'], ['cpp', 'python'], true), 422, 'IO tests require Python or C++.');
             abort_unless(!array_diff($config['allowed_languages'], ['cpp', 'python'])
                 && !in_array('text', $config['submission_modes'], true), 422, 'Tests require executable source files.');
-            $config['test_config'] = $this->io($data['test_config'] ?? [], (int) $task->max_mark);
+            $tests = $data['test_config'] ?? [];
+            if ($combined) $tests['scoring'] = 'diagnostic';
+            $config['test_config'] = $this->io($tests, (int) $task->max_mark, diagnostic: $combined);
         }
         if ($data['check_type']==='tests' && $config['test_mode']==='suite') {
             $config['test_config']=app(LegacySuites::class)->validate($data['test_config']??[],$config['language'],(int)$task->max_mark);
@@ -82,7 +102,7 @@ class Configuration
         ]);
     }
 
-    public function io(array $input, int $maximum, ?callable $legacyField = null): array
+    public function io(array $input, int $maximum, ?callable $legacyField = null, bool $diagnostic = false): array
     {
         $config = array_replace([
             'comparison' => 'tokens', 'trailing_whitespace' => 'one_newline', 'scoring' => 'proportional',
@@ -92,7 +112,7 @@ class Configuration
         Validator::make($config, [
             'comparison' => ['required', Rule::in(self::COMPARISONS)],
             'trailing_whitespace' => ['required', Rule::in(['one_newline', 'newlines', 'all'])],
-            'scoring' => ['required', Rule::in(['proportional', 'all_or_nothing', 'groups'])],
+            'scoring' => ['required', Rule::in($diagnostic ? ['diagnostic'] : ['proportional', 'all_or_nothing', 'groups'])],
             'time_limit' => 'required|integer|min:1|max:30', 'output_limit' => 'required|integer|min:1024|max:8388608',
             'memory_limit' => 'required|integer|min:128|max:2048', 'process_limit' => 'required|integer|min:16|max:256',
             'disable_swap' => 'required|boolean',
@@ -131,15 +151,22 @@ class Configuration
         foreach (['time_limit', 'output_limit', 'memory_limit', 'process_limit'] as $key) $result[$key] = (int) $result[$key];
         $result['disable_swap'] = (bool) $result['disable_swap'];
         foreach (['absolute_tolerance', 'relative_tolerance'] as $key) $result[$key] = (string) $result[$key];
-        if ($result['scoring'] === 'groups') {
+        if ($result['scoring'] === 'groups' || $diagnostic) {
             Validator::make($config, ['groups' => 'required|array|min:1|max:50',
                 'groups.*.id' => 'required|string|regex:/^[a-zA-Z0-9_-]{1,64}$/D|distinct',
-                'groups.*.name' => 'required|string|max:100', 'groups.*.points' => 'required|integer|min:1|max:1000000'])->validate();
-            abort_unless(array_sum(array_column($config['groups'], 'points')) === $maximum, 422, 'Group points must equal task maximum.');
+                'groups.*.name' => 'required|string|max:100',
+                'groups.*.points' => $diagnostic ? 'exclude' : 'required|integer|min:1|max:1000000'])->validate();
+            if (!$diagnostic) abort_unless(array_sum(array_column($config['groups'], 'points')) === $maximum, 422, 'Group points must equal task maximum.');
             $groups = array_column($config['groups'], 'id');
             foreach ($tests as $test) abort_unless(in_array($test['group'] ?? null, $groups, true), 422, 'Invalid test group.');
             abort_unless(count(array_unique(array_column($tests, 'group'))) === count($groups), 422, 'Every group needs a test.');
-            $result['groups'] = array_map(fn ($group) => ['id' => $group['id'], 'name' => $group['name'], 'points' => (int) $group['points']], $config['groups']);
+            $result['groups'] = array_values(array_map(fn ($group) => ['id' => $group['id'], 'name' => trim($group['name'])]
+                + ($diagnostic ? [] : ['points' => (int) $group['points']]), $config['groups']));
+            if ($diagnostic) {
+                $names = array_column($result['groups'], 'name');
+                abort_if(in_array('', $names, true) || count(array_unique($names)) !== count($names),
+                    422, 'Укажите разные названия групп тестов.');
+            }
         }
         $result['tests'] = $tests;
         return $result;

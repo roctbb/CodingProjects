@@ -19,7 +19,7 @@ class Reports
 
     public function __construct(private Artifacts $artifacts, private Access $access) {}
 
-    public function accept(array $report): CodeTestReport
+    public function accept(array $report, array $groups = []): CodeTestReport
     {
         abort_unless(($report['schema_version'] ?? null) === 1 && Str::isUuid($report['run_id'] ?? '')
             && is_string($report['code_id'] ?? null) && preg_match('/^[a-zA-Z0-9-]{1,64}$/D', $report['code_id'])
@@ -40,6 +40,7 @@ class Reports
                 && is_bool($test['is_public'] ?? null) && preg_match('/^[a-f0-9]{64}$/D', $test['test_id'] ?? '')
                 && in_array($test['verdict'] ?? null, self::VERDICTS, true), 422, 'Invalid test result.');
             $row = array_intersect_key($test, array_flip(['number', 'test_id', 'is_public', 'verdict']));
+            if ($groups && isset($test['group'])) $row['group'] = $test['group'];
             foreach (['input', 'expected', 'actual', 'error'] as $key) {
                 $row[$key] = $this->artifacts->descriptor($test[$key] ?? null, in_array($key, ['input', 'expected'], true));
             }
@@ -53,6 +54,7 @@ class Reports
         $report = array_intersect_key($report, array_flip(['schema_version', 'run_id', 'code_id', 'user_id', 'course_id', 'task_id',
             'started_at', 'finished_at', 'test_mode', 'test_set_version', 'total', 'passed']));
         $report['tests'] = $tests;
+        if ($groups) $report['groups'] = $groups;
         $hash = hash('sha256', json_encode($report, JSON_THROW_ON_ERROR));
         $existing = CodeTestReport::find($report['run_id']);
         if ($existing) {
@@ -85,7 +87,7 @@ class Reports
         }
         $report['tests'] = array_map(function ($test) use ($teacher, $purchased, $record, $viewer,$includeFields,$canPurchase) {
             $unlocked = $teacher || $test['is_public'] || in_array($test['test_id'], $purchased, true);
-            $row = array_intersect_key($test, array_flip(['number', 'test_id', 'is_public', 'verdict']));
+            $row = array_intersect_key($test, array_flip(['number', 'test_id', 'is_public', 'verdict', 'group']));
             $row['unlocked'] = $unlocked;
             $row['can_purchase'] = !$unlocked && $canPurchase && in_array($test['verdict'],self::PURCHASABLE,true);
             $row['has_details']=$unlocked;

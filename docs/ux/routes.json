@@ -83,6 +83,18 @@
   },
   {
     "method": "POST",
+    "uri": "api/executor/executions/{execution}/test-report",
+    "name": null,
+    "action": "CodeCheckerAPI@executionTestReport",
+    "middleware": [
+      "api",
+      "throttle:6000,1"
+    ],
+    "node": "geekexecutor",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
     "uri": "api/executor/test-artifacts/status",
     "name": null,
     "action": "CodeCheckerAPI@artifactStatus",

@@ -7,6 +7,8 @@ import {submissionGroups,submissionMode,uploadDescription,executionPhase,draftFi
 import {feedbackPanel} from './feedback';
 import {taskChat} from './task-chat';
 import {awardPanel} from './award-view';
+import {criterionTable, testGroupSummary} from './chat-results';
+import {combinedCheck, usesAi} from './authoring-settings';
 
 const attemptTime = new Intl.DateTimeFormat('ru-RU', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -203,6 +205,7 @@ export async function workspace(root) {
             const type=source.recheck_type || source.check_type;
             const automatic=source.execution_id && source.state!=='error' && (!source.source_version_unknown || snapshot);
             if (automatic && type==='tests') methods.normal='Повторить автотесты';
+            if (automatic && type===combinedCheck) methods.normal='Повторить тесты и проверку ИИ';
             if (automatic && source.ai_recheck?.available) methods.strong='Усиленная модель';
             const method=select('manual',methods,update);
             const note=textarea('',()=>{},{rows:3,maxLength:4000,placeholder:'Что проверить внимательнее?'});
@@ -235,7 +238,7 @@ export async function workspace(root) {
             return node('div',{},node('p',{class:'gc-help-text'},event.reference),
                 data.source_notice ? node('p',{class:'gc-help-note'},data.source_notice) : null,
                 Object.keys(methods).length>1 ? field('Способ проверки',method) : null,
-                type==='gpt' && !methods.strong && source.ai_recheck?.reason ? node('p',{class:'gc-help-text'},source.ai_recheck.reason) : null,
+                usesAi(type) && !methods.strong && source.ai_recheck?.reason ? node('p',{class:'gc-help-text'},source.ai_recheck.reason) : null,
                 noteField,status,actions(submit));
         }, {wide: false});
     }
@@ -597,6 +600,9 @@ export async function workspace(root) {
         const section = node('section',{class:'gc-test-report','aria-label':'Результаты тестов'});
         section.append(node('div',{class:'gc-test-report__heading'},node('h4',{class:'h6 mb-0'},savedSource?'Проверка сохранённого кода':'Результаты тестов'),
             node('span',{class:report.passed === report.total ? 'gc-test-total is-passed' : 'gc-test-total'},`${report.passed} из ${report.total} пройдено`)));
+        const groups = testGroupSummary(report.groups);
+        if (groups) section.append(groups);
+        const groupNames = new Map((report.groups || []).map(group=>[group.id,group.name]));
         const rows = node('tbody');
         const table = node('table',{class:'gc-test-table'},node('thead',{},node('tr',{},
             node('th',{scope:'col'},'Тест'),node('th',{scope:'col'},'Результат'),node('th',{scope:'col',class:'gc-test-access'},'Доступ'),node('th',{scope:'col'},node('span',{class:'visually-hidden'},'Данные теста')))),rows);
@@ -683,7 +689,8 @@ export async function workspace(root) {
             const verdict = node('span',{class:`gc-test-verdict ${passed ? 'is-passed' : 'is-failed'}`},
                 node('i',{class:`fas ${passed ? 'fa-check-circle' : 'fa-circle-xmark'}`,'aria-hidden':'true'}),' ',verdicts[test.verdict] || test.verdict);
             const visibility=(test.is_public?'Публичный':'Скрытый')+(!teacher&&test.unlocked&&!test.is_public?' · Открыт вам':'');
-            rows.append(node('tr',{},node('th',{scope:'row'},`№ ${test.number}`),node('td',{},verdict,node('small',{class:'gc-test-access-mobile text-muted'},visibility)),
+            const groupName = groupNames.get(test.group);
+            rows.append(node('tr',{},node('th',{scope:'row'},`№ ${test.number}`,groupName ? node('small',{class:'d-block fw-normal text-muted text-break'},groupName) : null),node('td',{},verdict,node('small',{class:'gc-test-access-mobile text-muted'},visibility)),
                 node('td',{class:'gc-test-access'},node('span',{class:'gc-test-visibility'},test.is_public ? 'Публичный' : 'Скрытый'),!teacher && test.unlocked && !test.is_public ? node('small',{class:'d-block text-muted'},'Открыт вам') : null),node('td',{},control)),detailRow);
         }
         pageNodes.set(testPage,[...rows.children]);while(pageNodes.size>3)pageNodes.delete(pageNodes.keys().next().value);renderPages();
@@ -945,7 +952,7 @@ export async function workspace(root) {
         });
     }
     function recheckDialog(record,options,stronger=false){
-        const ai=(record.recheck_type || record.check_type)==='gpt';
+        const ai=usesAi(record.recheck_type || record.check_type);
         const reviewSolution=options.snapshotOf?.solution_id;
         const model=select(stronger?'strong':'normal',{'normal':ai?'Обычная модель':'Автотесты',...(record.ai_recheck?.available?{'strong':'Усиленная модель'}:{})},()=>{});
         const note=textarea('',()=>{},{rows:4,maxLength:4000,placeholder:'Что нужно проверить внимательнее?'});
@@ -1137,6 +1144,7 @@ export async function workspace(root) {
         const terminal=['completed','error','awaiting_review','imported_pending'].includes(record.state);
         const menu=teacher ? resultActions() : null;
         const body = node('section',{class:'gc-execution-result'},header);
+        const stagedReport = record.check_type === combinedCheck && !terminal && !record.report ? node('div',{hidden:true}) : null;
         const contextBar=menu ? node('div',{class:'gc-result-context-bar'},menu.root) : null;
         if(teacher && !ownMode && (options.snapshotOf || !record.source_version_unknown)) {
             const remove=removeAttemptAction(options.snapshotOf || record);menu.add(remove);remove.classList.add('text-danger');
@@ -1152,6 +1160,7 @@ export async function workspace(root) {
         body.append(workPreview(record));
         if (!focusedVerdict && record.repository?.commit) body.append(node('p',{},`GitHub · ${record.repository.commit}`, ' ',download(`/insider/code-submissions/${id}/repository/archive`,'Скачать репозиторий')));
         renderReport(record.report,body,id,{savedSource:!!options.snapshotOf});
+        if(stagedReport)body.append(stagedReport);
         if(record.text_report_available)body.append(textReport(record));
         if (teacher && record.checker_diagnostics) body.append(node('details',{},node('summary',{},'Диагностика проверяющего модуля'),node('pre',{class:'gc-execution-output'},JSON.stringify(record.checker_diagnostics,null,2))));
         if (record.legacy) {
@@ -1189,14 +1198,16 @@ export async function workspace(root) {
         const recheckType=record.recheck_type || record.check_type;
         if(teacher && !ownMode && terminal && record.state!=='error' && recheckType!=='manual'){
             const needsSelection=record.source_version_unknown && !options.snapshotOf?.solution_id;
-            const normal=button(recheckType==='gpt'?'Перепроверить обычной моделью':'Повторить автотесты',()=>recheckDialog(record,options));
+            const normal=button(recheckType===combinedCheck?'Повторить тесты и проверку ИИ':
+                usesAi(recheckType)?'Перепроверить обычной моделью':'Повторить автотесты',()=>recheckDialog(record,options));
             normal.disabled=needsSelection;if(needsSelection)normal.title='Выберите сдачу ученика в списке.';menu.add(normal);
             if(record.ai_recheck){const strong=button('Перепроверить усиленной моделью',()=>recheckDialog(record,options,true));strong.disabled=needsSelection || !record.ai_recheck.available;strong.title=needsSelection?'Выберите сдачу ученика в списке.':record.ai_recheck.reason || '';menu.add(strong);}
         }
         if(options.snapshotOf?.text && options.snapshotOf.text!==record.text)body.append(workPreview({...options.snapshotOf,mode:'text'}));
         const comment=target.teacher_feedback ? target.review_comment ?? target.comment ?? '' : target.review_comment || target.comment || (target.check_type!=='tests' && record.state!=='error'?record.comment:'') || '';
         const teacherComment=target.teacher_feedback||target.check_type==='manual';
-        if(comment)body.append(feedbackPanel(comment,{title:teacherComment?'Комментарий преподавателя':target.check_type==='gpt'?'Разбор AI-проверки':'Комментарий проверки',collapsible:!teacherComment,open:true,meta:target.checked_at?new Date(target.checked_at).toLocaleString('ru-RU'):''}));
+        if(comment)body.append(feedbackPanel(comment,{title:teacherComment?'Комментарий преподавателя':usesAi(target.check_type)?'Разбор ИИ-проверки':'Комментарий проверки',collapsible:!teacherComment,open:true,meta:target.checked_at?new Date(target.checked_at).toLocaleString('ru-RU'):''}));
+        if(record.check_type===combinedCheck && record.criteria?.length)body.append(criterionTable(record.criteria,true));
         if(options.snapshotOf?.can_grade && !ownMode)body.append(legacyGrading(options.snapshotOf,{comment:teacherComment?comment:''}));
         else if(teacher && !ownMode && !sourceOnly && terminal)body.append(inlineGrading({key:id,comment:teacherComment?comment:'',mark:record.points,onSkip:skipReview(record),maximum:record.maximum_points,ungraded:record.state==='awaiting_review',onSave:async(points,comment)=>{
             const savedGeneration=generation;
@@ -1220,6 +1231,7 @@ export async function workspace(root) {
                         if(value.comment)result.append(feedbackPanel(value.comment,{title:'Комментарий проверки'}));
                         for(const file of value.files || [])result.append(node('p',{},download(file.download_url,file.name)));
                         if(value.report)renderReport(value.report,result,id);
+                        if(value.check_type===combinedCheck && value.criteria?.length)result.append(criterionTable(value.criteria,true));
                         if(value.text_report_available)result.append(textReport(value));
                         loaded=true;
                     }catch(e){result.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить загрузку проверки',safe(load)));}
@@ -1243,14 +1255,25 @@ export async function workspace(root) {
         }
         arrangeResult(body);finishResult(body);
         if (!['completed','error','awaiting_review','imported_pending'].includes(record.state)) {
-            const progressBar=node('progress',{class:'gc-execution-progress','aria-label':'Ход проверки тестов'});
+            const progressBar=node('progress',{class:'gc-execution-progress','aria-label':'Ход проверки'});
             const phaseTitle=node('strong'),phaseHint=node('span',{class:'text-muted small'},'Результат появится здесь автоматически.');
-            const phaseSteps=node('div',{class:'gc-execution-phases'},(record.check_type==='gpt'?['preparing','grading','publishing']:['preparing','compiling','testing','publishing'].filter(phase=>phase!=='compiling'||record.language==='cpp')).map(phase=>node('span',{'data-phase':phase},phases[phase])));
+            const stages = ['preparing', ...(record.check_type==='gpt'?[]:[...(record.language==='cpp'?['compiling']:[]),'testing']),
+                ...(usesAi(record.check_type)?['grading']:[]),'publishing'];
+            const phaseSteps=node('div',{class:'gc-execution-phases'},stages.map(phase=>node('span',{'data-phase':phase},phases[phase])));
             status.replaceChildren(node('i',{class:'fas fa-gear gc-execution-gear','aria-hidden':'true'}),node('div',{},phaseTitle,phaseHint),progressBar,phaseSteps);
+            let loadingReport = false;
             const update=event=>{
                 const phase=executionPhase(event);phaseTitle.textContent=phase.label;
                 if(phase.total){progressBar.max=phase.total;progressBar.value=phase.completed;}else progressBar.removeAttribute('value');
                 phaseSteps.querySelectorAll('[data-phase]').forEach(step=>step.classList.toggle('is-current',step.dataset.phase===event.phase));
+                if(stagedReport?.hidden && !loadingReport && ['grading','publishing'].includes(event.phase)){
+                    loadingReport=true;
+                    request(`/insider/code-submissions/${id}/runs/${record.execution_id}?test_data=metadata`).then(value=>{
+                        if(selected!==generation || !value.report)return;
+                        renderReport(value.report,stagedReport,id);
+                        stagedReport.hidden=false;
+                    }).catch(()=>{}).finally(()=>{loadingReport=false;});
+                }
             };
             update({...record.progress,phase:record.progress?.phase || record.state});
             const executionId=record.execution_id;

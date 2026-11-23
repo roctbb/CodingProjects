@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\CodeExecutionRun;
+use App\CodeTestReport;
 use App\Services\CodeChecking\Artifacts;
+use App\Services\CodeChecking\CombinedTests;
+use App\Services\CodeChecking\Configuration;
 use App\Services\CodeChecking\Reports;
 use App\Services\CodeChecking\Results;
 use App\Services\CodeChecking\ServiceToken;
@@ -27,8 +30,12 @@ class CodeCheckerAPI extends Controller
         $data = $this->body($request, 32 * 1024 * 1024);
         abort_unless(($data['execution_id'] ?? null) === $execution, 422);
         $run = CodeExecutionRun::findOrFail($execution);
-        abort_unless(($run->snapshot['check_type'] ?? null) === 'gpt' && !$run->finished_at
+        $type = $run->snapshot['check_type'] ?? null;
+        abort_unless(in_array($type, Configuration::AI_TYPES, true) && !$run->finished_at
             && $run->submission->current_run_id === $execution, 409);
+        if ($type === Configuration::TESTS_THEN_AI) {
+            abort_unless(CodeTestReport::whereKey($execution)->exists(), 409);
+        }
 
         $messages = $data['messages'] ?? null;
         abort_unless(is_array($messages) && array_is_list($messages) && count($messages) >= 1 && count($messages) <= 8, 422);
@@ -72,10 +79,23 @@ class CodeCheckerAPI extends Controller
         return response()->json(['state' => 'ok', 'execution_id' => $execution]);
     }
 
+    public function executionTestReport(Request $request, string $execution, ServiceToken $tokens, CombinedTests $tests)
+    {
+        $tokens->verify($request, 'execution-test-report');
+        $run = CodeExecutionRun::findOrFail($execution);
+        $report = $tests->accept($run, $this->body($request, 262144));
+        return response()->json(['test_evidence' => $tests->evidence($report)])->header('Cache-Control', 'private, no-store');
+    }
+
     public function report(Request $request, ServiceToken $tokens, Reports $reports)
     {
         $tokens->verify($request, 'test-report');
-        $record = $reports->accept($this->body($request, 262144));
+        $data = $this->body($request, 262144);
+        $id = $data['run_id'] ?? null;
+        if (is_string($id) && \Illuminate\Support\Str::isUuid($id)) {
+            abort_if((CodeExecutionRun::find($id)?->snapshot['check_type'] ?? null) === Configuration::TESTS_THEN_AI, 422);
+        }
+        $record = $reports->accept($data);
         return response()->json(['state' => 'ok', 'run_id' => $record->id]);
     }
 

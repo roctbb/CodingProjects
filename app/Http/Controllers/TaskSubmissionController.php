@@ -7,6 +7,7 @@ use App\CodeSubmission;
 use App\CodeTaskFile;
 use App\Services\CodeChecking\Access;
 use App\Services\CodeChecking\Artifacts;
+use App\Services\CodeChecking\Configuration;
 use App\Services\CodeChecking\Drafts;
 use App\Services\CodeChecking\Results;
 use App\Services\CodeChecking\Submissions;
@@ -172,7 +173,9 @@ class TaskSubmissionController extends Controller
             'review_comment' => $access->teacher($request->user(), $record->course_id) ? ($item->snapshot['review_comment'] ?? null) : null,
             'execution_error' => app(\App\Services\CodeChecking\Submissions::class)->executionError($record, $item),
             'ai_recheck' => app(\App\Services\CodeChecking\Submissions::class)->aiRecheck($record, $item, $request->user()),
-            'comment' => $item->state === 'error' || (!$fields&&($report || ($item->snapshot['check_type']??null)==='tests'))?'':$item->comment, 'progress' => $item->progress,
+            'comment' => $item->state === 'error' || (!$fields && ($item->snapshot['check_type'] ?? null) !== Configuration::TESTS_THEN_AI
+                && ($report || ($item->snapshot['check_type']??null)==='tests'))?'':$item->comment, 'progress' => $item->progress,
+            'criteria' => $item->criteria,
             'text_report_available'=>$item->state !== 'error' && !$fields && !$report && ($item->snapshot['check_type']??null)==='tests' && (bool)($item->comment || isset($item->legacy_report['suite_diagnostics'])),
             'text_report_url'=>url('/insider/code-submissions/'.$record->id.'/runs/'.$run).'?test_data=full',
             'checker_diagnostics'=>$fields && $access->teacher($request->user(),$record->course_id)?($item->legacy_report['suite_diagnostics']??null):null];

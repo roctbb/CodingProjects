@@ -4,6 +4,7 @@ namespace App\Services\CodeChecking;
 
 use App\CodeExecutionRun;
 use App\CodeSubmission;
+use App\CodeTestReport;
 use Illuminate\Support\Facades\DB;
 
 class Results
@@ -25,13 +26,15 @@ class Results
 
     public function accept(CodeExecutionRun $run, array $data, string $hash): void
     {
+        $type = $run->snapshot['check_type'] ?? null;
+        $combined = $type === Configuration::TESTS_THEN_AI;
         abort_unless(($data['execution_id'] ?? null) === $run->id
             && in_array($data['state'] ?? null, ['done', 'partially done', 'execution error'], true)
             && is_int($data['points'] ?? null) && $data['points'] >= 0 && $data['points'] <= $run->snapshot['points']
             && is_string($data['comment'] ?? null) && strlen($data['comment']) <= 200000, 422, 'Invalid execution result.');
         if (array_key_exists('criteria', $data)) {
             $rows = $data['criteria'];
-            abort_unless($run->snapshot['check_type'] === 'gpt' && $data['state'] !== 'execution error'
+            abort_unless(in_array($type, Configuration::AI_TYPES, true) && $data['state'] !== 'execution error'
                 && is_array($rows) && array_is_list($rows) && count($rows) <= 100, 422);
             foreach ($rows as $row) {
                 abort_unless(is_array($row)
@@ -47,19 +50,34 @@ class Results
             abort_if($rows && ($remaining < 0 || $remaining > $unweighted
                 || (!array_column($rows, 'status') && ($remaining !== 0 || $unweighted !== 0))), 422, 'Invalid rubric totals.');
         }
+        if ($combined) {
+            abort_if(array_key_exists('report', $data), 422, 'Test report must precede grading.');
+            if ($data['state'] !== 'execution error') {
+                $criteria = $data['criteria'] ?? [];
+                $expected = $run->snapshot['rubric_criteria'];
+                abort_unless(count($criteria) === count($expected), 422, 'Incomplete rubric result.');
+                foreach ($expected as $index => $criterion) {
+                    abort_unless($criteria[$index]['title'] === $criterion['title']
+                        && ($criteria[$index]['maximum'] ?? null) === $criterion['maximum'], 422, 'Rubric differs from the snapshot.');
+                }
+            }
+        }
         if (isset($data['suite_diagnostics'])) {
             abort_unless(($run->snapshot['test_mode']??null)==='suite' && is_array($data['suite_diagnostics'])
                 && is_string($data['suite_diagnostics']['text']??null) && strlen($data['suite_diagnostics']['text'])<=400000
                 && ($data['suite_diagnostics']['suite_id']??null)===($run->snapshot['test_config']['suite_id']??null)
                 && ($data['suite_diagnostics']['suite_version']??null)===($run->snapshot['test_config']['suite_version']??null),422,'Invalid suite diagnostics.');
         }
-        DB::transaction(function () use ($run, $data, $hash) {
+        DB::transaction(function () use ($run, $data, $hash, $combined) {
             $run = CodeExecutionRun::lockForUpdate()->findOrFail($run->id);
             if ($run->result_hash) {
                 abort_unless(hash_equals($run->result_hash, $hash), 409, 'Result is immutable.');
                 return;
             }
             $submission = CodeSubmission::lockForUpdate()->findOrFail($run->submission_id);
+            if ($combined && $data['state'] !== 'execution error') {
+                abort_unless(CodeTestReport::whereKey($run->id)->exists(), 409, 'Test report has not been saved.');
+            }
             if (isset($data['report'])) {
                 $report = $data['report'];
                 abort_unless(($report['run_id'] ?? null) === $run->id && ($report['code_id'] ?? null) === $submission->id

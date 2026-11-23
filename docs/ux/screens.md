@@ -2814,6 +2814,7 @@ Telegram, почта и Силаэдр в личных настройках; н�
 - `GET|HEAD /api/executor/executions/{execution}/input` — api
 - `POST /api/executor/executions/{execution}/progress` — api
 - `POST /api/executor/executions/{execution}/result` — api
+- `POST /api/executor/executions/{execution}/test-report` — api
 - `POST /api/executor/test-artifacts/status` — api
 - `PUT /api/executor/test-artifacts/{artifact}` — api
 - `POST /api/executor/test-reports` — api

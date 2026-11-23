@@ -1,4 +1,5 @@
 import {node,button,iconButton,download,request} from './ui';
+import {combinedCheck, usesAi} from './authoring-settings';
 
 const terminal=['completed','error','awaiting_review','imported_pending'];
 
@@ -10,7 +11,7 @@ export function resultVerdict(record) {
     if(record.state==='awaiting_review')return {tone:'review',icon:'fa-clock',title:'Ожидает оценки преподавателя'};
     if(record.state==='imported_pending')return {tone:'review',icon:'fa-clock-rotate-left',title:'Историческая сдача'};
     if(!terminal.includes(record.state))return {tone:'running',icon:'fa-gear',title:record.state==='queued'?'В очереди на проверку':'Решение проверяется'};
-    if(record.report?.total>0){
+    if(record.check_type !== combinedCheck && record.report?.total>0){
         if(record.report.passed===record.report.total)return {tone:'passed',icon:'fa-circle-check',title:'Все тесты пройдены'};
         const compilation=record.report.tests?.some(test=>test.verdict==='compilation_error');
         return {tone:record.report.passed>0&&!compilation?'partial':'failed',icon:'fa-circle-xmark',title:compilation?'Ошибка компиляции':record.report.passed>0?'Часть тестов не пройдена':'Тесты не пройдены'};
@@ -30,7 +31,7 @@ export function resultHeader(record,{sourceOnly=false,showScore=true,showSourceD
     const raw=record.award_breakdown?.evaluated_points ?? record.evaluated_points ?? record.points;
     const maximum=record.maximum_points ?? record.grading_maximum_points;
     const credited=!sourceOnly && record.awarded_xp!==null && record.awarded_xp!==undefined;
-    if(raw!==null && raw!==undefined && record.state!=='error' && !(compact && showScore && !credited && raw===record.points))details.append(node('p',{class:'gc-help-text mb-0', 'data-score-repeated':credited && Number(raw) === Number(record.awarded_xp) ? '' : null},`Оценка за работу: ${raw}${maximum?' из '+maximum:''} баллов${record.check_type==='gpt'?' · проверка ИИ':''}`));
+    if(raw!==null && raw!==undefined && record.state!=='error' && !(compact && showScore && !credited && raw===record.points))details.append(node('p',{class:'gc-help-text mb-0', 'data-score-repeated':credited && Number(raw) === Number(record.awarded_xp) ? '' : null},`Оценка за работу: ${raw}${maximum?' из '+maximum:''} баллов${usesAi(record.check_type)?' · проверка ИИ':''}`));
     const header=node('header',{class:`gc-result-verdict is-${verdict.tone}`,'aria-label':'Итог проверки'},
         node('i',{class:`fas ${verdict.icon} gc-result-verdict__icon`,'aria-hidden':'true'}),details);
     header.hidden=reviewing && (record.state==='awaiting_review' || record.kind==='legacy_attempt' && record.awarded_xp===null);

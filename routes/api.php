@@ -28,6 +28,7 @@ Route::prefix('executor')->withoutMiddleware('throttle:60,1')->middleware('throt
     Route::get('/executions/{execution}/input', 'CodeCheckerAPI@input');
     Route::post('/executions/{execution}/grade', 'CodeCheckerAPI@grade');
     Route::post('/executions/{execution}/progress', 'CodeCheckerAPI@progress');
+    Route::post('/executions/{execution}/test-report', 'CodeCheckerAPI@executionTestReport');
     Route::post('/executions/{execution}/result', 'CodeCheckerAPI@result');
     Route::post('/test-reports', 'CodeCheckerAPI@report');
     Route::post('/test-artifacts/status', 'CodeCheckerAPI@artifactStatus');

@@ -10,9 +10,10 @@ export const comparisons = {
     rational_absolute:'Рациональное число с абсолютной погрешностью', magic_mismatch:'Сохранённое специальное правило',
 };
 
-export function enableGroups(config, maximum) {
-    config.scoring='groups';
+export function enableGroups(config, maximum, diagnostic = false) {
+    config.scoring=diagnostic ? 'diagnostic' : 'groups';
     if (!config.groups?.length) config.groups=[{id:'main',name:'Основная группа',points:maximum}];
+    if (!diagnostic && config.groups.length === 1) config.groups[0].points ??= maximum;
     for (const test of config.tests) if (!config.groups.some(group=>group.id===test.group)) test.group=config.groups[0].id;
 }
 export function addGroup(config) {
@@ -27,12 +28,15 @@ export function testIssues(config, maximum) {
     const issues=[];
     if (!config.tests?.length) issues.push('Добавьте хотя бы один тест.');
     if (config.tests?.length>50) issues.push('Допустимо не более 50 тестов.');
-    if (config.scoring==='groups') {
+    if (config.scoring==='groups' || config.scoring==='diagnostic') {
         const groups=config.groups || [], ids=groups.map(group=>group.id);
         if (!groups.length) issues.push('Добавьте хотя бы одну группу.');
         if (new Set(ids).size!==ids.length || groups.some(group=>!group.id || !group.name.trim())) issues.push('У групп должны быть разные ID и непустые названия.');
-        if (groups.some(group=>!Number.isInteger(group.points) || group.points<1)) issues.push('Баллы каждой группы должны быть положительным целым числом.');
-        if (groups.reduce((total,group)=>total+Number(group.points || 0),0)!==maximum) issues.push(`Сумма баллов групп должна равняться максимуму задания: ${maximum} XP.`);
+        if (config.scoring==='diagnostic' && new Set(groups.map(group=>group.name.trim())).size!==groups.length) issues.push('Укажите разные названия групп тестов.');
+        if (config.scoring==='groups') {
+            if (groups.some(group=>!Number.isInteger(group.points) || group.points<1)) issues.push('Баллы каждой группы должны быть положительным целым числом.');
+            if (groups.reduce((total,group)=>total+Number(group.points || 0),0)!==maximum) issues.push(`Сумма баллов групп должна равняться максимуму задания: ${maximum} XP.`);
+        }
         if (config.tests.some(test=>!ids.includes(test.group))) issues.push('Назначьте каждому тесту группу.');
         if (groups.some(group=>!config.tests.some(test=>test.group===group.id))) issues.push('В каждой группе должен быть хотя бы один тест.');
     }

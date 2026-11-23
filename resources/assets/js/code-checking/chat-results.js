@@ -32,3 +32,9 @@ export function testSummary(event) {
     return node('div', {class:'gc-chat-test-summary'}, node('span', {}, 'Пройдено тестов: '+passed+' из '+total),
         node('div', {class:'gc-chat-test-meter', 'aria-hidden':'true'}, fill));
 }
+
+export function testGroupSummary(groups) {
+    if (!groups?.length) return null;
+    return node('ul', {class:'list-unstyled mb-2', 'aria-label':'Группы тестов'}, groups.map(group => node('li', {},
+        node('strong', {}, group.name), ' · ', group.executed > 0 ? `${group.passed} из ${group.total} пройдено` : 'тесты не запускались')));
+}

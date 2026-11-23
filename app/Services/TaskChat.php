@@ -157,7 +157,8 @@ class TaskChat
         $legacyRows = $legacy->whereIn('id',$ids(self::LEGACY_FILE, self::LEGACY_GRADE))
             ->get(['id','mark','evaluated_mark','raw_mark','comment','geekpaste_code_id'])->keyBy('id');
         $manualTask = $legacyRows->isNotEmpty() && !$assignment->is_code && !$assignment->is_quiz
-            && !in_array(DB::table('code_task_checkers')->where('task_id',$task)->value('config->check_type'), ['gpt','tests'], true);
+            && !in_array(DB::table('code_task_checkers')->where('task_id',$task)->value('config->check_type'),
+                ['tests', ...\App\Services\CodeChecking\Configuration::AI_TYPES], true);
         $teacherFeedback = collect();
         if ($legacyRows->isNotEmpty() && \Illuminate\Support\Facades\Schema::hasTable('course_activities')) {
             $teacherFeedback = \App\CourseActivity::where($scope)->where('type', \App\CourseActivity::TYPE_SOLUTION_CHECKED)
@@ -167,7 +168,7 @@ class TaskChat
             ->get(['r.id','r.submission_id','s.legacy_id','s.solution_id','r.finished_at','s.current_run_id','s.preparation_state','r.state','r.progress','r.points','r.comment','r.criteria','r.snapshot->check_type as method',
                 'r.snapshot->points as maximum','r.snapshot->ai_review->source_run_id as stronger',
                 'r.snapshot->ai_review->origin as review_origin','r.snapshot->ai_review->finding->focus as review_focus',
-                'r.snapshot->review_solution_id as solution','t.report->passed as passed','t.report->total as total',
+                'r.snapshot->review_solution_id as solution','t.report->passed as passed','t.report->total as total','t.report->groups as test_groups',
                 'r.legacy_report->passed as archive_passed','r.legacy_report->total as archive_total',
                 't.report->tests[0]->verdict as first_verdict','r.legacy_report->tests[0]->verdict as archive_verdict',
                 'r.legacy_report->tests[0]->error->text as archive_diagnostic'])->keyBy('id');
@@ -217,11 +218,13 @@ class TaskChat
                     'criteria'=>$run->criteria ? json_decode($run->criteria, true) : null,
                     'stronger'=>(bool)$run->stronger,'points'=>$run->points,'maximum'=>$run->maximum,
                     'passed'=>$run->passed ?? $run->archive_passed,'total'=>$run->total ?? $run->archive_total,
+                    'test_groups'=>$run->test_groups ? json_decode($run->test_groups, true) : null,
                     'reviewable'=>$run->current_run_id === $id && in_array($run->state, ['completed', 'error', 'imported_pending'], true)
                         && (!$run->legacy_id || $run->solution),
                     'awaiting_teacher'=>$run->method === 'manual' && $run->state === 'awaiting_review'
                         && $run->current_run_id === $id && $run->preparation_state === 'ready',
-                    'text'=>in_array($run->method,['gpt','manual'],true) && $run->state==='completed' ? (string)$run->comment : ''];
+                    'text'=>in_array($run->method,['manual', ...\App\Services\CodeChecking\Configuration::AI_TYPES],true)
+                        && $run->state==='completed' ? (string)$run->comment : ''];
                 if ($run->review_origin === 'tutor' && ($original = $originals->get($run->stronger))
                     && $original->submission_id === $run->submission_id) {
                     $item['tutor_review'] = ['previous'=>$original->points, 'maximum'=>$original->maximum, 'focus'=>$run->review_focus];

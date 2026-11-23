@@ -11,6 +11,7 @@
 | GET\|HEAD | `/api/executor/executions/{execution}/input` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | POST | `/api/executor/executions/{execution}/progress` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | POST | `/api/executor/executions/{execution}/result` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
+| POST | `/api/executor/executions/{execution}/test-report` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | POST | `/api/executor/test-artifacts/status` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | PUT | `/api/executor/test-artifacts/{artifact}` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | POST | `/api/executor/test-reports` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
