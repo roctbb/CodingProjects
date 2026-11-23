@@ -29,6 +29,11 @@
 
 ```mermaid
 flowchart TD
+  wifi["Подключиться к учебному Wi-Fi"] --> portal["Войти через Coding Projects"]
+  portal -->|После входа по паролю вернуться в Guard в той же вкладке| applying["Дождаться применения доступа в Guard"]
+  applying -->|Роутер подтвердил доступ устройства| connected["✓ Подключено"]
+  applying -->|Ошибка| retryWifi["Повторить подключение"]
+  retryWifi --> applying
   login["Войти по паролю или через Силаэдр"] --> home["Мои курсы"]
   register["Регистрация по коду курса"] --> joined["Зачисление на курс"]
   joined --> home

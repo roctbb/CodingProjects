@@ -71,7 +71,7 @@ Route::prefix('insider')->middleware('verified')->group(function () {
         return redirect('/insider/courses');
     });
 
-    Route::get('/jwt', 'RemoteAuthController@remoteAuth');
+    Route::get('/jwt', 'RemoteAuthController@remoteAuth')->name('service.jwt');
 
     // Keep both existing URLs compatible with older editors.
     Route::post('/chatgpt/improve-text', 'TextImprovementController@improveText');

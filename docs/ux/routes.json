@@ -2321,7 +2321,7 @@
   {
     "method": "GET|HEAD",
     "uri": "insider/jwt",
-    "name": null,
+    "name": "service.jwt",
     "action": "RemoteAuthController@remoteAuth",
     "middleware": [
       "web",

@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\SilaederOidcController;
 use App\Services\SilaederOidcClient;
+use App\Support\ServiceLoginReturn;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -50,6 +51,9 @@ class LoginController extends Controller
             'last_login_at' => Carbon::now()->toDateTimeString(),
             'last_login_ip' => $request->getClientIp()
         ]);
+        if (!$request->wantsJson() && ($issuer = ServiceLoginReturn::issuerUrl($request)) !== null) {
+            return redirect()->to($issuer);
+        }
     }
 
     protected function attemptLogin(Request $request)

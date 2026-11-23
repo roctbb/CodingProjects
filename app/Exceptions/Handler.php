@@ -2,8 +2,11 @@
 
 namespace App\Exceptions;
 
+use App\Support\ServiceLoginReturn;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -46,6 +49,16 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
+        if ($request->isMethod('POST') && $request->is('login') && !$request->expectsJson()
+            && ($issuer = ServiceLoginReturn::issuerUrl($request)) !== null) {
+            if ($exception instanceof TokenMismatchException) {
+                // Another tab may have signed in and rotated CSRF. Discard the POST and recheck the session.
+                return redirect()->to($issuer, 303);
+            }
+            if ($exception instanceof ValidationException) {
+                $exception->redirectTo(route('login', ['service_login' => $request->query('service_login')]));
+            }
+        }
         return parent::render($request, $exception);
     }
 
@@ -60,6 +73,11 @@ class Handler extends ExceptionHandler
     {
         if ($request->expectsJson()) {
             return response()->json(['error' => 'Требуется авторизация.'], 401);
+        }
+
+        $callback = $request->query('redirect_url');
+        if ($request->routeIs('service.jwt') && is_string($callback) && $callback !== '' && strlen($callback) <= 2048) {
+            return redirect()->to(ServiceLoginReturn::loginUrl($callback));
         }
 
         return redirect()->guest(route('login'));

@@ -9,6 +9,7 @@ use App\OidcLinkRequest;
 use App\Services\EmailVerify;
 use App\Services\SilaederOidcClient;
 use App\Services\SilaederOidcProfile;
+use App\Support\ServiceLoginReturn;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -204,6 +205,9 @@ class SilaederOidcController extends Controller
         string $intent,
         ?int $localUserId = null
     ) {
+        if ($intent === 'login' && ($issuer = ServiceLoginReturn::issuerUrl($request)) !== null) {
+            redirect()->setIntendedUrl($issuer);
+        }
         try {
             $authorization = $oidc->createAuthorizationRequest(
                 (string) config('services.silaeder_oidc.redirect_uri')

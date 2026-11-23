@@ -43,6 +43,11 @@ or GeekKaggle catalog starts sign-in automatically when the service has no sessi
 With an active Coding Projects session, the user returns directly to the requested
 page. GeekPaste public snippets remain accessible without a session.
 
+When a service opens the Coding Projects password form, that form keeps its own
+encrypted return address. Opening a course or starting a second service login in
+another tab preserves the first tab's destination. After sign-in, Coding Projects
+checks the registered service origin at `/insider/jwt` before issuing the token.
+
 ClassScreenShare starts sign-in when a participant opens an exam and when a teacher
 opens the admin area. The public landing page asks for the exam code. GeekExecutor
 starts its administrator sign-in on direct access to `/system/status`.

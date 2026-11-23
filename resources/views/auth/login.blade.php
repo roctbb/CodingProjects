@@ -5,7 +5,7 @@
 @section('auth-background-image', url('/images/bg/'.random_int(1,16).'.jpg'))
 
 @section('content')
-    <form method="POST" action="{{ url('/login') }}" class="auth-card gc-auth-card">
+    <form method="POST" action="{{ route('login', request()->only('service_login')) }}" class="auth-card gc-auth-card">
         @csrf
         <a href="{{ url('/') }}" class="gc-auth-brand"><x-brand-logo width="26" height="26" alt="" /><span>{{ config('app.name', 'Laravel') }}</span></a>
         <h1 class="gc-auth-title">Войти в аккаунт</h1>
@@ -50,7 +50,7 @@
 
         @if (config('services.silaeder_oidc.enabled'))
             <a class="btn btn-outline-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-2"
-               href="{{ route('silaeder.login') }}">
+               href="{{ route('silaeder.login', request()->only('service_login')) }}">
                 <img class="silaeder-login-button__logo" src="{{ asset('images/silaeder-logo.png') }}" alt="">
                 <span>Войти через ЛК Силаэдра</span>
             </a>

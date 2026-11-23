@@ -5,6 +5,9 @@ namespace Tests\Feature;
 use App\User;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -67,7 +70,42 @@ class RemoteAuthTest extends TestCase
     {
         $this->get('/insider/jwt?' . http_build_query([
             'redirect_url' => 'https://exam.example.test/auth/callback',
-        ]))->assertRedirect('/login');
+        ]))->assertRedirectContains('/login?service_login=');
+        $this->assertGuest();
+    }
+
+    public function test_password_login_returns_to_the_service_that_opened_this_form(): void
+    {
+        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('email');
+            $table->string('password');
+            $table->boolean('birthday_hidden')->default(false);
+            $table->timestamp('last_login_at')->nullable();
+            $table->string('last_login_ip')->nullable();
+            $table->timestamps();
+        });
+        $credentials = ['email' => 'pupil@example.test', 'password' => 'local-test-password'];
+        (new User())->forceFill(['email' => $credentials['email'], 'password' => bcrypt($credentials['password'])])->save();
+
+        $issuer = route('service.jwt', ['redirect_url' => 'https://exam.example.test/auth/callback?state=first']);
+        $loginPage = $this->get($issuer)->assertRedirect()->headers->get('Location');
+        $this->get($loginPage)->assertOk()->assertSee('action="'.e($loginPage).'"', false);
+        $this->get('/insider/jwt?'.http_build_query(['redirect_url' => 'https://exam.example.test/auth/callback?state=second']));
+        $this->get('/insider/courses')->assertRedirect('/login');
+        $this->post($loginPage, [...$credentials, 'password' => 'incorrect'])->assertRedirect($loginPage);
+        $this->assertGuest();
+        $this->post($loginPage, $credentials)->assertRedirect($issuer);
+        $this->assertAuthenticated();
+        $this->get($loginPage)->assertRedirect($issuer);
+    }
+
+    public function test_an_unrelated_encrypted_value_is_not_a_service_continuation(): void
+    {
+        $user = (new User())->forceFill(['id' => 42, 'role' => 'student']);
+        $this->actingAs($user)->get(route('login', ['service_login' => Crypt::encryptString('unrelated')]))
+            ->assertRedirect('/home');
     }
 
     public function test_untrusted_origins_credentials_ports_and_fragments_cannot_receive_a_token(): void
