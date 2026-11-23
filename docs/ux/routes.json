@@ -119,6 +119,18 @@
   },
   {
     "method": "POST",
+    "uri": "api/geekexam/course-access",
+    "name": null,
+    "action": "GeekExamCourseAccessController@sync",
+    "middleware": [
+      "api",
+      "throttle:600,1"
+    ],
+    "node": "geekexam",
+    "kind": "callback"
+  },
+  {
+    "method": "POST",
     "uri": "api/geekexam/wifi-disconnect",
     "name": null,
     "action": "GeekExamWifiAlertController@store",
@@ -3307,6 +3319,17 @@
     ],
     "node": "profile-room",
     "kind": "media"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "open/course-material-access",
+    "name": "course-material-access",
+    "action": "Closure",
+    "middleware": [
+      "web"
+    ],
+    "node": "geekexam",
+    "kind": "api"
   },
   {
     "method": "GET|HEAD",

@@ -6,3 +6,4 @@
 <script type="module" src="{{ asset('build/'.$vendorScript) }}"></script>
 <x-gc-reward-notices />
 <x-gc-screen-pet />
+@include('layouts.partials.course-material-access')

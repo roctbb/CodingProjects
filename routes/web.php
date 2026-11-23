@@ -59,6 +59,7 @@ Route::get('/auth/silaeder/logout/callback', 'Auth\SilaederOidcController@logout
 Auth::routes(['verify' => true]);
 
 Route::prefix('open')->group(function () {
+    Route::get('/course-material-access', fn () => response()->noContent())->name('course-material-access');
     Route::get('/steps/{id}', 'OpenStepsController@details');
     Route::get('/steps/{id}/notebook', 'OpenStepsController@downloadNotebook');
 });

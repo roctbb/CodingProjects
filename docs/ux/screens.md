@@ -2435,7 +2435,9 @@ GeekExam
 
 Маршруты:
 
+- `POST /api/geekexam/course-access` — callback
 - `POST /api/geekexam/wifi-disconnect` — callback
+- `GET|HEAD /open/course-material-access` — api
 
 Исходники:
 

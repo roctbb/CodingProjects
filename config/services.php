@@ -35,6 +35,7 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
 
+    'geekexam_course_access_secret' => env('GEEKEXAM_COURSE_ACCESS_SECRET'),
     'geekexam_alert_secret' => env('GEEKEXAM_ALERT_SECRET'),
     'geekexecutor_url' => env('GEEKEXECUTOR_URL', 'http://geekexecutor:8086'),
     'task_chat_socket' => env('TASK_CHAT_SOCKET_URL', '/task-chat/socket'),

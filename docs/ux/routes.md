@@ -14,6 +14,7 @@
 | POST | `/api/executor/test-artifacts/status` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | PUT | `/api/executor/test-artifacts/{artifact}` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
 | POST | `/api/executor/test-reports` | api | [GeekExecutor: исполнение кода](screens.md#geekexecutor) | api, throttle:6000,1 |
+| POST | `/api/geekexam/course-access` | callback | [GeekExam](screens.md#geekexam) | api, throttle:600,1 |
 | POST | `/api/geekexam/wifi-disconnect` | callback | [GeekExam](screens.md#geekexam) | api |
 | GET\|HEAD | `/api/user` | api | [Профиль](screens.md#profile) | api, auth:api |
 | GET\|HEAD | `/auth/silaeder` | callback | [Личный кабинет Силаэдра](screens.md#silaeder) | web, guest, throttle:30,1 |
@@ -248,6 +249,7 @@
 | GET\|HEAD | `/material-resources/{id}` | media | [Ревью учебных материалов](screens.md#material-review) | web, auth |
 | GET\|HEAD | `/media/room-character-previews/{generation_id}` | media | [Комната участника](screens.md#profile-room) | web |
 | GET\|HEAD | `/media/{dir}/{name}` | media | [Комната участника](screens.md#profile-room) | web |
+| GET\|HEAD | `/open/course-material-access` | api | [GeekExam](screens.md#geekexam) | web |
 | GET\|HEAD | `/open/steps/{id}` | screen | [Открытая ступень](screens.md#public-step) | web |
 | GET\|HEAD | `/open/steps/{id}/notebook` | download | [Открытая ступень](screens.md#public-step) | web |
 | POST | `/password/email` | action | [Восстановление доступа](screens.md#password-request) | web, guest |
