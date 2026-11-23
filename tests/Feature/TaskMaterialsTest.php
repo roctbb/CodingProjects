@@ -38,7 +38,7 @@ class TaskMaterialsTest extends DeadlineFeatureCase
         $this->assertSame(0, $student->query('//*[@id="task12"]//section[contains(@class,"gc-task-materials")]')->length);
         $this->assertSame(1, $student->query('//section[contains(@class,"gc-task-materials")]')->length);
         $teacher = $this->conditionFiles(2);
-        $this->assertSame(1, $teacher->query('//*[@id="task11"]//details//section[contains(@class,"gc-task-materials")]//a[contains(@href,"'.$private->id.'")]')->length);
+        $this->assertSame(1, $teacher->query('//*[@id="task11"]//section[@data-task-condition="11"]//section[contains(@class,"gc-task-materials")]//a[contains(@href,"'.$private->id.'")]')->length);
         $this->assertSame(1, $teacher->query('//section[contains(@class,"gc-task-materials")]')->length);
     }
 

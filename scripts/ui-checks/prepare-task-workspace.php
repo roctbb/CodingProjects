@@ -76,3 +76,6 @@ foreach([115=>6,116=>10] as $id=>$mark)$db::table('solutions')->insert(['id'=>$i
 $db::table('lessons')->where('id',1)->update(['sticker'=>'/images/silaeder-logo.png']);
 Illuminate\Support\Facades\DB::disconnect('sqlite');
 foreach (['submissions-desktop','submissions-phone'] as $variant) copy($directory.'/submissions.sqlite',$directory.'/'.$variant.'.sqlite');
+// The shared read-only workbook covers a late full mark and a completed native run awaiting XP publication.
+$db::table('solutions')->where('id',1)->update(['mark'=>7,'raw_mark'=>10,'evaluated_mark'=>10]);
+$make(13,1,33,'gpt',20);

@@ -1,4 +1,9 @@
-import {chatDesktop} from './workbook-navigation';
+import {chatDesktop, mountTaskChatPanel} from './workbook-navigation';
+
+const reviewChoices = '[data-execution-student], [data-execution-own-submission]';
+const reviewRoots = '[data-execution-inline-review], [data-execution-own-workspace]';
+const reviewPanel = root => root.closest('.gc-task-own-workspace') || root;
+const choiceTarget = link => link.dataset.executionStudent || link.dataset.executionOwnSubmission;
 
 function revealAttempt(root, attempt) {
     if (!attempt || new URL(location.href).searchParams.get('attempt') !== attempt || !root.getClientRects().length) return;
@@ -28,30 +33,58 @@ function showURLContext(initialContext) {
     if(!/^\d+$/.test(student || ''))return;
     const teacher=roots.some(root=>root.dataset.teacher==='true'),own=student===roots[0].dataset.viewerId;
     const bound = roots.find(root => root.dataset.user === student && root.dataset.submission === attempt);
-    const root=bound || (teacher ? roots.find(root=>own ? root.hasAttribute('data-execution-tab-workspace') : root.hasAttribute('data-execution-inline-review')) : roots[0]);
+    const root=bound || (teacher ? roots.find(root=>own ? root.hasAttribute('data-execution-own-workspace') : root.hasAttribute('data-execution-inline-review')) : roots[0]);
     if(!root)return;
     root.dataset.submission=attempt || '';
-    if (attempt) {
-        const condition = root.closest('.gc-task-sheet')?.querySelector('.gc-task-condition-disclosure');
-        if (condition && !condition.closest('.gc-task-sheet--tutor')) {
-            const sideBySide = condition.closest('.gc-chat-sheet') ? chatDesktop().matches : matchMedia('(min-width: 1200px)').matches;
-            if (!sideBySide) condition.open = false;
-        }
-    }
-    if(teacher && !bound){
-        const tab=document.getElementById((own?'own-solution-tab-':'student-solutions-tab-')+task);
-        if(tab)globalThis.bootstrap?.Tab.getOrCreateInstance(tab).show();
-        if(!own){
-            document.querySelectorAll('[data-execution-student]').forEach(link=>{if(link.dataset.executionStudent==='#'+root.id)link.removeAttribute('aria-current');});
-            const link=[...document.querySelectorAll('[data-execution-student]')].find(link=>link.dataset.studentId===student && link.dataset.executionStudent==='#'+root.id);
-            if(link)link.setAttribute('aria-current','true');
-            root.dispatchEvent(new CustomEvent('gc:execution-open',{detail:{id:student,name:link?.dataset.studentName || '',attempt}}));return;
-        }
+    const navigation = root.closest('[data-execution-review-navigation]');
+    if (navigation) {
+        const link = [...navigation.querySelectorAll(reviewChoices)]
+            .find(link => choiceTarget(link) === '#' + root.id && link.dataset.studentId === student);
+        root.dispatchEvent(new CustomEvent('gc:execution-open', {
+            detail: {id: student, name: link?.dataset.studentName || '', own, attempt},
+        }));
+        return;
     }
     root.dispatchEvent(new CustomEvent('gc:execution-context',{detail:{attempt}}));
 }
 
+function activeReview(navigation) {
+    return [...navigation.querySelectorAll(reviewRoots)].find(root => !reviewPanel(root).hidden);
+}
+
+function syncTeacherChat(navigation) {
+    const list = navigation.querySelector('[data-execution-student-list]');
+    const dialog = navigation.querySelector('.gc-teacher-chat-dialog');
+    const desktop = chatDesktop().matches;
+    const active = activeReview(navigation);
+    list.hidden = desktop && !!active;
+    if (!desktop && active && navigation.getClientRects().length) {
+        if (!dialog.open) dialog.showModal();
+    } else if (dialog.open) dialog.close();
+}
+
+function initTeacherChat(dialog) {
+    dialog.dataset.chatMounted = '';
+    const navigation = dialog.parentElement;
+    const sheet = dialog.closest('.gc-task-sheet');
+    const panel = navigation.querySelector('[data-teacher-chat-panel]');
+    mountTaskChatPanel({sheet, dialog, panel, onPlace: () => syncTeacherChat(navigation)});
+    dialog.addEventListener('cancel', event => {
+        event.preventDefault();
+        activeReview(navigation)?.dispatchEvent(new CustomEvent('gc:execution-close'));
+    });
+    dialog.addEventListener('close', () => {
+        if (dialog.open || chatDesktop().matches) return;
+        activeReview(navigation)?.dispatchEvent(new CustomEvent('gc:execution-close', {
+            detail: {fromHistory: true, restoreFocus: false},
+        }));
+    });
+}
+
 export default function initCodeChecking() {
+    for (const dialog of document.querySelectorAll('.gc-teacher-chat-dialog:not([data-chat-mounted])')) {
+        initTeacherChat(dialog);
+    }
     document.querySelectorAll('[data-quiz-student-for]').forEach(select=>{
         if(select.dataset.connected)return;
         select.dataset.connected='true';
@@ -66,7 +99,9 @@ export default function initCodeChecking() {
         if (root.dataset.initialized) return;
         root.dataset.initialized = 'true';
         let ready, pendingIntent, listScroll=null, openSequence=0;
-        const list=root.closest('[data-execution-review-navigation]')?.querySelector('[data-execution-student-list]');
+        const navigation = root.closest('[data-execution-review-navigation]');
+        const list = navigation?.querySelector('[data-execution-student-list]');
+        const panel = reviewPanel(root);
         const load = () => ready ||= import('../code-checking/workspace').then(module => module.workspace(root)).catch(error => {
             ready = null;
             root.replaceChildren();
@@ -90,16 +125,31 @@ export default function initCodeChecking() {
         });
         const open = async intent => {
             pendingIntent = intent;const sequence=++openSequence;
-            root.hidden = false;
-            if(list && !list.hidden){listScroll=intent.fromList ? window.scrollY : null;list.hidden=true;}
+            if (list) {
+                for (const other of navigation.querySelectorAll(reviewRoots)) {
+                    if (other !== root && !reviewPanel(other).hidden) {
+                        other.dispatchEvent(new CustomEvent('gc:execution-close', {detail: {switching: true}}));
+                    }
+                }
+                for (const link of list.querySelectorAll(reviewChoices)) {
+                    if (choiceTarget(link) === '#' + root.id && link.dataset.studentId === intent.id) {
+                        link.setAttribute('aria-current', 'true');
+                    } else {
+                        link.removeAttribute('aria-current');
+                    }
+                }
+                if (intent.fromList) listScroll = window.scrollY;
+            }
+            panel.hidden = false;
+            if (navigation) syncTeacherChat(navigation);
             try {
                 const controller = await load();
-                if (sequence!==openSequence || root.hidden) return;
+                if (sequence !== openSequence || panel.hidden) return;
                 const selected = intent;
-                if (selected.own) await controller.startOwnSubmission();
+                if (selected.own) await controller.startOwnSubmission({attempt: selected.attempt});
                 else await controller.selectStudent(selected,{attempt:selected.attempt});
                 if (sequence === openSequence && !selected.fromList) revealAttempt(root, selected.attempt);
-                if (sequence === openSequence && selected.fromList && !chatDesktop().matches) {
+                if (sequence === openSequence && selected.fromList && !navigation && !chatDesktop().matches) {
                     const heading = root.querySelector('.gc-chat-head') || root;
                     const bounds = heading.getBoundingClientRect();
                     if (bounds.top < 0 || bounds.bottom > innerHeight) heading.scrollIntoView({block:'start',behavior:'instant'});
@@ -113,29 +163,38 @@ export default function initCodeChecking() {
             if(links.length>1)links[index<0 ? (event.detail.direction<0?links.length-1:0) : (index+(event.detail.direction<0?links.length-1:1))%links.length].click();
         });
         root.addEventListener('gc:execution-activate',() => {
-            if(root.hasAttribute('data-execution-inline-review') && root.hidden)return;
+            if (navigation && panel.hidden) return;
             load().then(controller=>controller.activate()).catch(()=>{});
         });
         root.addEventListener('gc:execution-context',event=>load().then(async controller=>{
             await controller.context(event.detail.attempt);
             revealAttempt(root, event.detail.attempt);
         }).catch(()=>{}));
-        root.addEventListener('gc:execution-close',() => {
-            openSequence++;root.hidden = true;
-            const url=new URL(location.href);for(const key of ['student','attempt'])url.searchParams.delete(key);
-            url.searchParams.set('task',root.dataset.taskId);url.hash='task'+root.dataset.taskId;
-            globalThis.history.replaceState(null,'',url);
-            if(list){list.hidden=false;requestAnimationFrame(()=>listScroll===null ? list.scrollIntoView({block:'start',behavior:'instant'}) : window.scrollTo({top:listScroll,behavior:'instant'}));}
-            document.querySelectorAll('[data-execution-student]').forEach(link => {
-                if (link.dataset.executionStudent === '#'+root.id && link.getAttribute('aria-current') === 'true') {link.removeAttribute('aria-current');link.focus({preventScroll:true});}
-            });
+        root.addEventListener('gc:execution-close', event => {
+            openSequence++;panel.hidden = true;
+            if (event.detail?.switching) return;
+            if (!event.detail?.fromHistory) {
+                const url=new URL(location.href);for(const key of ['student','attempt'])url.searchParams.delete(key);
+                url.searchParams.set('task',root.dataset.taskId);url.hash='task'+root.dataset.taskId;
+                globalThis.history.replaceState(null,'',url);
+            }
+            if (list) {
+                syncTeacherChat(navigation);
+                const choice = list.querySelector('[aria-current="true"]');
+                choice?.removeAttribute('aria-current');
+                if (event.detail?.restoreFocus !== false) {
+                    choice?.focus({preventScroll: listScroll !== null || chatDesktop().matches});
+                    if (listScroll !== null) window.scrollTo({top: listScroll, behavior: 'instant'});
+                }
+                listScroll = null;
+            }
         });
         if (root.hasAttribute('data-execution-inline-review')) return;
-        if (root.hasAttribute('data-execution-tab-workspace')) {
-            if(root.closest('.tab-pane')?.classList.contains('active'))load().catch(() => {});
+        if (root.hasAttribute('data-execution-own-workspace')) {
+            if (!panel.hidden) open({own: true, id: root.dataset.viewerId});
             return;
         }
-        if (root.closest('.gc-task-sheet--tutor')) {
+        if (root.closest('.gc-task-sheet--student')) {
             const pane = root.closest('.step-content > .tab-pane');
             if (!pane || pane.classList.contains('active')) load().catch(() => {});
             return;
@@ -149,21 +208,20 @@ export default function initCodeChecking() {
     if (!document.documentElement.hasAttribute('data-execution-navigation-ready')) {
         document.documentElement.setAttribute('data-execution-navigation-ready','');
         document.addEventListener('shown.bs.tab',event => {
-            const target=event.target.dataset.executionTabTarget;
-            if(target)document.querySelector(target)?.dispatchEvent(new CustomEvent('gc:execution-activate'));
             if (event.target.matches('.task-pill')) {
                 const pane = document.getElementById(event.target.getAttribute('aria-controls'));
-                pane?.querySelector('.gc-task-sheet--tutor [data-execution-workspace]')?.dispatchEvent(new CustomEvent('gc:execution-activate'));
+                pane?.querySelector('.gc-task-sheet--student [data-execution-workspace]')?.dispatchEvent(new CustomEvent('gc:execution-activate'));
             }
         });
         window.addEventListener('popstate',()=>{
-            if(new URL(location.href).searchParams.has('student'))showURLContext();
-            else{
-                const task=location.hash.match(/^#task(\d+)$/)?.[1];
-                const tab=document.getElementById('student-solutions-tab-'+task);
-                if(tab)globalThis.bootstrap?.Tab.getOrCreateInstance(tab).show();
-                const root=document.getElementById('execution-workspace-'+task);
-                if(root?.hasAttribute('data-execution-inline-review') && !root.hidden)root.dispatchEvent(new CustomEvent('gc:execution-close'));
+            showURLContext();
+            if (!new URL(location.href).searchParams.has('student')) {
+                const pane = document.getElementById(location.hash.slice(1));
+                for (const root of pane?.querySelectorAll(reviewRoots) || []) {
+                    if (!reviewPanel(root).hidden) {
+                        root.dispatchEvent(new CustomEvent('gc:execution-close', {detail: {fromHistory: true}}));
+                    }
+                }
             }
         });
         document.addEventListener('click',event => {
@@ -182,23 +240,18 @@ export default function initCodeChecking() {
                 }).catch(error=>{if(feedback)feedback.textContent=error.message;}).finally(()=>{batch.disabled=false;});
                 return;
             }
-            const action = event.target.closest('[data-execution-student], [data-execution-own-submission]');
+            const action = event.target.closest(reviewChoices);
             if (!action || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
-            const target = action.dataset.executionStudent || action.dataset.executionOwnSubmission;
-            const root = document.querySelector(target);
+            const root = document.querySelector(choiceTarget(action));
             if (!root) return;
-            const alreadyOpen=!root.hidden;
+            const alreadyOpen = !reviewPanel(root).hidden;
             event.preventDefault();
-            document.querySelectorAll('[data-execution-student]').forEach(link => {
-                if (link.dataset.executionStudent === target) link.removeAttribute('aria-current');
-            });
-            if (action.dataset.executionStudent) action.setAttribute('aria-current','true');
-            if(action.dataset.executionStudent){
-                const url=new URL(location.href);url.searchParams.set('student',action.dataset.studentId);url.searchParams.set('task',root.dataset.taskId);url.searchParams.delete('attempt');url.hash='task'+root.dataset.taskId;
-                globalThis.history[alreadyOpen?'replaceState':'pushState']({gcTaskReview:true},'',url);
-            }
-            root.dispatchEvent(new CustomEvent('gc:execution-open',{detail:action.dataset.executionOwnSubmission ? {own:true} : {id:action.dataset.studentId,name:action.dataset.studentName,fromList:!alreadyOpen}}));
-
+            const {studentId: id, studentName: name} = action.dataset;
+            const url=new URL(location.href);url.searchParams.set('student',id);url.searchParams.set('task',root.dataset.taskId);url.searchParams.delete('attempt');url.hash='task'+root.dataset.taskId;
+            globalThis.history[alreadyOpen?'replaceState':'pushState']({gcTaskReview:true},'',url);
+            root.dispatchEvent(new CustomEvent('gc:execution-open', {
+                detail: {id, name, own: action.hasAttribute('data-execution-own-submission'), fromList: !alreadyOpen},
+            }));
         });
     }
     document.querySelectorAll('[data-checker-editor]').forEach(root => {

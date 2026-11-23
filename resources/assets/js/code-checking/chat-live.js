@@ -1,7 +1,7 @@
 import {io} from 'socket.io-client';
 
 // The socket carries invalidations. The existing authenticated history endpoint supplies the content.
-export function watchTaskChat(root, student, refresh) {
+export function watchTaskChat(root, panel, student, refresh) {
     let socket, retry, fallback, attempts = 0, visible = false, suspended = false;
     const active = () => visible && !suspended && !document.hidden;
     function stop() {
@@ -45,7 +45,7 @@ export function watchTaskChat(root, student, refresh) {
     }
     function sync() { if (active()) connect(); else stop(); }
     const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); });
-    observer.observe(root);
+    observer.observe(panel);
     const hide = () => { suspended = true; stop(); };
     const show = () => { suspended = false; sync(); };
     document.addEventListener('visibilitychange', sync);

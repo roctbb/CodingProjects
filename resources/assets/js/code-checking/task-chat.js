@@ -3,7 +3,7 @@ import {watchTaskChat} from './chat-live';
 import {showCriteria, criterionTable, testSummary} from './chat-results';
 import {markdownContent} from './feedback';
 import autosize from 'autosize';
-import {chatDesktop} from '../components/workbook-navigation';
+import {chatDesktop, mountTaskChatPanel} from '../components/workbook-navigation';
 import {executionPhase} from './composer-options';
 import {subscribe} from './progress';
 
@@ -18,7 +18,7 @@ const teacherMention = '@преподаватель ';
 const historyTimeout = 12_000;
 const hasTeacherMention = /(?:^|[^\p{L}\p{N}_@])@преподаватель(?![\p{L}\p{N}_])/iu;
 
-// On a phone the condition sits above the chat and the keyboard can resize the viewport.
+// Keep the composer visible when the phone keyboard changes the viewport.
 function fitChat(shell, root, input, dialog) {
     const sheet=root.closest('.gc-chat-sheet');
     const desktop=chatDesktop();
@@ -64,8 +64,8 @@ export function taskChat(root, actions) {
     const viewer = Number(root.dataset.viewerId);
     const withTutor = root.hasAttribute('data-chat-tutor');
     const sheet = root.closest('.gc-task-sheet');
-    const openChat = withTutor && sheet?.querySelector('[data-task-chat-open]');
-    const dialog = openChat ? node('dialog', {id:openChat.getAttribute('aria-controls'), class:'gc-tutor-chat-dialog', 'aria-label':'Чат задачи'}) : null;
+    const openChat = sheet?.querySelector('[data-task-chat-open]');
+    const dialog = openChat ? node('dialog', {id:openChat.getAttribute('aria-controls'), class:'gc-task-chat-dialog', 'aria-label':'Чат задачи'}) : null;
     const title = node('strong', {}, withTutor ? tutorName : 'Чат задачи');
     const member = node('small');
     const avatar = withTutor
@@ -109,32 +109,32 @@ export function taskChat(root, actions) {
     const shortcuts = askTeacher ? node('div', {class:'gc-chat-shortcuts'}, attach, askTeacher) : null;
     const form = node('form',{class:'gc-chat-compose'},reply,shortcuts,node('div',{class:'gc-chat-entry'},shortcuts ? null : attach,input,send));
     const shell = node('section',{class:dialog ? 'gc-task-chat gc-task-chat--panel' : 'gc-task-chat',hidden:true,'aria-label':'Личная переписка по задаче'},header,log,form,status);
-    const surface = dialog ? node('div', {}, shell, dialog) : shell;
-    let revealTutorStart = false;
-    if (dialog) {
-        const desktop = chatDesktop();
-        function placeChat() {
-            if (desktop.matches) {
-                dialog.close();
-                surface.prepend(shell);
-            } else dialog.append(shell);
-        }
-        placeChat();
-        desktop.addEventListener('change', placeChat);
-        openChat.addEventListener('click', () => {
-            dialog.showModal();
-            openChat.setAttribute('aria-expanded', 'true');
-            showLatestTutorStart();
-        });
-        dialog.addEventListener('close', () => {
-            if (!dialog.open) openChat.setAttribute('aria-expanded', 'false');
-        });
-        const pane = sheet.closest('.step-content > .tab-pane');
-        sheet.closest('.gc-workbook').addEventListener('hide.bs.tab', event => {
-            if (pane && event.target.getAttribute('aria-controls') === pane.id) dialog.close();
-        });
-        openChat.hidden = false;
+    const solutions = actions.solutions;
+    let selectView = () => {};
+    if (solutions) {
+        log.id = root.id+'-messages';
+        const chatButton = button('Чат', () => selectView(false));
+        const listButton = button('Список решений', () => selectView(true));
+        chatButton.classList.remove('btn-outline-secondary');
+        listButton.classList.remove('btn-outline-secondary');
+        chatButton.setAttribute('aria-controls', log.id);
+        listButton.setAttribute('aria-controls', solutions.id);
+        selectView = showSolutions => {
+            chatButton.setAttribute('aria-pressed', String(!showSolutions));
+            listButton.setAttribute('aria-pressed', String(showSolutions));
+            log.hidden = form.hidden = status.hidden = showSolutions;
+            solutions.hidden = !showSolutions;
+            if (!showSolutions && !shell.hidden) autosize.update(input);
+        };
+        header.classList.add('gc-chat-head--with-views');
+        header.append(node('div', {class:'gc-chat-views', role:'group', 'aria-label':'Вид панели'}, chatButton,listButton));
+        shell.append(solutions);
     }
+    const surface = dialog ? node('div', {}, dialog) : shell;
+    let revealTutorStart = false;
+    if (dialog) mountTaskChatPanel({
+        sheet, opener:openChat, dialog, panel:shell, onOpen:() => { refresh(); if (withTutor) showLatestTutorStart(); },
+    });
     let stopFit, stopWatching, activeRead, refreshPending = false, awaitingTutor = false;
     let student=null, cursor=null, loading=false, token=0, readNumber=0, pending=false, replyTo=null;
     let events=new Map(), drafts=new Map(), newestIds=[], signature='';
@@ -529,7 +529,8 @@ export function taskChat(root, actions) {
         stopFit?.();stopFit=null;
         student=Number(studentId)||null;shell.hidden=!student;
         if(!student){dialog?.close();autosize.destroy(input);return;}
-        stopFit=fitChat(shell,root,input,dialog);
+        selectView(false);
+        stopFit=fitChat(shell,root,input,dialog || sheet?.querySelector('.gc-teacher-chat-dialog'));
         member.textContent=teacher?(name || 'Ученик'):'Вы и преподаватель';
         attach.hidden=!canSubmit;
         const draft=drafts.get(student);replyTo=draft?.reply || null;input.value=draft?.text || '';
@@ -538,7 +539,7 @@ export function taskChat(root, actions) {
         reply.hidden=!replyTo;quoted.textContent=replyTo?'Ответ на посылку · '+replyTo.label:'';
         awaitingTutor=false;revealTutorStart=false;messages.replaceChildren();status.textContent='';
         showHistoryStatus('Загружаем переписку…');
-        enable();load();stopWatching=watchTaskChat(root, student, refresh);
+        enable();load();stopWatching=watchTaskChat(root, shell, student, refresh);
     }
     window.addEventListener('pagehide', () => { for (const watch of watching.values()) watch.stop?.(); watching.clear(); });
     input.oninput=()=>{saveDraft();enable();};

@@ -16,7 +16,7 @@
              @endif>
             @php
                 $isInsider = \Request::is('insider/*');
-                $nativeTaskChecker = $isInsider && \Illuminate\Support\Facades\Schema::hasTable('code_task_checkers') ? \App\CodeTaskChecker::find($task->id) : null;
+                $nativeTaskChecker = $isInsider ? $task->workbookChecker : null;
                 $isManager = $isInsider && ($course->teachers->contains($user) || $user->role=='admin');
                 $deadline = $isInsider ? $task->getDeadline($course->id, $isManager ? null : $user->id) : null;
                 $latestUserSolution = $isInsider && Auth::check() ? $task->latestSolutionForUser(Auth::id()) : null;
@@ -45,37 +45,13 @@
                     }
                 }
                 $studentSheet = $isInsider && !$isManager && !$task->is_quiz;
-                $inlineCondition = $studentSheet && empty($studentAttempt);
-                $studentTutorPanel = $studentSheet && $user->role === 'student' && \App\Services\Tutor\Context::enabledForCourse($course->id);
                 $teacherSheet = $isManager && !$task->is_quiz;
-                $ownTabActive = $teacherSheet && $errors->has('text');
+                $inlineCondition = $teacherSheet || ($studentSheet && empty($studentAttempt));
+                $ownWorkspaceActive = $teacherSheet && $errors->has('text');
             @endphp
-            <div class="gc-task-sheet @if($isInsider && $task->is_quiz) gc-section step-task-card step-task-card--quiz gc-quiz-card @elseif($isInsider) gc-task-sheet--split gc-chat-sheet @endif @if($studentTutorPanel) gc-task-sheet--tutor @elseif($teacherSheet) gc-task-sheet--teacher @endif">
-            @if($teacherSheet)
-                <header class="gc-task-title-row gc-task-title-row--teacher">
-                    @include('steps.partials.task_header')
-                </header>
-            @elseif($studentSheet)
-                @php
-                    $outcome = \App\Support\TaskOutcome::forStudent($task, $user->id, ($nativeTaskProgress ?? collect())->get($task->id)?->get($user->id));
-                @endphp
-                <header class="gc-task-title-row gc-task-title-row--student">
-                    <div class="gc-task-title-group">
-                        @if(!empty($studentAttempt))<h1>{{ $task->name }}</h1>@else<h2>{{ $task->name }}</h2>@endif
-                        <div class="gc-task-title-facts">
-                            <div class="gc-task-outcome" data-task-outcome data-tone="{{ $outcome['tone'] }}" aria-live="polite">
-                                <span>{{ $outcome['label'] }}</span>
-                                <small title="Лучшая оценка за решение" @if($outcome['score'] === null) hidden @endif>{{ $outcome['score'] }}</small>
-                            </div>
-                            @include('steps.partials.task-title-rewards')
-                            @include('steps.partials.task-timing')
-                        </div>
-                    </div>
-                    @if($studentTutorPanel)
-                        <button type="button" class="btn btn-outline-secondary gc-task-chat-open" data-task-chat-open
-                                aria-haspopup="dialog" aria-controls="task-chat-dialog-{{ $task->id }}" aria-expanded="false" hidden>Чат задачи</button>
-                    @endif
-                </header>
+            <div class="gc-task-sheet @if($isInsider && $task->is_quiz) gc-section step-task-card step-task-card--quiz gc-quiz-card @elseif($studentSheet) gc-chat-sheet gc-task-sheet--student @elseif($teacherSheet) gc-chat-sheet gc-task-sheet--teacher @endif">
+            @if($teacherSheet || $studentSheet)
+                @include('steps.partials.task_header', ['worksheet' => true])
             @endif
             @if($isInsider && $task->is_quiz)
                 @include('steps.partials.task_header')
@@ -84,7 +60,7 @@
             @else
             <details class="gc-task-condition-disclosure" data-task-condition="{{ $task->id }}"
                      @if($latestUserSolution?->submitted || ($submittedCodeTasks ?? collect())->has($task->id)) data-submitted @endif
-                     @if($studentTutorPanel || ($attemptTask ?? null)?->id !== $task->id) open @endif>
+                     @if($studentSheet || ($attemptTask ?? null)?->id !== $task->id) open @endif>
             <summary>
                 @if($teacherSheet || $studentSheet || !empty($studentAttempt))
                     <span>Условие</span>
@@ -246,7 +222,7 @@
             @unless($isInsider && $task->is_quiz)
                 @if($inlineCondition)</section>@else</details>@endif
             @endunless
-            @if($studentTutorPanel)
+            @if($studentSheet)
                 <section class="gc-task-history" aria-labelledby="task-history-title-{{ $task->id }}" data-task-attempt-history hidden>
                     <h3 id="task-history-title-{{ $task->id }}">Отправленные решения</h3>
                     <ul class="gc-attempt-list"></ul>
@@ -265,22 +241,10 @@
                         @php
                             $stepProgressStudents = $course->relationLoaded('statsStudents') ? $course->statsStudents : $course->students;
                         @endphp
-                        <div class="gc-task-workspaces">
-                            <header class="gc-task-review-controls">
-                                <div class="nav gc-segmented-tabs" role="tablist" aria-label="Работа с задачей">
-                                    <button class="nav-link @if($ownTabActive) active @endif" id="own-solution-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#own-solution-{{ $task->id }}" data-execution-tab-target="#execution-own-workspace-{{ $task->id }}" aria-controls="own-solution-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'true' : 'false' }}">Моё решение</button>
-                                    <button class="nav-link @if(!$ownTabActive) active @endif" id="student-solutions-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#student-solutions-{{ $task->id }}" data-execution-tab-target="#execution-workspace-{{ $task->id }}" aria-controls="student-solutions-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'false' : 'true' }}">Решения учеников</button>
-                                </div>
-                            </header>
-                            <div class="tab-content">
-                            <div class="tab-pane fade @if(!$ownTabActive) show active @endif" id="student-solutions-{{ $task->id }}" role="tabpanel" aria-labelledby="student-solutions-tab-{{ $task->id }}" tabindex="0">
-                                <div class="gc-section step-progress-card overflow-hidden" data-execution-review-navigation>
-                                    <div data-execution-student-list>
+                        <div class="gc-task-workspaces gc-section step-progress-card overflow-hidden" id="student-solutions-{{ $task->id }}" data-execution-review-navigation>
+                                    <div data-execution-student-list @if($ownWorkspaceActive) hidden @endif>
                                     <div class="gc-section-header gc-section-header--between">
-                                        <div>
-                                            <h6 class="mb-0">Прогресс учеников</h6>
-                                            <p class="text-muted small mb-0">Выберите ученика, чтобы увидеть его сдачи.</p>
-                                        </div>
+                                        <h3 class="h6 mb-0">Ученики</h3>
                                         <div class="input-group input-group-sm gc-search-box step-progress-search">
                                             <span class="input-group-text"><i class="fas fa-search"></i></span>
                                             <input type="search"
@@ -293,6 +257,13 @@
                                         </div>
                                     </div>
                                     <div class="step-progress-grid-wrap">
+                                        <a class="gc-task-own-choice"
+                                           href="{{ url('/insider/courses/'.$course->id.'/steps/'.$step->id).'?student='.Auth::id().'&task='.$task->id.'#task'.$task->id }}"
+                                           data-execution-own-submission="#execution-own-workspace-{{ $task->id }}" data-student-id="{{ Auth::id() }}">
+                                            <i class="far fa-user" aria-hidden="true"></i>
+                                            <span>Мои решения</span>
+                                            <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                                        </a>
                                         <div class="step-progress-grid" id="step-progress-grid-{{ $task->id }}">
                                         @foreach($stepProgressStudents as $student)
                                             @php
@@ -388,18 +359,18 @@
                                     </div>
                                     </div>
                                     @if($nativeTaskChecker)<p class="gc-help-text px-3 mb-2" role="status" data-execution-status-for="execution-workspace-{{ $task->id }}" hidden></p>@endif
-                                        @include('steps.partials.native-workspace', ['nativeTeacher' => true])
+                            <div class="gc-task-review-panel" data-teacher-chat-panel>
+                                @include('steps.partials.native-workspace', ['nativeTeacher' => true])
+                                <div class="gc-task-own-workspace" @unless($ownWorkspaceActive) hidden @endunless>
+                                    @if($nativeTaskChecker)
+                                        @include('steps.partials.native-workspace', ['nativeTeacher' => true, 'nativeUser' => Auth::id(), 'nativeWorkspaceId' => 'execution-own-workspace-'.$task->id, 'nativeOwnWorkspace' => true])
+                                    @else
+                                        @if(!$task->is_code) @include('steps.partials.task_solution_form') @endif
+                                        @include('steps.partials.native-workspace', ['nativeTeacher' => true, 'nativeUser' => Auth::id(), 'nativeWorkspaceId' => 'execution-own-workspace-'.$task->id, 'nativeOwnWorkspace' => true, 'nativeHistoryOnly' => true])
+                                    @endif
                                 </div>
                             </div>
-                            <div class="tab-pane fade @if($ownTabActive) show active @endif" id="own-solution-{{ $task->id }}" role="tabpanel" aria-labelledby="own-solution-tab-{{ $task->id }}" tabindex="0">
-                                @if($nativeTaskChecker)
-                                    @include('steps.partials.native-workspace', ['nativeTeacher' => true, 'nativeUser' => Auth::id(), 'nativeWorkspaceId' => 'execution-own-workspace-'.$task->id, 'nativeTabWorkspace' => true])
-                                @else
-                                    @if(!$task->is_code) @include('steps.partials.task_solution_form') @endif
-                                    @include('steps.partials.native-workspace', ['nativeTeacher' => true, 'nativeUser' => Auth::id(), 'nativeWorkspaceId' => 'execution-own-workspace-'.$task->id, 'nativeTabWorkspace' => true, 'nativeHistoryOnly' => true])
-                                @endif
-                            </div>
-                            </div>
+                            <dialog class="gc-task-chat-dialog gc-teacher-chat-dialog" aria-label="Чат задачи"></dialog>
                         </div>
                     @endif
                     @if(!$nativeTaskChecker && !$isManager) @include('steps.partials.native-workspace', ['nativeTeacher' => false, 'nativeHistoryOnly' => true]) @endif

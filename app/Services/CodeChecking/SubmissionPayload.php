@@ -21,7 +21,7 @@ class SubmissionPayload
     {
         $input = $this->body($request);
         if (($input['use_draft'] ?? false) === true) {
-            $saved = CodeDraft::where('user_id', $request->user()->id)->where('course_id', $courseId)->where('task_id', $taskId)->first();
+            $saved = CodeDraft::workspace($request, $courseId, $taskId)->first();
             abort_unless($saved,409,'Черновик не найден. Сохраните решение перед отправкой.');
             abort_unless(($input['draft_revision'] ?? null) === (int) $saved->revision, 409, 'Draft has changed.');
             $value = $saved->value;
@@ -38,7 +38,7 @@ class SubmissionPayload
         } else {
             if (isset($input['keep_files'])) {
                 abort_unless(is_array($input['keep_files']) && count($input['keep_files']) <= 100, 422);
-                $saved = CodeDraft::where('user_id', $request->user()->id)->where('course_id', $courseId)->where('task_id', $taskId)->first();
+                $saved = CodeDraft::workspace($request, $courseId, $taskId)->first();
                 abort_unless((is_int($input['draft_revision'] ?? null) || ctype_digit((string) ($input['draft_revision'] ?? '')))
                     && (int) $input['draft_revision'] === (int) ($saved?->revision ?? 0), 409, 'Draft has changed.');
                 // GET returns an unsaved revision-0 draft. The first editor save

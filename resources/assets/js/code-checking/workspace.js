@@ -36,15 +36,22 @@ function attemptOutcome(record) {
 export async function workspace(root) {
     const base = root.dataset.endpoint;
     const teacher = root.dataset.teacher === 'true';
+    const ownWorkspace = root.hasAttribute('data-execution-own-workspace');
+    const inlineReview = root.hasAttribute('data-execution-inline-review');
     const taskHeading = teacher ? null : root.closest('.gc-student-attempt')?.querySelector('.gc-attempt-heading');
     const sheet = root.closest('.gc-task-sheet');
-    const taskName = sheet?.querySelector('.gc-task-title-group :is(h1, h2)')?.textContent.trim();
+    const taskName = sheet?.querySelector('.gc-task-title-row :is(h1, h2)')?.textContent.trim();
     const taskOutcome = !teacher && sheet?.querySelector('[data-task-outcome]');
-    const taskHistory = teacher ? null : sheet?.querySelector('[data-task-attempt-history]');
+    const solutionsStatus = inlineReview || ownWorkspace ? node('p', {class:'gc-help-text', role:'status'}) : null;
+    const panelHistory = solutionsStatus ? node('section', {
+        id: root.id+'-solutions', class:'gc-task-history gc-chat-solutions', 'aria-label':'Список решений', hidden:true,
+    }, solutionsStatus, node('ul', {class:'gc-attempt-list'}), node('button', {
+        type:'button', class:'btn btn-outline-secondary mt-3', 'data-task-attempt-more':'', hidden:true,
+    }, 'Показать ещё сдачи')) : null;
+    const taskHistory = panelHistory || (!teacher ? sheet?.querySelector('[data-task-attempt-history]') : null);
     const taskAttemptList = taskHistory?.querySelector('.gc-attempt-list');
     const moreTaskAttempts = taskHistory?.querySelector('[data-task-attempt-more]');
     const focusedVerdict = taskHeading?.querySelector('[data-attempt-verdict]');
-    const inlineReview = root.hasAttribute('data-execution-inline-review');
     let config, draft, files = [], uploads = [], dirty = false, editing, stop = () => {}, page = 1, current, requestId, generation = 0;
     let saving = false, submitting = false, savePromise, editVersion=0, autoSaveTimer, settingsPromise, historyGeneration = 0, ownMode = false;
     let selectedUser = root.dataset.user ? {id:root.dataset.user,name:''} : null;
@@ -55,7 +62,7 @@ export async function workspace(root) {
     const details=detailCache((url,signal)=>httpRequest(url,'GET',undefined,{signal}));
     async function request(url,method='GET',body,options){
         const value=await httpRequest(url,method,body,options);
-        if(method!=='GET' && !url.endsWith('/code-draft'))details.clear();
+        if(method!=='GET' && !url.split('?')[0].endsWith('/code-draft'))details.clear();
         return value;
     }
     const toolbar = node('div',{class:'gc-execution-toolbar'});
@@ -66,17 +73,19 @@ export async function workspace(root) {
     const draftState=node('span',{class:'gc-draft-state',role:'status'});
     const heading=node('div',{class:'gc-submission-heading'},node('h3',{class:'h6 mb-0'},teacher?'Работа ученика':'Моё решение'),draftState);
     const stage=node('div',{class:'gc-submission-stage'},content,results);
-    const summary=node('section',{class:'gc-result-summary'+(!teacher?' is-student':''),'aria-label':'Сдача и результат',hidden:true},toolbar,history);
+    const summary=node('section',{
+        class:'gc-result-summary'+(inlineReview ? ' is-review' : !teacher ? ' is-student' : ''),
+        'aria-label':'Сдача и результат',hidden:true,
+    },toolbar,history);
     const browser = node('section',{class:'gc-execution-browser gc-submission-surface'},summary,stage);
     root.replaceChildren(notice,browser);
     const teacherOwnChat = teacher && root.dataset.user === root.dataset.viewerId;
     const personalChat = !root.hasAttribute('data-quiz-review') && (!teacher || inlineReview || !!root.dataset.user);
     const legacyForm = (!teacher || teacherOwnChat) && root.hasAttribute('data-history-only') ?
-        (root.closest('[role="tabpanel"]')?.id.startsWith('own-solution-') ? root.closest('[role="tabpanel"]') : root.closest('.gc-task-answer'))?.querySelector('.step-submit-form')?.closest('.row') : null;
+        root.closest('.gc-task-own-workspace, .gc-task-answer')?.querySelector('.step-submit-form')?.closest('.row') : null;
     let workspaceDialog, dialogHeading, previousAttempt;
-    function styleStudentDialog(dialog, view) {
-        if (teacher) return;
-        dialog.classList.add('gc-student-work-dialog');
+    function styleWorkDialog(dialog, view) {
+        dialog.classList.add('gc-work-dialog');
         dialog.dataset.view = view;
         const header = dialog.firstElementChild;
         const title = header.firstElementChild;
@@ -85,15 +94,15 @@ export async function workspace(root) {
         heading.append(title);
         if (taskName) heading.append(node('p', {}, taskName));
     }
-    function studentWorkspaceView(view) {
-        if (teacher || !workspaceDialog?.open || workspaceDialog.dataset.view === view) return;
+    function updateWorkDialogView(view) {
+        if (teacher && !ownWorkspace || !workspaceDialog?.open || workspaceDialog.dataset.view === view) return;
         workspaceDialog.dataset.view = view;
         dialogHeading.textContent = view === 'compose' ? 'Отправить решение' : 'Отправленное решение';
         workspaceDialog.scrollTop = 0;
     }
     function openWorkspace(title, view = 'result') {
         dialogHeading.textContent=title;
-        if (!teacher) workspaceDialog.dataset.view = view;
+        workspaceDialog.dataset.view = view;
         browser.before(notice);
         const verdict=verdictHost?.querySelector(':scope > header');
         if(verdict)history.after(verdict);
@@ -106,26 +115,52 @@ export async function workspace(root) {
         }
     }
     async function viewDetails(attempt) {
-        openWorkspace(teacher ? 'Проверка и оценка' : 'Отправленное решение');
+        openWorkspace(teacher && !ownWorkspace ? 'Проверка и оценка' : 'Отправленное решение');
         if(typeof attempt==='string')await openAttemptById(attempt);
     }
+    let draftSource = null, switchingDraft = false;
+    const draftQuery = source => source ? '?from_submission='+encodeURIComponent(source) : '';
+    const draftUrl = () => base+'/code-draft'+draftQuery(draftSource);
+
+    async function editDraft(source = null) {
+        if (switchingDraft || submitting) return;
+        switchingDraft = true;
+        try {
+            if (draftSource !== source) {
+                if (savePromise) await savePromise;
+                if (dirty) await save();
+                const value = await request(base+'/code-draft'+draftQuery(source), source ? 'POST' : 'GET');
+                draftSource = source;
+                setDraft(value);
+                requestId = null;
+                draftState.textContent = '';
+                renderComposer();
+            }
+            showComposer();
+        } catch (e) {
+            error(e);
+        } finally {
+            switchingDraft = false;
+        }
+    }
+
     function openEditor() {
         if(legacyForm) {
-            const body = teacher ? legacyForm : node('div', {class: 'gc-work-dialog__content'}, legacyForm);
+            const body = node('div', {class: 'gc-work-dialog__content'}, legacyForm);
             const dialog=openDialog('Отправить решение',body);
-            styleStudentDialog(dialog, 'compose');
+            styleWorkDialog(dialog, 'compose');
             legacyForm.hidden=false;
             dialog.addEventListener('close',()=>{legacyForm.hidden=true;root.after(legacyForm);},{once:true});
         }else{
             previousAttempt=activeAttempt;
-            openWorkspace('Отправить решение', 'compose');showComposer();
+            openWorkspace('Отправить решение', 'compose');editDraft();
         }
     }
     function chatDialog(title,loadContent,{wide=true,studentWork=false}={}) {
-        const body=node('div',{class:studentWork && !teacher ? 'gc-work-dialog__content' : null},node('p',{role:'status'},'Загружаем…'));
+        const body=node('div',{class:studentWork ? 'gc-work-dialog__content' : null},node('p',{role:'status'},'Загружаем…'));
         const dialog=openDialog(title,body);
         if(wide)dialog.classList.add('gc-source-dialog');
-        if(studentWork)styleStudentDialog(dialog, 'result');
+        if(studentWork)styleWorkDialog(dialog, 'result');
         const render=async()=>{try{const content=await loadContent(render,dialog);if(dialog.open)body.replaceChildren(content);}
             catch(e){if(dialog.open)body.replaceChildren(node('p',{role:'alert'},e.message),button('Повторить',render));}};
         render();
@@ -230,7 +265,8 @@ export async function workspace(root) {
         } catch (e) { error(e); }
     }
     const chat=personalChat ? taskChat(root,{
-        back:inlineReview ? ()=>root.dispatchEvent(new CustomEvent('gc:execution-close')) : null,
+        back:inlineReview || ownWorkspace ? ()=>root.dispatchEvent(new CustomEvent('gc:execution-close')) : null,
+        solutions:panelHistory,
         grade:gradeChatSubmission,recheck:openChatReview,requestReview:openReviewRequest,
         details:viewDetails,source:openSource,report:openReport,compose:openEditor,
         updated:refreshChatAttempts,
@@ -239,7 +275,7 @@ export async function workspace(root) {
         dialogHeading=node(teacher ? 'h3' : 'h2',{class:'h5 mb-0'});
         workspaceDialog=node('dialog',{id:root.id+'-dialog',class:'gc-dialog gc-source-dialog','aria-label':'Работа с решением'},
             node('header',{},dialogHeading,iconButton('Закрыть','fa-xmark',()=>workspaceDialog.close())),browser);
-        styleStudentDialog(workspaceDialog, 'result');
+        styleWorkDialog(workspaceDialog, 'result');
         root.append(chat.surface,workspaceDialog);
         if(legacyForm && !legacyForm.querySelector('.text-danger'))legacyForm.hidden=true;
         workspaceDialog.addEventListener('close',()=>{
@@ -254,7 +290,7 @@ export async function workspace(root) {
     const verdictHost = focusedVerdict;
     const busy=node('span',{class:'gc-submission-loading',role:'status'},node('i',{class:'fas fa-spinner fa-spin','aria-hidden':'true'}),' Загружаем работу…');
     function beginResult(){
-        studentWorkspaceView('result');
+        updateWorkDialogView('result');
         verdictHost?.replaceChildren();const jump=toolbar.querySelector('.gc-review-jump');if(jump)jump.disabled=true;stage.hidden=false;summary.hidden=false;summary.setAttribute('aria-busy','true');summary.querySelectorAll(':scope > header,:scope > .gc-award').forEach(el=>el.setAttribute('inert',''));stage.setAttribute('aria-busy','true');stage.setAttribute('inert','');stage.append(busy);
     }
     function finishResult(panel){
@@ -290,7 +326,7 @@ export async function workspace(root) {
             const link = node('a',{href:url,download:'my-draft.json'}); link.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
         }),button('Загрузить серверную версию',safe(async () => {
             if (!confirm('Заменить локальный черновик версией с сервера? Сначала скачайте нужный код и сохраните выбранные файлы.')) return;
-            setDraft(await request(base+'/code-draft')); renderComposer(); notice.replaceChildren();
+            setDraft(await request(draftUrl())); renderComposer(); notice.replaceChildren();
         }))));
     };
     const safe = action => async event => {event?.preventDefault(); try {await action(event);} catch (e) {if(e.name!=='AbortError')error(e);} };
@@ -328,7 +364,8 @@ export async function workspace(root) {
         } catch(e) {if(selectedUser===student && e.name!=='AbortError')failResult(e.message,()=>selectStudent(student));}
     }
     async function startOwnSubmission({attempt=null}={}) {
-        generation++;historyGeneration++;stop();current=null;activeAttempt=null;
+        const selected = ++generation;
+        historyGeneration++;stop();current=null;activeAttempt=null;
         ownMode=true;selectedUser=null;chat?.select(root.dataset.viewerId,'',!!legacyForm);results.replaceChildren();notice.replaceChildren();renderToolbar();
         content.hidden=false;
         content.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем форму сдачи…'));
@@ -337,15 +374,21 @@ export async function workspace(root) {
             if(root.hasAttribute('data-history-only')){content.hidden=true;records=await loadHistory();}
             else{
                 await settings();
+                if (selected !== generation) return;
                 if (!config.teacher_submission_allowed) throw new Error('Сдача этой задачи пока недоступна. Проверьте настройки проверки.');
-                if (!draft) setDraft(await request(base+'/code-draft'));
+                if (!draft) setDraft(await request(draftUrl()));
+                if (selected !== generation) return;
                 renderComposer();
                 chat?.setCanSubmit(true);
                 records=await loadHistory();
             }
-            if(ownMode && attempt)await openAttemptById(attempt);
-            else if(ownMode && records?.length && chat)await openAttempt(records[0]);
-        } catch(e) {error(e);notice.append(button('Повторить',safe(startOwnSubmission)));}
+            if (selected !== generation) return;
+            if(attempt)await openAttemptById(attempt);
+            else if(records?.length && chat)await openAttempt(records[0]);
+        } catch(e) {
+            if (selected !== generation) return;
+            error(e);notice.append(button('Повторить',safe(() => startOwnSubmission({attempt}))));
+        }
     }
 
     function setDraft(value) {
@@ -388,7 +431,7 @@ export async function workspace(root) {
     }
     function showComposer(){
         if(!draft || root.hasAttribute('data-history-only'))return;
-        studentWorkspaceView('compose');
+        updateWorkDialogView('compose');
         verdictHost?.replaceChildren();
         lastResultAttempt=activeAttempt || lastResultAttempt;
         backToResult.hidden=!lastResultAttempt;
@@ -402,7 +445,7 @@ export async function workspace(root) {
         if(!draft || !dirty && draft.revision>0)return;
         const version=editVersion,body=payload(),sentFiles=files.map(file=>({file,path:file.path,content:file.content})),sentUploads=[...uploads];
         saving=true;draftState.textContent='Сохраняем черновик…';
-        savePromise=request(base+'/code-draft','PUT',body).then(value=>{
+        savePromise=request(draftUrl(),'PUT',body).then(value=>{
             draft.revision=value.revision;
             const savedFiles=value.files.map((file,index)=>({...file,index})).filter(file=>!file.is_answer);
             for(const sent of sentFiles){
@@ -430,7 +473,7 @@ export async function workspace(root) {
         requestId ||= crypto.randomUUID();
         content.setAttribute('inert','');
         try {
-            const record = await request(base+'/code-submissions','POST',{request_id:requestId, use_draft:true, draft_revision:draft.revision});
+            const record = await request(base+'/code-submissions'+draftQuery(draftSource),'POST',{request_id:requestId, use_draft:true, draft_revision:draft.revision});
             root.dispatchEvent(new CustomEvent('gc:attempt-submitted', {bubbles: true, detail: {taskId: root.dataset.taskId}}));
             previousAttempt=null;workspaceDialog?.close();chat?.refresh();
             notice.replaceChildren();notice.className='';
@@ -456,11 +499,12 @@ export async function workspace(root) {
         const composerHeading=node('div',{class:'gc-composer-heading'},node('h3',{class:'h6 mb-0'},teacher?'Пробное решение':'Ваше решение'));
         backToResult.hidden=!lastResultAttempt;
         composerHeading.append(backToResult);
+        if (draftSource) composerHeading.append(node('span', {class:'gc-help-text'}, 'Доработка выбранной сдачи'));
         const body=node('section',{class:'gc-execution-composer'+(kind==='code'?' is-code-composer':''),'aria-label':'Форма сдачи решения'},composerHeading);
         if(composerVisible)summary.hidden=true;
         const form=node('div',{class:'gc-composer-body'});body.append(form);
-        const options = teacher ? form : node('div', {class:'gc-composer-options'});
-        if (!teacher) form.append(options);
+        const options = node('div', {class:'gc-composer-options'});
+        form.append(options);
         if(kind!=='text' && groups.length>1){
             const labels={files:['fa-file-arrow-up','Файлы'],code:['fa-code','Код'],repository:['fa-code-branch','Репозиторий']};
             const choices=node('div',{class:'gc-segmented-tabs gc-submission-modes',role:'group','aria-label':'Способ сдачи'});
@@ -779,7 +823,10 @@ export async function workspace(root) {
             return row;
         });
         taskAttemptList.replaceChildren(...rows);
-        taskHistory.hidden = !rows.length;
+        if (solutionsStatus) {
+            solutionsStatus.textContent = rows.length ? '' : 'Сдач пока нет.';
+            solutionsStatus.hidden = !!rows.length;
+        } else taskHistory.hidden = !rows.length;
         moreTaskAttempts.hidden = !hasMore;
         focused?.focus({preventScroll: true});
     }
@@ -847,7 +894,7 @@ export async function workspace(root) {
             if(Number(record.user_id)!==Number(teacher && !ownMode ? selectedUser.id : root.dataset.viewerId))throw new Error('Эта сдача принадлежит другому ученику. Выберите его в списке.');
             ensureAttemptCard(record);
             if(record.source_submission_id){await show(record.source_submission_id,{snapshotOf:record});return;}
-            const {header}=resultHeader(record,{showSourceDate:false,reviewing:teacher&&!ownMode,compact:!teacher});
+            const {header}=resultHeader(record,{showSourceDate:false,reviewing:teacher&&!ownMode,compact:!teacher || ownWorkspace || inlineReview});
             const panel=node('section',{class:'gc-execution-result'},header);
             if(teacher && !ownMode){const menu=resultActions();const remove=removeAttemptAction(record);menu.add(remove);remove.classList.add('text-danger');panel.append(node('div',{class:'gc-result-context-bar'},menu.root));}
             renderAward(record,panel,{label:false});
@@ -948,10 +995,13 @@ export async function workspace(root) {
         toolbar.querySelector(':scope > .gc-result-context-bar')?.remove();
         if(header && !header.hidden && tools){
             if(chat && teacher && !ownMode)toolbar.append(tools);
-            else header.append(tools);
+            else if (!ownWorkspace) header.append(tools);
         }
         const award=body.querySelector(':scope > .gc-award'),status=body.querySelector(':scope > .gc-execution-status');
-        if(teacher&&!ownMode){const navigation=toolbar.querySelector('.gc-execution-actions');if(navigation)navigation.before(history);else toolbar.append(history);if(header?.hidden&&tools)toolbar.append(tools);summary.replaceChildren(toolbar,...[header,award,status].filter(Boolean));}
+        if (inlineReview) {
+            if (header?.hidden && tools) toolbar.append(tools);
+            summary.replaceChildren(toolbar, history, ...[header,award,status].filter(Boolean));
+        } else if(teacher&&!ownMode){const navigation=toolbar.querySelector('.gc-execution-actions');if(navigation)navigation.before(history);else toolbar.append(history);if(header?.hidden&&tools)toolbar.append(tools);summary.replaceChildren(toolbar,...[header,award,status].filter(Boolean));}
         else {
             if (history.parentElement === summary) {
                 for (const child of [...summary.children]) if (child !== history) child.remove();
@@ -1083,10 +1133,9 @@ export async function workspace(root) {
         current = {...record,snapshotOf:options.snapshotOf};
         const status = node('div',{role:'status','aria-live':'polite',class:'gc-execution-status'}, phases[record.progress?.phase || record.state] || record.state);
         const target=options.snapshotOf || record;
-        const {header}=resultHeader(target,{sourceOnly:sourceOnly&&!options.snapshotOf,showSourceDate:false,reviewing:teacher&&!ownMode,compact:!teacher});
+        const {header}=resultHeader(target,{sourceOnly:sourceOnly&&!options.snapshotOf,showSourceDate:false,reviewing:teacher&&!ownMode,compact:!teacher || ownWorkspace || inlineReview});
         const terminal=['completed','error','awaiting_review','imported_pending'].includes(record.state);
         const menu=teacher ? resultActions() : null;
-        if(menu)menu.add(button('Обновить результат',safe(() => show(id,options))));
         const body = node('section',{class:'gc-execution-result'},header);
         const contextBar=menu ? node('div',{class:'gc-result-context-bar'},menu.root) : null;
         if(teacher && !ownMode && (options.snapshotOf || !record.source_version_unknown)) {
@@ -1125,9 +1174,14 @@ export async function workspace(root) {
         }
         if(menu && !sourceOnly && attemptItems.filter(item=>item.kind==='submission'&&!item.source_version_unknown).length>1)menu.add(button('Сравнить две сдачи',()=>compareDialog(record)));
         if (teacher && !ownMode && !sourceOnly) {
-            if (record.review_request?.requested) body.append(node('p',{class:'gc-review-request-note'},'Запрос ученика: '+record.review_request.comment));
-            const viewed=button(record.teacher_viewed ? 'Отметить непросмотренным' : 'Отметить просмотренным',safe(async () => {await request(`/insider/code-submissions/${id}/flags`,'PUT',{teacher_viewed:!record.teacher_viewed}); await show(id); await loadHistory();}));
-            menu.add(viewed);
+            if (target.review_request?.requested) {
+                body.append(node('p',{class:'gc-review-request-note'},'Запрос ученика: '+target.review_request.comment));
+                menu.add(button(record.teacher_viewed ? 'Отметить непросмотренным' : 'Отметить просмотренным',safe(async () => {
+                    await request(`/insider/code-submissions/${id}/flags`,'PUT',{teacher_viewed:!record.teacher_viewed});
+                    await show(id,options);
+                    await loadHistory();
+                })));
+            }
             contextBar.prepend(authorshipPanel(record,async dismissed=>{await request(`/insider/code-submissions/${id}/integrity/review`,'PUT',{dismissed});await show(id,options);root.querySelector('[data-authorship-trigger]')?.focus({preventScroll:true});}));
 
         }
@@ -1178,8 +1232,13 @@ export async function workspace(root) {
         }
         if(terminal && (!teacher || ownMode) && !root.hasAttribute('data-history-only')){
             const complete=record.state==='completed' && record.maximum_points>0 && record.points>=record.maximum_points;
-            const controls=actions(button(complete?'Ещё одно решение':'Исправить решение',showComposer,complete?'outline-secondary':'primary'));
-            if(complete && root.dataset.continueUrl)controls.append(node('a',{href:root.dataset.continueUrl,class:'btn btn-primary'},root.dataset.continueLabel || 'Продолжить обучение'));
+            const canRevise = !complete && !record.source_version_unknown && !config?.requires_conversion && root.dataset.blocked !== 'true';
+            const controls = actions();
+            if (canRevise) controls.append(button('Исправить решение', () => editDraft(record.id), 'primary'));
+            if (root.dataset.blocked !== 'true' && !config?.requires_conversion) {
+                controls.append(button(complete ? 'Ещё одно решение' : 'Открыть основной черновик', () => editDraft(), 'outline-secondary'));
+            }
+            if(complete && root.dataset.continueUrl)controls.append(node('a',{href:root.dataset.continueUrl,'data-workbook-tab-target':new URL(root.dataset.continueUrl).hash || null,class:'btn btn-primary'},root.dataset.continueLabel || 'Продолжить обучение'));
             body.append(controls);
         }
         arrangeResult(body);finishResult(body);
@@ -1217,16 +1276,32 @@ export async function workspace(root) {
         const query = new URLSearchParams({page:String(requestedPage)});
         if(teacher && ownMode)query.set('user_id',config?.viewer_user_id || root.dataset.viewerId);
         else if(teacher && selectedUser)query.set('user_id',selectedUser.id);
+        if (solutionsStatus && !append && !attemptItems.length) {
+            taskAttemptList.replaceChildren();
+            moreTaskAttempts.hidden = true;
+            solutionsStatus.textContent = 'Загружаем сдачи…';
+            solutionsStatus.hidden = false;
+        }
         if(!append && !attemptItems.length)history.replaceChildren(node('p',{class:'text-muted',role:'status'},'Загружаем сдачи…'));
         let value;
         try {value = await request(base+'/code-submissions?'+query);} catch(e) {
             if(requestGeneration!==historyGeneration)return [];
             if(!append && !attemptItems.length)history.replaceChildren(node('p',{class:'text-danger'},e.message),button('Повторить загрузку списка',safe(() => loadHistory())));
+            if (solutionsStatus && !append) {
+                solutionsStatus.replaceChildren(e.message, ' ', button('Повторить', safe(() => loadHistory())));
+                solutionsStatus.hidden = false;
+            }
             throw e;
         }
         if(requestGeneration!==historyGeneration)return [];
         if (taskOutcome && value.task_outcome) {
             const {tone, label, score} = value.task_outcome;
+            const tab = document.getElementById('tasks-tab'+root.dataset.taskId)?.querySelector('[data-workbook-outcome]');
+            if (tab && tone !== 'empty' && root.dataset.blocked !== 'true') {
+                tab.className = 'gc-task-state gc-task-state--compact gc-task-state--'+value.task_outcome.tab_tone;
+                tab.title = tab.querySelector('span').textContent = label;
+                tab.querySelector('i').className = 'fas fa-'+value.task_outcome.icon;
+            }
             taskOutcome.dataset.tone = tone;
             taskOutcome.querySelector('span').textContent = label;
             const points = taskOutcome.querySelector('small');
@@ -1249,7 +1324,7 @@ export async function workspace(root) {
         }
         const heading = node('div', {class:'gc-attempt-history__heading'});
         let picker;
-        if (teacher) {
+        if (teacher && !ownWorkspace && !inlineReview) {
             heading.append(node('span', {}, ownMode ? 'Моё решение' : 'Сдача'));
             picker=select(activeAttempt || '',Object.fromEntries(attemptItems.map(item=>[String(item.id),choiceLabel(item)])),()=>{});
             picker.dataset.attemptPicker='';picker.setAttribute('aria-label','Выбрать попытку');
@@ -1257,7 +1332,7 @@ export async function workspace(root) {
             heading.append(attemptItems.length===1 ? node('strong',{},choiceLabel(attemptItems[0])) : picker);
         } else {
             heading.classList.add('gc-attempt-history__heading--steps');
-            heading.append(node('div', {class:'gc-attempt-steps', role:'group', 'aria-label':'Мои сдачи'}, attemptItems.map(item => attemptStep(item))),
+            heading.append(node('div', {class:'gc-attempt-steps', role:'group', 'aria-label':inlineReview ? 'Сдачи ученика' : 'Мои сдачи'}, attemptItems.map(item => attemptStep(item))),
                 node('time', {class:'gc-attempt-history__date', hidden:true}),
                 node('span', {class:'gc-help-text gc-attempt-history__viewed', hidden:true}));
         }
@@ -1305,7 +1380,7 @@ export async function workspace(root) {
         else{
             [,records]=await Promise.all([settings(),loadHistory()]);
             if(root.dataset.blocked!=='true' && !config.requires_conversion){
-                if(!draft){setDraft(await request(base+'/code-draft'));renderComposer();}
+                if(!draft){setDraft(await request(draftUrl()));renderComposer();}
             }else if(!content.children.length)content.append(node('p',{class:'alert alert-warning'},config.requires_conversion ? 'Преподавателю нужно настроить проверку перед сдачей.' : 'Новые сдачи этой задачи заблокированы.'));
         }
         if(root.dataset.submission || activeAttempt)await openAttemptById(activeAttempt || root.dataset.submission);
@@ -1325,8 +1400,10 @@ export async function workspace(root) {
     try {
         if(teacher){
             renderToolbar();content.hidden=true;
-            if(root.dataset.user && root.dataset.user===root.dataset.viewerId)await startOwnSubmission({attempt:root.dataset.submission});
-            else if(root.dataset.user)await selectStudent(selectedUser,{attempt:root.dataset.submission});
+            if (!ownWorkspace && root.dataset.user) {
+                if (teacherOwnChat) await startOwnSubmission({attempt:root.dataset.submission});
+                else await selectStudent(selectedUser,{attempt:root.dataset.submission});
+            }
         }else await initializeStudent();
     } catch(e){initializationError(e);}
     return controller;

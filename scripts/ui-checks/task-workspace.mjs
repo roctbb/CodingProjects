@@ -10,10 +10,23 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
         const showStudentChat=async work=>{
             const sheet=work.locator('xpath=ancestor::div[contains(@class,"gc-task-sheet")][1]');
             const chat=work.locator('.gc-task-chat:visible');
-            if (width<992 && await sheet.locator('[data-task-chat-open]').count() && !await chat.isVisible()) {
+            if (width<1200 && await sheet.locator('[data-task-chat-open]').count() && !await chat.isVisible()) {
                 await sheet.getByRole('button',{name:'Чат задачи',exact:true}).click();
             }
         };
+        const waitForStudentChatViewport = task => page.waitForFunction(task => {
+            const chat = document.querySelector('#execution-workspace-' + task + ' .gc-task-chat:not([hidden])');
+            if (!chat) return false;
+            const viewport = window.visualViewport;
+            const top = viewport?.offsetTop ?? 0;
+            const bottom = top + (viewport?.height ?? innerHeight);
+            const panel = chat.getBoundingClientRect();
+            const input = chat.querySelector('textarea').getBoundingClientRect();
+            const heading = document.querySelector('.gc-workbook-header').getBoundingClientRect();
+            return Math.abs(bottom - panel.bottom) <= 2 && Math.abs(top - panel.top) <= 2
+                && input.height > 0 && input.bottom <= bottom
+                && (!matchMedia('(min-width: 1200px)').matches || heading.right <= panel.left + 2);
+        }, task);
         const openWork=async(actor,task,attempt=null)=>{
             const chat=page.locator('#execution-workspace-'+task+' .gc-task-chat:visible');
             const work=page.locator('#execution-workspace-'+task);
@@ -57,7 +70,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                         .filter(box => box.height > 0)
                         .every(box => Math.abs(center(box) - rowCenter) < 1);
                 }), width);
-                if (attempt && width < 992) {
+                if (attempt && width < 1200) {
                     await conditionToggle.click();
                     check('task-attempts-stay-visible-after-collapsing-condition',
                         !await condition.locator('.gc-task-condition-content').isVisible() && await attemptRow.isVisible(), width);
@@ -95,10 +108,10 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 await page.locator('dialog[open] .gc-execution-composer').waitFor();
                 await page.keyboard.press('Escape');
                 check('start-solution-below-statement',true,width);
-                if (width >= 992) await page.setViewportSize({width:1280,height:580});
+                if (width >= 1200) await page.setViewportSize({width:1280,height:580});
                 const opener=page.getByRole('button',{name:'Чат задачи',exact:true});
                 const chat=work.locator('.gc-task-chat');
-                if (width<992) {
+                if (width<1200) {
                     check('mobile-tutor-opens-from-task', !await chat.isVisible(), width);
                     await showStudentChat(work);
                     const draft=chat.getByRole('textbox');
@@ -111,19 +124,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                     await chat.waitFor({state:'hidden'});
                     await opener.click();
                 }
-                await page.waitForFunction(() => {
-                    const chat = document.querySelector('#execution-workspace-12 .gc-task-chat:not([hidden])');
-                    if (!chat) return false;
-                    const viewport = window.visualViewport;
-                    const bottom = viewport ? viewport.offsetTop + viewport.height : innerHeight;
-                    const top = viewport?.offsetTop ?? 0;
-                    const panel = chat.getBoundingClientRect();
-                    const input = chat.querySelector('textarea').getBoundingClientRect();
-                    const heading = document.querySelector('.gc-workbook-header').getBoundingClientRect();
-                    return Math.abs(bottom - panel.bottom) <= 2 && Math.abs(top - panel.top) <= 2
-                        && input.height > 0 && input.bottom <= bottom
-                        && (!matchMedia('(min-width: 992px)').matches || heading.right <= panel.left + 2);
-                });
+                await waitForStudentChatViewport(12);
                 check('chat-fills-viewport-and-keeps-composer-visible', true, width);
                 await page.screenshot({path:`${output}/tutor-panel-${width}.png`});
                 const ask = chat.getByRole('button', {name:'Спросить преподавателя',exact:true});
@@ -190,7 +191,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 check('choosing-score-binds-attempt-without-erasing-draft',selected.attempt==='solution-41'
                     && selected.body==='Почему 26/35?' && await draft.inputValue()==='Мой незаконченный вопрос',width);
                 await page.unroute(chatUrl);
-                if (width >= 992) await page.setViewportSize({width,height:1000});
+                if (width >= 1200) await page.setViewportSize({width,height:1000});
             }
             if(open)await openWork(actor,task,attempt);
         };
@@ -202,7 +203,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
         };
         try{
             await page.setViewportSize({width,height:1000});
-            if (width >= 992) {
+            if (width >= 1200) {
                 await visit('teacher',13,null,{open:false});
                 await context.grantPermissions(['clipboard-read','clipboard-write'],{origin:url});
                 const sample = page.locator('#task13 .gc-task-condition-content');
@@ -217,26 +218,35 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 }));
                 await list.waitFor();
                 const title = page.locator('#task13 > .gc-chat-sheet > .gc-task-title-row');
-                const modeBar = page.locator('#task13 .gc-task-workspaces > .gc-task-review-controls');
-                const ownTab = modeBar.getByRole('tab',{name:'Моё решение',exact:true});
-                const studentTab = modeBar.getByRole('tab',{name:'Решения учеников',exact:true});
-                check('teacher-right-pane-spans-the-viewport', await modeBar.evaluate(bar => {
-                    const pane = bar.closest('.gc-task-layout').getBoundingClientRect();
+                const ownChoice = list.getByRole('link',{name:'Мои решения',exact:true});
+                check('teacher-right-pane-spans-the-viewport', await list.evaluate(roster => {
+                    const pane = roster.closest('.gc-task-layout').getBoundingClientRect();
                     const heading = document.querySelector('.gc-workbook-header').getBoundingClientRect();
                     return Math.abs(pane.top) <= 1 && Math.abs(pane.bottom - innerHeight) <= 1
                         && Math.abs(pane.right - document.documentElement.clientWidth) <= 1 && heading.right <= pane.left + 1;
                 }), width);
-                check('teacher-switches-chats-from-right-pane',
-                    (await modeBar.getByRole('tab').allTextContents()).join(' / ')==='Моё решение / Решения учеников'
-                    && await ownTab.isVisible() && await studentTab.getAttribute('aria-selected')==='true'
-                    && await title.getByRole('tab').count()===0
+                check('teacher-chooses-own-or-student-work-first',
+                    await ownChoice.isVisible() && await list.locator('[data-execution-student]').first().isVisible()
+                    && await page.locator('#task13 .gc-task-chat:visible').count()===0
                     && await title.getByRole('button',{name:/Действия с задачей/}).isVisible(),width);
+                check('teacher-uses-the-student-task-header-and-condition-styles',await title.evaluate(heading =>
+                    heading.querySelector('.gc-task-title-facts .gc-task-reward') &&
+                    heading.nextElementSibling.matches('section.gc-task-condition') &&
+                    getComputedStyle(heading).borderBottomWidth==='0px'),width);
                 check('no-step-footer-in-task', !await page.locator('.step-page-nav').isVisible(),width);
                 const original = await geometry(list);
                 await list.locator('[data-student-id="1"]').click();
                 const chat = page.locator('#execution-workspace-13 .gc-task-chat:visible');
                 await chat.locator('.gc-chat-file').first().waitFor();
                 check('teacher-feedback-has-no-mention-shortcut',await chat.getByRole('button',{name:'Спросить преподавателя'}).count()===0,width);
+                const draft = chat.getByRole('textbox',{name:'Сообщение в чат задачи'});
+                await draft.fill('Черновик комментария');
+                await chat.getByRole('button',{name:'Список решений',exact:true}).click();
+                const submissions = chat.getByRole('region',{name:'Список решений',exact:true});
+                await submissions.locator('[data-attempt-id]').first().waitFor();
+                check('teacher-solutions-view-shows-submissions-without-the-composer',await draft.isHidden(),width);
+                await chat.getByRole('button',{name:'Чат',exact:true}).click();
+                check('teacher-chat-switch-keeps-the-draft',await draft.inputValue()==='Черновик комментария',width);
                 const selected = await geometry(chat);
                 await chat.getByRole('button',{name:'К списку учеников'}).click();
                 await list.waitFor();
@@ -244,19 +254,105 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 check('teacher-roster-and-chat-keep-the-page-still',
                     [selected,restored].every(view => Math.abs(view.pageY-original.pageY)<=1
                         && Math.abs(view.bottom-original.bottom)<=2),width,{original,selected,restored});
-                await ownTab.click();
-                await page.locator('#execution-own-workspace-13 .gc-chat-head').waitFor();
-                await studentTab.click();
+                await ownChoice.click();
+                const ownChat = page.locator('#execution-own-workspace-13 .gc-task-chat');
+                await ownChat.locator('.gc-chat-head').waitFor();
+                check('teacher-own-chat-has-a-direct-link',await list.isHidden() &&
+                    new URL(page.url()).searchParams.get('student')==='2',width);
+                await page.goBack();
                 await list.waitFor();
-                check('teacher-mode-switch-keeps-both-tabs-accessible',
-                    await ownTab.isVisible() && await studentTab.getAttribute('aria-selected')==='true',width);
+                await page.goForward();
+                await ownChat.locator('.gc-chat-head').waitFor();
+                await ownChat.getByRole('button',{name:'К списку учеников'}).click();
+                await list.waitFor();
+                check('teacher-own-chat-returns-to-the-choice-list',
+                    await ownChat.isHidden() && await ownChoice.evaluate(link => document.activeElement===link),width);
+            } else {
+                await visit('teacher',13,null,{open:false});
+                const list = page.locator('#student-solutions-13 [data-execution-student-list]');
+                const panel = page.getByRole('dialog',{name:'Чат задачи',exact:true});
+                const student = list.locator('[data-execution-student][data-student-id="1"]');
+                check('teacher-mobile-roster-sits-below-the-condition',await list.isVisible() && await panel.isHidden() &&
+                    await list.evaluate(el => {
+                        const condition = el.closest('.gc-task-sheet').querySelector('[data-task-condition]');
+                        return el.getBoundingClientRect().top >= condition.getBoundingClientRect().bottom;
+                    }),width);
+                await student.click();
+                await panel.getByRole('button',{name:'Чат',exact:true}).waitFor();
+                check('teacher-mobile-selection-opens-chat-directly',
+                    await panel.getByRole('button',{name:'Чат',exact:true}).getAttribute('aria-pressed')==='true',width);
+                await panel.getByRole('button',{name:'Список решений',exact:true}).click();
+                await panel.getByRole('region',{name:'Список решений',exact:true}).locator('[data-attempt-id]').first().waitFor();
+                await panel.getByRole('button',{name:'К списку учеников',exact:true}).click();
+                check('teacher-mobile-chat-restores-focus-to-the-selected-student',await panel.isHidden() &&
+                    await student.evaluate(el=>el===document.activeElement),width);
+                const ownChoice = list.getByRole('link',{name:'Мои решения',exact:true});
+                await ownChoice.click();
+                await panel.locator('#execution-own-workspace-13 .gc-chat-head').waitFor();
+                await page.keyboard.press('Escape');
+                await panel.waitFor({state:'hidden'});
+                check('teacher-mobile-escape-returns-to-own-solutions-choice',
+                    await ownChoice.evaluate(el=>el===document.activeElement) && !new URL(page.url()).searchParams.has('student'),width);
             }
+            await page.goto(`${url}/insider/courses/1/steps/1?actor=student&scenario=submissions&task=12#task12`);
+            const plainWork = page.locator('#execution-workspace-12');
+            const plainChat = plainWork.locator('.gc-task-chat');
+            const plainOpener = page.getByRole('button',{name:'Чат задачи',exact:true});
+            if (width < 1200) {
+                await plainOpener.waitFor();
+                check('student-mobile-chat-without-tutor-opens-from-the-task',await plainChat.isHidden(),width);
+                await plainOpener.click();
+            }
+            await waitForStudentChatViewport(12);
+            check('student-chat-without-tutor-fills-the-viewport',
+                await plainWork.getAttribute('data-chat-tutor') === null &&
+                await plainChat.getByRole('button',{name:'Спросить преподавателя',exact:true}).count() === 0,width);
+            if (width < 1200) {
+                await plainChat.getByRole('button',{name:'К задаче',exact:true}).click();
+                check('student-mobile-chat-without-tutor-returns-to-the-task',
+                    await plainChat.isHidden() && await plainOpener.evaluate(el=>el===document.activeElement),width);
+            }
+            const plainHistory = page.getByRole('region',{name:'Отправленные решения'});
+            await plainHistory.locator(`[data-attempt-id="${id(1)}"]`).first().waitFor();
+            const tabState = task => page.locator('#tasks-tab'+task+' [data-task-state]');
+            check('late-full-mark-closes-the-task', await tabState(11).getAttribute('title') === 'Решение принято',width);
+            check('completed-native-runs-have-a-partial-result',
+                await tabState(12).getAttribute('title') === 'Требует доработки' &&
+                await page.locator('#task12 [data-task-outcome] small').innerText() === '10 / 20',width);
+            if (width === 1440) {
+                await page.setViewportSize({width:1024,height:768});
+                await page.locator('[data-task-condition="12"] .gc-task-condition-content').evaluate(el=>el.style.minHeight='2200px');
+                const refreshed = page.waitForResponse(res=>res.request().method()==='GET' && res.url().endsWith('/tasks/12/chat/1'));
+                await plainOpener.click();
+                await refreshed;
+                check('tablet-opens-chat-above-long-condition', await plainChat.isVisible() &&
+                    await plainWork.evaluate(el=>el.getBoundingClientRect().top > innerHeight),1024);
+                const chatUrl = '**/tasks/12/chat/1';
+                await page.route(chatUrl, async route=>{
+                    const response = await route.fetch();
+                    const data = await response.json();
+                    data.events.push({id:'teacher-offscreen-reply',type:'message',author:2,name:'Преподаватель',
+                        at:'2026-11-11T12:00:00Z',text:'Посмотрите второй пример.'});
+                    await route.fulfill({response,json:data});
+                });
+                await plainChat.locator('[data-event="teacher-offscreen-reply"]').waitFor({timeout:16000});
+                check('open-chat-receives-reply-while-workspace-is-offscreen', true,1024);
+                await page.unroute(chatUrl);
+                await page.setViewportSize({width,height:1000});
+            }
+            await page.goto(url+'/insider/courses/1/steps/1#task13');
+            await page.locator('#task13 [data-task-attempt-history] [data-attempt-id="'+id(33)+'"]').first().click();
+            const nextTask = page.getByRole('dialog',{name:'Работа с решением'}).getByRole('link',{name:'Следующая задача'});
+            await nextTask.click();
+            await page.locator('#task14.active.show').waitFor();
+            check('full-result-opens-next-task-and-closes-dialog',new URL(page.url()).hash === '#task14' &&
+                await page.locator('dialog[open]').count() === 0 && await page.locator('#task14 h2').first().evaluate(el=>el===document.activeElement),width);
             await visit('student',12,id(1));
             const root=page.locator('#execution-workspace-12');
             const worksheet=await root.evaluate(el=>{
                 const sheet=el.closest('.gc-task-sheet'),condition=sheet.querySelector('[data-task-condition]');
                 const left=condition.getBoundingClientRect(),right=el.querySelector('.gc-task-chat').getBoundingClientRect();
-                const desktop=matchMedia('(min-width: 992px)').matches;
+                const desktop=matchMedia('(min-width: 1200px)').matches;
                 return {layout:left.height>0 && (desktop ? left.right<=right.left : left.bottom<=el.getBoundingClientRect().top),
 
                     reward:getComputedStyle(sheet.querySelector('.gc-task-title-row .gc-task-reward i')).color,
@@ -264,11 +360,15 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             });
             check('task-worksheet-layout-and-two-colors',worksheet.layout && worksheet.paper===worksheet.ground && (palette || worksheet.reward==='rgb(255, 161, 23)'),width,worksheet);
             await root.getByRole('button',{name:'Исправить решение',exact:true}).click();
-            await root.getByRole('button',{name:'Код',exact:true}).click();
-            const code=root.locator('.cm-content');await code.fill('def largest(values):\n    return max(values)\n# saved draft');
+            const code=root.locator('.cm-content');
+            await code.waitFor();
+            check('revision-opens-the-selected-source', (await code.innerText()).includes('return max(values)'),width);
+            await code.fill('def largest(values):\n    return max(values)\n# saved draft');
             await root.locator('.gc-draft-state').filter({hasText:'Черновик сохранён'}).waitFor();
-            const draft=await (await page.request.get(url+'/insider/courses/1/tasks/12/code-draft')).json();
+            const draft=await (await page.request.get(url+'/insider/courses/1/tasks/12/code-draft?from_submission='+id(1))).json();
             check('task-draft-autosave',draft.files[0].content.includes('# saved draft'),width);
+            const mainDraft=await (await page.request.get(url+'/insider/courses/1/tasks/12/code-draft')).json();
+            check('correction-keeps-the-main-draft', !mainDraft.files.some(file => file.content?.includes('# saved draft')),width);
             await root.getByRole('button',{name:'Вернуться к результату',exact:true}).click();
             await root.locator('.gc-execution-result').waitFor();
             await root.getByRole('button',{name:'Исправить решение',exact:true}).click();
@@ -357,7 +457,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
 
             await visit('student',14);
             const uploadRoot=page.locator('#execution-workspace-14');
-            await uploadRoot.getByRole('button',{name:'Исправить решение',exact:true}).click();
+            await uploadRoot.getByRole('button',{name:'Открыть основной черновик',exact:true}).click();
             await uploadRoot.getByRole('textbox',{name:'Ответ',exact:true}).fill('Объясняю решение и прикладываю файлы.');
             await uploadRoot.locator('input[type="file"]').setInputFiles([
                 {name:'a.bin',mimeType:'application/octet-stream',buffer:Buffer.from([0,255,1])},
@@ -391,8 +491,9 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             check('task-last-test-page',await testRows.count()===3 && await paged.getByRole('button',{name:'Следующая страница тестов',exact:true}).isDisabled(),width);
             await paged.getByRole('button',{name:'Страница тестов 2',exact:true}).click();
             check('task-test-page-keeps-details',await paged.getByRole('button',{name:'Данные теста 11',exact:true}).getAttribute('aria-expanded')==='true',width);
-            await paged.getByRole('button',{name:'Действия',exact:true}).click();
-            await paged.getByRole('button',{name:'Отметить просмотренным',exact:true}).click();
+            check('teacher-review-menu-omits-viewed-action-on-an-ordinary-attempt',
+                await paged.getByText(/^(Обновить результат|Отметить (не)?просмотренным)$/).count()===0,width);
+            await paged.getByRole('group',{name:'Сдачи ученика',exact:true}).getByRole('button').first().click();
             await paged.getByRole('button',{name:'Страница тестов 2',exact:true}).waitFor();
             check('task-test-page-survives-refresh',await paged.getByRole('button',{name:'Страница тестов 2',exact:true}).getAttribute('aria-current')==='page',width);
             await page.screenshot({path:`${output}/task-test-pages-${width}.png`,fullPage:true});
@@ -417,6 +518,15 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
 
             await visit('teacher',13,id(13));
             const ai=page.locator('#execution-workspace-13');
+            const reviewHeader=ai.locator('.gc-result-summary');
+            const steps=reviewHeader.getByRole('group',{name:'Сдачи ученика',exact:true});
+            check('teacher-review-header-uses-circles-date-and-score',
+                await steps.getByRole('button').count()>0 && await reviewHeader.locator('.gc-attempt-history__date').isVisible()
+                && await reviewHeader.locator('.gc-result-score').isVisible()
+                && await reviewHeader.locator('.gc-result-verdict__title').isHidden(),width);
+            check('teacher-review-menu-only-offers-viewed-action-for-review-requests',
+                await ai.getByText(/^Отметить (не)?просмотренным$/).count()===1
+                && await ai.getByText('Обновить результат',{exact:true}).count()===0,width);
             const warning=ai.getByRole('button',{name:'Антиплагиат и помощь ИИ: есть предупреждения',exact:true});
             await warning.click();
             await ai.getByRole('heading',{name:'Анализ авторства',exact:true}).waitFor();
@@ -463,10 +573,11 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await manual.getByRole('heading',{name:'Ученик 1',exact:true}).waitFor();
             check('task-arrow-navigation',true,width);
             await page.getByRole('dialog',{name:'Работа с решением'}).getByRole('button',{name:'Закрыть',exact:true}).click();
-            await page.getByRole('tab',{name:'Моё решение',exact:true}).click();
+            await manual.getByRole('button',{name:'К списку учеников',exact:true}).click();
+            await page.locator('#task14 [data-execution-student-list]').getByRole('link',{name:'Мои решения',exact:true}).click();
             const own=page.locator('#execution-own-workspace-14');
             await own.getByRole('button',{name:'Отправить решение',exact:true}).click();
-            const editor=page.locator('dialog[open] .gc-execution-composer');
+            const editor=page.locator('dialog.gc-work-dialog[data-view="compose"][open] .gc-execution-composer');
             await editor.getByRole('textbox',{name:'Ответ',exact:true}).fill('Собственная сдача преподавателя.');
             const ownResponse=page.waitForResponse(response=>response.url().endsWith('/tasks/14/code-submissions') && response.request().method()==='POST');
             await editor.getByRole('button',{name:'Отправить решение',exact:true}).click();
@@ -483,7 +594,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             check('chat-grades-earlier-attempt', (await saved).ok(), width);
             await page.getByRole('dialog',{name:'Работа с решением'}).getByRole('button',{name:'Закрыть'}).click();
             await selected.locator('[data-kind="check"][data-attempt="'+id(17)+'"]').getByText('Проверил исходный блокнот.',{exact:true}).waitFor();
-            if (width >= 992) {
+            if (width >= 1200) {
                 check('teacher-composer-stays-in-view-after-grading', await selected.locator('.gc-task-chat').evaluate(chat => {
                     const input = chat.querySelector('textarea').getBoundingClientRect();
                     return input.height > 0 && input.bottom <= innerHeight && Math.abs(chat.getBoundingClientRect().bottom - innerHeight) <= 1;

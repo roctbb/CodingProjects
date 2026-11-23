@@ -9,7 +9,15 @@ export default async function reviewNavigation(controlPage, {url,output,widths=[
         const list=page.locator('#student-solutions-13 [data-execution-student-list]');
         const student=n=>list.locator(`[data-student-id="${n}"]`);
         const heading=n=>root.getByRole('heading',{name:`Ученик ${n}`,exact:true});
-        const loaded=async n=>{await heading(n).waitFor();await root.locator('.gc-submission-stage[aria-busy="true"]').waitFor({state:'hidden'});};
+        const loaded=async n=>{
+            if (!await root.locator('dialog[open]').count()) {
+                await root.getByRole('button',{name:'Список решений',exact:true}).click();
+                await root.getByRole('region',{name:'Список решений',exact:true})
+                    .locator('[data-attempt-id]').first().click();
+            }
+            await heading(n).waitFor();
+            await root.locator('.gc-submission-stage[aria-busy="true"]').waitFor({state:'hidden'});
+        };
         const back=()=>root.getByRole('button',{name:'К списку работ',exact:true}).click();
         try {
             await page.goto(listURL);await list.waitFor();
@@ -28,7 +36,7 @@ export default async function reviewNavigation(controlPage, {url,output,widths=[
             check('review-list-survives-reload',await root.isHidden(),width);
             await student(1).click();await loaded(1);
             await root.getByRole('button',{name:'Следующая работа',exact:true}).click();await loaded(3);
-            await page.goBack();await list.waitFor();
+            await page.goBack();await root.waitFor({state:'hidden'});await list.waitFor();
             check('review-browser-back-restores-list',await root.isHidden(),width);
             await page.goForward();await loaded(3);
             check('review-browser-forward-restores-current-work',await list.locator('[aria-current="true"]').count()===1&&await student(3).getAttribute('aria-current')==='true',width);

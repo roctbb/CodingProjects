@@ -1895,7 +1895,7 @@
     "kind": "api"
   },
   {
-    "method": "GET|PUT|DELETE|HEAD",
+    "method": "GET|PUT|POST|DELETE|HEAD",
     "uri": "insider/courses/{course}/tasks/{task}/code-draft",
     "name": null,
     "action": "TaskSubmissionController@draft",

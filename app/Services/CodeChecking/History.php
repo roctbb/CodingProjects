@@ -25,10 +25,10 @@ class History
                 ->whereColumn('course_students.user_id','s.user_id')->where('course_students.course_id',$course))
             ->whereNotExists(fn($q)=>$q->selectRaw('1')->from('course_teachers')
                 ->whereColumn('course_teachers.user_id','s.user_id')->where('course_teachers.course_id',$course))
-            ->orderByDesc('s.created_at')->get(['s.task_id','s.user_id','s.created_at','r.state']);
+            ->orderByDesc('s.created_at')->get(['s.task_id','s.user_id','s.created_at','r.state','r.points']);
         return $rows->groupBy('task_id')->map(fn($taskRows)=>$taskRows->groupBy('user_id')->map(function($attempts){
             $latest=$attempts->first();
-            return ['attempts'=>$attempts->count(),'latest_at'=>Carbon::parse($latest->created_at,config('app.timezone')),
+            return ['best_evaluation'=>$attempts->where('state', 'completed')->max('points'), 'attempts'=>$attempts->count(),'latest_at'=>Carbon::parse($latest->created_at,config('app.timezone')),
                 'state'=>$latest->state??'queued','pending'=>$attempts->contains(fn($r)=>!in_array($r->state,['completed','error','imported_pending','awaiting_review'],true)),
                 'error'=>$latest->state==='error'];
         }));

@@ -144,7 +144,7 @@
 | GET\|HEAD | `/insider/courses/{course}/tasks/{task}/checker/legacy` | api | [Редактирование задачи](screens.md#task-edit) | web, auth, verified |
 | GET\|PUT\|HEAD | `/insider/courses/{course}/tasks/{task}/checker/private` | api | [Редактирование задачи](screens.md#task-edit) | web, auth, verified |
 | GET\|HEAD | `/insider/courses/{course}/tasks/{task}/code-attempts/{solution}` | api | [Отправленное решение и проверки](screens.md#code-submission) | web, auth, verified |
-| GET\|PUT\|DELETE\|HEAD | `/insider/courses/{course}/tasks/{task}/code-draft` | api | [Ступень](screens.md#step) | web, auth, verified |
+| GET\|PUT\|POST\|DELETE\|HEAD | `/insider/courses/{course}/tasks/{task}/code-draft` | api | [Ступень](screens.md#step) | web, auth, verified |
 | GET\|HEAD | `/insider/courses/{course}/tasks/{task}/code-draft/files/{file}` | download | [Ступень](screens.md#step) | web, auth, verified |
 | GET\|POST\|HEAD | `/insider/courses/{course}/tasks/{task}/code-submissions` | api | [Ступень](screens.md#step) | web, auth, verified |
 | POST | `/insider/courses/{course}/tasks/{task}/code-submissions/recheck-latest` | api | [Проверка решений ученика](screens.md#review) | web, auth, verified |

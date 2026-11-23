@@ -1,18 +1,38 @@
+@php($worksheet = $worksheet ?? false)
+@if($worksheet)
+<header class="gc-task-title-row gc-task-title-row--{{ $isManager ? 'teacher' : 'student' }}">
+@else
 <div class="step-task-card__header gc-section-header">
     @if(!$isManager && empty($studentAttempt))<span class="gc-task-emblem" aria-hidden="true"><i class="{{ $taskTypeIcon }}"></i></span>@endif
-    <div class="gc-task-heading min-width-0">
-        @if(empty($studentAttempt))<h2 class="step-task-card__title mb-0">{{$task->name}}</h2>@endif
+@endif
+    <div class="{{ $worksheet ? 'gc-task-title-group' : 'gc-task-heading min-width-0' }}">
+        @if($worksheet && !empty($studentAttempt))
+            <h1>{{ $task->name }}</h1>
+        @elseif(empty($studentAttempt))
+            <h2 @unless($worksheet) class="step-task-card__title mb-0" @endunless>{{ $task->name }}</h2>
+        @endif
+        @if($worksheet)<div class="gc-task-title-facts">@endif
+        @if($worksheet && !$isManager)
+            @php($outcome = $taskOutcomes[$task->id])
+            <div class="gc-task-outcome" data-task-outcome data-tone="{{ $outcome['tone'] }}" aria-live="polite">
+                <span>{{ $outcome['label'] }}</span>
+                <small title="Лучшая оценка за решение" @if($outcome['score'] === null) hidden @endif>{{ $outcome['score'] }}</small>
+            </div>
+        @endif
         @include('steps.partials.task-title-rewards')
+        @if(!$worksheet || $isManager)
         <div class="gc-task-heading__type">
             <span class="step-task-type step-task-type--{{$taskType}}"><i class="{{$taskTypeIcon}}" aria-hidden="true"></i>{{$taskTypeLabel}}</span>
             <span class="gc-help-text">{{$task->max_mark}} XP</span>
         </div>
-        <div class="gc-task-metadata">
-            @if($isInsider && !$isManager && !$task->is_quiz)
+        @endif
+        @if(!$worksheet && $isInsider && !$isManager && !$task->is_quiz)
+            <div class="gc-task-metadata">
                 <x-gc-task-state :task="$task" :viewer="$user" :course="$course" />
-            @endif
-        </div>
+            </div>
+        @endif
         @include('steps.partials.task-timing')
+        @if($worksheet)</div>@endif
     </div>
     @if ($isManager)
         @include('steps.partials.deadline_modal')
@@ -38,4 +58,12 @@
             </div>
         </div>
     @endif
+@if($worksheet)
+    @if($studentSheet)
+        <button type="button" class="btn btn-outline-secondary gc-task-chat-open" data-task-chat-open
+                aria-haspopup="dialog" aria-controls="task-chat-dialog-{{ $task->id }}" aria-expanded="false" hidden>Чат задачи</button>
+    @endif
+</header>
+@else
 </div>
+@endif

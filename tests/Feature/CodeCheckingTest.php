@@ -442,6 +442,29 @@ class CodeCheckingTest extends TestCase
             'editor_files'=>[['path'=>'main.py', 'content'=>'print(5)']]])->assertOk()->assertJsonPath('files.0.content', 'print(5)');
     }
 
+    public function test_correcting_a_submission_preserves_the_attempt_and_main_draft(): void
+    {
+        (require database_path('migrations/2026_11_23_140000_create_code_submission_drafts.php'))->up();
+        $base = '/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private', $this->configBody())->assertOk();
+        $code = fn ($text, $revision) => ['revision' => $revision, 'mode' => 'code', 'language' => 'python',
+            'editor_files' => [['path' => 'main.py', 'content' => $text]]];
+        $submit = fn ($revision) => ['request_id' => (string) Str::uuid(), 'use_draft' => true, 'draft_revision' => $revision];
+        $this->login()->putJson($base.'/code-draft', $code('print(1)', 0))->assertOk();
+        $source = $this->postJson($base.'/code-submissions', $submit(1))->assertCreated()->json('id');
+        $this->putJson($base.'/code-draft', $code('print(2)', 1))->assertOk();
+        $query = '?from_submission='.$source;
+        $correction = $base.'/code-draft'.$query;
+        $this->postJson($correction)->assertOk()->assertJsonPath('files.0.content', 'print(1)');
+        $this->putJson($correction, $code('print(3)', 1))->assertOk();
+        $this->postJson($correction)->assertOk()->assertJsonPath('revision', 2)->assertJsonPath('files.0.content', 'print(3)');
+        $this->postJson($base.'/code-submissions'.$query, $submit(2))->assertCreated()->assertJsonPath('files.0.source', 'print(3)');
+        $this->getJson('/insider/code-submissions/'.$source)->assertOk()->assertJsonPath('files.0.source', 'print(1)');
+        $this->getJson($base.'/code-draft')->assertOk()->assertJsonPath('files.0.content', 'print(2)');
+        $this->login(3)->postJson($correction)->assertNotFound();
+        $this->getJson($correction)->assertNotFound();
+    }
+
     public function test_project_draft_uses_optimistic_revision_and_can_be_submitted(): void
     {
         $base = '/insider/courses/7/tasks/12';

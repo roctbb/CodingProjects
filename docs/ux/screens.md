@@ -336,7 +336,7 @@
 - `GET|POST|HEAD /insider/courses/{course}/tasks/{task}/chat/{student}` — api
 - `GET|HEAD /insider/courses/{course}/tasks/{task}/checker` — api
 - `POST /insider/courses/{course}/tasks/{task}/checker/extra-attempt` — api
-- `GET|PUT|DELETE|HEAD /insider/courses/{course}/tasks/{task}/code-draft` — api
+- `GET|PUT|POST|DELETE|HEAD /insider/courses/{course}/tasks/{task}/code-draft` — api
 - `GET|HEAD /insider/courses/{course}/tasks/{task}/code-draft/files/{file}` — download
 - `GET|POST|HEAD /insider/courses/{course}/tasks/{task}/code-submissions` — api
 

@@ -51,12 +51,14 @@ class StepsController extends Controller
             $works=$works->get();
             return view('material-review.archived-step',compact('archivedStep','works','manager'));
         }
-        $user = User::with('submissions')->findOrFail(Auth::User()->id);
-        $course = Course::with('teachers', 'students', 'statsStudents')->findOrFail($course_id);
+        $user = Auth::user();
+        $course = Course::with('teachers')->findOrFail($course_id);
+        $manager = app(\App\Services\CourseAccess::class)->manages($user, $course);
+        if ($manager) $course->load('students', 'statsStudents');
         $step = ProgramStep::with([
-            'lesson.steps',
-            'tasks.solutions' => function ($query) use ($course_id) {
-                $query->where('course_id', $course_id);
+            'lesson.steps.tasks:id,step_id,is_hidden',
+            'tasks.solutions' => function ($query) use ($course_id, $manager, $user) {
+                $query->where('course_id', $course_id)->when(!$manager, fn ($q) => $q->where('user_id', $user->id));
             },
             'tasks.deadlines' => function ($query) use ($course_id) {
                 $query->where('course_id', $course_id);
@@ -65,13 +67,20 @@ class StepsController extends Controller
                 $query->where('course_id', $course_id);
             },
         ])->findOrFail($id);
-        $tasks = [];
+        foreach ($step->tasks as $task) $task->setRelation('step', $step);
         \App\ActionLog::record(Auth::User()->id, 'step', $id);
 
 
         $tasks = $step->tasks->filter(function($task) use ($user, $course) {
             return $task->isVisible($user, $course);
         });
+
+        $checkers = collect();
+        if ($tasks->isNotEmpty() && \Illuminate\Support\Facades\Schema::hasTable('code_task_checkers')) {
+            $key = \Illuminate\Support\Facades\Schema::hasColumn('code_task_checkers', 'task_id') ? 'task_id' : 'id';
+            $checkers = \App\CodeTaskChecker::whereIn($key, $tasks->pluck('id'))->get()->keyBy($key);
+        }
+        foreach ($tasks as $task) $task->setRelation('workbookChecker', $checkers->get($task->id));
 
         $latestTaskAiSummaries = collect();
         $earnedTaskAchievements = collect();
@@ -103,21 +112,24 @@ class StepsController extends Controller
             if (!$task->is_quiz) $quizer = false;
 
         $quizer = $quizer && $zero_theory && !$empty;
-        $waitingStudents = app(\App\Services\CourseAccess::class)->manages($user, $course)
+        $waitingStudents = $manager
             && \Illuminate\Support\Facades\Schema::hasTable('task_chat_messages')
             ? app(\App\Services\TaskChat::class)->waitingStudents($course_id, $tasks->pluck('id')->all())
             : collect();
-        $manager = app(\App\Services\CourseAccess::class)->manages($user, $course);
         $nativeTaskProgress = app(\App\Services\CodeChecking\History::class)->ungradedProgress(
             $course->id, $tasks->pluck('id')->all(), $manager ? null : $user->id
         );
+        $taskOutcomes = $manager ? [] : $tasks->reject(fn ($task) => $task->is_quiz)->mapWithKeys(fn ($task) => [
+            $task->id => \App\Support\TaskOutcome::forStudent($task, $user->id, $nativeTaskProgress->get($task->id)?->get($user->id)),
+        ]);
+        $classBonuses = $manager ? [] : app(\App\Services\ClassroomBonus::class)->forStep($step, $tasks, $course->id, $user->id, now());
         $taskReviewContext=app(\App\Services\TaskLocation::class)->context(request(),$user,$course,$tasks);
         $submittedCodeTasks = \Illuminate\Support\Facades\Schema::hasTable('code_submissions')
             ? \App\CodeSubmission::where('course_id', $course->id)->where('user_id', $user->id)
                 ->whereIn('task_id', $tasks->pluck('id'))->whereNull('legacy_id')->distinct()->pluck('task_id')->flip()
             : collect();
 
-        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'latestTaskAiSummaries', 'earnedTaskAchievements','nativeTaskProgress','waitingStudents','taskReviewContext','submittedCodeTasks'));
+        return view('steps.details', compact('step', 'user', 'tasks', 'zero_theory', 'one_tasker', 'empty', 'quizer', 'course', 'latestTaskAiSummaries', 'earnedTaskAchievements','nativeTaskProgress','waitingStudents','taskOutcomes','classBonuses','taskReviewContext','submittedCodeTasks'));
     }
 
     public function downloadNotebook($course_id, $id)

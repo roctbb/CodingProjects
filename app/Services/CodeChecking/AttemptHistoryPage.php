@@ -48,7 +48,7 @@ final class AttemptHistoryPage
                        e.id as event_id, s.id as source_id, e.user_id,
                        case when $canonical then s.created_at else e.submitted end as event_time,
                        case when s.teacher_viewed then 1 else 0 end as viewed,
-                       1 as attempt, e.mark as xp, e.evaluation,
+                       1 as attempt, e.mark as xp, case when e.mark is not null then e.evaluation end as evaluation,
                        case when $canonical then coalesce(s.state, 'preparing')
                             when e.mark is null then 'awaiting_review' else 'completed' end as state
                 from linked e left join sources s on s.id = e.source_id and s.user_id = e.user_id
@@ -58,21 +58,22 @@ final class AttemptHistoryPage
         $order = 'event_time desc, entry_id desc';
         $sql = "with sources as (
                 select cast(s.id as $textType) as id, s.user_id, s.legacy_id, s.solution_id,
-                       s.created_at, s.teacher_viewed, r.state,
+                       s.created_at, s.teacher_viewed, r.state, r.points,
                        row_number() over (partition by s.solution_id order by s.id desc) as solution_rank
                 from (select * from code_submissions where $scope) s
                 left join code_execution_runs r on r.id = s.current_run_id
             ) $events, timeline as (
                 $standalone select s.id as entry_id, null as event_id, s.id as source_id, s.user_id,
                        s.created_at as event_time, case when s.teacher_viewed then 1 else 0 end as viewed,
-                       case when s.legacy_id is null then 1 else 0 end as attempt, null as xp, null as evaluation,
+                       case when s.legacy_id is null then 1 else 0 end as attempt, null as xp,
+                       case when s.legacy_id is null and s.state = 'completed' then s.points end as evaluation,
                        coalesce(s.state, 'preparing') as state from sources s $unlinked
             ), ranked as (
                 select timeline.*, row_number() over (partition by user_id order by
                        case when xp is null then 1 else 0 end, xp desc, $order) as grade_rank from timeline
             ), summary as (
                 select count(case when $visible then 1 end) as total, count(case when attempt = 1 then 1 end) as attempts,
-                       max(case when xp is not null then evaluation end) as best_evaluation from ranked
+                       max(evaluation) as best_evaluation from ranked
             ), page_items as (
                 select * from ranked where $visible order by $order limit 20 offset ?
             ), selected as (

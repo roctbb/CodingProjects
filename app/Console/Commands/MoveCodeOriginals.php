@@ -26,7 +26,12 @@ class MoveCodeOriginals extends Command
             }
             $mark($submission->source_metadata['archive']??null);
         }
-        foreach (\App\CodeDraft::cursor() as $draft) foreach($draft->value['files']??[] as $file) if(isset($file['original_name']))$mark($file['artifact']);
+        foreach (['code_drafts', 'code_submission_drafts'] as $table) {
+            if (!\Illuminate\Support\Facades\Schema::hasTable($table)) continue;
+            foreach ((new \App\CodeDraft)->setTable($table)->newQuery()->cursor() as $draft) {
+                foreach ($draft->value['files'] ?? [] as $file) if (isset($file['original_name'])) $mark($file['artifact']);
+            }
+        }
         $counts=['apply'=>(bool)$this->option('apply'),'originals'=>0,'text'=>0,'verified'=>0,'missing'=>[],'failed'=>[]];
         foreach(DB::table('code_artifacts')->orderBy('id')->cursor() as $row) {
             $descriptor=['blob_id'=>$row->id,'sha256'=>$row->id,'bytes'=>(int)$row->bytes];

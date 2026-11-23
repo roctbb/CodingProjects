@@ -16,7 +16,7 @@ foreach (glob($directory.'/*.sqlite') as $fixture) {
     Illuminate\Support\Facades\DB::purge('sqlite');
     Illuminate\Support\Facades\DB::statement('CREATE UNIQUE INDEX native_qa_lesson_stats ON lesson_student_stats(course_id, lesson_id, student_id)');
     foreach (['2026_11_14_120000_create_code_checking_tables.php','2026_11_14_130000_expand_task_submissions.php','2026_11_14_140000_complete_native_submission_storage.php',
-        '2026_11_13_180000_create_reward_notices_table.php','2026_11_16_230000_link_solution_coin_rewards.php','2026_11_21_180000_create_task_chat_messages.php','2026_11_22_001000_classify_task_chat_messages.php','2026_11_22_002000_add_tutor_chat_replies.php','2026_11_21_221000_add_execution_criteria.php'] as $migration) (require $root.'/database/migrations/'.$migration)->up();
+        '2026_11_13_180000_create_reward_notices_table.php','2026_11_16_230000_link_solution_coin_rewards.php','2026_11_21_180000_create_task_chat_messages.php','2026_11_22_001000_classify_task_chat_messages.php','2026_11_22_002000_add_tutor_chat_replies.php','2026_11_21_221000_add_execution_criteria.php','2026_11_23_140000_create_code_submission_drafts.php'] as $migration) (require $root.'/database/migrations/'.$migration)->up();
 }
 config(['database.connections.sqlite.database' => $directory.'/submissions.sqlite']);
 Illuminate\Support\Facades\DB::purge('sqlite');

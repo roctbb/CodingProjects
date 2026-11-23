@@ -18,7 +18,9 @@ class Attempts
     public static function token(Task $task): string
     {
         $checking=null;
-        if (\Illuminate\Support\Facades\Schema::hasTable('code_task_checkers')) {
+        if ($task->relationLoaded('workbookChecker')) {
+            $checking = $task->workbookChecker?->getRawOriginal();
+        } elseif (\Illuminate\Support\Facades\Schema::hasTable('code_task_checkers')) {
             $column=\Illuminate\Support\Facades\Schema::hasColumn('code_task_checkers','task_id')?'task_id':'id';
             $checking=DB::table('code_task_checkers')->where($column,$task->id)->first();
         }

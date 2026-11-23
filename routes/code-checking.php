@@ -23,7 +23,7 @@ Route::middleware(['web', 'auth', 'verified'])->prefix('insider')->where([
     Route::match(['get', 'post'], $base.'/checker/files', [TaskSubmissionController::class, 'taskFiles']);
     Route::post($base.'/checker/files/{attachment}/replace', [TaskSubmissionController::class, 'replaceTaskFile']);
     Route::match(['get', 'delete'], $base.'/checker/files/{attachment}', [TaskSubmissionController::class, 'taskFile'])->name('code-task-files.download');
-    Route::match(['get', 'put', 'delete'], $base.'/code-draft', [TaskSubmissionController::class, 'draft']);
+    Route::match(['get', 'put', 'post', 'delete'], $base.'/code-draft', [TaskSubmissionController::class, 'draft']);
     Route::get($base.'/code-draft/files/{file}', [TaskSubmissionController::class, 'draftFile'])->whereNumber('file')->name('code-drafts.file');
     Route::post($base.'/code-submissions/recheck-latest', [TaskSubmissionController::class, 'recheckLatest']);
     Route::get($base.'/checker', [CodeCheckingController::class, 'settings']);

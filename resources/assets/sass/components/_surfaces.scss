@@ -574,11 +574,13 @@
   width: 100%;
 }
 .gc-home-profile__portrait .avatar {
-  aspect-ratio: 3 / 2;
   height: auto;
   width: 100%;
 }
-.gc-home-profile__portrait .gc-avatar-initials { font-size: 2.5rem; }
+.gc-home-profile__portrait .gc-avatar-initials {
+  aspect-ratio: 3 / 2;
+  font-size: 2.5rem;
+}
 .gc-home-offer {
   display: flex; align-items: center; gap: var(--gc-space-2);
   padding: var(--gc-space-2) var(--gc-space-3); min-height: var(--gc-touch-target);

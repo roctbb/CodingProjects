@@ -3,6 +3,8 @@ namespace App\Services;
 
 use App\CoinTransaction;
 use App\Solution;
+use App\ProgramStep;
+use Illuminate\Support\Collection;
 use App\Task;
 use App\User;
 use Carbon\CarbonInterface;
@@ -18,26 +20,44 @@ class ClassroomBonus
         if (DB::table('classroom_bonus_awards')->where('course_id', $courseId)->where('user_id', $userId)->where('task_id', $task->id)->exists()) return [];
         if (Solution::where('course_id', $courseId)->where('user_id', $userId)->where('task_id', $task->id)->where('submitted', '<', $submitted)
             ->whereNotNull('mark')->get()->contains(fn ($s) => $s->evaluatedMark() >= $task->max_mark)) return [];
-        $step = $task->step;
+        return $this->scheduled($task->step, [$task->id], $courseId, $userId, $submitted)[$task->id] ?? [];
+    }
+
+    public function forStep(ProgramStep $step, Collection $tasks, int $courseId, int $userId, CarbonInterface $at): array
+    {
+        if ($tasks->isEmpty() || !Schema::hasTable('classroom_bonus_awards')
+            || !DB::table('course_students')->where('course_id', $courseId)->where('user_id', $userId)->exists()) return [];
+        $awarded = DB::table('classroom_bonus_awards')->where('course_id', $courseId)->where('user_id', $userId)
+            ->whereIn('task_id', $tasks->pluck('id'))->pluck('task_id')->flip();
+        $eligible = $tasks->reject(fn ($task) => $awarded->has($task->id) || $task->solutions->contains(fn ($s) =>
+            $s->user_id == $userId && $s->mark !== null && $s->submitted && $s->submitted->lt($at) && $s->evaluatedMark() >= $task->max_mark));
+        return $eligible->isEmpty() ? [] : $this->scheduled($step, $eligible->pluck('id')->all(), $courseId, $userId, $at);
+    }
+
+    private function scheduled(ProgramStep $step, array $taskIds, int $courseId, int $userId, CarbonInterface $submitted): array
+    {
         $audience = app(CourseSubgroups::class)->groupFor($courseId, $userId, $submitted) ?? 0;
         $entries = DB::table('planner_session_resources as e')->join('planner_sessions as s', 's.id', '=', 'e.session_id')
             ->join('planner_courses as p', 'p.id', '=', 's.planner_course_id')->join('planner_calendar_slots as c', 'c.id', '=', 's.calendar_slot_id')
             ->join('planner_resource_refs as r', 'r.id', '=', 'e.resource_ref_id')->join('planner_providers as provider', 'provider.id', '=', 'r.provider_id')
             ->where('p.course_id', $courseId)->where('e.layer', 'plan')->where('e.class_bonus_gc', '>', 0)->where('c.state', 'available')
             ->when(Schema::hasColumn('planner_courses', 'audience_id'), fn ($q) => $q->whereIn('p.audience_id', array_unique([0, $audience])))
-            ->whereNotNull('c.start_time')->where('provider.key', 'codingprojects')->where(function ($q) use ($task, $step) {
-                $q->where(fn ($q) => $q->where('r.resource_type', 'task')->where('r.external_id', (string) $task->id))
+            ->whereNotNull('c.start_time')->where('provider.key', 'codingprojects')->where(function ($q) use ($taskIds, $step) {
+                $q->where(fn ($q) => $q->where('r.resource_type', 'task')->whereIn('r.external_id', array_map('strval', $taskIds)))
                     ->orWhere(fn ($q) => $q->where('r.resource_type', 'step')->where('r.external_id', (string) $step->id))
                     ->orWhere(fn ($q) => $q->where('r.resource_type', 'lesson')->where('r.external_id', (string) $step->lesson_id));
             })->orderByDesc('e.class_bonus_gc')->orderBy('e.id')
-            ->get(['e.id', 'e.class_bonus_gc', 's.id as session_id', 'p.timezone', 'c.local_date', 'c.start_time', 'c.duration_minutes']);
+            ->get(['r.resource_type','r.external_id','e.id', 'e.class_bonus_gc', 's.id as session_id', 'p.timezone', 'c.local_date', 'c.start_time', 'c.duration_minutes']);
+        $bonuses = [];
         foreach ($entries as $entry) {
             $start = CarbonImmutable::parse($entry->local_date.' '.$entry->start_time, $entry->timezone);
             $end = $start->addMinutes($entry->duration_minutes);
-            if ($submitted->gte($start) && $submitted->lt($end)) return ['session_id' => $entry->session_id, 'entry_id' => $entry->id,
+            if ($submitted->lt($start) || $submitted->gte($end)) continue;
+            $appliesTo = $entry->resource_type === 'task' ? [$entry->external_id] : $taskIds;
+            foreach ($appliesTo as $id) $bonuses[$id] ??= ['session_id' => $entry->session_id, 'entry_id' => $entry->id,
                 'amount' => $entry->class_bonus_gc, 'starts_at' => $start->utc()->toIso8601String(), 'ends_at' => $end->utc()->toIso8601String()];
         }
-        return [];
+        return $bonuses;
     }
 
     public function freeze(Solution $solution): void

@@ -5,7 +5,7 @@
     @if(!$task->is_quiz && \App\Services\Tutor\Context::enabledForCourse($course->id) && (($nativeTeacher && ($nativeUser ?? null) == Auth::id()) || (!$nativeTeacher && Auth::user()->role === 'student'))) data-chat-tutor @endif
     @if(!$task->is_quiz && \Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') data-chat-socket="{{ config('services.task_chat_socket') }}" @endif
     @if($task->is_quiz) data-quiz-review @endif
-    @if($nativeTabWorkspace ?? false) data-execution-tab-workspace @endif
+    @if($nativeOwnWorkspace ?? false) data-execution-own-workspace @endif
     @if($nativeTeacher && !isset($nativeUser)) data-execution-inline-review hidden @endif
     data-endpoint="{{ url('/insider/courses/'.$course->id.'/tasks/'.$task->id) }}"
     @php($nativeStep = $step ?? $task->step)

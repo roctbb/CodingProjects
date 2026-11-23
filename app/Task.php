@@ -89,7 +89,7 @@ class Task extends Model
     {
         $minMark = $this->max_mark > 1 ? round($this->max_mark * 3 / 4) : 1;
 
-        return $this->scoredSolutionsForUser($user_id)->where('mark', '>=', $minMark)->isNotEmpty();
+        return $this->scoredSolutionsForUser($user_id)->contains(fn ($solution) => $solution->evaluatedMark() >= $minMark);
     }
 
     private function scoredSolutionsForUser($user_id)
@@ -136,7 +136,7 @@ class Task extends Model
 
     public function isFullDone($user_id)
     {
-        return $this->scoredSolutionsForUser($user_id)->where('mark', '=', $this->max_mark)->isNotEmpty();
+        return $this->scoredSolutionsForUser($user_id)->contains(fn ($solution) => $solution->evaluatedMark() >= $this->max_mark);
     }
 
     public function hasRewardableFullSolution($user_id)

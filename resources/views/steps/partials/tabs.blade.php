@@ -26,7 +26,7 @@
                             @if($task->is_star) <sup title="Необязательная задача"><i class="fas fa-star" aria-hidden="true"></i></sup> @endif
                             @if($task->is_hidden) <sup title="Скрытая задача"><i class="fas fa-lock" aria-hidden="true"></i></sup> @endif
                             @if($isInsider && !$isManager)
-                                <x-gc-task-state :task="$task" :viewer="$user" :course="$course" compact />
+                                <x-gc-task-state :task="$task" :viewer="$user" :course="$course" :outcome="$taskOutcomes[$task->id] ?? null" compact />
                             @endif
                         </a>
                     </li>

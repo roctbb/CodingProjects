@@ -45,7 +45,12 @@ class TaskSubmissionController extends Controller
         $model = $access->task($request->user(), $course, $task);
         if (!$request->isMethod('get')) {
             abort_if($model->isBlocked($request->user()->id, $course), 403);
-            $drafts->save($request, $course, $task);
+            if ($request->isMethod('post')) {
+                $request->validate(['from_submission' => 'required|uuid']);
+                $drafts->startCorrection($request, $course, $task);
+            } else {
+                $drafts->save($request, $course, $task);
+            }
         }
         return $this->json($drafts->get($request, $course, $task));
     }
@@ -53,7 +58,7 @@ class TaskSubmissionController extends Controller
     public function draftFile(Request $request, int $course, int $task, int $file, Access $access, Artifacts $artifacts)
     {
         $access->task($request->user(), $course, $task);
-        $draft = CodeDraft::where('user_id', $request->user()->id)->where('course_id', $course)->where('task_id', $task)->firstOrFail();
+        $draft = CodeDraft::workspace($request, $course, $task)->firstOrFail();
         $item = $draft->value['files'][$file] ?? null;
         abort_unless($item, 404);
         return $this->download($item['artifact'], $item['original_name']??$item['name'], $artifacts);

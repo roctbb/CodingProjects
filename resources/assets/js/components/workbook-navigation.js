@@ -1,6 +1,34 @@
-import * as bootstrap from 'bootstrap';
+export const chatDesktop = () => matchMedia('(min-width: 1200px)');
 
-export const chatDesktop = () => matchMedia('(min-width: 992px)');
+export function mountTaskChatPanel({sheet, opener, dialog, panel, onOpen, onPlace}) {
+    const desktop = chatDesktop();
+    function placePanel() {
+        if (desktop.matches) {
+            dialog.close();
+            dialog.before(panel);
+        } else {
+            dialog.append(panel);
+        }
+        onPlace?.();
+    }
+    placePanel();
+    desktop.addEventListener('change', placePanel);
+    if (opener) {
+        opener.addEventListener('click', () => {
+            dialog.showModal();
+            opener.setAttribute('aria-expanded', 'true');
+            onOpen?.();
+        });
+        dialog.addEventListener('close', () => {
+            if (!dialog.open) opener.setAttribute('aria-expanded', 'false');
+        });
+        opener.hidden = false;
+    }
+    const pane = sheet.closest('.step-content > .tab-pane');
+    sheet.closest('.gc-workbook')?.addEventListener('hide.bs.tab', event => {
+        if (pane && event.target.getAttribute('aria-controls') === pane.id) dialog.close();
+    });
+}
 
 function readingHeading(condition, desktop) {
     if (desktop) condition.tabIndex = 0;
@@ -10,36 +38,6 @@ function readingHeading(condition, desktop) {
         else condition.removeAttribute('aria-label');
     }
     condition.classList.toggle('gc-task-condition--reading', desktop);
-}
-
-// Size the chat and condition when they share the space below the task heading.
-function fitDesktopPanes(workbook, desktop) {
-    const main = workbook.querySelector('.step-main');
-    const sheets = main.querySelectorAll('.gc-chat-sheet:not(.gc-task-sheet--tutor, .gc-task-sheet--teacher)');
-    if (!sheets.length) return;
-    function measure() {
-        if (!desktop.matches) return;
-        const available = document.documentElement.clientHeight - parseFloat(getComputedStyle(main).paddingBottom);
-        for (const sheet of sheets) {
-            const condition = sheet.querySelector(':scope > [data-task-condition]');
-            if (!condition?.getClientRects().length) continue;
-            const top = condition.getBoundingClientRect().top + window.scrollY;
-            const height = Math.max(320, Math.floor(available - top));
-            sheet.style.setProperty('--gc-pane-height', height + 'px');
-        }
-    }
-    let frame;
-    function schedule() {
-        cancelAnimationFrame(frame);
-        frame = requestAnimationFrame(measure);
-    }
-    const observer = new ResizeObserver(schedule);
-    for (const element of workbook.querySelectorAll('.gc-workbook-header, .step-section-toolbar, .gc-chat-sheet, .gc-task-title-row')) {
-        observer.observe(element);
-    }
-    window.addEventListener('resize', schedule);
-    workbook.addEventListener('shown.bs.tab', schedule);
-    measure();
 }
 
 export default function initWorkbookNavigation() {
@@ -54,9 +52,7 @@ export default function initWorkbookNavigation() {
                 const selected = workbook.dataset.attemptTask === condition.dataset.taskCondition;
                 const sheet = condition.closest('.gc-chat-sheet');
                 if (sheet) {
-                    if (condition instanceof HTMLDetailsElement && (desktop.matches || !sheet.classList.contains('gc-task-sheet--tutor'))) {
-                        condition.open = desktop.matches || !(selected || condition.hasAttribute('data-submitted'));
-                    }
+                    if (condition instanceof HTMLDetailsElement && desktop.matches) condition.open = true;
                     readingHeading(condition, desktop.matches);
                     const submitSlot = condition.querySelector('[data-task-submit-slot]');
                     if (submitSlot) {
@@ -70,7 +66,6 @@ export default function initWorkbookNavigation() {
             }
         }
         applyConditionLayout();
-        fitDesktopPanes(workbook, desktop);
         desktop.addEventListener('change', applyConditionLayout);
         phone.addEventListener('change', applyConditionLayout);
         wide.addEventListener('change', applyConditionLayout);
@@ -79,17 +74,17 @@ export default function initWorkbookNavigation() {
             const condition = [...conditions].find(el => el.dataset.taskCondition === String(event.detail?.taskId));
             if (!(condition instanceof HTMLDetailsElement) || condition.hasAttribute('data-submitted')) return;
             condition.setAttribute('data-submitted', '');
-            if (condition.closest('.gc-task-sheet--tutor')) return;
-            if (condition.closest('.gc-chat-sheet') ? !desktop.matches : phone.matches) condition.open = false;
+            if (!condition.closest('.gc-chat-sheet') && phone.matches) condition.open = false;
         }
         workbook.addEventListener('gc:attempt-submitted', recordSubmission);
         document.addEventListener('gc:task-checked', recordSubmission);
         document.addEventListener('gc:task-checked', function (event) {
             if (!event.detail?.taskId) return;
             workbook.querySelectorAll('[data-task-state]').forEach(function (state) {
+                if (state.hasAttribute('data-workbook-outcome')) return;
                 if (state.dataset.taskState !== String(event.detail.taskId) || state.classList.contains('gc-task-state--danger')) return;
                 const complete = state.dataset.taskComplete === 'true' ||
-                    (event.detail.correct !== false && Number(event.detail.mark) === Number(state.dataset.taskMaximum));
+                    (event.detail.correct === true || (event.detail.correct !== false && Number(event.detail.mark) === Number(state.dataset.taskMaximum)));
                 const label = complete ? 'Выполнено' : event.detail.exhausted ? 'Попытки исчерпаны' : 'Можно улучшить';
                 const icon = complete ? 'circle-check' : event.detail.exhausted ? 'circle-xmark' : 'circle-half-stroke';
                 state.dataset.taskComplete = String(complete);
@@ -103,11 +98,23 @@ export default function initWorkbookNavigation() {
         workbook.addEventListener('click', function (event) {
             const action = event.target.closest('[data-workbook-tab-target]');
             if (!action) return;
+            if (action instanceof HTMLAnchorElement && (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0)) return;
             const trigger = Array.from(workbook.querySelectorAll('[data-bs-toggle="pill"]')).find(tab => tab.getAttribute('href') === action.dataset.workbookTabTarget);
             if (!trigger) return;
-            bootstrap.Tab.getOrCreateInstance(trigger).show();
-            trigger.focus({ preventScroll: true });
-            workbook.querySelector('.step-section-toolbar')?.scrollIntoView({ block: 'start', behavior: 'instant' });
+            event.preventDefault();
+            action.closest('dialog[open]')?.close();
+            const focusTarget = () => {
+                const pane = document.getElementById(trigger.getAttribute('aria-controls'));
+                const heading = action instanceof HTMLAnchorElement && pane?.querySelector('h2');
+                if (heading) heading.tabIndex = -1;
+                (heading || trigger).focus({preventScroll: true});
+                workbook.querySelector('.step-section-toolbar')?.scrollIntoView({block: 'start', behavior: 'instant'});
+            };
+            if (trigger.classList.contains('active')) focusTarget();
+            else {
+                trigger.addEventListener('shown.bs.tab', focusTarget, {once: true});
+                trigger.click();
+            }
         });
     }
 
