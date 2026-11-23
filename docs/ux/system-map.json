@@ -3505,7 +3505,7 @@
         "resources/views/material-review/attempt.blade.php",
         "resources/views/material-review/code-condition.blade.php"
       ],
-      "goal": "Прочитать достоверное условие своей прежней работы после изменения или переноса задачи.",
+      "goal": "По прямой ссылке прочитать сохранённое условие прежней работы после изменения или переноса задачи.",
       "guard": "Только владелец работы и уполномоченный преподаватель курса/администратор; авторское решение видно только преподавателю.",
       "checkStates": [
         "снимок сохранён",
@@ -5804,22 +5804,6 @@
       "kind": "close",
       "roles": [],
       "source": "public/js/material-review.js"
-    },
-    {
-      "from": "step",
-      "to": "material-history",
-      "label": "Условие при сдаче",
-      "kind": "navigate",
-      "roles": [],
-      "source": "resources/views/steps/partials/content.blade.php"
-    },
-    {
-      "from": "code-submission",
-      "to": "material-history",
-      "label": "Условие сохранённой сдачи",
-      "kind": "navigate",
-      "roles": [],
-      "source": "resources/assets/js/code-checking/result-view.js"
     },
     {
       "from": "course",

@@ -653,7 +653,7 @@
     }
     .gc-result-verdict__details {
         grid-column:1 / -1;
-        &:not(:has(> a, > p:not([data-score-repeated]))) {display:none;}
+        &:not(:has(> p:not([data-score-repeated]))) {display:none;}
     }
     :is(.gc-result-verdict__icon, .gc-result-verdict__title, [data-score-repeated], .gc-result-score > small) {display:none;}
     > :is(.gc-award, .gc-execution-status) {grid-column:1 / -1;}

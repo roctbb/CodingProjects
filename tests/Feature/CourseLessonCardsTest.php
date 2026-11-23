@@ -82,28 +82,43 @@ class CourseLessonCardsTest extends DeadlineFeatureCase
         $this->assertStringNotContainsString('15.11', $label);
     }
 
-    public function test_calendar_alerts_follow_student_work_and_are_not_shown_to_the_teacher(): void
+    public function test_calendar_alerts_follow_student_work_and_teachers_see_the_lesson_schedule(): void
     {
         $this->policy('task', 11);
         \Carbon\Carbon::setTestNow('2026-11-17 12:00:00 Europe/Moscow');
         $student = $this->cards(1);
         $this->assertSame(1, $student->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="overdue"]')->length);
         $teacher = $this->cards(2);
-        $this->assertSame(0, $teacher->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="overdue"]')->length);
+        $this->assertSame(1, $teacher->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="overdue"]')->length);
         $pending = $this->solution('2026-11-14 12:00:00', task: 11);
         $this->assertSame(0, $this->cards(1)->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="overdue"]')->length);
         DB::table('solutions')->where('id', $pending->id)->update(['mark' => 10]);
         $this->assertSame(0, $this->cards(1)->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="overdue"]')->length);
     }
 
-    public function test_calendar_is_yellow_today_and_neutral_after_a_full_penalty(): void
+    public function test_calendar_uses_the_first_deadline_even_when_a_later_stage_is_today(): void
     {
         \Carbon\Carbon::setTestNow('2026-11-17 12:00:00 Europe/Moscow');
-        $this->policy('task', 11, stages: [['deadline_date' => '2026-11-17', 'retained_percent' => 50]]);
-        $this->assertSame(1, $this->cards(1)->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="today"]')->length);
+        $this->policy('task', 11, stages: [
+            ['deadline_date' => '2026-11-17', 'retained_percent' => 50],
+            ['deadline_date' => '2026-11-22', 'retained_percent' => 0],
+        ]);
+        foreach ([1, 2] as $viewer) {
+            $this->assertSame(1, $this->cards($viewer)->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="today"]')->length);
+        }
+
+        \Carbon\Carbon::setTestNow('2026-11-22 12:00:00 Europe/Moscow');
+        foreach ([1, 2] as $viewer) {
+            $this->assertSame(1, $this->cards($viewer)->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="overdue"]')->length);
+        }
+    }
+
+    public function test_the_calendar_remains_overdue_after_a_full_penalty(): void
+    {
+        \Carbon\Carbon::setTestNow('2026-11-17 12:00:00 Europe/Moscow');
         $this->policy('task', 11, stages: [['deadline_date' => '2026-11-16', 'retained_percent' => 0]]);
         $xpath = $this->cards(1);
-        $this->assertSame(0, $xpath->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="overdue" or @data-lesson-deadline-status="today"]')->length);
+        $this->assertSame(1, $xpath->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="overdue"]')->length);
         $this->assertStringContainsString('16.11', $xpath->query('//*[@id="lesson-1"]//*[contains(@class,"course-lesson-deadline")]//button[@popovertarget]')->item(0)->textContent);
     }
 

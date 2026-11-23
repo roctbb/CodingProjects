@@ -243,7 +243,7 @@ class CodeCheckingTest extends TestCase
         $this->getJson($base.'/code-submissions?user_id=2&teacher_viewed=0')->assertJsonCount(2,'items');
         $this->assertArrayNotHasKey('report',$list['items'][0]);$this->assertArrayNotHasKey('files',$list['items'][0]);
         $this->getJson($base.'/code-attempts/101')->assertOk()->assertJsonPath('awarded_xp',5)->assertJsonPath('comment','Earlier feedback')
-            ->assertJsonPath('report',null)->assertJsonPath('source_version_unknown',true)->assertJsonPath('source_submission_id',$record->id)->assertDontSee('LATEST GP RESULT')
+            ->assertJsonPath('report',null)->assertJsonPath('source_version_unknown',true)->assertJsonPath('source_notice',null)->assertJsonPath('source_submission_id',$record->id)->assertDontSee('LATEST GP RESULT')
             ->assertJsonPath('can_grade',true)->assertJsonPath('review_mark',5)->assertJsonPath('review_comment','Earlier feedback')
             ->assertJsonPath('check_type','gpt')->assertJsonPath('comment_available',true)
             ->assertJsonPath('review_url',url('/insider/courses/7/steps/1').'?student=2&task=12&attempt=solution-101#task12');

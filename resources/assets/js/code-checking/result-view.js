@@ -27,7 +27,6 @@ export function resultHeader(record,{sourceOnly=false,showScore=true,showSourceD
     const title=node('h3',{class:'gc-result-verdict__title'},verdict.title);
     const details=node('div',{class:'gc-result-verdict__details'},title,
         sourceOnly && showSourceDate?node('p',{class:'text-muted small mb-0'},`Сохранённая версия решения · ${new Date(record.created_at).toLocaleString('ru-RU')}`):null);
-    if(record.condition_url)details.append(node('a',{href:record.condition_url,target:'_blank',rel:'noopener',class:'small'},'Условие при сдаче'));
     const raw=record.award_breakdown?.evaluated_points ?? record.evaluated_points ?? record.points;
     const maximum=record.maximum_points ?? record.grading_maximum_points;
     const credited=!sourceOnly && record.awarded_xp!==null && record.awarded_xp!==undefined;

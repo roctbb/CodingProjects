@@ -120,9 +120,11 @@ class History
             'text'=>$source?null:$answer,'original_reference'=>$isLink?$answer:null,'files'=>[],'report'=>null,
             'award_breakdown'=>app(SolutionAward::class)->view($solution, $viewer),
             'source_url'=>$source?url('/insider/code-submissions/'.$source->id):null,
-            'source_notice'=>$source
-                ? ($source->legacy_id!==null?'Точная версия кода этой сдачи не зафиксирована. Доступную сохранённую версию и её отчёт можно посмотреть отдельно.':'Исходный код сохранён отдельно. Отчёт текущей проверки не подставляется в историческую запись сдачи.')
-                : ($isLink?'Исходная ссылка сохранена, но отдельная версия кода и отчёт этой сдачи недоступны.':null),
+            'source_notice'=>match (true) {
+                $source !== null && $source->legacy_id === null => 'Исходный код сохранён отдельно. Отчёт текущей проверки не подставляется в историческую запись сдачи.',
+                $source === null && $isLink => 'Исходная ссылка сохранена, но отдельная версия кода и отчёт этой сдачи недоступны.',
+                default => null,
+            },
             'review_url'=>$teacher?app(\App\Services\TaskLocation::class)->task($course,$task,(int)$event->user_id,'solution-'.$id):null,
             'can_grade'=>$teacher,'grade_url'=>$teacher?url('/insider/courses/'.$course.'/solution/'.$id):null,
             'review_mark'=>$saved->evaluated_mark??$saved->raw_mark??$saved->mark,

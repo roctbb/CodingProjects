@@ -685,10 +685,9 @@
 .gc-deadline-popover__trigger > .fa-calendar-days { color:var(--gc-primary); }
 .gc-deadline-summary--compact time { font-variant-numeric:tabular-nums; }
 .course-lesson-deadline { display:flex; }
-.course-lesson-deadline[data-lesson-deadline-status="overdue"] .gc-deadline-popover__trigger,
-.course-lesson-deadline[data-lesson-deadline-status="overdue"] .gc-deadline-popover__trigger > i { color:var(--gc-danger); }
-.course-lesson-deadline[data-lesson-deadline-status="today"] .gc-deadline-popover__trigger,
-.course-lesson-deadline[data-lesson-deadline-status="today"] .gc-deadline-popover__trigger > i { color:var(--gc-warning); }
+.course-lesson-deadline .gc-deadline-popover__trigger > .fa-calendar-days { transition-property:none; }
+.course-lesson-deadline[data-lesson-deadline-status="overdue"] .gc-deadline-popover__trigger > .fa-calendar-days { color:var(--gc-danger); }
+.course-lesson-deadline[data-lesson-deadline-status="today"] .gc-deadline-popover__trigger > .fa-calendar-days { color:var(--gc-warning); }
 .gc-deadline-popover__panel, .gc-lesson-progress-popover__panel { position:fixed; inset:auto; left:16px; top:16px; margin:0; width:28rem; max-width:calc(100vw - 32px); max-height:calc(100dvh - 32px); overflow:auto; overscroll-behavior:contain; background:var(--gc-surface); border:1px solid var(--gc-control-border); border-radius:var(--gc-radius-md); box-shadow:var(--gc-shadow-lg); color:var(--gc-on-surface); font-size:var(--gc-font-small); line-height:1.5; padding:var(--gc-space-4); }
 .gc-deadline-popover__heading, .gc-lesson-progress-popover__heading { display:flex; align-items:center; justify-content:space-between; gap:var(--gc-space-3); margin-bottom:var(--gc-space-2); }
 .gc-deadline-popover__panel > ul { margin:0; padding-left:var(--gc-space-4); }

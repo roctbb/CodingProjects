@@ -42,7 +42,6 @@ flowchart TB
   review["Проверка решений ученика"]
   profile_achievements["Достижения и просмотр кубка"]
   geekpaste["GeekPaste"]
-  material_history["Условие на момент сдачи"]
   courses -->|"Активные / черновики / архив"| course_tabs
   courses -->|"Код приглашения / запись на курс"| join_course
   course -->|"Глава и список уроков"| course_chapter
@@ -105,7 +104,5 @@ flowchart TB
   step -->|"Ссылка на отправленную работу"| code_submission
   code_submission -->|"Вернуться к задаче"| step
   course -->|"Уведомления курса · меню действий"| course_notifications
-  step -->|"Условие при сдаче"| material_history
-  code_submission -->|"Условие сохранённой сдачи"| material_history
   course -->|"Подгруппы"| course_subgroups
   course_subgroups -->|"Расписание подгруппы"| planner

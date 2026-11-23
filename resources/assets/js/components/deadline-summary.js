@@ -9,18 +9,28 @@ export function deadlineState(stages, legacy, now) {
 }
 
 const dayFormatters = new Map();
+function localDay(timezone, now) {
+    if (!dayFormatters.has(timezone)) dayFormatters.set(timezone, new Intl.DateTimeFormat('en', {
+        timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit',
+    }));
+    const parts = Object.fromEntries(dayFormatters.get(timezone).formatToParts(now).map(part => [part.type, part.value]));
+    return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+export function lessonCalendarState(first, now) {
+    if (!first) return null;
+    if (now >= first.cutoff) return 'overdue';
+    return first.day === localDay(first.timezone, now) ? 'today' : null;
+}
+
 export function lessonDeadlineState(rules, now) {
     let today = false;
     for (const rule of rules) {
         const passed = rule.stages.filter(stage => rule.legacy ? now > stage.cutoff : now >= stage.cutoff);
         if ((passed.at(-1)?.percent ?? 100) <= 0) continue;
         if (passed.length) return 'overdue';
-        if (!dayFormatters.has(rule.timezone)) dayFormatters.set(rule.timezone, new Intl.DateTimeFormat('en', {
-            timeZone: rule.timezone, year: 'numeric', month: '2-digit', day: '2-digit',
-        }));
-        const parts = Object.fromEntries(dayFormatters.get(rule.timezone).formatToParts(now).map(part => [part.type, part.value]));
-        const localDay = `${parts.year}-${parts.month}-${parts.day}`;
-        today ||= rule.stages.some(stage => stage.day === localDay);
+        const day = localDay(rule.timezone, now);
+        today ||= rule.stages.some(stage => stage.day === day);
     }
     return today ? 'today' : null;
 }
@@ -75,13 +85,13 @@ export default function initDeadlineSummaries() {
             cutoff: Number(row.dataset.cutoff), percent: Number(row.dataset.percent), date: row.dataset.date, datetime: row.dataset.datetime,
         })),
     }));
-    const alerts = [...document.querySelectorAll('[data-lesson-deadline-rules]')].map(root => ({
-        root, rules: JSON.parse(root.dataset.lessonDeadlineRules), serverNow: Number(root.dataset.deadlineServerNow),
-    })).filter(alert => alert.rules.length);
+    const calendars = [...document.querySelectorAll('[data-lesson-deadline-first]')].map(root => ({
+        root, first: JSON.parse(root.dataset.lessonDeadlineFirst), serverNow: Number(root.dataset.deadlineServerNow),
+    }));
     const badges = [...document.querySelectorAll('[data-course-deadline-badge]')].map(root => ({
         root, rules: JSON.parse(root.dataset.deadlineRules), serverNow: Number(root.dataset.deadlineServerNow),
     }));
-    if (!summaries.length && !alerts.length && !badges.length) return;
+    if (!summaries.length && !calendars.length && !badges.length) return;
     let timer;
     const update = () => {
         clearTimeout(timer);
@@ -114,13 +124,15 @@ export default function initDeadlineSummaries() {
                 root.dispatchEvent(new CustomEvent('gc:deadline-change', { bubbles: true, detail: { penalty, next } }));
             }
         }
-        for (const {root, rules, serverNow} of alerts) {
-            const status = lessonDeadlineState(rules, serverNow + performance.now() - start);
+        for (const {root, first, serverNow} of calendars) {
+            const now = serverNow + performance.now() - start;
+            const status = lessonCalendarState(first, now);
             root.dataset.lessonDeadlineStatus = status ?? '';
-            const label = status === 'overdue' ? 'Есть несданные задачи с прошедшим сроком'
-                : status === 'today' ? 'Срок сдачи несданных задач сегодня' : 'Сроки сдачи';
+            const label = status === 'overdue' ? 'Первый срок сдачи прошёл'
+                : status === 'today' ? 'Первый срок сдачи сегодня' : 'Сроки сдачи';
             root.setAttribute('aria-label', label);
             root.title = label;
+            if (first.cutoff > now) delay = Math.min(delay, Math.max(1, first.cutoff - now));
         }
         for (const {root, rules, serverNow} of badges) {
             const {count, status} = deadlineBadgeState(rules, serverNow + performance.now() - start);
@@ -132,7 +144,7 @@ export default function initDeadlineSummaries() {
             root.setAttribute('aria-label', label); root.title = label;
         }
         // Also update the local calendar day while the page remains open.
-        if (alerts.length || badges.length) delay = Math.min(delay, 60000);
+        if (calendars.length || badges.length) delay = Math.min(delay, 60000);
         // One timer for the page, capped at the browser's maximum timeout.
         if (Number.isFinite(delay)) timer = setTimeout(update, Math.min(delay, 2147483647));
     };

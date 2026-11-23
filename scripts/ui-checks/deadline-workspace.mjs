@@ -30,6 +30,33 @@ export default async function deadlineWorkspace(controlPage, { url, output, widt
                 check('deadlines-date-on-each-card', await rows.locator('time[data-deadline-calendar]').count() === ids.length, width);
             }
             await page.clock.install();
+            for (const role of ['teacher', 'student']) {
+                await page.goto(`${url}/insider/courses/1?actor=${role}&scenario=base`);
+                const calendar = page.locator('#lesson-1 [data-lesson-deadline-first]');
+                const icon = calendar.locator('.gc-deadline-popover__trigger > .fa-calendar-days').first();
+                await calendar.locator('[data-deadline-state]').first().waitFor({ state: 'attached' });
+                const timing = await calendar.evaluate(el => ({
+                    now: Number(el.dataset.deadlineServerNow),
+                    cutoff: JSON.parse(el.dataset.lessonDeadlineFirst).cutoff,
+                }));
+                const color = token => icon.evaluate((el, token) => {
+                    const canvas = document.createElement('canvas').getContext('2d');
+                    canvas.fillStyle = getComputedStyle(el).color;
+                    const actual = canvas.fillStyle;
+                    canvas.fillStyle = getComputedStyle(el).getPropertyValue(token).trim();
+                    return { actual, expected: canvas.fillStyle };
+                }, token);
+                await page.clock.fastForward(timing.cutoff - timing.now - 3600000);
+                const today = await calendar.getAttribute('data-lesson-deadline-status');
+                const yellow = await color('--gc-warning');
+                check('lesson-calendar-is-yellow-on-the-first-deadline-day',
+                    today === 'today' && yellow.actual === yellow.expected, width, { role, status: today, ...yellow });
+                await page.clock.fastForward(3600010);
+                const overdue = await calendar.getAttribute('data-lesson-deadline-status');
+                const red = await color('--gc-danger');
+                check('lesson-calendar-turns-red-when-the-first-deadline-passes',
+                    overdue === 'overdue' && red.actual === red.expected, width, { role, status: overdue, ...red });
+            }
             await page.goto(`${url}/insider/courses/1/deadlines?actor=teacher&scenario=base`);
             const rule = page.locator('[data-deadline-task-id="11"] [data-deadline-summary]');
             const schedule = await rule.evaluate(el => ({ now: Number(el.dataset.serverNow), cutoffs: [...el.querySelectorAll('[data-deadline-stage]')].map(stage => Number(stage.dataset.cutoff)) }));

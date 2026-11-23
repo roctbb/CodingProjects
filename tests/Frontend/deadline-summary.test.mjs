@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { deadlineState, lessonDeadlineState, deadlineBadgeState } from '../../resources/assets/js/components/deadline-summary.js';
+import { deadlineState, lessonCalendarState, lessonDeadlineState, deadlineBadgeState } from '../../resources/assets/js/components/deadline-summary.js';
 
 test('deadline summary shows the current penalty and only the next stage, including zero retained points', () => {
     const stages = [{cutoff:1000,percent:70},{cutoff:2000,percent:50},{cutoff:3000,percent:0}];
@@ -20,6 +20,14 @@ test('deadline summary preserves legacy strict boundaries and fractional penalti
 const cutoff = Date.parse('2026-11-16T21:00:00Z');
 const rule = (percent=70,legacy=false) => ({timezone:'Europe/Moscow',legacy,stages:[{cutoff,percent,day:'2026-11-16'}]});
 
+test('lesson calendar switches to red when its first deadline expires', () => {
+    const first = {cutoff, timezone:'Europe/Moscow', day:'2026-11-16'};
+    assert.equal(lessonCalendarState(first, Date.parse('2026-11-15T20:59:59Z')), null);
+    assert.equal(lessonCalendarState(first, Date.parse('2026-11-15T21:00:00Z')), 'today');
+    assert.equal(lessonCalendarState(first, cutoff), 'overdue');
+    assert.equal(lessonCalendarState(first, cutoff + 86400000), 'overdue');
+});
+
 test('course deadline badge counts task rules and updates today, overdue and expired states', () => {
     assert.deepEqual(deadlineBadgeState([rule(),rule(0)],Date.parse('2026-11-15T12:00:00Z')),{count:2,status:null});
     assert.deepEqual(deadlineBadgeState([rule(),rule(0)],cutoff-3600000),{count:2,status:'today'});
@@ -31,7 +39,7 @@ test('course deadline badge counts task rules and updates today, overdue and exp
     assert.deepEqual(deadlineBadgeState([rule(0.004)],cutoff),{count:1,status:'overdue'});
 });
 
-test('lesson calendars distinguish today, recoverable overdue work, and full penalties', () => {
+test('deadline badges distinguish today, recoverable overdue work, and full penalties', () => {
     assert.equal(lessonDeadlineState([rule()],Date.parse('2026-11-15T12:00:00Z')),null);
     assert.equal(lessonDeadlineState([rule()],Date.parse('2026-11-16T12:00:00Z')),'today');
     assert.equal(lessonDeadlineState([rule()],cutoff),'overdue');
@@ -40,12 +48,12 @@ test('lesson calendars distinguish today, recoverable overdue work, and full pen
     assert.equal(lessonDeadlineState([],cutoff),null);
 });
 
-test('lesson calendar alerts preserve the strict legacy scoring boundary', () => {
+test('deadline badge alerts preserve the strict legacy scoring boundary', () => {
     assert.equal(lessonDeadlineState([rule(70,true)],cutoff),null);
     assert.equal(lessonDeadlineState([rule(70,true)],cutoff+1),'overdue');
 });
 
-test('lesson calendar day respects timezone and ignores expired zero-point work', () => {
+test('deadline badge day respects timezone and ignores expired zero-point work', () => {
     const tomorrow={timezone:'Europe/Moscow',legacy:false,stages:[{cutoff:cutoff+86400000,percent:50,day:'2026-11-17'}]};
     const now=Date.parse('2026-11-16T22:00:00Z');
     assert.equal(lessonDeadlineState([tomorrow],now),'today');

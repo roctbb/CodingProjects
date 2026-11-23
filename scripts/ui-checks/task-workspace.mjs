@@ -427,6 +427,8 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await archive.getByRole('tab',{name:'src/helper.py',exact:true}).click();
             await archive.locator('pre').filter({hasText:'def answer()'}).waitFor();
             check('task-legacy-zip-source-and-xp',await archive.locator('.gc-attempt-step[aria-current="true"]').getAttribute('data-attempt-id')==='solution-115' && (await archive.locator('.gc-result-score > strong').innerText())==='6',width);
+            check('task-result-omits-the-historical-condition-link',
+                await archive.locator('a[href*="/insider/material-history/"], a[href*="/insider/material-code-history/"]').count()===0,width);
             check('task-no-coin-button-without-an-action',await archive.locator('.gc-award .btn-coin').count()===0,width);
 
             await visit('student',13,id(13));
