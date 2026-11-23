@@ -5,4 +5,6 @@
 @if($text)<pre class="gc-execution-output">{{ $text }}</pre>@endif
 @foreach($files as $file)<section class="mb-4"><h2 class="h5">{{ $file['name'] }}</h2><a href="{{ $file['url'] }}">Скачать оригинал</a>
 @if(isset($file['text']))<pre class="gc-execution-output">{{ $file['text'] }}</pre>@endif</section>@endforeach
-</main></body></html>
+</main>
+@include('layouts.partials.course-material-access')
+</body></html>

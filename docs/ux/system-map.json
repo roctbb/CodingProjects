@@ -6571,6 +6571,14 @@
       "node": "geekexecutor",
       "kind": "api"
     },
+    "GeekExamCourseAccessController@sync": {
+      "node": "geekexam",
+      "kind": "callback"
+    },
+    "Closure:open/course-material-access": {
+      "node": "geekexam",
+      "kind": "api"
+    },
     "GeekExamWifiAlertController@store": {
       "node": "geekexam",
       "kind": "callback"

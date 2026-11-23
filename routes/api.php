@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 |
 */
 
+Route::post('/geekexam/course-access', 'GeekExamCourseAccessController@sync')
+    ->withoutMiddleware('throttle:60,1')->middleware('throttle:600,1');
 Route::post('/geekexam/wifi-disconnect', 'GeekExamWifiAlertController@store');
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
