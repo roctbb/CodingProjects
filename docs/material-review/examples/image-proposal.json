@@ -1,0 +1,17 @@
+{
+  "external_id": "audit-2026-11-16:image01",
+  "title": "Показать обращения к элементам",
+  "reason": "На схеме нужны записи a[0] и a[1], чтобы связать рисунок с кодом.",
+  "scope": "local",
+  "intent": "learning",
+  "operations": [
+    {
+      "op": "image",
+      "entity": "step",
+      "id": 1,
+      "field": "theory",
+      "old": "/media/course/array.svg",
+      "resource_id": "00000000-0000-4000-a000-000000000003"
+    }
+  ]
+}

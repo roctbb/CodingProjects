@@ -33,7 +33,7 @@ class TaskMaterialsTest extends DeadlineFeatureCase
         $queries = collect(DB::getQueryLog())->filter(fn ($row) => str_contains($row['query'], 'from "code_task_files"'));
         DB::disableQueryLog();
         $this->assertCount(1, $queries, 'Load materials for the whole step in one query');
-        $this->assertSame(1, $student->query('//*[@id="task11"]//details[contains(@class,"gc-task-condition-disclosure")]//section[contains(@class,"gc-task-materials")]//a[contains(@href,"'.$public->id.'")]')->length);
+        $this->assertSame(1, $student->query('//*[@id="task11"]//section[@data-task-condition="11"]//section[contains(@class,"gc-task-materials")]//a[contains(@href,"'.$public->id.'")]')->length);
         $this->assertSame(0, $student->query('//a[contains(@href,"'.$private->id.'")]')->length);
         $this->assertSame(0, $student->query('//*[@id="task12"]//section[contains(@class,"gc-task-materials")]')->length);
         $this->assertSame(1, $student->query('//section[contains(@class,"gc-task-materials")]')->length);

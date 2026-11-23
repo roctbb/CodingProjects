@@ -10,7 +10,7 @@ class CodeSubmission extends Model
     protected $keyType = 'string';
     protected $dateFormat = 'Y-m-d H:i:s.u';
     protected $guarded = [];
-    protected $hidden = ['files', 'payload_hash', 'source_metadata', 'answer_text'];
+    protected $hidden = ['files', 'payload_hash', 'source_metadata', 'answer_text', 'material_snapshot'];
     protected $casts = ['files' => 'array', 'is_public'=>'boolean', 'teacher_viewed'=>'boolean', 'source_metadata' => 'array', 'deadline_rule_snapshot' => 'array', 'class_bonus_snapshot' => 'array'];
 
     protected static function booted(): void

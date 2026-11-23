@@ -1,0 +1,29 @@
+{
+  "source_id": "audit-reviewer-main",
+  "files": {
+    "legacy-file-id": {
+      "program_id": 1,
+      "lesson_id": 1,
+      "entity": "step",
+      "id": 1,
+      "field": "theory"
+    }
+  },
+  "lessons": {
+    "grade7-2026:1.1": {
+      "program_id": 1,
+      "lesson_id": 1
+    }
+  },
+  "proposal_targets": {
+    "legacy-proposal-id": [
+      {
+        "program_id": 1,
+        "lesson_id": 1,
+        "entity": "task",
+        "id": 1,
+        "field": "text"
+      }
+    ]
+  }
+}

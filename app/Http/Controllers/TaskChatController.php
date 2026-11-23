@@ -21,8 +21,10 @@ class TaskChatController extends Controller
         if ($request->isMethod('post')) {
             $input = $request->validate([
                 'body' => ['required', 'string', 'max:3000'],
-                'attempt' => ['nullable', 'string', 'regex:/^(?:solution-[1-9][0-9]{0,17}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/D'],
-                'run_id' => ['nullable', 'uuid'],
+                'run_id' => ['nullable', 'uuid', 'required_with:tutor_action'],
+                'attempt' => ['nullable', 'string', 'required_with:tutor_action', 'regex:/^(?:solution-[1-9][0-9]{0,17}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/D'],
+                'tutor_action' => ['nullable', 'in:examples'],
+                'chat_layout' => ['nullable', 'in:panel,dialog'],
                 'client_id' => ['required', 'uuid'],
             ]);
             $withTutor = $student === (int)$viewer->id && !$assignment->is_quiz

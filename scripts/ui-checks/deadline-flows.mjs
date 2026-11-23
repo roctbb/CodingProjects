@@ -35,7 +35,7 @@ export default async function deadlineFlows(page, config) {
             await modal.getByRole('button',{name:'Сохранить',exact:true}).click();await target.waitForLoadState('networkidle');
             await open('/insider/courses/1/deadlines','student');
             assert(await target.locator('[data-deadline-summary]').count()>0,'student conditions missing');
-            assert(await target.locator('form[action$="/notifications/preference"]').count()===1,'student opt-in missing');
+            assert(await target.locator('form[action$="/notifications/preference"]').count()===0,'reminder form is still on deadlines');
             assert(await target.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'student deadline overflow');
             results.push({name:'student-deadlines',width});
             await open('/insider/courses/1/notifications');

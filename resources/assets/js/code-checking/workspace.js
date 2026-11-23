@@ -8,17 +8,47 @@ import {feedbackPanel} from './feedback';
 import {taskChat} from './task-chat';
 import {awardPanel} from './award-view';
 
+const attemptTime = new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+});
+const scorePlural = new Intl.PluralRules('ru-RU');
+const attemptMarkers = {
+    pending: {icon:'fa-clock', label:'На проверке'},
+    technical: {icon:'fa-triangle-exclamation', label:'Ошибка проверки'},
+    failed: {icon:'fa-xmark', label:'Не принято'},
+    partial: {icon:'fa-circle-half-stroke', label:'Частично'},
+    passed: {icon:'fa-check', label:'Полностью'},
+    stored: {icon:'fa-clock-rotate-left', label:'Сохранённая сдача'},
+};
+
+function attemptOutcome(record) {
+    if (record.state === 'error') return 'technical';
+    if (record.state === 'imported_pending') return 'stored';
+    if (record.state !== 'completed') return 'pending';
+
+    const points = record.evaluated_points ?? record.points ?? record.awarded_xp;
+    const maximum = record.maximum_points ?? record.grading_maximum_points;
+    if (points == null || !(maximum > 0)) return 'stored';
+    if (points <= 0) return 'failed';
+    return points >= maximum ? 'passed' : 'partial';
+}
+
 export async function workspace(root) {
     const base = root.dataset.endpoint;
     const teacher = root.dataset.teacher === 'true';
     const taskHeading = teacher ? null : root.closest('.gc-student-attempt')?.querySelector('.gc-attempt-heading');
-    const taskOutcome = !teacher && root.closest('.gc-task-sheet')?.querySelector('[data-task-outcome]');
+    const sheet = root.closest('.gc-task-sheet');
+    const taskName = sheet?.querySelector('.gc-task-title-group :is(h1, h2)')?.textContent.trim();
+    const taskOutcome = !teacher && sheet?.querySelector('[data-task-outcome]');
+    const taskHistory = teacher ? null : sheet?.querySelector('[data-task-attempt-history]');
+    const taskAttemptList = taskHistory?.querySelector('.gc-attempt-list');
+    const moreTaskAttempts = taskHistory?.querySelector('[data-task-attempt-more]');
     const focusedVerdict = taskHeading?.querySelector('[data-attempt-verdict]');
     const inlineReview = root.hasAttribute('data-execution-inline-review');
     let config, draft, files = [], uploads = [], dirty = false, editing, stop = () => {}, page = 1, current, requestId, generation = 0;
     let saving = false, submitting = false, savePromise, editVersion=0, autoSaveTimer, settingsPromise, historyGeneration = 0, ownMode = false;
     let selectedUser = root.dataset.user ? {id:root.dataset.user,name:''} : null;
-    let attemptItems = [], activeAttempt = null, attemptList, composerVisible=true, lastResultAttempt=null;
+    let attemptItems = [], activeAttempt = null, composerVisible=true, lastResultAttempt=null;
     const submittedOrder=[];
     const rewardedRuns=new Set();
     const gradingDrafts=new Map(),reviewDrafts=new Map(),expandedTests=new Map(),testPages=new Map();
@@ -44,33 +74,58 @@ export async function workspace(root) {
     const legacyForm = (!teacher || teacherOwnChat) && root.hasAttribute('data-history-only') ?
         (root.closest('[role="tabpanel"]')?.id.startsWith('own-solution-') ? root.closest('[role="tabpanel"]') : root.closest('.gc-task-answer'))?.querySelector('.step-submit-form')?.closest('.row') : null;
     let workspaceDialog, dialogHeading, previousAttempt;
-    function openWorkspace(title) {
+    function styleStudentDialog(dialog, view) {
+        if (teacher) return;
+        dialog.classList.add('gc-student-work-dialog');
+        dialog.dataset.view = view;
+        const header = dialog.firstElementChild;
+        const title = header.firstElementChild;
+        const heading = node('div', {class: 'gc-work-dialog__heading'});
+        header.prepend(heading);
+        heading.append(title);
+        if (taskName) heading.append(node('p', {}, taskName));
+    }
+    function studentWorkspaceView(view) {
+        if (teacher || !workspaceDialog?.open || workspaceDialog.dataset.view === view) return;
+        workspaceDialog.dataset.view = view;
+        dialogHeading.textContent = view === 'compose' ? 'Отправить решение' : 'Отправленное решение';
+        workspaceDialog.scrollTop = 0;
+    }
+    function openWorkspace(title, view = 'result') {
         dialogHeading.textContent=title;
+        if (!teacher) workspaceDialog.dataset.view = view;
         browser.before(notice);
         const verdict=verdictHost?.querySelector(':scope > header');
         if(verdict)history.after(verdict);
         root.querySelectorAll('[data-chat-source-preview]').forEach(el=>el.dispatchEvent(new Event('gc:preview-open')));
 
-        if(!workspaceDialog.open)workspaceDialog.showModal();
+        if (!workspaceDialog.open) {
+            workspaceDialog.showModal();
+            workspaceDialog.scrollTop = 0;
+            revealAttemptStep();
+        }
     }
     async function viewDetails(attempt) {
-        openWorkspace(teacher?'Проверка и оценка':'Мои решения');
+        openWorkspace(teacher ? 'Проверка и оценка' : 'Отправленное решение');
         if(typeof attempt==='string')await openAttemptById(attempt);
     }
     function openEditor() {
         if(legacyForm) {
-            const dialog=openDialog('Отправить решение',legacyForm);
+            const body = teacher ? legacyForm : node('div', {class: 'gc-work-dialog__content'}, legacyForm);
+            const dialog=openDialog('Отправить решение',body);
+            styleStudentDialog(dialog, 'compose');
             legacyForm.hidden=false;
             dialog.addEventListener('close',()=>{legacyForm.hidden=true;root.after(legacyForm);},{once:true});
         }else{
             previousAttempt=activeAttempt;
-            openWorkspace('Отправить решение');showComposer();
+            openWorkspace('Отправить решение', 'compose');showComposer();
         }
     }
-    function chatDialog(title,loadContent,wide=true) {
-        const body=node('div',{},node('p',{role:'status'},'Загружаем…'));
+    function chatDialog(title,loadContent,{wide=true,studentWork=false}={}) {
+        const body=node('div',{class:studentWork && !teacher ? 'gc-work-dialog__content' : null},node('p',{role:'status'},'Загружаем…'));
         const dialog=openDialog(title,body);
         if(wide)dialog.classList.add('gc-source-dialog');
+        if(studentWork)styleStudentDialog(dialog, 'result');
         const render=async()=>{try{const content=await loadContent(render,dialog);if(dialog.open)body.replaceChildren(content);}
             catch(e){if(dialog.open)body.replaceChildren(node('p',{role:'alert'},e.message),button('Повторить',render));}};
         render();
@@ -93,7 +148,7 @@ export async function workspace(root) {
             if(repository?.commit)preview.append(node('p',{},node('code',{},repository.commit),' ',
                 download('/insider/code-submissions/'+source.id+'/repository/archive','Скачать репозиторий')));
             return preview;
-        });
+        }, {studentWork: true});
     }
     async function gradeChatSubmission(attempt) {
         details.clear();
@@ -147,7 +202,7 @@ export async function workspace(root) {
                 Object.keys(methods).length>1 ? field('Способ проверки',method) : null,
                 type==='gpt' && !methods.strong && source.ai_recheck?.reason ? node('p',{class:'gc-help-text'},source.ai_recheck.reason) : null,
                 noteField,status,actions(submit));
-        },false);
+        }, {wide: false});
     }
     function openReport(event) {
         chatDialog('Журнал тестирования',async reload=>{
@@ -158,7 +213,7 @@ export async function workspace(root) {
             else if(run.text_report_available)body.append(node('pre',{class:'gc-execution-output'},(await request(path+'?test_data=full')).comment || 'Текстовый отчёт пуст.'));
             else body.append(node('p',{},run.execution_error?.message || 'Подробный журнал для этой проверки не сохранился.'));
             return body;
-        });
+        }, {studentWork: true});
     }
     const pendingChatAttempts = new Set();
     async function refreshChatAttempts(attempts) {
@@ -181,10 +236,11 @@ export async function workspace(root) {
         updated:refreshChatAttempts,
     }) : null;
     if(chat){
-        dialogHeading=node('h3',{class:'h5 mb-0'});
-        workspaceDialog=node('dialog',{class:'gc-dialog gc-source-dialog','aria-label':'Работа с решением'},
+        dialogHeading=node(teacher ? 'h3' : 'h2',{class:'h5 mb-0'});
+        workspaceDialog=node('dialog',{id:root.id+'-dialog',class:'gc-dialog gc-source-dialog','aria-label':'Работа с решением'},
             node('header',{},dialogHeading,iconButton('Закрыть','fa-xmark',()=>workspaceDialog.close())),browser);
-        root.append(chat.shell,workspaceDialog);
+        styleStudentDialog(workspaceDialog, 'result');
+        root.append(chat.surface,workspaceDialog);
         if(legacyForm && !legacyForm.querySelector('.text-danger'))legacyForm.hidden=true;
         workspaceDialog.addEventListener('close',()=>{
             root.prepend(notice);
@@ -197,12 +253,16 @@ export async function workspace(root) {
     }
     const verdictHost = focusedVerdict;
     const busy=node('span',{class:'gc-submission-loading',role:'status'},node('i',{class:'fas fa-spinner fa-spin','aria-hidden':'true'}),' Загружаем работу…');
-    function beginResult(){verdictHost?.replaceChildren();const jump=toolbar.querySelector('.gc-review-jump');if(jump)jump.disabled=true;stage.hidden=false;summary.hidden=false;summary.setAttribute('aria-busy','true');summary.querySelectorAll(':scope > header,:scope > .gc-award').forEach(el=>el.setAttribute('inert',''));stage.setAttribute('aria-busy','true');stage.setAttribute('inert','');stage.append(busy);}
+    function beginResult(){
+        studentWorkspaceView('result');
+        verdictHost?.replaceChildren();const jump=toolbar.querySelector('.gc-review-jump');if(jump)jump.disabled=true;stage.hidden=false;summary.hidden=false;summary.setAttribute('aria-busy','true');summary.querySelectorAll(':scope > header,:scope > .gc-award').forEach(el=>el.setAttribute('inert',''));stage.setAttribute('aria-busy','true');stage.setAttribute('inert','');stage.append(busy);
+    }
     function finishResult(panel){
         if(panel){chat?.refresh();results.querySelectorAll('.gc-inline-grade').forEach(grade=>grade.dispatchEvent(new Event('gc:grading-dispose')));results.replaceChildren(panel);results.hidden=false;content.hidden=true;composerVisible=false;history.hidden=false;summary.hidden=false;}
         summary.removeAttribute('aria-busy');summary.querySelectorAll('[inert]').forEach(el=>el.removeAttribute('inert'));
         busy.remove();stage.removeAttribute('inert');stage.removeAttribute('aria-busy');
         const jump=toolbar.querySelector('.gc-review-jump');if(jump)jump.disabled=!results.querySelector('.gc-inline-grade');
+        if(panel)revealAttemptStep();
     }
     function failResult(message,retry){
         finishResult();
@@ -260,7 +320,7 @@ export async function workspace(root) {
     async function selectStudent(student,{attempt=null}={}) {
         generation++;historyGeneration++;stop();current=null;activeAttempt=null;
         clearResult();
-        selectedUser=student;chat?.select(student.id,student.name,false);ownMode=false;attemptItems=[];attemptList=null;
+        selectedUser=student;chat?.select(student.id,student.name,false);ownMode=false;attemptItems=[];
         content.hidden=true;notice.replaceChildren();renderToolbar();beginResult();
         try {
             await loadHistory();
@@ -322,8 +382,13 @@ export async function workspace(root) {
         return groups.includes(selected)?selected:groups[0] || 'text';
     }
     const backToResult=button('Вернуться к результату',safe(()=>openAttemptById(lastResultAttempt)));
+    if (!teacher) {
+        backToResult.setAttribute('aria-label', 'Вернуться к результату');
+        backToResult.replaceChildren(node('i', {class: 'fas fa-arrow-left', 'aria-hidden': 'true'}), ' К результату');
+    }
     function showComposer(){
         if(!draft || root.hasAttribute('data-history-only'))return;
+        studentWorkspaceView('compose');
         verdictHost?.replaceChildren();
         lastResultAttempt=activeAttempt || lastResultAttempt;
         backToResult.hidden=!lastResultAttempt;
@@ -394,20 +459,29 @@ export async function workspace(root) {
         const body=node('section',{class:'gc-execution-composer'+(kind==='code'?' is-code-composer':''),'aria-label':'Форма сдачи решения'},composerHeading);
         if(composerVisible)summary.hidden=true;
         const form=node('div',{class:'gc-composer-body'});body.append(form);
+        const options = teacher ? form : node('div', {class:'gc-composer-options'});
+        if (!teacher) form.append(options);
         if(kind!=='text' && groups.length>1){
             const labels={files:['fa-file-arrow-up','Файлы'],code:['fa-code','Код'],repository:['fa-code-branch','Репозиторий']};
             const choices=node('div',{class:'gc-segmented-tabs gc-submission-modes',role:'group','aria-label':'Способ сдачи'});
             for(const group of groups){
-                const choice=button('',()=>{draft.mode=group==='code'?(allowed.includes('code')?'code':'project'):group;markDirty();renderComposer();});
+                const choice=button('',()=>{
+                    draft.mode=group==='code'?(allowed.includes('code')?'code':'project'):group;
+                    markDirty();renderComposer();
+                    content.querySelector('.gc-submission-modes .active')?.focus({preventScroll:true});
+                });
                 choice.className='nav-link'+(group===kind?' active':'');choice.setAttribute('aria-pressed',String(group===kind));
                 choice.append(node('i',{class:'fas '+labels[group][0],'aria-hidden':'true'}),' '+labels[group][1]);choices.append(choice);
             }
-            form.append(choices);
+            options.append(choices);
         }
         if(kind==='code' || kind==='repository'){
             const languageNames={cpp:'C++',python:'Python',py:'Python',javascript:'JavaScript',text:'Текст'};
             const languages=config.allowed_languages.filter(value=>value!=='text');
-            if(languages.length>1)form.append(field('Язык',select(draft.language,Object.fromEntries(languages.map(value=>[value,languageNames[value] || value])),value=>{draft.language=value;markDirty();renderComposer();})));
+            if(languages.length>1)options.append(field('Язык',select(draft.language,Object.fromEntries(languages.map(value=>[value,languageNames[value] || value])),value=>{
+                draft.language=value;markDirty();renderComposer();
+                content.querySelector('.gc-composer-options select')?.focus({preventScroll:true});
+            })));
             else if(languages.length)composerHeading.append(node('span',{class:'gc-composer-language text-muted small'},node('i',{class:'fas fa-code','aria-hidden':'true'}),' '+(kind==='code'?(files[0]?.path || config.entrypoint || (draft.language==='cpp'?'main.cpp':'main.py'))+' · ':'')+(languageNames[languages[0]] || languages[0])));
         }
         if(kind==='repository'){
@@ -432,8 +506,9 @@ export async function workspace(root) {
                 if(editable.length>1)controls.append(button('Удалить файл',()=>{files=files.filter(value=>value!==file);markDirty();renderComposer();}));
                 if(file.content===undefined){
                     if(editable.length>1)pane.append(button('Удалить файл',()=>{files=files.filter(value=>value!==file);markDirty();renderComposer();}));
-                    pane.append(node('p',{class:'text-muted small'},'Исходник сохранён и будет отправлен без изменений. Для редактирования большого файла используйте свой редактор.'),file.download_url?download(file.download_url,'Скачать '+file.path):null,
-                        actions(button('Заменить код',()=>{if(!confirm('Заменить сохранённый исходник новым кодом? Сначала скачайте файл, если он нужен.'))return;file.content='';file.changed=true;markDirty();renderComposer();})));
+                    pane.append(node('p',{class:'text-muted small'},'Исходник сохранён и будет отправлен без изменений. Для редактирования большого файла используйте свой редактор.'));
+                    if (file.download_url) pane.append(download(file.download_url,'Скачать '+file.path));
+                    pane.append(actions(button('Заменить код',()=>{if(!confirm('Заменить сохранённый исходник новым кодом? Сначала скачайте файл, если он нужен.'))return;file.content='';file.changed=true;markDirty();renderComposer();})));
                 }else{if(editable.length>1)pane.append(controls);pane.append(host);}
                 const tab=button(file.path || 'Новый файл',()=>activate(file));tab.className='gc-source-tab';tab.setAttribute('role','tab');if(editable.length>1){tab.id=root.id+'-source-tab-'+editable.indexOf(file);pane.id=tab.id+'-panel';tab.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',tab.id);}
                 tabs.append(tab);panes.push({file,pane,tab});editors.append(pane);
@@ -618,29 +693,111 @@ export async function workspace(root) {
             if(selected)item.setAttribute('aria-current','true');else item.removeAttribute('aria-current');
         });
         const picker=history.querySelector('[data-attempt-picker]');if(picker)picker.value=id || '';
-        const counter=history.querySelector('.gc-attempt-count'),item=attemptItems.find(item=>String(item.id)===String(id));
-        if(counter){const count=Number(history.dataset.totalAttempts)||attemptItems.length,word={one:'сдача',few:'сдачи',many:'сдач',other:'сдачи'}[new Intl.PluralRules('ru').select(count)],viewed=typeof item?.teacher_viewed==='boolean'&&!item.source_version_unknown?(item.teacher_viewed?(teacher?'Просмотрено':'Просмотрено учителем'):(teacher?'Не просмотрено':'Учитель ещё не просмотрел')):'';counter.textContent=[viewed,`${count} ${word}`].filter(Boolean).join(' · ');}
+        const counter = history.querySelector('.gc-attempt-count');
+        const item = attemptItems.find(item => String(item.id) === String(id));
+        const viewed = history.querySelector('.gc-attempt-history__viewed');
+        if (counter) {
+            const count = Number(history.dataset.totalAttempts) || attemptItems.length;
+            const unit = {one:'сдача', few:'сдачи', many:'сдач', other:'сдача'}[scorePlural.select(count)];
+            const status = typeof item?.teacher_viewed === 'boolean' && !item.source_version_unknown
+                ? (item.teacher_viewed ? (teacher ? 'Просмотрено' : 'Просмотрено учителем') : (teacher ? 'Не просмотрено' : 'Учитель ещё не просмотрел'))
+                : '';
+            const countLabel = `${count} ${unit}`;
+            if (viewed) {
+                viewed.textContent = status;
+                viewed.hidden = !status;
+            }
+            counter.textContent = viewed || !status ? countLabel : `${status} · ${countLabel}`;
+        }
+        showAttemptDate(item);
     }
-    function attemptHeader(record){
-        const label=record.kind==='legacy_attempt'?'Сдача':record.counts_as_attempt===false?'Сохранённая версия решения':'Решение';
-        let score=record.state==='error'?'Ошибка проверки · без оценки':record.kind==='legacy_attempt'?record.awarded_xp!==null&&record.awarded_xp!==undefined?`${record.awarded_xp} XP`:'Ожидает оценки':record.points!==null&&record.points!==undefined?`${record.points}${record.maximum_points&&!record.source_version_unknown?' / '+record.maximum_points:''} баллов`:phases[record.state] || 'Загружаем результат…';
-        if(record.kind!=='legacy_attempt' && record.state!=='error' && record.awarded_xp!==null && record.awarded_xp!==undefined && record.awarded_xp!==record.points)score+=` · ${record.awarded_xp} XP`;
-        return [node('span',{},node('strong',{},record.created_at?new Date(record.created_at).toLocaleString('ru-RU'):label,record.is_best?node('small',{class:'gc-attempt-best ms-2'},'Лучшая'):null),node('small',{class:'text-muted'},record.created_at?label:'',teacher&&record.kind==='submission'&&!record.source_version_unknown&&record.teacher_viewed===false?' · Не просмотрено':'')),node('span',{class:'gc-attempt-list__score'},score),node('i',{class:'fas fa-chevron-down','aria-hidden':'true'})];
+    function showAttemptDate(item) {
+        const date = history.querySelector('.gc-attempt-history__date');
+        if (!date) return;
+        date.hidden = !item?.created_at;
+        date.dateTime = item?.created_at || '';
+        date.textContent = item?.created_at ? attemptTime.format(new Date(item.created_at)) : '';
     }
-    function attemptCard(record){
-        const id=String(record.id),heading=button('',safe(()=>openAttempt(record)));
-        heading.className='gc-attempt-list__item';heading.dataset.attemptId=id;
-        heading.setAttribute('aria-controls',results.id);heading.append(...attemptHeader(record));
-        return node('li',{},heading);
+    function revealAttemptStep(step = history.querySelector('.gc-attempt-step[aria-current="true"]')) {
+        const rail = step?.parentElement;
+        if (!rail?.clientWidth) return;
+        const left = step.offsetLeft - rail.scrollLeft;
+        if (left < 0) rail.scrollLeft += left;
+        else if (left + step.offsetWidth > rail.clientWidth) rail.scrollLeft += left + step.offsetWidth - rail.clientWidth;
+    }
+    function attemptStep(record, existing) {
+        const id = String(record.id);
+        const step = existing || node('button', {type:'button', class:'gc-attempt-step', 'data-attempt-id':id,
+            onclick:safe(() => openAttemptById(id))});
+        step.dataset.tone = attemptOutcome(record);
+        const marker = attemptMarkers[step.dataset.tone];
+        const details = attemptLabel(record);
+        const label = details.includes(marker.label) ? details : [details, marker.label].filter(Boolean).join(' · ');
+        step.title = label;
+        step.setAttribute('aria-label', label);
+        step.replaceChildren(node('span', {class:'gc-attempt-step__icon', 'aria-hidden':'true'},
+            node('i', {class:'fas '+marker.icon})));
+        return step;
+    }
+    function attemptHeader(record) {
+        const points = record.evaluated_points ?? record.points;
+        const maximum = record.source_version_unknown ? null : record.maximum_points;
+        let result = phases[record.state] || 'Ожидает проверки';
+        let tone = record.state === 'error' ? 'error' : 'neutral';
+        if (record.state === 'completed') {
+            const units = {one: 'балл', few: 'балла', many: 'баллов', other: 'балла'}[scorePlural.select(maximum ?? points)];
+            const score = points == null ? null : [points, maximum].filter(value => value != null).join(' / ') + ' ' + units;
+            const xp = record.awarded_xp != null && record.awarded_xp !== points ? `${record.awarded_xp} XP` : null;
+            result = [score, xp].filter(Boolean).join(' · ') || result;
+            if (points != null && maximum > 0) {
+                if (points >= maximum) tone = 'passed';
+                else if (points > 0) tone = 'partial';
+                else tone = 'error';
+            }
+        }
+        return [
+            node('span', {class:'gc-task-history__file', 'aria-hidden':'true'}, node('i', {class:'far fa-file-lines'})),
+            node('span', {class:'gc-task-history__date'},
+                record.created_at ? node('time', {dateTime: record.created_at}, attemptTime.format(new Date(record.created_at))) : 'Решение',
+                record.counts_as_attempt === false ? node('small', {class:'text-muted'}, 'Сохранённая версия') : null),
+            node('span', {class:'gc-attempt-list__score', 'data-tone':tone}, result),
+            node('i', {class:'fas fa-chevron-right', 'aria-hidden':'true'}),
+        ];
+    }
+    function renderTaskHistory(hasMore) {
+        if (!taskAttemptList) return;
+        const previousRows = new Map([...taskAttemptList.children].map(row => [row.firstElementChild.dataset.attemptId, row]));
+        const focused = taskAttemptList.contains(document.activeElement) ? document.activeElement : null;
+        const rows = attemptItems.map(record => {
+            const id = String(record.id);
+            const row = previousRows.get(id) || node('li', {}, node('button', {
+                type: 'button', class: 'gc-attempt-list__item', 'data-attempt-id': id,
+                'aria-haspopup': 'dialog', 'aria-controls': workspaceDialog.id,
+                onclick: safe(() => viewDetails(id)),
+            }));
+            row.firstElementChild.replaceChildren(...attemptHeader(record));
+            return row;
+        });
+        taskAttemptList.replaceChildren(...rows);
+        taskHistory.hidden = !rows.length;
+        moreTaskAttempts.hidden = !hasMore;
+        focused?.focus({preventScroll: true});
     }
     function ensureAttemptCard(record){
         const id=String(record.id);let summary=attemptItems.find(item=>String(item.id)===id);
         if(!summary){summary={id,kind:record.kind || 'submission'};attemptItems.push(summary);}
-        for(const key of ['kind','created_at','awarded_xp','points','maximum_points','state','counts_as_attempt','is_best','source_version_unknown','teacher_viewed','solution_id'])if(record[key]!==undefined)summary[key]=record[key];
+        for(const key of ['kind','created_at','awarded_xp','points','evaluated_points','maximum_points','grading_maximum_points','state','counts_as_attempt','is_best','source_version_unknown','teacher_viewed','solution_id'])if(record[key]!==undefined)summary[key]=record[key];
+        if (record.award_breakdown?.evaluated_points != null) summary.evaluated_points = record.award_breakdown.evaluated_points;
         const picker=history.querySelector('[data-attempt-picker]');
         if(picker){let option=[...picker.options].find(o=>o.value===id);if(!option){option=node('option',{value:id});picker.append(option);}option.textContent=choiceLabel(summary);}
-        const row=[...history.querySelectorAll('[data-attempt-id]')].find(item=>item.dataset.attemptId===id);
-        if(row)row.replaceChildren(...attemptHeader(summary));else attemptList?.prepend(attemptCard(summary));
+        const rail = history.querySelector('.gc-attempt-steps');
+        if (rail) {
+            const existing = rail.querySelector(`[data-attempt-id="${CSS.escape(id)}"]`);
+            const step = attemptStep(summary, existing);
+            if (!existing) rail.append(step);
+            if (String(activeAttempt) === id) showAttemptDate(summary);
+        }
+        taskAttemptList?.querySelector(`[data-attempt-id="${CSS.escape(id)}"]`)?.replaceChildren(...attemptHeader(summary));
     }
     function choiceLabel(record){
         return focusedVerdict && record.created_at ? new Date(record.created_at).toLocaleString('ru-RU',
@@ -648,7 +805,7 @@ export async function workspace(root) {
     }
     function attemptLabel(record){
         const score=record.awarded_xp!==null&&record.awarded_xp!==undefined?`${record.awarded_xp}${record.maximum_points?' / '+record.maximum_points:''} XP`:record.state==='error'?'Ошибка проверки':record.points!==null&&record.points!==undefined?`${record.points} баллов`:phases[record.state];
-        return [record.created_at?new Date(record.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):null,record.is_best?'лучшая':null,record.counts_as_attempt===false?'материалы':null,score].filter(Boolean).join(' · ');
+        return [record.created_at?attemptTime.format(new Date(record.created_at)):null,record.is_best?'лучшая':null,record.counts_as_attempt===false?'материалы':null,score].filter(Boolean).join(' · ');
     }
     function writeContext(id){
         // Opening a task loads its latest attempt in the background. Keep the task URL on reload.
@@ -673,7 +830,8 @@ export async function workspace(root) {
         const render=()=>awardPanel(record,{student:!teacher||ownMode,onChange:async value=>{
             if(!panel?.isConnected)return;
             Object.assign(record,value);details.clear();const updated=render();if(updated)panel.replaceWith(updated);else panel.remove();panel=updated;
-            const score=(verdictHost || summary).querySelector('.gc-result-score > strong');if(score)score.textContent=String(value.awarded_xp);
+            const score=summary.querySelector('.gc-result-score > strong') ?? verdictHost?.querySelector('.gc-result-score > strong');
+            if(score)score.textContent=String(value.awarded_xp);
             if(current && current.id===record.id)Object.assign(current,value);
             await loadHistory();
             if(!teacher||ownMode)document.dispatchEvent(new CustomEvent('gc:task-checked',{detail:{taskId:root.dataset.taskId,mark:value.awarded_xp}}));
@@ -689,7 +847,7 @@ export async function workspace(root) {
             if(Number(record.user_id)!==Number(teacher && !ownMode ? selectedUser.id : root.dataset.viewerId))throw new Error('Эта сдача принадлежит другому ученику. Выберите его в списке.');
             ensureAttemptCard(record);
             if(record.source_submission_id){await show(record.source_submission_id,{snapshotOf:record});return;}
-            const {header}=resultHeader(record,{showSourceDate:false,reviewing:teacher&&!ownMode,compact:!!focusedVerdict});
+            const {header}=resultHeader(record,{showSourceDate:false,reviewing:teacher&&!ownMode,compact:!teacher});
             const panel=node('section',{class:'gc-execution-result'},header);
             if(teacher && !ownMode){const menu=resultActions();const remove=removeAttemptAction(record);menu.add(remove);remove.classList.add('text-danger');panel.append(node('div',{class:'gc-result-context-bar'},menu.root));}
             renderAward(record,panel,{label:false});
@@ -698,7 +856,10 @@ export async function workspace(root) {
             if(record.can_grade && !ownMode)panel.append(legacyGrading(record));
             else if(record.comment)panel.append(feedbackDisplay(record.comment));
             if((!teacher || ownMode) && !root.hasAttribute('data-history-only'))panel.append(actions(button('Ещё одно решение',showComposer,'primary')));
-            if(!teacher)panel.append(reviewRequest(record,()=>showLegacyAttempt(item)));
+            if (!teacher) {
+                const review = reviewRequest(record, () => showLegacyAttempt(item));
+                if (review) panel.append(review);
+            }
             arrangeResult(panel);finishResult(panel);
         } catch(e) {
             if(selected!==generation || e.name==='AbortError')return;
@@ -792,8 +953,10 @@ export async function workspace(root) {
         const award=body.querySelector(':scope > .gc-award'),status=body.querySelector(':scope > .gc-execution-status');
         if(teacher&&!ownMode){const navigation=toolbar.querySelector('.gc-execution-actions');if(navigation)navigation.before(history);else toolbar.append(history);if(header?.hidden&&tools)toolbar.append(tools);summary.replaceChildren(toolbar,...[header,award,status].filter(Boolean));}
         else {
-            summary.replaceChildren(history,...[header,award,status].filter(Boolean));
-            if(focusedVerdict && tools)summary.append(tools);
+            if (history.parentElement === summary) {
+                for (const child of [...summary.children]) if (child !== history) child.remove();
+                summary.append(...[header,award,status].filter(Boolean));
+            } else summary.replaceChildren(history,...[header,award,status].filter(Boolean));
         }
         placeVerdict(header);
         summary.classList.toggle('is-toolbar-only',teacher&&!ownMode && !!header?.hidden && !award && !status);
@@ -807,13 +970,19 @@ export async function workspace(root) {
                 controls.setAttribute('role','group');controls.setAttribute('aria-label','Действия с решением');
                 if(focusedVerdict)body.append(controls);else body.prepend(controls);
             }
+            const reviewNote = body.querySelector(':scope > .gc-review-request-note');
+            if (reviewNote) {
+                if (controls) controls.after(reviewNote);
+                else body.prepend(reviewNote);
+            }
             const source=[...body.children].filter(child=>child.matches('.gc-submitted-work'));
             const feedback=[...body.children].filter(child=>child.matches('.gc-grading-feedback'));
+            const tests = teacher ? null : body.querySelector(':scope > :is(.gc-test-report, .gc-compilation-error)');
             if(source.length && feedback.length){
                 const work=node('section',{class:'gc-student-result-columns__work','aria-label':'Сданная работа'},source);
                 const review=node('section',{class:'gc-student-result-columns__feedback','aria-label':'Комментарий к проверке'},feedback);
-                body.append(node('div',{class:'gc-student-result-columns'},work,review));
-            }else source.forEach(child=>body.append(child));
+                body.insertBefore(node('div',{class:'gc-student-result-columns'},work,review), tests);
+            }else source.forEach(child=>body.insertBefore(child, tests));
             return;
         }
         const overview=node('div',{class:'gc-result-overview'}),main=node('div',{class:'gc-result-main'}),side=node('aside',{class:'gc-result-review','aria-label':'Проверка и оценивание'});
@@ -836,10 +1005,9 @@ export async function workspace(root) {
         if(!status)return null;
         if(status.requested)return node('div',{class:'gc-review-request-note'},node('strong',{},'Запрос на перепроверку отправлен'),status.comment?node('p',{},status.comment):null,node('p',{class:'gc-help-text mb-0'},'Преподаватель увидит вопрос вместе с этой сдачей.'));
         if(!status.available)return status.message?node('p',{class:'gc-help-text'},status.message):null;
-        if (chat) return null;
         const attempt = record.kind === 'legacy_attempt' ? 'solution-'+record.solution_id : record.id;
         return node('div', {class:'gc-review-request'}, button('Попросить перепроверить',
-            () => openReviewRequest(attempt, new Date(record.created_at).toLocaleString('ru-RU'), reload)));
+            () => openReviewRequest(attempt, new Date(record.created_at).toLocaleString('ru-RU'), reload), 'outline-primary'));
     }
 
     function openReviewRequest(attempt, label, onResult) {
@@ -914,18 +1082,20 @@ export async function workspace(root) {
         if(!options.snapshotOf)ensureAttemptCard(record);
         current = {...record,snapshotOf:options.snapshotOf};
         const status = node('div',{role:'status','aria-live':'polite',class:'gc-execution-status'}, phases[record.progress?.phase || record.state] || record.state);
-        const {header}=resultHeader(options.snapshotOf || record,{sourceOnly:sourceOnly&&!options.snapshotOf,showSourceDate:false,reviewing:teacher&&!ownMode,compact:!!focusedVerdict});
+        const target=options.snapshotOf || record;
+        const {header}=resultHeader(target,{sourceOnly:sourceOnly&&!options.snapshotOf,showSourceDate:false,reviewing:teacher&&!ownMode,compact:!teacher});
         const terminal=['completed','error','awaiting_review','imported_pending'].includes(record.state);
-        const menu=resultActions();menu.add(button('Обновить результат',safe(() => show(id,options))));
+        const menu=teacher ? resultActions() : null;
+        if(menu)menu.add(button('Обновить результат',safe(() => show(id,options))));
         const body = node('section',{class:'gc-execution-result'},header);
-        const contextBar=node('div',{class:'gc-result-context-bar'},menu.root);
+        const contextBar=menu ? node('div',{class:'gc-result-context-bar'},menu.root) : null;
         if(teacher && !ownMode && (options.snapshotOf || !record.source_version_unknown)) {
             const remove=removeAttemptAction(options.snapshotOf || record);menu.add(remove);remove.classList.add('text-danger');
         }
         if(!terminal){header.hidden=!focusedVerdict && (record.awarded_xp===null || record.awarded_xp===undefined);body.append(status);}
         if(options.snapshotOf)renderAward(options.snapshotOf,body,{label:false});
         else if(!sourceOnly && record.state!=='error')renderAward(record,body,{label:false});
-        body.append(contextBar);
+        if(contextBar)body.append(contextBar);
         if(record.state==='error'){
             body.append(node('p',{class:'gc-execution-error',role:'alert'},record.execution_error?.message || 'Проверяющий сервис не смог завершить работу. Решение сохранено.'));
             if(record.execution_error?.can_retry && !sourceOnly)body.append(button('Повторить проверку',safe(async()=>{await request(record.execution_error.retry_url,'POST',{});await show(id,options);await loadHistory();}),'primary'));
@@ -939,14 +1109,21 @@ export async function workspace(root) {
             if (record.legacy.requires_conversion || record.legacy.warnings.length) body.append(node('details',{class:'gc-report-provenance'},node('summary',{},'О материалах работы'),node('p',{},'Некоторые материалы этой сдачи нельзя показать в текущем формате. Доступные материалы приведены выше.')));
         }
         if (!teacher || ownMode) {
-            if (teacher || record.is_public) menu.add(button(record.is_public ? 'Закрыть публичный доступ' : 'Поделиться решением',safe(async () => {
-                if (!record.is_public && !confirm('Опубликовать отправленный текст и все файлы? Их сможет скачать любой, у кого есть ссылка. Тесты и критерии остаются закрытыми.')) return;
-                await request(`/insider/code-submissions/${id}/flags`,'PUT',{is_public:!record.is_public}); await show(id);
-            })));
+            if (teacher || record.is_public) {
+                const sharing = button(record.is_public ? 'Закрыть публичный доступ' : 'Поделиться решением',safe(async () => {
+                    if (!record.is_public && !confirm('Опубликовать отправленный текст и все файлы? Их сможет скачать любой, у кого есть ссылка. Тесты и критерии остаются закрытыми.')) return;
+                    await request(`/insider/code-submissions/${id}/flags`,'PUT',{is_public:!record.is_public}); await show(id);
+                }));
+                if (menu) menu.add(sharing);
+                else body.append(actions(sharing));
+            }
             if (teacher && record.is_public) body.append(download(`/shared/code-submissions/${id}`,'Публичная ссылка'));
-            if(!teacher && !sourceOnly)body.append(reviewRequest(record,()=>show(id,options)));
+            if (!teacher && (!sourceOnly || options.snapshotOf)) {
+                const review = reviewRequest(target, () => options.snapshotOf ? showLegacyAttempt(target) : show(id,options));
+                if (review) body.append(review);
+            }
         }
-        if(!sourceOnly && attemptItems.filter(item=>item.kind==='submission'&&!item.source_version_unknown).length>1)menu.add(button('Сравнить две сдачи',()=>compareDialog(record)));
+        if(menu && !sourceOnly && attemptItems.filter(item=>item.kind==='submission'&&!item.source_version_unknown).length>1)menu.add(button('Сравнить две сдачи',()=>compareDialog(record)));
         if (teacher && !ownMode && !sourceOnly) {
             if (record.review_request?.requested) body.append(node('p',{class:'gc-review-request-note'},'Запрос ученика: '+record.review_request.comment));
             const viewed=button(record.teacher_viewed ? 'Отметить непросмотренным' : 'Отметить просмотренным',safe(async () => {await request(`/insider/code-submissions/${id}/flags`,'PUT',{teacher_viewed:!record.teacher_viewed}); await show(id); await loadHistory();}));
@@ -963,7 +1140,6 @@ export async function workspace(root) {
             if(record.ai_recheck){const strong=button('Перепроверить усиленной моделью',()=>recheckDialog(record,options,true));strong.disabled=needsSelection || !record.ai_recheck.available;strong.title=needsSelection?'Выберите сдачу ученика в списке.':record.ai_recheck.reason || '';menu.add(strong);}
         }
         if(options.snapshotOf?.text && options.snapshotOf.text!==record.text)body.append(workPreview({...options.snapshotOf,mode:'text'}));
-        const target=options.snapshotOf || record;
         const comment=target.teacher_feedback ? target.review_comment ?? target.comment ?? '' : target.review_comment || target.comment || (target.check_type!=='tests' && record.state!=='error'?record.comment:'') || '';
         const teacherComment=target.teacher_feedback||target.check_type==='manual';
         if(comment)body.append(feedbackPanel(comment,{title:teacherComment?'Комментарий преподавателя':target.check_type==='gpt'?'Разбор AI-проверки':'Комментарий проверки',collapsible:!teacherComment,open:true,meta:target.checked_at?new Date(target.checked_at).toLocaleString('ru-RU'):''}));
@@ -974,7 +1150,7 @@ export async function workspace(root) {
             await request(`/insider/code-submissions/${id}/grade`,'PUT',{points,comment});if(savedGeneration!==generation)return false;await show(id,options);if(current?.id!==id)return false;await loadHistory();
             notice.className='text-muted small';notice.textContent='Оценка и комментарий сохранены';return true;
         }}));
-        if (record.runs.length) {
+        if (menu && record.runs.length) {
             const runs = node('details',{},node('summary',{},'История проверок'));
             record.runs.forEach(run => {
                 const detail=node('details',{},node('summary',{},`${new Date(run.created_at).toLocaleString()} · ${phases[run.state] || run.state}`));
@@ -1064,22 +1240,51 @@ export async function workspace(root) {
         const ids=new Set(attemptItems.map(item=>String(item.id)));attemptItems.push(...value.items.filter(item=>!ids.has(String(item.id))));
         if(selectedSummary&&!attemptItems.some(item=>String(item.id)===String(activeAttempt)))attemptItems.push(selectedSummary);
         attemptItems.sort((a,b)=>{const first=submittedOrder.indexOf(String(a.id)),second=submittedOrder.indexOf(String(b.id));return first>=0&&second>=0?first-second:first>=0?1:second>=0?-1:(Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0);});
+        renderTaskHistory(value.has_more);
         if(teacher && !ownMode && !selectedUser?.name && value.items[0]?.user_name){selectedUser.name=value.items[0].user_name;chat?.setName(selectedUser.name);renderToolbar();}
         if(!attemptItems.length){
             history.replaceChildren();
             if(verdictHost && !teacher)verdictHost.replaceChildren(node('strong',{class:'gc-help-text'},'Решение не сдано'));
-            attemptList=null;return value.items;
+            return value.items;
         }
-        const picker=select(activeAttempt || '',Object.fromEntries(attemptItems.map(item=>[String(item.id),choiceLabel(item)])),()=>{});
-        picker.dataset.attemptPicker='';picker.setAttribute('aria-label','Выбрать попытку');
-        picker.onchange=safe(()=>picker.value?openAttemptById(picker.value):showComposer());
-        const heading=node('div',{class:'gc-attempt-history__heading'},node('span',{},teacher&&!ownMode?'Сдача':'Моё решение'),attemptItems.length===1?node('strong',{},choiceLabel(attemptItems[0])):picker,node('span',{class:'gc-help-text gc-attempt-count'},`${value.total_attempts ?? value.total} ${new Intl.PluralRules('ru').select(value.total_attempts ?? value.total)==='one'?'сдача':new Intl.PluralRules('ru').select(value.total_attempts ?? value.total)==='few'?'сдачи':'сдач'}`));
+        const heading = node('div', {class:'gc-attempt-history__heading'});
+        let picker;
+        if (teacher) {
+            heading.append(node('span', {}, ownMode ? 'Моё решение' : 'Сдача'));
+            picker=select(activeAttempt || '',Object.fromEntries(attemptItems.map(item=>[String(item.id),choiceLabel(item)])),()=>{});
+            picker.dataset.attemptPicker='';picker.setAttribute('aria-label','Выбрать попытку');
+            picker.onchange=safe(()=>picker.value?openAttemptById(picker.value):showComposer());
+            heading.append(attemptItems.length===1 ? node('strong',{},choiceLabel(attemptItems[0])) : picker);
+        } else {
+            heading.classList.add('gc-attempt-history__heading--steps');
+            heading.append(node('div', {class:'gc-attempt-steps', role:'group', 'aria-label':'Мои сдачи'}, attemptItems.map(item => attemptStep(item))),
+                node('time', {class:'gc-attempt-history__date', hidden:true}),
+                node('span', {class:'gc-help-text gc-attempt-history__viewed', hidden:true}));
+        }
+        heading.append(node('span',{class:'gc-help-text gc-attempt-count'}));
         if(value.has_more)heading.append(button('Показать ещё сдачи',safe(()=>loadHistory(true))));
         const focused=history.contains(document.activeElement);
-        history.replaceChildren(heading);attemptList=null;markSelectedAttempt(activeAttempt);history.hidden=composerVisible;
-        if(focused)picker.focus({preventScroll:true});
+        const focusedId=focused ? document.activeElement.dataset.attemptId : null;
+        history.replaceChildren(heading);markSelectedAttempt(activeAttempt);history.hidden=composerVisible;
+        if(focused) {
+            const steps = [...heading.querySelectorAll('.gc-attempt-step')];
+            const targetId = focusedId ?? (append ? value.items[0]?.id : activeAttempt);
+            const step = steps.find(item => item.dataset.attemptId === String(targetId)) || steps[0];
+            (picker || step)?.focus({preventScroll:true});
+            if(step)revealAttemptStep(step);
+        } else revealAttemptStep();
         return value.items;
     }
+    moreTaskAttempts?.addEventListener('click', safe(async () => {
+        const previousCount = taskAttemptList.children.length;
+        moreTaskAttempts.disabled = true;
+        try {
+            await loadHistory(true);
+            taskAttemptList.children[previousCount]?.firstElementChild.focus();
+        } finally {
+            moreTaskAttempts.disabled = false;
+        }
+    }));
     const activate=()=>{if(ownMode || selectedUser || !teacher)writeContext(activeAttempt);};
     const controller={selectStudent,startOwnSubmission,openAttemptById,activate,openEditor:()=>{
         if (!teacher && root.dataset.blocked !== 'true' && (legacyForm || draft && !config?.requires_conversion)) openEditor();
@@ -1087,6 +1292,14 @@ export async function workspace(root) {
     },context:async attempt=>{if(attempt && activeAttempt!==attempt)await openAttemptById(attempt);else activate();}};
     async function initializeStudent(){
         chat?.select(root.dataset.viewerId,'',!!legacyForm && root.dataset.blocked!=='true');
+        if (legacyForm) {
+            loadHistory().then(records => {
+                if (activeAttempt) return;
+                const initial = root.dataset.submission || records?.[0]?.id;
+                if (initial) return openAttemptById(initial);
+            }).catch(initializationError);
+            return;
+        }
         let records;
         if(root.hasAttribute('data-history-only'))records=await loadHistory();
         else{

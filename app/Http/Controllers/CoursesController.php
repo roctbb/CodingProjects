@@ -419,10 +419,10 @@ class CoursesController extends Controller
 
         $nativeProgress = $isManager ? null : app(\App\Services\CodeChecking\History::class)
             ->ungradedProgress((int) $course->id, $deadlines->pluck('task_id')->unique()->values()->all(), (int) $user->id);
-        $deadlineItems = \App\Support\CourseDeadlineWorkspace::items($deadlines, $isManager ? null : (int) $user->id, $nativeProgress);
-        $deadlineChapters = $course->program->chapters->whereIn('id', $deadlineItems->pluck('chapter'));
+        $deadlineItems = \App\Support\CourseDeadlineWorkspace::items($deadlines, $isManager ? null : (int) $user->id, $nativeProgress)
+            ->reject(fn ($item) => $item['status'] === 'blocked')->values();
 
-        return view('courses.deadlines', compact('course', 'user', 'isManager', 'deadlines', 'deadlineMonths', 'deadlineItems', 'deadlineChapters'));
+        return view('courses.deadlines', compact('course', 'user', 'isManager', 'deadlines', 'deadlineMonths', 'deadlineItems'));
     }
 
     public function lessonStatistics($course_id, $lesson_id, Request $request)

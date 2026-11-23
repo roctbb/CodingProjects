@@ -87,13 +87,7 @@ a.gc-person-card:is(:hover,:focus-visible) { border-color:var(--gc-border-hover)
 .gc-course-deadline-count[data-deadline-badge-status="overdue"] {background:color-mix(in srgb,var(--gc-danger) 12%,var(--gc-surface)); color:var(--gc-danger);}
 .gc-course-deadline-count[data-deadline-badge-status="today"] {background:var(--gc-reward-bg); color:var(--gc-warning);}
 .gc-course-deadline-count[hidden] {display:none;}
-.gc-deadline-controls { display:flex; align-items:baseline; flex-wrap:wrap; gap:.45rem 1rem; margin-block:1rem .75rem; }
-.gc-deadline-controls h2 { margin:0 auto 0 0; font-size:var(--gc-font-heading); }
-.gc-deadline-controls details > summary { color:var(--gc-on-surface-muted); cursor:pointer; font-size:var(--gc-font-small); }
-.gc-deadline-controls details[open] { flex-basis:100%; }
-.gc-deadline-tools,.gc-deadline-reminders__form { display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; margin-top:.5rem; }
-.gc-deadline-tools :is(.gc-deadline-search,select) { width:min(100%,17rem); margin:0; }
-.gc-deadline-agenda ul[data-deadline-list] { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,19rem),1fr)); gap:var(--gc-space-3); }
+.gc-deadline-agenda > ul { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,19rem),1fr)); gap:var(--gc-space-3); }
 .gc-deadline-task { min-width:0; padding:.8rem 1rem; display:flex; flex-direction:column; justify-content:space-between; gap:.6rem; }
 .gc-deadline-task__body { display:grid; gap:.15rem; overflow-wrap:anywhere; color:var(--gc-on-surface); text-decoration:none; }
 .gc-deadline-task__body:hover strong { color:var(--gc-link-hover); text-decoration:underline; }

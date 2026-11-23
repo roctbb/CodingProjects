@@ -13,8 +13,9 @@
             <div class="step-submit-card__body">
                 @if (!$blocked)
                     <form action="{{url('/insider/courses/'.$course->id.'/tasks/'.$task->id.'/solution')}}" method="POST"
-                          class="step-submit-form">
+                          class="step-submit-form" data-material-attempt>
                         {{ csrf_field() }}
+                        <input type="hidden" name="material_revision" value="{{ \App\MaterialReview\Attempts::token($task) }}">
                         <div class="mb-3">
                             <label for="text{{$task->id}}" class="form-label">Ваше решение</label>
                             <textarea id="text{{$task->id}}" class="form-control rounded-3" name="text" rows="3">{{old('text')}}</textarea>
@@ -41,3 +42,6 @@
         </div>
     </div>
 </div>
+@once
+<script src="{{ url('/js/material-attempts.js') }}" defer></script>
+@endonce

@@ -12,6 +12,7 @@ existing service clients. It does not add login to otherwise public applications
 | GeekCodeBattle | `https://battle.geekclass.ru` |
 | ClassScreenShare | `https://inga.codingprojects.ru` |
 | GeekGuard | `https://guard.geekclass.ru` |
+| GeekKaggle | `https://kaggle.codingprojects.ru` |
 
 `SSO_RETURN_ORIGINS` can explicitly replace that list. Entries are complete origins,
 including a nonstandard port when required; subdomains are not implicitly trusted.
@@ -37,9 +38,14 @@ origins. Production checks confirmed the six existing consumers accept newly
 issued tokens without modifying their user databases. The administrator flow of
 GeekExecutor was also exercised through dashboard access and logout.
 
-The separately configured GeekKaggle endpoint returned HTTP 502 during the audit.
-It is not an active working login client; no new authentication was introduced or
-service started as part of this correction.
+Opening the GeekPaste editor, GeekExam join page, Guard dashboard or Wi-Fi portal,
+or GeekKaggle catalog starts sign-in automatically when the service has no session.
+With an active Coding Projects session, the user returns directly to the requested
+page. GeekPaste public snippets remain accessible without a session.
+
+ClassScreenShare starts sign-in when a participant opens an exam and when a teacher
+opens the admin area. The public landing page asks for the exam code. GeekExecutor
+starts its administrator sign-in on direct access to `/system/status`.
 
 GeekGuard additionally receives the account catalogue (`id`, `name`, `role`) through
 `php artisan guard:sync-identities`, scheduled every five minutes. Set `GUARD_URL`

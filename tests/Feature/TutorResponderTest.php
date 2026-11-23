@@ -50,7 +50,7 @@ class TutorResponderTest extends DeadlineFeatureCase
         }
     }
 
-    public function test_exact_count_recovers_a_long_question_and_reserves_each_call_before_generation(): void
+    public function test_exact_counts_reserve_both_models_and_the_draft_before_generation(): void
     {
         Http::fake([
             '*/responses/input_tokens' => Http::response(['input_tokens'=>45]),
@@ -59,10 +59,10 @@ class TutorResponderTest extends DeadlineFeatureCase
         ]);
         $reservations = [];
         $reply = $this->ask(function ($tokens, $prior) use (&$reservations) {
-            abort_if($tokens + $prior['known_tokens'] > 1300, 429, 'Личный дневной лимит.');
+            abort_if($tokens + $prior['known_tokens'] > 11000, 429, 'Личный дневной лимит.');
             $reservations[] = [$tokens, $prior['known_tokens']];
         });
-        $this->assertSame([[1200,0], [1245,0], [1200,17], [1245,17]], $reservations);
+        $this->assertSame([[10624,0], [10714,0], [10714,0]], $reservations);
         $this->assertSame(34, $reply['usage']['total_tokens']);
         $this->assertFalse($reply['guided']);
         $this->assertSame($this->draft()['answer'], $reply['answer']);
@@ -72,10 +72,11 @@ class TutorResponderTest extends DeadlineFeatureCase
     public function test_exact_count_over_quota_never_starts_generation(): void
     {
         Http::fake(['*/responses/input_tokens'=>Http::response(['input_tokens'=>500])]);
-        $reply = $this->ask(fn ($tokens) => abort_if($tokens > 1300, 429, 'Личный дневной лимит.'));
+        $reply = $this->ask(fn ($tokens) => abort_if($tokens > 11000, 429, 'Личный дневной лимит.'));
         $this->assertSame('Личный дневной лимит.', $reply['quota_limited']);
         $this->assertSame(0, $reply['usage']['known_tokens']);
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
+        Http::assertNotSent(fn ($request) => !str_ends_with($request->url(), '/input_tokens'));
     }
 
     public function test_interrupted_check_retains_paid_first_call_and_hides_unchecked_draft(): void

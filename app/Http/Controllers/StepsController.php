@@ -42,6 +42,15 @@ class StepsController extends Controller
 
     public function details($course_id, $id)
     {
+        if (\Illuminate\Support\Facades\Schema::hasColumn('program_steps','review_archived_at') && \App\ProgramStep::whereKey($id)->whereNotNull('review_archived_at')->exists()) {
+            $archivedStep=\App\ProgramStep::with('tasks')->findOrFail($id);
+            $archivedCourse=Course::findOrFail($course_id);
+            $manager=app(\App\Services\CourseAccess::class)->manages(Auth::user(),$archivedCourse);
+            $works=Solution::where('course_id',$course_id)->whereIn('task_id',$archivedStep->tasks->pluck('id'));
+            if (!$manager) $works->where('user_id',Auth::id());
+            $works=$works->get();
+            return view('material-review.archived-step',compact('archivedStep','works','manager'));
+        }
         $user = User::with('submissions')->findOrFail(Auth::User()->id);
         $course = Course::with('teachers', 'students', 'statsStudents')->findOrFail($course_id);
         $step = ProgramStep::with([
@@ -232,6 +241,12 @@ class StepsController extends Controller
         $pr = $step->previousStep();
         $lesson = $step->lesson;
 
+        if (app(\App\MaterialReview\Documents::class)->installed()) {
+            $step->delete(); // The shared observer archives the step and hides its tasks, retaining all work.
+            if ($pr !== null) return redirect('/insider/courses/'.$course_id.'/steps/'.$pr->id);
+            if ($next !== null) return redirect('/insider/courses/'.$course_id.'/steps/'.$next->id);
+            return redirect('/insider/courses/'.$course_id);
+        }
         ProgramStep::where('id', $id)->delete();
         if ($pr != null) return redirect('/insider/courses/' . $course_id . '/steps/' . $pr->id);
         if ($next != null) return redirect('/insider/courses/' . $course_id . '/steps/' . $next->id);

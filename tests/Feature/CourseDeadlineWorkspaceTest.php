@@ -108,9 +108,11 @@ class CourseDeadlineWorkspaceTest extends DeadlineFeatureCase
         $summary = \App\Support\CourseDeadlineWorkspace::navigation(\App\Course::find(1), User::find(1), $done->viewData('deadlineItems'));
         $this->assertSame(0, $summary['count']);
         Carbon::setTestNow('2026-11-24 12:00:00 Europe/Moscow');
-        DB::table('blocked_tasks')->delete();
         $expired = $this->get('/insider/courses/1/deadlines')->assertOk();
         $summary = \App\Support\CourseDeadlineWorkspace::navigation(\App\Course::find(1), User::find(1), $expired->viewData('deadlineItems'));
         $this->assertSame(0, $summary['count']);
+        $expired->assertDontSee('data-deadline-task-id="12"', false);
+        DB::table('blocked_tasks')->delete();
+        $this->get('/insider/courses/1/deadlines')->assertOk()->assertSee('data-deadline-task-id="12"', false);
     }
 }

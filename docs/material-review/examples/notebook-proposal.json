@@ -1,0 +1,18 @@
+{
+  "external_id": "audit-2026-11-16:nb01",
+  "title": "Исправить границу цикла",
+  "reason": "Пример пропускает последний элемент. Перебираем всю длину массива.",
+  "scope": "local",
+  "intent": "error",
+  "operations": [
+    {
+      "op": "notebook_cell",
+      "entity": "step",
+      "id": 1,
+      "field": "theory",
+      "cell_id": "loop-example",
+      "old": "for i in range(len(a)-1):\n    print(a[i])",
+      "value": "for i in range(len(a)):\n    print(a[i])"
+    }
+  ]
+}

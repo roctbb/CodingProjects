@@ -50,6 +50,9 @@ class AnswerTaskQuestion implements ShouldQueue, ShouldBeUnique
         if (!$student || !$task || $task->is_quiz) return;
 
         $input = ['task_id'=>(int)$task->id, 'question'=>$question->body, 'request_id'=>$question->client_id];
+        $details = json_decode($question->tutor_details ?? 'null', true);
+        if (isset($details['action'])) $input['action'] = $details['action'];
+        if (isset($details['layout'])) $input['layout'] = $details['layout'];
         if ($question->solution_id) $input['legacy_solution']=(int)$question->solution_id;
         if ($question->submission_id) {
             $run = DB::table('code_execution_runs')->where('submission_id',$question->submission_id);
@@ -64,10 +67,10 @@ class AnswerTaskQuestion implements ShouldQueue, ShouldBeUnique
         try {
             $reply = $conversation->ask($student, $question->course_id, $task->step_id, $input, $this->history($question));
         } catch (HttpExceptionInterface $error) {
-            $reply = ['answer'=>match ($error->getStatusCode()) {
-                429 => $error->getMessage().' Вопрос сохранён в чате.',
-                413 => 'Материал слишком велик для одного разбора. Преподаватель видит твой вопрос.',
-                default => 'Сейчас я не могу разобрать этот вопрос. Он сохранён в чате для преподавателя.',
+            $reply = ['handoff'=>'teacher', 'answer'=>match ($error->getStatusCode()) {
+                429 => $error->getMessage().' Вопрос передан преподавателю.',
+                413 => 'Материал слишком велик для одного разбора. Вопрос передан преподавателю.',
+                default => 'Сейчас я не могу разобрать этот вопрос. Он передан преподавателю.',
             }];
         }
         $this->save($question, $reply);
@@ -79,17 +82,27 @@ class AnswerTaskQuestion implements ShouldQueue, ShouldBeUnique
             ->where(['course_id'=>$question->course_id, 'task_id'=>$question->task_id, 'student_id'=>$question->student_id])
             ->where('id', '<', $question->id)
             ->where(fn ($query) => $query->where('automatic', false)->orWhereNotNull('answer_to'))
-            ->orderByDesc('id')->limit(20)->get(['author_id','answer_to','body']);
+            ->orderByDesc('id')->limit(20)->get(['author_id','answer_to','body','tutor_details','submission_id','solution_id','review_run_id']);
 
         $history = [];
         $remaining = 12000;
         foreach ($messages as $message) {
+            $details = json_decode($message->tutor_details ?? 'null', true);
+            $turn = ['text'=>$message->body];
+            $attempt = $details['discussed'] ?? array_filter(['submission_id'=>$message->submission_id,
+                'run_id'=>$message->review_run_id, 'legacy_solution'=>$message->solution_id]);
+            if ($attempt) $turn['attempt'] = $attempt;
+            if (!empty($details['recheck'])) $turn['recheck'] = $details['recheck'];
+            if (!empty($details['next_step'])) $turn['next_step'] = $details['next_step'];
+            if (!empty($details['test_examples'])) $turn['test_examples'] = $details['test_examples'];
             $length = mb_strlen($message->body);
+            $metadata = array_diff_key($turn, ['text'=>true]);
+            if ($metadata) $length += mb_strlen(json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
             if ($length > $remaining) break;
             $remaining -= $length;
             $role = $message->answer_to !== null ? 'assistant'
                 : ((int)$message->author_id === (int)$question->student_id ? 'student' : 'teacher');
-            $history[] = ['role'=>$role, 'text'=>$message->body];
+            $history[] = ['role'=>$role] + $turn;
         }
         return array_reverse($history);
     }
@@ -99,7 +112,7 @@ class AnswerTaskQuestion implements ShouldQueue, ShouldBeUnique
         if ($question = DB::table('task_chat_messages')->find($this->questionId)) {
             DB::table('student_tutor_usage')->where(['user_id'=>$question->student_id, 'request_id'=>$question->client_id,
                 'state'=>'pending'])->update(['state'=>'unknown','updated_at'=>now()]);
-            $this->save($question,['answer'=>'Подготовить ответ не удалось. Вопрос сохранён в чате.']);
+            $this->save($question,['handoff'=>'teacher','answer'=>'Подготовить ответ не удалось. Вопрос передан преподавателю.']);
         }
     }
 

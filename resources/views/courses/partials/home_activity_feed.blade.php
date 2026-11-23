@@ -2,18 +2,16 @@
     $homePulse = $pulse ?? [];
     $pulseSeries = collect($homePulse['series'] ?? []);
     $maxPulseValue = max(0, (int) $pulseSeries->max('value'));
+    $currentPulse = $homePulse['current'] ?? 0;
 @endphp
 
 @if($compact ?? false)
-    <a class="gc-header-pulse {{ $maxPulseValue === 0 ? 'gc-header-pulse--empty' : '' }}" href="{{ url('/insider/pulse') }}" aria-label="Пульс курсов: {{ $homePulse['label'] ?? 'нет сигнала' }}" title="Пульс курсов · {{ $homePulse['label'] ?? 'нет сигнала' }}">
+    <a class="gc-header-pulse {{ $maxPulseValue === 0 ? 'gc-header-pulse--empty' : '' }}" href="{{ url('/insider/pulse') }}" aria-label="Пульс курсов: {{ $currentPulse }} · {{ $homePulse['label'] ?? 'нет сигнала' }}" title="Пульс курсов · {{ $homePulse['label'] ?? 'нет сигнала' }}">
+        <span class="gc-header-pulse__value">{{ $currentPulse }}</span>
         @if($maxPulseValue > 0)
-            <span class="gc-header-pulse__label">Пульс<span>{{ $homePulse['current'] ?? 0 }}</span></span>
             <x-gc-pulse-chart :pulse="$homePulse" :chart-width="220" :chart-height="58" :chart-padding="4" :filled="true" />
         @else
-            <span class="gc-header-pulse__empty">
-                <span class="gc-header-pulse__label">Пульс<span>{{ $homePulse['current'] ?? 0 }}</span></span>
-                <span class="gc-help-text">Пока нет активности</span>
-            </span>
+            <span class="gc-help-text">Пока нет активности</span>
         @endif
     </a>
 @elseif($maxPulseValue === 0)
@@ -33,7 +31,7 @@
         </span>
     </span>
 
-    <span class="home-pulse-card__value">{{ $homePulse['current'] ?? 0 }}</span>
+    <span class="home-pulse-card__value">{{ $currentPulse }}</span>
 
     <span class="home-pulse-card__chart" aria-hidden="true">
         <x-gc-pulse-chart :pulse="$homePulse" :chart-width="220" :chart-height="58" :chart-padding="4" :filled="true" line-class="home-pulse-card__line" area-class="home-pulse-card__area" />

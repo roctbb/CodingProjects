@@ -11,6 +11,8 @@ flowchart TB
   perform["Режим показа"]
   task_create["Создание задания"]
   text_assist["Помощь ИИ в редакторе"]
+  material_review["Ревью учебных материалов"]
+  material_review_editor(["Ручная правка в ревью"])
   step["Ступень"]
   courses["Мои курсы"]
   course["Страница курса"]
@@ -30,4 +32,6 @@ flowchart TB
   course_edit -->|"Исправить / улучшить текст"| text_assist
   step_edit -->|"Исправить / улучшить текст"| text_assist
   task_edit -->|"Исправить / улучшить текст"| text_assist
+  material_review -->|"Редактировать материал или вариант предложения"| material_review_editor
+  material_review_editor -.->|"Сохранить в черновик или закрыть редактор"| material_review
   lesson_edit -->|"Каталог наклеек"| settings_stickers

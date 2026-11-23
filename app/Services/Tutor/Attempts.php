@@ -21,7 +21,7 @@ final class Attempts
 
     public function __construct(private History $history, private Artifacts $artifacts) {}
 
-    public function forTask(Course $course, Task $task, User $user, ?string $reviewSubmission, ?array &$latestTarget = null): array
+    public function forTask(Course $course, Task $task, User $user, ?string $reviewSubmission, ?array &$latestTarget = null, ?int &$latestLegacy = null): array
     {
         // The history folds graded native attempts and their Solution row together and identifies archive-only records.
         $attempts = [];
@@ -58,6 +58,7 @@ final class Attempts
                     $result['comment'] = $event['comment'];
                 }
                 if ($withSource) {
+                    $latestLegacy = (int)$row['solution_id'];
                     $exact = $event['source_available'] && !$event['original_reference'] && is_string($event['text']);
                     $latest = ['language'=>null, 'mode'=>'legacy', 'result'=>$result, 'source_status'=>$exact ? 'ready' : 'unavailable',
                         'text'=>$exact ? $event['text'] : '', 'files'=>[]];
@@ -82,12 +83,77 @@ final class Attempts
             'source_status'=>$unknown ? 'unverified' : ($partial ? 'partial' : $record->preparation_state)];
     }
 
+    /** Only grade records visible in this student's task history, including older runs. */
+    public function matchingGrade(Course $course, Task $task, User $user, int $points, int $maximum): array
+    {
+        $scope = ['user_id'=>$user->id, 'course_id'=>$course->id, 'task_id'=>$task->id];
+        $submissions = DB::table('code_submissions')->where($scope)->select('id','created_at');
+        $matches = [];
+        $runs = DB::table('code_execution_runs as r')->joinSub($submissions, 's', 's.id', '=', 'r.submission_id')
+            ->where('r.state','completed')->where('r.points',$points)
+            ->whereIn('r.snapshot->check_type',['tests','manual','gpt'])
+            ->orderByDesc('r.finished_at')->get(['r.id','r.submission_id','r.snapshot->points as maximum','r.finished_at','s.created_at']);
+        foreach ($runs as $run) {
+            if ((int)$run->maximum !== $maximum || $run->maximum === null) continue;
+            $matches[] = ['submission_id'=>$run->submission_id, 'run_id'=>$run->id, 'at'=>$run->finished_at ?? $run->created_at];
+        }
+        if ((int)$task->max_mark === $maximum) {
+            $legacy = DB::table('solutions')->where($scope)->whereNotNull('submitted')->whereNotNull('mark')
+                ->whereRaw('coalesce(evaluated_mark,raw_mark,mark) = ?', [$points])
+                ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('code_submissions as s')
+                    ->whereColumn('s.solution_id','solutions.id')->whereColumn('s.course_id','solutions.course_id')
+                    ->whereColumn('s.user_id','solutions.user_id')->whereColumn('s.task_id','solutions.task_id')->whereNull('s.legacy_id'))
+                ->get(['id','checked','submitted']);
+            foreach ($legacy as $row) $matches[] = ['legacy_solution'=>(int)$row->id, 'at'=>$row->checked ?? $row->submitted];
+        }
+        return collect($matches)->sortByDesc('at')->values()->all();
+    }
+
+    public function recheckResult(Course $course, Task $task, User $user, array $previous): ?array
+    {
+        $target = $previous['attempt'] ?? [];
+        $runs = CodeExecutionRun::whereHas('submission', fn ($q) => $q->where([
+            'course_id'=>$course->id,'task_id'=>$task->id,'user_id'=>$user->id,
+        ]))->where('snapshot->ai_review->origin','tutor');
+        if (isset($target['submission_id'], $target['run_id'])) {
+            $runs->where('submission_id',$target['submission_id'])->where('snapshot->ai_review->source_run_id',$target['run_id']);
+        } else {
+            // Old replies stored the verified finding but not the source run ID.
+            $runs->where('snapshot->ai_review->finding->focus',$previous['recheck']['focus'])
+                ->where('snapshot->ai_review->finding->claim',$previous['recheck']['claim']);
+        }
+        $candidates = $runs->limit(2)->get(['id','submission_id','state','snapshot->ai_review->source_run_id as original']);
+        if ($candidates->count() !== 1) return null;
+        $run = $candidates->first();
+        $submission = CodeSubmission::findOrFail($run->submission_id);
+        $before = $this->nativeResult($submission, $course, $task, $user, $run->original);
+        $after = $this->nativeResult($submission, $course, $task, $user, $run->id);
+        return $this->comparison($previous['recheck'], $before, $after)
+            + ['target'=>['submission_id'=>$run->submission_id, 'run_id'=>$run->state === 'completed' ? $run->id : $run->original]];
+    }
+
+    private function comparison(array $finding, array $before, array $after): array
+    {
+        $public = fn ($result) => Arr::only($result, ['state','points','maximum']) + ['feedback'=>$this->feedback($result)];
+        return ['finding'=>Arr::only($finding,['claim','focus','evidence']), 'before'=>$public($before), 'after'=>$public($after)];
+    }
+
     public function selected(Course $course, Task $task, User $user, string $submission, string $run, bool $includeSource): array
     {
         $record = CodeSubmission::where(['course_id'=>$course->id, 'task_id'=>$task->id, 'user_id'=>$user->id])->findOrFail($submission);
         $result = $this->nativeResult($record, $course, $task, $user, $run);
         abort_unless($result['state'] === 'completed' && in_array($result['method'], ['tests','gpt','manual'], true), 404);
-        return $includeSource ? ['result'=>$result, 'source'=>$this->source($record)] : ['result'=>$result];
+        $selected = ['result'=>$result];
+        if ($includeSource) $selected['source'] = $this->source($record);
+        $review = CodeExecutionRun::where('submission_id',$record->id)->whereKey($run)
+            ->where('snapshot->ai_review->origin','tutor')
+            ->first(['snapshot->ai_review->source_run_id as original', 'snapshot->ai_review->finding as finding']);
+        $finding = json_decode($review->finding ?? 'null', true);
+        if ($review && $review->original && is_array($finding) && isset($finding['focus'])) {
+            $prior = $this->nativeResult($record, $course, $task, $user, $review->original);
+            $selected['comparison'] = $this->comparison($finding, $prior, $result);
+        }
+        return $selected;
     }
 
     public function feedback(array $result): array

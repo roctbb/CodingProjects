@@ -155,7 +155,7 @@
 
 Проверка: Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.
 
-Состояния для макета и проверки: ученик; преподаватель; активные; черновики; архив; нет курсов; дедлайны; дни рождения; преподаватель: один счётчик GC и XP; сегодняшние дни рождения; группы будущих дат; все даты ближайших семи дней; пустой пульс; больше восьми именинников; переход года; скрытая дата рождения; карточка курса: наведение и клавиатурный фокус; SVG-иконки: автовыбор и ручной выбор; пульс между заголовком и действиями / под заголовком; именинники без аватаров.
+Состояния для макета и проверки: ученик; преподаватель; активные; черновики; архив; нет курсов; дедлайны; дни рождения; преподаватель: один счётчик GC и XP; сегодняшние дни рождения; группы будущих дат; все даты ближайших семи дней; пустой пульс; больше восьми именинников; переход года; скрытая дата рождения; единая сетка активных и пройденных курсов ученика; карточка курса: наведение и клавиатурный фокус; аватар на ширину личной карточки, переход в профиль; SVG-иконки: автовыбор и ручной выбор; пульс между заголовком и действиями / под заголовком; именинники без аватаров.
 
 Шаблон экрана: course-list. Статус: implemented.
 
@@ -170,7 +170,8 @@
 - Код приглашения / запись на курс → [Код приглашения / запись на курс](#join-course) (state)
 - Открыть курс → [Страница курса](#course) (navigate)
 - Создать курс → [Создание курса](#course-create) (navigate)
-- Пульс в шапке → [Пульс](#pulse) (navigate)
+- Число и график пульса в шапке → [Пульс](#pulse) (navigate)
+- Открыть свой профиль по аватару → [Профиль](#profile) (navigate)
 
 Исходники:
 
@@ -179,6 +180,7 @@
 - [resources/views/courses/partials/birthday_rows.blade.php](../../resources/views/courses/partials/birthday_rows.blade.php)
 - [resources/views/components/gc-deadline-preview.blade.php](../../resources/views/components/gc-deadline-preview.blade.php)
 - [resources/views/courses/partials/home_course_card.blade.php](../../resources/views/courses/partials/home_course_card.blade.php)
+- [resources/views/courses/partials/home_completed_course_card.blade.php](../../resources/views/courses/partials/home_completed_course_card.blade.php)
 - [app/Queries/CourseDeadlineList.php](../../app/Queries/CourseDeadlineList.php)
 - [resources/views/courses/partials/home_activity_feed.blade.php](../../resources/views/courses/partials/home_activity_feed.blade.php)
 - [resources/views/components/gc-page-header.blade.php](../../resources/views/components/gc-page-header.blade.php)
@@ -278,7 +280,7 @@
 
 Проверка: Итерация 19: общий перенос B+ и повторный срез всех 41 экранов. Chromium 320/390/768/1440 px, применимые роли, обычные и дополнительные данные; сценарии и границы проверки — ui-round-19.md.
 
-Состояния для макета и проверки: предстоящие; просроченные; пусто; ученик / преподаватель; поиск по задаче, ступени и уроку; выполнено / к выполнению / просрочено; преподаватель: предстоящие сроки и срок прошёл; пустой поиск и сброс; месяцы и даты без подходящих задач скрываются.
+Состояния для макета и проверки: ближайшие дедлайны; пропущенные дедлайны с доступной сдачей; переход в пропущенные после последнего срока; пусто; ученик / преподаватель.
 
 Шаблон экрана: timeline. Статус: implemented.
 
@@ -291,7 +293,7 @@
 
 Переходы:
 
-- Открыть задачу → [Ступень](#step) (navigate)
+- Открыть задачу с ближайшим или пропущенным сроком → [Ступень](#step) (navigate)
 - Программа · общая навигация курса → [Страница курса](#course) (navigate)
 - План занятий · общая навигация курса → [План занятий](#planner) (navigate)
 - Журнал · общая навигация курса → [Журнал опыта](#assessments) (navigate)
@@ -356,6 +358,7 @@
 - Режим показа → [Режим показа](#perform) (navigate)
 - Оглавление конспекта → [Оглавление конспекта](#reading-outline) (state)
 - Ссылка на отправленную работу → [Отправленное решение и проверки](#code-submission) (navigate)
+- Условие при сдаче → [Условие на момент сдачи](#material-history) (navigate)
 
 Исходники:
 
@@ -2328,6 +2331,7 @@
 - Выход → [Вход](#login) (action)
 - Переключить тему → [Меню пользователя](#user-menu) (state)
 - Личные настройки → [Аккаунт и уведомления](#account-preferences) (navigate)
+- Ревью программ для администратора → [Ревью учебных материалов](#material-review) (navigate)
 
 Исходники:
 
@@ -2887,6 +2891,7 @@ Telegram, почта и Силаэдр в личных настройках; н�
 Переходы:
 
 - Вернуться к задаче → [Ступень](#step) (navigate)
+- Условие сохранённой сдачи → [Условие на момент сдачи](#material-history) (navigate)
 
 Исходники:
 
@@ -2920,6 +2925,87 @@ Telegram, почта и Силаэдр в личных настройках; н�
 - [app/Http/Controllers/CourseNotificationsController.php](../../app/Http/Controllers/CourseNotificationsController.php)
 - [app/Services/CourseTelegram.php](../../app/Services/CourseTelegram.php)
 - [app/Services/DeadlineNotifications.php](../../app/Services/DeadlineNotifications.php)
+
+<a id="material-review"></a>
+
+## Ревью учебных материалов
+
+Тип: page. Роли сценария: Администратор.
+
+Выбрать редакцию урока, разобрать замысел, структуру и локальные правки, проверить итог и отдельно опубликовать.
+
+Условия: Только администраторы; версия основы, принадлежность программе и версия черновика проверяются перед записью.
+
+Проверка: Изолированный синтетический стенд, Chromium 1440/390, светлая и тёмная темы; конфликт с сохранением ввода, публикация и подготовка восстановления.
+
+Состояния для макета и проверки: программы с поиском; урок без предложений; три уровня ревью; несколько редакций; сравнение; вопрос без готовой правки; конфликт; прогресс; предпросмотр публикации; опубликованная версия; светлая и тёмная темы; узкое окно.
+
+Шаблон экрана: review-workspace. Статус: implemented.
+
+Маршруты:
+
+- `GET|HEAD /insider/material-review` — screen
+- `POST /insider/material-review/drafts` — action
+- `GET|HEAD /insider/material-review/drafts/{id}` — api
+- `POST /insider/material-review/drafts/{id}/{action}` — action
+- `POST /insider/material-review/preview` — api
+- `GET|HEAD /material-resources/{id}` — media
+
+Переходы:
+
+- Редактировать материал или вариант предложения → [Ручная правка в ревью](#material-review-editor) (open)
+
+Исходники:
+
+- [resources/views/material-review/index.blade.php](../../resources/views/material-review/index.blade.php)
+- [resources/views/material-review/document.blade.php](../../resources/views/material-review/document.blade.php)
+- [public/css/material-review.css](../../public/css/material-review.css)
+- [public/js/material-review.js](../../public/js/material-review.js)
+
+<a id="material-review-editor"></a>
+
+## Ручная правка в ревью
+
+Тип: dialog. Роли сценария: Администратор.
+
+Исправить текст или ячейки Jupyter, просмотреть результат, сохранить авторское предложение и сохранить ввод при конфликте.
+
+Проверка: Браузер: ручная правка, предпросмотр, сохранение, конфликт и восстановление введённого текста на 1440/390.
+
+Состояния для макета и проверки: Markdown; связанные части; ячейки Jupyter; предпросмотр; версия изменилась; восстановление ввода.
+
+Переходы:
+
+- Сохранить в черновик или закрыть редактор → [Ревью учебных материалов](#material-review) (close)
+
+Исходники:
+
+- [resources/views/material-review/index.blade.php](../../resources/views/material-review/index.blade.php)
+- [public/js/material-review.js](../../public/js/material-review.js)
+
+<a id="material-history"></a>
+
+## Условие на момент сдачи
+
+Тип: page. Роли сценария: Ученик, Преподаватель, Администратор.
+
+Прочитать достоверное условие своей прежней работы после изменения или переноса задачи.
+
+Условия: Только владелец работы и уполномоченный преподаватель курса/администратор; авторское решение видно только преподавателю.
+
+Проверка: PHP-тесты: доступ владельца и преподавателя, запрет постороннему ученику, отсутствие авторского решения у ученика.
+
+Состояния для макета и проверки: снимок сохранён; версия неизвестна; задача перенесена; приватное авторское решение.
+
+Маршруты:
+
+- `GET|HEAD /insider/material-code-history/{id}` — screen
+- `GET|HEAD /insider/material-history/{id}` — screen
+
+Исходники:
+
+- [resources/views/material-review/attempt.blade.php](../../resources/views/material-review/attempt.blade.php)
+- [resources/views/material-review/code-condition.blade.php](../../resources/views/material-review/code-condition.blade.php)
 
 <a id="course-subgroups"></a>
 

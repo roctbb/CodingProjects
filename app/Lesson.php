@@ -33,7 +33,9 @@ class Lesson extends Model
 
     public function steps()
     {
-        return $this->hasMany('App\ProgramStep', 'lesson_id', 'id')->with('tasks')->orderBy('sort_index')->orderBy('id');
+        $query = $this->hasMany('App\ProgramStep', 'lesson_id', 'id')->with('tasks')->orderBy('sort_index')->orderBy('id');
+        if (\Illuminate\Support\Facades\Schema::hasColumn('program_steps','review_archived_at')) $query->whereNull('review_archived_at');
+        return $query;
     }
 
     public function percent(User $student, $course = null)

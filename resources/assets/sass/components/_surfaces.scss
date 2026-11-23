@@ -554,6 +554,31 @@
 }
 .gc-home-layout { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: var(--gc-space-6); }
 .gc-home-side { display: flex; flex-direction: column; gap: var(--gc-space-4); }
+.gc-home-course-grid .course-index-card { min-height: 15rem; }
+.gc-home-profile__portrait {
+  display: block;
+  border-radius: var(--gc-radius-lg) var(--gc-radius-lg) 0 0;
+  overflow: hidden;
+  text-decoration: none;
+}
+.gc-home-profile__portrait:focus-visible {
+  outline: 2px solid var(--gc-primary);
+  outline-offset: -2px;
+  position: relative;
+  z-index: 1;
+}
+.gc-home-profile__portrait > .gc-avatar-frame {
+  --profile-avatar-frame-radius: 0;
+  --profile-avatar-frame-inner-radius: 0;
+  display: grid;
+  width: 100%;
+}
+.gc-home-profile__portrait .avatar {
+  aspect-ratio: 3 / 2;
+  height: auto;
+  width: 100%;
+}
+.gc-home-profile__portrait .gc-avatar-initials { font-size: 2.5rem; }
 .gc-home-offer {
   display: flex; align-items: center; gap: var(--gc-space-2);
   padding: var(--gc-space-2) var(--gc-space-3); min-height: var(--gc-touch-target);
@@ -630,11 +655,8 @@
 .gc-page-header--with-middle > .gc-actions { grid-area: actions; min-width: 0; }
 .gc-header-pulse { align-items: center; color: var(--gc-on-surface-muted); display: flex; gap: var(--gc-space-3); max-width: 20rem; min-height: 48px; text-decoration: none; }
 .gc-header-pulse:hover { color: var(--gc-primary); }
-.gc-header-pulse__label { display: grid; flex: 0 0 auto; font-size: var(--gc-font-caption); gap: 2px; }
-.gc-header-pulse__label > span { color: var(--gc-primary); font-size: var(--gc-font-ui); font-weight: 500; }
+.gc-header-pulse__value { color: var(--gc-primary); flex: none; font-size: var(--gc-font-title); font-variant-numeric: tabular-nums; font-weight: var(--gc-font-weight-heading); line-height: 1; }
 .gc-header-pulse--empty { max-width: 100%; width: max-content; }
-.gc-header-pulse__empty { display: grid; gap: 2px; }
-.gc-header-pulse--empty .gc-header-pulse__label { align-items: baseline; display: flex; gap: var(--gc-space-2); }
 .gc-header-pulse--empty .gc-help-text { font-size: var(--gc-font-caption); }
 .gc-header-pulse svg { flex: 1; height: 48px; min-width: 0; }
 @media (min-width: 1200px) {

@@ -56,13 +56,22 @@ class TaskChat
             $table = DB::table('task_chat_messages');
             $toTutor = $withTutor && $student === $author
                 && !preg_match('/(?<![\p{L}\p{N}_@])@преподаватель(?![\p{L}\p{N}_])/iu', $body);
+            abort_if(isset($input['tutor_action']) && !$toTutor, 403);
+            $details = ['recipient'=>'tutor'] + array_filter([
+                'action'=>$input['tutor_action'] ?? null, 'layout'=>$input['chat_layout'] ?? null,
+            ]);
             $created = $table->insertOrIgnore($key + $message + [
-                'tutor_details'=>$toTutor ? json_encode(['recipient'=>'tutor'], JSON_THROW_ON_ERROR) : null,
+                'tutor_details'=>$toTutor ? json_encode($details, JSON_THROW_ON_ERROR) : null,
                 'created_at'=>now()->format('Y-m-d H:i:s.u'),
             ]);
             $id = $table->where($key + $message)->value('id');
             abort_unless($id, 409, 'Этот запрос уже отправлен с другим сообщением.');
-            if (!$created || $student !== $author) return;
+            if (!$created) {
+                $saved = json_decode($table->where('id', $id)->value('tutor_details') ?? 'null', true);
+                abort_if(($saved['action'] ?? null) !== ($input['tutor_action'] ?? null), 409);
+                return;
+            }
+            if ($student !== $author) return;
             if ($toTutor) {
                 AnswerTaskQuestion::dispatch((int)$id)->afterCommit();
             } elseif (User::whereKey($author)->where('role', 'student')->exists()) {
@@ -99,6 +108,16 @@ class TaskChat
     {
         return DB::table('task_chat_messages')->where('course_id', $course)->whereIn('task_id', $tasks)
             ->when($student !== null, fn ($q) => $q->where('student_id', $student))->where('automatic', false)
+            ->where(function ($messages) {
+                $messages->where(function ($legacy) {
+                    // Earlier chats did not mark the recipient. A tutor reply identifies those turns.
+                    $legacy->whereNull('tutor_details->recipient')->whereNotExists(fn ($reply) => $reply
+                        ->selectRaw('1')->from('task_chat_messages as reply')->whereColumn('reply.answer_to','task_chat_messages.id'));
+                })->orWhere('tutor_details->recipient', 'teacher')
+                    ->orWhereExists(fn ($reply) => $reply->selectRaw('1')->from('task_chat_messages as reply')
+                        ->whereColumn('reply.answer_to', 'task_chat_messages.id')
+                        ->where('reply.tutor_details->handoff', 'teacher'));
+            })
             ->select('task_id', 'student_id')->groupBy('task_id', 'student_id')
             ->havingRaw('max(case when author_id = student_id then id else 0 end) > max(case when author_id <> student_id then id else 0 end)')
             ->get()->groupBy('task_id')->map(fn ($rows) => $rows->pluck('student_id')->flip());
@@ -147,10 +166,13 @@ class TaskChat
         $checks = $runs->leftJoin('code_test_reports as t','t.id','=','r.id')->whereIn('r.id',$ids(self::CHECK))
             ->get(['r.id','r.submission_id','s.legacy_id','s.solution_id','r.finished_at','s.current_run_id','s.preparation_state','r.state','r.progress','r.points','r.comment','r.criteria','r.snapshot->check_type as method',
                 'r.snapshot->points as maximum','r.snapshot->ai_review->source_run_id as stronger',
+                'r.snapshot->ai_review->origin as review_origin','r.snapshot->ai_review->finding->focus as review_focus',
                 'r.snapshot->review_solution_id as solution','t.report->passed as passed','t.report->total as total',
                 'r.legacy_report->passed as archive_passed','r.legacy_report->total as archive_total',
                 't.report->tests[0]->verdict as first_verdict','r.legacy_report->tests[0]->verdict as archive_verdict',
                 'r.legacy_report->tests[0]->error->text as archive_diagnostic'])->keyBy('id');
+        $originals = DB::table('code_execution_runs')->whereIn('id', $checks->where('review_origin','tutor')->pluck('stronger')->filter())
+            ->get(['id','submission_id','points','snapshot->points as maximum'])->keyBy('id');
         // Compilation precedes the first input. Fetch only the compiler diagnostic for those runs.
         $diagnostics = DB::table('code_test_reports')->whereIn('id', $checks->where('first_verdict','compilation_error')->keys())
             ->pluck('report->tests[0]->error as diagnostic','id');
@@ -200,6 +222,10 @@ class TaskChat
                     'awaiting_teacher'=>$run->method === 'manual' && $run->state === 'awaiting_review'
                         && $run->current_run_id === $id && $run->preparation_state === 'ready',
                     'text'=>in_array($run->method,['gpt','manual'],true) && $run->state==='completed' ? (string)$run->comment : ''];
+                if ($run->review_origin === 'tutor' && ($original = $originals->get($run->stronger))
+                    && $original->submission_id === $run->submission_id) {
+                    $item['tutor_review'] = ['previous'=>$original->points, 'maximum'=>$original->maximum, 'focus'=>$run->review_focus];
+                }
                 if ($run->current_run_id === $id && $run->finished_at && in_array($run->state, ['completed','error'], true)) {
                     if ($requested->has($run->solution ?: $run->solution_id)) $item['student_review'] = 'requested';
                     elseif ($mayRequest && (!$run->solution || $assignment->is_code)

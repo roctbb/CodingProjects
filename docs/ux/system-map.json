@@ -254,6 +254,7 @@
         "resources/views/courses/partials/birthday_rows.blade.php",
         "resources/views/components/gc-deadline-preview.blade.php",
         "resources/views/courses/partials/home_course_card.blade.php",
+        "resources/views/courses/partials/home_completed_course_card.blade.php",
         "app/Queries/CourseDeadlineList.php",
         "resources/views/courses/partials/home_activity_feed.blade.php",
         "resources/views/components/gc-page-header.blade.php",
@@ -284,7 +285,9 @@
         "больше восьми именинников",
         "переход года",
         "скрытая дата рождения",
+        "единая сетка активных и пройденных курсов ученика",
         "карточка курса: наведение и клавиатурный фокус",
+        "аватар на ширину личной карточки, переход в профиль",
         "SVG-иконки: автовыбор и ручной выбор",
         "пульс между заголовком и действиями / под заголовком",
         "именинники без аватаров"
@@ -404,15 +407,11 @@
       },
       "layout": "timeline",
       "checkStates": [
-        "предстоящие",
-        "просроченные",
+        "ближайшие дедлайны",
+        "пропущенные дедлайны с доступной сдачей",
+        "переход в пропущенные после последнего срока",
         "пусто",
-        "ученик / преподаватель",
-        "поиск по задаче, ступени и уроку",
-        "выполнено / к выполнению / просрочено",
-        "преподаватель: предстоящие сроки и срок прошёл",
-        "пустой поиск и сброс",
-        "месяцы и даты без подходящих задач скрываются"
+        "ученик / преподаватель"
       ],
       "guard": "Участник курса либо администратор.",
       "design": {
@@ -3419,6 +3418,107 @@
       ]
     },
     {
+      "id": "material-review",
+      "title": "Ревью учебных материалов",
+      "domain": "authoring",
+      "kind": "page",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/material-review/index.blade.php",
+        "resources/views/material-review/document.blade.php",
+        "public/css/material-review.css",
+        "public/js/material-review.js"
+      ],
+      "goal": "Выбрать редакцию урока, разобрать замысел, структуру и локальные правки, проверить итог и отдельно опубликовать.",
+      "layout": "review-workspace",
+      "guard": "Только администраторы; версия основы, принадлежность программе и версия черновика проверяются перед записью.",
+      "checkStates": [
+        "программы с поиском",
+        "урок без предложений",
+        "три уровня ревью",
+        "несколько редакций",
+        "сравнение",
+        "вопрос без готовой правки",
+        "конфликт",
+        "прогресс",
+        "предпросмотр публикации",
+        "опубликованная версия",
+        "светлая и тёмная темы",
+        "узкое окно"
+      ],
+      "design": {
+        "stage": "implemented",
+        "layout": "review-workspace",
+        "rules": [
+          "Общая оболочка B+, штатная шапка и семантические токены.",
+          "Материал на одной поверхности; действия возле правки и в панели.",
+          "На узком экране навигация и предложения сворачиваются.",
+          "Стили ограничены модулем ревью."
+        ]
+      },
+      "review": {
+        "stage": "verified",
+        "note": "Изолированный синтетический стенд, Chromium 1440/390, светлая и тёмная темы; конфликт с сохранением ввода, публикация и подготовка восстановления.",
+        "evidence": "output/playwright/material-review/review-light-1440.png"
+      }
+    },
+    {
+      "id": "material-review-editor",
+      "title": "Ручная правка в ревью",
+      "domain": "authoring",
+      "kind": "dialog",
+      "parent": "material-review",
+      "roles": [
+        "admin"
+      ],
+      "sources": [
+        "resources/views/material-review/index.blade.php",
+        "public/js/material-review.js"
+      ],
+      "goal": "Исправить текст или ячейки Jupyter, просмотреть результат, сохранить авторское предложение и сохранить ввод при конфликте.",
+      "checkStates": [
+        "Markdown",
+        "связанные части",
+        "ячейки Jupyter",
+        "предпросмотр",
+        "версия изменилась",
+        "восстановление ввода"
+      ],
+      "review": {
+        "stage": "verified",
+        "note": "Браузер: ручная правка, предпросмотр, сохранение, конфликт и восстановление введённого текста на 1440/390."
+      }
+    },
+    {
+      "id": "material-history",
+      "title": "Условие на момент сдачи",
+      "domain": "review",
+      "kind": "page",
+      "roles": [
+        "student",
+        "teacher",
+        "admin"
+      ],
+      "sources": [
+        "resources/views/material-review/attempt.blade.php",
+        "resources/views/material-review/code-condition.blade.php"
+      ],
+      "goal": "Прочитать достоверное условие своей прежней работы после изменения или переноса задачи.",
+      "guard": "Только владелец работы и уполномоченный преподаватель курса/администратор; авторское решение видно только преподавателю.",
+      "checkStates": [
+        "снимок сохранён",
+        "версия неизвестна",
+        "задача перенесена",
+        "приватное авторское решение"
+      ],
+      "review": {
+        "stage": "verified",
+        "note": "PHP-тесты: доступ владельца и преподавателя, запрет постороннему ученику, отсутствие авторского решения у ученика."
+      }
+    },
+    {
       "id": "course-subgroups",
       "title": "Подгруппы курса",
       "domain": "courses",
@@ -4275,7 +4375,7 @@
     {
       "from": "deadlines",
       "to": "step",
-      "label": "Открыть задачу",
+      "label": "Открыть задачу с ближайшим или пропущенным сроком",
       "kind": "navigate",
       "roles": [],
       "source": "resources/views/courses/deadlines.blade.php"
@@ -5573,10 +5673,18 @@
     {
       "from": "courses",
       "to": "pulse",
-      "label": "Пульс в шапке",
+      "label": "Число и график пульса в шапке",
       "kind": "navigate",
       "roles": [],
       "source": "resources/views/courses/partials/home_activity_feed.blade.php"
+    },
+    {
+      "from": "courses",
+      "to": "profile",
+      "label": "Открыть свой профиль по аватару",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/courses/partials/home_profile_panel.blade.php"
     },
     {
       "from": "settings-store",
@@ -5672,6 +5780,46 @@
         "admin"
       ],
       "source": "resources/views/courses/partials/course-actions.blade.php"
+    },
+    {
+      "from": "user-menu",
+      "to": "material-review",
+      "label": "Ревью программ для администратора",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/layouts/partials/sidebar-user-resources.blade.php"
+    },
+    {
+      "from": "material-review",
+      "to": "material-review-editor",
+      "label": "Редактировать материал или вариант предложения",
+      "kind": "open",
+      "roles": [],
+      "source": "resources/views/material-review/field.blade.php"
+    },
+    {
+      "from": "material-review-editor",
+      "to": "material-review",
+      "label": "Сохранить в черновик или закрыть редактор",
+      "kind": "close",
+      "roles": [],
+      "source": "public/js/material-review.js"
+    },
+    {
+      "from": "step",
+      "to": "material-history",
+      "label": "Условие при сдаче",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/views/steps/partials/content.blade.php"
+    },
+    {
+      "from": "code-submission",
+      "to": "material-history",
+      "label": "Условие сохранённой сдачи",
+      "kind": "navigate",
+      "roles": [],
+      "source": "resources/assets/js/code-checking/result-view.js"
     },
     {
       "from": "course",
@@ -6335,10 +6483,6 @@
       "node": "text-assist",
       "kind": "api"
     },
-    "GeekExamWifiAlertController@store": {
-      "node": "geekexam",
-      "kind": "callback"
-    },
     "TelegramBotController@webhook": {
       "node": "telegram",
       "kind": "api"
@@ -6415,11 +6559,11 @@
       "node": "geekexecutor",
       "kind": "api"
     },
-    "CodeCheckerAPI@grade": {
+    "CodeCheckerAPI@input": {
       "node": "geekexecutor",
       "kind": "api"
     },
-    "CodeCheckerAPI@input": {
+    "CodeCheckerAPI@grade": {
       "node": "geekexecutor",
       "kind": "api"
     },
@@ -6442,6 +6586,10 @@
     "CodeCheckerAPI@report": {
       "node": "geekexecutor",
       "kind": "api"
+    },
+    "GeekExamWifiAlertController@store": {
+      "node": "geekexam",
+      "kind": "callback"
     },
     "CodeCheckingController@executorStatus": {
       "node": "geekexecutor",
@@ -6678,6 +6826,38 @@
     "SolutionRemovalController@destroy": {
       "node": "review-tools",
       "kind": "action"
+    },
+    "MaterialReviewController@index": {
+      "node": "material-review",
+      "kind": "screen"
+    },
+    "MaterialReviewController@create": {
+      "node": "material-review",
+      "kind": "action"
+    },
+    "MaterialReviewController@read": {
+      "node": "material-review",
+      "kind": "api"
+    },
+    "MaterialReviewController@action": {
+      "node": "material-review",
+      "kind": "action"
+    },
+    "MaterialReviewController@preview": {
+      "node": "material-review",
+      "kind": "api"
+    },
+    "MaterialReviewController@resource": {
+      "node": "material-review",
+      "kind": "media"
+    },
+    "MaterialReviewController@attempt": {
+      "node": "material-history",
+      "kind": "screen"
+    },
+    "MaterialReviewController@codeAttempt": {
+      "node": "material-history",
+      "kind": "screen"
     },
     "CourseSubgroupsController@index": {
       "node": "course-subgroups",

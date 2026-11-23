@@ -21,6 +21,7 @@ class Solution extends Model
     ];
 
     protected $appends = ['mark'];
+    protected $hidden = ['material_snapshot'];
 
     protected $casts = [
         'evaluated_mark' => 'integer',

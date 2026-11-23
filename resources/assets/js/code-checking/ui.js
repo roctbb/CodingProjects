@@ -47,9 +47,11 @@ export function download(url, label) {
 }
 export async function request(url, method = 'GET', body, options = {}) {
     const multipart = body instanceof FormData;
+    const materialTask = /\/tasks\/(\d+)\/code-submissions(?:\?|$)/.exec(url);
+    const materialToken = materialTask ? [...document.querySelectorAll('[data-execution-workspace]')].find(el => el.dataset.taskId === materialTask[1])?.dataset.materialRevision : null;
     if (multipart && method === 'PUT') {body.set('_method','PUT'); method = 'POST';}
     const response = await fetch(url, {signal:options.signal, method, credentials:'same-origin', headers:{Accept:'application/json',
-        'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]')?.content || '', ...(!multipart && body ? {'Content-Type':'application/json'} : {})},
+        'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]')?.content || '', ...(materialToken ? {'X-Material-Revision':materialToken} : {}), ...(!multipart && body ? {'Content-Type':'application/json'} : {})},
     ...(body ? {body:multipart ? body : JSON.stringify(body)} : {})});
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {

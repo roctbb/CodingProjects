@@ -33,7 +33,7 @@ function showURLContext(initialContext) {
     root.dataset.submission=attempt || '';
     if (attempt) {
         const condition = root.closest('.gc-task-sheet')?.querySelector('.gc-task-condition-disclosure');
-        if (condition) {
+        if (condition && !condition.closest('.gc-task-sheet--tutor')) {
             const sideBySide = condition.closest('.gc-chat-sheet') ? chatDesktop().matches : matchMedia('(min-width: 1200px)').matches;
             if (!sideBySide) condition.open = false;
         }
@@ -135,6 +135,11 @@ export default function initCodeChecking() {
             if(root.closest('.tab-pane')?.classList.contains('active'))load().catch(() => {});
             return;
         }
+        if (root.closest('.gc-task-sheet--tutor')) {
+            const pane = root.closest('.step-content > .tab-pane');
+            if (!pane || pane.classList.contains('active')) load().catch(() => {});
+            return;
+        }
         if (!globalThis.IntersectionObserver) {load().catch(() => {}); return;}
         const observer = new IntersectionObserver(entries => {
             if (entries.some(entry => entry.isIntersecting)) {observer.disconnect(); load().catch(() => {});}
@@ -146,6 +151,10 @@ export default function initCodeChecking() {
         document.addEventListener('shown.bs.tab',event => {
             const target=event.target.dataset.executionTabTarget;
             if(target)document.querySelector(target)?.dispatchEvent(new CustomEvent('gc:execution-activate'));
+            if (event.target.matches('.task-pill')) {
+                const pane = document.getElementById(event.target.getAttribute('aria-controls'));
+                pane?.querySelector('.gc-task-sheet--tutor [data-execution-workspace]')?.dispatchEvent(new CustomEvent('gc:execution-activate'));
+            }
         });
         window.addEventListener('popstate',()=>{
             if(new URL(location.href).searchParams.has('student'))showURLContext();

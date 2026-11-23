@@ -299,6 +299,7 @@ class TasksController extends Controller
     private function submitSolution($course_id, $id, Request $request)
     {
         $task = Task::whereKey($id)->lockForUpdate()->firstOrFail();
+        \App\MaterialReview\Attempts::guard($request, $task);
         $revision = $request->input('quiz_revision');
         abort_if($revision !== null && (!is_string($revision) || !$task->is_quiz || !hash_equals($task->quizRevision(), $revision)),
             409, 'Задание изменилось. Обновите страницу перед отправкой.');

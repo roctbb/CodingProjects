@@ -13,6 +13,7 @@
     data-continue-url="{{ $continueTask ? url('/insider/courses/'.$course->id.'/steps/'.$nativeStep->id.'#task'.$continueTask->id) : url('/insider/courses/'.$course->id.'?chapter='.$nativeStep->lesson->chapter_id) }}"
     data-continue-label="{{ $continueTask ? 'Следующая задача' : 'К урокам курса' }}"
     data-task-id="{{ $task->id }}" data-course-id="{{ $course->id }}"
+    data-material-revision="{{ \App\MaterialReview\Attempts::token($task) }}"
     @if($nativeHistoryOnly ?? false) data-history-only @endif
     data-teacher="{{ $nativeTeacher ? 'true' : 'false' }}"
     data-viewer-id="{{ Auth::id() }}"

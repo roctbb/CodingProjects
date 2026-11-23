@@ -3,12 +3,11 @@ import * as bootstrap from 'bootstrap';
 export const chatDesktop = () => matchMedia('(min-width: 992px)');
 
 function readingHeading(condition, desktop) {
-    if(desktop){
-        condition.tabIndex=0;
-        condition.setAttribute('aria-label','Условие задачи');
-    }else{
-        condition.removeAttribute('tabindex');
-        condition.removeAttribute('aria-label');
+    if (desktop) condition.tabIndex = 0;
+    else condition.removeAttribute('tabindex');
+    if (condition instanceof HTMLDetailsElement) {
+        if (desktop) condition.setAttribute('aria-label', 'Условие задачи');
+        else condition.removeAttribute('aria-label');
     }
     condition.classList.toggle('gc-task-condition--reading', desktop);
 }
@@ -16,7 +15,7 @@ function readingHeading(condition, desktop) {
 // Use the same bottom edge in the roster, student review and personal chat.
 function fitDesktopPanes(workbook, desktop) {
     const main = workbook.querySelector('.step-main');
-    const sheets = [...main.querySelectorAll('.gc-chat-sheet')];
+    const sheets = [...main.querySelectorAll('.gc-chat-sheet:not(.gc-task-sheet--tutor)')];
     if (!sheets.length) return;
     function measure() {
         if (!desktop.matches) return;
@@ -27,6 +26,11 @@ function fitDesktopPanes(workbook, desktop) {
             const top = condition.getBoundingClientRect().top + window.scrollY;
             const height = Math.max(320, Math.floor(available - top));
             sheet.style.setProperty('--gc-pane-height', height + 'px');
+            const modeBar = sheet.querySelector('.gc-task-review-controls');
+            if (modeBar) {
+                const paneHeight = height - modeBar.offsetHeight;
+                modeBar.nextElementSibling.style.setProperty('--gc-pane-height', paneHeight + 'px');
+            }
         }
     }
     let frame;
@@ -35,7 +39,7 @@ function fitDesktopPanes(workbook, desktop) {
         frame = requestAnimationFrame(measure);
     }
     const observer = new ResizeObserver(schedule);
-    for (const element of workbook.querySelectorAll('.gc-workbook-header, .step-section-toolbar, .gc-chat-sheet, .gc-task-title-row')) {
+    for (const element of workbook.querySelectorAll('.gc-workbook-header, .step-section-toolbar, .gc-chat-sheet, .gc-task-title-row, .gc-task-review-controls')) {
         observer.observe(element);
     }
     window.addEventListener('resize', schedule);
@@ -53,12 +57,15 @@ export default function initWorkbookNavigation() {
         function applyConditionLayout() {
             for (const condition of conditions) {
                 const selected = workbook.dataset.attemptTask === condition.dataset.taskCondition;
-                if (condition.closest('.gc-chat-sheet')) {
-                    condition.open = desktop.matches || !(selected || condition.hasAttribute('data-submitted'));
+                const sheet = condition.closest('.gc-chat-sheet');
+                if (sheet) {
+                    if (condition instanceof HTMLDetailsElement && (desktop.matches || !sheet.classList.contains('gc-task-sheet--tutor'))) {
+                        condition.open = desktop.matches || !(selected || condition.hasAttribute('data-submitted'));
+                    }
                     readingHeading(condition, desktop.matches);
                     const submitSlot = condition.querySelector('[data-task-submit-slot]');
                     if (submitSlot) {
-                        const action = condition.closest('.gc-chat-sheet').querySelector('.gc-task-submit-action');
+                        const action = sheet.querySelector('.gc-task-submit-action');
                         if (desktop.matches) submitSlot.append(action);
                         else condition.after(action);
                     }
@@ -75,8 +82,9 @@ export default function initWorkbookNavigation() {
 
         function recordSubmission(event) {
             const condition = [...conditions].find(el => el.dataset.taskCondition === String(event.detail?.taskId));
-            if (!condition || condition.hasAttribute('data-submitted')) return;
+            if (!(condition instanceof HTMLDetailsElement) || condition.hasAttribute('data-submitted')) return;
             condition.setAttribute('data-submitted', '');
+            if (condition.closest('.gc-task-sheet--tutor')) return;
             if (condition.closest('.gc-chat-sheet') ? !desktop.matches : phone.matches) condition.open = false;
         }
         workbook.addEventListener('gc:attempt-submitted', recordSubmission);

@@ -29,7 +29,9 @@ class Program extends Model
 
     public function steps()
     {
-        return $this->hasMany('App\ProgramStep', 'program_id', 'id')->orderBy('sort_index')->orderBy('id');
+        $query = $this->hasMany('App\ProgramStep', 'program_id', 'id')->orderBy('sort_index')->orderBy('id');
+        if (\Illuminate\Support\Facades\Schema::hasColumn('program_steps','review_archived_at')) $query->whereNull('review_archived_at');
+        return $query;
     }
 
     public function chapters()

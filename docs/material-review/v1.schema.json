@@ -1,0 +1,1283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codingprojects:material-review:v1",
+  "title": "Coding Projects material review v1",
+  "$defs": {
+    "operation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "fragment"
+            },
+            "entity": {
+              "type": "string",
+              "enum": [
+                "lesson",
+                "step",
+                "task"
+              ]
+            },
+            "id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "field": {
+              "type": "string",
+              "enum": [
+                "name",
+                "description",
+                "image",
+                "theory",
+                "notes",
+                "video_url",
+                "is_notebook",
+                "text",
+                "solution",
+                "max_mark",
+                "is_star",
+                "is_hidden",
+                "only_class",
+                "only_remote"
+              ]
+            },
+            "old": {
+              "type": "string",
+              "minLength": 1
+            },
+            "new": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "entity",
+            "id",
+            "field",
+            "old",
+            "new"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "replace"
+            },
+            "entity": {
+              "type": "string",
+              "enum": [
+                "lesson",
+                "step",
+                "task"
+              ]
+            },
+            "id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "field": {
+              "type": "string",
+              "enum": [
+                "name",
+                "description",
+                "image",
+                "theory",
+                "notes",
+                "video_url",
+                "is_notebook",
+                "text",
+                "solution",
+                "max_mark",
+                "is_star",
+                "is_hidden",
+                "only_class",
+                "only_remote"
+              ]
+            },
+            "value": {
+              "type": [
+                "string",
+                "integer",
+                "boolean",
+                "null"
+              ]
+            },
+            "expected": {}
+          },
+          "required": [
+            "op",
+            "entity",
+            "id",
+            "field",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "image"
+            },
+            "entity": {
+              "type": "string",
+              "enum": [
+                "lesson",
+                "step",
+                "task"
+              ]
+            },
+            "id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "field": {
+              "type": "string",
+              "enum": [
+                "name",
+                "description",
+                "image",
+                "theory",
+                "notes",
+                "video_url",
+                "is_notebook",
+                "text",
+                "solution",
+                "max_mark",
+                "is_star",
+                "is_hidden",
+                "only_class",
+                "only_remote"
+              ]
+            },
+            "old": {
+              "type": "string",
+              "minLength": 1
+            },
+            "resource_id": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "required": [
+            "op",
+            "entity",
+            "id",
+            "field",
+            "old",
+            "resource_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "notebook_cell"
+            },
+            "entity": {
+              "type": "string",
+              "enum": [
+                "lesson",
+                "step",
+                "task"
+              ]
+            },
+            "id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "field": {
+              "type": "string",
+              "enum": [
+                "name",
+                "description",
+                "image",
+                "theory",
+                "notes",
+                "video_url",
+                "is_notebook",
+                "text",
+                "solution",
+                "max_mark",
+                "is_star",
+                "is_hidden",
+                "only_class",
+                "only_remote"
+              ]
+            },
+            "cell_id": {
+              "type": "string"
+            },
+            "cell_index": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "old": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "entity",
+            "id",
+            "field",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "create_step"
+            },
+            "lesson_id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "key": {
+              "type": "string",
+              "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+            },
+            "after": {
+              "oneOf": [
+                {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                    }
+                  ]
+                },
+                {
+                  "const": "start"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "fields": {
+              "type": "object",
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "integer",
+                  "boolean",
+                  "null"
+                ]
+              }
+            }
+          },
+          "required": [
+            "op",
+            "lesson_id",
+            "key",
+            "fields"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "create_task"
+            },
+            "step_id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "key": {
+              "type": "string",
+              "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+            },
+            "after": {
+              "oneOf": [
+                {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                    }
+                  ]
+                },
+                {
+                  "const": "start"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "fields": {
+              "type": "object",
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "integer",
+                  "boolean",
+                  "null"
+                ]
+              }
+            }
+          },
+          "required": [
+            "op",
+            "step_id",
+            "key",
+            "fields"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "archive_step"
+            },
+            "id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "tasks": {
+              "type": "object",
+              "additionalProperties": {
+                "enum": [
+                  "hide",
+                  "moved"
+                ]
+              }
+            }
+          },
+          "required": [
+            "op",
+            "id",
+            "tasks"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "archive_task"
+            },
+            "id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "move_step"
+            },
+            "id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "lesson_id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "after": {
+              "oneOf": [
+                {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                    }
+                  ]
+                },
+                {
+                  "const": "start"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "id",
+            "lesson_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "move_task"
+            },
+            "id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "step_id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "after": {
+              "oneOf": [
+                {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                    }
+                  ]
+                },
+                {
+                  "const": "start"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "id",
+            "step_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "reorder_steps"
+            },
+            "id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "order": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                  }
+                ]
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "op",
+            "id",
+            "order"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "reorder_tasks"
+            },
+            "id": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                }
+              ]
+            },
+            "order": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+                  }
+                ]
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "op",
+            "id",
+            "order"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "enum": [
+                "question",
+                "unsupported"
+              ]
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "op"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "task": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "string",
+              "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+            }
+          ]
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "integer",
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "checking": {
+          "type": "object",
+          "readOnly": true
+        }
+      },
+      "required": [
+        "id",
+        "fields"
+      ],
+      "additionalProperties": false
+    },
+    "step": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "string",
+              "pattern": "^new:[A-Za-z0-9_-]{1,80}$"
+            }
+          ]
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "integer",
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/task"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "fields",
+        "archived",
+        "tasks"
+      ],
+      "additionalProperties": false
+    },
+    "document": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "program_id": {
+          "type": "integer"
+        },
+        "chapter_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "integer",
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          }
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "readOnly": true
+        }
+      },
+      "required": [
+        "id",
+        "program_id",
+        "chapter_id",
+        "fields",
+        "steps"
+      ],
+      "additionalProperties": false
+    },
+    "proposal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "external_id": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "reason": {
+          "type": "string",
+          "pattern": "\\S",
+          "maxLength": 10000
+        },
+        "kind": {
+          "enum": [
+            "change",
+            "manual",
+            "question",
+            "plan",
+            "unsupported"
+          ]
+        },
+        "scope": {
+          "enum": [
+            "lesson",
+            "structure",
+            "local"
+          ]
+        },
+        "intent": {
+          "enum": [
+            "error",
+            "learning",
+            "style",
+            "question"
+          ]
+        },
+        "operations": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/operation"
+          }
+        },
+        "against": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/document"
+          }
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/document"
+          }
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uniqueItems": true
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uniqueItems": true
+        },
+        "origin": {},
+        "legacy": {},
+        "transferred_from": {
+          "type": "string"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "legacy_images": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "transferred_group_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "create": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "installation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "program_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "base_revision_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "reason": {
+          "type": "string",
+          "pattern": "\\S",
+          "maxLength": 10000
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/document"
+          }
+        },
+        "proposals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/proposal"
+          }
+        },
+        "origin": {},
+        "transfer_groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "reason",
+              "paths"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "paths": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "depends_on": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "alternatives": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "format_version",
+        "installation_id",
+        "program_id",
+        "base_revision_ids",
+        "title",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "update": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/operation"
+          }
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/document"
+          }
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "resource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "program_id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "mime": {
+          "type": "string"
+        },
+        "data": {
+          "type": "string",
+          "contentEncoding": "base64"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        },
+        "original_data": {
+          "type": "string",
+          "contentEncoding": "base64"
+        },
+        "original_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "program_id",
+        "name",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "package": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "installation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "snapshot_id": {
+          "type": "string"
+        },
+        "program_id": {
+          "type": "integer"
+        },
+        "draft": {
+          "type": "object",
+          "required": [
+            "id",
+            "bases",
+            "base_documents",
+            "targets",
+            "metadata",
+            "proposals",
+            "history",
+            "state"
+          ]
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource"
+          }
+        },
+        "archive_signature": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "publication_history": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "revision_history": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "legacy_history": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "format_version",
+        "installation_id",
+        "snapshot_id",
+        "program_id",
+        "draft",
+        "resources",
+        "archive_signature"
+      ],
+      "additionalProperties": false
+    },
+    "mapping_target": {
+      "type": "object",
+      "properties": {
+        "program_id": {
+          "type": "integer"
+        },
+        "lesson_id": {
+          "type": "integer"
+        },
+        "entity": {
+          "type": "string",
+          "enum": [
+            "lesson",
+            "step",
+            "task"
+          ]
+        },
+        "id": {
+          "type": "integer"
+        },
+        "field": {
+          "type": "string"
+        },
+        "old": {
+          "type": "string"
+        },
+        "uses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/mapping_target"
+          }
+        }
+      },
+      "required": [
+        "program_id",
+        "lesson_id",
+        "entity",
+        "id",
+        "field"
+      ],
+      "additionalProperties": false
+    },
+    "mapping": {
+      "type": "object",
+      "properties": {
+        "source_id": {
+          "type": "string"
+        },
+        "files": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/mapping_target"
+          }
+        },
+        "proposal_targets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/mapping_target"
+            }
+          }
+        },
+        "lessons": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "program_id": {
+                "type": "integer"
+              },
+              "lesson_id": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "program_id",
+              "lesson_id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "images": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/mapping_target"
+          }
+        }
+      },
+      "required": [
+        "source_id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "anyOf": [
+    {
+      "$ref": "#/$defs/create"
+    },
+    {
+      "$ref": "#/$defs/proposal"
+    },
+    {
+      "$ref": "#/$defs/update"
+    },
+    {
+      "$ref": "#/$defs/resource"
+    },
+    {
+      "$ref": "#/$defs/package"
+    },
+    {
+      "$ref": "#/$defs/mapping"
+    }
+  ]
+}

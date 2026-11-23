@@ -66,7 +66,6 @@ final class CourseDeadlineWorkspace
                 'penalty' => (float) round(100 - $rule->at($now)->penalty * 100, 2),
                 'next' => $next ? \Carbon\Carbon::parse($next['at'], 'UTC')->getTimestampMs() : null,
                 'last' => $last ? $rule->deadlineAt($last) : null,
-                'chapter' => (string) ($entry->task->step->lesson->chapter_id ?? 0),
             ];
         })->sortBy(fn ($item) => [$item['done'] ? 1 : 0, $item['next'] === null ? 1 : 0,
             $item['next'] ?? -($item['last']?->timestamp ?? 0), $item['task']->id])->values();

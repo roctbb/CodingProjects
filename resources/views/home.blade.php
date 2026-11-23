@@ -10,6 +10,7 @@
         $archiveCourses = $archiveCourses ?? collect();
         $availableCourses = $availableCourses ?? $open_courses;
         $completedCourses = $completedCourses ?? collect();
+        $studentCourseGrid = 'row row-cols-1 row-cols-md-2 row-cols-xxl-3 g-3 gc-home-course-grid';
         $birthdayUsers = $birthdayUsers ?? collect();
         $rank = $user->rank();
         $score = $user->score();
@@ -134,7 +135,7 @@
                     @endif
 
                     @if ($activeCourses->count())
-                        <div class="row row-cols-1 row-cols-md-2 {{ $activeCourses->count() > 2 ? ($isTeacher ? 'row-cols-xxl-3' : 'row-cols-xl-3') : '' }} g-3">
+                        <div class="{{ $isTeacher ? 'row row-cols-1 row-cols-md-2 g-3'.($activeCourses->count() > 2 ? ' row-cols-xxl-3' : '') : $studentCourseGrid }}">
                             @foreach($activeCourses as $course)
                                 @include('courses.partials.home_course_card', ['variant' => 'active', 'showProgress' => true])
                             @endforeach
@@ -167,7 +168,7 @@
                                 <h5 class="mb-0">Пройденные курсы</h5>
                                 <span class="text-muted small">{{ $completedCourses->count() }} всего</span>
                             </div>
-                            <div class="row row-cols-1 row-cols-md-2 row-cols-xxl-3 g-3">
+                            <div class="{{ $studentCourseGrid }}">
                                 @foreach($completedCourses as $completedCourse)
                                     @include('courses.partials.home_completed_course_card')
                                 @endforeach

@@ -21,6 +21,7 @@ class Submissions
     {
         $user = $request->user();
         $this->access->task($user,$courseId,(int)$task->id);
+        if (!CodeSubmission::where('user_id',$user->id)->where('course_id',$courseId)->where('task_id',$task->id)->where('request_id',$request->input('request_id'))->exists()) \App\MaterialReview\Attempts::guard($request,$task);
         abort_if($task->isBlocked($user->id, $courseId), 403, 'Task is blocked.');
         $checker = CodeTaskChecker::findOrFail($task->id);
         abort_if($checker->config['requires_conversion'] ?? false, 409, 'Legacy checking configuration needs conversion.');
@@ -36,13 +37,17 @@ class Submissions
             $value['files'] = $files;
         }
         $hash = hash('sha256', json_encode($value, JSON_THROW_ON_ERROR));
-        return app(\App\Services\CoinWallet::class)->transaction($user->id, function () use ($user, $courseId, $task, $checker, $language, $input, $files, $hash, $value, $snapshot) {
+        return app(\App\Services\CoinWallet::class)->transaction($user->id, function () use ($request, $user, $courseId, $task, $checker, $language, $input, $files, $hash, $value, $snapshot) {
             $existing = CodeSubmission::where('user_id', $user->id)->where('course_id', $courseId)->where('task_id', $task->id)
                 ->where('request_id', $input['request_id'])->first();
             if ($existing) {
                 abort_unless(hash_equals($existing->payload_hash, $hash), 409, 'Request ID was used for another submission.');
                 return $existing;
             }
+            $task=Task::whereKey($task->id)->lockForUpdate()->firstOrFail();
+            \App\MaterialReview\Attempts::guard($request,$task);
+            $checker=CodeTaskChecker::findOrFail($task->id);
+            $snapshot=$this->configuration->snapshot($task,$checker);
             $credit = app(Attempts::class)->reserve($user, $task, $checker);
             $submissionId = (string) Str::uuid();
             $runId = (string) Str::uuid();

@@ -57,7 +57,7 @@ class History
             $event = $events->get($key->event_id);
             if (($key->event_id !== null && !$event) || ($key->entry_id === $key->source_id && !$source)) continue;
             $native = $source && $key->entry_id === $source->id;
-            $row = $native ? $this->submission($source) : $this->legacy($event, $source);
+            $row = $native ? $this->submission($source) : $this->legacy($event, $source, (int) $task->max_mark);
             if ($event) {
                 $row['needs_review'] = (!$event->review_skipped && $event->mark === null) || (bool)$event->recheck_requested;
                 if ($native) {
@@ -96,7 +96,7 @@ class History
             if (preg_match('/(?:\?|&|&amp;)id=([A-Za-z0-9_-]+)/',$event->source_reference ?? '',$match)) $query->orWhere('s.legacy_id',$match[1]);
         })->get();
         $source=$this->sourceFor($event,$sources->keyBy('id'),$sources->filter(fn($r)=>$r->legacy_id!==null)->keyBy('legacy_id'),$sources->filter(fn($r)=>$r->solution_id!==null)->keyBy('solution_id'));
-        $row=$this->legacy($event,$source);
+        $row=$this->legacy($event,$source,(int)$task->max_mark);
         $saved=DB::table('solutions')->where('id',$id)->first();
         $answer=(string)($saved->text??'');
         $isLink=$source || preg_match('~(?:paste\.geekclass\.ru|/code-submissions/|^https?://)~i',$answer);
@@ -125,7 +125,7 @@ class History
                 : ($isLink?'Исходная ссылка сохранена, но отдельная версия кода и отчёт этой сдачи недоступны.':null),
             'review_url'=>$teacher?app(\App\Services\TaskLocation::class)->task($course,$task,(int)$event->user_id,'solution-'.$id):null,
             'can_grade'=>$teacher,'grade_url'=>$teacher?url('/insider/courses/'.$course.'/solution/'.$id):null,
-            'grading_maximum_points'=>(int)$task->max_mark,'review_mark'=>$saved->evaluated_mark??$saved->raw_mark??$saved->mark,
+            'review_mark'=>$saved->evaluated_mark??$saved->raw_mark??$saved->mark,
             'review_comment'=>$teacherFeedback?$editableComment:$visibleComment];
     }
 
@@ -179,6 +179,7 @@ class History
     private function submission(object $source):array
     {
         return ['kind'=>'submission','id'=>$source->id,'submission_id'=>$source->id,'solution_id'=>$source->solution_id===null?null:(int)$source->solution_id,
+            'condition_url'=>url('/insider/material-code-history/'.$source->id),
             'user_id'=>(int)$source->user_id,'user_name'=>$source->user_name,'created_at'=>$this->date($source->created_at),
             'state'=>$source->state??'preparing','progress'=>$source->progress?json_decode($source->progress,true):null,
             'points'=>$source->points===null?null:(int)$source->points,'maximum_points'=>$source->maximum_points===null?null:(int)$source->maximum_points,
@@ -187,13 +188,14 @@ class History
             'counts_as_attempt'=>$source->legacy_id===null];
     }
 
-    private function legacy(object $event,?object $source):array
+    private function legacy(object $event,?object $source,int $maximum):array
     {
         return ['kind'=>'legacy_attempt','id'=>'solution-'.$event->id,'submission_id'=>null,'solution_id'=>(int)$event->id,
+            'condition_url'=>url('/insider/material-history/'.$event->id),
             'source_submission_id'=>$source?->id,'source_version_unknown'=>$source===null || $source->legacy_id!==null,
             'source_available'=>$source!==null,'user_id'=>(int)$event->user_id,'user_name'=>$event->user_name,
             'created_at'=>$this->date($event->submitted),'state'=>$event->mark===null?'awaiting_review':'completed','progress'=>null,
-            'points'=>null,'maximum_points'=>null,'awarded_xp'=>$event->mark===null?null:(int)$event->mark,
+            'points'=>null,'maximum_points'=>null,'grading_maximum_points'=>$maximum,'awarded_xp'=>$event->mark===null?null:(int)$event->mark,
             'evaluated_points'=>isset($event->evaluated_mark)?(int)$event->evaluated_mark:(isset($event->raw_mark)?(int)$event->raw_mark:null),
             'teacher_viewed'=>$source!==null?(bool)$source->teacher_viewed:null,'review_state_known'=>$source!==null,
             'counts_as_attempt'=>true];

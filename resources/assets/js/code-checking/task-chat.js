@@ -15,10 +15,11 @@ const tutorPortrait = '/images/rostislop.webp';
 const tutorName = 'Ростислоп Нейрославович';
 const askTeacherLabel = 'Спросить преподавателя';
 const teacherMention = '@преподаватель ';
+const historyTimeout = 12_000;
 const hasTeacherMention = /(?:^|[^\p{L}\p{N}_@])@преподаватель(?![\p{L}\p{N}_])/iu;
 
 // On a phone the condition sits above the chat and the keyboard can resize the viewport.
-function fitChat(shell, root, input) {
+function fitChat(shell, root, input, dialog) {
     const sheet=root.closest('.gc-chat-sheet');
     const desktop=chatDesktop();
     const condition=sheet?.querySelector('[data-task-condition]');
@@ -27,8 +28,12 @@ function fitChat(shell, root, input) {
     let frame=0, inputWidth=0;
     function measure() {
         frame=0;
+        if (dialog && viewport) {
+            dialog.style.setProperty('--gc-chat-viewport-height', viewport.height+'px');
+            dialog.style.setProperty('--gc-chat-viewport-top', viewport.offsetTop+'px');
+        }
         if(shell.hidden || !shell.getClientRects().length)return;
-        if (!sheet || !desktop.matches) {
+        if (!dialog && (!sheet || !desktop.matches)) {
             const height=viewport?.height || innerHeight;
             const top=shell.getBoundingClientRect().top + window.scrollY;
             shell.style.setProperty('--gc-chat-height', Math.round(Math.max(height * .42, height - Math.max(0,top)))+'px');
@@ -40,14 +45,16 @@ function fitChat(shell, root, input) {
     }
     function schedule(){if(!frame)frame=requestAnimationFrame(measure);}
     const observer=new ResizeObserver(schedule);
-    for(const el of [header,sheet,condition,root,input])if(el)observer.observe(el);
+    for(const el of [header,sheet,condition,root,shell,input])if(el)observer.observe(el);
     window.addEventListener('resize',schedule);
     viewport?.addEventListener('resize',schedule);
+    if (dialog) viewport?.addEventListener('scroll',schedule);
     schedule();
     return ()=>{
         cancelAnimationFrame(frame);observer.disconnect();
         window.removeEventListener('resize',schedule);
         viewport?.removeEventListener('resize',schedule);
+        if (dialog) viewport?.removeEventListener('scroll',schedule);
         shell.style.removeProperty('--gc-chat-height');
     };
 }
@@ -56,6 +63,9 @@ export function taskChat(root, actions) {
     const teacher = root.dataset.teacher === 'true' && root.dataset.user !== root.dataset.viewerId;
     const viewer = Number(root.dataset.viewerId);
     const withTutor = root.hasAttribute('data-chat-tutor');
+    const sheet = root.closest('.gc-task-sheet');
+    const openChat = withTutor && sheet?.querySelector('[data-task-chat-open]');
+    const dialog = openChat ? node('dialog', {id:openChat.getAttribute('aria-controls'), class:'gc-tutor-chat-dialog', 'aria-label':'Чат задачи'}) : null;
     const title = node('strong', {}, withTutor ? tutorName : 'Чат задачи');
     const member = node('small');
     const avatar = withTutor
@@ -63,11 +73,27 @@ export function taskChat(root, actions) {
         : node('span', {class:'gc-chat-avatar', 'aria-hidden':'true'}, 'ГК');
     const header = node('header', {class:'gc-chat-head'}, avatar, node('div', {}, title, withTutor ? null : member));
     if (actions.back) header.prepend(iconButton('К списку учеников','fa-arrow-left',actions.back));
+    if (dialog) {
+        const back = button('К задаче', () => dialog.close());
+        back.classList.add('gc-chat-back-to-task');
+        back.setAttribute('autofocus', '');
+        header.prepend(back);
+    }
     const messages = node('div', {class:'gc-chat-messages'});
     const log = node('div',{class:'gc-chat-log',role:'log','aria-label':'Сообщения по задаче'},messages);
     const earlier = button('Предыдущие сообщения',()=>load(true)); earlier.className='gc-chat-earlier';
     const status = node('small',{role:'status',class:'gc-chat-status'});
-    const retry = button('Обновить',()=>load()); retry.hidden=true;
+    const readStatus = node('p', {class:'gc-chat-empty mb-0', role:'status'});
+    const retry = button('Повторить', () => {
+        showHistoryStatus('Загружаем переписку…');
+        load(false, true);
+    });
+    const readNotice = node('div', {class:'gc-chat-read-state'}, readStatus, retry);
+    function showHistoryStatus(message, allowRetry = false) {
+        readStatus.textContent = message;
+        retry.hidden = !allowRetry;
+        if (readNotice.parentElement !== messages) messages.append(readNotice);
+    }
     const input = node('textarea',{rows:2,maxLength:3000,placeholder:'Сообщение','aria-label':'Сообщение в чат задачи'});
     const attach = button('Решение',actions.compose);
     attach.prepend(node('i',{class:'fas fa-paperclip','aria-hidden':'true'}),' ');attach.className='gc-chat-attach';attach.setAttribute('aria-label','Отправить решение');
@@ -82,8 +108,34 @@ export function taskChat(root, actions) {
     const reply = node('div',{class:'gc-chat-reply',hidden:true},quoted,iconButton('Отменить ответ','fa-xmark',()=>setReply(null)));
     const shortcuts = askTeacher ? node('div', {class:'gc-chat-shortcuts'}, attach, askTeacher) : null;
     const form = node('form',{class:'gc-chat-compose'},reply,shortcuts,node('div',{class:'gc-chat-entry'},shortcuts ? null : attach,input,send));
-    const shell = node('section',{class:'gc-task-chat',hidden:true,'aria-label':'Личная переписка по задаче'},header,log,form,status,retry);
-    let stopFit, stopWatching, refreshPending = false, awaitingTutor = false;
+    const shell = node('section',{class:dialog ? 'gc-task-chat gc-task-chat--panel' : 'gc-task-chat',hidden:true,'aria-label':'Личная переписка по задаче'},header,log,form,status);
+    const surface = dialog ? node('div', {}, shell, dialog) : shell;
+    let revealTutorStart = false;
+    if (dialog) {
+        const desktop = chatDesktop();
+        function placeChat() {
+            if (desktop.matches) {
+                dialog.close();
+                surface.prepend(shell);
+            } else dialog.append(shell);
+        }
+        placeChat();
+        desktop.addEventListener('change', placeChat);
+        openChat.addEventListener('click', () => {
+            dialog.showModal();
+            openChat.setAttribute('aria-expanded', 'true');
+            showLatestTutorStart();
+        });
+        dialog.addEventListener('close', () => {
+            if (!dialog.open) openChat.setAttribute('aria-expanded', 'false');
+        });
+        const pane = sheet.closest('.step-content > .tab-pane');
+        sheet.closest('.gc-workbook').addEventListener('hide.bs.tab', event => {
+            if (pane && event.target.getAttribute('aria-controls') === pane.id) dialog.close();
+        });
+        openChat.hidden = false;
+    }
+    let stopFit, stopWatching, activeRead, refreshPending = false, awaitingTutor = false;
     let student=null, cursor=null, loading=false, token=0, readNumber=0, pending=false, replyTo=null;
     let events=new Map(), drafts=new Map(), newestIds=[], signature='';
     const endpoint = () => root.dataset.endpoint+'/chat/'+student;
@@ -202,6 +254,25 @@ export function taskChat(root, actions) {
         item.append(disclosure);
     }
 
+    const quickRequests = new Map();
+    async function askAbout(key, body, attempt, run, tutorAction = null) {
+        if (pending || !student) return;
+        const context = token, requestKey = student + ':' + key;
+        const clientId = quickRequests.get(requestKey) || crypto.randomUUID();
+        quickRequests.set(requestKey, clientId);
+        pending = true;
+        enable();
+        try {
+            await request(endpoint(), 'POST', {body, attempt, run_id:run, tutor_action:tutorAction,
+                client_id:clientId, chat_layout:dialog?.open ? 'dialog' : 'panel'});
+            if (context === token) await load(false, true);
+        } catch (error) {
+            if (context === token) status.textContent = 'Сообщение не отправлено. ' + error.message;
+        } finally {
+            if (context === token) { pending = false; enable(); }
+        }
+    }
+
     function bubble(event, previous) {
         const manualGrade = event.type === 'grade' && event.method === 'manual';
         const finished = event.type === 'check' && event.state === 'completed' || manualGrade;
@@ -267,7 +338,21 @@ export function taskChat(root, actions) {
                 const r = info.recheck;
                 item.append(node('blockquote', {}, r.claim), node('small', {}, (r.location.file || 'Сдача') + ' · строка ' + r.location.line),
                     node('pre', {}, r.evidence), node('strong', {}, 'Что перепроверить'), node('p', {}, r.focus));
-                if (['queued','already_requested'].includes(r.status)) item.append(node('small', {}, 'Перепроверка поставлена в очередь.'));
+                const labels = {queued:'Перепроверка поставлена в очередь. Результат появится в истории.',
+                    already_requested:'Эта перепроверка уже запрашивалась. Посмотри результат в истории.',
+                    superseded:'У этой посылки есть более новая проверка. Открой её в истории.',
+                    teacher:'Это замечание можно обсудить с преподавателем.',
+                    unavailable:'Автоматическая перепроверка недоступна. Можно спросить преподавателя.'};
+                if (labels[r.status]) item.append(node('small', {}, labels[r.status]));
+                if (askTeacher && ['teacher','unavailable'].includes(r.status)) {
+                    item.append(action(askTeacherLabel, mentionTeacher, 'gc-chat-link'));
+                }
+            }
+            if (withTutor && !teacher) for (const choice of info.choices || []) {
+                const attempt = choice.submission_id || 'solution-' + choice.legacy_solution;
+                const label = 'Проверка ' + (choice.at || '') + (choice.legacy_solution ? ' · № ' + choice.legacy_solution : '');
+                item.append(action(label, () => askAbout(event.id + ':' + (choice.run_id || attempt),
+                    info.choice_question || 'Объясни оценку этой проверки.', attempt, choice.run_id || null), 'gc-chat-link'));
             }
             for (const example of info.test_examples || []) {
                 const details = node('details', {class:'gc-chat-feedback'}, node('summary', {}, 'Тест № ' + example.number + ' · бесплатно'));
@@ -300,12 +385,24 @@ export function taskChat(root, actions) {
             if (!teacher) footer.append(action('Посмотреть проверку', () => actions.details(event.attempt), 'gc-chat-link'));
         } else {
             checkBody(item, event, inlinePoints);
+            if (event.tutor_review) {
+                const review = event.tutor_review;
+                const outcome = event.state === 'completed' ? 'Было ' + review.previous + '/' + review.maximum +
+                    ', после перепроверки ' + event.points + '/' + event.maximum + '.' :
+                    event.state === 'error' ? 'Перепроверка завершилась технической ошибкой.' : 'Перепроверка выполняется.';
+                item.append(node('p', {}, outcome + (review.focus ? ' Вопрос: ' + review.focus : '')));
+            }
             if (teacher && event.awaiting_teacher) footer.append(gradeAction(event));
             if (event.criteria?.length) footer.append(action('Подробнее', () => showCriteria(event), 'gc-chat-link'));
             if (event.method === 'tests' && ['completed','error'].includes(event.state)) {
                 footer.append(action('Подробнее', () => actions.report(event), 'gc-chat-link'));
             }
             if (!teacher && withTutor && event.run && event.source && event.state === 'completed') {
+                if (askTeacher && event.method === 'tests' && event.total >= 3 && event.passed < event.total) {
+                    footer.append(action('Показать бесплатные примеры непройденных тестов',
+                        () => askAbout(event.id, 'Покажи бесплатные примеры непройденных тестов.', event.source, event.run, 'examples'),
+                        'gc-chat-link'));
+                }
                 const reply = iconButton('Спросить об этой проверке','fa-reply',()=>setReply({id:event.source,run:event.run,label:event.reference || 'Проверка'}));
                 reply.className = 'gc-chat-answer';
                 footer.append(reply);
@@ -328,8 +425,16 @@ export function taskChat(root, actions) {
         item.append(footer);
         return item;
     }
+    function showLatestTutorStart() {
+        if (!revealTutorStart || !log.clientHeight) return;
+        revealTutorStart = false;
+        const latest = messages.querySelector('article[data-event]:last-of-type');
+        if (latest?.dataset.kind !== 'tutor' || latest.offsetHeight <= log.clientHeight) return;
+        log.scrollTop += latest.getBoundingClientRect().top - log.getBoundingClientRect().top;
+    }
     function render(older=false,forceBottom=false) {
         const wasBottom=Math.abs(log.scrollTop)<45;
+        const previousLatest = messages.querySelector('article[data-event]:last-of-type')?.dataset.event;
         const anchor=[...log.querySelectorAll('[data-event]')].find(el=>el.getBoundingClientRect().bottom>log.getBoundingClientRect().top);
         const offset=anchor?.getBoundingClientRect().top;
         const sorted=[...events.values()].sort((a,b)=>a.at.localeCompare(b.at) || (a.id<b.id?-1:a.id>b.id?1:0));
@@ -355,18 +460,27 @@ export function taskChat(root, actions) {
         const controlIndex=focusId?[...focus.closest('[data-event]').querySelectorAll('button, summary, a')].indexOf(focus):-1;
         messages.replaceChildren(...parts);
         if(focusId)log.querySelector('[data-event="'+focusId+'"]')?.querySelectorAll('button, summary, a')[controlIndex]?.focus({preventScroll:true});
-        if(forceBottom || (!older && wasBottom))log.scrollTop=0;
+        if(forceBottom || (!older && wasBottom)) {
+            log.scrollTop=0;
+            if (dialog && sorted.at(-1)?.id !== previousLatest) {
+                revealTutorStart = sorted.at(-1)?.type === 'tutor';
+                showLatestTutorStart();
+            }
+        }
         else if(anchor){const saved=log.querySelector('[data-event="'+anchor.dataset.event+'"]');if(saved)log.scrollTop+=saved.getBoundingClientRect().top-offset;}
     }
     async function load(older=false,force=false) {
         if(!student || (loading && !force) || (older && !cursor))return;
         const context=token, read=++readNumber;loading=true;earlier.disabled=true;
+        activeRead?.abort();
+        const controller = new AbortController();
+        activeRead = controller;
+        const timeout = setTimeout(() => controller.abort(), historyTimeout);
         try {
-            const page=await request(endpoint()+(older?'?before='+encodeURIComponent(cursor):''));
+            const page=await request(endpoint()+(older?'?before='+encodeURIComponent(cursor):''), 'GET', undefined, {signal:controller.signal});
             if(context!==token || read!==readNumber)return;
-            retry.hidden=true;
+            readNotice.remove();
             if (!older) {
-                status.textContent = '';
                 awaitingTutor = withTutor && page.awaiting_tutor === true;
             }
             const initial=signature==='';
@@ -389,10 +503,12 @@ export function taskChat(root, actions) {
             }else cursor=page.before;
             for(const e of page.events)events.set(e.id,e);
             syncProgress();
-            render(older,initial);
+            render(older,initial || force);
             if(changed.length)actions.updated(changed);
-        }catch(e){if(context===token && read===readNumber){status.textContent='Не удалось загрузить переписку.';retry.hidden=false;}}
+        }catch(e){if(context===token && read===readNumber)showHistoryStatus('Не удалось загрузить переписку.', true);}
         finally {
+            clearTimeout(timeout);
+            if (activeRead === controller) activeRead = null;
             if (context === token && read === readNumber) {
                 loading = false;
                 earlier.disabled = false;
@@ -409,17 +525,20 @@ export function taskChat(root, actions) {
         for (const watch of watching.values()) watch.stop?.();
         watching.clear();
         token++;stopWatching?.();refreshPending=false;loading=false;pending=false;events=new Map();newestIds=[];signature='';cursor=null;
+        activeRead?.abort();
         stopFit?.();stopFit=null;
         student=Number(studentId)||null;shell.hidden=!student;
-        if(!student){autosize.destroy(input);return;}
-        stopFit=fitChat(shell,root,input);
+        if(!student){dialog?.close();autosize.destroy(input);return;}
+        stopFit=fitChat(shell,root,input,dialog);
         member.textContent=teacher?(name || 'Ученик'):'Вы и преподаватель';
         attach.hidden=!canSubmit;
         const draft=drafts.get(student);replyTo=draft?.reply || null;input.value=draft?.text || '';
         autosize(input);
         autosize.update(input);
         reply.hidden=!replyTo;quoted.textContent=replyTo?'Ответ на посылку · '+replyTo.label:'';
-        awaitingTutor=false;messages.replaceChildren();status.textContent='Загружаем переписку…';retry.hidden=true;enable();load();stopWatching=watchTaskChat(root, student, refresh);
+        awaitingTutor=false;revealTutorStart=false;messages.replaceChildren();status.textContent='';
+        showHistoryStatus('Загружаем переписку…');
+        enable();load();stopWatching=watchTaskChat(root, student, refresh);
     }
     window.addEventListener('pagehide', () => { for (const watch of watching.values()) watch.stop?.(); watching.clear(); });
     input.oninput=()=>{saveDraft();enable();};
@@ -429,16 +548,17 @@ export function taskChat(root, actions) {
         if(!student || pending || !input.value.trim())return;
         const context=token, recipient=student, url=endpoint();
         const id=drafts.get(student)?.clientId || crypto.randomUUID();
+        status.textContent = '';
         saveDraft(id);pending=true;enable();
         try{
-            await request(url,'POST',{body:input.value.trim(),attempt:replyTo?.id || null,run_id:replyTo?.run || null,client_id:id});
+            await request(url,'POST',{body:input.value.trim(),attempt:replyTo?.id || null,run_id:replyTo?.run || null,client_id:id,chat_layout:dialog?.open ? 'dialog' : 'panel'});
             if(drafts.get(recipient)?.clientId===id)drafts.delete(recipient);
             if(context!==token)return;
             input.value='';autosize.update(input);replyTo=null;reply.hidden=true;
             // Invalidate an older in-flight read so the post is visible immediately.
-            await load(false,true);if(context===token)log.scrollTop=0;
+            await load(false,true);
         }catch(error){if(context===token)status.textContent='Сообщение не отправлено. '+error.message;}
         finally{if(context===token){pending=false;enable();}}
     };
-    return {shell,select,refresh,setCanSubmit:value=>{attach.hidden=!value;},setName:name=>{member.textContent=name;}};
+    return {surface,select,refresh,setCanSubmit:value=>{attach.hidden=!value;},setName:name=>{member.textContent=name;}};
 }

@@ -11,13 +11,15 @@ class Responder
 {
     private const CODE = '~^\s*(?:\x60{3}|#include\b|(?:def|class|import|from|return)\s+[A-Za-z_]|(?:for|while|if)\b.{1,160}:\s*$|(?:print|input|range)\s*\(|std::|int\s+main\b|using namespace\b|[A-Za-z_]\w*\s*=\s*[A-Za-z_]\w*\s*\()~m';
 
+    private const DRAFT_BYTES = 8192;
+
     public function __construct(private ApiClient $api, private AiSettings $settings) {}
 
     public function reply(array $data, ?callable $checkpoint = null, ?callable $reserve = null, ?int $userId = null): array
     {
         $calls = [];
         $reply = $this->guided($data);
-        if (!config('tutor.guided_only') && !($data['mode'] === 'review' && empty($data['review']['comment']))) {
+        if (!config('tutor.guided_only') && !$this->scoreOnly($data)) {
             $settings = $this->settings->all();
             $provider = $settings['provider'];
             $connection = Connection::resolve($provider, $settings['providers'][$provider]);
@@ -50,10 +52,16 @@ class Responder
         $source = $data['review_basis']['source'] ?? $data['latest_submission'] ?? [];
         $canCheck = !empty($data['review_basis']['feedback']) && ($source['source_status'] ?? null) === 'ready';
         $string = ['type'=>'string'];
-        $fields = ['answer'=>$string,'sources'=>['type'=>'array','items'=>$refs && count($refs)<=200 ? $string+['enum'=>$refs] : $string,
+        $fields = ['answer'=>$string, 'next_step'=>['type'=>['string','null']], 'sources'=>['type'=>'array','items'=>$refs && count($refs)<=200 ? $string+['enum'=>$refs] : $string,
             'maxItems'=>min(2,count($refs))], 'card'=>['type'=>['string','null'],'enum'=>array_merge([null],array_column($cards,'id'))]];
         if ($canCheck) $fields['recheck'] = ['anyOf'=>[['type'=>'null'],$this->object(array_fill_keys(['claim','evidence','focus'],$string))]];
-        $draft = $this->call('answer',$fields,$data,$provider,$connection,$canCheck,$calls,$checkpoint,$reserve,$userId);
+        $answerPayload = $this->payload('answer', $fields, $data, $canCheck);
+        $checkFields = ['allow'=>['type'=>'boolean'], 'good_question'=>['type'=>'boolean']];
+        if ($canCheck) $checkFields['confirm_recheck'] = ['type'=>'boolean'];
+        $checkPayload = $this->payload('check', $checkFields, $data, $canCheck);
+        $prior = $this->usage([]);
+        $reserved = $reserve ? $this->reservePair($answerPayload, $checkPayload, $reserve, $prior, $provider, $connection) : 0;
+        $draft = $this->call('answer', $answerPayload, $provider, $connection, $calls, $checkpoint, $userId);
         $text = $draft['answer'] ?? null;
         $selected = $draft['sources'] ?? null;
         if (!is_string($text) || trim($text)==='' || mb_strlen($text)>1400 || $this->unsuitable($text)
@@ -61,14 +69,19 @@ class Responder
         foreach ($selected as $ref) if (!is_string($ref) || !in_array($ref,$refs,true)) return null;
         $card = collect($cards)->firstWhere('id',$draft['card'] ?? null);
         if (isset($draft['card']) && !$card) return null;
-        $fields = ['allow'=>['type'=>'boolean'], 'good_question'=>['type'=>'boolean']];
-        if ($canCheck) $fields['confirm_recheck'] = ['type'=>'boolean'];
-        $check = $this->call('check',$fields,$data+['draft'=>$draft],$provider,$connection,$canCheck,$calls,$checkpoint,$reserve,$userId);
+        $input = json_encode($data + ['draft'=>$draft], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        if (strlen($input) - strlen($checkPayload['input']) > self::DRAFT_BYTES) return null;
+        $checkPayload['input'] = $input;
+        // Retain the whole reservation across both calls; revalidate admin limit changes.
+        if ($reserve) $reserve($reserved, $prior);
+        $check = $this->call('check', $checkPayload, $provider, $connection, $calls, $checkpoint, $userId);
         if (($check['allow'] ?? false)!==true) return null;
         $finding = $canCheck && ($check['confirm_recheck'] ?? false)===true ? ($draft['recheck'] ?? null) : null;
         if ($finding && (!is_array($finding) || collect($finding)->contains(fn ($s) => !is_string($s) || preg_match('~https?://|www\.|\x60{3}~i',$s))
             || $this->unsuitable($finding['focus'] ?? ''))) $finding = null;
-        return ['answer'=>trim($text),'sources'=>array_values(array_unique($selected)), 'good_question'=>($check['good_question'] ?? false) === true,
+        $step = $draft['next_step'] ?? null;
+        $step = is_string($step) && mb_strlen($step) <= 300 && str_contains($text, $step) ? $step : null;
+        return ['answer'=>trim($text),'next_step'=>$step,'sources'=>array_values(array_unique($selected)), 'good_question'=>($check['good_question'] ?? false) === true,
             'reference'=>$card ? Arr::only($card,['title','text','example']) : null,'recheck'=>$finding,'guided'=>false];
     }
 
@@ -82,7 +95,7 @@ class Responder
         return ['type'=>'object','properties'=>$fields,'required'=>array_keys($fields),'additionalProperties'=>false];
     }
 
-    private function call(string $stage, array $fields, array $data, string $provider, array $settings, bool $canCheck, array &$calls, ?callable $checkpoint, ?callable $reserve, ?int $userId): array
+    private function payload(string $stage, array $fields, array $data, bool $canCheck): array
     {
         $model = config($stage === 'check' ? 'tutor.check_model' : 'tutor.model');
         $effort = config('tutor.effort');
@@ -91,29 +104,43 @@ class Responder
             $file = $canCheck ? "$stage-review" : 'missing-source';
             $instruction .= "\n".file_get_contents(resource_path("tutor/$file.txt"));
         }
-        $payload = ['model'=>$model,'store'=>false,'max_output_tokens'=>1200,'instructions'=>$instruction,
+        return ['model'=>$model,'store'=>false,'max_output_tokens'=>1200,'instructions'=>$instruction,
             'reasoning'=>['effort'=>$effort],'input'=>json_encode($data,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),
             'text'=>['format'=>['type'=>'json_schema','name'=>"tutor_$stage",'strict'=>true,'schema'=>$this->object($fields)]]];
-        // UTF-8 bytes upper-bound the visible tokenized text; include schema, protocol overhead and the entire output allowance.
-        if ($reserve) {
-            $prior = $this->usage($calls);
-            $output = $payload['max_output_tokens'];
-            try {
-                $reserve(strlen(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) + 1024 + $output, $prior);
-            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
-                if ($error->getStatusCode() !== 429) throw $error;
-                // If even the output allowance cannot fit, skip the network request entirely.
-                $reserve($output, $prior);
-                $countSettings = $settings;
-                $countSettings['endpoint'] = rtrim($settings['endpoint'], '/').'/input_tokens';
-                $count = $this->api->create(Arr::only($payload, ['model','instructions','input','text','reasoning']),
-                    $provider, $countSettings, 8, 'student_tutor', api: 'input_tokens');
-                if (!is_int($count['input_tokens'] ?? null) || $count['input_tokens'] <= 0) {
-                    throw new \RuntimeException('AI returned an invalid input token count');
-                }
-                $reserve($count['input_tokens'] + $output, $prior);
-            }
+    }
+
+    private function reservePair(array $answer, array $check, callable $reserve, array $prior, string $provider, array $settings): int
+    {
+        $allowance = $answer['max_output_tokens'] + $check['max_output_tokens'] + self::DRAFT_BYTES + 32;
+        $upper = $allowance;
+        foreach ([$answer, $check] as $payload) {
+            $upper += strlen(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) + 1024;
         }
+        try {
+            $reserve($upper, $prior);
+            return $upper;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+            if ($error->getStatusCode() !== 429) throw $error;
+        }
+        $reserve($allowance, $prior);
+        $settings['endpoint'] = rtrim($settings['endpoint'], '/').'/input_tokens';
+        $total = $allowance;
+        foreach ([$answer, $check] as $payload) {
+            $count = $this->api->create(Arr::only($payload, ['model','instructions','input','text','reasoning']),
+                $provider, $settings, 8, 'student_tutor', api: 'input_tokens');
+            if (!is_int($count['input_tokens'] ?? null) || $count['input_tokens'] <= 0) {
+                throw new \RuntimeException('AI returned an invalid input token count');
+            }
+            $total += $count['input_tokens'];
+        }
+        $reserve($total, $prior);
+        return $total;
+    }
+
+    private function call(string $stage, array $payload, string $provider, array $settings, array &$calls, ?callable $checkpoint, ?int $userId): array
+    {
+        $model = $payload['model'];
+        $effort = $payload['reasoning']['effort'];
         $index = count($calls);
         $calls[] = ['stage'=>$stage,'model'=>$model,'reasoning_effort'=>$effort,'input_tokens'=>null,'output_tokens'=>null,
             'total_tokens'=>null,'cached_input_tokens'=>null,'reasoning_tokens'=>null];
@@ -154,11 +181,36 @@ class Responder
             'input_tokens'=>$total('input_tokens'),'output_tokens'=>$total('output_tokens'),'calls'=>$calls];
     }
 
+    private function scoreOnly(array $data): bool
+    {
+        if (isset($data['recheck_result'])) return false;
+        if ($data['mode'] === 'review') return empty($data['review']['comment']) && (empty($data['followup']) || Dialogue::aboutGrade($data['question']));
+        $result = $data['latest_submission']['result'] ?? [];
+        return $data['mode'] === 'submission' && ($result['state'] ?? null) === 'completed'
+            && isset($result['points']) && empty($data['review_basis']['feedback']) && Dialogue::aboutGrade($data['question']);
+    }
+
     private function guided(array $data): array
     {
         $parts=$data['readings'] ?: array_values(array_filter($data['lesson']['steps'] ?? [], fn($s)=>!empty($s['current'])));
         $parts=array_slice($parts,0,2);
-        if (in_array($data['mode'],['submission','review'],true)) {
+        if ($review = $data['recheck_result'] ?? null) {
+            $before = $review['before'];
+            $after = $review['after'];
+            $answer = 'Вопрос перепроверки — «'.$review['finding']['focus'].'». ';
+            if ($after['state'] === 'completed') {
+                $answer .= "Было {$before['points']}/{$before['maximum']}, после перепроверки — {$after['points']}/{$after['maximum']}. ";
+                $answer .= !empty($after['feedback']) ? 'В новом отзыве записано: «'.mb_strimwidth($after['feedback'][0], 0, 280, '…').'».'
+                    : 'В новой проверке записан только балл. Причину можно уточнить у преподавателя.';
+            } else {
+                $answer .= $after['state'] === 'error' ? 'Проверка завершилась технической ошибкой. Обратись к преподавателю.'
+                    : 'Результат ещё готовится. Он появится в истории задачи.';
+            }
+        } elseif ($this->scoreOnly($data)) {
+            $answer = 'В этой проверке записан только балл. Нажми «Спросить преподавателя», чтобы уточнить причину оценки.';
+        } elseif (!empty($data['followup']) && ($last = Dialogue::lastAnswer($data['history']))) {
+            $answer = Dialogue::followupHint($data, $last);
+        } elseif (in_array($data['mode'],['submission','review'],true)) {
             $answer='Выбери одно замечание из проверки и найди строку своей работы, к которой оно относится. На каком маленьком примере можно проверить эту строку?';
             if ($data['mode'] === 'submission') {
                 $criteria = $data['latest_submission']['result']['criteria'] ?? [];
@@ -169,7 +221,6 @@ class Responder
                     break;
                 }
             }
-            if ($data['mode']==='review' && empty($data['review']['comment'])) $answer='В этой проверке записан только балл. Преподаватель видит эту переписку и может пояснить оценку.';
         } else {
             $answer=$parts ? 'Загляни в «'.(($parts[0]['heading'] ?? '') ?: $parts[0]['title']).'». ' : '';
             $answer.='Возьми самый маленький пример из условия. Какой результат ты ожидаешь получить вручную? 🔎';

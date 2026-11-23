@@ -2553,6 +2553,95 @@
   },
   {
     "method": "GET|HEAD",
+    "uri": "insider/material-code-history/{id}",
+    "name": null,
+    "action": "MaterialReviewController@codeAttempt",
+    "middleware": [
+      "web",
+      "auth"
+    ],
+    "node": "material-history",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/material-history/{id}",
+    "name": null,
+    "action": "MaterialReviewController@attempt",
+    "middleware": [
+      "web",
+      "auth"
+    ],
+    "node": "material-history",
+    "kind": "screen"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/material-review",
+    "name": "material-review",
+    "action": "MaterialReviewController@index",
+    "middleware": [
+      "web",
+      "auth",
+      "admin"
+    ],
+    "node": "material-review",
+    "kind": "screen"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/material-review/drafts",
+    "name": null,
+    "action": "MaterialReviewController@create",
+    "middleware": [
+      "web",
+      "auth",
+      "admin"
+    ],
+    "node": "material-review",
+    "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "insider/material-review/drafts/{id}",
+    "name": null,
+    "action": "MaterialReviewController@read",
+    "middleware": [
+      "web",
+      "auth",
+      "admin"
+    ],
+    "node": "material-review",
+    "kind": "api"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/material-review/drafts/{id}/{action}",
+    "name": null,
+    "action": "MaterialReviewController@action",
+    "middleware": [
+      "web",
+      "auth",
+      "admin"
+    ],
+    "node": "material-review",
+    "kind": "action"
+  },
+  {
+    "method": "POST",
+    "uri": "insider/material-review/preview",
+    "name": null,
+    "action": "MaterialReviewController@preview",
+    "middleware": [
+      "web",
+      "auth",
+      "admin"
+    ],
+    "node": "material-review",
+    "kind": "api"
+  },
+  {
+    "method": "GET|HEAD",
     "uri": "insider/profile/delete-course/{id}",
     "name": null,
     "action": "ProfileController@deleteCourse",
@@ -3184,6 +3273,18 @@
     ],
     "node": "user-menu",
     "kind": "action"
+  },
+  {
+    "method": "GET|HEAD",
+    "uri": "material-resources/{id}",
+    "name": null,
+    "action": "MaterialReviewController@resource",
+    "middleware": [
+      "web",
+      "auth"
+    ],
+    "node": "material-review",
+    "kind": "media"
   },
   {
     "method": "GET|HEAD",

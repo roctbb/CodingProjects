@@ -496,6 +496,161 @@ class StudentTutorTest extends DeadlineFeatureCase
         $this->assertDatabaseCount('student_tutor_usage',5);
     }
 
+    private function chatTurn(string $body, array $metadata = []): array
+    {
+        $this->postJson('/insider/courses/1/tasks/11/chat/1', $metadata + [
+            'body'=>$body, 'client_id'=>(string)Str::uuid(),
+        ])->assertOk();
+        $job = \Illuminate\Support\Facades\Queue::pushed(\App\Jobs\AnswerTaskQuestion::class)->last();
+        $job->handle(app(\App\Services\Tutor\Conversation::class));
+        $reply = DB::table('task_chat_messages')->where('answer_to',$job->questionId)->first();
+        return ['answer'=>$reply->body] + json_decode($reply->tutor_details, true);
+    }
+
+    private function scoredRun(int $points, string $comment, string $code = 'Ответ'): array
+    {
+        $submission = (string)Str::uuid();
+        $run = (string)Str::uuid();
+        DB::table('code_submissions')->insert(['id'=>$submission,'user_id'=>1,'course_id'=>1,'task_id'=>11,
+            'request_id'=>Str::uuid(),'payload_hash'=>'h','language'=>'python','files'=>'[]','current_run_id'=>$run,
+            'mode'=>'text','answer_text'=>$code,'preparation_state'=>'ready','created_at'=>now()]);
+        DB::table('code_execution_runs')->insert(['id'=>$run,'submission_id'=>$submission,'state'=>'completed',
+            'snapshot'=>json_encode(['check_type'=>'gpt','points'=>35]),'comment'=>$comment,'points'=>$points,'finished_at'=>now()]);
+        return ['submission_id'=>$submission,'run_id'=>$run];
+    }
+
+    public function test_a_named_grade_selects_the_correct_run_and_duplicate_grades_offer_dated_choices(): void
+    {
+        $old = $this->scoredRun(26,'Разбор старой сдачи','первая версия');
+        $new = $this->scoredRun(25,'Разбор новой сдачи','вторая версия');
+        $payloads = [];
+        $this->stubTutor(function ($data) use (&$payloads) {
+            $payloads[] = $data;
+            return ['answer'=>'Сравни версии.', 'sources'=>[], 'usage'=>self::USAGE];
+        });
+        $this->assertSame($old,$this->chatTurn('Почему у меня 26/35 баллов?')['discussed']);
+        $this->assertSame('первая версия',$payloads[0]['review_basis']['source']['text']);
+        $this->assertSame('Разбор старой сдачи',$payloads[0]['review']['comment']);
+        $this->assertNull($payloads[0]['latest_submission']);
+        $this->assertSame($old,$this->chatTurn('А почему так?')['discussed']);
+        $second = $this->scoredRun(26,'Ещё одна проверка');
+        $choices = $this->chatTurn('Почему 26/35?')['choices'];
+        $this->assertEqualsCanonicalizing([$old['run_id'],$second['run_id']],array_column($choices,'run_id'));
+        $this->assertNotEmpty($choices[0]['at']);
+        $this->assertSame($new,$this->chatTurn('Объясни оценку этой проверки.', [
+            'attempt'=>$new['submission_id'],'run_id'=>$new['run_id'],
+        ])['discussed']);
+        $this->assertCount(3,$payloads);
+    }
+
+    public function test_followup_checking_a_parameter_keeps_the_previous_step_in_guided_mode(): void
+    {
+        $source = $this->scoredRun(5, 'Проверь запись файла', 'def write_wav(filename2, values):');
+        DB::table('task_chat_messages')->insert([
+            'student_id'=>1,'author_id'=>1,'course_id'=>1,'task_id'=>11,'body'=>'Что сравнить?',
+            'client_id'=>(string)Str::uuid(),'created_at'=>now(),
+        ]);
+        $question = DB::table('task_chat_messages')->value('id');
+        $step = "Сравни параметр \x60filename2\x60 функции \x60write_wav\x60 с именем в строке записи.";
+        DB::table('task_chat_messages')->insert(['student_id'=>1,'author_id'=>1,'course_id'=>1,'task_id'=>11,
+            'automatic'=>true,'answer_to'=>$question,'body'=>$step,'tutor_details'=>json_encode(['discussed'=>$source,'next_step'=>$step]),
+            'client_id'=>(string)Str::uuid(),'created_at'=>now()]);
+        $reply = $this->chatTurn('То есть там должно быть falename1?');
+        $this->assertTrue($reply['guided']);
+        $this->assertStringContainsString('filename2',$reply['answer']);
+        $this->assertStringContainsString('falename1',$reply['answer']);
+        $this->assertStringNotContainsString('балл',$reply['answer']);
+    }
+
+    public function test_followup_explains_a_completed_tutor_recheck_in_the_same_chat(): void
+    {
+        $source = $this->scoredRun(5,'Ошибка в обработке канала.');
+        $finding = ['claim'=>'Ошибка в обработке канала.', 'evidence'=>'канал', 'focus'=>'Проверить число каналов.'];
+        $question = DB::table('task_chat_messages')->insertGetId(['student_id'=>1,'author_id'=>1,'course_id'=>1,'task_id'=>11,
+            'body'=>'Проверь замечание.', 'client_id'=>(string)Str::uuid(),'created_at'=>now()]);
+        DB::table('task_chat_messages')->insert(['student_id'=>1,'author_id'=>1,'course_id'=>1,'task_id'=>11,
+            'automatic'=>true,'answer_to'=>$question,'body'=>'Это замечание спорно.',
+            'tutor_details'=>json_encode(['discussed'=>$source,'recheck'=>$finding+['status'=>'queued']]),
+            'client_id'=>(string)Str::uuid(),'created_at'=>now()]);
+        $newRun = (string)Str::uuid();
+        DB::table('code_execution_runs')->insert(['id'=>$newRun,'submission_id'=>$source['submission_id'],'state'=>'completed',
+            'points'=>5,'finished_at'=>now(),'comment'=>'Канал читается, входной путь по-прежнему фиксирован.',
+            'snapshot'=>json_encode(['check_type'=>'gpt','points'=>35,'ai_review'=>['origin'=>'tutor','source_run_id'=>$source['run_id'],'finding'=>$finding]])]);
+        DB::table('code_submissions')->where('id',$source['submission_id'])->update(['current_run_id'=>$newRun]);
+        $reply = $this->chatTurn('Почему балл остался тем же?');
+        $this->assertStringContainsString('Было 5/35, после перепроверки — 5/35',$reply['answer']);
+        $this->assertStringContainsString($finding['focus'],$reply['answer']);
+        $this->assertSame($newRun,$reply['discussed']['run_id']);
+        $explicit = $this->chatTurn('Что показала перепроверка?', ['attempt'=>$source['submission_id'],'run_id'=>$newRun]);
+        $this->assertStringContainsString('Было 5/35, после перепроверки — 5/35', $explicit['answer']);
+        $events = $this->getJson('/insider/courses/1/tasks/11/chat/1')->assertOk()->json('events');
+        $this->assertSame(5,collect($events)->firstWhere('run',$newRun)['tutor_review']['previous']);
+    }
+
+    public function test_examples_are_opened_only_by_a_scoped_button_request_without_model_usage(): void
+    {
+        (require database_path('migrations/2026_11_22_004000_mark_tutor_test_reveals.php'))->up();
+        $target = $this->scoredRun(5,'');
+        $id = $target['run_id'];
+        DB::table('code_execution_runs')->where('id',$id)->update(['snapshot'=>json_encode(['check_type'=>'tests','points'=>10])]);
+        $tests = [];
+        foreach (range(1,3) as $number) {
+            $tests[] = ['number'=>$number,'verdict'=>'wrong_answer','test_id'=>hash('sha256',(string)$number),'is_public'=>false];
+        }
+        DB::table('code_test_reports')->insert(['id'=>$id,'code_id'=>$target['submission_id'],'user_id'=>1,'course_id'=>1,'task_id'=>11,
+            'started_at'=>1,'payload_hash'=>'h','created_at'=>now(),'report'=>json_encode(['passed'=>0,'total'=>3,'tests'=>$tests])]);
+        $this->chatTurn('Что такое тест?');
+        $this->assertDatabaseCount('code_test_purchases',0);
+        $metadata = ['attempt'=>$target['submission_id'],'run_id'=>$id,'tutor_action'=>'examples'];
+        $reply = $this->chatTurn('Покажи бесплатные примеры.', $metadata);
+        $this->assertSame([1],array_column($reply['test_examples'],'number'));
+        $this->chatTurn('Покажи бесплатные примеры.', $metadata);
+        $this->assertDatabaseCount('code_test_purchases',1);
+        $this->assertDatabaseCount('student_tutor_usage',1);
+    }
+
+    public function test_a_grade_without_feedback_in_normal_chat_never_asks_for_an_absent_comment(): void
+    {
+        $this->scoredRun(5,'');
+        $this->assertStringContainsString('записан только балл',$this->chatTurn('Почему у меня такая оценка?')['answer']);
+    }
+
+    public function test_short_confirmation_uses_relevant_readings_without_neighboring_lessons(): void
+    {
+        $requests = [];
+        $this->stubTutor(function ($data) use (&$requests) {
+            $requests[] = $data;
+            return ['answer'=>'Сравни время начала.', 'next_step'=>'Сравни время начала.', 'sources'=>[], 'usage'=>self::USAGE];
+        });
+        $this->chatTurn('Как указывать время начала?');
+        $this->chatTurn('То есть 25 часов допустимы?');
+        $this->assertTrue($requests[1]['followup']);
+        $this->assertSame('Сравни время начала.',$requests[1]['dialogue_focus']['proposed_step']);
+        $this->assertSame('Как указывать время начала?',$requests[1]['dialogue_focus']['previous_student_words']);
+        $this->assertSame([],$requests[1]['neighbors']);
+        $this->assertCount(1,$requests[1]['lesson']['steps']);
+        $this->assertArrayNotHasKey('previous_results',$requests[1]);
+        $this->assertSame('Сравни время начала.',$this->chatTurn('Повтори ещё раз')['answer']);
+        $this->assertCount(2,$requests);
+    }
+
+    public function test_screen_help_uses_no_model_and_only_handoffs_reach_the_teacher_queue(): void
+    {
+        $chat = app(\App\Services\TaskChat::class);
+        foreach (['dialog'=>'К задаче','panel'=>'встроен'] as $layout=>$hint) {
+            $this->assertStringContainsString($hint,$this->chatTurn('Как закрыть чат?', ['chat_layout'=>$layout])['answer']);
+        }
+        $this->assertDatabaseCount('student_tutor_usage',0);
+        $this->assertTrue($chat->waitingStudents(1,[11])->isEmpty());
+        config(['tutor.daily_questions'=>0]);
+        $this->assertSame('teacher',$this->chatTurn('Почему не получается?')['handoff']);
+        $this->assertTrue($chat->waitingStudents(1,[11])->get(11)->has(1));
+        $this->actingAs(User::findOrFail(2))->postJson('/insider/courses/1/tasks/11/chat/1', [
+            'body'=>'Посмотрим вместе.', 'client_id'=>(string)Str::uuid(),
+        ])->assertOk();
+        $this->assertTrue($chat->waitingStudents(1,[11])->isEmpty());
+    }
+
     public function test_review_uses_only_the_students_selected_completed_gpt_run(): void
     {
         $submission = (string) Str::uuid(); $run = (string) Str::uuid();

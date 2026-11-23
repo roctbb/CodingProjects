@@ -101,6 +101,6 @@ return [
 
     'jwt_secret' => env('JWT_SECRET'),
     'sso_return_origins' => array_values(array_filter(array_map('trim', explode(',', env('SSO_RETURN_ORIGINS',
-        'https://storage.geekclass.ru,https://paste.geekclass.ru,https://exam.geekclass.ru,https://arena.geekclass.ru,https://battle.geekclass.ru,https://inga.codingprojects.ru,https://guard.geekclass.ru'))))),
+        'https://storage.geekclass.ru,https://paste.geekclass.ru,https://exam.geekclass.ru,https://arena.geekclass.ru,https://battle.geekclass.ru,https://inga.codingprojects.ru,https://guard.geekclass.ru,https://kaggle.codingprojects.ru'))))),
 
 ];

@@ -1,0 +1,32 @@
+{
+  "external_id": "audit-2026-11-16:p02",
+  "title": "Ввести практику перед задачей",
+  "reason": "Сначала проверяем понимание обращения по индексу, затем переходим к основной задаче.",
+  "kind": "change",
+  "scope": "structure",
+  "intent": "learning",
+  "operations": [
+    {
+      "op": "create_step",
+      "lesson_id": 1,
+      "key": "new:introduction",
+      "after": "start",
+      "fields": {
+        "name": "Обращаемся к элементу",
+        "theory": "Первый элемент массива a записывается как a[0]. Объясните, что означает индекс."
+      }
+    },
+    {
+      "op": "move_task",
+      "id": 1,
+      "step_id": "new:introduction"
+    },
+    {
+      "op": "replace",
+      "entity": "step",
+      "id": 1,
+      "field": "notes",
+      "value": "Практика обращения по индексу теперь находится во вводной ступени."
+    }
+  ]
+}

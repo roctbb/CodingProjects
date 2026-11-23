@@ -28,22 +28,83 @@ final class Conversation
             abort_unless((int) $task->step_id === $id && $task->isVisible($user, $course), 404);
             abort_if($task->isBlocked($user->id, $course_id), 403);
         }
+        $digest = hash('sha256', json_encode([$course_id, $id, $data]));
+        $question = $data['question'];
+        $last = Dialogue::lastAnswer($chatHistory ?? []);
+        $followup = $last && Dialogue::continues($question);
+        $comparison = null;
+        $local = static fn (string $text) => ['answer'=>$text, 'links'=>[], 'guided'=>true, 'recheck'=>null];
+        if ($task && ($help = Dialogue::screenHelp($question, $data['layout'] ?? null)) !== null) return $local($help);
+        if ($task && $last && !isset($data['run_id'], $data['submission_id']) && empty($data['legacy_solution'])
+            && empty($last['recheck']) && preg_match('/^\s*повтори(?:\s+ещ[её]\s+раз)?[.!?\s]*$/iu', $question)) {
+            $reply = $local($last['text']);
+            if (!empty($last['attempt'])) $reply['discussed'] = $last['attempt'];
+            if (!empty($last['next_step'])) $reply['next_step'] = $last['next_step'];
+            return $reply;
+        }
+        if ($task && ($data['action'] ?? null) === 'examples') {
+            abort_unless(\App\CodeExecutionRun::where('submission_id',$data['submission_id'])->where('state','completed')
+                ->where('snapshot->check_type','tests')->whereKey($data['run_id'])->exists(), 404);
+            $record = \App\CodeTestReport::where(['user_id'=>$user->id, 'course_id'=>$course_id,'task_id'=>$task->id])->findOrFail($data['run_id']);
+            $examples = app(\App\Services\CodeChecking\Reports::class)->tutorExamples($record, $user);
+            return $local($examples ? 'Открой пример, чтобы сравнить результат со своим.' : 'У этой проверки нет доступных бесплатных примеров.')
+                + ['test_examples'=>$examples, 'discussed'=>['run_id'=>$data['run_id'],'submission_id'=>$data['submission_id']]];
+        }
+        if ($task && !isset($data['run_id']) && !isset($data['legacy_solution'])) {
+            if (preg_match('~(?<!\d)(\d{1,5})\s*(?:/|из)\s*(\d{1,5})(?!\d)~iu', $question, $score)
+                && (Dialogue::aboutGrade($question) || preg_match('~^\s*(?:почему\s+)?\d+\s*(?:/|из)\s*\d+\s*[?!.]*$~iu', $question))) {
+                $matches = $this->attempts->matchingGrade($course, $task, $user, (int)$score[1], (int)$score[2]);
+                if (count($matches) !== 1) {
+                    return $local($matches ? 'Такой балл встречается несколько раз. Выбери проверку по времени.'
+                        : 'Среди завершённых проверок этой задачи такой оценки нет. Укажи нужную проверку в истории.')
+                        + ['choices'=>$matches, 'choice_question'=>$question];
+                }
+                $data += $matches[0];
+            } elseif ($last && !preg_match('/последн|нов[а-яё]* сдач/iu',$question)) {
+                if ((!empty($last['recheck']) && Dialogue::aboutGrade($question))
+                    || preg_match('/перепровер|столько же|тот же|тем же|не изменил|не поменял/iu', $question)) {
+                    foreach (array_reverse($chatHistory ?? []) as $turn) {
+                        if (($turn['role'] ?? null) === 'teacher') break;
+                        $active = $last['attempt'] ?? [];
+                        if (!empty($turn['attempt']) && $active
+                            && (($turn['attempt']['submission_id'] ?? null) !== ($active['submission_id'] ?? null)
+                                || ($turn['attempt']['legacy_solution'] ?? null) !== ($active['legacy_solution'] ?? null))) break;
+                        if (!empty($turn['recheck']) && in_array($turn['recheck']['status'], ['queued','already_requested'], true)) {
+                            $comparison = $this->attempts->recheckResult($course, $task, $user, $turn);
+                            break;
+                        }
+                        if (!empty($turn['attempt']) && $turn['attempt'] !== ($last['attempt'] ?? null)) break;
+                    }
+                }
+                if ($comparison) $data += $comparison['target'];
+                elseif ($followup && !empty($last['attempt'])) $data += $last['attempt'];
+            }
+        }
         $mode = $task ? 'hint' : 'theory';
         $report = null;
         $target = null;
         $basis = null;
         $latestTarget = null;
+        $latestLegacy = null;
         abort_if(isset($data['run_id']) && !$task, 422);
-        $work = $task ? $this->attempts->forTask($course, $task, $user, $data['submission_id'] ?? null, $latestTarget) : [];
+        $compact = $followup && !$comparison && !Dialogue::aboutGrade($question) && !isset($data['focus']);
+        $readingQuery = $compact ? mb_substr($last['text'], -400).' '.$question : $question;
+        $needsWork = !$compact || preg_match('/код|функци|параметр|строк|переменн|программ|файл|ошибк|сдач|[a-z_]{2,}/iu', $readingQuery);
+        $focusedReview = $chatHistory !== null && (isset($data['run_id']) || isset($data['legacy_solution']));
+        $work = $task ? ['latest_submission'=>null, 'previous_results'=>[]] : [];
+        if ($task && $needsWork && !$focusedReview) {
+            $work = $this->attempts->forTask($course, $task, $user, $data['submission_id'] ?? null, $latestTarget, $latestLegacy);
+        }
         if (isset($data['run_id'])) {
             $mode = 'review';
             $target = ['submission'=>$data['submission_id'], 'run'=>$data['run_id']];
             $selected = $this->attempts->selected($course, $task, $user, $target['submission'], $target['run'],
-                ($latestTarget['submission'] ?? null) !== $target['submission']);
+                $needsWork && ($latestTarget['submission'] ?? null) !== $target['submission']);
+            $comparison ??= $selected['comparison'] ?? null;
             $result = $selected['result'];
             $feedback = $this->attempts->feedback($result);
             $report = ['comment'=>mb_substr(implode("\n", $feedback), 0, 1800), 'points'=>$result['points'], 'maximum'=>$result['maximum']];
-            $basis = ['feedback'=>$feedback] + array_intersect_key($selected, ['source'=>true]);
+            $basis = ['feedback'=>$feedback] + array_intersect_key($result, ['tests'=>true]) + array_intersect_key($selected, ['source'=>true]);
         } elseif (isset($data['legacy_solution']) && $task) {
             abort_unless(\App\Solution::where(['user_id'=>$user->id, 'task_id'=>$task->id, 'course_id'=>$course_id])->whereKey($data['legacy_solution'])->exists(), 404);
             $event = app(\App\Services\CodeChecking\History::class)->event($user, $course_id, $task, $data['legacy_solution']);
@@ -74,7 +135,8 @@ final class Conversation
             $assignment .= "\n".implode("\n", array_column($task->quiz_choices['options'] ?? [], 'label'));
         }
         abort_if(strlen($assignment) > Context::MAX_BYTES, 413, Context::TOO_LARGE);
-        $materials = $this->context->materials($course, $step, $user, $data['question'].' '.($report['comment'] ?? ''), $assignment, $data['focus'] ?? null);
+        if (!$compact && $report) $readingQuery .= ' '.$report['comment'];
+        $materials = $this->context->materials($course, $step, $user, $readingQuery, $assignment, $data['focus'] ?? null, $compact);
         $sources = $materials['sources'];
         unset($materials['sources']);
         $available = array_column($sources, 'id');
@@ -83,7 +145,6 @@ final class Conversation
                 JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR))]);
         $thread = 'tutor:thread:'.sha1($contextKey);
         $key = 'tutor:request:'.$user->id.':'.$data['request_id'];
-        $digest = hash('sha256', json_encode([$course_id, $id, $data]));
         $lock = Cache::lock($thread.':lock', 80);
         abort_unless($lock->get(), 409, 'Дождитесь ответа на предыдущий вопрос.');
         try {
@@ -99,6 +160,15 @@ final class Conversation
                 'assignment' => $assignment, 'excerpt' => $data['excerpt'] ?? '',
                 'review' => $report, 'history' => $chatHistory ?? array_column($history, 'exchange')] + $materials + $work;
             if ($basis !== null) $payload['review_basis'] = $basis;
+            if ($comparison) $payload['recheck_result'] = array_diff_key($comparison, ['target'=>true]);
+            if ($followup) {
+                $payload['followup'] = true;
+                $payload['dialogue_focus'] = Dialogue::focus($chatHistory, $last);
+            }
+            if (isset($data['layout'])) $payload['chat_layout'] = $data['layout'];
+            if ($compact) {
+                unset($payload['previous_results']);
+            }
             $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
             abort_if(strlen($body) > Context::MAX_BYTES, 413, Context::TOO_LARGE);
             $usageId = $this->meter->begin((int) $user->id, $data['request_id']);
@@ -123,18 +193,17 @@ final class Conversation
             $reply = ['answer' => $answer['answer'], 'links' => array_values($links),
                 'good_question' => !$ownTeachingTask && ($answer['guided'] ?? true) === false && ($answer['good_question'] ?? false) === true,
                 'reference' => $answer['reference'] ?? null, 'guided' => (bool) ($answer['guided'] ?? false)];
+            $discussed = isset($data['legacy_solution']) ? ['legacy_solution'=>$data['legacy_solution']]
+                : ($target && !empty($target['run']) ? ['submission_id'=>$target['submission'], 'run_id'=>$target['run']] : []);
+            if (!$discussed && $latestLegacy && $mode === 'submission') $discussed = ['legacy_solution'=>$latestLegacy];
+            if ($discussed) $reply['discussed'] = $discussed;
+            if (!empty($answer['next_step'])) $reply['next_step'] = $answer['next_step'];
             $reply['recheck'] = null;
             $finding = $answer['recheck'] ?? null;
             $source = $basis['source'] ?? $work['latest_submission'] ?? [];
-            if ($basis && ($answer['guided'] ?? null) === false && ($location = $this->locateFinding($finding, $basis, $source)) !== null) {
+            if (!$comparison && $basis && ($answer['guided'] ?? null) === false && ($location = $this->locateFinding($finding, $basis, $source)) !== null) {
                 $status = $target ? app(Submissions::class)->tutorRecheck($user, $course_id, $task, $target, $finding) : 'teacher';
                 $reply['recheck'] = ['claim'=>$finding['claim'], 'evidence'=>$finding['evidence'], 'focus'=>$finding['focus'], 'location'=>$location, 'status'=>$status];
-            }
-            $exampleRun = isset($data['legacy_solution']) ? null : ($data['run_id'] ?? $latestTarget['run'] ?? null);
-            if ($exampleRun && ($result['method'] ?? null) === 'tests' && ($result['state'] ?? null) === 'completed'
-                && preg_match('/тест|контрпример|входн.{0,12}данн|на ч[её]м.{0,18}(упал|пада)/iu', $data['question'])) {
-                $record = \App\CodeTestReport::where(['user_id'=>$user->id, 'task_id'=>$task->id, 'course_id'=>$course_id])->find($exampleRun);
-                if ($record) $reply['test_examples'] = app(\App\Services\CodeChecking\Reports::class)->tutorExamples($record, $user);
             }
             $refs = array_keys($links);
             if ($chatHistory === null) {

@@ -31,6 +31,7 @@
                 <div class="gc-section-header gc-section-header--between solution-review-card__header">
                     <div class="solution-review-card__title min-width-0">
                         <strong class="text-truncate">Решение #{{ $attemptNumbers[$solution->id] }}</strong>
+                        @if(\Illuminate\Support\Facades\Schema::hasColumn('solutions','material_snapshot'))<a class="small" href="{{ url('/insider/material-history/'.$solution->id) }}">Условие при сдаче</a>@endif
                         <span class="text-muted small">{{ $solution->submitted?->format('d.m.Y H:i') ?? 'Черновик' }}</span>
                     </div>
                     <div class="solution-review-card__meta">
