@@ -268,8 +268,8 @@
                         <div class="gc-task-workspaces">
                             <header class="gc-task-review-controls">
                                 <div class="nav gc-segmented-tabs" role="tablist" aria-label="Работа с задачей">
-                                    <button class="nav-link @if(!$ownTabActive) active @endif" id="student-solutions-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#student-solutions-{{ $task->id }}" data-execution-tab-target="#execution-workspace-{{ $task->id }}" aria-controls="student-solutions-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'false' : 'true' }}">Ученик</button>
                                     <button class="nav-link @if($ownTabActive) active @endif" id="own-solution-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#own-solution-{{ $task->id }}" data-execution-tab-target="#execution-own-workspace-{{ $task->id }}" aria-controls="own-solution-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'true' : 'false' }}">Моё решение</button>
+                                    <button class="nav-link @if(!$ownTabActive) active @endif" id="student-solutions-tab-{{ $task->id }}" type="button" role="tab" data-no-tab-history data-bs-toggle="tab" data-bs-target="#student-solutions-{{ $task->id }}" data-execution-tab-target="#execution-workspace-{{ $task->id }}" aria-controls="student-solutions-{{ $task->id }}" aria-selected="{{ $ownTabActive ? 'false' : 'true' }}">Решения учеников</button>
                                 </div>
                             </header>
                             <div class="tab-content">

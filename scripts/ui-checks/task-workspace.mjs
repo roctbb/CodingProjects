@@ -219,7 +219,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 const title = page.locator('#task13 > .gc-chat-sheet > .gc-task-title-row');
                 const modeBar = page.locator('#task13 .gc-task-workspaces > .gc-task-review-controls');
                 const ownTab = modeBar.getByRole('tab',{name:'Моё решение',exact:true});
-                const studentTab = modeBar.getByRole('tab',{name:'Ученик',exact:true});
+                const studentTab = modeBar.getByRole('tab',{name:'Решения учеников',exact:true});
                 check('teacher-right-pane-spans-the-viewport', await modeBar.evaluate(bar => {
                     const pane = bar.closest('.gc-task-layout').getBoundingClientRect();
                     const heading = document.querySelector('.gc-workbook-header').getBoundingClientRect();
@@ -227,7 +227,8 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                         && Math.abs(pane.right - document.documentElement.clientWidth) <= 1 && heading.right <= pane.left + 1;
                 }), width);
                 check('teacher-switches-chats-from-right-pane',
-                    await ownTab.isVisible() && await studentTab.getAttribute('aria-selected')==='true'
+                    (await modeBar.getByRole('tab').allTextContents()).join(' / ')==='Моё решение / Решения учеников'
+                    && await ownTab.isVisible() && await studentTab.getAttribute('aria-selected')==='true'
                     && await title.getByRole('tab').count()===0
                     && await title.getByRole('button',{name:/Действия с задачей/}).isVisible(),width);
                 check('no-step-footer-in-task', !await page.locator('.step-page-nav').isVisible(),width);
