@@ -12,10 +12,10 @@ function readingHeading(condition, desktop) {
     condition.classList.toggle('gc-task-condition--reading', desktop);
 }
 
-// Use the same bottom edge in the roster, student review and personal chat.
+// Size the chat and condition when they share the space below the task heading.
 function fitDesktopPanes(workbook, desktop) {
     const main = workbook.querySelector('.step-main');
-    const sheets = [...main.querySelectorAll('.gc-chat-sheet:not(.gc-task-sheet--tutor)')];
+    const sheets = main.querySelectorAll('.gc-chat-sheet:not(.gc-task-sheet--tutor, .gc-task-sheet--teacher)');
     if (!sheets.length) return;
     function measure() {
         if (!desktop.matches) return;
@@ -26,11 +26,6 @@ function fitDesktopPanes(workbook, desktop) {
             const top = condition.getBoundingClientRect().top + window.scrollY;
             const height = Math.max(320, Math.floor(available - top));
             sheet.style.setProperty('--gc-pane-height', height + 'px');
-            const modeBar = sheet.querySelector('.gc-task-review-controls');
-            if (modeBar) {
-                const paneHeight = height - modeBar.offsetHeight;
-                modeBar.nextElementSibling.style.setProperty('--gc-pane-height', paneHeight + 'px');
-            }
         }
     }
     let frame;
@@ -39,7 +34,7 @@ function fitDesktopPanes(workbook, desktop) {
         frame = requestAnimationFrame(measure);
     }
     const observer = new ResizeObserver(schedule);
-    for (const element of workbook.querySelectorAll('.gc-workbook-header, .step-section-toolbar, .gc-chat-sheet, .gc-task-title-row, .gc-task-review-controls')) {
+    for (const element of workbook.querySelectorAll('.gc-workbook-header, .step-section-toolbar, .gc-chat-sheet, .gc-task-title-row')) {
         observer.observe(element);
     }
     window.addEventListener('resize', schedule);

@@ -50,7 +50,7 @@
                 $teacherSheet = $isManager && !$task->is_quiz;
                 $ownTabActive = $teacherSheet && $errors->has('text');
             @endphp
-            <div class="gc-task-sheet @if($isInsider && $task->is_quiz) gc-section step-task-card step-task-card--quiz gc-quiz-card @elseif($isInsider) gc-task-sheet--split gc-chat-sheet @endif @if($studentTutorPanel) gc-task-sheet--tutor @endif">
+            <div class="gc-task-sheet @if($isInsider && $task->is_quiz) gc-section step-task-card step-task-card--quiz gc-quiz-card @elseif($isInsider) gc-task-sheet--split gc-chat-sheet @endif @if($studentTutorPanel) gc-task-sheet--tutor @elseif($teacherSheet) gc-task-sheet--teacher @endif">
             @if($teacherSheet)
                 <header class="gc-task-title-row gc-task-title-row--teacher">
                     @include('steps.partials.task_header')
@@ -274,8 +274,6 @@
                             </header>
                             <div class="tab-content">
                             <div class="tab-pane fade @if(!$ownTabActive) show active @endif" id="student-solutions-{{ $task->id }}" role="tabpanel" aria-labelledby="student-solutions-tab-{{ $task->id }}" tabindex="0">
-                        <div>
-                            <div>
                                 <div class="gc-section step-progress-card overflow-hidden" data-execution-review-navigation>
                                     <div data-execution-student-list>
                                     <div class="gc-section-header gc-section-header--between">
@@ -392,8 +390,6 @@
                                     @if($nativeTaskChecker)<p class="gc-help-text px-3 mb-2" role="status" data-execution-status-for="execution-workspace-{{ $task->id }}" hidden></p>@endif
                                         @include('steps.partials.native-workspace', ['nativeTeacher' => true])
                                 </div>
-                            </div>
-                        </div>
                             </div>
                             <div class="tab-pane fade @if($ownTabActive) show active @endif" id="own-solution-{{ $task->id }}" role="tabpanel" aria-labelledby="own-solution-tab-{{ $task->id }}" tabindex="0">
                                 @if($nativeTaskChecker)

@@ -220,6 +220,12 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 const modeBar = page.locator('#task13 .gc-task-workspaces > .gc-task-review-controls');
                 const ownTab = modeBar.getByRole('tab',{name:'Моё решение',exact:true});
                 const studentTab = modeBar.getByRole('tab',{name:'Ученик',exact:true});
+                check('teacher-right-pane-spans-the-viewport', await modeBar.evaluate(bar => {
+                    const pane = bar.closest('.gc-task-layout').getBoundingClientRect();
+                    const heading = document.querySelector('.gc-workbook-header').getBoundingClientRect();
+                    return Math.abs(pane.top) <= 1 && Math.abs(pane.bottom - innerHeight) <= 1
+                        && Math.abs(pane.right - document.documentElement.clientWidth) <= 1 && heading.right <= pane.left + 1;
+                }), width);
                 check('teacher-switches-chats-from-right-pane',
                     await ownTab.isVisible() && await studentTab.getAttribute('aria-selected')==='true'
                     && await title.getByRole('tab').count()===0
@@ -476,6 +482,12 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             check('chat-grades-earlier-attempt', (await saved).ok(), width);
             await page.getByRole('dialog',{name:'Работа с решением'}).getByRole('button',{name:'Закрыть'}).click();
             await selected.locator('[data-kind="check"][data-attempt="'+id(17)+'"]').getByText('Проверил исходный блокнот.',{exact:true}).waitFor();
+            if (width >= 992) {
+                check('teacher-composer-stays-in-view-after-grading', await selected.locator('.gc-task-chat').evaluate(chat => {
+                    const input = chat.querySelector('textarea').getBoundingClientRect();
+                    return input.height > 0 && input.bottom <= innerHeight && Math.abs(chat.getBoundingClientRect().bottom - innerHeight) <= 1;
+                }), width);
+            }
             if(width===1440)await selected.locator('.gc-task-chat').screenshot({path:`${output}/chat-manual-recheck.png`});
             const other=await (await page.request.get(url+'/insider/code-submissions/'+id(18)+'?test_data=metadata',{headers:{Accept:'application/json'}})).json();
             check('chat-keeps-other-attempt-grade',other.points===16,width);
