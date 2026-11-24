@@ -40,12 +40,92 @@ function readingHeading(condition, desktop) {
     condition.classList.toggle('gc-task-condition--reading', desktop);
 }
 
+function initChatControls(workbook, desktop) {
+    const dividers = workbook.querySelectorAll('[data-task-chat-divider]');
+    if (!dividers.length) return;
+    const toggles = workbook.querySelectorAll('[data-task-chat-toggle]');
+
+    const storageKey = 'geekclass.taskChatWidth';
+    let preferredWidth, min, max, width;
+    try { preferredWidth = Number(localStorage.getItem(storageKey)); } catch { /* Optional browser storage. */ }
+
+    function renderWidth(requested) {
+        const next = Math.round(Math.min(max, Math.max(min, requested)));
+        if (width === next) return;
+        width = next;
+        workbook.style.setProperty('--gc-chat-panel-width', `${width}px`);
+        for (const divider of dividers) divider.setAttribute('aria-valuenow', width);
+    }
+
+    function resize() {
+        if (!desktop.matches) return;
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        min = Math.min(Math.round(20 * rem), Math.floor(innerWidth * .4));
+        max = Math.floor(Math.min(56 * rem, innerWidth * .52));
+        for (const divider of dividers) {
+            divider.setAttribute('aria-valuemin', min);
+            divider.setAttribute('aria-valuemax', max);
+        }
+        renderWidth(preferredWidth || Math.min(42 * rem, innerWidth * .38));
+    }
+
+    function saveWidth() {
+        preferredWidth = width;
+        try { localStorage.setItem(storageKey, width); } catch { /* Optional browser storage. */ }
+    }
+
+    for (const divider of dividers) {
+        let drag;
+        divider.addEventListener('pointerdown', event => {
+            if (event.button !== 0 || !event.isPrimary) return;
+            event.preventDefault();
+            divider.setPointerCapture(event.pointerId);
+            drag = {id: event.pointerId, x: event.clientX, width};
+            divider.setAttribute('data-dragging', '');
+        });
+        divider.addEventListener('pointermove', event => {
+            if (event.pointerId === drag?.id) renderWidth(drag.width + drag.x - event.clientX);
+        });
+        divider.addEventListener('lostpointercapture', event => {
+            if (event.pointerId !== drag?.id) return;
+            if (width !== drag.width) saveWidth();
+            drag = null;
+            divider.removeAttribute('data-dragging');
+        });
+        divider.addEventListener('keydown', event => {
+            const values = {ArrowLeft: width + 24, ArrowRight: width - 24, Home: min, End: max};
+            if (!Object.hasOwn(values, event.key)) return;
+            event.preventDefault();
+            const previous = width;
+            renderWidth(values[event.key]);
+            if (width !== previous) saveWidth();
+        });
+        divider.hidden = false;
+    }
+    for (const toggle of toggles) {
+        toggle.addEventListener('click', () => {
+            const collapsed = workbook.toggleAttribute('data-task-chat-collapsed');
+            for (const button of toggles) {
+                const label = `${collapsed ? 'Развернуть' : 'Свернуть'} ${button.dataset.taskChatToggle}`;
+                button.setAttribute('aria-expanded', String(!collapsed));
+                button.setAttribute('aria-label', label);
+                button.title = label;
+            }
+        });
+        toggle.hidden = false;
+    }
+    window.addEventListener('resize', resize);
+    desktop.addEventListener('change', resize);
+    resize();
+}
+
 export default function initWorkbookNavigation() {
     const workbook = document.querySelector('[data-step-details-page]');
     if (workbook) {
         const phone = matchMedia('(max-width: 767.98px)');
         const wide = matchMedia('(min-width: 1200px)');
         const desktop = chatDesktop();
+        initChatControls(workbook, desktop);
         const conditions = workbook.querySelectorAll('[data-task-condition]');
         function applyConditionLayout() {
             for (const condition of conditions) {

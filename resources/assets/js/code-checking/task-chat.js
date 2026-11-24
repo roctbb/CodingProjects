@@ -110,6 +110,7 @@ export function taskChat(root, actions) {
     const shortcuts = askTeacher ? node('div', {class:'gc-chat-shortcuts'}, attach, askTeacher) : null;
     const form = node('form',{class:'gc-chat-compose'},reply,shortcuts,node('div',{class:'gc-chat-entry'},shortcuts ? null : attach,input,send));
     const shell = node('section',{class:dialog ? 'gc-task-chat gc-task-chat--panel' : 'gc-task-chat',hidden:true,'aria-label':'Личная переписка по задаче'},header,log,form,status);
+    if (dialog) shell.id = 'task-chat-panel-' + root.dataset.taskId;
     const solutions = actions.solutions;
     let selectView = () => {};
     if (solutions) {
@@ -403,12 +404,14 @@ export function taskChat(root, actions) {
                 item.append(node('p', {}, outcome + (review.focus ? ' Вопрос: ' + review.focus : '')));
             }
             if (teacher && event.awaiting_teacher) footer.append(gradeAction(event));
-            if (event.criteria?.length) footer.append(action('Подробнее', () => showCriteria(event), 'gc-chat-link'));
-            if (event.method === combinedCheck && event.test_groups?.length) {
-                footer.append(action('Журнал тестирования', () => actions.report(event), 'gc-chat-link'));
-            }
-            if (event.method === 'tests' && ['completed','error'].includes(event.state)) {
-                footer.append(action('Подробнее', () => actions.report(event), 'gc-chat-link'));
+            const testReport = event.method === combinedCheck && event.test_groups?.length;
+            const finishedCheck = ['completed', 'error'].includes(event.state);
+            if (actions.check) {
+                if (finishedCheck || testReport) footer.append(action('Подробнее', () => actions.check(event), 'gc-chat-link'));
+            } else {
+                if (event.criteria?.length) footer.append(action('Подробнее', () => showCriteria(event), 'gc-chat-link'));
+                if (testReport) footer.append(action('Журнал тестирования', () => actions.report(event), 'gc-chat-link'));
+                if (event.method === 'tests' && finishedCheck) footer.append(action('Подробнее', () => actions.report(event), 'gc-chat-link'));
             }
             if (!teacher && withTutor && event.run && event.source && event.state === 'completed') {
                 if (askTeacher && event.method === 'tests' && event.total >= 3 && event.passed < event.total) {

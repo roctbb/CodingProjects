@@ -39,9 +39,10 @@ class DeadlineNotifications
         DeadlinePolicy::with('stages')->where('mode', 'custom')->when($courseId, fn ($q) => $q->where('course_id', $courseId))->chunkById(100, function ($policies) {
             foreach ($policies as $policy) foreach ($policy->stages as $stage) {
                 $cutoff = Carbon::parse($stage->cutoff_at, 'UTC');
-                foreach (['reminder' => $cutoff->copy()->subDay(), 'reached' => $cutoff] as $kind => $at) {
-                    // Do not replay historical notifications on migration or a retroactive edit.
-                    if ($at->lt($policy->updated_at)) continue;
+                // Do not replay historical notifications on migration or a retroactive edit.
+                if ($cutoff->lt($policy->updated_at)) continue;
+                $reminder = $cutoff->copy()->subDay()->max($policy->updated_at->copy()->utc());
+                foreach (['reminder' => $reminder, 'reached' => $cutoff] as $kind => $at) {
                     DB::table('deadline_notification_events')->insertOrIgnore([
                         'event_key' => hash('sha256', "$policy->id:$policy->revision:$stage->id:$kind"),
                         'course_id' => $policy->course_id, 'policy_id' => $policy->id, 'revision' => $policy->revision,

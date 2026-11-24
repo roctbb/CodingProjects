@@ -116,9 +116,9 @@ export async function workspace(root) {
             revealAttemptStep();
         }
     }
-    async function viewDetails(attempt) {
+    async function viewDetails(attempt, check) {
         openWorkspace(teacher && !ownWorkspace ? 'Проверка и оценка' : 'Отправленное решение');
-        if(typeof attempt==='string')await openAttemptById(attempt);
+        if(typeof attempt==='string')await openAttemptById(attempt, check);
     }
     let draftSource = null, switchingDraft = false;
     const draftQuery = source => source ? '?from_submission='+encodeURIComponent(source) : '';
@@ -253,6 +253,28 @@ export async function workspace(root) {
             return body;
         }, {studentWork: true});
     }
+    function previousCheck(event) {
+        const score = event.points != null ? ' · ' + [event.points, event.maximum].filter(value => value != null).join(' из ') : '';
+        const body = node('div');
+        const panel = node('details', {class:'gc-report-provenance', open:true},
+            node('summary', {}, 'Предыдущая проверка · ' + attemptTime.format(new Date(event.at)) + score), body);
+        async function load() {
+            body.replaceChildren(node('p', {role:'status'}, 'Загружаем проверку…'));
+            try {
+                const run = await request(`/insider/code-submissions/${event.source}/runs/${event.run}?test_data=metadata`);
+                body.replaceChildren();
+                if (run.comment) body.append(feedbackPanel(run.comment, {title:'Комментарий проверки'}));
+                if (run.criteria?.length) body.append(criterionTable(run.criteria, true));
+                if (run.report) renderReport(run.report, body, event.source, {afterPurchase: load});
+                if (run.text_report_available) body.append(textReport(run));
+                if (!body.childElementCount) body.append(node('p', {}, run.execution_error?.message || 'Подробный журнал для этой проверки не сохранился.'));
+            } catch (e) {
+                body.replaceChildren(node('p', {role:'alert'}, e.message), button('Повторить загрузку проверки', load));
+            }
+        }
+        load();
+        return panel;
+    }
     const pendingChatAttempts = new Set();
     async function refreshChatAttempts(attempts) {
         for (const attempt of attempts) pendingChatAttempts.add(attempt);
@@ -271,7 +293,8 @@ export async function workspace(root) {
         back:inlineReview || ownWorkspace ? ()=>root.dispatchEvent(new CustomEvent('gc:execution-close')) : null,
         solutions:panelHistory,
         grade:gradeChatSubmission,recheck:openChatReview,requestReview:openReviewRequest,
-        details:viewDetails,source:openSource,report:openReport,compose:openEditor,
+        details:viewDetails,source:teacher ? openSource : viewDetails,report:openReport,compose:openEditor,
+        check:teacher ? null : event => viewDetails(event.attempt, event),
         updated:refreshChatAttempts,
     }) : null;
     if(chat){
@@ -873,11 +896,11 @@ export async function workspace(root) {
         }
     }
     function historyState(url){globalThis.history.replaceState(globalThis.history.state,'',url);}
-    async function openAttemptById(id){
+    async function openAttemptById(id, check){
         const item=attemptItems.find(item=>String(item.id)===String(id));
-        if(item)return openAttempt(item);
-        if(/^solution-\d+$/.test(id))return showLegacyAttempt({id,kind:'legacy_attempt',solution_id:Number(id.slice(9))});
-        return show(id);
+        if(item)return openAttempt(item, check);
+        if(/^solution-\d+$/.test(id))return showLegacyAttempt({id,kind:'legacy_attempt',solution_id:Number(id.slice(9))}, check);
+        return show(id, {check});
     }
     function renderAward(record,parent,{label=true}={}) {
         let panel;
@@ -892,7 +915,7 @@ export async function workspace(root) {
         }});
         panel=render();if(panel)parent.append(panel);
     }
-    async function showLegacyAttempt(item) {
+    async function showLegacyAttempt(item, check) {
         const selected=++generation;stop();current=null;ensureAttemptCard({...item,kind:'legacy_attempt'});markSelectedAttempt(item.id);
         beginResult();
         try {
@@ -900,11 +923,12 @@ export async function workspace(root) {
             if(selected!==generation)return;
             if(Number(record.user_id)!==Number(teacher && !ownMode ? selectedUser.id : root.dataset.viewerId))throw new Error('Эта сдача принадлежит другому ученику. Выберите его в списке.');
             ensureAttemptCard(record);
-            if(record.source_submission_id){await show(record.source_submission_id,{snapshotOf:record});return;}
+            if(record.source_submission_id){await show(record.source_submission_id,{snapshotOf:record,check});return;}
             const {header}=resultHeader(record,{showSourceDate:false,reviewing:teacher&&!ownMode,compact:!teacher || ownWorkspace || inlineReview});
             const panel=node('section',{class:'gc-execution-result'},header);
             if(teacher && !ownMode){const menu=resultActions();const remove=removeAttemptAction(record);menu.add(remove);remove.classList.add('text-danger');panel.append(node('div',{class:'gc-result-context-bar'},menu.root));}
             renderAward(record,panel,{label:false});
+            if(!teacher && record.source_notice)panel.append(node('p',{class:'gc-help-note'},record.source_notice));
             if(record.text)panel.append(workPreview({...record,mode:'text'}));
             if(!record.text)panel.append(node('p',{class:'text-muted small'},'Код этой сдачи не сохранился отдельно.'));
             if(record.can_grade && !ownMode)panel.append(legacyGrading(record));
@@ -917,7 +941,7 @@ export async function workspace(root) {
             arrangeResult(panel);finishResult(panel);
         } catch(e) {
             if(selected!==generation || e.name==='AbortError')return;
-            failResult(e.message,()=>showLegacyAttempt(item));
+            failResult(e.message,()=>showLegacyAttempt(item, check));
         }
     }
     function feedbackDisplay(comment){
@@ -1112,9 +1136,9 @@ export async function workspace(root) {
                 notice.className='text-muted small';notice.textContent='Оценка и комментарий сохранены';return true;
             }});
     }
-    async function openAttempt(item) {
-        if(item.kind==='legacy_attempt')return showLegacyAttempt(item);
-        return show(item.id);
+    async function openAttempt(item, check) {
+        if(item.kind==='legacy_attempt')return showLegacyAttempt(item, check);
+        return show(item.id, {check});
     }
     async function show(id,options={}) {
         const selected = ++generation;
@@ -1158,8 +1182,15 @@ export async function workspace(root) {
             if(record.execution_error?.can_retry && !sourceOnly)body.append(button('Повторить проверку',safe(async()=>{await request(record.execution_error.retry_url,'POST',{});await show(id,options);await loadHistory();}),'primary'));
         }
         body.append(workPreview(record));
-        if (!focusedVerdict && record.repository?.commit) body.append(node('p',{},`GitHub · ${record.repository.commit}`, ' ',download(`/insider/code-submissions/${id}/repository/archive`,'Скачать репозиторий')));
-        renderReport(record.report,body,id,{savedSource:!!options.snapshotOf});
+        if (!teacher && options.snapshotOf?.source_notice) body.append(node('p',{class:'gc-help-note'},options.snapshotOf.source_notice));
+        const repository = record.repository;
+        if (!teacher && repository?.url) body.append(node('p',{},download(repository.url,'Репозиторий GitHub')));
+        if (!focusedVerdict && repository?.commit) body.append(node('p',{},`GitHub · ${repository.commit}`, ' ',download(`/insider/code-submissions/${id}/repository/archive`,'Скачать репозиторий')));
+        const chatCheck = options.check;
+        const viewingPreviousCheck = chatCheck?.source === id && chatCheck.run !== record.execution_id;
+        if (viewingPreviousCheck) body.append(previousCheck(chatCheck));
+        renderReport(record.report,body,id,{savedSource:!!options.snapshotOf,
+            afterPurchase:viewingPreviousCheck ? () => selected === generation && show(id, options) : null});
         if(stagedReport)body.append(stagedReport);
         if(record.text_report_available)body.append(textReport(record));
         if (teacher && record.checker_diagnostics) body.append(node('details',{},node('summary',{},'Диагностика проверяющего модуля'),node('pre',{class:'gc-execution-output'},JSON.stringify(record.checker_diagnostics,null,2))));
@@ -1207,7 +1238,7 @@ export async function workspace(root) {
         const comment=target.teacher_feedback ? target.review_comment ?? target.comment ?? '' : target.review_comment || target.comment || (target.check_type!=='tests' && record.state!=='error'?record.comment:'') || '';
         const teacherComment=target.teacher_feedback||target.check_type==='manual';
         if(comment)body.append(feedbackPanel(comment,{title:teacherComment?'Комментарий преподавателя':usesAi(target.check_type)?'Разбор ИИ-проверки':'Комментарий проверки',collapsible:!teacherComment,open:true,meta:target.checked_at?new Date(target.checked_at).toLocaleString('ru-RU'):''}));
-        if(record.check_type===combinedCheck && record.criteria?.length)body.append(criterionTable(record.criteria,true));
+        if(record.criteria?.length && (!teacher || record.check_type===combinedCheck))body.append(criterionTable(record.criteria,true));
         if(options.snapshotOf?.can_grade && !ownMode)body.append(legacyGrading(options.snapshotOf,{comment:teacherComment?comment:''}));
         else if(teacher && !ownMode && !sourceOnly && terminal)body.append(inlineGrading({key:id,comment:teacherComment?comment:'',mark:record.points,onSkip:skipReview(record),maximum:record.maximum_points,ungraded:record.state==='awaiting_review',onSave:async(points,comment)=>{
             const savedGeneration=generation;
@@ -1247,11 +1278,11 @@ export async function workspace(root) {
             const canRevise = !complete && !record.source_version_unknown && !config?.requires_conversion && root.dataset.blocked !== 'true';
             const controls = actions();
             if (canRevise) controls.append(button('Исправить решение', () => editDraft(record.id), 'primary'));
-            if (root.dataset.blocked !== 'true' && !config?.requires_conversion) {
-                controls.append(button(complete ? 'Ещё одно решение' : 'Открыть основной черновик', () => editDraft(), 'outline-secondary'));
+            if (complete && root.dataset.blocked !== 'true' && !config?.requires_conversion) {
+                controls.append(button('Ещё одно решение', () => editDraft(), 'outline-secondary'));
             }
             if(complete && root.dataset.continueUrl)controls.append(node('a',{href:root.dataset.continueUrl,'data-workbook-tab-target':new URL(root.dataset.continueUrl).hash || null,class:'btn btn-primary'},root.dataset.continueLabel || 'Продолжить обучение'));
-            body.append(controls);
+            if (controls.childElementCount) body.append(controls);
         }
         arrangeResult(body);finishResult(body);
         if (!['completed','error','awaiting_review','imported_pending'].includes(record.state)) {

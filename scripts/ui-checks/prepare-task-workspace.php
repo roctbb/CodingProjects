@@ -38,7 +38,18 @@ $make=function(int $task,int $user,int $suffix,string $type,?int $points,?int $s
     return $id;
 };
 $ai=$make(13,1,13,'gpt',8,113);$other=$make(13,3,23,'gpt',12,123);$make(14,1,14,'manual',null,114);
-$make(14,3,24,'manual',null,124);$make(12,1,31,'tests',6);
+$make(14,3,24,'manual',null,124);
+$lateSubmission = App\CodeSubmission::findOrFail($make(12,1,31,'tests',6,131));
+$lateSolution = App\Solution::findOrFail(131);
+$lateSolution->applyDeadlinePenalty(6, App\Support\DeadlineRule::fromSnapshot([
+    'timezone' => 'Europe/Moscow', 'stages' => [['at' => '2026-11-10 21:00:00', 'percent' => 50]],
+]));
+$lateSolution->save();
+App\CodeExecutionRun::create([
+    'id' => '20000000-0000-4000-8000-000000000131', 'submission_id' => $lateSubmission->id,
+    'snapshot' => $lateSubmission->currentRun->snapshot, 'state' => 'completed', 'points' => 2,
+    'comment' => 'Отчёт первой проверки.', 'finished_at' => '2026-11-11 10:16:00',
+]);
 $paged=$make(16,1,16,'tests',10);
 $notebookId=$make(17,1,17,'gpt',18);
 $notebook=['nbformat'=>4,'nbformat_minor'=>5,'metadata'=>['kernelspec'=>['language'=>'python']],

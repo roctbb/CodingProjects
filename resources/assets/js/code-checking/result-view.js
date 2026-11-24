@@ -128,7 +128,7 @@ export function submittedWork(record) {
             try{await navigator.clipboard.writeText(record.text);}catch{answer.focus();const range=document.createRange();range.selectNodeContents(answer);const selection=getSelection();selection.removeAllRanges();selection.addRange(range);}
         }));
     }
-    if(!files.length && !record.text)section.append(node('p',{class:'text-muted'},'Отправленная работа не сохранилась отдельно.'));
+    if(!files.length && !record.text && !record.repository?.url)section.append(node('p',{class:'text-muted'},'Отправленная работа не сохранилась отдельно.'));
     return section;
 }
 

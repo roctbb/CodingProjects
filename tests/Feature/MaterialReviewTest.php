@@ -100,7 +100,6 @@ class MaterialReviewTest extends TestCase
     {
         $d=$this->draft(); $target=$d['targets']; $target[0]['fields']['name']='Другая последовательность';
         $alternative=$this->draft([1],['targets'=>$target,'title'=>'Альтернатива']);
-        $this->get('/insider/material-review?draft='.$d['id'].'&compare='.$alternative['id'])->assertOk()->assertSee('Сравнение редакций');
         $this->publish($alternative); $this->assertSame('Другая последовательность',DB::table('lessons')->where('id',1)->value('name'));
         $target[0]['steps'][0]['tasks']=[];
         $this->expectException(Problem::class); $this->draft([1],['targets'=>$target]);
@@ -156,23 +155,50 @@ class MaterialReviewTest extends TestCase
         $inverse=app(Publishing::class)->reverse($this->admin,$pub['id']); $this->publish($inverse);
         $this->assertSame(8,DB::table('solutions')->where('id',1)->value('mark')); $this->assertDatabaseCount('material_review_publications',2);
     }
-    public function test_stale_draft_does_not_overwrite_author_text(): void
+    public function test_review_is_unavailable_while_live_editors_and_archived_materials_keep_working(): void
     {
-        $d=$this->draft(); $this->review->select($this->admin,$d['id'],$d['version']);
-        $this->postJson('/insider/material-review/drafts/'.$d['id'].'/update',['version'=>1,'change'=>['reason'=>'Моя правка.','operations'=>[$this->replacement()]]])->assertStatus(409)->assertJsonPath('error','version');
-        $this->assertSame('Старое условие.',DB::table('tasks')->where('id',1)->value('text'));
+        (require database_path('migrations/2026_11_18_120000_add_quiz_settings_to_tasks.php'))->up();
+        $draft = $this->accepted($this->draft(), [$this->replacement()]);
+        $draft = $this->review->select($this->admin, $draft['id'], $draft['version']);
+        $draftRow = (array) DB::table('material_review_drafts')->find($draft['id']);
+        $attempts = DB::table('solutions')->where('task_id', 1)->count();
+        $url = '/insider/material-review';
+
+        $this->get($url)->assertNotFound();
+        $this->postJson($url.'/drafts', ['lesson_id' => 1])->assertNotFound();
+        $this->getJson($url.'/drafts/'.$draft['id'])->assertNotFound();
+        $this->postJson($url.'/drafts/'.$draft['id'].'/publish', ['version' => $draft['version']])->assertNotFound();
+        $this->postJson($url.'/preview', ['text' => 'Текст'])->assertNotFound();
+        $this->assertArrayNotHasKey('materials:review', \Illuminate\Support\Facades\Artisan::all());
+        $this->assertSame('Старое условие.', DB::table('tasks')->find(1)->text);
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg"><rect width="50" height="50"/></svg>';
+        $resource = app(Resources::class)->store($this->admin, 1, ['name' => 'diagram.svg', 'mime' => 'image/svg+xml', 'data' => base64_encode($svg)]);
+        $resourceUrl = '/material-resources/'.$resource['id'];
+        $theory = "Текущая теория.\n\n![Схема]($resourceUrl)";
+        $this->post('/insider/courses/1/steps/1/edit', ['name' => 'Ступень', 'theory' => $theory])->assertRedirect();
+        $this->post('/insider/courses/1/tasks/1/edit', ['name' => 'Задача', 'text' => 'Текущее условие.', 'max_mark' => 10, 'answer_mode' => 'manual'])->assertRedirect();
+
+        $this->assertSame($theory, DB::table('program_steps')->find(1)->theory);
+        $this->assertSame('Текущее условие.', DB::table('tasks')->find(1)->text);
+        $this->assertSame($draftRow, (array) DB::table('material_review_drafts')->find($draft['id']));
+        $this->assertSame($attempts, DB::table('solutions')->where('task_id', 1)->count());
+        $this->assertDatabaseCount('material_review_proposals', 1);
+        $this->assertDatabaseCount('material_review_publications', 0);
+        $this->actingAs(User::findOrFail(1))->get($resourceUrl)->assertOk()->assertSee('<rect', false);
     }
     public function test_drafts_are_admin_only_and_foreign_installations_are_rejected(): void
     {
         $d=$this->draft();
-        foreach ([1,2] as $id) $this->actingAs(User::find($id))->getJson('/insider/material-review/drafts/'.$d['id'])->assertForbidden();
-        $this->actingAs($this->admin);
+        foreach ([1,2] as $id) {
+            try { $this->review->get(User::findOrFail($id), $d['id']); $this->fail('Expected access to be denied.'); }
+            catch (Problem $e) { $this->assertSame(403, $e->status); }
+        }
         $this->expectException(Problem::class); $this->review->create($this->admin,['format_version'=>1,'installation_id'=>'foreign']);
     }
-    public function test_question_has_explanation_and_no_apply_action(): void
+    public function test_question_without_a_concrete_change_cannot_be_accepted(): void
     {
         [$d,$pid]=$this->proposal($this->draft(),[],['kind'=>'question','scope'=>'lesson','intent'=>'question']);
-        $this->get('/insider/material-review?draft='.$d['id'])->assertOk()->assertSee('Для применения требуется');
         $this->expectException(Problem::class); $this->review->decide($this->admin,$d['id'],$pid,'accepted',$d['version']);
     }
     public function test_export_import_and_repeated_proposal_are_idempotent(): void
@@ -182,12 +208,6 @@ class MaterialReviewTest extends TestCase
         $this->assertTrue($q['duplicate']); $this->assertSame($p['proposal_id'],$q['proposal_id']);
         $package=$this->review->export($this->admin,$d['id']); $this->assertSame($d['id'],$this->review->import($this->admin,$package)['id']);
         $this->assertDatabaseCount('material_review_proposals',1);
-    }
-    public function test_cli_provides_json_snapshots_and_never_publishes(): void
-    {
-        $this->artisan('materials:review',['action'=>'snapshot','--actor'=>5,'--lesson'=>1])->assertSuccessful();
-        $this->artisan('materials:review',['action'=>'publish','--actor'=>5])->assertFailed();
-        $this->assertDatabaseCount('material_review_publications',0);
     }
     public function test_dependencies_alternatives_and_revoked_prerequisites_are_checked(): void
     {

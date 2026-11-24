@@ -195,11 +195,6 @@
 | POST | `/insider/market/{id}/restore` | action | [Архив товаров](screens.md#market-archive) | web, verified, auth, admin |
 | GET\|HEAD | `/insider/material-code-history/{id}` | screen | [Условие на момент сдачи](screens.md#material-history) | web, auth |
 | GET\|HEAD | `/insider/material-history/{id}` | screen | [Условие на момент сдачи](screens.md#material-history) | web, auth |
-| GET\|HEAD | `/insider/material-review` | screen | [Ревью учебных материалов](screens.md#material-review) | web, auth, admin |
-| POST | `/insider/material-review/drafts` | action | [Ревью учебных материалов](screens.md#material-review) | web, auth, admin |
-| GET\|HEAD | `/insider/material-review/drafts/{id}` | api | [Ревью учебных материалов](screens.md#material-review) | web, auth, admin |
-| POST | `/insider/material-review/drafts/{id}/{action}` | action | [Ревью учебных материалов](screens.md#material-review) | web, auth, admin |
-| POST | `/insider/material-review/preview` | api | [Ревью учебных материалов](screens.md#material-review) | web, auth, admin |
 | GET\|HEAD | `/insider/profile/delete-course/{id}` | action | [Добавление завершённого курса](screens.md#completed-course) | web, verified, auth, self, admin |
 | GET\|HEAD | `/insider/profile/{id?}` | screen | [Профиль](screens.md#profile) | web, verified, auth |
 | POST | `/insider/profile/{id}/avatar-frame` | action | [Цифровые товары](screens.md#market-digital) | web, verified, auth, self |
@@ -247,7 +242,7 @@
 | GET\|HEAD | `/login` | screen | [Вход](screens.md#login) | web, guest |
 | POST | `/login` | action | [Вход](screens.md#login) | web, guest |
 | POST | `/logout` | action | [Меню пользователя](screens.md#user-menu) | web |
-| GET\|HEAD | `/material-resources/{id}` | media | [Ревью учебных материалов](screens.md#material-review) | web, auth |
+| GET\|HEAD | `/material-resources/{id}` | media | [Условие на момент сдачи](screens.md#material-history) | web, auth |
 | GET\|HEAD | `/media/room-character-previews/{generation_id}` | media | [Комната участника](screens.md#profile-room) | web |
 | GET\|HEAD | `/media/{dir}/{name}` | media | [Комната участника](screens.md#profile-room) | web |
 | GET\|HEAD | `/open/course-material-access` | api | [GeekExam](screens.md#geekexam) | web |

@@ -229,7 +229,8 @@
                     <button type="button" class="btn btn-outline-secondary gc-attempt-history__footer" data-task-attempt-more hidden>Показать ещё</button>
                 </section>
             @endif
-            <div class="gc-task-layout {{ $isManager ? 'is-teacher' : 'is-student' }} @if($task->is_quiz) is-quiz @endif">
+            <div class="gc-task-layout {{ $isManager ? 'is-teacher' : 'is-student' }} @if($task->is_quiz) is-quiz @endif"
+                 @if($teacherSheet) id="task-review-panel-{{ $task->id }}" @endif>
                 <div class="gc-task-answer">
                 @if($isInsider && $task->is_quiz)
                     @include('steps.partials.quiz-response')

@@ -2330,7 +2330,6 @@
 - Выход → [Вход](#login) (action)
 - Переключить тему → [Меню пользователя](#user-menu) (state)
 - Личные настройки → [Аккаунт и уведомления](#account-preferences) (navigate)
-- Ревью программ для администратора → [Ревью учебных материалов](#material-review) (navigate)
 
 Исходники:
 
@@ -2927,70 +2926,13 @@ Telegram, почта и Силаэдр в личных настройках; н�
 - [app/Services/CourseTelegram.php](../../app/Services/CourseTelegram.php)
 - [app/Services/DeadlineNotifications.php](../../app/Services/DeadlineNotifications.php)
 
-<a id="material-review"></a>
-
-## Ревью учебных материалов
-
-Тип: page. Роли сценария: Администратор.
-
-Выбрать редакцию урока, разобрать замысел, структуру и локальные правки, проверить итог и отдельно опубликовать.
-
-Условия: Только администраторы; версия основы, принадлежность программе и версия черновика проверяются перед записью.
-
-Проверка: Изолированный синтетический стенд, Chromium 1440/390, светлая и тёмная темы; конфликт с сохранением ввода, публикация и подготовка восстановления.
-
-Состояния для макета и проверки: программы с поиском; урок без предложений; три уровня ревью; несколько редакций; сравнение; вопрос без готовой правки; конфликт; прогресс; предпросмотр публикации; опубликованная версия; светлая и тёмная темы; узкое окно.
-
-Шаблон экрана: review-workspace. Статус: implemented.
-
-Маршруты:
-
-- `GET|HEAD /insider/material-review` — screen
-- `POST /insider/material-review/drafts` — action
-- `GET|HEAD /insider/material-review/drafts/{id}` — api
-- `POST /insider/material-review/drafts/{id}/{action}` — action
-- `POST /insider/material-review/preview` — api
-- `GET|HEAD /material-resources/{id}` — media
-
-Переходы:
-
-- Редактировать материал или вариант предложения → [Ручная правка в ревью](#material-review-editor) (open)
-
-Исходники:
-
-- [resources/views/material-review/index.blade.php](../../resources/views/material-review/index.blade.php)
-- [resources/views/material-review/document.blade.php](../../resources/views/material-review/document.blade.php)
-- [public/css/material-review.css](../../public/css/material-review.css)
-- [public/js/material-review.js](../../public/js/material-review.js)
-
-<a id="material-review-editor"></a>
-
-## Ручная правка в ревью
-
-Тип: dialog. Роли сценария: Администратор.
-
-Исправить текст или ячейки Jupyter, просмотреть результат, сохранить авторское предложение и сохранить ввод при конфликте.
-
-Проверка: Браузер: ручная правка, предпросмотр, сохранение, конфликт и восстановление введённого текста на 1440/390.
-
-Состояния для макета и проверки: Markdown; связанные части; ячейки Jupyter; предпросмотр; версия изменилась; восстановление ввода.
-
-Переходы:
-
-- Сохранить в черновик или закрыть редактор → [Ревью учебных материалов](#material-review) (close)
-
-Исходники:
-
-- [resources/views/material-review/index.blade.php](../../resources/views/material-review/index.blade.php)
-- [public/js/material-review.js](../../public/js/material-review.js)
-
 <a id="material-history"></a>
 
 ## Условие на момент сдачи
 
 Тип: page. Роли сценария: Ученик, Преподаватель, Администратор.
 
-По прямой ссылке прочитать сохранённое условие прежней работы после изменения или переноса задачи.
+По прямой ссылке прочитать сохранённое условие прежней работы после изменения или переноса задачи. Этот же сервис выдаёт изображения, встроенные в текущие материалы.
 
 Условия: Только владелец работы и уполномоченный преподаватель курса/администратор; авторское решение видно только преподавателю.
 
@@ -3002,11 +2944,13 @@ Telegram, почта и Силаэдр в личных настройках; н�
 
 - `GET|HEAD /insider/material-code-history/{id}` — screen
 - `GET|HEAD /insider/material-history/{id}` — screen
+- `GET|HEAD /material-resources/{id}` — media
 
 Исходники:
 
 - [resources/views/material-review/attempt.blade.php](../../resources/views/material-review/attempt.blade.php)
 - [resources/views/material-review/code-condition.blade.php](../../resources/views/material-review/code-condition.blade.php)
+- [app/Http/Controllers/MaterialHistoryController.php](../../app/Http/Controllers/MaterialHistoryController.php)
 
 <a id="course-subgroups"></a>
 

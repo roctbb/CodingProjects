@@ -126,6 +126,56 @@ class DeadlineNotificationsTest extends DeadlineFeatureCase
         $this->assertSame('reached',$event->kind);
         $this->assertDatabaseHas('deadline_notification_events',['kind'=>'reminder','status'=>'expired']);
     }
+
+    public function test_rescheduled_deadline_gets_a_reminder_with_less_than_a_day_left(): void
+    {
+        $this->teacher();
+        $this->policy();
+        Carbon::setTestNow(Carbon::parse('2026-11-16 17:30:00', 'Europe/Moscow'));
+        $policy = $this->policy(stages: [
+            ['deadline_date' => '2026-11-15', 'retained_percent' => 85],
+            ['deadline_date' => '2026-11-16', 'retained_percent' => 70],
+        ]);
+        Http::fake(['*' => Http::response(['ok' => true, 'result' => ['message_id' => 1]])]);
+
+        $this->assertSame(1, app(DeadlineNotifications::class)->dispatchDue());
+        $this->deliverAll();
+        $this->assertSame(0, app(DeadlineNotifications::class)->dispatchDue());
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($request) => $request['chat_id'] === '202'
+            && str_contains($request['text'], 'До срока сдачи: 6 ч 30 мин')
+            && str_contains($request['text'], '70% баллов'));
+        $this->assertDatabaseMissing('deadline_notification_events', ['stage_id' => $policy->stages->first()->id, 'kind' => 'reminder']);
+    }
+
+    public function test_full_penalty_deadline_notifies_all_subscribed_recipients_before_and_at_cutoff(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-22 16:00:00', 'Europe/Moscow'));
+        $this->policy();
+        $this->teacher();
+        $this->chat();
+        User::find(1)->forceFill(['telegram_chat_id' => '101'])->save();
+        DB::table('course_notification_preferences')->insert(['course_id' => 1, 'user_id' => 1, 'enabled' => true]);
+        Http::fake(['*' => Http::response(['ok' => true, 'result' => ['message_id' => 1]])]);
+
+        $this->assertSame(3, app(DeadlineNotifications::class)->dispatchDue());
+        $this->deliverAll();
+        Carbon::setTestNow(now()->addHours(8));
+        $this->assertSame(3, app(DeadlineNotifications::class)->dispatchDue());
+        $this->deliverAll();
+        $this->assertSame(0, app(DeadlineNotifications::class)->dispatchDue());
+
+        Http::assertSentCount(6);
+        foreach (['202', '101', '-1009'] as $chatId) {
+            Http::assertSent(fn ($request) => $request['chat_id'] === $chatId
+                && str_contains($request['text'], 'До крайнего срока сдачи: 8 ч 0 мин')
+                && str_contains($request['text'], 'штраф 100% к XP'));
+            Http::assertSent(fn ($request) => $request['chat_id'] === $chatId
+                && str_contains($request['text'], 'Наступил крайний срок сдачи')
+                && str_contains($request['text'], 'штраф 100% к XP'));
+        }
+    }
+
     public function test_teacher_receives_reached_notification_at_the_cutoff_once(): void
     {
         $this->teacher();$this->policy();app(DeadlineNotifications::class)->reconcile();

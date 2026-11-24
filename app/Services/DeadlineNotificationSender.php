@@ -59,9 +59,14 @@ class DeadlineNotificationSender
             $date = $rule->deadlineAt()->format('d.m.Y H:i');
             $minutes = max(1, (int) ceil(now()->diffInSeconds($rule->cutoffAt(), false) / 60));
             $remaining = $minutes >= 60 ? intdiv($minutes, 60).' ч '.($minutes % 60).' мин' : $minutes.' мин';
-            $text = ($event->kind === 'reminder' ? '⏳ До срока сдачи: '.$remaining : '🏁 Наступил срок сдачи')."\n".
+            $fullPenalty = (float) $stage->retained_percent === 0.0;
+            $heading = $event->kind === 'reminder'
+                ? '⏳ До '.($fullPenalty ? 'крайнего ' : '').'срока сдачи: '.$remaining
+                : '🏁 Наступил '.($fullPenalty ? 'крайний ' : '').'срок сдачи';
+            $afterDeadline = $fullPenalty ? 'штраф 100% к XP' : ($stage->retained_percent + 0).'% баллов';
+            $text = $heading."\n".
                 $courseTitle."\n".mb_substr($tasks->first()->step->lesson->name, 0, 200)."\n".
-                'До '.$date.' ('.$zone.'); после срока — '.($stage->retained_percent + 0)."% баллов\n";
+                'До '.$date.' ('.$zone.'); после срока — '.$afterDeadline."\n";
         }
         foreach ($tasks->take(5) as $task) $text .= '• '.mb_substr($task->name, 0, 150)."\n";
         if ($tasks->count() > 5) $text .= 'И ещё '.($tasks->count() - 5)." задач\n";

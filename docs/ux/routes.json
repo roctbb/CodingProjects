@@ -2579,7 +2579,7 @@
     "method": "GET|HEAD",
     "uri": "insider/material-code-history/{id}",
     "name": null,
-    "action": "MaterialReviewController@codeAttempt",
+    "action": "MaterialHistoryController@codeAttempt",
     "middleware": [
       "web",
       "auth"
@@ -2591,78 +2591,13 @@
     "method": "GET|HEAD",
     "uri": "insider/material-history/{id}",
     "name": null,
-    "action": "MaterialReviewController@attempt",
+    "action": "MaterialHistoryController@attempt",
     "middleware": [
       "web",
       "auth"
     ],
     "node": "material-history",
     "kind": "screen"
-  },
-  {
-    "method": "GET|HEAD",
-    "uri": "insider/material-review",
-    "name": "material-review",
-    "action": "MaterialReviewController@index",
-    "middleware": [
-      "web",
-      "auth",
-      "admin"
-    ],
-    "node": "material-review",
-    "kind": "screen"
-  },
-  {
-    "method": "POST",
-    "uri": "insider/material-review/drafts",
-    "name": null,
-    "action": "MaterialReviewController@create",
-    "middleware": [
-      "web",
-      "auth",
-      "admin"
-    ],
-    "node": "material-review",
-    "kind": "action"
-  },
-  {
-    "method": "GET|HEAD",
-    "uri": "insider/material-review/drafts/{id}",
-    "name": null,
-    "action": "MaterialReviewController@read",
-    "middleware": [
-      "web",
-      "auth",
-      "admin"
-    ],
-    "node": "material-review",
-    "kind": "api"
-  },
-  {
-    "method": "POST",
-    "uri": "insider/material-review/drafts/{id}/{action}",
-    "name": null,
-    "action": "MaterialReviewController@action",
-    "middleware": [
-      "web",
-      "auth",
-      "admin"
-    ],
-    "node": "material-review",
-    "kind": "action"
-  },
-  {
-    "method": "POST",
-    "uri": "insider/material-review/preview",
-    "name": null,
-    "action": "MaterialReviewController@preview",
-    "middleware": [
-      "web",
-      "auth",
-      "admin"
-    ],
-    "node": "material-review",
-    "kind": "api"
   },
   {
     "method": "GET|HEAD",
@@ -3302,12 +3237,12 @@
     "method": "GET|HEAD",
     "uri": "material-resources/{id}",
     "name": null,
-    "action": "MaterialReviewController@resource",
+    "action": "MaterialHistoryController@resource",
     "middleware": [
       "web",
       "auth"
     ],
-    "node": "material-review",
+    "node": "material-history",
     "kind": "media"
   },
   {

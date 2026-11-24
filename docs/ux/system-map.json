@@ -1730,7 +1730,9 @@
       "title": "Расход токенов ИИ",
       "domain": "admin",
       "kind": "page",
-      "roles": ["admin"],
+      "roles": [
+        "admin"
+      ],
       "sources": [
         "resources/views/settings/ai-usage.blade.php",
         "app/Http/Controllers/AiUsageController.php",
@@ -1742,7 +1744,12 @@
         "note": "Для вызовов с частичным или отсутствующим счётчиком показано число таких вызовов."
       },
       "layout": "settings",
-      "checkStates": ["общий отчёт", "фильтр по пользователю и модели", "частичный счётчик", "пустой период"],
+      "checkStates": [
+        "общий отчёт",
+        "фильтр по пользователю и модели",
+        "частичный счётчик",
+        "пустой период"
+      ],
       "guard": "Только глобальный администратор."
     },
     {
@@ -3418,80 +3425,6 @@
       ]
     },
     {
-      "id": "material-review",
-      "title": "Ревью учебных материалов",
-      "domain": "authoring",
-      "kind": "page",
-      "roles": [
-        "admin"
-      ],
-      "sources": [
-        "resources/views/material-review/index.blade.php",
-        "resources/views/material-review/document.blade.php",
-        "public/css/material-review.css",
-        "public/js/material-review.js"
-      ],
-      "goal": "Выбрать редакцию урока, разобрать замысел, структуру и локальные правки, проверить итог и отдельно опубликовать.",
-      "layout": "review-workspace",
-      "guard": "Только администраторы; версия основы, принадлежность программе и версия черновика проверяются перед записью.",
-      "checkStates": [
-        "программы с поиском",
-        "урок без предложений",
-        "три уровня ревью",
-        "несколько редакций",
-        "сравнение",
-        "вопрос без готовой правки",
-        "конфликт",
-        "прогресс",
-        "предпросмотр публикации",
-        "опубликованная версия",
-        "светлая и тёмная темы",
-        "узкое окно"
-      ],
-      "design": {
-        "stage": "implemented",
-        "layout": "review-workspace",
-        "rules": [
-          "Общая оболочка B+, штатная шапка и семантические токены.",
-          "Материал на одной поверхности; действия возле правки и в панели.",
-          "На узком экране навигация и предложения сворачиваются.",
-          "Стили ограничены модулем ревью."
-        ]
-      },
-      "review": {
-        "stage": "verified",
-        "note": "Изолированный синтетический стенд, Chromium 1440/390, светлая и тёмная темы; конфликт с сохранением ввода, публикация и подготовка восстановления.",
-        "evidence": "output/playwright/material-review/review-light-1440.png"
-      }
-    },
-    {
-      "id": "material-review-editor",
-      "title": "Ручная правка в ревью",
-      "domain": "authoring",
-      "kind": "dialog",
-      "parent": "material-review",
-      "roles": [
-        "admin"
-      ],
-      "sources": [
-        "resources/views/material-review/index.blade.php",
-        "public/js/material-review.js"
-      ],
-      "goal": "Исправить текст или ячейки Jupyter, просмотреть результат, сохранить авторское предложение и сохранить ввод при конфликте.",
-      "checkStates": [
-        "Markdown",
-        "связанные части",
-        "ячейки Jupyter",
-        "предпросмотр",
-        "версия изменилась",
-        "восстановление ввода"
-      ],
-      "review": {
-        "stage": "verified",
-        "note": "Браузер: ручная правка, предпросмотр, сохранение, конфликт и восстановление введённого текста на 1440/390."
-      }
-    },
-    {
       "id": "material-history",
       "title": "Условие на момент сдачи",
       "domain": "review",
@@ -3503,9 +3436,10 @@
       ],
       "sources": [
         "resources/views/material-review/attempt.blade.php",
-        "resources/views/material-review/code-condition.blade.php"
+        "resources/views/material-review/code-condition.blade.php",
+        "app/Http/Controllers/MaterialHistoryController.php"
       ],
-      "goal": "По прямой ссылке прочитать сохранённое условие прежней работы после изменения или переноса задачи.",
+      "goal": "По прямой ссылке прочитать сохранённое условие прежней работы после изменения или переноса задачи. Этот же сервис выдаёт изображения, встроенные в текущие материалы.",
       "guard": "Только владелец работы и уполномоченный преподаватель курса/администратор; авторское решение видно только преподавателю.",
       "checkStates": [
         "снимок сохранён",
@@ -5242,7 +5176,9 @@
       "to": "settings-ai-usage",
       "label": "Расход ИИ",
       "kind": "navigate",
-      "roles": ["admin"],
+      "roles": [
+        "admin"
+      ],
       "source": "resources/views/settings/partials/tabs.blade.php"
     },
     {
@@ -5250,7 +5186,9 @@
       "to": "settings-ai",
       "label": "ИИ",
       "kind": "navigate",
-      "roles": ["admin"],
+      "roles": [
+        "admin"
+      ],
       "source": "resources/views/settings/partials/tabs.blade.php"
     },
     {
@@ -5258,7 +5196,9 @@
       "to": "settings-ai-usage",
       "label": "Уточнить фильтры отчёта",
       "kind": "state",
-      "roles": ["admin"],
+      "roles": [
+        "admin"
+      ],
       "source": "resources/views/settings/ai-usage.blade.php"
     },
     {
@@ -5780,30 +5720,6 @@
         "admin"
       ],
       "source": "resources/views/courses/partials/course-actions.blade.php"
-    },
-    {
-      "from": "user-menu",
-      "to": "material-review",
-      "label": "Ревью программ для администратора",
-      "kind": "navigate",
-      "roles": [],
-      "source": "resources/views/layouts/partials/sidebar-user-resources.blade.php"
-    },
-    {
-      "from": "material-review",
-      "to": "material-review-editor",
-      "label": "Редактировать материал или вариант предложения",
-      "kind": "open",
-      "roles": [],
-      "source": "resources/views/material-review/field.blade.php"
-    },
-    {
-      "from": "material-review-editor",
-      "to": "material-review",
-      "label": "Сохранить в черновик или закрыть редактор",
-      "kind": "close",
-      "roles": [],
-      "source": "public/js/material-review.js"
     },
     {
       "from": "course",
@@ -6823,38 +6739,6 @@
       "node": "review-tools",
       "kind": "action"
     },
-    "MaterialReviewController@index": {
-      "node": "material-review",
-      "kind": "screen"
-    },
-    "MaterialReviewController@create": {
-      "node": "material-review",
-      "kind": "action"
-    },
-    "MaterialReviewController@read": {
-      "node": "material-review",
-      "kind": "api"
-    },
-    "MaterialReviewController@action": {
-      "node": "material-review",
-      "kind": "action"
-    },
-    "MaterialReviewController@preview": {
-      "node": "material-review",
-      "kind": "api"
-    },
-    "MaterialReviewController@resource": {
-      "node": "material-review",
-      "kind": "media"
-    },
-    "MaterialReviewController@attempt": {
-      "node": "material-history",
-      "kind": "screen"
-    },
-    "MaterialReviewController@codeAttempt": {
-      "node": "material-history",
-      "kind": "screen"
-    },
     "CourseSubgroupsController@index": {
       "node": "course-subgroups",
       "kind": "screen"
@@ -6886,6 +6770,18 @@
     "StickersController@update": {
       "node": "settings-stickers",
       "kind": "action"
+    },
+    "MaterialHistoryController@resource": {
+      "node": "material-history",
+      "kind": "media"
+    },
+    "MaterialHistoryController@attempt": {
+      "node": "material-history",
+      "kind": "screen"
+    },
+    "MaterialHistoryController@codeAttempt": {
+      "node": "material-history",
+      "kind": "screen"
     }
   },
   "observations": [

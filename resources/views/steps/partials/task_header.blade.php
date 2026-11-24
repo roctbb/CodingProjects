@@ -11,6 +11,15 @@
         @elseif(empty($studentAttempt))
             <h2 @unless($worksheet) class="step-task-card__title mb-0" @endunless>{{ $task->name }}</h2>
         @endif
+        @if($worksheet)
+            @php($chatPanelId = ($isManager ? 'task-review-panel-' : 'task-chat-panel-').$task->id)
+            @php($chatPanelLabel = $isManager ? 'панель' : 'чат')
+            <button type="button" class="btn btn-sm btn-outline-secondary gc-icon-button gc-task-chat-toggle"
+                    data-task-chat-toggle="{{ $chatPanelLabel }}" aria-controls="{{ $chatPanelId }}" aria-expanded="true"
+                    aria-label="Свернуть {{ $chatPanelLabel }}" title="Свернуть {{ $chatPanelLabel }}" hidden>
+                <i class="fas fa-angles-right" aria-hidden="true"></i>
+            </button>
+        @endif
         @if($worksheet)<div class="gc-task-title-facts">@endif
         @if($worksheet && !$isManager)
             @php($outcome = $taskOutcomes[$task->id])
@@ -18,6 +27,7 @@
                 <span>{{ $outcome['label'] }}</span>
                 <small title="Лучшая оценка за решение" @if($outcome['score'] === null) hidden @endif>{{ $outcome['score'] }}</small>
             </div>
+            <span class="gc-task-title-meta">Максимум {{ trans_choice(':count балл|:count балла|:count баллов', $task->max_mark) }}</span>
         @endif
         @include('steps.partials.task-title-rewards')
         @if(!$worksheet || $isManager)
@@ -63,6 +73,8 @@
         <button type="button" class="btn btn-outline-secondary gc-task-chat-open" data-task-chat-open
                 aria-haspopup="dialog" aria-controls="task-chat-dialog-{{ $task->id }}" aria-expanded="false" hidden>Чат задачи</button>
     @endif
+    <div class="gc-task-chat-divider" data-task-chat-divider role="separator" aria-orientation="vertical" tabindex="0"
+         aria-label="Ширина боковой панели" aria-controls="{{ $chatPanelId }}" title="Перетащите, чтобы изменить ширину" hidden></div>
 </header>
 @else
 </div>

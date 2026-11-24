@@ -14,6 +14,41 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 await sheet.getByRole('button',{name:'Чат задачи',exact:true}).click();
             }
         };
+        const checkChatControls = async (sheet, panel, draft, label, role) => {
+            const divider = sheet.getByRole('separator', {name: 'Ширина боковой панели'});
+            const toggle = sheet.locator('[data-task-chat-toggle]');
+            const panelWidth = () => panel.evaluate(el => el.getBoundingClientRect().width);
+            const dragEdge = async offset => {
+                const {x, y, height} = await panel.boundingBox();
+                const center = y + height / 2;
+                await page.mouse.move(x, center);
+                await page.mouse.down();
+                await page.mouse.move(x + offset, center, {steps: 6});
+                await page.mouse.up();
+            };
+            const initialWidth = await panelWidth();
+            await dragEdge(-64);
+            const draggedWidth = await panelWidth();
+            check(`${role}-widens-chat-by-dragging-the-edge`, draggedWidth > initialWidth, width);
+            await divider.press('ArrowRight');
+            const resizedWidth = await panelWidth();
+            check(`${role}-resizes-chat-with-the-keyboard`, resizedWidth === draggedWidth - 24, width);
+            check(`${role}-chat-toggle-is-an-icon`, (await toggle.innerText()).trim() === '' && await toggle.locator('i').isVisible(), width);
+
+            const originalDraft = await draft.inputValue();
+            const text = originalDraft || 'Черновик для проверки панели';
+            await draft.fill(text);
+            await sheet.getByRole('button', {name: `Свернуть ${label}`, exact: true}).click();
+            const reservedWidth = await sheet.evaluate(el => getComputedStyle(el.closest('.gc-workbook')).paddingInlineEnd);
+            check(`${role}-collapses-chat-and-reclaims-width`, await panel.isHidden() && await divider.isHidden()
+                && reservedWidth === '0px' && await toggle.getAttribute('aria-expanded') === 'false', width);
+
+            await sheet.getByRole('button', {name: `Развернуть ${label}`, exact: true}).click();
+            check(`${role}-restores-chat-width-and-draft`, await panelWidth() === resizedWidth
+                && await draft.inputValue() === text && await toggle.getAttribute('aria-expanded') === 'true', width);
+            await dragEdge(resizedWidth - initialWidth);
+            await draft.fill(originalDraft);
+        };
         const waitForStudentChatViewport = task => page.waitForFunction(task => {
             const chat = document.querySelector('#execution-workspace-' + task + ' .gc-task-chat:not([hidden])');
             if (!chat) return false;
@@ -58,6 +93,8 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 const history=page.getByRole('region',{name:'Отправленные решения'});
                 const attemptRow=history.locator(`[data-attempt-id="${id(1)}"]`);
                 await attemptRow.waitFor();
+                check('student-task-header-shows-the-maximum-score',
+                    await page.locator('#task12 .gc-task-title-facts').getByText('Максимум 20 баллов',{exact:true}).isVisible(),width);
                 const conditionToggle = condition.locator(':scope > summary');
                 check('submitted-task-condition-is-visible-with-toggle-only-in-attempt-view',
                     await condition.locator('.gc-task-condition-content').isVisible()
@@ -97,6 +134,8 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 check('student-result-actions-use-theme-colors',
                     await attemptDetails.getByRole('button',{name:'Исправить решение',exact:true}).evaluate(button=>button.classList.contains('btn-primary'))
                     && await attemptDetails.getByRole('button',{name:'Попросить перепроверить',exact:true}).evaluate(button=>button.classList.contains('btn-outline-primary')), width);
+                check('student-result-hides-the-main-draft-shortcut',
+                    !await attemptDetails.getByRole('button',{name:'Открыть основной черновик',exact:true}).count(), width);
                 check('student-result-shows-source-before-tests', await attemptDetails.locator('.gc-execution-result').evaluate(el=>{
                     const source=el.querySelector('.gc-submitted-work'), tests=el.querySelector('.gc-test-report');
                     return !!(source.compareDocumentPosition(tests) & Node.DOCUMENT_POSITION_FOLLOWING)
@@ -126,9 +165,11 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 }
                 await waitForStudentChatViewport(12);
                 check('chat-fills-viewport-and-keeps-composer-visible', true, width);
-                await page.screenshot({path:`${output}/tutor-panel-${width}.png`});
                 const ask = chat.getByRole('button', {name:'Спросить преподавателя',exact:true});
                 const draft = chat.getByRole('textbox', {name:'Сообщение в чат задачи'});
+                if (width >= 1200) await checkChatControls(page.locator('#task12 .gc-task-sheet'), chat, draft, 'чат', 'student');
+                else check('mobile-chat-has-no-width-controls', !await page.getByRole('separator', {name:'Ширина боковой панели'}).count(), width);
+                await page.screenshot({path:`${output}/tutor-panel-${width}.png`});
                 const note = 'Можно уточнить условие?';
                 await draft.fill(note);
                 await ask.click();
@@ -241,6 +282,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
                 check('teacher-feedback-has-no-mention-shortcut',await chat.getByRole('button',{name:'Спросить преподавателя'}).count()===0,width);
                 const draft = chat.getByRole('textbox',{name:'Сообщение в чат задачи'});
                 await draft.fill('Черновик комментария');
+                await checkChatControls(page.locator('#task13 .gc-task-sheet'), page.locator('#task-review-panel-13'), draft, 'панель', 'teacher');
                 await chat.getByRole('button',{name:'Список решений',exact:true}).click();
                 const submissions = chat.getByRole('region',{name:'Список решений',exact:true});
                 await submissions.locator('[data-attempt-id]').first().waitFor();
@@ -377,23 +419,39 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await page.getByRole('dialog',{name:'Работа с решением'}).getByRole('button',{name:'Закрыть'}).click();
             const file=root.locator('[data-kind="file"][data-attempt="'+id(1)+'"] .gc-chat-file');
             await file.click();
-            const source=page.getByRole('dialog',{name:'Отправленное решение'});
-            await source.locator('.gc-submitted-work').waitFor();
-            check('source-preview-opens-without-extra-details',await source.getByRole('button',{name:'Подробнее о посылке'}).count()===0,width);
-            await source.getByRole('button',{name:'Закрыть'}).click();
+            const workDialog = page.getByRole('dialog',{name:'Работа с решением'});
+            await workDialog.locator('.gc-submitted-work').waitFor();
+            check('chat-source-opens-the-full-submission',await workDialog.locator('.gc-test-report').isVisible() &&
+                await workDialog.locator('.gc-result-score > strong').innerText()==='10',width);
+            await workDialog.getByRole('button',{name:'Закрыть'}).click();
             const card=root.locator('[data-kind="check"][data-attempt="'+id(1)+'"]');
             await card.getByRole('button',{name:'Подробнее',exact:true}).click();
-            const report=page.getByRole('dialog',{name:'Журнал тестирования'});
-            const purchase=report.getByRole('row').filter({hasText:'№ 2'}).getByRole('button',{name:'Открыть за 5 GC'});
+            check('chat-check-opens-the-same-submission-with-a-score',await workDialog.locator('.gc-result-score > strong').innerText()==='10' &&
+                await workDialog.locator('.gc-attempt-step[aria-current="true"]').getAttribute('data-attempt-id')===id(1),width);
+            const purchase=workDialog.getByRole('row').filter({hasText:'№ 2'}).getByRole('button',{name:'Открыть за 5 GC'});
             page.once('dialog',dialog=>dialog.dismiss());await purchase.click();
             check('cancel-keeps-hidden-test-locked',await purchase.isVisible(),width);
             page.once('dialog',dialog=>dialog.accept());await purchase.click();
-            await report.locator('.gc-test-detail:not([hidden]) .gc-test-data').filter({hasText:'-8 -2 -5'}).waitFor();
-            check('task-purchased-test-stays-open',await report.getByRole('button',{name:'Данные теста 2',exact:true}).getAttribute('aria-expanded')==='true',width);
-            await report.getByRole('button',{name:'Закрыть'}).click();
+            await workDialog.locator('.gc-test-detail:not([hidden]) .gc-test-data').filter({hasText:'-8 -2 -5'}).waitFor();
+            check('task-purchased-test-stays-open',await workDialog.getByRole('button',{name:'Данные теста 2',exact:true}).getAttribute('aria-expanded')==='true',width);
+            await workDialog.getByRole('button',{name:'Закрыть'}).click();
+
+            const previous = root.locator('[data-event="3-20000000-0000-4000-8000-000000000131"]');
+            await previous.getByRole('button',{name:'Подробнее',exact:true}).click();
+            const pastCheck = workDialog.locator('details').filter({has:page.getByText(/^Предыдущая проверка.*2 из 20$/)}).first();
+            await pastCheck.getByText('Текстовый отчёт проверки',{exact:true}).click();
+            await pastCheck.getByText('Отчёт первой проверки.',{exact:true}).waitFor();
+            check('chat-keeps-the-previous-run-in-the-full-submission',await workDialog.locator('.gc-result-score > strong').innerText()==='3',width);
+            const waive = workDialog.getByRole('button',{name:'Снять штраф · 3 GC',exact:true});
+            await waive.click();
+            const penalty = page.getByRole('dialog',{name:'Снять штраф за опоздание'});
+            await penalty.getByRole('button',{name:'Снять штраф',exact:true}).click();
+            await workDialog.getByText('Штраф снят за GC. Баллы за работу не менялись.',{exact:true}).waitFor();
+            check('chat-submission-pays-the-penalty-and-updates-xp',await workDialog.locator('.gc-result-score > strong').innerText()==='6',width);
+            await workDialog.getByRole('button',{name:'Закрыть'}).click();
+
             await card.getByRole('button',{name:'Попросить перепроверить',exact:true}).waitFor();
             await openWork('student',12,id(1));
-            const workDialog = page.getByRole('dialog',{name:'Работа с решением'});
             const resultActions = workDialog.getByRole('group',{name:'Действия с решением'});
             const reviewButton = resultActions.getByRole('button',{name:'Попросить перепроверить',exact:true});
             await reviewButton.click();
@@ -457,9 +515,9 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             check('task-unavailable-coin-action-is-hidden',await page.locator('#execution-workspace-13 .gc-award button.btn-coin').count()===0,width);
             await page.unroute(unavailablePattern);
 
-            await visit('student',14);
+            await visit('student',14,null,{open:false});
             const uploadRoot=page.locator('#execution-workspace-14');
-            await uploadRoot.getByRole('button',{name:'Открыть основной черновик',exact:true}).click();
+            await page.getByRole('button',{name:'Сдать решение',exact:true}).click();
             await uploadRoot.getByRole('textbox',{name:'Ответ',exact:true}).fill('Объясняю решение и прикладываю файлы.');
             await uploadRoot.locator('input[type="file"]').setInputFiles([
                 {name:'a.bin',mimeType:'application/octet-stream',buffer:Buffer.from([0,255,1])},
