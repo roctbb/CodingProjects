@@ -83,7 +83,7 @@ export function taskChat(root, actions) {
     const messages = node('div', {class:'gc-chat-messages'});
     const log = node('div',{class:'gc-chat-log',role:'log','aria-label':'Сообщения по задаче'},messages);
     const earlier = button('Предыдущие сообщения',()=>load(true)); earlier.className='gc-chat-earlier';
-    const status = node('small',{role:'status',class:'gc-chat-status'});
+    const sendError = node('div', {role:'alert', class:'gc-chat-send-error'});
     const readStatus = node('p', {class:'gc-chat-empty mb-0', role:'status'});
     const retry = button('Повторить', () => {
         showHistoryStatus('Загружаем переписку…');
@@ -108,8 +108,8 @@ export function taskChat(root, actions) {
     const quoted = node('span');
     const reply = node('div',{class:'gc-chat-reply',hidden:true},quoted,iconButton('Отменить ответ','fa-xmark',()=>setReply(null)));
     const shortcuts = askTeacher ? node('div', {class:'gc-chat-shortcuts'}, attach, askTeacher) : null;
-    const form = node('form',{class:'gc-chat-compose'},reply,shortcuts,node('div',{class:'gc-chat-entry'},shortcuts ? null : attach,input,send));
-    const shell = node('section',{class:dialog ? 'gc-task-chat gc-task-chat--panel' : 'gc-task-chat',hidden:true,'aria-label':'Личная переписка по задаче'},header,log,form,status);
+    const form = node('form',{class:'gc-chat-compose'},sendError,reply,shortcuts,node('div',{class:'gc-chat-entry'},shortcuts ? null : attach,input,send));
+    const shell = node('section',{class:dialog ? 'gc-task-chat gc-task-chat--panel' : 'gc-task-chat',hidden:true,'aria-label':'Личная переписка по задаче'},header,log,form);
     if (dialog) shell.id = 'task-chat-panel-' + root.dataset.taskId;
     const solutions = actions.solutions;
     let selectView = () => {};
@@ -124,7 +124,7 @@ export function taskChat(root, actions) {
         selectView = showSolutions => {
             chatButton.setAttribute('aria-pressed', String(!showSolutions));
             listButton.setAttribute('aria-pressed', String(showSolutions));
-            log.hidden = form.hidden = status.hidden = showSolutions;
+            log.hidden = form.hidden = showSolutions;
             solutions.hidden = !showSolutions;
             if (!showSolutions && !shell.hidden) autosize.update(input);
         };
@@ -271,6 +271,7 @@ export function taskChat(root, actions) {
         const context = token, requestKey = student + ':' + key;
         const clientId = quickRequests.get(requestKey) || crypto.randomUUID();
         quickRequests.set(requestKey, clientId);
+        sendError.textContent = '';
         pending = true;
         enable();
         try {
@@ -278,7 +279,7 @@ export function taskChat(root, actions) {
                 client_id:clientId, chat_layout:dialog?.open ? 'dialog' : 'panel'});
             if (context === token) await load(false, true);
         } catch (error) {
-            if (context === token) status.textContent = 'Сообщение не отправлено. ' + error.message;
+            if (context === token) sendError.textContent = 'Сообщение не отправлено. ' + error.message;
         } finally {
             if (context === token) { pending = false; enable(); }
         }
@@ -392,7 +393,7 @@ export function taskChat(root, actions) {
         const footer = node('div', {class:'gc-chat-foot'});
         if (event.type === 'grade') {
             if (manualGrade) checkBody(item, event, inlinePoints);
-            else item.append(node('p', {class:'gc-chat-score'}, event.text));
+            else if (event.awarded_xp == null) item.append(node('p', {class:'gc-chat-score'}, event.text));
             if (!teacher) footer.append(action('Посмотреть проверку', () => actions.details(event.attempt), 'gc-chat-link'));
         } else {
             checkBody(item, event, inlinePoints);
@@ -423,6 +424,11 @@ export function taskChat(root, actions) {
                 reply.className = 'gc-chat-answer';
                 footer.append(reply);
             }
+        }
+        if (event.awarded_xp != null && (!finished || event.awarded_xp !== Number(event.points) || event.deadline_penalty > 0)) {
+            item.append(node('p', {class:'gc-chat-award'},
+                node('span', {}, 'Начислено ', node('strong', {}, event.awarded_xp + ' XP')),
+                event.deadline_penalty > 0 ? node('span', {}, '−' + event.deadline_penalty + ' XP за просрочку') : null));
         }
         if (event.student_review === 'available') {
             footer.append(action('Попросить перепроверить', () => actions.requestReview(event.attempt, event.reference, status => {
@@ -553,7 +559,7 @@ export function taskChat(root, actions) {
         autosize(input);
         autosize.update(input);
         reply.hidden=!replyTo;quoted.textContent=replyTo?'Ответ на посылку · '+replyTo.label:'';
-        awaitingTutor=false;revealTutorStart=false;messages.replaceChildren();status.textContent='';
+        awaitingTutor=false;revealTutorStart=false;messages.replaceChildren();sendError.textContent='';
         showHistoryStatus('Загружаем переписку…');
         enable();load();stopWatching=watchTaskChat(root, shell, student, refresh);
     }
@@ -565,7 +571,7 @@ export function taskChat(root, actions) {
         if(!student || pending || !input.value.trim())return;
         const context=token, recipient=student, url=endpoint();
         const id=drafts.get(student)?.clientId || crypto.randomUUID();
-        status.textContent = '';
+        sendError.textContent = '';
         saveDraft(id);pending=true;enable();
         try{
             await request(url,'POST',{body:input.value.trim(),attempt:replyTo?.id || null,run_id:replyTo?.run || null,client_id:id,chat_layout:dialog?.open ? 'dialog' : 'panel'});
@@ -574,7 +580,7 @@ export function taskChat(root, actions) {
             input.value='';autosize.update(input);replyTo=null;reply.hidden=true;
             // Invalidate an older in-flight read so the post is visible immediately.
             await load(false,true);
-        }catch(error){if(context===token)status.textContent='Сообщение не отправлено. '+error.message;}
+        }catch(error){if(context===token)sendError.textContent='Сообщение не отправлено. '+error.message;}
         finally{if(context===token){pending=false;enable();}}
     };
     return {surface,select,refresh,setCanSubmit:value=>{attach.hidden=!value;},setName:name=>{member.textContent=name;}};

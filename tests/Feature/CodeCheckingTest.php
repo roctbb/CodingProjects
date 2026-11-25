@@ -104,7 +104,7 @@ class CodeCheckingTest extends TestCase
 
     private function createChatSolutions(): void
     {
-        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY, user_id INTEGER, course_id INTEGER, task_id INTEGER, submitted TEXT, checked TEXT, mark INTEGER, raw_mark INTEGER, evaluated_mark INTEGER, comment TEXT, geekpaste_code_id TEXT, recheck_requested BOOLEAN DEFAULT 0)');
+        DB::statement('CREATE TABLE solutions (id INTEGER PRIMARY KEY, user_id INTEGER, course_id INTEGER, task_id INTEGER, submitted TEXT, checked TEXT, mark INTEGER, raw_mark INTEGER, evaluated_mark INTEGER, comment TEXT, geekpaste_code_id TEXT, recheck_requested BOOLEAN DEFAULT 0, deadline_penalty_amount INTEGER DEFAULT 0, deadline_penalty_paid_at TEXT, deadline_penalty_waived_at TEXT)');
     }
 
     public function test_task_chat_keeps_questions_and_scoped_replies_across_checks_and_retries(): void
@@ -128,7 +128,7 @@ class CodeCheckingTest extends TestCase
         $second = (string)Str::uuid();
         $now = now()->subHour();
         $scope = ['course_id'=>7,'task_id'=>12,'user_id'=>2];
-        DB::table('solutions')->insert($scope + ['id'=>41,'submitted'=>$now,'checked'=>$now,'mark'=>8]);
+        DB::table('solutions')->insert($scope + ['id'=>41,'submitted'=>$now,'checked'=>$now,'mark'=>4,'deadline_penalty_amount'=>4]);
         DB::table('code_submissions')->insert($scope + ['id'=>$source,'solution_id'=>41,'request_id'=>(string)Str::uuid(),
             'current_run_id'=>$second,'language'=>'python','files'=>json_encode([['name'=>'quest.py']]),
             'payload_hash'=>str_repeat('a',64),'created_at'=>$now]);
@@ -156,6 +156,9 @@ class CodeCheckingTest extends TestCase
         $this->assertCount(2,$events->where('type','check'));
         $this->assertEquals(2,$events->firstWhere('run',$first)['passed']);
         $this->assertEquals(3,$events->firstWhere('run',$first)['total']);
+        $this->assertArrayNotHasKey('awarded_xp', $events->firstWhere('run', $first));
+        $this->assertSame(4, $events->firstWhere('run', $second)['awarded_xp']);
+        $this->assertSame(4, $events->firstWhere('run', $second)['deadline_penalty']);
         $this->assertArrayNotHasKey('student_review',$events->firstWhere('run',$first));
         $this->assertSame('available',$events->firstWhere('run',$second)['student_review']);
         DB::table('solutions')->where('id',41)->update(['recheck_requested'=>true]);
@@ -177,6 +180,26 @@ class CodeCheckingTest extends TestCase
         $this->assertCount(40,$recent['events']);
         $this->assertEmpty(array_intersect(array_column($recent['events'],'id'),array_column($older['events'],'id')));
         $this->assertSame('solution-42',collect($older['events'])->firstWhere('text','Ответ по старой работе')['attempt']);
+    }
+
+    public function test_task_chat_shows_awarded_xp_and_the_active_penalty_for_a_manual_grade(): void
+    {
+        $this->createChatSolutions();
+        DB::table('tasks')->where('id', 12)->update(['is_code' => false]);
+        DB::table('solutions')->insert([
+            'id' => 41, 'course_id' => 7, 'task_id' => 12, 'user_id' => 2,
+            'submitted' => now()->subDay(), 'checked' => now(),
+            'evaluated_mark' => 5, 'raw_mark' => 5, 'mark' => 3, 'deadline_penalty_amount' => 2,
+        ]);
+
+        $thread = '/insider/courses/7/tasks/12/chat/2';
+        $this->login(1)->getJson($thread)->assertOk()
+            ->assertJsonPath('events.1.method', 'manual')->assertJsonPath('events.1.points', 5)
+            ->assertJsonPath('events.1.awarded_xp', 3)->assertJsonPath('events.1.deadline_penalty', 2);
+
+        DB::table('solutions')->where('id', 41)->update(['mark' => 5, 'deadline_penalty_paid_at' => now()]);
+        $this->login()->getJson($thread)->assertOk()
+            ->assertJsonPath('events.1.awarded_xp', 5)->assertJsonPath('events.1.deadline_penalty', 0);
     }
 
     private function configBody(): array

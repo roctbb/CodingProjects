@@ -244,6 +244,18 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
         };
         try{
             await page.setViewportSize({width,height:1000});
+            await visit('teacher',11,null,{open:false});
+            await page.locator('#student-solutions-11 [data-execution-student-list] [data-student-id="4"]').click();
+            const pendingGrade = page.locator('#execution-workspace-11 [data-attempt="solution-101"]')
+                .getByRole('button',{name:'Оценить решение',exact:true});
+            await pendingGrade.waitFor();
+            const arrow = await pendingGrade.evaluate(el => ({
+                layout: getComputedStyle(el).display,
+                width: parseFloat(getComputedStyle(el, '::after').width),
+            }));
+            check('chat-pending-grade-keeps-the-arrow-beside-the-label',
+                ['flex', 'inline-flex'].includes(arrow.layout) && arrow.width > 0,width,arrow);
+            await pendingGrade.locator('..').screenshot({path:`${output}/chat-pending-grade-${width}.png`});
             if (width >= 1200) {
                 await visit('teacher',13,null,{open:false});
                 await context.grantPermissions(['clipboard-read','clipboard-write'],{origin:url});
@@ -436,6 +448,9 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             check('task-purchased-test-stays-open',await workDialog.getByRole('button',{name:'Данные теста 2',exact:true}).getAttribute('aria-expanded')==='true',width);
             await workDialog.getByRole('button',{name:'Закрыть'}).click();
 
+            const lateAward = root.locator('[data-kind="check"][data-attempt="'+id(31)+'"] .gc-chat-award');
+            await lateAward.getByText('3 XP',{exact:true}).waitFor();
+            check('chat-shows-awarded-xp-and-late-penalty',await lateAward.getByText('−3 XP за просрочку',{exact:true}).isVisible(),width);
             const previous = root.locator('[data-event="3-20000000-0000-4000-8000-000000000131"]');
             await previous.getByRole('button',{name:'Подробнее',exact:true}).click();
             const pastCheck = workDialog.locator('details').filter({has:page.getByText(/^Предыдущая проверка.*2 из 20$/)}).first();
@@ -449,6 +464,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await workDialog.getByText('Штраф снят за GC. Баллы за работу не менялись.',{exact:true}).waitFor();
             check('chat-submission-pays-the-penalty-and-updates-xp',await workDialog.locator('.gc-result-score > strong').innerText()==='6',width);
             await workDialog.getByRole('button',{name:'Закрыть'}).click();
+            await lateAward.waitFor({state:'hidden'});
 
             await card.getByRole('button',{name:'Попросить перепроверить',exact:true}).waitFor();
             await openWork('student',12,id(1));
@@ -624,6 +640,9 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await manual.getByRole('spinbutton',{name:'Баллы, из 20',exact:true}).fill('17');
             await writeComment(manual,'Объяснение верное, добавьте пример.');
             await manual.getByRole('button',{name:'Сохранить оценку',exact:true}).click();
+            const confirmation = page.getByRole('dialog',{name:'Работа с решением'}).locator('.gc-grade-confirmation');
+            await confirmation.getByText('Оценка и комментарий сохранены',{exact:true}).waitFor();
+            check('grading-shows-a-floating-confirmation',await confirmation.evaluate(el => getComputedStyle(el).position === 'fixed'),width);
             await manual.getByRole('heading',{name:'Ученик 1',exact:true}).waitFor();
             await manual.getByRole('button',{name:'Следующая работа',exact:true}).click();
             await manual.getByRole('heading',{name:'Ученик 3',exact:true}).waitFor();

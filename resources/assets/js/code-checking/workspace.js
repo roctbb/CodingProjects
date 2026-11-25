@@ -69,6 +69,8 @@ export async function workspace(root) {
     }
     const toolbar = node('div',{class:'gc-execution-toolbar'});
     const notice = node('div', {role:'status', 'aria-live':'polite'});
+    const gradeConfirmation = node('output', {class:'gc-grade-confirmation', role:'status', 'aria-atomic':'true'});
+    let gradeConfirmationTimer;
     const content = node('div',{class:'gc-submission-editor'});
     const results = node('div',{id:root.id+'-result',class:'gc-submission-result',hidden:true});
     const history = node('div',{class:'gc-submission-history'});
@@ -80,7 +82,7 @@ export async function workspace(root) {
         'aria-label':'Сдача и результат',hidden:true,
     },toolbar,history);
     const browser = node('section',{class:'gc-execution-browser gc-submission-surface'},summary,stage);
-    root.replaceChildren(notice,browser);
+    root.replaceChildren(notice,browser,gradeConfirmation);
     const teacherOwnChat = teacher && root.dataset.user === root.dataset.viewerId;
     const personalChat = !root.hasAttribute('data-quiz-review') && (!teacher || inlineReview || !!root.dataset.user);
     const legacyForm = (!teacher || teacherOwnChat) && root.hasAttribute('data-history-only') ?
@@ -106,6 +108,7 @@ export async function workspace(root) {
         dialogHeading.textContent=title;
         workspaceDialog.dataset.view = view;
         browser.before(notice);
+        workspaceDialog.append(gradeConfirmation);
         const verdict=verdictHost?.querySelector(':scope > header');
         if(verdict)history.after(verdict);
         root.querySelectorAll('[data-chat-source-preview]').forEach(el=>el.dispatchEvent(new Event('gc:preview-open')));
@@ -115,6 +118,13 @@ export async function workspace(root) {
             workspaceDialog.scrollTop = 0;
             revealAttemptStep();
         }
+    }
+    function confirmGradeSaved() {
+        clearTimeout(gradeConfirmationTimer);
+        gradeConfirmation.replaceChildren(node('i', {class:'fas fa-circle-check', 'aria-hidden':'true'}),
+            'Оценка и комментарий сохранены');
+        gradeConfirmationTimer = setTimeout(() => gradeConfirmation.replaceChildren(), 4500);
+        chat?.refresh();
     }
     async function viewDetails(attempt, check) {
         openWorkspace(teacher && !ownWorkspace ? 'Проверка и оценка' : 'Отправленное решение');
@@ -306,6 +316,7 @@ export async function workspace(root) {
         if(legacyForm && !legacyForm.querySelector('.text-danger'))legacyForm.hidden=true;
         workspaceDialog.addEventListener('close',()=>{
             root.prepend(notice);
+            root.append(gradeConfirmation);
             if(!composerVisible)placeVerdict(summary.querySelector(':scope > .gc-result-verdict'));
             if(composerVisible && previousAttempt)openAttemptById(previousAttempt).catch(error);
             previousAttempt=null;
@@ -911,6 +922,7 @@ export async function workspace(root) {
             if(score)score.textContent=String(value.awarded_xp);
             if(current && current.id===record.id)Object.assign(current,value);
             await loadHistory();
+            chat?.refresh();
             if(!teacher||ownMode)document.dispatchEvent(new CustomEvent('gc:task-checked',{detail:{taskId:root.dataset.taskId,mark:value.awarded_xp}}));
         }});
         panel=render();if(panel)parent.append(panel);
@@ -1133,7 +1145,7 @@ export async function workspace(root) {
                 await request(record.grade_url,'POST',{mark,comment,review_solution_id:record.solution_id});
                 if(savedGeneration!==generation)return false;
                 await showLegacyAttempt(record);if(activeAttempt!==String(record.id))return false;await loadHistory();
-                notice.className='text-muted small';notice.textContent='Оценка и комментарий сохранены';return true;
+                confirmGradeSaved();return true;
             }});
     }
     async function openAttempt(item, check) {
@@ -1244,7 +1256,7 @@ export async function workspace(root) {
             const savedGeneration=generation;
             if(record.state!=='awaiting_review' || record.check_type!=='manual')await request(`/insider/code-submissions/${id}/manual-review`,'POST',{});
             await request(`/insider/code-submissions/${id}/grade`,'PUT',{points,comment});if(savedGeneration!==generation)return false;await show(id,options);if(current?.id!==id)return false;await loadHistory();
-            notice.className='text-muted small';notice.textContent='Оценка и комментарий сохранены';return true;
+            confirmGradeSaved();return true;
         }}));
         if (menu && record.runs.length) {
             const runs = node('details',{},node('summary',{},'История проверок'));

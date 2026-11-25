@@ -603,6 +603,22 @@
     background: var(--gc-surface); border-block-end: 1px solid var(--gc-border);
 }
 .gc-work-dialog__heading { min-width: 0; overflow-wrap: anywhere; }
+.gc-grade-confirmation {
+    position: fixed; z-index: 1090; pointer-events: none;
+    inset-inline-end: max(var(--gc-space-4), env(safe-area-inset-right));
+    inset-block-end: max(var(--gc-space-4), env(safe-area-inset-bottom));
+    max-inline-size: calc(100% - 2 * var(--gc-space-4));
+
+    &:not(:empty) {
+        display: flex; align-items: center; gap: var(--gc-space-2);
+        padding: var(--gc-space-2) var(--gc-space-3);
+        border: 1px solid var(--gc-border); border-radius: var(--gc-radius-md);
+        background: var(--gc-surface); color: var(--gc-on-surface);
+        box-shadow: 0 .25rem 1rem color-mix(in srgb, var(--gc-on-surface) 16%, transparent);
+        font-size: var(--gc-font-small);
+    }
+    i { color: var(--gc-success); }
+}
 .gc-work-dialog > header :is(h2,h3) {
     margin: 0; font-size: var(--gc-font-subtitle); font-weight: 600;
 }
@@ -862,8 +878,7 @@
     .gc-chat-foot .gc-chat-answer { margin-inline-start:auto; }
     .gc-chat-foot .gc-chat-answer + time { margin-inline-start:0; }
 }
-.gc-chat-file-pending { grid-column:1 / -1; font-size:var(--gc-font-small); }
-.gc-chat-file-pending .gc-chat-link { display:block; }
+.gc-chat-file-pending { grid-column:1 / -1; display:grid; justify-items:start; font-size:var(--gc-font-small); }
 .gc-chat-sources { display: grid; justify-items: start; gap: .15rem; margin-block-start: var(--gc-space-2); }
 .gc-chat-tutor-foot { align-items:baseline; margin-top:.55rem; }
 .gc-chat-coin { display:inline-flex; align-items:baseline; flex-wrap:wrap; gap:.3rem; color:var(--gc-on-surface-muted); font-size:var(--gc-font-caption); }
@@ -913,12 +928,17 @@
     border-radius:.4rem; max-height:8em; overflow:auto; white-space:pre-wrap; font: .85em/1.4 var(--bs-font-monospace); }
 .gc-chat-score { margin: .15rem 0; font-size: var(--gc-font-ui); }
 .gc-chat-score strong { font-size: 1.05em; }
+.gc-chat-award {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .65rem; margin: .45rem 0 0;
+    color: var(--gc-on-surface-muted); font-size: var(--gc-font-caption);
+    strong { color: var(--gc-on-surface); font-variant-numeric: tabular-nums; }
+}
 .gc-chat-foot { display: flex; flex-wrap: wrap; align-items: end; column-gap: .85rem; row-gap: .2rem; }
 .gc-chat-link, .gc-chat-disclosure-label {
     display: inline-flex; gap: .4rem; align-items: center; padding: .2rem 0 0; color: var(--chat-ink);
     font-size: var(--gc-font-small); font-weight: 600; line-height: 1.45; text-align: start;
 }
-.gc-chat-link::after { content: ''; width: .35rem; height: .35rem; border: solid currentColor; border-width: 1px 1px 0 0; transform: rotate(45deg); }
+.gc-chat-link::after { content: ''; flex: none; width: .35rem; height: .35rem; border: solid currentColor; border-width: 1px 1px 0 0; transform: rotate(45deg); }
 .gc-chat-feedback { margin-top: .3rem; }
 .gc-chat-feedback > summary { display: flex; flex-direction: column; align-items: start; justify-content: center; list-style: none; cursor: pointer; }
 .gc-chat-feedback > summary::-webkit-details-marker { display: none; }
@@ -971,7 +991,12 @@
 .gc-chat-send { width: 2.5rem; height: 2.5rem; border: 0; border-radius: 50%; background: var(--gc-button-primary); color: var(--gc-button-primary-text); }
 .gc-chat-send:disabled { opacity: .45; }
 .gc-chat-reply { justify-content: space-between; border-inline-start: 3px solid var(--chat-ink); padding-inline: .5rem; margin-block-end: .4rem; }
-.gc-chat-status:not(:empty) { display: block; padding: .25rem .85rem .5rem; color: var(--gc-on-surface-muted); font-size: var(--gc-font-caption); }
+.gc-chat-send-error:not(:empty) {
+    margin-block-end: var(--gc-space-2); padding: var(--gc-space-2) var(--gc-space-3);
+    border: 1px solid color-mix(in srgb, var(--gc-danger) 35%, var(--gc-border));
+    border-radius: var(--gc-radius-md); background: color-mix(in srgb, var(--gc-danger) 8%, var(--gc-surface));
+    color: var(--gc-on-surface); font-size: var(--gc-font-small);
+}
 @media(pointer:coarse) {
     .gc-chat-head button, .gc-chat-compose button, .gc-chat-answer, .gc-chat-file { min-height: 44px; }
     .gc-chat-quote, .gc-chat-link, .gc-chat-feedback summary { min-height: 2rem; }

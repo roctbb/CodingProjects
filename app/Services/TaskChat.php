@@ -155,7 +155,8 @@ class TaskChat
         $ids = fn (...$kinds) => $rows->whereIn('kind',$kinds)->pluck('event_id')->map(fn ($id) => trim($id))->all();
         $files = $native->whereIn('id',$ids(self::FILE))->get(['id','mode','files','legacy_id'])->keyBy('id');
         $legacyRows = $legacy->whereIn('id',$ids(self::LEGACY_FILE, self::LEGACY_GRADE))
-            ->get(['id','mark','evaluated_mark','raw_mark','comment','geekpaste_code_id'])->keyBy('id');
+            ->get(['id','mark','evaluated_mark','raw_mark','comment','geekpaste_code_id',
+                'deadline_penalty_amount','deadline_penalty_paid_at','deadline_penalty_waived_at'])->keyBy('id');
         $manualTask = $legacyRows->isNotEmpty() && !$assignment->is_code && !$assignment->is_quiz
             && !in_array(DB::table('code_task_checkers')->where('task_id',$task)->value('config->check_type'),
                 ['tests', ...\App\Services\CodeChecking\Configuration::AI_TYPES], true);
@@ -164,8 +165,14 @@ class TaskChat
             $teacherFeedback = \App\CourseActivity::where($scope)->where('type', \App\CourseActivity::TYPE_SOLUTION_CHECKED)
                 ->whereIn('solution_id', $ids(self::LEGACY_GRADE))->orderBy('id')->get(['solution_id','payload'])->keyBy('solution_id');
         }
-        $checks = $runs->leftJoin('code_test_reports as t','t.id','=','r.id')->whereIn('r.id',$ids(self::CHECK))
+        $checks = $runs->leftJoin('code_test_reports as t','t.id','=','r.id')
+            // The current grade may change after another check or after a penalty is removed.
+            ->leftJoin('solutions as grade', fn ($join) => $join->on('grade.id', '=', 's.solution_id')
+                ->on('r.id', '=', 's.current_run_id')->where('r.state', 'completed')->whereNotNull('r.finished_at')
+                ->where('grade.course_id', $course)->where('grade.task_id', $task)->where('grade.user_id', $student))
+            ->whereIn('r.id',$ids(self::CHECK))
             ->get(['r.id','r.submission_id','s.legacy_id','s.solution_id','r.finished_at','s.current_run_id','s.preparation_state','r.state','r.progress','r.points','r.comment','r.criteria','r.snapshot->check_type as method',
+                'grade.mark','grade.deadline_penalty_amount','grade.deadline_penalty_paid_at','grade.deadline_penalty_waived_at',
                 'r.snapshot->points as maximum','r.snapshot->ai_review->source_run_id as stronger',
                 'r.snapshot->ai_review->origin as review_origin','r.snapshot->ai_review->finding->focus as review_focus',
                 'r.snapshot->review_solution_id as solution','t.report->passed as passed','t.report->total as total','t.report->groups as test_groups',
@@ -210,6 +217,7 @@ class TaskChat
                 $item += ['type'=>'grade','attempt'=>'solution-'.$id,'method'=>$manual ? 'manual' : null,
                     'points'=>$grade->evaluated_mark ?? $grade->raw_mark ?? $grade->mark,'maximum'=>(int)$assignment->max_mark,
                     'text'=>$manual ? ($teacherComment ?? $comment) : 'Начислено '.$grade->mark.' XP'];
+                $item += $this->award($grade);
                 if ($requested->has($id)) $item['student_review'] = 'requested';
                 elseif ($mayRequest && $assignment->is_code) $item['student_review'] = 'available';
             } elseif ($kind === self::CHECK && $run = $checks->get($id)) {
@@ -225,6 +233,9 @@ class TaskChat
                         && $run->current_run_id === $id && $run->preparation_state === 'ready',
                     'text'=>in_array($run->method,['manual', ...\App\Services\CodeChecking\Configuration::AI_TYPES],true)
                         && $run->state==='completed' ? (string)$run->comment : ''];
+                if ($run->mark !== null && (!$run->legacy_id || $run->solution)) {
+                    $item += $this->award($run);
+                }
                 if ($run->review_origin === 'tutor' && ($original = $originals->get($run->stronger))
                     && $original->submission_id === $run->submission_id) {
                     $item['tutor_review'] = ['previous'=>$original->points, 'maximum'=>$original->maximum, 'focus'=>$run->review_focus];
@@ -264,6 +275,13 @@ class TaskChat
         }
         unset($entry);
         return ['events'=>$events,'before'=>$page->nextCursor()?->encode()];
+    }
+
+    private function award(object $grade): array
+    {
+        return ['awarded_xp' => (int) $grade->mark,
+            'deadline_penalty' => $grade->deadline_penalty_paid_at || $grade->deadline_penalty_waived_at
+                ? 0 : (int) $grade->deadline_penalty_amount];
     }
 
     private function compilerPreview(?string $json): string

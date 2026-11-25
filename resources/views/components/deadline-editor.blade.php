@@ -27,7 +27,7 @@
         <button class="btn btn-outline-secondary btn-sm mt-3" type="button" data-deadline-add><i class="fas fa-plus" aria-hidden="true"></i> Ещё срок</button>
     </div>
     @if($targetType === 'lesson')
-        <label class="form-check mt-3"><input class="form-check-input" type="checkbox" name="apply_to_tasks" value="1"><span class="form-check-label">Заменить индивидуальные сроки обычных задач сроками урока</span></label>
+        <label class="form-check mt-3"><input class="form-check-input" type="checkbox" name="apply_to_tasks" value="1" checked><span class="form-check-label">Заменить индивидуальные сроки обычных задач сроками урока</span></label>
         <p class="gc-help-text mt-2 mb-0">Новые обычные задачи наследуют сроки урока. Звёздные задачи сохраняют свои правила.</p>
     @endif
     <p class="gc-help-text mt-3 mb-0">Последний процент действует и дальше. Сдача остаётся открытой. За отправленное решение сохраняется минимум 1 балл; уже заработанные баллы не снижаются.</p>

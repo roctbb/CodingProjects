@@ -96,6 +96,25 @@ class CourseLessonCardsTest extends DeadlineFeatureCase
         $this->assertSame(0, $this->cards(1)->query('//*[@id="lesson-1"]//*[@data-lesson-deadline-status="overdue"]')->length);
     }
 
+    public function test_calendar_only_shows_lesson_stages_that_apply_to_its_tasks(): void
+    {
+        $this->policy('lesson', 1, stages: [['deadline_date' => '2026-11-23', 'retained_percent' => 0]]);
+        foreach ([11, 12] as $task) {
+            $this->policy('task', $task, stages: [['deadline_date' => '2026-11-16', 'retained_percent' => 50]]);
+        }
+        foreach ([1, 2] as $viewer) {
+            $calendar = $this->cards($viewer)->query('//*[@id="lesson-1"]//*[@data-deadline-popover]')->item(0);
+            $this->assertStringContainsString('штраф 50%', $calendar->textContent);
+            $this->assertStringNotContainsString('23.11', $calendar->textContent);
+        }
+
+        $this->policy('task', 12, extra: ['mode' => 'inherit']);
+        $calendar = $this->cards(1)->query('//*[@id="lesson-1"]//*[@data-deadline-popover]')->item(0);
+        $this->assertStringContainsString('штраф 50%', $calendar->textContent);
+        $this->assertStringContainsString('штраф 100%', $calendar->textContent);
+        $this->assertStringContainsString('23.11', $calendar->textContent);
+    }
+
     public function test_calendar_uses_the_first_deadline_even_when_a_later_stage_is_today(): void
     {
         \Carbon\Carbon::setTestNow('2026-11-17 12:00:00 Europe/Moscow');

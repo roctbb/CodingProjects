@@ -16,6 +16,7 @@ export default async function deadlineFlows(page, config) {
             await target.locator('[data-bs-target="#lesson-deadline-modal-1"]').click();
             const modal=target.locator('#lesson-deadline-modal-1'); await modal.waitFor({state:'visible'});
             assert(await modal.locator('[data-deadline-row]').count()===2,'lesson chain missing');
+            assert(await modal.locator('[name="apply_to_tasks"]').isChecked(),'lesson deadline does not replace task deadlines by default');
             await modal.locator('[data-deadline-add]').click();
             const added=modal.locator('[data-deadline-row]').last();
             await added.locator('input[type="date"]').fill('2026-11-29');

@@ -131,10 +131,7 @@
 	                            $lessonTaskCount = $lesson->steps->sum(function ($step) {
 	                                return $step->tasks->count();
 	                            });
-	                            $lessonDeadline = $lesson->sharedDeadline($course->id);
                                 $lessonDeadlines = $lessonCardDeadlines->filter(fn ($deadline) => $deadline->task->step->lesson_id == $lesson->id);
-                                $lessonCalendarDeadline = $lessonDeadlines->first(fn ($deadline) => ($deadline instanceof \App\Support\DeadlineRule
-                                    ? $deadline->cutoffAt() : $deadline->expiration->copy()->addDay())->isFuture()) ?? $lessonDeadlines->last();
 	                        @endphp
 
                         <article id="lesson-{{ $lesson->id }}" class="course-path-item @if ($isDone) is-done @endif @if ($isCurrent) is-current @endif @if (!$isAvailable) is-locked @endif @if (!$isDone && ($hasEarlyAccess || $canBuyEarlyAccess)) is-early-access @endif">
