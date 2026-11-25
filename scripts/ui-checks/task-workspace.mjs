@@ -68,7 +68,7 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             if (actor==='student') await showStudentChat(work);
             if(actor==='teacher'){
                 await chat.locator('[data-kind="check"][data-attempt="'+attempt+'"]').getByRole('button',{name:'Перепроверить',exact:true}).click();
-                await page.getByRole('dialog',{name:'Перепроверить решение'}).getByRole('button',{name:'Оценить вручную'}).click();
+                await work.getByRole('heading',{name:'Проверка и оценка',exact:true}).waitFor();
             }else if(attempt?.startsWith('solution-')){
                 await chat.locator('[data-kind="grade"][data-attempt="'+attempt+'"]').getByRole('button',{name:'Посмотреть проверку'}).click();
             }else{
@@ -256,6 +256,25 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             check('chat-pending-grade-keeps-the-arrow-beside-the-label',
                 ['flex', 'inline-flex'].includes(arrow.layout) && arrow.width > 0,width,arrow);
             await pendingGrade.locator('..').screenshot({path:`${output}/chat-pending-grade-${width}.png`});
+            const legacyChat = page.locator('#execution-workspace-11 .gc-task-chat');
+            await legacyChat.getByRole('button',{name:'К списку учеников'}).click();
+            await page.locator('#student-solutions-11 [data-execution-student-list] [data-student-id="1"]').click();
+            const legacyWork = page.getByRole('dialog',{name:'Работа с решением'});
+            const legacyGrade = legacyChat.locator('[data-kind="grade"][data-attempt="solution-1"]');
+            for (const entry of [
+                legacyChat.locator('[data-kind="file"][data-attempt="solution-1"] .gc-chat-file'),
+                legacyGrade.locator('.gc-chat-quote'),
+                legacyGrade.getByRole('button',{name:'Перепроверить',exact:true}),
+            ]) {
+                await entry.click();
+                await legacyWork.getByRole('heading',{name:'Проверка и оценка',exact:true}).waitFor();
+                await legacyWork.locator('.gc-submitted-work').getByText('Текст ответа',{exact:true}).waitFor();
+                const grade = legacyWork.getByRole('spinbutton',{name:'Баллы, из 10',exact:true});
+                await grade.waitFor();
+                check('chat-entry-opens-the-same-reviewed-legacy-attempt',await grade.inputValue()==='8'
+                    && await legacyWork.getByRole('button',{name:'Сохранить оценку',exact:true}).isVisible(),width);
+                await legacyWork.getByRole('button',{name:'Закрыть',exact:true}).click();
+            }
             if (width >= 1200) {
                 await visit('teacher',13,null,{open:false});
                 await context.grantPermissions(['clipboard-read','clipboard-write'],{origin:url});
@@ -626,12 +645,15 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await page.getByRole('dialog',{name:'Работа с решением'}).getByRole('button',{name:'Закрыть'}).click();
             const result=ai.locator('[data-kind="check"][data-attempt="'+id(13)+'"]');
             await result.getByRole('button',{name:'Перепроверить',exact:true}).click();
-            await page.getByRole('combobox',{name:'Способ проверки'}).selectOption('strong');
+            const review = page.getByRole('dialog',{name:'Работа с решением'});
+            await review.getByRole('button',{name:'Действия',exact:true}).click();
+            await review.getByRole('button',{name:'Перепроверить усиленной моделью',exact:true}).click();
             await page.getByRole('textbox',{name:'Комментарий к перепроверке',exact:true}).fill('Проверьте второй критерий подробнее.');
             if(width===1440)await page.getByRole('dialog',{name:'Перепроверить решение'}).screenshot({path:`${output}/chat-recheck-method.png`});
             await page.getByRole('button',{name:'Запустить перепроверку',exact:true}).click();
             const enhanced=await recheckResponse;
             check('task-enhanced-ai-recheck',enhanced.status()===202 && JSON.parse(enhanced.request().postData()).stronger_ai===true,width);
+            await review.getByRole('button',{name:'Закрыть',exact:true}).click();
             await result.getByRole('button',{name:'Перепроверить',exact:true}).waitFor({state:'hidden'});
 
             await visit('teacher',14,id(14),{open:false});
@@ -665,7 +687,6 @@ export default async function taskWorkspace(controlPage, {url, output, widths = 
             await visit('teacher',17,id(18),{open:false});
             const selected=page.locator('#execution-workspace-17');
             await selected.locator('[data-kind="check"][data-attempt="'+id(17)+'"]').getByRole('button',{name:'Перепроверить',exact:true}).click();
-            await page.getByRole('dialog',{name:'Перепроверить решение'}).getByRole('button',{name:'Оценить вручную'}).click();
             await selected.getByRole('spinbutton',{name:'Баллы, из 20',exact:true}).fill('19');
             await writeComment(selected,'Проверил исходный блокнот.');
             const saved=page.waitForResponse(r=>r.url().endsWith('/'+id(17)+'/grade') && r.request().method()==='PUT');

@@ -168,100 +168,30 @@ export async function workspace(root) {
             openWorkspace('Отправить решение', 'compose');editDraft();
         }
     }
-    function chatDialog(title,loadContent,{wide=true,studentWork=false}={}) {
-        const body=node('div',{class:studentWork ? 'gc-work-dialog__content' : null},node('p',{role:'status'},'Загружаем…'));
-        const dialog=openDialog(title,body);
-        if(wide)dialog.classList.add('gc-source-dialog');
-        if(studentWork)styleWorkDialog(dialog, 'result');
-        const render=async()=>{try{const content=await loadContent(render,dialog);if(dialog.open)body.replaceChildren(content);}
-            catch(e){if(dialog.open)body.replaceChildren(node('p',{role:'alert'},e.message),button('Повторить',render));}};
-        render();
-    }
-    async function chatSubmission(attempt) {
-        const data=attempt.startsWith('solution-')
-            ? await request(base+'/code-attempts/'+attempt.slice(9))
-            : await request('/insider/code-submissions/'+attempt+'?test_data=metadata');
-        const source=data.source_submission_id ? await request('/insider/code-submissions/'+data.source_submission_id+'?test_data=metadata') : data;
-        return {data,source};
-    }
-    function openSource(attempt) {
-        chatDialog('Отправленное решение',async()=>{
-            const {data,source}=await chatSubmission(attempt);
-            const repository=source.repository;
-            const preview=repository?.url && !source.files?.length ? node('div') :
-                submittedWork(data.kind==='legacy_attempt' && !data.source_submission_id ? {...data,mode:'text'} : source);
-            if(data.source_notice)preview.prepend(node('p',{class:'gc-help-note'},data.source_notice));
-            if(repository?.url)preview.append(node('p',{},download(repository.url,repository.url)));
-            if(repository?.commit)preview.append(node('p',{},node('code',{},repository.commit),' ',
-                download('/insider/code-submissions/'+source.id+'/repository/archive','Скачать репозиторий')));
-            return preview;
-        }, {studentWork: true});
-    }
     async function gradeChatSubmission(attempt) {
         details.clear();
         await viewDetails(attempt);
-        results.querySelector('.gc-inline-grade input')?.focus();
-    }
-    function openChatReview(event) {
-        chatDialog('Перепроверить решение', async (reload,dialog) => {
-            const {data,source}=await chatSubmission(event.attempt);
-            const snapshot=data.kind==='legacy_attempt' ? data : null;
-            const active=source.execution_id && !['completed','error','imported_pending','awaiting_review'].includes(source.state);
-            if (active || (event.run && event.run!==source.execution_id)) {
-                chat.refresh();
-                return node('p',{role:'status'},active ? 'Эта посылка уже на проверке.' : 'В чате уже есть более свежая проверка этой посылки.');
-            }
-            const methods={manual:'Оценить вручную'};
-            const type=source.recheck_type || source.check_type;
-            const automatic=source.execution_id && source.state!=='error' && (!source.source_version_unknown || snapshot);
-            if (automatic && type==='tests') methods.normal='Повторить автотесты';
-            if (automatic && type===combinedCheck) methods.normal='Повторить тесты и проверку ИИ';
-            if (automatic && source.ai_recheck?.available) methods.strong='Усиленная модель';
-            const method=select('manual',methods,update);
-            const note=textarea('',()=>{},{rows:3,maxLength:4000,placeholder:'Что проверить внимательнее?'});
-            const noteField=field('Комментарий к перепроверке',note);
-            const status=node('p',{class:'gc-help-text',role:'status'});
-            const submit=button('Оценить вручную',async()=>{
-                if(method.value==='manual') {
-                    dialog.close();
-                    await gradeChatSubmission(event.attempt);
-                    return;
-                }
-                submit.disabled=true;
-                method.disabled=true;
-                try {
-                    await startRecheck(source,snapshot,{stronger_ai:method.value==='strong',comment:note.value});
-                    dialog.close();
-                    chat.refresh();
-                } catch(error) {
-                    status.textContent=error.message;
-                    submit.disabled=false;
-                    method.disabled=false;
-                }
-            },'primary');
-            function update() {
-                const manual=method.value==='manual';
-                noteField.hidden=manual;
-                submit.textContent=manual ? 'Оценить вручную' : 'Запустить перепроверку';
-            }
-            update();
-            return node('div',{},node('p',{class:'gc-help-text'},event.reference),
-                data.source_notice ? node('p',{class:'gc-help-note'},data.source_notice) : null,
-                Object.keys(methods).length>1 ? field('Способ проверки',method) : null,
-                usesAi(type) && !methods.strong && source.ai_recheck?.reason ? node('p',{class:'gc-help-text'},source.ai_recheck.reason) : null,
-                noteField,status,actions(submit));
-        }, {wide: false});
+        if (workspaceDialog.open) results.querySelector('.gc-inline-grade input')?.focus({preventScroll:true});
     }
     function openReport(event) {
-        chatDialog('Журнал тестирования',async reload=>{
-            const path='/insider/code-submissions/'+event.source+'/runs/'+event.run;
-            const run=await request(path+'?test_data=metadata');
-            const body=node('div');
-            if(run.report)renderReport(run.report,body,event.source,{afterPurchase:reload});
-            else if(run.text_report_available)body.append(node('pre',{class:'gc-execution-output'},(await request(path+'?test_data=full')).comment || 'Текстовый отчёт пуст.'));
-            else body.append(node('p',{},run.execution_error?.message || 'Подробный журнал для этой проверки не сохранился.'));
-            return body;
-        }, {studentWork: true});
+        const body=node('div',{class:'gc-work-dialog__content'},node('p',{role:'status'},'Загружаем…'));
+        const dialog=openDialog('Журнал тестирования',body);
+        dialog.classList.add('gc-source-dialog');
+        styleWorkDialog(dialog, 'result');
+        const path='/insider/code-submissions/'+event.source+'/runs/'+event.run;
+        async function render() {
+            try {
+                const run=await request(path+'?test_data=metadata');
+                const report=node('div');
+                if(run.report)renderReport(run.report,report,event.source,{afterPurchase:render});
+                else if(run.text_report_available)report.append(node('pre',{class:'gc-execution-output'},(await request(path+'?test_data=full')).comment || 'Текстовый отчёт пуст.'));
+                else report.append(node('p',{},run.execution_error?.message || 'Подробный журнал для этой проверки не сохранился.'));
+                if(dialog.open)body.replaceChildren(report);
+            } catch(e) {
+                if(dialog.open)body.replaceChildren(node('p',{role:'alert'},e.message),button('Повторить',render));
+            }
+        }
+        render();
     }
     function previousCheck(event) {
         const score = event.points != null ? ' · ' + [event.points, event.maximum].filter(value => value != null).join(' из ') : '';
@@ -302,8 +232,8 @@ export async function workspace(root) {
     const chat=personalChat ? taskChat(root,{
         back:inlineReview || ownWorkspace ? ()=>root.dispatchEvent(new CustomEvent('gc:execution-close')) : null,
         solutions:panelHistory,
-        grade:gradeChatSubmission,recheck:openChatReview,requestReview:openReviewRequest,
-        details:viewDetails,source:teacher ? openSource : viewDetails,report:openReport,compose:openEditor,
+        grade:gradeChatSubmission,requestReview:openReviewRequest,
+        details:viewDetails,report:openReport,compose:openEditor,
         check:teacher ? null : event => viewDetails(event.attempt, event),
         updated:refreshChatAttempts,
     }) : null;
@@ -940,7 +870,7 @@ export async function workspace(root) {
             const panel=node('section',{class:'gc-execution-result'},header);
             if(teacher && !ownMode){const menu=resultActions();const remove=removeAttemptAction(record);menu.add(remove);remove.classList.add('text-danger');panel.append(node('div',{class:'gc-result-context-bar'},menu.root));}
             renderAward(record,panel,{label:false});
-            if(!teacher && record.source_notice)panel.append(node('p',{class:'gc-help-note'},record.source_notice));
+            if(record.source_notice)panel.append(node('p',{class:'gc-help-note'},record.source_notice));
             if(record.text)panel.append(workPreview({...record,mode:'text'}));
             if(!record.text)panel.append(node('p',{class:'text-muted small'},'Код этой сдачи не сохранился отдельно.'));
             if(record.can_grade && !ownMode)panel.append(legacyGrading(record));
@@ -997,7 +927,7 @@ export async function workspace(root) {
         const content=node('div',{},ai?field('Модель',model):null,field('Комментарий к перепроверке',note),node('p',{class:'gc-help-text'},reviewSolution?'Будут проверены сохранённые файлы, показанные на экране. Результат обновит оценку выбранной сдачи; предыдущие проверки останутся в журнале.':'Будет проверена сохранённая работа. Предыдущие проверки останутся в журнале этой сдачи.'),node('details',{},node('summary',{},'Настройки проверки'),field('Использовать текущие настройки задачи',latest)),status);
         model.addEventListener('change',()=>{latest.disabled=model.value==='strong';if(latest.disabled)latest.checked=false;});latest.disabled=stronger;
         let dialog;
-        const run=button('Запустить перепроверку',async()=>{run.disabled=true;try{await startRecheck(record,options.snapshotOf,{stronger_ai:model.value==='strong',latest_configuration:latest.checked,comment:note.value});dialog.close();await show(record.id,{...options,refreshReviewSolution:reviewSolution});await loadHistory();}catch(error){status.textContent=error.message;run.disabled=false;}},'primary');
+        const run=button('Запустить перепроверку',async()=>{run.disabled=true;try{await startRecheck(record,options.snapshotOf,{stronger_ai:model.value==='strong',latest_configuration:latest.checked,comment:note.value});dialog.close();chat?.refresh();await show(record.id,{...options,refreshReviewSolution:reviewSolution});await loadHistory();}catch(error){status.textContent=error.message;run.disabled=false;}},'primary');
         dialog=openDialog(ai?'Перепроверить решение':'Повторить автотесты',content,[button('Отмена',()=>dialog.close()),run]);
     }
     function compareDialog(record){
@@ -1194,9 +1124,9 @@ export async function workspace(root) {
             if(record.execution_error?.can_retry && !sourceOnly)body.append(button('Повторить проверку',safe(async()=>{await request(record.execution_error.retry_url,'POST',{});await show(id,options);await loadHistory();}),'primary'));
         }
         body.append(workPreview(record));
-        if (!teacher && options.snapshotOf?.source_notice) body.append(node('p',{class:'gc-help-note'},options.snapshotOf.source_notice));
+        if (options.snapshotOf?.source_notice) body.append(node('p',{class:'gc-help-note'},options.snapshotOf.source_notice));
         const repository = record.repository;
-        if (!teacher && repository?.url) body.append(node('p',{},download(repository.url,'Репозиторий GitHub')));
+        if (repository?.url) body.append(node('p',{},download(repository.url,'Репозиторий GitHub')));
         if (!focusedVerdict && repository?.commit) body.append(node('p',{},`GitHub · ${repository.commit}`, ' ',download(`/insider/code-submissions/${id}/repository/archive`,'Скачать репозиторий')));
         const chatCheck = options.check;
         const viewingPreviousCheck = chatCheck?.source === id && chatCheck.run !== record.execution_id;

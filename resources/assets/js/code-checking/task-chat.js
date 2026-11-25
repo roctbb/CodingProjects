@@ -180,7 +180,7 @@ export function taskChat(root, actions) {
     }
     function fileBubble(item, event, own) {
         if (!own) item.append(node('strong', {class:'gc-chat-who'}, member.textContent));
-        const file = action('', () => actions.source(event.attempt), 'gc-chat-file');
+        const file = action('', () => actions.details(event.attempt), 'gc-chat-file');
         const caption = event.archived ? 'Версия GeekPaste' : 'Отправлено решение';
         file.append(node('i', {class:'fas fa-code', 'aria-hidden':'true'}),
             node('span', {}, node('small', {}, caption), node('b', {}, event.label)));
@@ -339,7 +339,7 @@ export function taskChat(root, actions) {
         }
         if (event.attempt && !followsSubmission) {
             const reference = event.reference || 'Посылка';
-            const quote = action(reference, () => actions.source(event.attempt), 'gc-chat-quote');
+            const quote = action(reference, () => actions.details(event.attempt), 'gc-chat-quote');
             quote.title = 'Открыть решение · ' + reference;
             item.append(quote);
         }
@@ -441,7 +441,7 @@ export function taskChat(root, actions) {
             footer.append(node('small',{class:'gc-help-text'},'Запрос на перепроверку отправлен'));
         }
         if (teacher && (event.type === 'grade' || event.reviewable)) {
-            footer.append(action('Перепроверить', () => actions.recheck(event), 'gc-chat-link'));
+            footer.append(action('Перепроверить', () => actions.grade(event.attempt), 'gc-chat-link'));
         }
         footer.append(time);
         item.append(footer);
