@@ -66,6 +66,24 @@ export default async function deadlineWorkspace(controlPage, { url, output, widt
             await page.clock.fastForward(schedule.cutoffs.at(-1) - schedule.cutoffs[0] + 10);
             const missed = page.locator('[data-deadline-agenda="missed"] [data-deadline-task-id="11"]');
             check('deadlines-live-final-stage-moves-to-missed', await missed.locator('[data-deadline-last-label]').isVisible() && await page.locator('[data-deadline-agenda="upcoming"]').isHidden(), width);
+
+            await page.goto(`${url}/insider/courses/1/deadlines?actor=student&scenario=base`);
+            const studentRow = page.locator('[data-deadline-task-id="12"]');
+            const studentRule = studentRow.locator('[data-deadline-summary]');
+            await studentRow.locator('[data-deadline-state]').waitFor({ state: 'visible' });
+            const studentSchedule = await studentRule.evaluate(el => ({
+                now: Number(el.dataset.serverNow),
+                cutoffs: [...el.querySelectorAll('[data-deadline-stage]')].map(stage => Number(stage.dataset.cutoff)),
+            }));
+            await page.clock.fastForward(studentSchedule.cutoffs[0] - studentSchedule.now + 10);
+            check('student-deadline-stays-visible-with-partial-penalty',
+                await studentRow.isVisible() && await studentRule.locator('[data-deadline-current]').textContent() === 'Сейчас −30%', width);
+            await page.clock.fastForward(studentSchedule.cutoffs.at(-1) - studentSchedule.cutoffs[0] + 10);
+            check('student-deadline-hides-at-full-penalty',
+                await studentRow.isHidden() && await page.locator('[data-deadline-agenda="upcoming"]').isHidden(), width);
+            const anyVisibleRows = await page.locator('[data-deadline-row]:visible').count() > 0;
+            check('student-deadline-empty-state-follows-remaining-work',
+                await page.locator('[data-deadline-empty]').isHidden() === anyVisibleRows, width);
         } finally { await context.close(); }
     }
     return { results, errors };

@@ -419,8 +419,10 @@ class CoursesController extends Controller
 
         $nativeProgress = $isManager ? null : app(\App\Services\CodeChecking\History::class)
             ->ungradedProgress((int) $course->id, $deadlines->pluck('task_id')->unique()->values()->all(), (int) $user->id);
+        // A later deadline stage can restore points while the page is open.
         $deadlineItems = \App\Support\CourseDeadlineWorkspace::items($deadlines, $isManager ? null : (int) $user->id, $nativeProgress)
-            ->reject(fn ($item) => $item['status'] === 'blocked')->values();
+            ->reject(fn ($item) => $item['status'] === 'blocked'
+                || (!$isManager && $item['fully_penalized'] && $item['next'] === null))->values();
 
         return view('courses.deadlines', compact('course', 'user', 'isManager', 'deadlines', 'deadlineMonths', 'deadlineItems'));
     }

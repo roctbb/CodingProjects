@@ -28,7 +28,7 @@ class CourseDeadlinesTest extends TestCase
             CREATE TABLE lesson_early_accesses (id INTEGER PRIMARY KEY, course_id INTEGER, lesson_id INTEGER, user_id INTEGER);
             CREATE TABLE program_steps (id INTEGER PRIMARY KEY, name TEXT, lesson_id INTEGER);
             CREATE TABLE tasks (id INTEGER PRIMARY KEY, name TEXT, step_id INTEGER, max_mark INTEGER DEFAULT 10, is_hidden INTEGER DEFAULT 0);
-            CREATE TABLE task_deadlines (id INTEGER PRIMARY KEY, task_id INTEGER, course_id INTEGER, expiration TEXT);
+            CREATE TABLE task_deadlines (id INTEGER PRIMARY KEY, task_id INTEGER, course_id INTEGER, expiration TEXT, penalty REAL DEFAULT 0.7);
             CREATE TABLE solutions (id INTEGER PRIMARY KEY, task_id INTEGER, course_id INTEGER, user_id INTEGER, mark INTEGER);
             INSERT INTO users VALUES (1, 'Student', 'student', '2026-01-01'), (2, 'Teacher', 'teacher', '2026-01-01'), (3, 'Outsider', 'student', '2026-01-01');
             INSERT INTO courses VALUES (1, 'Course', 1), (2, 'Other course', 2);
@@ -146,6 +146,20 @@ class CourseDeadlinesTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-10-11 00:00:00'));
         $this->assertTrue($this->deadlineData()['deadlines']->firstWhere('task_id', 2)->is_overdue);
+    }
+
+    public function test_legacy_full_penalty_hides_a_deadline_only_after_its_cutoff(): void
+    {
+        DB::table('task_deadlines')->where('task_id', 2)->update(['penalty' => 0]);
+        $url = '/insider/courses/1/deadlines';
+        Carbon::setTestNow('2026-10-11 00:00:00');
+        $this->actingAs(User::findOrFail(1))->get($url)->assertOk()->assertSee('data-deadline-task-id="2"', false);
+
+        Carbon::setTestNow('2026-10-11 00:00:01');
+        $this->get($url)->assertOk()
+            ->assertDontSee('data-deadline-task-id="2"', false)
+            ->assertSee('data-deadline-task-id="3"', false);
+        $this->actingAs(User::findOrFail(2))->get($url)->assertOk()->assertSee('data-deadline-task-id="2"', false);
     }
 
     public function test_course_outsider_cannot_access_deadlines(): void

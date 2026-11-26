@@ -5,7 +5,7 @@ export function deadlineState(stages, legacy, now) {
         if (legacy ? now > stage.cutoff : now >= stage.cutoff) percent = stage.percent;
         else { next = stage; break; }
     }
-    return {penalty: Math.round((100 - percent) * 100) / 100, next};
+    return {penalty: Math.round((100 - percent) * 100) / 100, fullyPenalized: percent === 0, next};
 }
 
 const dayFormatters = new Map();
@@ -98,7 +98,7 @@ export default function initDeadlineSummaries() {
         let delay = Infinity;
         for (const {root, serverNow, legacy, stages} of summaries) {
             const now = serverNow + performance.now() - start;
-            const {penalty, next} = deadlineState(stages, legacy, now);
+            const {penalty, fullyPenalized, next} = deadlineState(stages, legacy, now);
             root.querySelector('[data-deadline-current]').textContent = penalty ? `Сейчас −${penalty}%` : 'Без штрафа';
             const calendar = root.querySelector('[data-deadline-calendar]');
             if (!calendar) root.querySelector('[data-deadline-next]').hidden = !next;
@@ -118,10 +118,10 @@ export default function initDeadlineSummaries() {
                 if (effect) effect.hidden = nextPenaltyAmount === penalty;
                 delay = Math.min(delay, Math.max(1, next.cutoff - now + (legacy ? 1 : 0)));
             }
-            const state = `${penalty}:${next?.cutoff ?? ''}`;
+            const state = `${penalty}:${fullyPenalized}:${next?.cutoff ?? ''}`;
             if (root.dataset.deadlineState !== state) {
                 root.dataset.deadlineState = state;
-                root.dispatchEvent(new CustomEvent('gc:deadline-change', { bubbles: true, detail: { penalty, next } }));
+                root.dispatchEvent(new CustomEvent('gc:deadline-change', { bubbles: true, detail: { penalty, fullyPenalized, next } }));
             }
         }
         for (const {root, first, serverNow} of calendars) {

@@ -65,7 +65,7 @@ final class CourseDeadlineWorkspace
                 'done' => (bool) $entry->is_done,
                 'status' => $blocked ? 'blocked' : ($progress['status'] ?? null),
                 'points' => $progress['points'] ?? null,
-                'penalty' => (float) round(100 - $rule->at($now)->penalty * 100, 2),
+                'fully_penalized' => (float) $rule->at($now)->penalty === 0.0,
                 'next' => $next ? \Carbon\Carbon::parse($next['at'], 'UTC')->getTimestampMs() : null,
                 'last' => $last ? $rule->deadlineAt($last) : null,
             ];

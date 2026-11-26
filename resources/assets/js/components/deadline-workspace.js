@@ -8,29 +8,36 @@ export default function initDeadlineWorkspaces() {
         const upcoming = workspace.querySelector('[data-deadline-agenda="upcoming"]');
         const missed = workspace.querySelector('[data-deadline-agenda="missed"]');
         if (!upcoming || !missed) return;
+        const empty = workspace.querySelector('[data-deadline-empty]');
+        const student = workspace.hasAttribute('data-deadline-student');
 
         workspace.addEventListener('gc:deadline-change', event => {
             const row = event.target.closest('[data-deadline-row]');
             if (!row) return;
 
             const next = String(event.detail.next?.cutoff ?? '');
-            if (next === row.dataset.deadlineNextCutoff) return;
+            const hidden = student && event.detail.fullyPenalized;
+            if (next === row.dataset.deadlineNextCutoff && hidden === row.hidden) return;
+            if (hidden) row.querySelector('[popover]:popover-open')?.hidePopover();
+            row.hidden = hidden;
             row.dataset.deadlineNextCutoff = next;
             row.querySelector('[data-deadline-last-label]').hidden = next !== '';
 
-            const group = next ? upcoming : missed;
-            const targetList = group.querySelector('[data-deadline-list]');
+            const targetList = (next ? upcoming : missed).querySelector('[data-deadline-list]');
             const previousList = row.parentElement;
             const before = [...targetList.children].find(other => other !== row
                 && (sortDate(other) - sortDate(row) || Number(other.dataset.deadlineTaskId) - Number(row.dataset.deadlineTaskId)) > 0) ?? null;
+            let focused;
 
             if (targetList !== previousList || row.nextElementSibling !== before) {
-                const focused = row.contains(document.activeElement) ? document.activeElement : null;
-                group.hidden = false;
+                if (!hidden && row.contains(document.activeElement)) focused = document.activeElement;
                 targetList.insertBefore(row, before);
-                previousList.closest('[data-deadline-agenda]').hidden = !previousList.childElementCount;
-                focused?.focus({ preventScroll: true });
             }
+
+            upcoming.hidden = !upcoming.querySelector('[data-deadline-row]:not([hidden])');
+            missed.hidden = !missed.querySelector('[data-deadline-row]:not([hidden])');
+            empty.hidden = !upcoming.hidden || !missed.hidden;
+            focused?.focus({ preventScroll: true });
         });
     });
 }

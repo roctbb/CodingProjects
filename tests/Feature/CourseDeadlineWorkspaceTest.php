@@ -59,18 +59,42 @@ class CourseDeadlineWorkspaceTest extends DeadlineFeatureCase
         $this->assertSame(4, substr_count($response->getContent(), 'data-deadline-stage '));
     }
 
-    public function test_completed_work_is_hidden_and_last_stage_does_not_close_submissions(): void
+    public function test_completed_work_and_deadlines_with_full_penalty_are_hidden_from_students(): void
     {
         $this->policy('task', 11);
         $this->policy('task', 12);
         $this->solution(mark: 10);
-        Carbon::setTestNow('2026-11-24 12:00:00 Europe/Moscow');
-        $response = $this->actingAs(User::find(1))->get('/insider/courses/1/deadlines')->assertOk();
-        $response->assertSee('Сейчас −100%')->assertSee('Последний срок')->assertSee('22.11 23:59');
-        $items = $response->viewData('deadlineItems');
-        $this->assertNull($items->firstWhere('task.id', 11));
-        $this->assertNull($items->firstWhere('task.id', 12)['next']);
-        $this->assertStringContainsString('Сдавать можно и после последнего срока', $response->getContent());
+        $url = '/insider/courses/1/deadlines';
+        Carbon::setTestNow('2026-11-22 23:59:59 Europe/Moscow');
+        $this->actingAs(User::find(1))->get($url)->assertOk()
+            ->assertDontSee('data-deadline-task-id="11"', false)
+            ->assertSee('data-deadline-task-id="12"', false);
+
+        Carbon::setTestNow('2026-11-23 00:00:00 Europe/Moscow');
+        $response = $this->get($url)->assertOk()->assertDontSee('data-deadline-row', false);
+        $this->assertMatchesRegularExpression('/data-deadline-empty\s*>/', $response->getContent());
+        $this->assertEmpty($response->viewData('deadlineItems'));
+
+        $this->actingAs(User::find(2))->get($url)->assertOk()
+            ->assertSee('data-deadline-task-id="12"', false)
+            ->assertSee('Сейчас −100%')->assertSee('Последний срок')->assertSee('22.11 23:59')
+            ->assertSee('Сдавать можно и после последнего срока');
+    }
+
+    public function test_deadline_visibility_follows_current_retained_percentage(): void
+    {
+        $this->policy('task', 11, [
+            ['deadline_date' => '2026-11-15', 'retained_percent' => 0],
+            ['deadline_date' => '2026-11-22', 'retained_percent' => 70],
+        ]);
+        $this->policy('task', 12, [['deadline_date' => '2026-11-15', 'retained_percent' => 0.004]]);
+        Carbon::setTestNow('2026-11-17 12:00:00 Europe/Moscow');
+        $url = '/insider/courses/1/deadlines';
+        $response = $this->actingAs(User::find(1))->get($url)->assertOk()->assertSee('data-deadline-task-id="12"', false);
+        $this->assertMatchesRegularExpression('/data-deadline-task-id="11"[^>]* hidden[ ]*>/', $response->getContent());
+
+        Carbon::setTestNow('2026-11-23 00:00:00 Europe/Moscow');
+        $this->get($url)->assertOk()->assertSee('data-deadline-task-id="11"', false)->assertSee('Сейчас −30%');
     }
 
     public function test_cards_show_due_dates_for_pending_and_partial_work(): void
@@ -150,6 +174,6 @@ class CourseDeadlineWorkspaceTest extends DeadlineFeatureCase
         $this->assertSame(0, $summary['count']);
         $expired->assertDontSee('data-deadline-task-id="12"', false);
         DB::table('blocked_tasks')->delete();
-        $this->get('/insider/courses/1/deadlines')->assertOk()->assertSee('data-deadline-task-id="12"', false);
+        $this->get('/insider/courses/1/deadlines')->assertOk()->assertDontSee('data-deadline-task-id="12"', false);
     }
 }
