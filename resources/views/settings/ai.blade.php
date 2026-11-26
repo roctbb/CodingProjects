@@ -84,6 +84,15 @@
                 </div>
             </div>
         </x-gc-form-section>
+        <x-gc-form-section title="Проверка решений">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <x-gc-field name="settings.submission_hourly_limit" id="ai-submission-hourly-limit" label="Попыток ИИ-проверки в час" hint="Для каждого пользователя и каждой задачи с ИИ-проверкой. Если поле пустое, действует лимит задачи или 3 попытки по умолчанию.">
+                        <input id="ai-submission-hourly-limit" name="settings[submission_hourly_limit]" type="number" min="1" max="1000" class="form-control" value="{{ old('settings.submission_hourly_limit', $settings['submission_hourly_limit']) }}">
+                    </x-gc-field>
+                </div>
+            </div>
+        </x-gc-form-section>
         <x-gc-form-section title="Ростислоп Нейрославович">
             <div class="row g-3" id="tutor-limits">
                 <div class="col-12 col-md-6">

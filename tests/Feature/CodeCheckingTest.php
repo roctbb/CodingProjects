@@ -1728,6 +1728,69 @@ class CodeCheckingTest extends TestCase
         $this->assertSame(15, (int) User::find(2)->balance());
     }
 
+    public function test_each_ai_submission_frees_a_slot_exactly_one_hour_after_submission(): void
+    {
+        $base = '/insider/courses/7/tasks/12';
+        $this->travelTo(now()->setMicrosecond(123456), function ($started) use ($base) {
+            $this->login(1)->putJson($base.'/checker/private', [
+                'language' => 'python', 'check_type' => 'gpt', 'gpt_rate_limit' => 2,
+            ])->assertOk();
+            $this->login();
+            $submit = fn (int $value) => $this->postJson($base.'/code-submissions', [
+                'request_id' => (string) Str::uuid(), 'code' => "print($value)",
+            ]);
+
+            $submit(1)->assertCreated();
+            $this->travel(10)->minutes();
+            $submit(2)->assertCreated();
+            $this->travelTo($started->copy()->addHour()->subMicrosecond());
+            $submit(3)->assertTooManyRequests();
+
+            $this->travelTo($started->copy()->addHour());
+            $this->postJson($base.'/checker/extra-attempt')->assertConflict();
+            $submit(3)->assertCreated();
+            $submit(4)->assertTooManyRequests();
+
+            $this->travel(10)->minutes();
+            $submit(4)->assertCreated();
+            $this->assertSame(20, (int) User::findOrFail(2)->balance());
+        });
+    }
+
+    public function test_admin_limit_applies_to_existing_ai_tasks_and_extra_attempts(): void
+    {
+        config(['app.key' => 'base64:'.base64_encode(str_repeat('a', 32))]);
+        (require database_path('migrations/2026_10_14_130000_create_ai_settings_table.php'))->up();
+        $base = '/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private', [
+            'language' => 'python', 'check_type' => 'gpt', 'gpt_rate_limit' => 1,
+        ])->assertOk();
+        $submit = fn (int $value) => $this->postJson($base.'/code-submissions', [
+            'request_id' => (string) Str::uuid(), 'code' => "print($value)",
+        ]);
+
+        $this->login();
+        $submit(1)->assertCreated();
+        $submit(2)->assertTooManyRequests();
+
+        $this->login(4)->putJson('/insider/settings/ai', [
+            'settings' => [
+                'provider' => 'openai',
+                'providers' => ['openai' => ['base_url' => 'https://api.example.test/v1']],
+                'defaults' => ['text' => ['model' => 'test-model', 'timeout' => 90], 'image' => ['model' => 'test-image', 'timeout' => 180]],
+                'submission_hourly_limit' => 2,
+            ],
+            'secrets' => ['openai' => ['key' => ['action' => 'keep'], 'proxy' => ['action' => 'keep']]],
+        ])->assertRedirect('/insider/settings/ai');
+
+        $this->login()->postJson($base.'/checker/extra-attempt')->assertConflict();
+        $submit(2)->assertCreated();
+        $submit(3)->assertTooManyRequests();
+        $this->postJson($base.'/checker/extra-attempt')->assertOk()->assertJson(['charged' => 5]);
+        $submit(3)->assertCreated();
+        $this->assertSame(1, CodeTaskChecker::findOrFail(12)->config['gpt_rate_limit']);
+    }
+
     public function test_form_submission_preserves_indentation_and_malformed_json_is_rejected(): void
     {
         $this->createSubmission();

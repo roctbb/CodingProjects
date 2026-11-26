@@ -446,15 +446,14 @@ export async function workspace(root) {
             notice.replaceChildren();notice.className='';
             if(generation===submittedGeneration){composerVisible=false;content.hidden=true;if(!submittedOrder.includes(record.id))submittedOrder.push(record.id);await loadHistory();if(generation===submittedGeneration)await show(record.id);}
         } catch (e) {
-            if (e.status === 429 && teacher) {
-                notice.className='alert alert-warning';notice.textContent='Лимит проверок исчерпан. Повторите сдачу позже или уточните настройки лимита проверки.';
-            } else if (e.status === 429) {
-                notice.replaceChildren(node('p',{},e.message), button('Дополнительная попытка', safe(async () => {
+            if (e.status === 429) {
+                notice.className = 'alert alert-warning';
+                notice.replaceChildren(node('p',{class:teacher?'mb-0':''},'Лимит ИИ-проверок исчерпан. Каждая сдача учитывается 60 минут с момента отправки.'));
+                if (!teacher) notice.append(button('Дополнительная попытка', safe(async () => {
                     if (!confirm(`Приобрести дополнительную попытку за ${root.dataset.attemptPrice || '5'} GC?`)) return;
                     const value = await request(base+'/checker/extra-attempt','POST',{});
                     notice.textContent = `Попытка доступна. Списано ${value.charged} GC. Нажмите «Отправить решение».`;
                 }), 'coin'));
-                notice.className = 'alert alert-warning';
             } else throw e;
         } finally {submitting=false;content.removeAttribute('inert');}
     }

@@ -20,9 +20,10 @@ class UpdateAiSettingsRequest extends FormRequest
         $selected = $this->input('settings.provider');
         $model = ['string', 'max:200', 'regex:/\A[a-zA-Z0-9][a-zA-Z0-9._:\/-]*\z/'];
         $rules = [
-            'settings' => ['required', 'array:provider,providers,defaults,commands,shared_models,tutor_limits'],
+            'settings' => ['required', 'array:provider,providers,defaults,commands,shared_models,tutor_limits,submission_hourly_limit'],
             'settings.provider' => ['required', Rule::in($providers)],
             'settings.shared_models' => ['sometimes', 'boolean'],
+            'settings.submission_hourly_limit' => ['sometimes', 'nullable', 'integer', 'between:1,1000'],
             'settings.providers' => ['required', 'array:' . implode(',', $providers)],
             'settings.defaults' => ['required', 'array:text,image,recheck'],
             'settings.commands' => ['sometimes', 'array:' . implode(',', array_keys(AiSettings::COMMANDS))],
@@ -100,7 +101,10 @@ class UpdateAiSettingsRequest extends FormRequest
 
     public function attributes(): array
     {
-        $attributes = ['settings.provider' => 'провайдер по умолчанию'];
+        $attributes = [
+            'settings.provider' => 'провайдер по умолчанию',
+            'settings.submission_hourly_limit' => 'лимит попыток ИИ-проверки в час',
+        ];
         foreach (AiSettings::TUTOR_LIMITS as $key => $label) {
             $attributes['settings.tutor_limits.'.$key] = $label;
         }

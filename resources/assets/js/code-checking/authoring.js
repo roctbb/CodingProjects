@@ -89,7 +89,8 @@ export function authoring(root) {
             advanced.append(node('div',{class:'gc-checker-advanced__group'},
                 field('Эталонный ответ (необязательно)',textarea(config.reference_answer,value => update('reference_answer',value),{rows:4})),
                 node('div',{class:'gc-form-pair'},field('Модель',input(config.gpt_model,value => update('gpt_model',value || null)), 'Пустое поле — модель сервиса проверки.'),
-                    field('Попыток в час',input(config.gpt_rate_limit ?? 3,value => update('gpt_rate_limit',Number(value)),{type:'number',min:1,max:1000})))));
+                    field('Попыток в час',input(config.gpt_rate_limit ?? 3,value => update('gpt_rate_limit',Number(value)),{type:'number',min:1,max:1000}),
+                        'Если администратор задал общий лимит, применяется он.'))));
         }
         if (config.check_type === 'tests' && config.test_mode === 'suite') {
             panel.append(node('p',{class:'gc-help-text mt-3'},'Проверяющий сценарий проверяет структуру кода, файлы и критерии задачи. Чтобы заменить его обычными тестами, выберите тип «По тестам».'));

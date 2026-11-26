@@ -4,6 +4,7 @@ return [
     'provider' => 'openai',
     // Older installations retain per-command overrides until the simplified form is saved.
     'shared_models' => env('AI_SHARED_MODELS', false),
+    'submission_hourly_limit' => null,
 
     // A compatible API uses one base URL. Explicit old URLs remain supported.
     'providers' => [

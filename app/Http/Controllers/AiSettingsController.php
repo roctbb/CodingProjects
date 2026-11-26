@@ -24,6 +24,9 @@ class AiSettingsController extends Controller
     public function update(UpdateAiSettingsRequest $request, AiSettings $settings)
     {
         $data = $request->validated();
+        if (isset($data['settings']['submission_hourly_limit'])) {
+            $data['settings']['submission_hourly_limit'] = (int) $data['settings']['submission_hourly_limit'];
+        }
         if (isset($data['settings']['tutor_limits'])) {
             $data['settings']['tutor_limits'] = array_map('intval', $data['settings']['tutor_limits']);
         }

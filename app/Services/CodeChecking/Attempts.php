@@ -5,19 +5,26 @@ namespace App\Services\CodeChecking;
 use App\CodeSubmission;
 use App\CodeTaskChecker;
 use App\CoinTransaction;
+use App\Services\Ai\AiSettings;
+use App\Services\CoinWallet;
 use App\Task;
 use App\User;
-use App\Services\CoinWallet;
-use App\Services\SystemStoreSettings;
 use Illuminate\Support\Facades\DB;
 
 class Attempts
 {
     public const EXTRA_ATTEMPT_COST = 5;
+
+    public function __construct(private AiSettings $aiSettings) {}
+
     private function exhausted(User $user, Task $task, CodeTaskChecker $checker): bool
     {
-        return CodeSubmission::where('user_id', $user->id)->where('task_id', $task->id)
-            ->where('created_at', '>=', now()->subHour())->count() >= ($checker->config['gpt_rate_limit'] ?? 3);
+        $limit = $this->aiSettings->all()['submission_hourly_limit'] ?? $checker->config['gpt_rate_limit'] ?? 3;
+        $submissions = CodeSubmission::query();
+        $cutoff = $submissions->getModel()->fromDateTime(now()->subHour());
+
+        return $submissions->where('user_id', $user->id)->where('task_id', $task->id)
+            ->where('created_at', '>', $cutoff)->count() >= $limit;
     }
 
     private function credits(User $user, Task $task)

@@ -100,6 +100,33 @@ class AiSettingsTest extends TestCase
         $this->assertSame(config('tutor.platform_monthly_tokens'), $settings->all()['tutor_limits']['platform_monthly_tokens']);
     }
 
+    public function test_admin_can_set_and_clear_the_hourly_submission_limit(): void
+    {
+        $this->login();
+        $this->get(self::URL)->assertOk()->assertSee('Попыток ИИ-проверки в час');
+        $settings = app(AiSettings::class);
+        $this->assertNull($settings->all()['submission_hourly_limit']);
+
+        $payload = $this->payload();
+        $payload['settings']['submission_hourly_limit'] = '7';
+        $this->put(self::URL, $payload)->assertRedirect(self::URL)->assertSessionHasNoErrors();
+        $this->assertSame(7, $settings->all()['submission_hourly_limit']);
+        $this->get(self::URL)->assertSee('id="ai-submission-hourly-limit" name="settings[submission_hourly_limit]" type="number" min="1" max="1000" class="form-control" value="7"', false);
+
+        foreach ([0, 1001, '1.5'] as $invalid) {
+            $payload['settings']['submission_hourly_limit'] = $invalid;
+            $this->put(self::URL, $payload)->assertSessionHasErrors('settings.submission_hourly_limit');
+            $this->assertSame(7, $settings->all()['submission_hourly_limit']);
+        }
+        unset($payload['settings']['submission_hourly_limit']);
+        $this->put(self::URL, $payload)->assertSessionHasNoErrors();
+        $this->assertSame(7, $settings->all()['submission_hourly_limit']);
+
+        $payload['settings']['submission_hourly_limit'] = '';
+        $this->put(self::URL, $payload)->assertSessionHasNoErrors();
+        $this->assertNull($settings->all()['submission_hourly_limit']);
+    }
+
     public static function deniedRoles(): array
     {
         return [['student'], ['teacher'], ['novice']];
