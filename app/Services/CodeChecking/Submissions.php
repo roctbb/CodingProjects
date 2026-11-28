@@ -37,13 +37,14 @@ class Submissions
             $value['files'] = $files;
         }
         $hash = hash('sha256', json_encode($value, JSON_THROW_ON_ERROR));
-        return app(\App\Services\CoinWallet::class)->transaction($user->id, function () use ($request, $user, $courseId, $task, $checker, $language, $input, $files, $hash, $value, $snapshot) {
+        return app(\App\Services\CoinWallet::class)->transaction($user->id, function () use ($request, $user, $courseId, $task, $checker, $language, $input, $files, $hash, $value, $snapshot, $payloads) {
             $existing = CodeSubmission::where('user_id', $user->id)->where('course_id', $courseId)->where('task_id', $task->id)
                 ->where('request_id', $input['request_id'])->first();
             if ($existing) {
                 abort_unless(hash_equals($existing->payload_hash, $hash), 409, 'Request ID was used for another submission.');
                 return $existing;
             }
+            $payloads->validateArchives($value['files']);
             $task=Task::whereKey($task->id)->lockForUpdate()->firstOrFail();
             \App\MaterialReview\Attempts::guard($request,$task);
             $checker=CodeTaskChecker::findOrFail($task->id);

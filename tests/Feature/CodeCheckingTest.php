@@ -561,6 +561,46 @@ class CodeCheckingTest extends TestCase
             \Illuminate\Http\UploadedFile::fake()->createWithContent('unexpected.exe', 'binary')]], ['Accept' => 'application/json'])->assertStatus(422);
     }
 
+    public function test_submission_rejects_empty_or_unreadable_zip_files_before_starting_a_check(): void
+    {
+        $base = '/insider/courses/7/tasks/12';
+        $this->login(1)->putJson($base.'/checker/private', ['language' => 'text', 'check_type' => 'gpt',
+            'submission_modes' => ['files'], 'allowed_extensions' => ['zip']])->assertOk();
+        $this->login();
+        $upload = static fn (string $content) => \Illuminate\Http\UploadedFile::fake()->createWithContent('project.ZIP', $content);
+        $headers = ['Accept' => 'application/json'];
+        $empty = 'Архив «project.ZIP» пуст. Добавьте в ZIP файлы решения и отправьте его снова.';
+        $unreadable = 'Не удалось прочитать ZIP-архив «project.ZIP». Создайте новый ZIP без пароля и отправьте его снова.';
+        $path = tempnam(sys_get_temp_dir(), 'submission-zip-');
+        try {
+            $zip = new \ZipArchive();
+            $this->assertTrue($zip->open($path, \ZipArchive::OVERWRITE));
+            $zip->addEmptyDir('project');
+            $zip->close();
+            $directoriesOnly = file_get_contents($path);
+            $this->assertTrue($zip->open($path));
+            $zip->addFromString('project/main.py', 'print(1)');
+            $zip->close();
+            $valid = file_get_contents($path);
+        } finally {
+            unlink($path);
+        }
+
+        foreach ([['', $empty], [$directoriesOnly, $empty], ['plain text', $unreadable], [substr($valid, 0, -22), $unreadable]] as [$content, $message]) {
+            $this->post($base.'/code-submissions', ['request_id' => (string) Str::uuid(), 'files' => [$upload($content)]], $headers)
+                ->assertUnprocessable()->assertJsonPath('message', $message);
+        }
+        $this->put($base.'/code-draft', ['revision' => '0', 'files' => [$upload('')]], $headers)->assertOk();
+        $submitDraft = static fn (int $revision) => ['request_id' => (string) Str::uuid(), 'use_draft' => true, 'draft_revision' => $revision];
+        $this->postJson($base.'/code-submissions', $submitDraft(1))->assertUnprocessable()->assertJsonPath('message', $empty);
+        $this->assertDatabaseCount('code_submissions', 0);
+        $this->assertDatabaseCount('code_execution_runs', 0);
+        Queue::assertNotPushed(\App\Jobs\DispatchCodeExecution::class);
+
+        $this->put($base.'/code-draft', ['revision' => '1', 'files' => [$upload($valid)]], $headers)->assertOk();
+        $this->postJson($base.'/code-submissions', $submitDraft(2))->assertCreated();
+    }
+
     public function test_manual_text_answer_stays_local_and_grading_is_idempotent(): void
     {
         $base = '/insider/courses/7/tasks/12';

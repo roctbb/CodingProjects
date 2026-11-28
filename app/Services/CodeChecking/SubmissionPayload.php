@@ -3,6 +3,7 @@ namespace App\Services\CodeChecking;
 
 use App\CodeDraft;
 use Illuminate\Http\Request;
+use ZipArchive;
 
 class SubmissionPayload
 {
@@ -106,6 +107,40 @@ class SubmissionPayload
             abort_if($value['mode'] === 'code' && $value['files'][0]['artifact']['bytes'] === 0, 422, 'Source is empty.');
             abort_if($value['mode'] === 'text' && trim($value['text']) === '', 422, 'Answer is empty.');
             abort_if($value['mode'] !== 'repository' && !$value['files'], 422, 'Files are required.');
+        }
+    }
+
+    public function validateArchives(array $files): void
+    {
+        foreach ($files as $file) {
+            $name = $file['name'];
+            if (($file['origin'] ?? 'student') === 'task' || !str_ends_with(strtolower($name), '.zip')) continue;
+
+            $artifact = $file['artifact'];
+            $empty = "Архив «{$name}» пуст. Добавьте в ZIP файлы решения и отправьте его снова.";
+            $unreadable = "Не удалось прочитать ZIP-архив «{$name}». Создайте новый ZIP без пароля и отправьте его снова.";
+            abort_if($artifact['bytes'] === 0, 422, $empty);
+
+            $this->artifacts->withLocalFile($artifact, function (string $path) use ($empty, $unreadable) {
+                $zip = new ZipArchive();
+                abort_unless($zip->open($path, ZipArchive::RDONLY | ZipArchive::CHECKCONS) === true, 422, $unreadable);
+                try {
+                    $hasFiles = false;
+                    for ($index = 0; $index < $zip->numFiles; $index++) {
+                        $entry = $zip->getNameIndex($index);
+                        abort_if($entry === false, 422, $unreadable);
+                        if (str_ends_with($entry, '/')) continue;
+
+                        $stream = $zip->getStreamIndex($index);
+                        abort_unless(is_resource($stream), 422, $unreadable);
+                        fclose($stream);
+                        $hasFiles = true;
+                    }
+                    abort_unless($hasFiles, 422, $empty);
+                } finally {
+                    $zip->close();
+                }
+            });
         }
     }
 }
